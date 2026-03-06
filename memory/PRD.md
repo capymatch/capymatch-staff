@@ -9,36 +9,45 @@ Build a "recruiting operating system" for clubs, coaches, families, and athletes
 5. **Program Intelligence** — Strategic layer for club directors
 
 ## Architecture
-- **Backend:** FastAPI (Python) — serves mock data via Decision Engine
+- **Backend:** FastAPI (Python) — Decision Engine + Quick Actions API
 - **Frontend:** React + Tailwind + Shadcn/UI
-- **Database:** None (all data mocked in-memory via `mock_data.py`)
+- **Database:** MongoDB (quick actions persist), mock data for interventions
 - **Key Concept:** Decision Engine detects interventions across 6 categories, scores them, and surfaces prioritized alerts with full explainability
 
 ## What's Been Implemented
 
 ### Phase 1: Documentation (COMPLETE)
-- PRODUCT_ARCHITECTURE.md, USER_ROLES.md, SYSTEM_ENTITIES.md
-- SCREEN_MAP.md, MISSION_CONTROL_SPEC.md, UX_PRINCIPLES.md
-- MVP_RECOMMENDATION.md, CATEGORY_POSITIONING.md, DECISION_ENGINE_SPEC.md
+- Full product spec suite: PRODUCT_ARCHITECTURE, USER_ROLES, SYSTEM_ENTITIES, SCREEN_MAP, MISSION_CONTROL_SPEC, UX_PRINCIPLES, MVP_RECOMMENDATION, CATEGORY_POSITIONING, DECISION_ENGINE_SPEC
 
 ### Phase 2: Mission Control Prototype (COMPLETE)
-- Decision Engine with 6 intervention categories
-- Balanced intervention distribution (verified: no single category > 28%)
-- Explainability on every intervention (why, what_changed, action, owner)
+- Decision Engine with 6 balanced intervention categories
 - Mission Control UI: Priority Alerts, What Changed Today, Athletes Needing Attention, Events, Program Snapshot
 
 ### Phase 3: Decision Engine Tuning (COMPLETE — Feb 2026)
 - Fixed momentum_drop over-firing (36% → 14%), ownership_gap from 0% → 14%
 - Deterministic athlete archetypes for consistent data
 
-### Peek Panel Feature (COMPLETE — Feb 2026)
-- Lightweight right-side slide-over panel for quick intervention preview
-- Shows: why surfaced, what changed, recommended action, owner, relevant context (schools/events/deadlines), numbered next steps
-- 3 quick actions: Log Note, Message, Assign
-- Main CTA: Open Support Pod
-- Dismiss: X button, Escape key, or click outside backdrop
-- Triggered from Priority Alert cards and Athletes Needing Attention cards
-- Mission Control remains fast, calm, scannable — peek is the triage/preview layer
+### Peek Panel (COMPLETE — Feb 2026)
+- Right-side slide-over panel for intervention preview
+- Shows: why surfaced, what changed, recommended action, owner, context, next steps
+- Dismiss via X, Escape, or backdrop click
+
+### Quick Actions (COMPLETE — Feb 2026)
+- **Log Note:** Inline textarea + optional tag pills (Check-in, Follow-up, Update, Concern, Positive). Saves to MongoDB athlete timeline. Success toast.
+- **Assign:** Owner reassignment with selectable list (filters out current owner) + optional reason. Persists in MongoDB. Success toast.
+- **Message:** Recipient pill selection → reveals textarea. Sends to MongoDB. Success toast.
+- All actions transform the peek panel footer inline (no extra modals/dialogs)
+- Escape closes form first, then panel — proper layered dismissal
+- Backend: POST /api/athletes/{id}/notes, /assign, /messages + GET /timeline
+
+### API Endpoints
+- `GET /api/mission-control` — curated dashboard data
+- `GET /api/debug/interventions` — Decision Engine debug output
+- `GET /api/athletes` / `GET /api/athletes/{id}` — athlete data
+- `POST /api/athletes/{id}/notes` — log note to timeline
+- `POST /api/athletes/{id}/assign` — reassign intervention owner
+- `POST /api/athletes/{id}/messages` — send quick message
+- `GET /api/athletes/{id}/timeline` — all actions for an athlete
 
 ## Prioritized Backlog
 
@@ -47,8 +56,8 @@ Build a "recruiting operating system" for clubs, coaches, families, and athletes
 
 ### P1
 - Implement Backend for Support Pod (API endpoints, logic)
-- Implement Frontend for Support Pod (React components)
-- Refine Mission Control UI (address "generic dashboard" concerns)
+- Implement Frontend for Support Pod (React components, routing)
+- Refine Mission Control UI (address "generic dashboard" risks)
 
 ### P2
 - Event Mode & Advocacy Mode (V2)
@@ -57,4 +66,4 @@ Build a "recruiting operating system" for clubs, coaches, families, and athletes
 ### P3
 - AI/Intelligence Layer integration
 - Real-time updates (WebSockets)
-- Persistent database layer
+- Replace mock intervention data with real database layer
