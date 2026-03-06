@@ -67,8 +67,10 @@ def detect_blocker(athlete: Dict) -> Dict or None:
     Category 2: Blocker
     Triggers: Missing documents, overdue actions, support pod gaps
     """
-    # Simulate missing transcript for some athletes
-    if athlete['gradYear'] == 2025 and athlete['id'].endswith('5'):
+    # Simulate various blockers more frequently
+    
+    # Missing transcript for 2025 grads (20% chance)
+    if athlete['gradYear'] == 2025 and random.random() < 0.2:
         urgency = 8  # Application season
         impact = 8  # Blocks multiple schools
         actionability = 6  # Requires external party (school counselor)
@@ -99,6 +101,76 @@ def detect_blocker(athlete: Dict) -> Dict or None:
                     'Parent contacts school counselor',
                     'Coach follows up with parent',
                     'Track submission status'
+                ]
+            }
+        }
+    
+    # Missing highlight reel (15% chance for actively recruiting)
+    if athlete['recruitingStage'] == 'actively_recruiting' and random.random() < 0.15:
+        urgency = 6  # Important but not urgent
+        impact = 7  # Can't share with coaches
+        actionability = 4  # Requires filming and editing
+        ownership = 7  # Coach + Athlete
+        
+        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+        score = score / 10
+        
+        return {
+            'category': 'blocker',
+            'trigger': 'missing_highlight_reel',
+            'score': int(score),
+            'urgency': urgency,
+            'impact': impact,
+            'actionability': actionability,
+            'ownership': ownership,
+            
+            'why_this_surfaced': "No highlight reel available to share",
+            'what_changed': "Coaches requesting film for evaluation",
+            'recommended_action': "Create 2-3 minute highlight reel",
+            'owner': "Coach + Athlete",
+            
+            'details': {
+                'blocker_type': 'missing_materials',
+                'impact_description': 'Cannot respond to coach film requests',
+                'suggested_steps': [
+                    'Identify recent games with best footage',
+                    'Work with coach to select clips',
+                    'Create 2-3 minute reel'
+                ]
+            }
+        }
+    
+    # Parent not in support pod (10% chance)
+    if random.random() < 0.1:
+        urgency = 5  # Not urgent but important
+        impact = 6  # Coordination gap
+        actionability = 9  # Easy to invite
+        ownership = 10  # Clear coach action
+        
+        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+        score = score / 10
+        
+        return {
+            'category': 'blocker',
+            'trigger': 'support_pod_gap',
+            'score': int(score),
+            'urgency': urgency,
+            'impact': impact,
+            'actionability': actionability,
+            'ownership': ownership,
+            
+            'why_this_surfaced': "Parent not yet added to Support Pod",
+            'what_changed': "Family coordination needed for recruiting",
+            'recommended_action': "Invite parent to join Support Pod",
+            'owner': "Coach Martinez",
+            
+            'details': {
+                'blocker_type': 'pod_gap',
+                'missing_role': 'parent',
+                'suggested_steps': [
+                    'Send Support Pod invite to parent',
+                    'Explain pod purpose and access',
+                    'Schedule kickoff call'
                 ]
             }
         }

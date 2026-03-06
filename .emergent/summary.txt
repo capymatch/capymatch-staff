@@ -1,0 +1,215 @@
+<analysis>**original_problem_statement:**
+The user wants to build a new product direction for CapyMatch, a recruiting operating system for clubs, coaches, families, and athletes. The vision is to move beyond a traditional recruiting CRM or dashboard and create a system that actively coordinates support, surfaces priorities, identifies blockers, and helps users know what to do next.
+
+The product is structured around 5 operating modes:
+1.  **Mission Control:** A command center for coaches to see which athletes need help.
+2.  **Support Pod:** A collaborative space for an athlete's support network.
+3.  **Event Mode:** A live recruiting workflow for tournaments and events.
+4.  **Advocacy Mode:** A tool for coach-to-college promotion.
+5.  **Program Intelligence:** A strategic layer for club directors.
+
+**PRODUCT REQUIREMENTS:**
+The initial request was to create a foundational blueprint in phases:
+1.  **Phase 1 (Documentation):** Create strategic documents covering product architecture, user roles, core entities, information architecture, screen maps, UX principles, and an MVP recommendation.
+2.  **Phase 2 (Prototyping):** Build a functional prototype of the **Mission Control** mode, focusing on the coach/director experience with mock data. The design should be a hybrid of Apple-like clarity and SpaceX-like mission control focus. The architecture must be AI-ready but implementation is deferred.
+3.  **Phase 3 (Refinement & Implementation):** Based on user feedback, refine the product's core logic.
+    -   Strengthen the concept of operating contexts.
+    -   Define and implement a Decision Engine to intelligently surface interventions with clear explainability (why it surfaced, what changed, recommended action, owner).
+    -   Create a  document.
+    -   Update all documentation with the refined concepts and more realistic timelines.
+    -   Begin implementation of the Decision Engine backend.
+    -   Draft the specification for the  mode.
+
+**User's preferred language**: English
+
+**what currently exists?**
+- A comprehensive set of strategic markdown documents defining the product vision, architecture, specs, and principles have been created and refined in the  directory.
+- The backend has been updated with a  module that implements the logic for surfacing interventions based on 6 defined categories.
+- The main  file uses this Decision Engine to power the  endpoint and includes a  endpoint for inspection. The data is entirely mocked in .
+- The frontend for the Mission Control dashboard has been created with React components, but visual verification has been blocked due to persistent preview environment issues (sleep mode).
+- A draft specification for the next phase, , has been created.
+
+**Last working item**:
+    - Last item agent was working: The agent was actively working on tuning the intervention quality and category balance within the Decision Engine. The user pointed out that the  category was over-firing, leading to an unrealistic distribution of alerts. The agent began the process of improving the mock data and/or detection thresholds to create a more believable mix of intervention types.
+    - Status: IN PROGRESS
+    - Agent Testing Done: N
+    - Which testing method agent to use? backend testing agent. After modifying the Decision Engine logic in  and , the agent should use  to hit the  endpoint to verify that the distribution of intervention categories is more balanced and realistic.
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:
+  - Issue 1: Unrealistic Intervention Distribution (P0)
+  - Issue 2: Frontend Preview is Unavailable (P1)
+  
+  **Issues Detail:**
+  - **Issue 1:** Unrealistic Intervention Distribution
+     - Attempted fixes: The agent has acknowledged the issue and started the thought process for a fix, but no code changes have been implemented yet.
+     - Next debug checklist:
+        1.  Review and modify  to create more diverse athlete scenarios that trigger different intervention categories (Blocker, Deadline Proximity, Engagement Drop, etc.).
+        2.  Review and adjust the detection thresholds and logic within the  function in .
+        3.  Use  on the  endpoint to inspect the  and ensure it's more balanced.
+     - Why fix this issue and what will be achieved with the fix? To make the Mission Control prototype feel believable and demonstrate the full power of the Decision Engine, which is a core part of the product vision.
+     - Status: IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? backend
+     - Blocked on other issue: None
+
+  - **Issue 2:** Frontend Preview is Unavailable
+     - Attempted fixes: The agent has repeatedly tried to get a screenshot, used  to wake up the app, and checked frontend logs. These attempts have failed to resolve the sleep mode issue with the preview environment.
+     - Next debug checklist:
+        1.  Since direct fixes have failed, the next agent should proceed with backend/spec work.
+        2.  If UI work is required, the agent may need to restart the  service using frontend: ERROR (not running)
+frontend: started as a last resort.
+        3.  Assume the UI is not verifiable for now and focus on other tasks.
+     - Why fix this issue and what will be achieved with the fix? Fixing this would allow for visual verification of the frontend, enabling UI/UX refinement and ensuring the Mission Control dashboard matches the design specs.
+     - Status: BLOCKED
+     - Is recurring issue? Y
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on other issue: This issue is blocking all frontend testing and verification.
+
+**In progress Task List**:
+  - Task 1: Tune Decision Engine Intervention Quality (P0)
+  - Task 2: Finalize Support Pod Specification (P1)
+ 
+  **Task Detail:**
+  - **Task 1:** Tune Decision Engine Intervention Quality
+     - Where to resume: The agent should start by editing  and  to address the imbalanced intervention categories.
+     - What will be achieved with this? The Mission Control API will return a more realistic and varied set of interventions, making the prototype more compelling and aligned with the product vision.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? backend
+     - Blocked on something: None
+
+  - **Task 2:** Finalize Support Pod Specification
+     - Where to resume: The agent needs to expand the existing  into a full, implementation-ready specification.
+     - What will be achieved with this? This will prepare the project for the next phase of development (V1.5), ensuring the Support Pod is designed as the treatment environment for issues triaged in Mission Control.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? N/A (Documentation task)
+     - Blocked on something: None
+
+**Upcoming and Future Tasks**
+    **Upcoming Tasks:**
+    - (P0) Implement Backend for Support Pod: Once the spec is finalized, create the necessary API endpoints and logic for the Support Pod.
+    - (P1) Implement Frontend for Support Pod: Build the React components and pages for the Support Pod UI.
+    - (P2) Refine Mission Control UI: Once the preview is working, refine the UI to address the generic dashboard risks previously identified.
+
+    **Future Tasks:**
+    - Implement V2: Event Mode & Advocacy Mode.
+    - Implement V2.5: Program Intelligence.
+    - Implement V3: Deeper platform integration and the AI/Intelligence Layer.
+    - Implement real-time updates (e.g., via WebSockets).
+
+**Completed work in this session**
+- **Documentation:**
+  - Created and iteratively refined a full suite of strategic product documents:
+    -  (v2 with Operating Contexts and Decision Engine)
+    - 
+    - 
+    - 
+    -  (v2 with Explainability)
+    -  (v2 with Explain the Why)
+    -  (v2 with realistic timelines)
+    -  (New)
+    -  (New)
+  - Created a  page for easy mobile access to all documentation.
+- **Backend Development:**
+  - Implemented the V1 of the **Decision Engine** in , which includes logic for 6 intervention categories, scoring, ranking, and explainability payloads.
+  - Updated  to use the Decision Engine for the  endpoint.
+  - Added a  endpoint to inspect the engine's output.
+  - Created a robust mock data structure in  to simulate athletes, events, and signals.
+- **Frontend Development:**
+  - Built the initial component structure for the Mission Control dashboard in React ().
+
+**Earlier issues found/mentioned but not fixed**
+   - **Issue 1:** The frontend preview environment is consistently in sleep mode, which has prevented any visual verification or screenshotting of the UI. The agent has confirmed the application compiles successfully and the backend API is responsive, but the preview URL itself is not serving the app. This is a recurring environmental issue.
+     - Debug checklist: Attempt a frontend: stopped
+frontend: started command. If that fails, assume the UI is not viewable and continue with non-UI tasks.
+     - Why to solve this issue and what will be achieved with this? Solving this is critical for any future UI development, refinement, and testing.
+     - Should Test frontend/backend/both after fix: frontend
+     - Is recurring issue? Y
+
+**Known issue recurrence from previous fork**
+  - N/A
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Backend:** FastAPI, Python
+- **Frontend:** React, JavaScript,  for API calls
+- **Database:** None. All data is mocked in-memory via Python scripts ().
+- **Architecture:** A service-oriented architecture with a React frontend consuming a FastAPI backend. The core logic is encapsulated in a Decision Engine module that processes mock data to simulate an intelligent operating system.
+
+**key DB schema**
+The application does not use a database. It relies on in-memory mock data generated by . The key data objects are:
+- **Athlete:** 
+- **Signal:** 
+- **Event:** 
+- **Intervention (output of Decision Engine):** 
+
+**changes in tech stack**
+- None.
+
+**All files of reference**
+- : Contains the core logic for the product's intelligence layer.
+- : Defines the API endpoints that serve the frontend.
+- : The source of all data for the application; crucial for testing and tuning the Decision Engine.
+- : The main entry point for the UI.
+- : The blueprint for the backend logic being implemented.
+- : The blueprint for the frontend UI.
+- : The starting point for the next phase of development.
+
+**Areas that need refactoring**:
+- The user previously identified several areas in the Mission Control UI that risked feeling like a generic dashboard (e.g., Program Snapshot widgets, standard navigation). These components should be revisited and refined once the frontend preview is accessible.
+
+**key api endpoints**
+- : Returns the curated data for the Mission Control dashboard, including priority alerts, momentum feed, and athletes needing attention, all processed by the Decision Engine.
+- : A debugging endpoint that returns the raw output of the Decision Engine, including all detected interventions and category distribution stats.
+
+**Critical Info for New Agent**
+- **Vision is Key:** The user is highly focused on the vision of an operating system, not a standard CRM. Every decision should be checked against this vision. Avoid generic SaaS patterns.
+- **Explainability is Mandatory:** The Decision Engine and UI must always explain *why* an item is being surfaced. This is a core product principle. Refer to  and .
+- **Phased Approach:** The project is built in phases: 1. Mission Control (in progress), 2. Support Pod (next), 3. Event/Advocacy, etc.
+- **Preview is Unreliable:** Do not depend on the screenshot tool or preview URL for UI verification. The environment has been persistently in sleep mode. Focus on backend and spec work until this is resolved or UI work becomes the highest priority.
+- **Trust the Specs:** The user has invested heavily in refining the specification documents. They are the source of truth for implementation.
+
+**documents and test reports created in this job**
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User asks for docs to be pasted directly.** (Agent complies).
+2.  **User provides major refinement feedback:** strengthen operating contexts, add a Decision Engine section, strengthen positioning for Support Pod/Event/Advocacy modes, add Explain the Why to UX principles, and make timelines more realistic. Also requests a  doc. (Agent implemented all changes).
+3.  **User wants to lock product behavior:** Asks to update  with explainability, create a detailed , define UI patterns for explainability, and add routing logic to Support Pod. (Agent implemented all changes).
+4.  **User confirms they meant for the agent to proceed with the changes.** (Agent confirms the work was already done and summarizes it).
+5.  **User is satisfied and wants to move to implementation:** Asks agent to implement the Decision Engine backend based on the new specs and start drafting the Support Pod spec. (Agent implemented the Decision Engine backend and created a draft spec for Support Pod).
+6.  **User gives next priority:** 1) Tune the Decision Engine's intervention quality because  is over-firing. 2) Deepen the Support Pod spec to make it an implementation-ready document, positioning it as the treatment environment for Mission Control's triage. (This is the current task).
+
+**Project Health Check:**
+- **Broken:** The frontend preview environment is non-functional, preventing any UI visualization or testing.
+- **Mocked:** The entire data layer is mocked. The application has no persistent database.
+
+**3rd Party Integrations**
+- None implemented. The architecture is AI-ready for future integration but currently uses no external services.
+
+**Testing status**
+  - Testing agent used after significant changes: NO
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: []
+  - Known regressions: The frontend preview has stopped working.
+
+**Credentials to test flow:**
+N/A
+
+**What agent forgot to execute**
+The agent has been thorough in following user instructions. The only significant unexecuted task is visually verifying the frontend, which is blocked by a persistent environmental issue outside the agent's direct control.</analysis>
