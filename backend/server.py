@@ -41,6 +41,19 @@ from event_engine import (
     route_note_to_pod,
     bulk_route_to_pods,
 )
+from advocacy_engine import (
+    get_recommendation,
+    list_recommendations,
+    create_recommendation,
+    update_recommendation,
+    send_recommendation,
+    log_response,
+    mark_follow_up,
+    close_recommendation,
+    get_school_relationship,
+    get_all_relationships,
+    get_event_context,
+)
 
 
 ROOT_DIR = Path(__file__).parent
@@ -685,6 +698,174 @@ async def list_schools():
     return SCHOOLS
 
 
+# ============================================================================
+# ADVOCACY MODE — recommendations, relationships, response tracking
+# ============================================================================
+
+class RecommendationCreate(BaseModel):
+    athlete_id: str
+    school_id: Optional[str] = ""
+    school_name: Optional[str] = ""
+    college_coach_name: Optional[str] = ""
+    fit_reasons: Optional[List[str]] = []
+    fit_note: Optional[str] = ""
+    supporting_event_notes: Optional[List[str]] = []
+    intro_message: Optional[str] = ""
+    desired_next_step: Optional[str] = ""
+
+class RecommendationUpdate(BaseModel):
+    college_coach_name: Optional[str] = None
+    fit_reasons: Optional[List[str]] = None
+    fit_note: Optional[str] = None
+    supporting_event_notes: Optional[List[str]] = None
+    intro_message: Optional[str] = None
+    desired_next_step: Optional[str] = None
+    school_id: Optional[str] = None
+    school_name: Optional[str] = None
+
+class ResponseLog(BaseModel):
+    response_note: str
+    response_type: Optional[str] = "warm"
+
+class CloseRequest(BaseModel):
+    reason: Optional[str] = "no_response"
+
+
+@api_router.get("/advocacy/recommendations")
+async def list_all_recommendations(status: str = None, athlete: str = None, school: str = None, grad_year: str = None):
+    return list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
+
+
+@api_router.get("/advocacy/context/{athlete_id}/{school_id}")
+async def get_advocacy_context(athlete_id: str, school_id: str):
+    return get_event_context(athlete_id, school_id)
+
+
+@api_router.get("/advocacy/context/{athlete_id}")
+async def get_advocacy_context_athlete(athlete_id: str):
+    return get_event_context(athlete_id)
+
+
+@api_router.get("/advocacy/relationships")
+async def list_all_relationships():
+    return get_all_relationships()
+
+
+@api_router.get("/advocacy/relationships/{school_id}")
+async def get_relationship(school_id: str):
+    result = get_school_relationship(school_id)
+    if not result:
+        return {"error": "School not found"}
+    return result
+
+
+@api_router.post("/advocacy/recommendations")
+async def create_new_recommendation(body: RecommendationCreate):
+    rec = create_recommendation(body.model_dump())
+    return rec
+
+
+@api_router.get("/advocacy/recommendations/{rec_id}")
+async def get_rec_detail(rec_id: str):
+    rec = get_recommendation(rec_id)
+    if not rec:
+        return {"error": "Recommendation not found"}
+    # Enrich with relationship summary
+    if rec.get("school_id"):
+        rel = get_school_relationship(rec["school_id"])
+        rec["relationship_summary"] = rel["summary"] if rel else None
+    return rec
+
+
+@api_router.patch("/advocacy/recommendations/{rec_id}")
+async def update_rec(rec_id: str, body: RecommendationUpdate):
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    result = update_recommendation(rec_id, updates)
+    if not result:
+        return {"error": "Recommendation not found"}
+    return result
+
+
+@api_router.post("/advocacy/recommendations/{rec_id}/send")
+async def send_rec(rec_id: str):
+    rec = send_recommendation(rec_id)
+    if not rec:
+        return {"error": "Cannot send — not a draft or not found"}
+
+    # Log to athlete timeline
+    await db.athlete_notes.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": rec["athlete_id"],
+        "author": "Coach Martinez",
+        "text": f"Recommendation sent to {rec['school_name']}: {rec.get('fit_summary', '')}",
+        "tag": "advocacy_sent",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return rec
+
+
+@api_router.post("/advocacy/recommendations/{rec_id}/respond")
+async def respond_to_rec(rec_id: str, body: ResponseLog):
+    rec = log_response(rec_id, body.response_note, body.response_type)
+    if not rec:
+        return {"error": "Cannot log response"}
+
+    # Log to athlete timeline
+    tag = "advocacy_response" if body.response_type == "warm" else "advocacy_closed"
+    await db.athlete_notes.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": rec["athlete_id"],
+        "author": "Coach Martinez",
+        "text": f"{rec['school_name']} response: {body.response_note}",
+        "tag": tag,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    # If warm response, create Support Pod action
+    if body.response_type == "warm":
+        await db.pod_actions.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": rec["athlete_id"],
+            "title": f"Follow up on {rec['school_name']} warm response",
+            "owner": "Coach Martinez",
+            "status": "ready",
+            "due_date": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+            "source": "advocacy",
+            "source_category": "advocacy_response",
+            "created_by": "Coach Martinez",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "is_suggested": False,
+            "completed_at": None,
+        })
+
+    return rec
+
+
+@api_router.post("/advocacy/recommendations/{rec_id}/follow-up")
+async def follow_up_rec(rec_id: str):
+    rec = mark_follow_up(rec_id)
+    if not rec:
+        return {"error": "Cannot follow up"}
+    return rec
+
+
+@api_router.post("/advocacy/recommendations/{rec_id}/close")
+async def close_rec(rec_id: str, body: CloseRequest):
+    rec = close_recommendation(rec_id, body.reason)
+    if not rec:
+        return {"error": "Cannot close"}
+
+    await db.athlete_notes.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": rec["athlete_id"],
+        "author": "Coach Martinez",
+        "text": f"Recommendation to {rec['school_name']} closed ({body.reason.replace('_', ' ')})",
+        "tag": "advocacy_closed",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return rec
+
+
 # Debug endpoints for Decision Engine inspection
 @api_router.get("/debug/interventions")
 async def get_all_interventions():
@@ -701,6 +882,7 @@ async def get_all_interventions():
             "engagement_drop": len([i for i in ALL_INTERVENTIONS if i['category'] == 'engagement_drop']),
             "ownership_gap": len([i for i in ALL_INTERVENTIONS if i['category'] == 'ownership_gap']),
             "readiness_issue": len([i for i in ALL_INTERVENTIONS if i['category'] == 'readiness_issue']),
+            "event_follow_up": len([i for i in ALL_INTERVENTIONS if i['category'] == 'event_follow_up']),
         },
         "by_tier": {
             "critical": len([i for i in ALL_INTERVENTIONS if i['priority_tier'] == 'critical']),

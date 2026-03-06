@@ -16,8 +16,8 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
   const modes = [
     { id: "mission-control", label: "Mission Control", icon: LayoutDashboard, path: "/mission-control" },
     { id: "events", label: "Events", icon: Calendar, path: "/events" },
+    { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
     { id: "support-pods", label: "Support Pods", icon: Users, path: null },
-    { id: "advocacy", label: "Advocacy", icon: Megaphone, path: null },
     { id: "program", label: "Program", icon: BarChart3, path: null },
   ];
 

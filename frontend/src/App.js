@@ -6,6 +6,10 @@ import EventHome from "./pages/EventHome";
 import EventPrep from "./pages/EventPrep";
 import LiveEvent from "./pages/LiveEvent";
 import EventSummary from "./pages/EventSummary";
+import AdvocacyHome from "./pages/AdvocacyHome";
+import RecommendationBuilder from "./pages/RecommendationBuilder";
+import RecommendationDetail from "./pages/RecommendationDetail";
+import RelationshipDetail from "./pages/RelationshipDetail";
 
 function App() {
   return (
@@ -18,6 +22,10 @@ function App() {
           <Route path="/events/:eventId/prep" element={<EventPrep />} />
           <Route path="/events/:eventId/live" element={<LiveEvent />} />
           <Route path="/events/:eventId/summary" element={<EventSummary />} />
+          <Route path="/advocacy" element={<AdvocacyHome />} />
+          <Route path="/advocacy/new" element={<RecommendationBuilder />} />
+          <Route path="/advocacy/:recommendationId" element={<RecommendationDetail />} />
+          <Route path="/advocacy/relationships/:schoolId" element={<RelationshipDetail />} />
           <Route path="/support-pods/:athleteId" element={<SupportPod />} />
           <Route path="*" element={<Navigate to="/mission-control" replace />} />
         </Routes>

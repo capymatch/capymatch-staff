@@ -1,0 +1,162 @@
+{
+  "summary": "Advocacy Mode and Decision Engine event_follow_up feature testing complete. All 26 backend API tests passed (100%). All frontend Playwright UI tests passed. Verified: Decision Engine event_follow_up detection, Advocacy Home page with groupings and tabs, Recommendation Builder with full create/send flow, Recommendation Detail with response tracking actions, Relationship Detail with school memory, Navigation between Advocacy pages, and Mission Control now shows event_follow_up interventions in Priority Alerts.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_advocacy_mode.py",
+    "/app/test_reports/pytest/pytest_advocacy_mode.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_advocacy_mode.py"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26 tests passed)",
+    "frontend": "100% (all Advocacy Mode UI tests passed)"
+  },
+  "test_credentials": "No auth required - mock data backend",
+  "seed_data_creation": "Used existing seeded recommendations from advocacy_engine.py: rec_1 (warm_response), rec_2 (awaiting_reply, stale), rec_3 (sent), rec_4 (draft), rec_5 (closed). Created additional test recommendations during pytest run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Advocacy Mode testing complete. All 4 Advocacy screens verified: (1) Advocacy Home (/advocacy) - 4 groupings (Needs Attention, Drafts, Recently Sent, Closed), 6 tabs (All, Drafts, Sent, Awaiting, Responded, Closed) with counts, New Recommendation button, rec cards with status badges and navigation. (2) Recommendation Builder (/advocacy/new) - athlete dropdown, school dropdown, 6 fit reason chips, fit note textarea, supporting context section (auto-populated from events), coach name input, intro message textarea, 5 next step radio buttons, Save Draft and Send Recommendation buttons, full flow creates recommendation and redirects. (3) Recommendation Detail (/advocacy/:id) - summary section, response tracking with status progression dots, Log Response/Follow-up/Close buttons with forms, response history timeline, relationship summary section. (4) Relationship Detail (/advocacy/relationships/:schoolId) - school name with division, warmth badge, 4 stat boxes (Interactions/Athletes Introduced/Response Rate/Last Contact), athletes introduced list with status, interaction timeline with event notes and recommendation events. Decision Engine event_follow_up category now detected and surfaced in Mission Control Priority Alerts (verified Hot stale notes >48h trigger). Navigation works between Mission Control, Events, and Advocacy via header tabs.",
+  "mocked_api_note": "All athlete/event/recommendation data is MOCKED (mock_data.py, advocacy_engine.py)",
+  "tests_passed": {
+    "backend": {
+      "decision_engine_event_follow_up": [
+        "GET /api/debug/interventions returns 200",
+        "by_category includes event_follow_up",
+        "event_follow_up interventions detected for stale notes",
+        "event_follow_up has required fields (category, trigger, score, urgency, impact, etc.)"
+      ],
+      "advocacy_recommendations_list": [
+        "GET /api/advocacy/recommendations returns 200",
+        "Response has 4 groups (needs_attention, drafts, recently_sent, closed)",
+        "Stats structure correct (total, drafts, sent, awaiting, warm, closed)",
+        "Seeded recommendations present (rec_1 through rec_5)",
+        "Filter by status=draft works"
+      ],
+      "advocacy_recommendation_detail": [
+        "GET /api/advocacy/recommendations/rec_1 returns warm_response rec with relationship_summary",
+        "GET /api/advocacy/recommendations/rec_4 returns draft with sent_at=null",
+        "GET /api/advocacy/recommendations/rec_999 returns error"
+      ],
+      "advocacy_recommendation_create": [
+        "POST /api/advocacy/recommendations creates new draft",
+        "Created rec has status=draft and id starting with rec_"
+      ],
+      "advocacy_recommendation_send": [
+        "POST /api/advocacy/recommendations/:id/send transitions draft to sent",
+        "Cannot re-send already sent recommendation"
+      ],
+      "advocacy_response_tracking": [
+        "POST /api/advocacy/recommendations/:id/respond logs warm response",
+        "POST /api/advocacy/recommendations/:id/follow-up increments follow_up_count",
+        "POST /api/advocacy/recommendations/:id/close closes recommendation"
+      ],
+      "advocacy_relationships": [
+        "GET /api/advocacy/relationships returns list of school relationships",
+        "GET /api/advocacy/relationships/michigan returns full relationship data",
+        "Nonexistent school returns error"
+      ],
+      "advocacy_event_context": [
+        "GET /api/advocacy/context/:athleteId returns athlete context",
+        "GET /api/advocacy/context/:athleteId/:schoolId returns filtered context"
+      ],
+      "mission_control": [
+        "GET /api/mission-control returns 200",
+        "Priority alerts may include event_follow_up category"
+      ],
+      "schools": [
+        "GET /api/schools returns 10 schools with id/name/division"
+      ]
+    },
+    "frontend": {
+      "advocacy_home": [
+        "Page loads with data-testid='advocacy-home-page'",
+        "Title 'Advocacy' displayed with subtitle",
+        "New Recommendation button present and navigates to /advocacy/new",
+        "All 6 tabs visible with counts (All, Drafts, Sent, Awaiting, Responded, Closed)",
+        "4 sections render (Needs Attention, Drafts, Recently Sent, Closed)",
+        "8 recommendation cards displayed",
+        "rec_1 card shows Marcus Johnson → Michigan with Warm Response badge",
+        "Tab switching works (Drafts tab clicks)",
+        "Card click navigates to detail page"
+      ],
+      "recommendation_builder": [
+        "Page loads with data-testid='recommendation-builder-page'",
+        "Back to Advocacy button present",
+        "Athlete section with dropdown",
+        "School section with dropdown",
+        "6 fit reason chips (athletic_ability, tactical_awareness, academic_fit, character_leadership, coachability, program_need_match)",
+        "Fit note textarea present",
+        "Coach name input and Intro message textarea present",
+        "5 next step radio buttons",
+        "Save Draft and Send Recommendation buttons present",
+        "Full flow works: select athlete → school → fit reasons → intro → next step → Send → redirect to /advocacy"
+      ],
+      "recommendation_detail": [
+        "Page loads with data-testid='recommendation-detail-page'",
+        "Back to Advocacy button present",
+        "Status badge shows correct status (Warm Response for rec_1, Draft for rec_4)",
+        "Recommendation summary section with athlete/school/coach/date/fit reasons/intro",
+        "Response tracking section with status progression dots (Sent → Awaiting → Warm Response → Closed)",
+        "Action buttons: Log Response, Follow-up, Close",
+        "Log Response form opens with note input and warm/declined radio",
+        "Follow-up button increments count (history entry added)",
+        "Close form opens with reason selection",
+        "Response history timeline shows entries",
+        "Relationship summary section shows school stats",
+        "Draft rec (rec_4) has Send button and no response tracking section"
+      ],
+      "relationship_detail": [
+        "Page loads with data-testid='relationship-detail-page'",
+        "School name 'Michigan — Relationship History' displayed",
+        "Warmth badge shows 'Warm'",
+        "Stats: 3 Interactions, 2 Athletes Introduced, 50% Response Rate, Last Contact today",
+        "Athletes Introduced section with Marcus Johnson and Olivia Anderson",
+        "Interaction Timeline with 5 entries (event notes + recommendation events)",
+        "Back button navigates to /advocacy"
+      ],
+      "navigation": [
+        "Advocacy tab visible in header and underlined when on /advocacy",
+        "Click Advocacy tab navigates to /advocacy",
+        "Back buttons work on all Advocacy pages",
+        "Rec card click → detail page",
+        "View relationship link → relationship page"
+      ],
+      "mission_control_event_follow_up": [
+        "event_follow_up interventions shown in Priority Alerts",
+        "Marcus Johnson: Michigan showed hot interest at Winter Showcase — follow-up overdue",
+        "Olivia Anderson: Stanford showed hot interest at Winter Showcase — follow-up overdue"
+      ]
+    }
+  },
+  "advocacy_mode_verification": {
+    "advocacy_home_groupings": "VERIFIED - needs_attention/drafts/recently_sent/closed sections",
+    "advocacy_home_tabs": "VERIFIED - All/Drafts/Sent/Awaiting/Responded/Closed with counts",
+    "advocacy_home_tab_filtering": "VERIFIED - clicking tabs triggers API filter",
+    "recommendation_builder_athlete_dropdown": "VERIFIED - loads athletes from /api/mission-control",
+    "recommendation_builder_school_dropdown": "VERIFIED - loads schools from /api/schools",
+    "recommendation_builder_fit_chips": "VERIFIED - 6 fit reason chips toggleable",
+    "recommendation_builder_context_section": "VERIFIED - auto-populates from events when athlete/school selected",
+    "recommendation_builder_send_flow": "VERIFIED - creates rec and sends, redirects to /advocacy",
+    "recommendation_detail_summary": "VERIFIED - shows full rec data",
+    "recommendation_detail_status_progression": "VERIFIED - dots show Sent→Awaiting→Warm→Closed",
+    "recommendation_detail_log_response": "VERIFIED - form opens with note + warm/declined",
+    "recommendation_detail_follow_up": "VERIFIED - increments follow_up_count",
+    "recommendation_detail_close": "VERIFIED - form with positive/no_response/declined",
+    "recommendation_detail_history_timeline": "VERIFIED - shows response_history entries",
+    "relationship_detail_summary_stats": "VERIFIED - interactions/athletes/rate/warmth",
+    "relationship_detail_athletes_list": "VERIFIED - shows athletes with rec status",
+    "relationship_detail_timeline": "VERIFIED - event_note and recommendation entries",
+    "decision_engine_event_follow_up": "VERIFIED - detected and surfaced in Mission Control Priority Alerts"
+  }
+}

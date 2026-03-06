@@ -372,12 +372,123 @@ def detect_readiness_issue(athlete: Dict) -> Dict or None:
     return None
 
 
-# ============================================================================
-# SCORING AND RANKING
-# ============================================================================
+def detect_event_follow_up(athlete: Dict, past_events: List[Dict]) -> Dict or None:
+    """
+    Category 7: Event Follow-Up (stale post-event opportunities)
+    Triggers: Hot interest note with uncompleted follow-ups >48h after event,
+              or Warm interest >72h.
+    Tightly scoped to post-event opportunities only.
+    """
+    athlete_id = athlete['id']
+
+    for event in past_events:
+        if event.get('daysAway', 0) >= 0:
+            continue  # only past events
+
+        days_since_event = abs(event['daysAway'])
+        notes = event.get('capturedNotes', [])
+
+        for note in notes:
+            if note.get('athlete_id') != athlete_id:
+                continue
+            if note.get('routed_to_pod'):
+                continue  # already handled
+            if not note.get('follow_ups'):
+                continue  # no pending follow-ups
+
+            interest = note.get('interest_level', 'none')
+            school_name = note.get('school_name', 'Unknown school')
+
+            # Hot: stale after 2 days
+            if interest == 'hot' and days_since_event >= 2:
+                urgency = min(10, 7 + (days_since_event - 2))
+                impact = 9
+                actionability = 9
+                ownership = 5
+
+                score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+                score = score // 10
+
+                stale_fus = [f.replace('_', ' ') for f in note.get('follow_ups', [])]
+
+                return {
+                    'category': 'event_follow_up',
+                    'trigger': 'hot_follow_up_stale',
+                    'score': int(score),
+                    'urgency': urgency,
+                    'impact': impact,
+                    'actionability': actionability,
+                    'ownership': ownership,
+
+                    'why_this_surfaced': f"{school_name} showed hot interest at {event['name']} — follow-up overdue",
+                    'what_changed': f"{days_since_event} days since event, no response sent",
+                    'recommended_action': f"Complete follow-up: {', '.join(stale_fus)}",
+                    'owner': "Coach Martinez",
+
+                    'details': {
+                        'event_name': event['name'],
+                        'event_id': event['id'],
+                        'school_name': school_name,
+                        'school_id': note.get('school_id'),
+                        'interest_level': 'hot',
+                        'days_since_event': days_since_event,
+                        'note_text': note.get('note_text', ''),
+                        'stale_follow_ups': note.get('follow_ups', []),
+                        'suggested_steps': [
+                            f'Send follow-up to {school_name} coach',
+                            'Reference specific interaction from event',
+                            'Route event context to Support Pod',
+                        ]
+                    }
+                }
+
+            # Warm: stale after 3 days
+            if interest == 'warm' and days_since_event >= 3:
+                urgency = min(8, 5 + (days_since_event - 3))
+                impact = 7
+                actionability = 8
+                ownership = 5
+
+                score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+                score = score // 10
+
+                stale_fus = [f.replace('_', ' ') for f in note.get('follow_ups', [])]
+
+                return {
+                    'category': 'event_follow_up',
+                    'trigger': 'warm_follow_up_stale',
+                    'score': int(score),
+                    'urgency': urgency,
+                    'impact': impact,
+                    'actionability': actionability,
+                    'ownership': ownership,
+
+                    'why_this_surfaced': f"{school_name} showed warm interest at {event['name']} — follow-up aging",
+                    'what_changed': f"{days_since_event} days since event, pending: {', '.join(stale_fus)}",
+                    'recommended_action': f"Follow up with {school_name} before opportunity cools",
+                    'owner': "Coach Martinez",
+
+                    'details': {
+                        'event_name': event['name'],
+                        'event_id': event['id'],
+                        'school_name': school_name,
+                        'school_id': note.get('school_id'),
+                        'interest_level': 'warm',
+                        'days_since_event': days_since_event,
+                        'note_text': note.get('note_text', ''),
+                        'stale_follow_ups': note.get('follow_ups', []),
+                        'suggested_steps': [
+                            f'Send follow-up to {school_name}',
+                            'Decide if this warrants a full recommendation',
+                            'Route to Support Pod if follow-up is complex',
+                        ]
+                    }
+                }
+
+    return None
 
 def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List[Dict]:
-    """Run all 6 detection categories and return list of interventions"""
+    """Run all 7 detection categories and return list of interventions"""
     interventions = []
 
     detectors = [
@@ -386,7 +497,8 @@ def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List
         detect_deadline_proximity(athlete, upcoming_events),
         detect_engagement_drop(athlete),
         detect_ownership_gap(athlete),
-        detect_readiness_issue(athlete)
+        detect_readiness_issue(athlete),
+        detect_event_follow_up(athlete, upcoming_events),
     ]
 
     for intervention in detectors:
