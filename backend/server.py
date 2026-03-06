@@ -55,6 +55,12 @@ from advocacy_engine import (
     get_event_context,
 )
 from program_engine import compute_all as compute_program_intelligence
+from database import (
+    seed_event_notes,
+    seed_recommendations,
+    load_event_notes_to_memory,
+    load_recommendations_to_memory,
+)
 
 
 ROOT_DIR = Path(__file__).parent
@@ -70,6 +76,26 @@ app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+
+@app.on_event("startup")
+async def startup_seed_and_load():
+    """Seed MongoDB if empty, then load persisted data into memory"""
+    import advocacy_engine
+
+    # Seed collections from mock data if they're empty
+    await seed_event_notes(db, UPCOMING_EVENTS)
+    await seed_recommendations(db, advocacy_engine.RECOMMENDATIONS)
+
+    # Load from DB into in-memory structures (source of truth after seed)
+    await load_event_notes_to_memory(db, UPCOMING_EVENTS)
+
+    loaded_recs = await load_recommendations_to_memory(db)
+    if loaded_recs:
+        advocacy_engine.RECOMMENDATIONS.clear()
+        advocacy_engine.RECOMMENDATIONS.extend(loaded_recs)
+
+    logging.getLogger(__name__).info("Persistence Phase 1: startup seed & load complete")
 
 
 # Define Models
@@ -564,8 +590,11 @@ async def remove_event_athlete(event_id: str, athlete_id: str):
 
 @api_router.get("/events/{event_id}/notes")
 async def list_event_notes(event_id: str):
-    """Get all captured notes for an event"""
-    return get_event_notes(event_id)
+    """Get all captured notes for an event (reads from MongoDB)"""
+    notes = await db.event_notes.find(
+        {"event_id": event_id}, {"_id": 0}
+    ).sort("captured_at", -1).to_list(1000)
+    return notes
 
 
 @api_router.post("/events/{event_id}/notes")
@@ -574,6 +603,9 @@ async def create_event_note(event_id: str, body: EventNoteCreate):
     result = capture_note(event_id, body.model_dump())
     if not result:
         return {"error": "Event not found"}
+
+    # Persist event note to MongoDB
+    await db.event_notes.insert_one({**result})
 
     # Auto-log to athlete timeline (every note hits timeline)
     timeline_doc = {
@@ -596,6 +628,12 @@ async def edit_event_note(event_id: str, note_id: str, body: EventNoteUpdate):
     result = update_note(event_id, note_id, updates)
     if not result:
         return {"error": "Note not found"}
+
+    # Persist update to MongoDB
+    db_updates = {k: v for k, v in updates.items()}
+    db_updates["advocacy_candidate"] = result.get("advocacy_candidate", False)
+    await db.event_notes.update_one({"id": note_id}, {"$set": db_updates})
+
     return result
 
 
@@ -614,6 +652,12 @@ async def route_single_note(event_id: str, note_id: str):
     result = route_note_to_pod(event_id, note_id)
     if not result:
         return {"error": "Note not found"}
+
+    # Persist route status to MongoDB
+    await db.event_notes.update_one(
+        {"id": note_id},
+        {"$set": {"routed_to_pod": True}}
+    )
 
     # Create action items in Support Pod
     for action_data in result["actions_to_create"]:
@@ -656,6 +700,12 @@ async def bulk_route_notes(event_id: str):
     athletes_routed = set()
 
     for result in results:
+        # Persist route status to MongoDB
+        await db.event_notes.update_one(
+            {"id": result["note"]["id"]},
+            {"$set": {"routed_to_pod": True}}
+        )
+
         for action_data in result["actions_to_create"]:
             doc = {
                 "id": str(uuid.uuid4()),
@@ -763,12 +813,16 @@ async def get_relationship(school_id: str):
 @api_router.post("/advocacy/recommendations")
 async def create_new_recommendation(body: RecommendationCreate):
     rec = create_recommendation(body.model_dump())
+
+    # Persist to MongoDB
+    await db.recommendations.insert_one({**rec})
+
     return rec
 
 
 @api_router.get("/advocacy/recommendations/{rec_id}")
 async def get_rec_detail(rec_id: str):
-    rec = get_recommendation(rec_id)
+    rec = await db.recommendations.find_one({"id": rec_id}, {"_id": 0})
     if not rec:
         return {"error": "Recommendation not found"}
     # Enrich with relationship summary
@@ -784,6 +838,13 @@ async def update_rec(rec_id: str, body: RecommendationUpdate):
     result = update_recommendation(rec_id, updates)
     if not result:
         return {"error": "Recommendation not found"}
+
+    # Persist full rec to MongoDB
+    await db.recommendations.replace_one(
+        {"id": rec_id},
+        {k: v for k, v in result.items() if k != "_id"}
+    )
+
     return result
 
 
@@ -792,6 +853,12 @@ async def send_rec(rec_id: str):
     rec = send_recommendation(rec_id)
     if not rec:
         return {"error": "Cannot send — not a draft or not found"}
+
+    # Persist status change to MongoDB
+    await db.recommendations.replace_one(
+        {"id": rec_id},
+        {k: v for k, v in rec.items() if k != "_id"}
+    )
 
     # Log to athlete timeline
     await db.athlete_notes.insert_one({
@@ -810,6 +877,12 @@ async def respond_to_rec(rec_id: str, body: ResponseLog):
     rec = log_response(rec_id, body.response_note, body.response_type)
     if not rec:
         return {"error": "Cannot log response"}
+
+    # Persist status change to MongoDB
+    await db.recommendations.replace_one(
+        {"id": rec_id},
+        {k: v for k, v in rec.items() if k != "_id"}
+    )
 
     # Log to athlete timeline
     tag = "advocacy_response" if body.response_type == "warm" else "advocacy_closed"
@@ -847,6 +920,13 @@ async def follow_up_rec(rec_id: str):
     rec = mark_follow_up(rec_id)
     if not rec:
         return {"error": "Cannot follow up"}
+
+    # Persist status change to MongoDB
+    await db.recommendations.replace_one(
+        {"id": rec_id},
+        {k: v for k, v in rec.items() if k != "_id"}
+    )
+
     return rec
 
 
@@ -855,6 +935,12 @@ async def close_rec(rec_id: str, body: CloseRequest):
     rec = close_recommendation(rec_id, body.reason)
     if not rec:
         return {"error": "Cannot close"}
+
+    # Persist status change to MongoDB
+    await db.recommendations.replace_one(
+        {"id": rec_id},
+        {k: v for k, v in rec.items() if k != "_id"}
+    )
 
     await db.athlete_notes.insert_one({
         "id": str(uuid.uuid4()),
