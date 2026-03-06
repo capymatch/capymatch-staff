@@ -56,8 +56,12 @@ from advocacy_engine import (
 )
 from program_engine import compute_all as compute_program_intelligence
 from database import (
+    seed_athletes,
+    seed_events,
     seed_event_notes,
     seed_recommendations,
+    load_athletes_to_memory,
+    load_events_to_memory,
     load_event_notes_to_memory,
     load_recommendations_to_memory,
 )
@@ -80,22 +84,84 @@ api_router = APIRouter(prefix="/api")
 
 @app.on_event("startup")
 async def startup_seed_and_load():
-    """Seed MongoDB if empty, then load persisted data into memory"""
-    import advocacy_engine
+    """Seed MongoDB if empty, then load persisted data into memory.
 
-    # Seed collections from mock data if they're empty
-    await seed_event_notes(db, UPCOMING_EVENTS)
+    Explicit ordering (dependency chain):
+      1. Athletes  (no deps)
+      2. Events    (references athlete IDs)
+      3. Event Notes (references event IDs)
+      4. Recommendations (references athlete + school IDs)
+      5. Recompute derived data (interventions, alerts, signals, snapshot)
+    """
+    import mock_data
+    import advocacy_engine
+    from decision_engine import (
+        detect_all_interventions,
+        rank_interventions,
+        get_priority_alerts,
+        get_athletes_needing_attention,
+    )
+
+    log = logging.getLogger(__name__)
+
+    # ── Step 1: Seed all collections if empty ──
+    await seed_athletes(db, mock_data.ATHLETES)
+    await seed_events(db, mock_data.UPCOMING_EVENTS)
+    await seed_event_notes(db, mock_data.UPCOMING_EVENTS)
     await seed_recommendations(db, advocacy_engine.RECOMMENDATIONS)
 
-    # Load from DB into in-memory structures (source of truth after seed)
-    await load_event_notes_to_memory(db, UPCOMING_EVENTS)
+    # ── Step 2: Load athletes from DB ──
+    loaded_athletes = await load_athletes_to_memory(db)
+    if loaded_athletes:
+        mock_data.ATHLETES.clear()
+        mock_data.ATHLETES.extend(loaded_athletes)
 
+    # ── Step 3: Load events from DB (capturedNotes initialized empty) ──
+    loaded_events = await load_events_to_memory(db)
+    if loaded_events:
+        mock_data.UPCOMING_EVENTS.clear()
+        mock_data.UPCOMING_EVENTS.extend(loaded_events)
+
+    # ── Step 4: Load event notes and merge into events ──
+    await load_event_notes_to_memory(db, mock_data.UPCOMING_EVENTS)
+
+    # ── Step 5: Load recommendations ──
     loaded_recs = await load_recommendations_to_memory(db)
     if loaded_recs:
         advocacy_engine.RECOMMENDATIONS.clear()
         advocacy_engine.RECOMMENDATIONS.extend(loaded_recs)
 
-    logging.getLogger(__name__).info("Persistence Phase 1: startup seed & load complete")
+    # ── Step 6: Recompute all derived data from loaded state ──
+    mock_data.ALL_INTERVENTIONS.clear()
+    for athlete in mock_data.ATHLETES:
+        interventions = detect_all_interventions(athlete, mock_data.UPCOMING_EVENTS)
+        mock_data.ALL_INTERVENTIONS.extend(interventions)
+    mock_data.ALL_INTERVENTIONS[:] = rank_interventions(mock_data.ALL_INTERVENTIONS)
+
+    mock_data.PRIORITY_ALERTS.clear()
+    mock_data.PRIORITY_ALERTS.extend(get_priority_alerts(mock_data.ALL_INTERVENTIONS))
+
+    mock_data.ATHLETES_NEEDING_ATTENTION.clear()
+    mock_data.ATHLETES_NEEDING_ATTENTION.extend(
+        get_athletes_needing_attention(mock_data.ALL_INTERVENTIONS)
+    )
+
+    mock_data.MOMENTUM_SIGNALS.clear()
+    mock_data.MOMENTUM_SIGNALS.extend(
+        mock_data.generate_momentum_signals(mock_data.ATHLETES)
+    )
+
+    mock_data.PROGRAM_SNAPSHOT.clear()
+    mock_data.PROGRAM_SNAPSHOT.update(
+        mock_data.get_program_snapshot(mock_data.ATHLETES)
+    )
+
+    log.info(
+        f"Persistence startup complete: "
+        f"{len(mock_data.ATHLETES)} athletes, "
+        f"{len(mock_data.UPCOMING_EVENTS)} events, "
+        f"{len(mock_data.ALL_INTERVENTIONS)} interventions recomputed"
+    )
 
 
 # Define Models
@@ -543,6 +609,12 @@ async def create_event(body: EventCreate):
         "athleteCount": 0,
     }
     UPCOMING_EVENTS.append(new_event)
+
+    # Persist to MongoDB (without capturedNotes)
+    await db.events.insert_one(
+        {k: v for k, v in new_event.items() if k != "capturedNotes"}
+    )
+
     return {k: v for k, v in new_event.items() if k != "capturedNotes"}
 
 
@@ -561,6 +633,18 @@ async def toggle_checklist(event_id: str, item_id: str):
     result = toggle_checklist_item(event_id, item_id)
     if not result:
         return {"error": "Item not found"}
+
+    # Persist checklist + prepStatus to MongoDB
+    event = get_event(event_id)
+    if event:
+        await db.events.update_one(
+            {"id": event_id},
+            {"$set": {
+                "checklist": event.get("checklist", []),
+                "prepStatus": event.get("prepStatus", "not_started"),
+            }}
+        )
+
     return result
 
 
@@ -973,6 +1057,8 @@ async def admin_status():
     # Collection counts
     event_notes_count = await db.event_notes.count_documents({})
     recommendations_count = await db.recommendations.count_documents({})
+    athletes_count = await db.athletes.count_documents({})
+    events_count = await db.events.count_documents({})
     pod_actions_count = await db.pod_actions.count_documents({})
     athlete_notes_count = await db.athlete_notes.count_documents({})
     assignments_count = await db.assignments.count_documents({})
@@ -981,9 +1067,11 @@ async def admin_status():
     pod_action_events_count = await db.pod_action_events.count_documents({})
 
     return {
-        "persistence_phase": "Phase 1",
+        "persistence_phase": "Phase 2",
         "collections": {
             "persisted": [
+                {"name": "athletes", "count": athletes_count, "source": "MongoDB", "phase": 2, "description": "Athlete profiles — durable across restarts, daysSinceActivity recomputed on load"},
+                {"name": "events", "count": events_count, "source": "MongoDB", "phase": 2, "description": "Event records — durable, daysAway recomputed on load, capturedNotes in event_notes"},
                 {"name": "event_notes", "count": event_notes_count, "source": "MongoDB", "phase": 1, "description": "Live event captures — courtside notes, interest levels, follow-ups"},
                 {"name": "recommendations", "count": recommendations_count, "source": "MongoDB", "phase": 1, "description": "Coach recommendations — full lifecycle with response history"},
                 {"name": "pod_actions", "count": pod_actions_count, "source": "MongoDB", "phase": 0, "description": "Support Pod action items"},
@@ -994,21 +1082,19 @@ async def admin_status():
                 {"name": "pod_action_events", "count": pod_action_events_count, "source": "MongoDB", "phase": 0, "description": "Action create/update audit log"},
             ],
             "in_memory_only": [
-                {"name": "athletes", "count": len(ATHLETES), "source": "mock_data.py", "description": "25 generated athlete profiles — resets on restart"},
-                {"name": "events", "count": len(UPCOMING_EVENTS), "source": "mock_data.py", "description": "7 generated events — resets on restart (Phase 2 target)"},
-                {"name": "schools", "count": len(SCHOOLS), "source": "mock_data.py", "description": "10 static school entries"},
-                {"name": "interventions", "count": len(ALL_INTERVENTIONS), "source": "decision_engine.py", "description": "Computed on startup — stateless, no persistence needed"},
+                {"name": "schools", "count": len(SCHOOLS), "source": "mock_data.py", "description": "10 static school entries — low priority for persistence"},
+                {"name": "interventions", "count": len(ALL_INTERVENTIONS), "source": "decision_engine.py", "description": "Recomputed on startup from persisted data — stateless, no persistence needed"},
             ],
         },
         "seed_strategy": "seed-if-empty — mock data inserted on first run only, user data preserved across restarts",
+        "startup_order": "athletes → events → event_notes → recommendations → recompute derived data",
         "limitations": [
-            "Athletes are mock-generated and reset on restart (Phase 2 will persist)",
-            "Events are mock-generated and reset on restart (Phase 2 will persist)",
-            "Interventions are recomputed on every startup — not persisted",
-            "Event checklist state is in-memory only",
-            "New events created via API are in-memory only (lost on restart)",
+            "Schools are static (10 entries) and loaded from code — low priority for persistence",
+            "Interventions are recomputed on every startup from persisted athletes + events",
+            "Momentum signals are regenerated on startup (not persisted individually)",
+            "daysSinceActivity (athletes) and daysAway (events) are recomputed from stored timestamps on each load",
         ],
-        "architecture": "Dual-write: mutations update MongoDB AND in-memory. Engines read from synced in-memory.",
+        "architecture": "Dual-write: mutations update MongoDB AND in-memory. Engines read from synced in-memory. Derived data recomputed after load.",
     }
 
 
