@@ -1,8 +1,9 @@
 """Program Intelligence — strategic overview + historical trending + coach views."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from db_client import db
 from program_engine import compute_all as compute_program_intelligence, get_coaches
+from auth_middleware import get_current_user_dep
 from services.snapshots import (
     extract_snapshot_metrics,
     capture_snapshot_if_needed,
@@ -14,25 +15,32 @@ router = APIRouter()
 
 
 @router.get("/program/coaches")
-async def list_coaches():
-    """Return available coaches for the persona switcher"""
+async def list_coaches(current_user: dict = get_current_user_dep()):
+    """Return available coaches for the persona switcher (directors only)."""
     return get_coaches()
 
 
 @router.get("/program/intelligence")
-async def program_intelligence(coach_id: str = None):
+async def program_intelligence(
+    coach_id: str = None,
+    current_user: dict = get_current_user_dep(),
+):
     """Return all 5 sections of Program Intelligence + trends.
-    Pass coach_id to get a coach-specific filtered view.
+    Directors see full program or can pick a coach_id.
+    Coaches automatically see their own filtered view.
     """
-    data = compute_program_intelligence(coach_id=coach_id)
+    # If the user is a coach, force the view to their own data
+    effective_coach_id = coach_id
+    if current_user["role"] == "coach":
+        effective_coach_id = current_user["name"]
+
+    data = compute_program_intelligence(coach_id=effective_coach_id)
 
     # Trending: program-wide snapshots for director, current-only stats for coach
-    if coach_id:
-        # Coach mode: show current stats without historical comparison
+    if effective_coach_id:
         current_metrics = extract_snapshot_metrics(data)
         data["trends"] = _coach_trends(current_metrics, data["athlete_count"])
     else:
-        # Director mode: full historical trending
         current_metrics = extract_snapshot_metrics(data)
         await capture_snapshot_if_needed(db, current_metrics)
         previous = await get_previous_snapshot(db)

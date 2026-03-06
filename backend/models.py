@@ -108,3 +108,20 @@ class ResponseLog(BaseModel):
 
 class CloseRequest(BaseModel):
     reason: Optional[str] = "no_response"
+
+
+# ── Auth ──
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    name: str
+    role: str = "coach"  # "director" or "coach"
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class TokenResponse(BaseModel):
+    token: str
+    user: dict

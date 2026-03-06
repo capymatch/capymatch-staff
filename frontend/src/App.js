@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
+import { AuthProvider, useAuth } from "./AuthContext";
+import LoginPage from "./pages/LoginPage";
 import MissionControl from "./pages/MissionControl";
 import SupportPod from "./pages/SupportPod";
 import EventHome from "./pages/EventHome";
@@ -13,27 +15,58 @@ import RelationshipDetail from "./pages/RelationshipDetail";
 import ProgramIntelligence from "./pages/ProgramIntelligence";
 import AdminStatus from "./pages/AdminStatus";
 
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" />
+      </div>
+    );
+  }
+  return user ? children : <Navigate to="/login" replace />;
+}
+
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" />
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/login" element={user ? <Navigate to="/mission-control" replace /> : <LoginPage />} />
+      <Route path="/mission-control" element={<ProtectedRoute><MissionControl /></ProtectedRoute>} />
+      <Route path="/events" element={<ProtectedRoute><EventHome /></ProtectedRoute>} />
+      <Route path="/events/:eventId/prep" element={<ProtectedRoute><EventPrep /></ProtectedRoute>} />
+      <Route path="/events/:eventId/live" element={<ProtectedRoute><LiveEvent /></ProtectedRoute>} />
+      <Route path="/events/:eventId/summary" element={<ProtectedRoute><EventSummary /></ProtectedRoute>} />
+      <Route path="/advocacy" element={<ProtectedRoute><AdvocacyHome /></ProtectedRoute>} />
+      <Route path="/advocacy/new" element={<ProtectedRoute><RecommendationBuilder /></ProtectedRoute>} />
+      <Route path="/advocacy/:recommendationId" element={<ProtectedRoute><RecommendationDetail /></ProtectedRoute>} />
+      <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute><RelationshipDetail /></ProtectedRoute>} />
+      <Route path="/program" element={<ProtectedRoute><ProgramIntelligence /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><AdminStatus /></ProtectedRoute>} />
+      <Route path="/support-pods/:athleteId" element={<ProtectedRoute><SupportPod /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to={user ? "/mission-control" : "/login"} replace />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <div className="App">
       <Toaster position="bottom-right" richColors />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/mission-control" element={<MissionControl />} />
-          <Route path="/events" element={<EventHome />} />
-          <Route path="/events/:eventId/prep" element={<EventPrep />} />
-          <Route path="/events/:eventId/live" element={<LiveEvent />} />
-          <Route path="/events/:eventId/summary" element={<EventSummary />} />
-          <Route path="/advocacy" element={<AdvocacyHome />} />
-          <Route path="/advocacy/new" element={<RecommendationBuilder />} />
-          <Route path="/advocacy/:recommendationId" element={<RecommendationDetail />} />
-          <Route path="/advocacy/relationships/:schoolId" element={<RelationshipDetail />} />
-          <Route path="/program" element={<ProgramIntelligence />} />
-          <Route path="/admin" element={<AdminStatus />} />
-          <Route path="/support-pods/:athleteId" element={<SupportPod />} />
-          <Route path="*" element={<Navigate to="/mission-control" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
     </div>
   );
 }

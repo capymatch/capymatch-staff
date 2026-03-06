@@ -1,14 +1,16 @@
 """Startup seed/load/recompute logic.
 
 Explicit ordering (dependency chain):
-  1. Athletes  (no deps)
-  2. Events    (references athlete IDs)
-  3. Event Notes (references event IDs)
-  4. Recommendations (references athlete + school IDs)
-  5. Recompute derived data (interventions, alerts, signals, snapshot)
+  1. Users (no deps — seed default accounts)
+  2. Athletes  (no deps)
+  3. Events    (references athlete IDs)
+  4. Event Notes (references event IDs)
+  5. Recommendations (references athlete + school IDs)
+  6. Recompute derived data (interventions, alerts, signals, snapshot)
 """
 
 import logging
+from passlib.hash import bcrypt
 from database import (
     seed_athletes,
     seed_events,
@@ -22,6 +24,31 @@ from database import (
 
 log = logging.getLogger(__name__)
 
+DEFAULT_USERS = [
+    {"id": "director-1", "email": "director@capymatch.com", "name": "Director Adams", "role": "director", "password": "director123"},
+    {"id": "coach-williams", "email": "coach.williams@capymatch.com", "name": "Coach Williams", "role": "coach", "password": "coach123"},
+    {"id": "coach-garcia", "email": "coach.garcia@capymatch.com", "name": "Coach Garcia", "role": "coach", "password": "coach123"},
+]
+
+
+async def seed_users(db):
+    """Seed default user accounts if the collection is empty."""
+    count = await db.users.count_documents({})
+    if count > 0:
+        log.info(f"Users collection already has {count} docs — skipping seed.")
+        return
+    for u in DEFAULT_USERS:
+        doc = {
+            "id": u["id"],
+            "email": u["email"],
+            "name": u["name"],
+            "role": u["role"],
+            "password_hash": bcrypt.hash(u["password"]),
+            "created_at": "2025-01-01T00:00:00+00:00",
+        }
+        await db.users.insert_one(doc)
+    log.info(f"Seeded {len(DEFAULT_USERS)} default users.")
+
 
 async def run_startup(db):
     """Run the full seed → load → recompute pipeline."""
@@ -33,6 +60,9 @@ async def run_startup(db):
         get_priority_alerts,
         get_athletes_needing_attention,
     )
+
+    # ── Step 0: Seed users if empty ──
+    await seed_users(db)
 
     # ── Step 1: Seed all collections if empty ──
     await seed_athletes(db, mock_data.ATHLETES)

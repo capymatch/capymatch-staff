@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, Bell, LayoutDashboard, Users, Calendar, Megaphone, BarChart3 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search, Bell, LayoutDashboard, Calendar, Megaphone, BarChart3, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -8,10 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/AuthContext";
 
 function Header({ selectedGradYear, setSelectedGradYear, stats }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const modes = [
     { id: "mission-control", label: "Mission Control", icon: LayoutDashboard, path: "/mission-control" },
@@ -19,6 +21,17 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
     { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
     { id: "program", label: "Program", icon: BarChart3, path: "/program" },
   ];
+
+  const initials = user?.name
+    ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+    : "CM";
+
+  const roleLabel = user?.role === "director" ? "Director" : "Coach";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-slate-900 text-white" data-testid="header">
@@ -104,13 +117,26 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
               <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-orange-400 rounded-full" />
             </button>
 
-            <button className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="user-profile-button">
-              <Avatar className="w-7 h-7">
-                <AvatarImage src="https://images.unsplash.com/photo-1724984430472-2b79b1c0dd13?w=100" />
-                <AvatarFallback className="text-[10px]">CM</AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-medium text-white/70 hidden sm:inline">Coach M</span>
-            </button>
+            {/* User profile + role badge */}
+            <div className="flex items-center gap-2" data-testid="user-profile-area">
+              <div className="flex items-center gap-2">
+                <Avatar className="w-7 h-7">
+                  <AvatarFallback className="text-[10px] bg-white/20 text-white">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-xs font-medium text-white/80 leading-tight" data-testid="user-display-name">{user?.name || "User"}</span>
+                  <span className="text-[9px] text-white/40 leading-tight uppercase tracking-wider" data-testid="user-role-badge">{roleLabel}</span>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-1.5 rounded-md hover:bg-white/10 transition-colors ml-1"
+                title="Sign out"
+                data-testid="logout-button"
+              >
+                <LogOut className="w-3.5 h-3.5 text-white/40 hover:text-white/70" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

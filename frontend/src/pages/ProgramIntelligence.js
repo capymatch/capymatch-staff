@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "@/components/mission-control/Header";
+import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import {
   Shield, AlertTriangle, Users, Calendar, Megaphone, ExternalLink,
@@ -387,15 +388,20 @@ function SupportLoad({ data }) {
 
 function ProgramIntelligence() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [coaches, setCoaches] = useState([]);
-  const [selectedCoach, setSelectedCoach] = useState(null); // null = director view
+  const [selectedCoach, setSelectedCoach] = useState(null); // null = full program view (directors only)
 
-  // Load coaches list once
+  const isDirector = user?.role === "director";
+
+  // Load coaches list once (directors only)
   useEffect(() => {
-    axios.get(`${API}/program/coaches`).then((r) => setCoaches(r.data)).catch(() => {});
-  }, []);
+    if (isDirector) {
+      axios.get(`${API}/program/coaches`).then((r) => setCoaches(r.data)).catch(() => {});
+    }
+  }, [isDirector]);
 
   // Fetch program data when view changes
   useEffect(() => {
@@ -409,7 +415,7 @@ function ProgramIntelligence() {
       .finally(() => setLoading(false));
   }, [selectedCoach]);
 
-  const isCoach = data?.view_mode === "coach";
+  const isCoachView = data?.view_mode === "coach";
 
   if (loading && !data) {
     return (
@@ -427,43 +433,45 @@ function ProgramIntelligence() {
       <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
 
       <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
-        {/* Title + Persona Switcher */}
+        {/* Title + Director Persona Switcher */}
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-lg font-semibold text-gray-900" data-testid="program-title">
-              {isCoach ? `My View — ${data.coach_id}` : "Program Intelligence"}
+              {isCoachView ? `My View — ${data.coach_id}` : "Program Intelligence"}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              {isCoach
+              {isCoachView
                 ? `${data.athlete_count} athletes · ${data.recommendation_count} recommendations`
                 : `Strategic overview · ${data.athlete_count} athletes · ${data.event_count} events · ${data.recommendation_count} recommendations`}
             </p>
           </div>
 
-          {/* Persona Switcher */}
-          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5" data-testid="view-switcher">
-            <button
-              onClick={() => setSelectedCoach(null)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                !selectedCoach ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
-              }`}
-              data-testid="view-program"
-            >
-              Program View
-            </button>
-            {coaches.map((c) => (
+          {/* Director-only: coach view switcher */}
+          {isDirector && coaches.length > 0 && (
+            <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5" data-testid="view-switcher">
               <button
-                key={c.id}
-                onClick={() => setSelectedCoach(c.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                  selectedCoach === c.id ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
+                onClick={() => setSelectedCoach(null)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  !selectedCoach ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
                 }`}
-                data-testid={`view-coach-${c.id.replace(/\s+/g, "-").toLowerCase()}`}
+                data-testid="view-program"
               >
-                {c.name.replace("Coach ", "")}
+                Program View
               </button>
-            ))}
-          </div>
+              {coaches.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedCoach(c.id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                    selectedCoach === c.id ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  data-testid={`view-coach-${c.id.replace(/\s+/g, "-").toLowerCase()}`}
+                >
+                  {c.name.replace("Coach ", "")}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading ? (
