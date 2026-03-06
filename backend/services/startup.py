@@ -86,6 +86,14 @@ async def run_startup(db):
         mock_data.get_program_snapshot(mock_data.ATHLETES)
     )
 
+    # ── Step 7: Seed historical program snapshots for trending ──
+    from program_engine import compute_all as compute_program_intelligence
+    from services.snapshots import extract_snapshot_metrics, seed_historical_snapshots
+
+    program_data = compute_program_intelligence()
+    current_metrics = extract_snapshot_metrics(program_data)
+    await seed_historical_snapshots(db, current_metrics)
+
     log.info(
         f"Persistence startup complete: "
         f"{len(mock_data.ATHLETES)} athletes, "

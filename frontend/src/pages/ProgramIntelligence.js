@@ -5,10 +5,60 @@ import Header from "@/components/mission-control/Header";
 import { toast } from "sonner";
 import {
   Shield, AlertTriangle, Users, Calendar, Megaphone, ExternalLink,
-  TrendingDown, Clock, UserX, ChevronRight,
+  TrendingDown, TrendingUp, Minus, Clock, UserX, ChevronRight,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+// ─── Trends Section ──────────────────────────────────────────────────────────
+
+const TREND_STYLE = {
+  improving: { color: "text-emerald-600", bg: "bg-emerald-50", icon: TrendingUp, arrow: "+" },
+  declining: { color: "text-red-600", bg: "bg-red-50", icon: TrendingDown, arrow: "" },
+  stable: { color: "text-gray-500", bg: "bg-gray-50", icon: Minus, arrow: "" },
+  baseline: { color: "text-blue-500", bg: "bg-blue-50", icon: Minus, arrow: "" },
+};
+
+function TrendCard({ trend }) {
+  const style = TREND_STYLE[trend.direction] || TREND_STYLE.stable;
+  const Icon = style.icon;
+
+  return (
+    <div className={`${style.bg} border border-gray-100 rounded-lg p-3.5 flex-1 min-w-[170px]`} data-testid={`trend-${trend.key}`}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{trend.label}</span>
+        <Icon className={`w-3.5 h-3.5 ${style.color}`} />
+      </div>
+      <div className="flex items-baseline gap-1.5 mb-1">
+        <span className="text-xl font-bold text-gray-900">{trend.current}</span>
+        <span className="text-xs text-gray-400">{trend.suffix}</span>
+        {trend.delta !== 0 && (
+          <span className={`text-xs font-semibold ${style.color}`}>
+            {style.arrow}{trend.delta > 0 ? "+" : ""}{trend.delta}
+          </span>
+        )}
+      </div>
+      <p className="text-[11px] text-gray-500 leading-snug">{trend.interpretation}</p>
+    </div>
+  );
+}
+
+function ProgramTrends({ trends }) {
+  if (!trends || trends.length === 0) return null;
+
+  return (
+    <section className="mb-5" data-testid="section-trends">
+      <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+        <TrendingUp className="w-3.5 h-3.5" /> What's Changing
+      </h2>
+      <div className="flex flex-wrap gap-3">
+        {trends.map((t) => (
+          <TrendCard key={t.key} trend={t} />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 // ─── Section 1: Program Health ───────────────────────────────────────────────
 
@@ -374,6 +424,7 @@ function ProgramIntelligence() {
         </div>
 
         <div className="space-y-5">
+          <ProgramTrends trends={data.trends} />
           <ProgramHealth data={data.program_health} />
           <ReadinessMatrix data={data.readiness} navigate={navigate} />
           <EventEffectiveness data={data.event_effectiveness} navigate={navigate} />

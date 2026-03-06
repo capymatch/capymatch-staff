@@ -20,6 +20,7 @@ async def admin_status():
     messages_count = await db.messages.count_documents({})
     pod_resolutions_count = await db.pod_resolutions.count_documents({})
     pod_action_events_count = await db.pod_action_events.count_documents({})
+    program_snapshots_count = await db.program_snapshots.count_documents({})
 
     return {
         "persistence_phase": "Phase 2",
@@ -29,6 +30,7 @@ async def admin_status():
                 {"name": "events", "count": events_count, "source": "MongoDB", "phase": 2, "description": "Event records — durable, daysAway recomputed on load, capturedNotes in event_notes"},
                 {"name": "event_notes", "count": event_notes_count, "source": "MongoDB", "phase": 1, "description": "Live event captures — courtside notes, interest levels, follow-ups"},
                 {"name": "recommendations", "count": recommendations_count, "source": "MongoDB", "phase": 1, "description": "Coach recommendations — full lifecycle with response history"},
+                {"name": "program_snapshots", "count": program_snapshots_count, "source": "MongoDB", "phase": 2, "description": "Daily metrics snapshots for historical trending"},
                 {"name": "pod_actions", "count": pod_actions_count, "source": "MongoDB", "phase": 0, "description": "Support Pod action items"},
                 {"name": "athlete_notes", "count": athlete_notes_count, "source": "MongoDB", "phase": 0, "description": "Athlete timeline entries"},
                 {"name": "assignments", "count": assignments_count, "source": "MongoDB", "phase": 0, "description": "Owner assignments from quick actions"},
