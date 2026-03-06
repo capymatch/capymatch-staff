@@ -12,7 +12,7 @@ Build a "recruiting operating system" for clubs, coaches, families, and athletes
 - **Backend:** FastAPI (Python) — serves mock data via Decision Engine
 - **Frontend:** React + Tailwind + Shadcn/UI
 - **Database:** None (all data mocked in-memory via `mock_data.py`)
-- **Key Concept:** Decision Engine detects interventions across 6 categories, scores them, and surfaces prioritized alerts
+- **Key Concept:** Decision Engine detects interventions across 6 categories, scores them, and surfaces prioritized alerts with full explainability
 
 ## What's Been Implemented
 
@@ -22,18 +22,23 @@ Build a "recruiting operating system" for clubs, coaches, families, and athletes
 - MVP_RECOMMENDATION.md, CATEGORY_POSITIONING.md, DECISION_ENGINE_SPEC.md
 
 ### Phase 2: Mission Control Prototype (COMPLETE)
-- Decision Engine with 6 intervention categories (momentum_drop, blocker, deadline_proximity, engagement_drop, ownership_gap, readiness_issue)
+- Decision Engine with 6 intervention categories
 - Balanced intervention distribution (verified: no single category > 28%)
-- Explainability on every intervention (why_this_surfaced, what_changed, recommended_action, owner)
+- Explainability on every intervention (why, what_changed, action, owner)
 - Mission Control UI: Priority Alerts, What Changed Today, Athletes Needing Attention, Events, Program Snapshot
-- Full backend API: /api/mission-control, /api/debug/interventions, /api/athletes
 
 ### Phase 3: Decision Engine Tuning (COMPLETE — Feb 2026)
-- Fixed momentum_drop over-firing (36% → 14%)
-- Fixed ownership_gap at 0% (→ 14%)
-- Created deterministic athlete archetypes for consistent, testable data
-- All 6 categories now balanced and represented
-- Frontend updated to properly render Decision Engine output with full explainability
+- Fixed momentum_drop over-firing (36% → 14%), ownership_gap from 0% → 14%
+- Deterministic athlete archetypes for consistent data
+
+### Peek Panel Feature (COMPLETE — Feb 2026)
+- Lightweight right-side slide-over panel for quick intervention preview
+- Shows: why surfaced, what changed, recommended action, owner, relevant context (schools/events/deadlines), numbered next steps
+- 3 quick actions: Log Note, Message, Assign
+- Main CTA: Open Support Pod
+- Dismiss: X button, Escape key, or click outside backdrop
+- Triggered from Priority Alert cards and Athletes Needing Attention cards
+- Mission Control remains fast, calm, scannable — peek is the triage/preview layer
 
 ## Prioritized Backlog
 
