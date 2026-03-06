@@ -45,8 +45,14 @@ Build a recruiting operating system for clubs, coaches, families, and athletes. 
 - Response history embedded in recommendations collection
 - Event note routing (routed_to_pod flag) persisted
 
+### Trust Cues & Admin Status (Complete, Mar 2026)
+- Action-level trust cues: "Saved" / "Synced" toast messages on all write operations
+- Inline "Saved" indicator with check icon on LiveEvent note feed (3s animation)
+- Internal admin status page at /admin (hidden, not in coach navigation)
+- GET /api/admin/status: persistence phase, collection counts, seed strategy, limitations
+
 ## Key Files
-- `backend/server.py` — All API endpoints, startup seed/load
+- `backend/server.py` — All API endpoints, startup seed/load, admin status
 - `backend/database.py` — Seed-if-empty and load functions
 - `backend/decision_engine.py` — 7 intervention categories
 - `backend/support_pod.py` — Pod data & health
@@ -55,26 +61,29 @@ Build a recruiting operating system for clubs, coaches, families, and athletes. 
 - `backend/program_engine.py` — 5 intelligence sections
 - `backend/mock_data.py` — Athletes, events, schools (still in-memory)
 
-## Specs
+## Specs & Plans
 - `/app/SUPPORT_POD_SPEC.md`
 - `/app/EVENT_MODE_SPEC.md`
 - `/app/ADVOCACY_MODE_SPEC.md`
 - `/app/PROGRAM_INTELLIGENCE_SPEC.md`
-- `/app/PERSISTENCE_PLAN.md`
+- `/app/PERSISTENCE_PLAN.md` (Phase 1 — complete)
+- `/app/PERSISTENCE_PHASE_2_PLAN.md` (Phase 2 — planning complete)
 
 ## Backlog
 
 ### P0 — Next
-- Persistence Phase 2: Migrate remaining core objects (events, athletes) to MongoDB
+- Persistence Phase 2: Migrate athletes (Step 1) then events (Step 2) to MongoDB
+  - Athletes: read-only, zero writes, LOW risk
+  - Events: has write path + capturedNotes merge, MEDIUM risk
+  - Startup ordering: athletes → events → event_notes → interventions
 
 ### P1 — Upcoming
+- Server refactoring: Split server.py into APIRouter modules
 - Historical trending for Program Intelligence (requires persistence)
 - Coach-specific views in Program Intelligence
-- Refactoring: Split server.py into APIRouter modules
 
 ### P2 — Future
 - V3: AI/Intelligence Layer (enhanced Decision Engine, predictive analytics)
-- Full database migration (athletes, events)
 - AI-suggested fit reasons, auto-generated intros
 - Event-to-event comparison, multi-coach support
 - Platform integrations (calendar, messaging)
