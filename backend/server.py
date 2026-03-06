@@ -16,6 +16,7 @@ from mock_data import (
     UPCOMING_EVENTS,
     ATHLETES_NEEDING_ATTENTION,
     PROGRAM_SNAPSHOT,
+    ALL_INTERVENTIONS,
 )
 
 
@@ -77,13 +78,21 @@ async def get_status_checks():
 # Mission Control endpoints
 @api_router.get("/mission-control")
 async def get_mission_control_data():
-    """Get all Mission Control data"""
+    """Get all Mission Control data with Decision Engine explainability"""
     return {
         "priorityAlerts": PRIORITY_ALERTS,
-        "recentChanges": MOMENTUM_SIGNALS,
+        "recentChanges": MOMENTUM_SIGNALS,  # momentum signals
         "athletesNeedingAttention": ATHLETES_NEEDING_ATTENTION,
         "upcomingEvents": UPCOMING_EVENTS,
         "programSnapshot": PROGRAM_SNAPSHOT,
+        
+        # Debug info (remove in production)
+        "_debug": {
+            "total_interventions_detected": len(ALL_INTERVENTIONS),
+            "priority_alerts_count": len(PRIORITY_ALERTS),
+            "athletes_attention_count": len(ATHLETES_NEEDING_ATTENTION),
+            "decision_engine_version": "v1.0"
+        }
     }
 
 @api_router.get("/mission-control/alerts")
@@ -123,6 +132,97 @@ async def get_athlete(athlete_id: str):
     if not athlete:
         return {"error": "Athlete not found"}
     return athlete
+
+# Debug endpoints for Decision Engine inspection
+@api_router.get("/debug/interventions")
+async def get_all_interventions():
+    """
+    DEBUG: Get all detected interventions with scoring details
+    Useful for inspecting Decision Engine behavior
+    """
+    return {
+        "total_interventions": len(ALL_INTERVENTIONS),
+        "by_category": {
+            "momentum_drop": len([i for i in ALL_INTERVENTIONS if i['category'] == 'momentum_drop']),
+            "blocker": len([i for i in ALL_INTERVENTIONS if i['category'] == 'blocker']),
+            "deadline_proximity": len([i for i in ALL_INTERVENTIONS if i['category'] == 'deadline_proximity']),
+            "engagement_drop": len([i for i in ALL_INTERVENTIONS if i['category'] == 'engagement_drop']),
+            "ownership_gap": len([i for i in ALL_INTERVENTIONS if i['category'] == 'ownership_gap']),
+            "readiness_issue": len([i for i in ALL_INTERVENTIONS if i['category'] == 'readiness_issue']),
+        },
+        "by_tier": {
+            "critical": len([i for i in ALL_INTERVENTIONS if i['priority_tier'] == 'critical']),
+            "high": len([i for i in ALL_INTERVENTIONS if i['priority_tier'] == 'high']),
+            "medium": len([i for i in ALL_INTERVENTIONS if i['priority_tier'] == 'medium']),
+            "low": len([i for i in ALL_INTERVENTIONS if i['priority_tier'] == 'low']),
+        },
+        "interventions": ALL_INTERVENTIONS,
+    }
+
+@api_router.get("/debug/interventions/{athlete_id}")
+async def get_athlete_interventions(athlete_id: str):
+    """
+    DEBUG: Get all interventions for a specific athlete
+    Shows full scoring breakdown
+    """
+    athlete_interventions = [i for i in ALL_INTERVENTIONS if i['athlete_id'] == athlete_id]
+    
+    if not athlete_interventions:
+        return {
+            "athlete_id": athlete_id,
+            "message": "No interventions detected for this athlete",
+            "interventions": []
+        }
+    
+    return {
+        "athlete_id": athlete_id,
+        "athlete_name": athlete_interventions[0]['athlete_name'],
+        "total_interventions": len(athlete_interventions),
+        "highest_score": max([i['score'] for i in athlete_interventions]),
+        "interventions": athlete_interventions
+    }
+
+@api_router.get("/debug/scoring/{intervention_id}")
+async def get_intervention_scoring(intervention_id: str):
+    """
+    DEBUG: Get detailed scoring breakdown for a specific intervention
+    Shows how urgency, impact, actionability, ownership combine
+    """
+    # Find intervention by matching athlete_id + category as pseudo-ID
+    # In production, would use actual intervention IDs
+    for intervention in ALL_INTERVENTIONS:
+        pseudo_id = f"{intervention['athlete_id']}_{intervention['category']}"
+        if pseudo_id == intervention_id:
+            return {
+                "intervention": intervention,
+                "scoring_breakdown": {
+                    "urgency": {
+                        "score": intervention['urgency'],
+                        "weight": 40,
+                        "contribution": intervention['urgency'] * 40
+                    },
+                    "impact": {
+                        "score": intervention['impact'],
+                        "weight": 30,
+                        "contribution": intervention['impact'] * 30
+                    },
+                    "actionability": {
+                        "score": intervention['actionability'],
+                        "weight": 20,
+                        "contribution": intervention['actionability'] * 20
+                    },
+                    "ownership": {
+                        "score": intervention['ownership'],
+                        "weight": 10,
+                        "contribution": intervention['ownership'] * 10
+                    }
+                },
+                "formula": "(urgency × 40) + (impact × 30) + (actionability × 20) + (ownership × 10) / 10",
+                "total_score": intervention['score']
+            }
+    
+    return {"error": "Intervention not found"}
+
 
 # Include the router in the main app
 app.include_router(api_router)

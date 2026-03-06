@@ -1,5 +1,11 @@
 from datetime import datetime, timezone, timedelta
 import random
+from decision_engine import (
+    detect_all_interventions,
+    rank_interventions,
+    get_priority_alerts,
+    get_athletes_needing_attention
+)
 
 # Generate realistic mock data for Mission Control
 
@@ -73,54 +79,6 @@ def generate_athletes():
         athletes.append(athlete)
     
     return athletes
-
-def generate_priority_alerts(athletes):
-    """Generate 2-4 priority alerts based on athlete data"""
-    alerts = []
-    
-    # Alert types
-    alert_types = [
-        {"type": "no_activity", "severity": "high", "color": "red"},
-        {"type": "response_needed", "severity": "high", "color": "amber"},
-        {"type": "event_prep", "severity": "medium", "color": "amber"},
-        {"type": "opportunity", "severity": "medium", "color": "blue"},
-    ]
-    
-    # Find athletes needing attention
-    for athlete in athletes:
-        if athlete["daysSinceActivity"] > 14 and len(alerts) < 4:
-            alerts.append({
-                "id": f"alert_{len(alerts)+1}",
-                "athleteId": athlete["id"],
-                "athleteName": athlete["fullName"],
-                "gradYear": athlete["gradYear"],
-                "alertType": "no_activity",
-                "severity": "high",
-                "color": "red",
-                "title": "No Activity",
-                "description": f"No recruiting activity in {athlete['daysSinceActivity']} days",
-                "action": "View Support Pod",
-                "actionLink": f"/support-pods/{athlete['id']}",
-            })
-        
-        if athlete["momentumScore"] > 5 and athlete["activeInterest"] > 2 and len(alerts) < 4:
-            school = random.choice(schools)
-            alerts.append({
-                "id": f"alert_{len(alerts)+1}",
-                "athleteId": athlete["id"],
-                "athleteName": athlete["fullName"],
-                "gradYear": athlete["gradYear"],
-                "alertType": "response_needed",
-                "severity": "high",
-                "color": "amber",
-                "title": "Follow-up Needed",
-                "description": f"{school['name']} coach responded — no follow-up sent",
-                "action": "Send Follow-up",
-                "actionLink": f"/support-pods/{athlete['id']}",
-                "context": school["name"],
-            })
-    
-    return alerts[:4]
 
 def generate_momentum_signals(athletes):
     """Generate recent momentum signals (changes)"""
@@ -199,33 +157,6 @@ def generate_upcoming_events():
     events.sort(key=lambda x: x["daysAway"])
     return events
 
-def get_athletes_needing_attention(athletes):
-    """Filter athletes who need attention"""
-    needing_attention = []
-    
-    for athlete in athletes:
-        if athlete["daysSinceActivity"] > 10 or athlete["momentumTrend"] == "declining":
-            # Determine primary issue
-            if athlete["daysSinceActivity"] > 14:
-                issue = f"No activity in {athlete['daysSinceActivity']} days"
-                issue_type = "no_activity"
-            elif athlete["momentumTrend"] == "declining":
-                issue = "Momentum declining"
-                issue_type = "declining_momentum"
-            else:
-                issue = "Needs follow-up"
-                issue_type = "follow_up"
-            
-            needing_attention.append({
-                **athlete,
-                "primaryIssue": issue,
-                "issueType": issue_type,
-            })
-    
-    # Sort by severity (days since activity, then momentum score)
-    needing_attention.sort(key=lambda x: (-x["daysSinceActivity"], x["momentumScore"]))
-    return needing_attention[:12]
-
 def get_program_snapshot(athletes):
     """Generate program-wide metrics"""
     total_athletes = len(athletes)
@@ -253,8 +184,28 @@ def get_program_snapshot(athletes):
 
 # Generate data on module load
 ATHLETES = generate_athletes()
-PRIORITY_ALERTS = generate_priority_alerts(ATHLETES)
-MOMENTUM_SIGNALS = generate_momentum_signals(ATHLETES)
 UPCOMING_EVENTS = generate_upcoming_events()
-ATHLETES_NEEDING_ATTENTION = get_athletes_needing_attention(ATHLETES)
 PROGRAM_SNAPSHOT = get_program_snapshot(ATHLETES)
+
+# ============================================================================
+# DECISION ENGINE INTEGRATION
+# ============================================================================
+
+# Detect all interventions across all athletes
+ALL_INTERVENTIONS = []
+for athlete in ATHLETES:
+    interventions = detect_all_interventions(athlete, UPCOMING_EVENTS)
+    ALL_INTERVENTIONS.extend(interventions)
+
+# Rank all interventions by score
+ALL_INTERVENTIONS = rank_interventions(ALL_INTERVENTIONS)
+
+# Surface priority alerts (top 2-4, score >= 70)
+PRIORITY_ALERTS = get_priority_alerts(ALL_INTERVENTIONS)
+
+# Surface athletes needing attention (up to 12, score >= 50)
+ATHLETES_NEEDING_ATTENTION = get_athletes_needing_attention(ALL_INTERVENTIONS)
+
+# Generate momentum signals (what changed today) from recent interventions
+# For V1, simulate recent positive/negative signals
+MOMENTUM_SIGNALS = generate_momentum_signals(ATHLETES)
