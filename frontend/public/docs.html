@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CapyMatch Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: #f9fafb;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #1e40af;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .doc-link {
+            display: block;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1f2937;
+            border-left: 4px solid #1e40af;
+            transition: all 0.2s;
+        }
+        .doc-link:hover {
+            background: #e5e7eb;
+            transform: translateX(4px);
+        }
+        .doc-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .doc-desc {
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #374151;
+        }
+        .note {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CapyMatch Documentation</h1>
+        <p class="subtitle">Mission Control - Recruiting Operating System</p>
+
+        <div class="note">
+            📱 <strong>Note:</strong> These links will download the markdown files. View them in a text editor or markdown viewer on your phone.
+        </div>
+
+        <div class="section">
+            <div class="section-title">📐 Strategic Architecture</div>
+            
+            <a href="/PRODUCT_ARCHITECTURE.md" download class="doc-link">
+                <div class="doc-title">Product Architecture</div>
+                <div class="doc-desc">Vision, 5 operating modes, platform integration, success metrics</div>
+            </a>
+
+            <a href="/USER_ROLES.md" download class="doc-link">
+                <div class="doc-title">User Roles</div>
+                <div class="doc-desc">Club directors, coaches, parents, athletes - goals and access levels</div>
+            </a>
+
+            <a href="/SYSTEM_ENTITIES.md" download class="doc-link">
+                <div class="doc-title">System Entities</div>
+                <div class="doc-desc">Data models: athletes, support pods, momentum signals, events</div>
+            </a>
+
+            <a href="/SCREEN_MAP.md" download class="doc-link">
+                <div class="doc-title">Screen Map & Priorities</div>
+                <div class="doc-desc">All screens mapped by priority, V1 through V3</div>
+            </a>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎨 Design & UX</div>
+            
+            <a href="/MISSION_CONTROL_SPEC.md" download class="doc-link">
+                <div class="doc-title">Mission Control Specification</div>
+                <div class="doc-desc">Detailed screen spec, components, interactions, visual design</div>
+            </a>
+
+            <a href="/UX_PRINCIPLES.md" download class="doc-link">
+                <div class="doc-title">UX Principles & Design System</div>
+                <div class="doc-desc">10 core principles, typography, colors, components, anti-patterns</div>
+            </a>
+
+            <a href="/design_guidelines.json" download class="doc-link">
+                <div class="doc-title">Design Guidelines (JSON)</div>
+                <div class="doc-desc">Theme, colors, typography, components - implementation ready</div>
+            </a>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🚀 Implementation</div>
+            
+            <a href="/MVP_RECOMMENDATION.md" download class="doc-link">
+                <div class="doc-title">MVP Recommendation & Roadmap</div>
+                <div class="doc-desc">Phased approach, V1 through V3, timelines, success criteria</div>
+            </a>
+
+            <a href="/REVIEW_SUMMARY.md" download class="doc-link">
+                <div class="doc-title">Review Summary</div>
+                <div class="doc-desc">Current state, generic risk analysis, refinement priorities</div>
+            </a>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🔗 Quick Links</div>
+            
+            <a href="/" class="doc-link">
+                <div class="doc-title">Mission Control Prototype</div>
+                <div class="doc-desc">View the live prototype dashboard</div>
+            </a>
+
+            <a href="/api/mission-control" class="doc-link">
+                <div class="doc-title">API Endpoint</div>
+                <div class="doc-desc">View raw mission control data (JSON)</div>
+            </a>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 13px;">
+            <p>CapyMatch Coach/Club Operating System</p>
+            <p style="margin-top: 8px;">Built with Emergent AI · January 2026</p>
+        </div>
+    </div>
+</body>
+</html>

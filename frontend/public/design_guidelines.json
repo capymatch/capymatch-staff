@@ -1,0 +1,109 @@
+{
+  "project_name": "CapyMatch - Mission Control",
+  "version": "1.0.0",
+  "theme": {
+    "mode": "light",
+    "background": "#F9FAFB",
+    "surface": "#FFFFFF",
+    "primary": "#1E40AF",
+    "primary_foreground": "#FFFFFF",
+    "secondary": "#F3F4F6",
+    "accent": "#F97316",
+    "text_primary": "#111827",
+    "text_secondary": "#6B7280",
+    "border_subtle": "#E5E7EB",
+    "border_strong": "#D1D5DB"
+  },
+  "typography": {
+    "font_family_heading": "Manrope, sans-serif",
+    "font_family_body": "Inter, sans-serif",
+    "scale": {
+      "h1": "text-4xl font-bold tracking-tight",
+      "h2": "text-2xl font-bold tracking-tight",
+      "h3": "text-xl font-semibold",
+      "body": "text-sm leading-relaxed",
+      "caption": "text-xs text-muted-foreground",
+      "label": "text-[10px] uppercase tracking-wider font-semibold text-muted-foreground"
+    }
+  },
+  "layout_strategy": {
+    "container": "max-w-[1600px] mx-auto px-6 py-8",
+    "grid_system": "grid grid-cols-1 md:grid-cols-12 gap-6",
+    "spacing": {
+      "section_gap": "gap-8",
+      "card_padding": "p-6",
+      "element_gap": "gap-4"
+    },
+    "z_index": {
+      "header": "z-50",
+      "modal": "z-50",
+      "dropdown": "z-40",
+      "tooltip": "z-50"
+    }
+  },
+  "components": {
+    "cards": {
+      "base": "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200",
+      "interactive": "cursor-pointer hover:border-primary/20 hover:ring-1 hover:ring-primary/20",
+      "alert": "border-l-4 border-l-orange-500"
+    },
+    "buttons": {
+      "primary": "bg-primary text-white hover:bg-primary/90 rounded-full px-6 py-2 font-medium shadow-sm transition-transform active:scale-95",
+      "secondary": "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-full px-4 py-2 font-medium",
+      "ghost": "hover:bg-gray-100 text-gray-600 rounded-lg px-3 py-1.5",
+      "destructive": "bg-red-50 text-red-600 hover:bg-red-100 border border-red-100"
+    },
+    "badges": {
+      "momentum_high": "bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full text-xs font-medium",
+      "momentum_low": "bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-full text-xs font-medium",
+      "status_neutral": "bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded-full text-xs font-medium"
+    },
+    "inputs": {
+      "search": "bg-white border-gray-200 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+    }
+  },
+  "visual_enhancers": {
+    "glass_panel": "bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm",
+    "gradients": {
+      "subtle_fade": "bg-gradient-to-b from-white to-gray-50",
+      "active_indicator": "bg-gradient-to-r from-primary to-blue-600"
+    },
+    "shadows": {
+      "card": "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
+      "float": "0 10px 30px -10px rgba(0,0,0,0.08)"
+    }
+  },
+  "image_assets": {
+    "coach_avatars": [
+      "https://images.unsplash.com/photo-1724984430472-2b79b1c0dd13?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzl8MHwxfHNlYXJjaHw0fHxtYWxlJTIwc29jY2VyJTIwY29hY2glMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzI4MTU4NzZ8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1652400744403-8f29705bd6a5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzl8MHwxfHNlYXJjaHwzfHxtYWxlJTIwc29jY2VyJTIwY29hY2glMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzI4MTU4NzZ8MA&ixlib=rb-4.1.0&q=85"
+    ],
+    "placeholders": {
+      "university_logo": "https://images.unsplash.com/photo-1559051668-e1fa58f25786?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHwyfHx1bml2ZXJzaXR5JTIwbG9nbyUyMHdoaXRlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzI4MTU4Nzd8MA&ixlib=rb-4.1.0&q=85",
+      "club_logo": "https://images.unsplash.com/photo-1759724369762-376e0a29478b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHw0fHx1bml2ZXJzaXR5JTIwbG9nbyUyMHdoaXRlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzI4MTU4Nzd8MA&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "icons": {
+    "library": "lucide-react",
+    "primary_set": ["LayoutDashboard", "Users", "Zap", "Calendar", "BarChart3", "Bell", "Search", "ChevronRight", "ArrowUpRight", "AlertCircle", "CheckCircle2"]
+  },
+  "component_paths": {
+    "shadcn": "/app/frontend/src/components/ui",
+    "custom": "/app/frontend/src/components/mission-control"
+  },
+  "universal_guidelines": [
+    "Always use 'Manrope' for headings and 'Inter' for body text.",
+    "Do NOT use pure black (#000000). Use #111827 or #0F172A for darkest text.",
+    "Do NOT use gradients on text unless specifically for a 'Momentum' score highlight.",
+    "Interactive elements must have a hover state that lightens the background or adds a subtle border color shift.",
+    "Use data-testid attributes on ALL interactive elements (buttons, links, inputs).",
+    "Layouts must be mobile-responsive first.",
+    "Glassmorphism effects should be used sparingly: Only on the Sticky Header and Modal backgrounds.",
+    "Cards should not have inner dividers unless absolutely necessary. Use whitespace to separate content."
+  ],
+  "mission_control_specifics": {
+    "visual_metaphor": "Clear Cockpit. High signal, low noise.",
+    "priority_indicators": "Use 'Pulse' animations for urgent items (Orange/Red dots).",
+    "data_density": "High density allowed in 'Program Snapshot', but generous whitespace in 'Priority Alerts'."
+  }
+}
