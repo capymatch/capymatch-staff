@@ -1,88 +1,40 @@
-# CapyMatch — Product Requirements Document
+# CapyMatch — Recruiting Operating System
 
-## Original Problem Statement
-Build a "recruiting operating system" for clubs, coaches, families, and athletes. 5 operating modes:
-1. **Mission Control** — Triage. What needs help. Who's at risk.
-2. **Support Pod** — Treatment. How to help. Resolve the issue.
-3. **Event Mode** — Live recruiting workflow for tournaments/events.
-4. **Advocacy Mode** — Coach-to-college promotion tool.
-5. **Program Intelligence** — Strategic layer for club directors.
+## Problem Statement
+Build a recruiting operating system for clubs, coaches, families, and athletes. The system actively coordinates support, surfaces priorities, identifies blockers, and helps users know what to do next.
 
 ## Architecture
-- **Backend:** FastAPI (Python) — Decision Engine + Support Pod + Quick Actions
-- **Frontend:** React + Tailwind + Shadcn/UI
-- **Database:** MongoDB (actions, notes, assignments, messages, resolutions persist)
-- **Mock Data:** Athletes, interventions, pod members generated in-memory (mock_data.py, support_pod.py)
+- **Backend:** FastAPI (Python), in-memory mock data (no DB persistence yet), MongoDB for quick actions
+- **Frontend:** React, Shadcn/UI, Tailwind CSS
+- **Core Loop:** Triage (Mission Control) -> Preview (Peek Panel) -> Treatment (Support Pod)
 
 ## What's Been Implemented
 
-### Phase 1: Documentation (COMPLETE)
-- Full spec suite: PRODUCT_ARCHITECTURE, USER_ROLES, SYSTEM_ENTITIES, SCREEN_MAP, MISSION_CONTROL_SPEC, UX_PRINCIPLES, MVP_RECOMMENDATION, CATEGORY_POSITIONING, DECISION_ENGINE_SPEC, SUPPORT_POD_SPEC
+### V1 — Complete
+- **Mission Control (Command Surface):** Priority alerts, athletes needing attention, momentum feed, upcoming events, program snapshot. Refined UI with operational feel.
+- **Decision Engine:** Backend module analyzing mock data to generate/rank interventions (blockers, momentum drops, deadlines, engagement, ownership, readiness).
+- **Peek Panel:** Slide-over preview from Mission Control cards showing intervention details.
+- **Quick Actions:** Log Note, Assign, Message — inline forms within Peek Panel with backend persistence.
+- **Support Pod (Treatment Environment):** 5 core blocks — Active Issue Banner, Athlete Snapshot, Pod Members, Next Actions, Treatment Timeline.
+- **Pod Health Indicator:** Calculated status (Healthy/Needs Attention/At Risk) displayed on Mission Control cards and Support Pod header.
+- **Real-Time Polling:** Auto-refresh every 30s on Support Pod with live indicator and manual refresh button (Feb 2026).
 
-### Phase 2: Mission Control (COMPLETE)
-- Decision Engine with 6 balanced intervention categories
-- Mission Control UI: Priority Alerts, What Changed Today, Athletes Needing Attention, Events, Program Snapshot
-- Peek Panel: right-side slide-over with full explainability + 3 quick actions (Log Note, Assign, Message)
+## Backlog
 
-### Phase 3: Decision Engine Tuning (COMPLETE — Feb 2026)
-- Balanced intervention distribution across all 6 categories
+### P1 — Upcoming
+- V2: Event Mode & Advocacy Mode (new operating modes)
 
-### Phase 4: Support Pod (COMPLETE — Feb 2026)
-**Backend:**
-- `GET /api/support-pods/:athleteId` — full pod data (athlete, interventions, members, actions, timeline, health)
-- `POST /api/support-pods/:athleteId/actions` — create action + log to timeline
-- `PATCH /api/support-pods/:athleteId/actions/:actionId` — complete/reassign + log event
-- `POST /api/support-pods/:athleteId/resolve` — resolve active issue + log to timeline
-- `support_pod.py` module: pod member generation, suggested action generation, health calculation
+### P2 — Future
+- V2.5: Program Intelligence
+- V3: AI/Intelligence Layer, deeper platform integration
+- Database migration (mock data -> persistent MongoDB)
 
-**Frontend — 5 Blocks:**
-1. **Active Issue Banner** — preserves MC context (why/what_changed/action/owner), Log Call, Send Message, Mark Resolved, Dismiss
-2. **Athlete Snapshot** — momentum, stage, schools, blockers, readiness, upcoming events
-3. **Pod Members + Ownership** — 3 members with roles, activity dots, task counts, PRIMARY badge, ownership summary
-4. **Next Actions** — grouped by owner, checkboxes for completion, + Add form, reassign, overdue detection
-5. **Treatment Timeline** — chronological entries (notes, assignments, messages, resolutions, action events) grouped by date with filter pills
-
-**Routing:**
-- MC → Peek Panel → "Open Support Pod" → `/support-pods/:athleteId?context=:category`
-- Support Pod → "← Mission Control" → `/mission-control`
-- Context param preserved to drive Active Issue Banner
-
-### API Endpoints (All)
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | /api/mission-control | Dashboard data |
-| GET | /api/athletes | All athletes |
-| GET | /api/athletes/:id | Single athlete |
-| POST | /api/athletes/:id/notes | Log note |
-| POST | /api/athletes/:id/assign | Reassign owner |
-| POST | /api/athletes/:id/messages | Send message |
-| GET | /api/athletes/:id/timeline | Treatment history |
-| GET | /api/support-pods/:id | Full pod data |
-| POST | /api/support-pods/:id/actions | Create action |
-| PATCH | /api/support-pods/:id/actions/:actionId | Complete/reassign action |
-| POST | /api/support-pods/:id/resolve | Resolve issue |
-| GET | /api/debug/interventions | Debug: all interventions |
-
-### Phase 5: Pod Health Indicators (COMPLETE — Feb 2026)
-- 3 states: green (Healthy), yellow (Needs Attention), red (At Risk)
-- 5 explainable signals: activity recency, open issue count, blockers, ownership gaps, issue severity
-- Shows on: Priority Alert cards (dot + label in owner row), Athlete cards (dot + label in meta row), Peek Panel (explanation below score)
-- Purely derived from athlete + intervention data (no DB queries needed)
-- Secondary to main intervention content — does not compete with why/what_changed/action/owner
-
-## Prioritized Backlog
-
-### P1 (Next)
-- Refine Mission Control UI (address "generic dashboard" risks, make it feel more like an operating system)
-- Pod health indicator connected to Mission Control athlete cards
-- Real-time refresh / polling for Support Pod data
-
-### P2
-- Event Mode & Advocacy Mode (V2)
-- Program Intelligence (V2.5)
-
-### P3
-- Real pod member management (invite by email, roles)
-- AI/Intelligence Layer integration
-- Real-time updates (WebSockets)
-- Replace mock data with real database layer
+## Key Files
+- `backend/server.py` — API endpoints
+- `backend/decision_engine.py` — Intervention scoring
+- `backend/support_pod.py` — Pod data & health logic
+- `backend/mock_data.py` — All mock data
+- `frontend/src/pages/MissionControl.js` — Command surface
+- `frontend/src/pages/SupportPod.js` — Treatment environment (with polling)
+- `frontend/src/components/support-pod/PodHeader.js` — Live indicator
+- `frontend/src/components/PeekPanel.js` — Slide-over preview
