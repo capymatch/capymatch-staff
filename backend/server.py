@@ -6,7 +6,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 from mock_data import (
@@ -45,6 +45,21 @@ class StatusCheck(BaseModel):
 
 class StatusCheckCreate(BaseModel):
     client_name: str
+
+
+# Quick Action Models
+class NoteCreate(BaseModel):
+    text: str
+    tag: Optional[str] = None
+
+class AssignCreate(BaseModel):
+    new_owner: str
+    reason: Optional[str] = None
+    intervention_category: Optional[str] = None
+
+class MessageCreate(BaseModel):
+    recipient: str
+    text: str
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
@@ -132,6 +147,65 @@ async def get_athlete(athlete_id: str):
     if not athlete:
         return {"error": "Athlete not found"}
     return athlete
+
+# ============================================================================
+# QUICK ACTIONS — lightweight operational actions from peek panel
+# ============================================================================
+
+@api_router.post("/athletes/{athlete_id}/notes")
+async def create_note(athlete_id: str, note: NoteCreate):
+    """Log a quick note to an athlete's timeline"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "author": "Coach Martinez",
+        "text": note.text,
+        "tag": note.tag,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.athlete_notes.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api_router.post("/athletes/{athlete_id}/assign")
+async def assign_owner(athlete_id: str, assignment: AssignCreate):
+    """Reassign intervention owner"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "previous_owner": "Coach Martinez",
+        "new_owner": assignment.new_owner,
+        "reason": assignment.reason,
+        "intervention_category": assignment.intervention_category,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.assignments.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api_router.post("/athletes/{athlete_id}/messages")
+async def send_message(athlete_id: str, message: MessageCreate):
+    """Send a quick message/update"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "sender": "Coach Martinez",
+        "recipient": message.recipient,
+        "text": message.text,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.messages.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api_router.get("/athletes/{athlete_id}/timeline")
+async def get_athlete_timeline(athlete_id: str):
+    """Get all notes, assignments, messages for an athlete"""
+    notes = await db.athlete_notes.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    assignments = await db.assignments.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    messages = await db.messages.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    return {"notes": notes, "assignments": assignments, "messages": messages}
+
 
 # Debug endpoints for Decision Engine inspection
 @api_router.get("/debug/interventions")
