@@ -1,85 +1,97 @@
-# CapyMatch — Recruiting Operating System
+# CapyMatch — Product Requirements Document
 
-## Problem Statement
-Build a recruiting operating system for clubs, coaches, families, and athletes. The system actively coordinates support, surfaces priorities, identifies blockers, and helps users know what to do next.
+## Original Problem Statement
+Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, and athletes. The vision is to create a system that actively coordinates support, surfaces priorities, and helps users know what to do next, moving beyond a traditional CRM.
 
-## Architecture
-- **Backend:** FastAPI (Python), MongoDB, modular APIRouter architecture
-- **Frontend:** React, Shadcn/UI, Tailwind CSS
-- **Database:** MongoDB — 11 persisted collections. Only `schools` (static) and `interventions` (computed) remain in-memory.
-- **Core Loop:** Triage (MC) → Preview (Peek) → Treatment (Pod) → Capture (Event) → Promotion (Advocacy) → Oversight (Program)
+## Core Modes
+- **Mission Control:** Command surface showing priority alerts and athletes needing attention
+- **Support Pod:** Dedicated "treatment" environment for an athlete
+- **Event Mode:** Capture live recruiting moments and manage follow-up
+- **Advocacy Mode:** Coach-backed promotion and relationship tracking
+- **Program Intelligence:** Strategic overview with historical trending and role-based views
+- **Decision Engine:** Backend logic analyzing data to generate and rank interventions
 
-### Backend Structure
-```
-backend/
-  server.py              # ~105 lines — app creation, router registration, startup/shutdown
-  db_client.py           # Shared MongoDB connection
-  models.py              # All Pydantic request/response schemas
-  database.py            # Seed-if-empty and load functions
-  services/
-    startup.py           # Seed → load → recompute pipeline
-    snapshots.py         # Daily metric snapshots + trend computation
-  routers/
-    mission_control.py   # 6 endpoints
-    athletes.py          # 6 endpoints
-    support_pods.py      # 4 endpoints
-    events.py            # 13 endpoints + /schools
-    advocacy.py          # 12 endpoints
-    program.py           # 1 endpoint (intelligence + trends)
-    admin.py             # 1 endpoint
-    debug.py             # 3 endpoints
-  decision_engine.py, support_pod.py, event_engine.py,
-  advocacy_engine.py, program_engine.py, mock_data.py
-```
+## Tech Stack
+- **Backend:** FastAPI (Python), MongoDB (motor async driver)
+- **Frontend:** React, Tailwind CSS, Shadcn/UI
+- **Auth:** JWT-based (PyJWT, bcrypt/passlib)
+- **Architecture:** Service-oriented backend with APIRouter modules
 
 ## What's Been Implemented
 
-### V1 — Mission Control + Support Pod (Complete)
-### V2 — Event Mode (Complete)
-### V2 — Advocacy Mode (Complete)
-### V2.5 — Program Intelligence (Complete)
+### Phase 1-2: Core Features & Persistence
+- All 5 operating modes (Mission Control, Support Pod, Event, Advocacy, Program Intelligence)
+- Decision Engine with intervention detection and ranking
+- Full MongoDB persistence for athletes, events, event_notes, recommendations
+- Seed-if-empty strategy for initial data population
+- Backend refactored from monolithic server.py to modular routers/
 
-### Persistence Phase 1 + 2 (Complete)
-- 11 MongoDB collections, seed-if-empty, dual-write, explicit startup ordering
-- Athletes + events durable, time-relative fields recomputed
+### Phase 3: Program Intelligence Enhancements
+- Historical trending via snapshot-based system (program_snapshots collection)
+- Coach-specific views with filtered data
 
-### Server Refactoring (Complete)
-- server.py: 1214 → 105 lines, 8 router modules
+### Phase 4: Real Authentication (2026-03-06)
+- JWT-based auth system (login, register, /me endpoints)
+- 3 seeded user accounts (1 Director, 2 Coaches)
+- Protected routes on /api/program/* endpoints
+- Frontend AuthContext with token management (localStorage)
+- Login page with Sign In / Create Account tabs and demo account quick-fill
+- Role-based UI: Directors see view switcher on Program Intelligence; Coaches see their own filtered view automatically
+- Header displays authenticated user name, role badge, and logout button
+- All routes protected on frontend (redirect to /login if unauthenticated)
 
-### Historical Trending (Complete, Mar 2026)
-- "What's Changing" section in Program Intelligence with 5 trend cards:
-  1. Pod Health (healthy count, delta)
-  2. Open Issues (total, delta, blocker context)
-  3. Overdue Actions (count, delta)
-  4. Advocacy Pipeline (warm responses, delta)
-  5. Follow-up Completion (%, delta)
-- Daily snapshots stored in `program_snapshots` collection (rate-limited to 1/day)
-- 3 historical snapshots seeded for demo (7, 3, 1 days ago with degraded values)
-- Each trend: current value, delta, direction (improving/declining/stable/baseline), interpretation
-- Trust cues: "Saved" / "Synced" toasts, internal admin at /admin
+## Default Credentials
+- Director: director@capymatch.com / director123
+- Coach Williams: coach.williams@capymatch.com / coach123
+- Coach Garcia: coach.garcia@capymatch.com / coach123
 
-## Persistence Summary — 11 Collections
-| Collection | Phase | Description |
-|---|---|---|
-| athletes | P2 | Profiles, daysSinceActivity recomputed |
-| events | P2 | Records, daysAway recomputed |
-| event_notes | P1 | Courtside notes + follow-ups |
-| recommendations | P1 | Full lifecycle + response history |
-| program_snapshots | P2 | Daily trending snapshots |
-| pod_actions | P0 | Pod action items |
-| athlete_notes | P0 | Timeline entries |
-| assignments | P0 | Owner assignments |
-| messages | P0 | Quick messages |
-| pod_resolutions | P0 | Issue resolutions |
-| pod_action_events | P0 | Action audit log |
+## Key DB Collections
+- `users`: {id, email, password_hash, name, role, created_at}
+- `athletes`: {id, name, grad_year, club, position, owner}
+- `events`: {id, name, location, start_date, end_date, attendees, checklist}
+- `event_notes`: {event_id, athlete_id, created_by, note, interest_level, needs_follow_up}
+- `recommendations`: {athlete_id, school, coach_name, created_by, status, status_history}
+- `program_snapshots`: {captured_at, metrics: {pod_health, open_issues, advocacy_outcomes, etc.}}
 
-## Backlog
+## Architecture
+```
+/app/backend/
+├── server.py              # FastAPI app entry point
+├── auth_middleware.py      # JWT creation/validation + Depends()
+├── db_client.py           # MongoDB connection
+├── models.py              # All Pydantic models
+├── routers/               # API endpoints by feature
+│   ├── auth.py            # Login, register, me
+│   ├── mission_control.py
+│   ├── events.py
+│   ├── advocacy.py
+│   ├── program.py         # Protected with auth
+│   ├── athletes.py
+│   ├── support_pods.py
+│   ├── admin.py
+│   └── debug.py
+├── services/
+│   ├── startup.py         # Seed + load pipeline
+│   └── snapshots.py       # Historical trending
+├── decision_engine.py
+├── program_engine.py
+├── advocacy_engine.py
+├── event_engine.py
+├── support_pod.py
+└── mock_data.py           # Seed data source
+```
 
-### P1 — Next
-- Coach-specific views for Program Intelligence
-- Real athlete CRUD (create/edit/delete via UI)
+## Prioritized Backlog
+
+### P0 (Completed)
+- [x] Real JWT Authentication
+
+### P1 — Next Up
+- [ ] Protect remaining API routes (/api/events, /api/advocacy, /api/mission-control) with auth
+- [ ] Deeper AI/Intelligence Layer (V3): cross-object analysis, predictive analytics
+- [ ] Consolidate Pydantic models into central models.py
 
 ### P2 — Future
-- V3: AI/Intelligence Layer
-- Multi-coach support, role-based access
-- Platform integrations (calendar, messaging)
+- [ ] Platform Integrations (calendars, messaging)
+- [ ] Full permission model (role-based access control per endpoint)
+- [ ] User management admin panel
