@@ -1,3 +1,4 @@
+import { useNavigate, useLocation } from "react-router-dom";
 import { Search, Bell, LayoutDashboard, Users, Calendar, Megaphone, BarChart3 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,12 +10,15 @@ import {
 } from "@/components/ui/select";
 
 function Header({ selectedGradYear, setSelectedGradYear, stats }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const modes = [
-    { id: "mission-control", label: "Mission Control", icon: LayoutDashboard, active: true },
-    { id: "support-pods", label: "Support Pods", icon: Users, active: false },
-    { id: "events", label: "Events", icon: Calendar, active: false },
-    { id: "advocacy", label: "Advocacy", icon: Megaphone, active: false },
-    { id: "program", label: "Program", icon: BarChart3, active: false },
+    { id: "mission-control", label: "Mission Control", icon: LayoutDashboard, path: "/mission-control" },
+    { id: "events", label: "Events", icon: Calendar, path: "/events" },
+    { id: "support-pods", label: "Support Pods", icon: Users, path: null },
+    { id: "advocacy", label: "Advocacy", icon: Megaphone, path: null },
+    { id: "program", label: "Program", icon: BarChart3, path: null },
   ];
 
   return (
@@ -33,14 +37,19 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
             <nav className="hidden lg:flex items-center" data-testid="mode-navigation">
               {modes.map((mode) => {
                 const Icon = mode.icon;
+                const isActive = mode.path && location.pathname.startsWith(mode.path);
                 return (
                   <button
                     key={mode.id}
                     data-testid={`mode-${mode.id}`}
+                    onClick={() => mode.path && navigate(mode.path)}
+                    disabled={!mode.path}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all border-b-2 ${
-                      mode.active
+                      isActive
                         ? "text-white border-white"
-                        : "text-white/40 border-transparent hover:text-white/70"
+                        : mode.path
+                          ? "text-white/40 border-transparent hover:text-white/70 cursor-pointer"
+                          : "text-white/20 border-transparent cursor-default"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />

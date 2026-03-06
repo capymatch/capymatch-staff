@@ -17,6 +17,7 @@ from mock_data import (
     ATHLETES_NEEDING_ATTENTION,
     PROGRAM_SNAPSHOT,
     ALL_INTERVENTIONS,
+    SCHOOLS,
 )
 from support_pod import (
     get_athlete as sp_get_athlete,
@@ -27,6 +28,18 @@ from support_pod import (
     get_relevant_events,
     enrich_members_with_tasks,
     explain_pod_health,
+)
+from event_engine import (
+    get_event,
+    get_all_events,
+    get_event_prep,
+    toggle_checklist_item,
+    capture_note,
+    update_note,
+    get_event_notes,
+    get_event_summary,
+    route_note_to_pod,
+    bulk_route_to_pods,
 )
 
 
@@ -409,6 +422,267 @@ async def resolve_issue(athlete_id: str, body: ResolveIssue):
     await db.pod_resolutions.insert_one(doc)
     doc.pop("_id", None)
     return doc
+
+
+# ============================================================================
+# EVENT MODE — capture, prep, live, summary, routing
+# ============================================================================
+
+class EventNoteCreate(BaseModel):
+    athlete_id: str
+    school_id: Optional[str] = None
+    school_name: Optional[str] = None
+    interest_level: Optional[str] = "none"
+    note_text: Optional[str] = ""
+    follow_ups: Optional[List[str]] = []
+
+class EventNoteUpdate(BaseModel):
+    interest_level: Optional[str] = None
+    note_text: Optional[str] = None
+    follow_ups: Optional[List[str]] = None
+    school_id: Optional[str] = None
+    school_name: Optional[str] = None
+
+class EventCreate(BaseModel):
+    name: str
+    type: str
+    date: str
+    location: str
+    expectedSchools: Optional[int] = 0
+
+class EventAthleteAdd(BaseModel):
+    athlete_id: str
+
+
+@api_router.get("/events")
+async def list_events(team: str = None, type: str = None):
+    """Get all events grouped by upcoming/past with urgency indicators"""
+    return get_all_events(team_filter=team, type_filter=type)
+
+
+@api_router.get("/events/{event_id}")
+async def get_event_detail(event_id: str):
+    """Get single event detail"""
+    event = get_event(event_id)
+    if not event:
+        return {"error": "Event not found"}
+    return {k: v for k, v in event.items() if k != "capturedNotes"}
+
+
+@api_router.post("/events")
+async def create_event(body: EventCreate):
+    """Create a new event"""
+    from datetime import datetime as dt
+    try:
+        event_date = dt.fromisoformat(body.date.replace("Z", "+00:00"))
+    except Exception:
+        event_date = datetime.now(timezone.utc) + timedelta(days=7)
+
+    days_away = (event_date - datetime.now(timezone.utc)).days
+    new_event = {
+        "id": f"event_{str(uuid.uuid4())[:8]}",
+        "name": body.name,
+        "type": body.type,
+        "date": event_date.isoformat(),
+        "daysAway": days_away,
+        "location": body.location,
+        "expectedSchools": body.expectedSchools,
+        "prepStatus": "not_started",
+        "status": "upcoming" if days_away >= 0 else "past",
+        "athlete_ids": [],
+        "school_ids": [],
+        "checklist": [
+            {"id": "check_1", "label": "Confirm athlete attendance", "completed": False},
+            {"id": "check_2", "label": "Identify target school coaches attending", "completed": False},
+            {"id": "check_3", "label": "Review highlight reels", "completed": False},
+            {"id": "check_4", "label": "Prepare talking points for athlete-school pairs", "completed": False},
+            {"id": "check_5", "label": "Confirm travel/logistics", "completed": False},
+        ],
+        "capturedNotes": [],
+        "summaryStatus": None,
+        "athleteCount": 0,
+    }
+    UPCOMING_EVENTS.append(new_event)
+    return {k: v for k, v in new_event.items() if k != "capturedNotes"}
+
+
+@api_router.get("/events/{event_id}/prep")
+async def get_prep_data(event_id: str):
+    """Get prep data: athletes, schools, checklist, blockers"""
+    result = get_event_prep(event_id)
+    if not result:
+        return {"error": "Event not found"}
+    return result
+
+
+@api_router.patch("/events/{event_id}/checklist/{item_id}")
+async def toggle_checklist(event_id: str, item_id: str):
+    """Toggle a prep checklist item"""
+    result = toggle_checklist_item(event_id, item_id)
+    if not result:
+        return {"error": "Item not found"}
+    return result
+
+
+@api_router.post("/events/{event_id}/athletes")
+async def add_event_athlete(event_id: str, body: EventAthleteAdd):
+    """Add an athlete to an event roster"""
+    event = get_event(event_id)
+    if not event:
+        return {"error": "Event not found"}
+    if body.athlete_id not in event["athlete_ids"]:
+        event["athlete_ids"].append(body.athlete_id)
+        event["athleteCount"] = len(event["athlete_ids"])
+    return {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}
+
+
+@api_router.delete("/events/{event_id}/athletes/{athlete_id}")
+async def remove_event_athlete(event_id: str, athlete_id: str):
+    """Remove an athlete from an event roster"""
+    event = get_event(event_id)
+    if not event:
+        return {"error": "Event not found"}
+    if athlete_id in event["athlete_ids"]:
+        event["athlete_ids"].remove(athlete_id)
+        event["athleteCount"] = len(event["athlete_ids"])
+    return {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}
+
+
+@api_router.get("/events/{event_id}/notes")
+async def list_event_notes(event_id: str):
+    """Get all captured notes for an event"""
+    return get_event_notes(event_id)
+
+
+@api_router.post("/events/{event_id}/notes")
+async def create_event_note(event_id: str, body: EventNoteCreate):
+    """Capture a live event note"""
+    result = capture_note(event_id, body.model_dump())
+    if not result:
+        return {"error": "Event not found"}
+
+    # Auto-log to athlete timeline (every note hits timeline)
+    timeline_doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": body.athlete_id,
+        "author": "Coach Martinez",
+        "text": f"[{get_event(event_id)['name']}] {body.school_name or ''} — {body.note_text}".strip(),
+        "tag": "event_note",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.athlete_notes.insert_one(timeline_doc)
+
+    return result
+
+
+@api_router.patch("/events/{event_id}/notes/{note_id}")
+async def edit_event_note(event_id: str, note_id: str, body: EventNoteUpdate):
+    """Edit a captured note"""
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    result = update_note(event_id, note_id, updates)
+    if not result:
+        return {"error": "Note not found"}
+    return result
+
+
+@api_router.get("/events/{event_id}/summary")
+async def event_summary(event_id: str):
+    """Get aggregated summary data for post-event debrief"""
+    result = get_event_summary(event_id)
+    if not result:
+        return {"error": "Event not found"}
+    return result
+
+
+@api_router.post("/events/{event_id}/notes/{note_id}/route")
+async def route_single_note(event_id: str, note_id: str):
+    """Route a single note's follow-ups to the athlete's Support Pod"""
+    result = route_note_to_pod(event_id, note_id)
+    if not result:
+        return {"error": "Note not found"}
+
+    # Create action items in Support Pod
+    for action_data in result["actions_to_create"]:
+        doc = {
+            "id": str(uuid.uuid4()),
+            "athlete_id": result["athlete_id"],
+            "title": action_data["title"],
+            "owner": action_data["owner"],
+            "status": "ready",
+            "due_date": action_data["due_date"],
+            "source": "event",
+            "source_category": action_data["source_category"],
+            "created_by": "Coach Martinez",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "is_suggested": False,
+            "completed_at": None,
+        }
+        await db.pod_actions.insert_one(doc)
+
+    # Log to athlete timeline
+    timeline_doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": result["athlete_id"],
+        "author": "Coach Martinez",
+        "text": result["timeline_text"],
+        "tag": "event_routed",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.athlete_notes.insert_one(timeline_doc)
+
+    return {"routed": True, "note": result["note"], "actions_created": len(result["actions_to_create"])}
+
+
+@api_router.post("/events/{event_id}/route-to-pods")
+async def bulk_route_notes(event_id: str):
+    """Bulk route all eligible notes to Support Pods"""
+    results = bulk_route_to_pods(event_id)
+
+    total_actions = 0
+    athletes_routed = set()
+
+    for result in results:
+        for action_data in result["actions_to_create"]:
+            doc = {
+                "id": str(uuid.uuid4()),
+                "athlete_id": result["athlete_id"],
+                "title": action_data["title"],
+                "owner": action_data["owner"],
+                "status": "ready",
+                "due_date": action_data["due_date"],
+                "source": "event",
+                "source_category": action_data["source_category"],
+                "created_by": "Coach Martinez",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "is_suggested": False,
+                "completed_at": None,
+            }
+            await db.pod_actions.insert_one(doc)
+            total_actions += 1
+
+        # Log timeline
+        timeline_doc = {
+            "id": str(uuid.uuid4()),
+            "athlete_id": result["athlete_id"],
+            "author": "Coach Martinez",
+            "text": result["timeline_text"],
+            "tag": "event_routed",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.athlete_notes.insert_one(timeline_doc)
+        athletes_routed.add(result["athlete_id"])
+
+    return {
+        "routed_notes": len(results),
+        "actions_created": total_actions,
+        "athletes_affected": len(athletes_routed),
+    }
+
+
+@api_router.get("/schools")
+async def list_schools():
+    """Get all schools for selectors"""
+    return SCHOOLS
 
 
 # Debug endpoints for Decision Engine inspection

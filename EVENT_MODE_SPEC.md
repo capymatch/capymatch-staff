@@ -486,53 +486,157 @@ Full list of captured notes, grouped by athlete, expandable. Allows editing note
 
 ---
 
-## Routing Logic
+## Signal Routing Matrix
 
-### Event Mode → Support Pod
+Every signal captured in Live Event Mode has a defined downstream path. This is the contract between Event Mode and the rest of the system.
 
-When a coach clicks "Route to Pod" on a note or follow-up action:
+### By Interest Level
 
-1. **Create action items** in the athlete's Support Pod:
-   ```
-   POST /api/support-pods/:athleteId/actions
-   {
-     "title": "Send highlight reel to UCLA coach",
-     "owner": "Coach Martinez",
-     "due_date": "2026-02-09",
-     "source_category": "event_follow_up"
-   }
-   ```
+| Interest | Timeline | Follow-up Action | Support Pod | Mission Control | Advocacy-Ready |
+|----------|----------|-------------------|-------------|-----------------|----------------|
+| **Hot** | Always | Auto-created from checked follow-ups | Action items created when routed (manual or auto) | Surfaces as `event_follow_up` intervention if follow-ups stale >48h | Yes — tagged as advocacy candidate |
+| **Warm** | Always | Created only from checked follow-ups | Action items created when manually routed | Does not surface unless follow-ups stale >72h | Yes — lower priority pool |
+| **Cool** | Always | No auto-creation | No | No | No |
+| **None** | Always | No | No | No | No |
 
-2. **Log to athlete timeline:**
-   ```
-   POST /api/athletes/:athleteId/notes
-   {
-     "text": "Event note (SoCal Showcase): UCLA coach loved footwork, asked for film. Interest: Hot",
-     "tag": "event_note"
-   }
-   ```
+### By Follow-Up Type
 
-3. **Mark note as routed:** `PATCH /api/events/:eventId/notes/:noteId { "routed_to_pod": true }`
+Each checked follow-up box produces a specific action with defined ownership, urgency, and routing:
 
-### Event Mode → Mission Control
+| Follow-Up | Action Created | Owner | Due | Routes To | MC Eligible |
+|-----------|---------------|-------|-----|-----------|-------------|
+| **Send film** | "Send [athlete] highlight reel to [school] coach" | Coach Martinez | +2 days | Support Pod action | Yes, if overdue |
+| **Schedule call** | "Schedule follow-up call with [school] re: [athlete]" | Coach Martinez | +3 days | Support Pod action | Yes, if overdue |
+| **Add to target list** | "Add [school] to [athlete] target list" | Coach Martinez | +1 day | Support Pod action | No |
+| **Route to Support Pod** | Creates/updates active issue in Support Pod | Coach Martinez | immediate | Support Pod issue banner | Yes — treated as new context |
 
-High-signal events should surface as interventions in Mission Control. This happens through the existing Decision Engine:
+### Signal Lifecycle
 
-**New detection category: `event_follow_up`**
+```
+CAPTURE (Live Mode)
+  │
+  ├─ note_text ──────────────── → Timeline entry (always, immediate)
+  │
+  ├─ interest: Hot/Warm ─────── → Follow-up actions created (from checked boxes)
+  │                                 │
+  │                                 ├─ Manual "Route to Pod" ──→ Support Pod actions + timeline
+  │                                 │
+  │                                 └─ Auto-route (Hot only) ──→ Support Pod actions
+  │                                     when summary is finalized
+  │
+  ├─ interest: Hot ──────────── → Advocacy candidate flag set
+  │                                 (future: feeds Advocacy Mode pipeline)
+  │
+  ├─ follow-up stale >48h ──── → Decision Engine: event_follow_up intervention
+  │   (Hot interest)               surfaces in Mission Control Priority Alerts
+  │
+  ├─ follow-up stale >72h ──── → Decision Engine: event_follow_up intervention
+  │   (Warm interest)              surfaces in MC Athletes Needing Attention
+  │
+  └─ interest: Cool/None ───── → Timeline only. No downstream routing.
+```
 
-When an event note has:
-- Interest level = "Hot" AND follow-up items checked → **high priority signal**
-- Multiple "Hot" interactions for same athlete → **momentum positive signal**
-- Follow-up items uncompleted after 48 hours → **ownership gap signal**
+### Routing Mechanics
 
-These signals feed into the existing `ALL_INTERVENTIONS` pipeline and surface naturally in Mission Control's Priority Alerts or Athletes Needing Attention sections.
+#### 1. Timeline Entry (Every Note)
 
-### Future: Event Mode → Advocacy Mode
+Every captured note logs to the athlete's treatment timeline immediately on save. No user action required.
 
-Notes captured with "Hot" interest and follow-up of "Schedule call" are candidates for the future Advocacy Mode. The data model is future-ready:
-- `interest_level` enables filtering for advocacy candidates
-- `follow_ups` array can be extended with advocacy-specific actions
-- `school_id` enables school-level relationship tracking
+```
+POST /api/athletes/:athleteId/notes
+{
+  "text": "[SoCal Showcase] UCLA — Coach loved footwork, asked for film",
+  "tag": "event_note"
+}
+```
+
+This ensures the Support Pod always has a record of what happened, even for Cool/None interactions.
+
+#### 2. Follow-Up Action Creation
+
+When a note is saved with checked follow-ups AND interest is Hot or Warm, action items are **staged** (stored on the event note, not yet pushed to Support Pod). They become Support Pod actions when:
+
+- **Explicit route:** Coach clicks "Route to Pod" on the note or on the summary page
+- **Bulk route:** Coach clicks "Route All to Pods" on the Post-Event Summary
+- **Auto-route (Hot only):** When the Post-Event Summary is marked as finalized, all un-routed Hot follow-ups auto-push to Support Pods
+
+Staged actions live on the event note as `follow_ups` array entries. When routed:
+
+```
+POST /api/support-pods/:athleteId/actions
+{
+  "title": "Send highlight reel to UCLA coach",
+  "owner": "Coach Martinez",
+  "due_date": "2026-02-09",
+  "source_category": "event_follow_up"
+}
+```
+
+```
+PATCH /api/events/:eventId/notes/:noteId
+{ "routed_to_pod": true }
+```
+
+#### 3. Support Pod Issue Creation
+
+When "Route to Support Pod" follow-up is checked, this is a stronger signal. It means the coach believes this interaction warrants an active issue in the Support Pod — not just an action item, but a context-setting issue.
+
+On route:
+- Existing Support Pod active issue is preserved (not overwritten)
+- A new timeline entry is logged with the full event context
+- Follow-up actions are created as usual
+- The note's `routed_to_pod` flag is set
+
+#### 4. Mission Control Surfacing
+
+Event signals reach Mission Control through the existing Decision Engine pipeline via a new `event_follow_up` detection category:
+
+**Trigger conditions:**
+| Condition | Priority Tier | MC Section |
+|-----------|--------------|------------|
+| Hot interest + follow-up action overdue >48h | High | Priority Alerts |
+| Warm interest + follow-up action overdue >72h | Medium | Athletes Needing Attention |
+| 3+ Hot interactions for same athlete at one event (no follow-up actions created) | Medium | Athletes Needing Attention |
+
+**Intervention object:**
+```json
+{
+  "category": "event_follow_up",
+  "trigger": "hot_follow_up_stale",
+  "why_this_surfaced": "UCLA showed hot interest in Sarah at SoCal Showcase — follow-up overdue",
+  "what_changed": "2 days since event, no response sent",
+  "recommended_action": "Send highlight reel and schedule call with UCLA coach",
+  "owner": "Coach Martinez",
+  "details": {
+    "event_name": "SoCal Showcase",
+    "school_name": "UCLA",
+    "interest_level": "hot",
+    "days_since_event": 2,
+    "stale_follow_ups": ["send_film", "schedule_call"]
+  }
+}
+```
+
+This intervention surfaces naturally alongside existing categories (momentum_drop, blocker, etc.) using the same scoring formula.
+
+#### 5. Advocacy Mode Readiness
+
+Every note with `interest_level: "hot"` or `"warm"` is tagged with an `advocacy_candidate` flag in the data model. This flag is not consumed by V1 but prepares the data for future Advocacy Mode:
+
+```json
+{
+  "advocacy_candidate": true,
+  "advocacy_signals": {
+    "school_id": "ucla",
+    "interest_level": "hot",
+    "has_follow_up_call": true,
+    "event_context": "SoCal Showcase",
+    "captured_at": "2026-02-07T14:32:00Z"
+  }
+}
+```
+
+Future Advocacy Mode will query for `advocacy_candidate: true` notes to build school relationship timelines and recommend advocacy actions (e.g., "UCLA has shown interest in 3 of your athletes across 2 events — consider a program-level introduction").
 
 ---
 
