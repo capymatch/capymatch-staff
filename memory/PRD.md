@@ -19,10 +19,17 @@ Build a recruiting operating system for clubs, coaches, families, and athletes. 
 - **Pod Health Indicator:** Calculated status (Healthy/Needs Attention/At Risk) displayed on Mission Control cards and Support Pod header.
 - **Real-Time Polling:** Auto-refresh every 30s on Support Pod with live indicator and manual refresh button (Feb 2026).
 
+## In Progress
+
+### P0 — Event Mode Spec
+- `/app/EVENT_MODE_SPEC.md` — Full implementation-ready spec for Event Mode (V2)
+- Status: SPEC WRITTEN, awaiting user approval before build
+
 ## Backlog
 
 ### P1 — Upcoming
-- V2: Event Mode & Advocacy Mode (new operating modes)
+- V2: Event Mode implementation (4 screens: Event Home, Prep, Live, Summary)
+- V2: Advocacy Mode (TBD spec)
 
 ### P2 — Future
 - V2.5: Program Intelligence
