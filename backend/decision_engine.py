@@ -3,10 +3,12 @@ Decision Engine - Intervention Detection and Scoring
 
 This module implements the 6 intervention categories, priority scoring,
 and surfacing logic as defined in DECISION_ENGINE_SPEC.md
+
+Scoring formula: (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10) / 10
 """
 
 from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Literal
+from typing import List, Dict
 import random
 
 
@@ -17,20 +19,19 @@ import random
 def detect_momentum_drop(athlete: Dict) -> Dict or None:
     """
     Category 1: Momentum Drop
-    Triggers: No activity 14+ days, declining engagement, stage regression
+    Triggers: No activity 21+ days (3 weeks = meaningful silence, not just a busy week)
     """
     days_since = athlete['daysSinceActivity']
-    
-    if days_since >= 14:
-        # Calculate scores
-        urgency = min(10, int((days_since - 14) / 2) + 7)  # 7-10 based on days
-        impact = 7 if days_since > 21 else 6  # Severe if 3+ weeks
-        actionability = 8  # Coach can call family easily
-        ownership = 9  # Clear coach responsibility
-        
+
+    if days_since >= 21:
+        urgency = min(10, 6 + (days_since - 21) // 3)
+        impact = 8 if days_since > 28 else 6
+        actionability = 8
+        ownership = 9
+
         score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-        score = score / 10  # Convert to 0-100 scale
-        
+        score = score // 10
+
         return {
             'category': 'momentum_drop',
             'trigger': f'no_activity_{days_since}_days',
@@ -39,26 +40,24 @@ def detect_momentum_drop(athlete: Dict) -> Dict or None:
             'impact': impact,
             'actionability': actionability,
             'ownership': ownership,
-            
-            # Explainability
-            'why_this_surfaced': f"No activity in {days_since} days",
-            'what_changed': f"Last activity was {athlete['lastActivity']}",
-            'recommended_action': "Check in with family about engagement",
+
+            'why_this_surfaced': f"No activity in {days_since} days — this athlete has gone dark",
+            'what_changed': f"Last logged activity was {days_since} days ago",
+            'recommended_action': "Check in with family about engagement and recruiting interest",
             'owner': "Coach Martinez",
-            
-            # Details for expansion
+
             'details': {
                 'last_activity': athlete['lastActivity'],
                 'momentum_score': athlete['momentumScore'],
                 'expected_frequency': 'Weekly updates',
                 'suggested_steps': [
-                    'Phone call to check in (preferred)',
-                    'Review target school list for engagement',
+                    'Phone call to check in (preferred over text)',
+                    'Review target school list — is the plan still viable?',
                     'Log update after conversation'
                 ]
             }
         }
-    
+
     return None
 
 
@@ -66,90 +65,88 @@ def detect_blocker(athlete: Dict) -> Dict or None:
     """
     Category 2: Blocker
     Triggers: Missing documents, overdue actions, support pod gaps
+    Uses deterministic checks based on athlete archetype/state, not pure randomness.
     """
-    # Simulate various blockers more frequently
-    
-    # Missing transcript for 2025 grads (20% chance)
-    if athlete['gradYear'] == 2025 and random.random() < 0.2:
-        urgency = 8  # Application season
-        impact = 8  # Blocks multiple schools
-        actionability = 6  # Requires external party (school counselor)
-        ownership = 7  # Parent + Coach coordination
-        
-        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-        score = score / 10
-        
-        return {
-            'category': 'blocker',
-            'trigger': 'missing_transcript',
-            'score': int(score),
-            'urgency': urgency,
-            'impact': impact,
-            'actionability': actionability,
-            'ownership': ownership,
-            
-            'why_this_surfaced': "Transcript missing for 3 target schools",
-            'what_changed': "Application deadlines in 10-14 days",
-            'recommended_action': "Request transcript from high school counselor",
-            'owner': "Parent + Coach",
-            
-            'details': {
-                'affected_schools': ['UCLA', 'Stanford', 'Duke'],
-                'deadline_dates': ['Jan 15', 'Jan 18', 'Jan 20'],
-                'blocker_type': 'missing_document',
-                'suggested_steps': [
-                    'Parent contacts school counselor',
-                    'Coach follows up with parent',
-                    'Track submission status'
-                ]
+    # Missing transcript — 2025 grads who are actively recruiting or narrowing
+    if athlete['gradYear'] == 2025 and athlete.get('archetype') in ('blocked_docs', 'blocked_materials'):
+        if athlete.get('archetype') == 'blocked_docs':
+            urgency = 9
+            impact = 8
+            actionability = 6
+            ownership = 7
+
+            score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+            score = score // 10
+
+            return {
+                'category': 'blocker',
+                'trigger': 'missing_transcript',
+                'score': int(score),
+                'urgency': urgency,
+                'impact': impact,
+                'actionability': actionability,
+                'ownership': ownership,
+
+                'why_this_surfaced': "Transcript missing — blocks applications to 3 target schools",
+                'what_changed': "Application deadlines in 10-14 days",
+                'recommended_action': "Request transcript from high school counselor",
+                'owner': "Parent + Coach",
+
+                'details': {
+                    'affected_schools': ['UCLA', 'Stanford', 'Duke'],
+                    'deadline_dates': ['Feb 15', 'Feb 18', 'Feb 20'],
+                    'blocker_type': 'missing_document',
+                    'suggested_steps': [
+                        'Parent contacts school counselor',
+                        'Coach follows up with parent in 48 hours',
+                        'Track submission status in pod'
+                    ]
+                }
             }
-        }
-    
-    # Missing highlight reel (15% chance for actively recruiting)
-    if athlete['recruitingStage'] == 'actively_recruiting' and random.random() < 0.15:
-        urgency = 6  # Important but not urgent
-        impact = 7  # Can't share with coaches
-        actionability = 4  # Requires filming and editing
-        ownership = 7  # Coach + Athlete
-        
-        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-        score = score / 10
-        
-        return {
-            'category': 'blocker',
-            'trigger': 'missing_highlight_reel',
-            'score': int(score),
-            'urgency': urgency,
-            'impact': impact,
-            'actionability': actionability,
-            'ownership': ownership,
-            
-            'why_this_surfaced': "No highlight reel available to share",
-            'what_changed': "Coaches requesting film for evaluation",
-            'recommended_action': "Create 2-3 minute highlight reel",
-            'owner': "Coach + Athlete",
-            
-            'details': {
-                'blocker_type': 'missing_materials',
-                'impact_description': 'Cannot respond to coach film requests',
-                'suggested_steps': [
-                    'Identify recent games with best footage',
-                    'Work with coach to select clips',
-                    'Create 2-3 minute reel'
-                ]
+        else:
+            urgency = 6
+            impact = 7
+            actionability = 4
+            ownership = 7
+
+            score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+            score = score // 10
+
+            return {
+                'category': 'blocker',
+                'trigger': 'missing_highlight_reel',
+                'score': int(score),
+                'urgency': urgency,
+                'impact': impact,
+                'actionability': actionability,
+                'ownership': ownership,
+
+                'why_this_surfaced': "No highlight reel available — coaches requesting film",
+                'what_changed': "2 college coaches requested film in the last week",
+                'recommended_action': "Create 2-3 minute highlight reel from recent games",
+                'owner': "Coach + Athlete",
+
+                'details': {
+                    'blocker_type': 'missing_materials',
+                    'impact_description': 'Cannot respond to coach film requests',
+                    'suggested_steps': [
+                        'Identify best footage from last 3 games',
+                        'Work with coach to select top clips',
+                        'Create 2-3 minute reel, upload to profile'
+                    ]
+                }
             }
-        }
-    
-    # Parent not in support pod (10% chance)
-    if random.random() < 0.1:
-        urgency = 5  # Not urgent but important
-        impact = 6  # Coordination gap
-        actionability = 9  # Easy to invite
-        ownership = 10  # Clear coach action
-        
+
+    # Support pod gap — athletes whose families aren't in the system (use archetype)
+    if athlete.get('archetype') == 'disengaging' and random.random() < 0.4:
+        urgency = 5
+        impact = 6
+        actionability = 9
+        ownership = 10
+
         score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-        score = score / 10
-        
+        score = score // 10
+
         return {
             'category': 'blocker',
             'trigger': 'support_pod_gap',
@@ -158,183 +155,194 @@ def detect_blocker(athlete: Dict) -> Dict or None:
             'impact': impact,
             'actionability': actionability,
             'ownership': ownership,
-            
-            'why_this_surfaced': "Parent not yet added to Support Pod",
-            'what_changed': "Family coordination needed for recruiting",
-            'recommended_action': "Invite parent to join Support Pod",
+
+            'why_this_surfaced': "Parent not yet added to Support Pod — coordination gap",
+            'what_changed': "Family engagement declining, pod access could help",
+            'recommended_action': "Invite parent to join the athlete's Support Pod",
             'owner': "Coach Martinez",
-            
+
             'details': {
                 'blocker_type': 'pod_gap',
                 'missing_role': 'parent',
                 'suggested_steps': [
                     'Send Support Pod invite to parent',
-                    'Explain pod purpose and access',
-                    'Schedule kickoff call'
+                    'Explain pod purpose and what they can see/do',
+                    'Schedule a kickoff call'
                 ]
             }
         }
-    
+
     return None
 
 
 def detect_deadline_proximity(athlete: Dict, upcoming_events: List[Dict]) -> Dict or None:
     """
     Category 3: Deadline Proximity
-    Triggers: Event in 48 hours without prep, application deadline approaching
+    Triggers: Event in <=2 days without prep, for athletes who are actively recruiting.
+    Only fires for athletes in active stages — not everyone.
     """
-    # Check if athlete has event tomorrow without prep
+    if athlete['recruitingStage'] not in ('actively_recruiting', 'narrowing'):
+        return None
+
     for event in upcoming_events:
-        if event['daysAway'] <= 1 and event['prepStatus'] == 'not_started':
-            # Check if athlete is attending
-            if random.random() < 0.3:  # 30% of athletes have this issue
-                urgency = 10  # Event tomorrow
-                impact = 8  # Major showcase
-                actionability = 9  # Can set targets now
-                ownership = 10  # Clear coach ownership
-                
+        if event['daysAway'] <= 2 and event['prepStatus'] == 'not_started':
+            # Only fire for ~25% of eligible athletes (simulates not all athletes attend every event)
+            if random.random() < 0.25:
+                urgency = 10
+                impact = 8
+                actionability = 9
+                ownership = 10
+
                 score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-                score = score / 10
-                
+                score = score // 10
+
                 return {
                     'category': 'deadline_proximity',
-                    'trigger': 'event_tomorrow_no_prep',
+                    'trigger': 'event_imminent_no_prep',
                     'score': int(score),
                     'urgency': urgency,
                     'impact': impact,
                     'actionability': actionability,
                     'ownership': ownership,
-                    
-                    'why_this_surfaced': f"{event['name']} in {event['daysAway']} {'day' if event['daysAway'] == 1 else 'hours'}",
-                    'what_changed': f"Event starts {'tomorrow' if event['daysAway'] == 1 else 'today'} at 9am",
-                    'recommended_action': "Set target schools and review prep checklist",
+
+                    'why_this_surfaced': f"{event['name']} is {'tomorrow' if event['daysAway'] == 1 else 'in 2 days'} — no prep started",
+                    'what_changed': f"Event starts in {event['daysAway']} day(s), {event['expectedSchools']} schools expected",
+                    'recommended_action': "Set target schools and complete prep checklist now",
                     'owner': "Coach Martinez",
-                    
+
                     'details': {
                         'event_name': event['name'],
                         'event_date': event['date'],
                         'expected_schools': event['expectedSchools'],
                         'prep_status': event['prepStatus'],
                         'checklist': [
-                            'Set target schools',
-                            'Review athlete current list',
+                            'Identify target school coaches attending',
+                            'Review athlete highlight reel',
                             'Prepare intro talking points'
                         ]
                     }
                 }
-    
+
     return None
 
 
 def detect_engagement_drop(athlete: Dict) -> Dict or None:
     """
     Category 4: Engagement Drop
-    Triggers: Athlete/family inactive, coach hasn't checked pod
+    Triggers: Athlete/family inactive 7-20 days (not yet "gone dark" like momentum_drop)
+    Catches the warning signs before full momentum collapse.
     """
-    # Simulate family disengagement for some athletes
-    if athlete['daysSinceActivity'] > 10 and random.random() < 0.2:
-        days_inactive = athlete['daysSinceActivity']
-        
-        urgency = 7  # Concerning but not immediate
-        impact = 7  # Engagement critical for success
-        actionability = 8  # Coach can call
-        ownership = 9  # Clear coach responsibility
-        
-        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-        score = score / 10
-        
-        return {
-            'category': 'engagement_drop',
-            'trigger': f'family_inactive_{days_inactive}_days',
-            'score': int(score),
-            'urgency': urgency,
-            'impact': impact,
-            'actionability': actionability,
-            'ownership': ownership,
-            
-            'why_this_surfaced': f"Family hasn't engaged in {days_inactive} days",
-            'what_changed': f"No logins, no responses since {athlete['lastActivity']}",
-            'recommended_action': "Personal phone call to check in",
-            'owner': "Coach Martinez",
-            
-            'details': {
-                'last_login': athlete['lastActivity'],
-                'missed_contacts': 3,
-                'engagement_pattern': 'sudden_drop',
-                'suggested_steps': [
-                    'Personal phone call (not text)',
-                    'Ask about family situation',
-                    'Re-engage with recruiting plan'
-                ]
+    days = athlete['daysSinceActivity']
+
+    # 7-20 day window — between "busy week" and "gone dark"
+    if 7 <= days <= 20:
+        # Higher probability for disengaging archetypes, lower for others
+        threshold = 0.6 if athlete.get('archetype') == 'disengaging' else 0.15
+        if random.random() < threshold:
+            urgency = 5 + min(3, (days - 7) // 3)
+            impact = 7
+            actionability = 8
+            ownership = 9
+
+            score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+            score = score // 10
+
+            return {
+                'category': 'engagement_drop',
+                'trigger': f'family_inactive_{days}_days',
+                'score': int(score),
+                'urgency': urgency,
+                'impact': impact,
+                'actionability': actionability,
+                'ownership': ownership,
+
+                'why_this_surfaced': f"Family hasn't engaged in {days} days — early warning",
+                'what_changed': f"No logins or responses since {athlete['lastActivity'][:10]}",
+                'recommended_action': "Personal phone call to check in before momentum drops further",
+                'owner': "Coach Martinez",
+
+                'details': {
+                    'last_login': athlete['lastActivity'],
+                    'days_inactive': days,
+                    'engagement_pattern': 'declining',
+                    'suggested_steps': [
+                        'Personal phone call (not text/email)',
+                        'Ask about family situation — any changes?',
+                        'Re-engage with updated recruiting timeline'
+                    ]
+                }
             }
-        }
-    
+
     return None
 
 
 def detect_ownership_gap(athlete: Dict) -> Dict or None:
     """
     Category 5: Ownership Gap
-    Triggers: Action with no owner, college response unassigned
+    Triggers: College responded but no follow-up owner assigned.
+    Fires for athletes with active college interest (>= 3 schools showing interest).
     """
-    # Simulate college response without follow-up owner
-    if athlete['activeInterest'] > 3 and random.random() < 0.15:
-        urgency = 8  # Response aging
-        impact = 9  # High-priority school
-        actionability = 10  # Can assign immediately
-        ownership = 4  # Needs assignment
-        
-        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-        score = score / 10
-        
-        schools = ['Boston College', 'Georgetown', 'Virginia', 'Michigan']
-        school = random.choice(schools)
-        
-        return {
-            'category': 'ownership_gap',
-            'trigger': 'college_response_no_owner',
-            'score': int(score),
-            'urgency': urgency,
-            'impact': impact,
-            'actionability': actionability,
-            'ownership': ownership,
-            
-            'why_this_surfaced': f"{school} coach responded 3 days ago",
-            'what_changed': "No follow-up owner assigned",
-            'recommended_action': "Assign owner and draft response strategy",
-            'owner': "Coach (needs to assign)",
-            
-            'details': {
-                'school_name': school,
-                'response_date': '3 days ago',
-                'response_type': 'camp_invite',
-                'athlete_interest_level': 'high',
-                'suggested_steps': [
-                    'Assign to athlete or parent',
-                    'Review response with family',
-                    'Draft reply within 24 hours'
-                ]
+    if athlete['activeInterest'] >= 3:
+        # Higher probability for hot prospects who have lots of inbound
+        threshold = 0.5 if athlete.get('archetype') == 'hot_prospect' else 0.15
+        if random.random() < threshold:
+            school_options = ['Boston College', 'Georgetown', 'Virginia', 'Michigan', 'UNC', 'USC']
+            school = random.choice(school_options)
+            days_ago = random.choice([2, 3, 4, 5])
+
+            urgency = 8
+            impact = 9
+            actionability = 10
+            ownership = 3  # Low — that's the problem
+
+            score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+            score = score // 10
+
+            return {
+                'category': 'ownership_gap',
+                'trigger': 'college_response_unassigned',
+                'score': int(score),
+                'urgency': urgency,
+                'impact': impact,
+                'actionability': actionability,
+                'ownership': ownership,
+
+                'why_this_surfaced': f"{school} coach responded {days_ago} days ago — no one owns the follow-up",
+                'what_changed': "Response aging without assignment",
+                'recommended_action': "Assign follow-up owner and draft response strategy",
+                'owner': "Needs assignment",
+
+                'details': {
+                    'school_name': school,
+                    'response_date': f'{days_ago} days ago',
+                    'response_type': random.choice(['camp_invite', 'info_request', 'evaluation_feedback']),
+                    'athlete_interest_level': 'high',
+                    'suggested_steps': [
+                        'Assign to parent or athlete as owner',
+                        'Review response details with family',
+                        'Draft and send reply within 24 hours'
+                    ]
+                }
             }
-        }
-    
+
     return None
 
 
 def detect_readiness_issue(athlete: Dict) -> Dict or None:
     """
     Category 6: Readiness Issue
-    Triggers: Target list too narrow/broad, stage misalignment
+    Triggers: 2025 grad with too few target schools (< 4).
+    This is deterministic — if your list is thin, we surface it.
     """
-    # Check target school count for grad year
     if athlete['gradYear'] == 2025 and athlete['schoolTargets'] < 4:
-        urgency = 8  # Critical recruiting window
-        impact = 6  # Limits opportunities
-        actionability = 5  # Requires research
-        ownership = 7  # Collaborative (coach + athlete)
-        
+        urgency = 8
+        impact = 7
+        actionability = 5
+        ownership = 7
+
         score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-        score = score / 10
-        
+        score = score // 10
+
         return {
             'category': 'readiness_issue',
             'trigger': 'target_list_too_narrow',
@@ -343,24 +351,24 @@ def detect_readiness_issue(athlete: Dict) -> Dict or None:
             'impact': impact,
             'actionability': actionability,
             'ownership': ownership,
-            
-            'why_this_surfaced': f"Only {athlete['schoolTargets']} target schools for {athlete['gradYear']} grad",
-            'what_changed': "Critical recruiting window (spring season)",
-            'recommended_action': "Expand target list to 5-8 schools, research fit",
+
+            'why_this_surfaced': f"Only {athlete['schoolTargets']} target schools for a {athlete['gradYear']} grad",
+            'what_changed': "Spring recruiting window is open — narrow list limits options",
+            'recommended_action': "Expand target list to 5-8 schools based on athletic and academic fit",
             'owner': "Coach + Athlete",
-            
+
             'details': {
                 'current_target_count': athlete['schoolTargets'],
                 'recommended_range': '5-8 schools',
                 'grad_year': athlete['gradYear'],
                 'suggested_steps': [
-                    'Research schools matching profile',
-                    'Discuss fit with family',
-                    'Add 3-4 target schools'
+                    'Research 3-5 schools matching athletic profile',
+                    'Discuss academic/geographic fit with family',
+                    'Add schools and begin outreach'
                 ]
             }
         }
-    
+
     return None
 
 
@@ -369,12 +377,9 @@ def detect_readiness_issue(athlete: Dict) -> Dict or None:
 # ============================================================================
 
 def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List[Dict]:
-    """
-    Run all 6 detection categories and return list of interventions
-    """
+    """Run all 6 detection categories and return list of interventions"""
     interventions = []
-    
-    # Run each detector
+
     detectors = [
         detect_momentum_drop(athlete),
         detect_blocker(athlete),
@@ -383,17 +388,19 @@ def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List
         detect_ownership_gap(athlete),
         detect_readiness_issue(athlete)
     ]
-    
-    # Filter out None results
+
     for intervention in detectors:
         if intervention:
-            # Add athlete context
             intervention['athlete_id'] = athlete['id']
             intervention['athlete_name'] = athlete['fullName']
             intervention['grad_year'] = athlete['gradYear']
             intervention['position'] = athlete['position']
-            
-            # Add priority tier
+            intervention['momentum_score'] = athlete['momentumScore']
+            intervention['momentum_trend'] = athlete['momentumTrend']
+            intervention['recruiting_stage'] = athlete['recruitingStage']
+            intervention['school_targets'] = athlete['schoolTargets']
+            intervention['team'] = athlete['team']
+
             score = intervention['score']
             if score >= 90:
                 intervention['priority_tier'] = 'critical'
@@ -407,20 +414,17 @@ def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List
             else:
                 intervention['priority_tier'] = 'low'
                 intervention['badge_color'] = 'gray'
-            
-            # Add routing
+
             intervention['action_link'] = f"/support-pods/{athlete['id']}?context={intervention['category']}"
             intervention['action_type'] = 'navigate'
-            
+
             interventions.append(intervention)
-    
+
     return interventions
 
 
 def rank_interventions(interventions: List[Dict]) -> List[Dict]:
-    """
-    Sort interventions by score (descending)
-    """
+    """Sort interventions by score (descending)"""
     return sorted(interventions, key=lambda x: x['score'], reverse=True)
 
 
@@ -433,22 +437,18 @@ def get_priority_alerts(all_interventions: List[Dict]) -> List[Dict]:
     Return top 2-4 critical/high priority items (score >= 70)
     Consolidate: max 2 per athlete
     """
-    # Filter for score >= 70
     high_priority = [i for i in all_interventions if i['score'] >= 70]
-    
-    # Consolidate: max 2 per athlete
+
     athlete_counts = {}
     filtered = []
-    
+
     for intervention in high_priority:
         athlete_id = intervention['athlete_id']
         count = athlete_counts.get(athlete_id, 0)
-        
         if count < 2:
             filtered.append(intervention)
             athlete_counts[athlete_id] = count + 1
-    
-    # Return top 2-4
+
     return filtered[:4]
 
 
@@ -457,34 +457,25 @@ def get_athletes_needing_attention(all_interventions: List[Dict]) -> List[Dict]:
     Return up to 12 medium+ priority items (score >= 50)
     One intervention per athlete (highest scored)
     """
-    # Filter for score >= 50
     medium_plus = [i for i in all_interventions if i['score'] >= 50]
-    
-    # One per athlete (highest score)
+
     athlete_best = {}
     for intervention in medium_plus:
         athlete_id = intervention['athlete_id']
         if athlete_id not in athlete_best or intervention['score'] > athlete_best[athlete_id]['score']:
             athlete_best[athlete_id] = intervention
-    
-    # Convert to list and sort
-    result = list(athlete_best.values())
-    result = sorted(result, key=lambda x: x['score'], reverse=True)
-    
-    # Return up to 12
+
+    result = sorted(athlete_best.values(), key=lambda x: x['score'], reverse=True)
     return result[:12]
 
 
 def consolidate_multiple_issues(athlete_id: str, interventions: List[Dict]) -> Dict:
-    """
-    If athlete has 3+ issues, show top 2 with "+ N more" indicator
-    """
+    """If athlete has 3+ issues, show top 2 with '+ N more' indicator"""
     athlete_issues = [i for i in interventions if i['athlete_id'] == athlete_id]
-    
+
     if len(athlete_issues) <= 2:
         return None
-    
-    # Return consolidation info
+
     return {
         'athlete_id': athlete_id,
         'athlete_name': athlete_issues[0]['athlete_name'],
