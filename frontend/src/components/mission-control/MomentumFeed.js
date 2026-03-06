@@ -1,90 +1,55 @@
 import { CheckCircle2, AlertCircle, Mail, Calendar, ArrowRight } from "lucide-react";
 
 function MomentumFeed({ signals }) {
-  if (!signals || signals.length === 0) {
-    return (
-      <section className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm" data-testid="momentum-feed-section">
-        <h2 className="text-xl font-bold tracking-tight mb-4" style={{fontFamily: 'Manrope'}}>
-          What Changed Today
-        </h2>
-        <p className="text-gray-500 text-sm text-center py-8">
-          No new momentum signals yet today. Check back later.
-        </p>
-      </section>
-    );
-  }
+  if (!signals || signals.length === 0) return null;
 
   const getIcon = (iconName, sentiment) => {
-    const colorClass = sentiment === 'positive' ? 'text-emerald-600' : 
-                      sentiment === 'negative' ? 'text-red-600' : 'text-gray-600';
-    
+    const colorClass = sentiment === "positive" ? "text-emerald-500" : sentiment === "negative" ? "text-red-500" : "text-slate-400";
     switch (iconName) {
-      case 'mail':
-        return <Mail className={`w-4 h-4 ${colorClass}`} />;
-      case 'calendar':
-        return <Calendar className={`w-4 h-4 ${colorClass}`} />;
-      case 'alert':
-        return <AlertCircle className={`w-4 h-4 ${colorClass}`} />;
-      case 'arrow-right':
-        return <ArrowRight className={`w-4 h-4 ${colorClass}`} />;
-      default:
-        return <CheckCircle2 className={`w-4 h-4 ${colorClass}`} />;
+      case "mail": return <Mail className={`w-3.5 h-3.5 ${colorClass}`} />;
+      case "calendar": return <Calendar className={`w-3.5 h-3.5 ${colorClass}`} />;
+      case "alert": return <AlertCircle className={`w-3.5 h-3.5 ${colorClass}`} />;
+      case "arrow-right": return <ArrowRight className={`w-3.5 h-3.5 ${colorClass}`} />;
+      default: return <CheckCircle2 className={`w-3.5 h-3.5 ${colorClass}`} />;
     }
   };
 
   const getTimeLabel = (hoursAgo) => {
-    if (hoursAgo < 1) return 'Just now';
-    if (hoursAgo < 2) return '1 hour ago';
-    if (hoursAgo < 12) return `${Math.floor(hoursAgo)} hours ago`;
-    if (hoursAgo < 24) return 'Earlier today';
-    return 'Yesterday';
+    if (hoursAgo < 1) return "now";
+    if (hoursAgo < 2) return "1h";
+    if (hoursAgo < 24) return `${Math.floor(hoursAgo)}h`;
+    return "1d";
   };
 
   return (
-    <section className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm" data-testid="momentum-feed-section">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold tracking-tight" style={{fontFamily: 'Manrope'}}>
-          What Changed Today
-        </h2>
-        <button className="text-sm text-primary hover:underline font-medium" data-testid="view-all-activity">
-          View all activity
+    <section data-testid="momentum-feed-section">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em]">Live Feed</span>
+        <button className="text-[11px] text-primary hover:underline font-medium" data-testid="view-all-activity">
+          View all
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="bg-white rounded-lg overflow-hidden divide-y divide-slate-50">
         {signals.map((signal) => (
           <div
             key={signal.id}
             data-testid={`momentum-signal-${signal.id}`}
-            className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/50 transition-colors cursor-pointer"
           >
-            <div className={`
-              flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
-              ${signal.sentiment === 'positive' ? 'bg-emerald-50' : 
-                signal.sentiment === 'negative' ? 'bg-red-50' : 'bg-gray-50'}
-            `}>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+              signal.sentiment === "positive" ? "bg-emerald-50" :
+              signal.sentiment === "negative" ? "bg-red-50" : "bg-slate-50"
+            }`}>
               {getIcon(signal.icon, signal.sentiment)}
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline space-x-2 mb-1">
-                <span className="font-semibold text-gray-900 text-sm">{signal.athleteName}</span>
-                <span className="text-xs text-gray-500">{getTimeLabel(signal.hoursAgo)}</span>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed">{signal.description}</p>
-              {signal.school && (
-                <span className="inline-block mt-1 text-xs text-gray-500">
-                  {signal.school}
-                </span>
-              )}
+            <div className="flex-1 min-w-0 flex items-baseline gap-2">
+              <span className="text-xs font-semibold text-slate-700 shrink-0">{signal.athleteName}</span>
+              <span className="text-xs text-slate-500 truncate">{signal.description}</span>
             </div>
 
-            <button 
-              className="flex-shrink-0 text-primary hover:opacity-80 transition-opacity"
-              data-testid={`signal-action-${signal.id}`}
-            >
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <span className="text-[10px] text-slate-400 font-mono shrink-0">{getTimeLabel(signal.hoursAgo)}</span>
           </div>
         ))}
       </div>

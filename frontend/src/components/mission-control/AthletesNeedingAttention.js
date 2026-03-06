@@ -38,151 +38,79 @@ function PodHealthDot({ health }) {
 function AthletesNeedingAttention({ athletes, selectedGradYear, onPeek }) {
   if (!athletes || athletes.length === 0) {
     return (
-      <section className="space-y-4" data-testid="athletes-attention-section">
-        <h2 className="text-xl font-bold tracking-tight">Athletes Needing Attention</h2>
-        <div className="bg-white rounded-xl border border-gray-100 p-12 shadow-sm text-center">
-          <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <TrendingUp className="w-8 h-8 text-emerald-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">No athletes need immediate attention</h3>
-            <p className="text-sm text-gray-600">
-              {selectedGradYear === "all"
-                ? "All athletes are looking good! Great work."
-                : `All ${selectedGradYear} athletes are on track.`}
-            </p>
-          </div>
+      <section data-testid="athletes-attention-section">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em]">Monitoring</span>
+        <div className="bg-white rounded-lg p-10 mt-3 text-center">
+          <TrendingUp className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+          <p className="text-sm text-slate-500">All athletes are on track.</p>
         </div>
       </section>
     );
   }
 
   const getMomentumBadge = (trend, score) => {
-    if (trend === "rising") {
-      return (
-        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full text-xs font-medium">
-          <TrendingUp className="w-3 h-3" />
-          <span>+{score}</span>
-        </span>
-      );
-    } else if (trend === "declining") {
-      return (
-        <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-full text-xs font-medium">
-          <TrendingDown className="w-3 h-3" />
-          <span>{score}</span>
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded-full text-xs font-medium">
-        <Minus className="w-3 h-3" />
-        <span>{score}</span>
-      </span>
-    );
+    if (trend === "rising") return <span className="inline-flex items-center gap-0.5 text-emerald-600 text-xs font-semibold"><TrendingUp className="w-3 h-3" />+{score}</span>;
+    if (trend === "declining") return <span className="inline-flex items-center gap-0.5 text-red-600 text-xs font-semibold"><TrendingDown className="w-3 h-3" />{score}</span>;
+    return <span className="inline-flex items-center gap-0.5 text-slate-500 text-xs font-semibold"><Minus className="w-3 h-3" />{score}</span>;
   };
 
   const getCategoryBadge = (category, badgeColor) => {
     const colors = {
-      red: "bg-red-50 text-red-700 border-red-200",
-      amber: "bg-amber-50 text-amber-700 border-amber-200",
-      blue: "bg-blue-50 text-blue-700 border-blue-200",
-      gray: "bg-gray-100 text-gray-600 border-gray-200",
+      red: "text-red-600 bg-red-500/8",
+      amber: "text-amber-600 bg-amber-500/8",
+      blue: "text-blue-600 bg-blue-500/8",
+      gray: "text-slate-500 bg-slate-500/8",
     };
     const Icon = CATEGORY_ICONS[category] || Zap;
+    const c = colors[badgeColor] || colors.gray;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${colors[badgeColor] || colors.gray}`}>
+      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${c}`}>
         <Icon className="w-3 h-3" />
-        {CATEGORY_LABELS[category] || category}
+        {CATEGORY_LABELS[category]}
       </span>
     );
   };
 
-  const getStageBadge = (stage) => {
-    const stages = {
-      exploring: { label: "Exploring", color: "bg-gray-100 text-gray-700 border-gray-200" },
-      actively_recruiting: { label: "Active", color: "bg-blue-100 text-blue-700 border-blue-200" },
-      narrowing: { label: "Narrowing", color: "bg-purple-100 text-purple-700 border-purple-200" },
-    };
-    const s = stages[stage] || stages.exploring;
-    return <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${s.color}`}>{s.label}</span>;
-  };
-
   return (
-    <section className="space-y-4" data-testid="athletes-attention-section">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold tracking-tight">
-          Athletes Needing Attention
-          <span className="ml-3 text-sm font-normal text-gray-500">
-            {athletes.length} {athletes.length === 1 ? "athlete" : "athletes"}
-          </span>
-        </h2>
+    <section data-testid="athletes-attention-section">
+      <div className="flex items-baseline gap-3 mb-4">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em]">Monitoring</span>
+        <span className="text-[11px] text-slate-400">{athletes.length} athletes</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="bg-white rounded-lg overflow-hidden divide-y divide-slate-50">
         {athletes.map((athlete, idx) => (
           <div
             key={`${athlete.athlete_id}_${athlete.category}_${idx}`}
             data-testid={`athlete-card-${athlete.athlete_id}`}
             onClick={() => onPeek?.(athlete)}
-            className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 cursor-pointer group"
+            className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group"
           >
-            {/* Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary transition-colors" data-testid="athlete-name">
-                  {athlete.athlete_name}
-                </h3>
-                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span>{athlete.grad_year}</span>
-                  <span>·</span>
-                  <span>{athlete.position}</span>
-                  <span>·</span>
-                  <span>{athlete.team}</span>
-                </div>
-              </div>
+            {/* Left: momentum indicator */}
+            <div className="pt-0.5 shrink-0">
               {getMomentumBadge(athlete.momentum_trend, athlete.momentum_score)}
             </div>
 
-            {/* Intervention reason */}
-            <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1.5">
+            {/* Center: main content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-semibold text-slate-800 group-hover:text-primary transition-colors" data-testid="athlete-name">
+                  {athlete.athlete_name}
+                </span>
+                <span className="text-[11px] text-slate-400">{athlete.grad_year} · {athlete.position}</span>
                 {getCategoryBadge(athlete.category, athlete.badge_color)}
               </div>
-              <p className="text-sm text-gray-700 leading-relaxed" data-testid="athlete-issue">
+
+              {/* WHY — prominent */}
+              <p className="text-sm text-slate-600 leading-relaxed" data-testid="athlete-issue">
                 {athlete.why_this_surfaced}
               </p>
             </div>
 
-            {/* Meta row */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap">
-              {getStageBadge(athlete.recruiting_stage)}
-              <span>·</span>
-              <span>{athlete.school_targets} schools</span>
-              <span>·</span>
-              <span>Owner: {athlete.owner}</span>
-              {athlete.pod_health && (
-                <>
-                  <span>·</span>
-                  <PodHealthDot health={athlete.pod_health} />
-                </>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-full font-medium text-xs"
-                data-testid={`athlete-view-pod-${athlete.athlete_id}`}
-              >
-                View Support Pod
-              </Button>
-              <Button size="sm" variant="ghost" className="p-2" data-testid={`athlete-log-note-${athlete.athlete_id}`}>
-                <FileText className="w-4 h-4" />
-              </Button>
-              <Button size="sm" variant="ghost" className="p-2" data-testid={`athlete-message-${athlete.athlete_id}`}>
-                <MessageSquare className="w-4 h-4" />
-              </Button>
+            {/* Right: pod health + owner */}
+            <div className="shrink-0 text-right space-y-1 pt-0.5">
+              {athlete.pod_health && <PodHealthDot health={athlete.pod_health} />}
+              <p className="text-[11px] text-slate-400">{athlete.owner}</p>
             </div>
           </div>
         ))}

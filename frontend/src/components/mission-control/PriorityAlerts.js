@@ -22,41 +22,39 @@ const CATEGORY_ICONS = {
 function PriorityAlerts({ alerts, onPeek }) {
   if (!alerts || alerts.length === 0) return null;
 
-  const getAlertStyles = (color) => {
+  const getBorderColor = (color) => {
     switch (color) {
-      case "red": return "border-l-red-500 bg-red-50/40";
-      case "amber": return "border-l-amber-500 bg-amber-50/40";
-      case "blue": return "border-l-blue-500 bg-blue-50/40";
-      default: return "border-l-gray-400 bg-gray-50";
+      case "red": return "border-l-red-500";
+      case "amber": return "border-l-amber-500";
+      default: return "border-l-blue-500";
+    }
+  };
+
+  const getAccentColor = (color) => {
+    switch (color) {
+      case "red": return "text-red-600";
+      case "amber": return "text-amber-600";
+      default: return "text-blue-600";
     }
   };
 
   const getBadgeStyles = (color) => {
     switch (color) {
-      case "red": return "bg-red-100 text-red-700 border-red-200";
-      case "amber": return "bg-amber-100 text-amber-700 border-amber-200";
-      case "blue": return "bg-blue-100 text-blue-700 border-blue-200";
-      default: return "bg-gray-100 text-gray-700 border-gray-200";
-    }
-  };
-
-  const getIconColor = (color) => {
-    switch (color) {
-      case "red": return "text-red-500";
-      case "amber": return "text-amber-500";
-      default: return "text-blue-500";
+      case "red": return "bg-red-500/10 text-red-600";
+      case "amber": return "bg-amber-500/10 text-amber-600";
+      default: return "bg-blue-500/10 text-blue-600";
     }
   };
 
   return (
-    <section className="space-y-4" data-testid="priority-alerts-section">
-      <div className="flex items-center space-x-2">
-        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-        <h2 className="text-xl font-bold tracking-tight">Priority Alerts</h2>
-        <span className="text-sm text-gray-500 ml-2">{alerts.length} active</span>
+    <section data-testid="priority-alerts-section">
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em]">Priority Alerts</span>
+        <span className="text-[11px] text-slate-400 ml-1">{alerts.length} active</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-3">
         {alerts.map((alert, idx) => {
           const CategoryIcon = CATEGORY_ICONS[alert.category] || AlertCircle;
           return (
@@ -64,35 +62,19 @@ function PriorityAlerts({ alerts, onPeek }) {
               key={`${alert.athlete_id}_${alert.category}_${idx}`}
               data-testid={`priority-alert-${alert.athlete_id}-${alert.category}`}
               onClick={() => onPeek?.(alert)}
-              className={`bg-white rounded-xl border-l-4 p-5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${getAlertStyles(alert.badge_color)}`}
+              className={`border-l-[3px] bg-white rounded-r-lg pl-5 pr-5 py-4 cursor-pointer hover:shadow-md transition-all duration-150 ${getBorderColor(alert.badge_color)}`}
             >
-              {/* Header: category badge + icon */}
-              <div className="flex items-start justify-between mb-3">
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getBadgeStyles(alert.badge_color)}`}>
-                  {CATEGORY_LABELS[alert.category] || alert.category}
-                </span>
-                <CategoryIcon className={`w-5 h-5 ${getIconColor(alert.badge_color)}`} />
-              </div>
-
-              {/* Athlete + why */}
-              <div className="space-y-1.5 mb-3">
-                <div className="flex items-baseline gap-2">
-                  <h3 className="font-semibold text-gray-900" data-testid="alert-athlete-name">{alert.athlete_name}</h3>
-                  <span className="text-xs text-gray-500">{alert.grad_year} · {alert.position}</span>
+              {/* Top line: category + athlete */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getBadgeStyles(alert.badge_color)}`}>
+                    <CategoryIcon className="w-3 h-3" />
+                    {CATEGORY_LABELS[alert.category]}
+                  </span>
+                  <span className="text-xs text-slate-400">{alert.athlete_name} · {alert.grad_year}</span>
                 </div>
-                <p className="text-sm text-gray-700 leading-relaxed" data-testid="alert-why">
-                  {alert.why_this_surfaced}
-                </p>
-                {alert.what_changed && (
-                  <p className="text-xs text-gray-500">{alert.what_changed}</p>
-                )}
-              </div>
-
-              {/* Owner + pod health */}
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                <span>Owner: <span className="font-medium text-gray-700">{alert.owner}</span></span>
                 {alert.pod_health && (
-                  <span className="flex items-center gap-1" data-testid="alert-pod-health">
+                  <span className="flex items-center gap-1 text-[11px]" data-testid="alert-pod-health">
                     <span className={`w-1.5 h-1.5 rounded-full ${
                       alert.pod_health.status === "red" ? "bg-red-500" :
                       alert.pod_health.status === "yellow" ? "bg-amber-400" : "bg-emerald-500"
@@ -105,15 +87,18 @@ function PriorityAlerts({ alerts, onPeek }) {
                 )}
               </div>
 
-              {/* Action button */}
-              <Button
-                size="sm"
-                className="w-full bg-primary hover:bg-primary/90 text-white rounded-full font-medium text-sm"
-                data-testid={`alert-action-${alert.athlete_id}`}
-              >
-                {alert.recommended_action}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              {/* WHY — the dominant line */}
+              <p className={`text-base font-semibold leading-snug mb-1 ${getAccentColor(alert.badge_color)}`} data-testid="alert-why">
+                {alert.why_this_surfaced}
+              </p>
+
+              {/* Context + owner */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">{alert.what_changed}</p>
+                <span className="text-[11px] text-slate-400">
+                  <span className="font-medium text-slate-600">{alert.owner}</span>
+                </span>
+              </div>
             </div>
           );
         })}
