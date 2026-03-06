@@ -54,6 +54,7 @@ from advocacy_engine import (
     get_all_relationships,
     get_event_context,
 )
+from program_engine import compute_all as compute_program_intelligence
 
 
 ROOT_DIR = Path(__file__).parent
@@ -864,6 +865,16 @@ async def close_rec(rec_id: str, body: CloseRequest):
         "created_at": datetime.now(timezone.utc).isoformat(),
     })
     return rec
+
+
+# ============================================================================
+# PROGRAM INTELLIGENCE
+# ============================================================================
+
+@api_router.get("/program/intelligence")
+async def program_intelligence():
+    """Return all 5 sections of Program Intelligence in a single response"""
+    return compute_program_intelligence()
 
 
 # Debug endpoints for Decision Engine inspection

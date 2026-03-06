@@ -10,6 +10,7 @@ import AdvocacyHome from "./pages/AdvocacyHome";
 import RecommendationBuilder from "./pages/RecommendationBuilder";
 import RecommendationDetail from "./pages/RecommendationDetail";
 import RelationshipDetail from "./pages/RelationshipDetail";
+import ProgramIntelligence from "./pages/ProgramIntelligence";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/advocacy/new" element={<RecommendationBuilder />} />
           <Route path="/advocacy/:recommendationId" element={<RecommendationDetail />} />
           <Route path="/advocacy/relationships/:schoolId" element={<RelationshipDetail />} />
+          <Route path="/program" element={<ProgramIntelligence />} />
           <Route path="/support-pods/:athleteId" element={<SupportPod />} />
           <Route path="*" element={<Navigate to="/mission-control" replace />} />
         </Routes>
