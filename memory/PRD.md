@@ -36,6 +36,8 @@ Build a recruiting operating system for clubs, coaches, families, and athletes. 
 - `/app/SUPPORT_POD_SPEC.md`
 - `/app/EVENT_MODE_SPEC.md` (with Signal Routing Matrix)
 - `/app/ADVOCACY_MODE_SPEC.md`
+- `/app/PROGRAM_INTELLIGENCE_SPEC.md`
+- `/app/PERSISTENCE_PLAN.md`
 
 ## Backlog
 
