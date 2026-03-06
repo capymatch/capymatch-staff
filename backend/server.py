@@ -351,13 +351,18 @@ async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdat
     if existing:
         await db.pod_actions.update_one({"id": action_id}, {"$set": update_dict})
     else:
-        # Suggested action being modified — save to DB
+        # Suggested action being modified — save to DB with original suggested fields preserved
+        from support_pod import get_athlete_interventions, generate_suggested_actions
+        suggested = generate_suggested_actions(athlete_id, get_athlete_interventions(athlete_id))
+        original = next((s for s in suggested if s["id"] == action_id), {})
         doc = {
+            **original,
             "id": action_id,
             "athlete_id": athlete_id,
             **update_dict,
-            "source": "intervention",
             "is_suggested": False,
+        }
+        await db.pod_actions.insert_one(doc)
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         await db.pod_actions.insert_one(doc)
