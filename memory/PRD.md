@@ -30,40 +30,35 @@ Build a "recruiting operating system" for clubs, coaches, families, and athletes
 ### Peek Panel (COMPLETE — Feb 2026)
 - Right-side slide-over panel for intervention preview
 - Shows: why surfaced, what changed, recommended action, owner, context, next steps
-- Dismiss via X, Escape, or backdrop click
 
 ### Quick Actions (COMPLETE — Feb 2026)
-- **Log Note:** Inline textarea + optional tag pills (Check-in, Follow-up, Update, Concern, Positive). Saves to MongoDB athlete timeline. Success toast.
-- **Assign:** Owner reassignment with selectable list (filters out current owner) + optional reason. Persists in MongoDB. Success toast.
-- **Message:** Recipient pill selection → reveals textarea. Sends to MongoDB. Success toast.
-- All actions transform the peek panel footer inline (no extra modals/dialogs)
-- Escape closes form first, then panel — proper layered dismissal
+- Log Note, Assign, Message — inline forms in peek panel footer
 - Backend: POST /api/athletes/{id}/notes, /assign, /messages + GET /timeline
+- All persist to MongoDB
 
-### API Endpoints
-- `GET /api/mission-control` — curated dashboard data
-- `GET /api/debug/interventions` — Decision Engine debug output
-- `GET /api/athletes` / `GET /api/athletes/{id}` — athlete data
-- `POST /api/athletes/{id}/notes` — log note to timeline
-- `POST /api/athletes/{id}/assign` — reassign intervention owner
-- `POST /api/athletes/{id}/messages` — send quick message
-- `GET /api/athletes/{id}/timeline` — all actions for an athlete
+### Support Pod Specification (COMPLETE — Feb 2026)
+- Full implementation-ready spec: SUPPORT_POD_SPEC.md
+- 5 core blocks: Active Issue Banner, Athlete Snapshot, Pod Members + Ownership, Next Actions, Treatment Timeline
+- API contracts, data models, component structure defined
+- Route: /support-pods/:athleteId?context=:category
 
 ## Prioritized Backlog
 
 ### P0 (Next)
-- Finalize Support Pod Specification (expand SUPPORT_POD_SPEC_DRAFT.md)
+- Implement Support Pod backend (GET /api/support-pods/:athleteId, POST actions, PATCH actions, POST resolve)
+- Implement Support Pod frontend (5 blocks + routing from Peek Panel)
 
 ### P1
-- Implement Backend for Support Pod (API endpoints, logic)
-- Implement Frontend for Support Pod (React components, routing)
+- Wire "Open Support Pod" button in Peek Panel to navigate to Support Pod
 - Refine Mission Control UI (address "generic dashboard" risks)
+- Pod health indicator connected to Mission Control
 
 ### P2
 - Event Mode & Advocacy Mode (V2)
 - Program Intelligence (V2.5)
 
 ### P3
+- Real pod member management (invite by email)
 - AI/Intelligence Layer integration
 - Real-time updates (WebSockets)
 - Replace mock intervention data with real database layer
