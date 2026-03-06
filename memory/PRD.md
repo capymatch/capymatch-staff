@@ -4,56 +4,58 @@
 Build a recruiting operating system for clubs, coaches, families, and athletes. The system actively coordinates support, surfaces priorities, identifies blockers, and helps users know what to do next.
 
 ## Architecture
-- **Backend:** FastAPI (Python), in-memory mock data (no DB persistence yet), MongoDB for quick actions/pod actions/timeline
+- **Backend:** FastAPI (Python), in-memory mock data, MongoDB for actions/timeline
 - **Frontend:** React, Shadcn/UI, Tailwind CSS
-- **Core Loop:** Triage (Mission Control) -> Preview (Peek Panel) -> Treatment (Support Pod) -> Capture (Event Mode)
+- **Core Loop:** Triage (MC) → Preview (Peek) → Treatment (Pod) → Capture (Event) → Promotion (Advocacy)
 
 ## What's Been Implemented
 
 ### V1 — Mission Control + Support Pod (Complete)
-- **Mission Control (Command Surface):** Priority alerts, athletes needing attention, momentum feed, upcoming events, program snapshot. Refined UI with operational feel.
-- **Decision Engine:** Backend module analyzing mock data to generate/rank interventions (blockers, momentum drops, deadlines, engagement, ownership, readiness).
-- **Peek Panel:** Slide-over preview from Mission Control cards showing intervention details.
-- **Quick Actions:** Log Note, Assign, Message — inline forms within Peek Panel with backend persistence.
-- **Support Pod (Treatment Environment):** 5 core blocks — Active Issue Banner, Athlete Snapshot, Pod Members, Next Actions, Treatment Timeline.
-- **Pod Health Indicator:** Calculated status (Healthy/Needs Attention/At Risk) displayed on Mission Control cards and Support Pod header.
-- **Real-Time Polling:** Auto-refresh every 30s on Support Pod with live indicator and manual refresh button.
+- Mission Control command surface: priority alerts, athletes needing attention, momentum feed, events, snapshot
+- Decision Engine: 7 detection categories (momentum_drop, blocker, deadline_proximity, engagement_drop, ownership_gap, readiness_issue, **event_follow_up**)
+- Peek Panel: slide-over preview with Quick Actions (Log Note, Assign, Message)
+- Support Pod: 5 blocks (Active Issue, Snapshot, Pod Members, Next Actions, Timeline)
+- Pod Health indicator, real-time polling (30s)
 
 ### V2 — Event Mode (Complete, Feb 2026)
-- **Event Home (/events):** Event list with urgency indicators (red/yellow/green), timing groups (today/this week/later), past events tab, type filter.
-- **Event Prep (/events/:id/prep):** Athletes attending with prep status, target schools with overlap counts, prep checklist with toggle, blockers section, links to Support Pod.
-- **Live Event Mode (/events/:id/live):** Dark theme courtside capture. Athlete/school chip selectors, interest levels (Hot/Warm/Cool/None), quick note text, follow-up checkboxes. Under-10-second capture. Recent notes feed.
-- **Post-Event Summary (/events/:id/summary):** Event stats, hottest interest ranked, follow-up actions, schools seen with interaction counts, all notes view.
-- **Routing Logic:** Route to Pod (single + bulk) creates Support Pod action items and athlete timeline entries. Signal routing matrix defined in spec.
-- **Navigation:** Header nav now functional with Mission Control and Events modes linked.
+- Event Home: urgency-grouped list, timing sections, type filter
+- Event Prep: athletes with prep status, schools with overlap, checklist with toggle, blockers
+- Live Event Mode: dark courtside capture, chip selectors, interest levels, 10-second logging
+- Post-Event Summary: stats, hottest interest, follow-up actions, schools seen, routing to pods
+
+### V2 — Advocacy Mode (Complete, Feb 2026)
+- Advocacy Home: recommendations grouped by Needs Attention / Drafts / Recently Sent / Closed, status tabs with counts
+- Recommendation Builder: athlete + school selection, 6 fit reason chips, event context auto-populated, intro message, desired next step, Save Draft / Send
+- Recommendation Detail: full summary, response tracking (status progression dots), Log Response / Follow-up / Close actions, response history timeline, relationship summary
+- Relationship Detail: school memory with warmth badge, aggregate stats (interactions, athletes introduced, response rate), athletes introduced list, interaction timeline
+
+### Decision Engine Update (Feb 2026)
+- **event_follow_up** detection: stale Hot notes (>48h) surface as critical in MC Priority Alerts, stale Warm notes (>72h) surface as high priority
 
 ## Specs
-- `/app/SUPPORT_POD_SPEC.md` — Support Pod implementation spec
-- `/app/EVENT_MODE_SPEC.md` — Event Mode implementation spec with Signal Routing Matrix
+- `/app/SUPPORT_POD_SPEC.md`
+- `/app/EVENT_MODE_SPEC.md` (with Signal Routing Matrix)
+- `/app/ADVOCACY_MODE_SPEC.md`
 
 ## Backlog
 
 ### P1 — Upcoming
-- V2 continued: Advocacy Mode (new operating mode — spec TBD)
-- Event follow-up as Decision Engine intervention category (stale follow-ups surface in MC)
+- V2.5: Program Intelligence
+- Advocacy → Support Pod routing (warm responses create pod actions — backend done, needs UI confirmation)
 
 ### P2 — Future
-- V2.5: Program Intelligence
-- V3: AI/Intelligence Layer, deeper platform integration
-- Database migration (mock data -> persistent MongoDB)
+- V3: AI/Intelligence Layer
+- Database migration (mock data → persistent MongoDB)
 - Event-to-event comparison
 - Multi-coach support
+- AI-suggested fit reasons, auto-generated intros
+- Recommendation templates, batch recommendations
 
 ## Key Files
 - `backend/server.py` — All API endpoints
-- `backend/decision_engine.py` — Intervention scoring
-- `backend/support_pod.py` — Pod data & health logic
-- `backend/event_engine.py` — Event Mode data aggregation, prep, live capture, summary, routing
-- `backend/mock_data.py` — All mock data (athletes, events with rosters/schools/checklists/past notes)
-- `frontend/src/pages/MissionControl.js` — Command surface
-- `frontend/src/pages/SupportPod.js` — Treatment environment
-- `frontend/src/pages/EventHome.js` — Event list
-- `frontend/src/pages/EventPrep.js` — Pre-event planning
-- `frontend/src/pages/LiveEvent.js` — Courtside capture
-- `frontend/src/pages/EventSummary.js` — Post-event debrief
-- `frontend/src/components/mission-control/Header.js` — Top nav with mode switching
+- `backend/decision_engine.py` — 7 intervention categories including event_follow_up
+- `backend/support_pod.py` — Pod data & health
+- `backend/event_engine.py` — Event CRUD, prep, live capture, summary, routing
+- `backend/advocacy_engine.py` — Recommendations, relationships, event context
+- `backend/mock_data.py` — Athletes, events with rosters/schools/checklists/past notes
+- `frontend/src/pages/` — MissionControl, SupportPod, EventHome, EventPrep, LiveEvent, EventSummary, AdvocacyHome, RecommendationBuilder, RecommendationDetail, RelationshipDetail
