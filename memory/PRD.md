@@ -4,8 +4,9 @@
 Build a recruiting operating system for clubs, coaches, families, and athletes. The system actively coordinates support, surfaces priorities, identifies blockers, and helps users know what to do next.
 
 ## Architecture
-- **Backend:** FastAPI (Python), in-memory mock data, MongoDB for actions/timeline
+- **Backend:** FastAPI (Python), MongoDB for persistence, in-memory mock data for athletes/events
 - **Frontend:** React, Shadcn/UI, Tailwind CSS
+- **Database:** MongoDB (event_notes, recommendations, pod_actions, athlete_notes, assignments, messages, pod_resolutions, pod_action_events)
 - **Core Loop:** Triage (MC) → Preview (Peek) → Treatment (Pod) → Capture (Event) → Promotion (Advocacy) → Oversight (Program)
 
 ## What's Been Implemented
@@ -26,18 +27,37 @@ Build a recruiting operating system for clubs, coaches, families, and athletes. 
 - Full lifecycle: draft → send → respond → follow-up → close
 - Routing: warm responses create Support Pod actions + timeline
 
-### V2.5 — Program Intelligence (Complete, Feb 2026)
+### V2.5 — Program Intelligence (Complete)
 - Single scrollable oversight page with 5 decision sections:
   1. Program Health: pod health distribution, issues by type, risk cluster callout
   2. Team/Grad Year Readiness: per-cohort breakdown, on-track %, stalled athletes
   3. Event Effectiveness: follow-up completion rates, downstream impact chain
   4. Advocacy Outcomes: pipeline, response rates, aging recommendations, school activity
   5. Support Load: per-owner load bars, overload detection, imbalance warnings
-- All 4 navigation modes now active (Mission Control, Events, Advocacy, Program)
+
+### Persistence Phase 1 (Complete, Mar 2026)
+- MongoDB collections: `event_notes`, `recommendations`
+- Seed-if-empty strategy: mock data seeded on first run, preserves user data on restarts
+- Dual-write architecture: all mutations write to MongoDB AND update in-memory structures
+- Engine modules (decision_engine, program_engine) read from synced in-memory data
+- API reads: event notes list and recommendation detail read directly from MongoDB
+- Full recommendation lifecycle persisted: draft → sent → awaiting_reply → warm_response → follow_up_needed → closed
+- Response history embedded in recommendations collection
+- Event note routing (routed_to_pod flag) persisted
+
+## Key Files
+- `backend/server.py` — All API endpoints, startup seed/load
+- `backend/database.py` — Seed-if-empty and load functions
+- `backend/decision_engine.py` — 7 intervention categories
+- `backend/support_pod.py` — Pod data & health
+- `backend/event_engine.py` — Event CRUD, prep, live capture, summary, routing
+- `backend/advocacy_engine.py` — Recommendations, relationships, event context
+- `backend/program_engine.py` — 5 intelligence sections
+- `backend/mock_data.py` — Athletes, events, schools (still in-memory)
 
 ## Specs
 - `/app/SUPPORT_POD_SPEC.md`
-- `/app/EVENT_MODE_SPEC.md` (with Signal Routing Matrix)
+- `/app/EVENT_MODE_SPEC.md`
 - `/app/ADVOCACY_MODE_SPEC.md`
 - `/app/PROGRAM_INTELLIGENCE_SPEC.md`
 - `/app/PERSISTENCE_PLAN.md`
@@ -45,24 +65,16 @@ Build a recruiting operating system for clubs, coaches, families, and athletes. 
 ## Backlog
 
 ### P0 — Next
-- Persistence Phase 1: event notes + recommendations + response history to MongoDB
+- Persistence Phase 2: Migrate remaining core objects (events, athletes) to MongoDB
 
 ### P1 — Upcoming
 - Historical trending for Program Intelligence (requires persistence)
 - Coach-specific views in Program Intelligence
+- Refactoring: Split server.py into APIRouter modules
 
 ### P2 — Future
-- V3: AI/Intelligence Layer
+- V3: AI/Intelligence Layer (enhanced Decision Engine, predictive analytics)
 - Full database migration (athletes, events)
 - AI-suggested fit reasons, auto-generated intros
 - Event-to-event comparison, multi-coach support
-
-## Key Files
-- `backend/server.py` — All API endpoints
-- `backend/decision_engine.py` — 7 intervention categories
-- `backend/support_pod.py` — Pod data & health
-- `backend/event_engine.py` — Event CRUD, prep, live capture, summary, routing
-- `backend/advocacy_engine.py` — Recommendations, relationships, event context
-- `backend/program_engine.py` — 5 intelligence sections computed from all data sources
-- `backend/mock_data.py` — Athletes, events, schools
-- `frontend/src/pages/` — MissionControl, SupportPod, EventHome, EventPrep, LiveEvent, EventSummary, AdvocacyHome, RecommendationBuilder, RecommendationDetail, RelationshipDetail, ProgramIntelligence
+- Platform integrations (calendar, messaging)
