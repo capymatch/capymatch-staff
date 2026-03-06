@@ -99,31 +99,37 @@ Gets the product in front of coaches quickly to validate:
 
 ### V1 Timeline Estimate
 
-**Week 1-2: Foundation**
+**Week 1-3: Foundation & Core Data**
 - Set up project structure
-- Create mock data (athletes, signals, events)
+- Create comprehensive mock data (athletes, signals, events, pods)
 - Build component library (cards, badges, buttons)
-- Implement navigation shell
+- Implement navigation shell and context switching
+- Build Decision Engine logic (detection + prioritization)
 
-**Week 3-4: Core Sections**
-- Build Priority Alerts
-- Build What Changed Today
-- Build Athletes Needing Attention
-- Build Critical Upcoming
+**Week 4-6: Mission Control Sections**
+- Build Priority Alerts with explainability
+- Build What Changed Today (momentum feed)
+- Build Athletes Needing Attention cards
+- Build Critical Upcoming section
+- Add Program Snapshot
 
-**Week 5: Polish & Integration**
-- Quick actions panel
-- Filters and search
+**Week 7-8: Interactions & Polish**
+- Quick actions panel and modals
+- Filters and global search
 - Responsive mobile design
 - Animations and transitions
+- Explainability refinements
 
-**Week 6: Testing & Refinement**
-- User testing with 3-5 coaches
-- Bug fixes
+**Week 9-10: Testing & Refinement**
+- Internal testing and bug fixes
+- User testing with 2-3 coaches
 - Performance optimization
-- Documentation
+- Documentation and onboarding materials
+- Refinement based on feedback
 
-**Total: ~6 weeks for V1**
+**Total: ~10 weeks for V1**
+
+*Note: This is a realistic timeline for a small team. With AI-assisted development or larger team, could compress to 6-8 weeks.*
 
 ---
 
@@ -180,7 +186,13 @@ Gets the product in front of coaches quickly to validate:
 
 ### V1.5 Timeline Estimate
 
-**4-5 weeks after V1 launch**
+**6-8 weeks after V1 launch**
+
+*Breakdown:*
+- Weeks 1-2: Support Pod data model and architecture
+- Weeks 3-4: Pod workspace UI and coordination features
+- Weeks 5-6: Testing, refinement, and documentation
+- Weeks 7-8: Beta with select coaches, iteration
 
 ---
 
@@ -222,7 +234,12 @@ Gets the product in front of coaches quickly to validate:
 
 ### V2 Timeline Estimate
 
-**6-8 weeks after V1.5 launch**
+**10-14 weeks after V1.5 launch**
+
+*Breakdown:*
+- Event Mode (6-7 weeks): prep, live capture, post-event workflows
+- Advocacy Mode (4-5 weeks): recommendations, relationship memory, tracking
+- Testing and refinement (2 weeks)
 
 ---
 
@@ -260,7 +277,12 @@ Gets the product in front of coaches quickly to validate:
 
 ### V2.5 Timeline Estimate
 
-**4-6 weeks after V2 launch, but 3-6 months after V1 for data accumulation**
+**6-8 weeks after V2 launch, but 4-6 months after V1 for data accumulation**
+
+*Breakdown:*
+- Weeks 1-3: Analytics infrastructure and data aggregation
+- Weeks 4-5: Dashboard and visualization
+- Weeks 6-8: Director-specific features and testing
 
 ---
 
@@ -306,7 +328,13 @@ Gets the product in front of coaches quickly to validate:
 
 ### V3 Timeline Estimate
 
-**8-12 weeks after V2.5, but 6-12 months after V1 for data and learning**
+**12-16 weeks after V2.5, but 8-12 months after V1 for data and learning**
+
+*Breakdown:*
+- Weeks 1-4: Deep athlete/parent workspace integration
+- Weeks 5-8: AI/ML model development and training
+- Weeks 9-12: Testing and refinement
+- Weeks 13-16: Beta and iteration with real usage data
 
 ---
 
@@ -314,11 +342,11 @@ Gets the product in front of coaches quickly to validate:
 
 | Phase | Focus | Timeline | Key Deliverables |
 |-------|-------|----------|------------------|
-| **V1** | Mission Control | Weeks 1-6 | Dashboard, momentum tracking, priorities |
-| **V1.5** | Support Pod | Weeks 10-14 | Pod workspaces, coordination |
-| **V2** | Event + Advocacy | Weeks 20-28 | Event workflows, recommendations |
-| **V2.5** | Program Intelligence | Weeks 32-38 | Strategic metrics, gap analysis |
-| **V3** | Integration + AI | Months 6-12 | Full platform, AI intelligence |
+| **V1** | Mission Control | Weeks 1-10 | Dashboard, momentum tracking, decision engine, explainability |
+| **V1.5** | Support Pod | Weeks 16-24 | Pod workspaces, coordination, ownership |
+| **V2** | Event + Advocacy | Weeks 34-48 | Event workflows, relationship memory, recommendations |
+| **V2.5** | Program Intelligence | Weeks 54-62 | Strategic metrics, gap analysis, director tools |
+| **V3** | Integration + AI | Months 10-14 | Full platform, AI intelligence, predictive features |
 
 ---
 
@@ -507,15 +535,15 @@ Could separate:
 - Mock data demonstrating concept
 
 **Timeline:**
-- 6 weeks for functional prototype
-- 2-4 weeks for beta testing and refinement
-- 10 weeks to general availability
+- 10 weeks for functional prototype with decision engine
+- 3-4 weeks for beta testing and refinement
+- 13-14 weeks to general availability
 
 ### Then Support Pod, Event/Advocacy, Program Intelligence, Full Integration
 
 **Total Timeline to Full Platform:**
-- 12-18 months for V3 (mature, integrated platform)
-- But meaningful value delivered every 2-3 months
+- 14-18 months for V3 (mature, integrated platform with AI)
+- But meaningful value delivered every 2-4 months
 
 ### Critical Success Factors
 

@@ -12,7 +12,7 @@ Every design decision should support:
 
 ---
 
-## 10 UX Principles
+## 11 UX Principles
 
 ### 1. Proactive, Not Reactive
 
@@ -236,6 +236,31 @@ Every design decision should support:
 - Inconsistent styling
 - Janky animations
 - "Good enough" mindset
+
+---
+
+### 11. Explain the Why
+
+**What This Means:**
+- The system should never feel like a black box
+- Every surfaced item includes why it's important
+- Recommendations show clear reasoning
+- Transparency builds trust with coaches
+- Help users understand the intelligence, don't hide it
+
+**In Practice:**
+- Priority alerts include "Why this surfaced"
+- Momentum signals show "Why this matters"
+- Athlete cards explain "Why they need attention"
+- Recommended actions include reasoning
+- Scores and rankings are explainable (not mysterious algorithms)
+
+**Anti-Patterns to Avoid:**
+- Unexplained AI recommendations
+- Mystery scoring or ranking
+- "The algorithm said so" responses
+- Hidden logic that users can't understand
+- Black box decision-making
 
 ---
 
