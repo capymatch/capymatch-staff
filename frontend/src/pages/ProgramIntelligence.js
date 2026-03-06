@@ -5,7 +5,7 @@ import Header from "@/components/mission-control/Header";
 import { toast } from "sonner";
 import {
   Shield, AlertTriangle, Users, Calendar, Megaphone, ExternalLink,
-  TrendingDown, TrendingUp, Minus, Clock, UserX, ChevronRight,
+  TrendingDown, TrendingUp, Minus, Clock, UserX, ChevronRight, User,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -17,6 +17,7 @@ const TREND_STYLE = {
   declining: { color: "text-red-600", bg: "bg-red-50", icon: TrendingDown, arrow: "" },
   stable: { color: "text-gray-500", bg: "bg-gray-50", icon: Minus, arrow: "" },
   baseline: { color: "text-blue-500", bg: "bg-blue-50", icon: Minus, arrow: "" },
+  current: { color: "text-blue-500", bg: "bg-blue-50", icon: User, arrow: "" },
 };
 
 function TrendCard({ trend }) {
@@ -43,13 +44,15 @@ function TrendCard({ trend }) {
   );
 }
 
-function ProgramTrends({ trends }) {
+function ProgramTrends({ trends, viewMode }) {
   if (!trends || trends.length === 0) return null;
+  const isCoach = viewMode === "coach";
 
   return (
     <section className="mb-5" data-testid="section-trends">
       <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-        <TrendingUp className="w-3.5 h-3.5" /> What's Changing
+        {isCoach ? <User className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
+        {isCoach ? "My Stats" : "What's Changing"}
       </h2>
       <div className="flex flex-wrap gap-3">
         {trends.map((t) => (
@@ -386,21 +389,29 @@ function ProgramIntelligence() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [coaches, setCoaches] = useState([]);
+  const [selectedCoach, setSelectedCoach] = useState(null); // null = director view
 
+  // Load coaches list once
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await axios.get(`${API}/program/intelligence`);
-        setData(res.data);
-      } catch {
-        toast.error("Failed to load Program Intelligence");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    axios.get(`${API}/program/coaches`).then((r) => setCoaches(r.data)).catch(() => {});
   }, []);
 
-  if (loading) {
+  // Fetch program data when view changes
+  useEffect(() => {
+    setLoading(true);
+    const url = selectedCoach
+      ? `${API}/program/intelligence?coach_id=${encodeURIComponent(selectedCoach)}`
+      : `${API}/program/intelligence`;
+    axios.get(url)
+      .then((res) => setData(res.data))
+      .catch(() => toast.error("Failed to load Program Intelligence"))
+      .finally(() => setLoading(false));
+  }, [selectedCoach]);
+
+  const isCoach = data?.view_mode === "coach";
+
+  if (loading && !data) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
@@ -416,21 +427,59 @@ function ProgramIntelligence() {
       <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
 
       <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
-        <div className="mb-6">
-          <h1 className="text-lg font-semibold text-gray-900" data-testid="program-title">Program Intelligence</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Strategic overview · {data.athlete_count} athletes · {data.event_count} events · {data.recommendation_count} recommendations
-          </p>
+        {/* Title + Persona Switcher */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900" data-testid="program-title">
+              {isCoach ? `My View — ${data.coach_id}` : "Program Intelligence"}
+            </h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {isCoach
+                ? `${data.athlete_count} athletes · ${data.recommendation_count} recommendations`
+                : `Strategic overview · ${data.athlete_count} athletes · ${data.event_count} events · ${data.recommendation_count} recommendations`}
+            </p>
+          </div>
+
+          {/* Persona Switcher */}
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5" data-testid="view-switcher">
+            <button
+              onClick={() => setSelectedCoach(null)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                !selectedCoach ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
+              }`}
+              data-testid="view-program"
+            >
+              Program View
+            </button>
+            {coaches.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedCoach(c.id)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                  selectedCoach === c.id ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
+                }`}
+                data-testid={`view-coach-${c.id.replace(/\s+/g, "-").toLowerCase()}`}
+              >
+                {c.name.replace("Coach ", "")}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-5">
-          <ProgramTrends trends={data.trends} />
-          <ProgramHealth data={data.program_health} />
-          <ReadinessMatrix data={data.readiness} navigate={navigate} />
-          <EventEffectiveness data={data.event_effectiveness} navigate={navigate} />
-          <AdvocacyOutcomes data={data.advocacy_outcomes} navigate={navigate} />
-          <SupportLoad data={data.support_load} />
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400" />
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <ProgramTrends trends={data.trends} viewMode={data.view_mode} />
+            <ProgramHealth data={data.program_health} />
+            <ReadinessMatrix data={data.readiness} navigate={navigate} />
+            <EventEffectiveness data={data.event_effectiveness} navigate={navigate} />
+            <AdvocacyOutcomes data={data.advocacy_outcomes} navigate={navigate} />
+            <SupportLoad data={data.support_load} />
+          </div>
+        )}
       </main>
     </div>
   );

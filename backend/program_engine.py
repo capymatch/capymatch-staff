@@ -7,6 +7,10 @@ Computes 5 decision surfaces from existing data:
 3. Event Effectiveness — follow-up completion, downstream impact
 4. Advocacy Outcomes — pipeline, response rates, aging recs
 5. Support Load — owner distribution, overload, gaps
+
+Supports two modes:
+- Director (coach_id=None): full program view with imbalance/overload warnings
+- Coach (coach_id="Coach Martinez"): filtered to that coach's athletes only
 """
 
 from datetime import datetime, timezone
@@ -20,27 +24,47 @@ from support_pod import (
 from advocacy_engine import RECOMMENDATIONS, get_all_relationships
 
 
-def compute_program_health():
+def _filter_athletes(athlete_ids=None):
+    if athlete_ids is None:
+        return ATHLETES
+    return [a for a in ATHLETES if a["id"] in athlete_ids]
+
+
+def _filter_interventions(athlete_ids=None):
+    if athlete_ids is None:
+        return ALL_INTERVENTIONS
+    return [i for i in ALL_INTERVENTIONS if i["athlete_id"] in athlete_ids]
+
+
+def _filter_recommendations(athlete_ids=None):
+    if athlete_ids is None:
+        return RECOMMENDATIONS
+    return [r for r in RECOMMENDATIONS if r["athlete_id"] in athlete_ids]
+
+
+def compute_program_health(athlete_ids=None):
     """Section 1: Where is the program fragile?"""
+    athletes = _filter_athletes(athlete_ids)
+    interventions = _filter_interventions(athlete_ids)
+
     health_counts = {"healthy": 0, "needs_attention": 0, "at_risk": 0}
     health_map = {"green": "healthy", "yellow": "needs_attention", "red": "at_risk"}
 
-    for athlete in ATHLETES:
-        interventions = get_athlete_interventions(athlete["id"])
+    for athlete in athletes:
+        ai = get_athlete_interventions(athlete["id"])
         members = generate_pod_members(athlete)
-        actions = generate_suggested_actions(athlete["id"], interventions)
+        actions = generate_suggested_actions(athlete["id"], ai)
         h = calculate_pod_health(athlete, members, actions)
         health_counts[health_map.get(h, "needs_attention")] += 1
 
-    # Open issues by category
     category_counts = {}
-    for i in ALL_INTERVENTIONS:
+    for i in interventions:
         cat = i["category"]
         category_counts[cat] = category_counts.get(cat, 0) + 1
 
-    # Find highest-risk cluster (grad year with most critical issues)
+    # Highest-risk cluster
     grad_year_risk = {}
-    for i in ALL_INTERVENTIONS:
+    for i in interventions:
         gy = i.get("grad_year")
         if gy:
             grad_year_risk.setdefault(gy, {"blockers": 0, "momentum_drops": 0, "total": 0})
@@ -53,7 +77,6 @@ def compute_program_health():
     highest_risk = None
     max_score = 0
     for gy, counts in grad_year_risk.items():
-        # Weight blockers more heavily
         risk = counts["blockers"] * 3 + counts["momentum_drops"] * 2 + counts["total"]
         if risk > max_score:
             max_score = risk
@@ -62,8 +85,7 @@ def compute_program_health():
                 parts.append(f"{counts['blockers']} blockers")
             if counts["momentum_drops"]:
                 parts.append(f"{counts['momentum_drops']} momentum drops")
-            # Check if this is an actively recruiting cohort
-            gy_athletes = [a for a in ATHLETES if a["gradYear"] == gy]
+            gy_athletes = [a for a in athletes if a["gradYear"] == gy]
             active_count = sum(1 for a in gy_athletes if a["recruitingStage"] in ("actively_recruiting", "narrowing"))
             stage_note = f"in {'actively recruiting' if active_count > len(gy_athletes) // 2 else 'early'} cohort"
             highest_risk = {
@@ -82,21 +104,22 @@ def compute_program_health():
             "event_follow_ups": category_counts.get("event_follow_up", 0),
             "engagement_drops": category_counts.get("engagement_drop", 0),
         },
-        "intervention_total": len(ALL_INTERVENTIONS),
+        "intervention_total": len(interventions),
         "highest_risk_cluster": highest_risk,
     }
 
 
-def compute_readiness():
+def compute_readiness(athlete_ids=None):
     """Section 2: Which teams/grad years need intervention? Who's stalling?"""
-    # Stall thresholds by grad year
+    athletes = _filter_athletes(athlete_ids)
+
     stall_thresholds = {2025: 30, 2026: 45, 2027: 90}
     expected_stages = {2025: "actively_recruiting", 2026: "actively_recruiting", 2027: "exploring"}
 
     by_grad_year = {}
     stalled_athletes = []
 
-    for athlete in ATHLETES:
+    for athlete in athletes:
         gy = athlete["gradYear"]
         if gy not in by_grad_year:
             by_grad_year[gy] = {
@@ -118,17 +141,13 @@ def compute_readiness():
         if stage in entry:
             entry[stage] += 1
 
-        # Count blockers for this athlete
         athlete_interventions = get_athlete_interventions(athlete["id"])
         blocker_count = sum(1 for i in athlete_interventions if i["category"] == "blocker")
         entry["blockers"] += blocker_count
 
-        # Stall detection
         days = athlete.get("daysSinceActivity", 0)
         threshold = stall_thresholds.get(gy, 90)
-        expected = expected_stages.get(gy, "exploring")
 
-        # Consider stalled if in early stage too long
         is_stalled = False
         if gy == 2025 and stage == "exploring" and days > threshold:
             is_stalled = True
@@ -144,12 +163,11 @@ def compute_readiness():
                 "grad_year": gy,
                 "stage": stage,
                 "days_in_stage": days,
-                "expected_stage": expected,
+                "expected_stage": expected_stages.get(gy, "exploring"),
                 "blockers": [i["trigger"] for i in athlete_interventions if i["category"] == "blocker"],
                 "has_blockers": blocker_count > 0,
             })
 
-    # Compute on-track percentage
     for gy, entry in by_grad_year.items():
         total = entry["total_athletes"]
         if total == 0:
@@ -162,7 +180,6 @@ def compute_readiness():
             on_track = total - entry["blockers"]
         entry["on_track_pct"] = round((on_track / total) * 100)
 
-        # Generate attention notes
         if entry["blockers"] > 0:
             entry["attention_note"] = f"{entry['blockers']} athletes with active blockers"
         stalled_in_gy = [s for s in stalled_athletes if s["grad_year"] == gy]
@@ -173,14 +190,18 @@ def compute_readiness():
     return {"by_grad_year": result, "stalled_athletes": stalled_athletes}
 
 
-def compute_event_effectiveness():
+def compute_event_effectiveness(athlete_ids=None):
     """Section 3: Which events produced outcomes? Where is follow-up breaking?"""
+    recs = _filter_recommendations(athlete_ids)
     past_events = []
     upcoming_events = []
 
     for event in UPCOMING_EVENTS:
         if event.get("daysAway", 0) < 0 or event.get("status") == "past":
             notes = event.get("capturedNotes", [])
+            if athlete_ids is not None:
+                notes = [n for n in notes if n.get("athlete_id") in athlete_ids]
+
             hot = sum(1 for n in notes if n.get("interest_level") == "hot")
             warm = sum(1 for n in notes if n.get("interest_level") == "warm")
             with_follow_ups = [n for n in notes if n.get("follow_ups")]
@@ -189,10 +210,9 @@ def compute_event_effectiveness():
             follow_up_completed = routed
             completion_pct = round((follow_up_completed / follow_up_total) * 100) if follow_up_total > 0 else 0
 
-            # Cross-reference: did any recommendations cite notes from this event?
             event_note_ids = {n["id"] for n in notes}
             recs_from_event = sum(
-                1 for r in RECOMMENDATIONS
+                1 for r in recs
                 if any(nid in event_note_ids for nid in r.get("supporting_event_notes", []))
             )
 
@@ -200,22 +220,23 @@ def compute_event_effectiveness():
             if follow_up_total > 0 and completion_pct < 50:
                 attention = f"{completion_pct}% follow-up completion — {follow_up_total - follow_up_completed} stale actions"
 
-            past_events.append({
-                "id": event["id"],
-                "name": event["name"],
-                "date": event.get("date"),
-                "location": event.get("location"),
-                "notes_captured": len(notes),
-                "hot_interactions": hot,
-                "warm_interactions": warm,
-                "follow_ups_identified": follow_up_total,
-                "follow_ups_completed": follow_up_completed,
-                "follow_up_completion_pct": completion_pct,
-                "routed_to_pods": routed,
-                "recommendations_created": recs_from_event,
-                "attention_note": attention,
-            })
-        else:
+            if notes:  # Only include events with notes for this coach
+                past_events.append({
+                    "id": event["id"],
+                    "name": event["name"],
+                    "date": event.get("date"),
+                    "location": event.get("location"),
+                    "notes_captured": len(notes),
+                    "hot_interactions": hot,
+                    "warm_interactions": warm,
+                    "follow_ups_identified": follow_up_total,
+                    "follow_ups_completed": follow_up_completed,
+                    "follow_up_completion_pct": completion_pct,
+                    "routed_to_pods": routed,
+                    "recommendations_created": recs_from_event,
+                    "attention_note": attention,
+                })
+        elif athlete_ids is None:  # Upcoming events only for director view
             upcoming_events.append({
                 "id": event["id"],
                 "name": event["name"],
@@ -227,20 +248,20 @@ def compute_event_effectiveness():
     return {"past_events": past_events, "upcoming_events": upcoming_events[:3]}
 
 
-def compute_advocacy_outcomes():
+def compute_advocacy_outcomes(athlete_ids=None):
     """Section 4: Is advocacy producing results?"""
+    recs = _filter_recommendations(athlete_ids)
     now = datetime.now(timezone.utc)
 
     pipeline = {"total": 0, "draft": 0, "sent": 0, "awaiting_reply": 0, "warm_response": 0, "follow_up_needed": 0, "closed": 0}
     aging = []
 
-    for r in RECOMMENDATIONS:
+    for r in recs:
         pipeline["total"] += 1
         status = r.get("status", "draft")
         if status in pipeline:
             pipeline[status] += 1
 
-        # Aging detection
         if status in ("awaiting_reply", "follow_up_needed", "sent") and r.get("sent_at"):
             sent_dt = datetime.fromisoformat(r["sent_at"])
             days = (now - sent_dt).days
@@ -254,28 +275,27 @@ def compute_advocacy_outcomes():
                     "status": status,
                 })
 
-    # Response rate: warm responses / (sent + awaiting + warm + follow_up)
     sent_total = pipeline["sent"] + pipeline["awaiting_reply"] + pipeline["warm_response"] + pipeline["follow_up_needed"]
     warm_total = pipeline["warm_response"]
-    # Also count closed positives
-    positive_closed = sum(1 for r in RECOMMENDATIONS if r.get("closed_reason") == "positive_outcome")
+    positive_closed = sum(1 for r in recs if r.get("closed_reason") == "positive_outcome")
     response_rate = round((warm_total + positive_closed) / sent_total, 2) if sent_total > 0 else 0
 
-    # School activity
-    relationships = get_all_relationships()
     school_activity = []
-    for rel in relationships[:6]:
-        school_recs = [r for r in RECOMMENDATIONS if r["school_id"] == rel["school"]["id"] and r["status"] != "draft"]
-        warm_resp = sum(1 for r in school_recs if r.get("response_status") == "warm" or r.get("closed_reason") == "positive_outcome")
-        sr = round(warm_resp / len(school_recs), 2) if school_recs else 0
-        school_activity.append({
-            "school_name": rel["school"]["name"],
-            "school_id": rel["school"]["id"],
-            "warmth": rel["summary"]["warmth"],
-            "recs_sent": len(school_recs),
-            "warm_responses": warm_resp,
-            "response_rate": sr,
-        })
+    if athlete_ids is None:
+        # Director view: full school activity
+        relationships = get_all_relationships()
+        for rel in relationships[:6]:
+            school_recs = [r for r in RECOMMENDATIONS if r["school_id"] == rel["school"]["id"] and r["status"] != "draft"]
+            warm_resp = sum(1 for r in school_recs if r.get("response_status") == "warm" or r.get("closed_reason") == "positive_outcome")
+            sr = round(warm_resp / len(school_recs), 2) if school_recs else 0
+            school_activity.append({
+                "school_name": rel["school"]["name"],
+                "school_id": rel["school"]["id"],
+                "warmth": rel["summary"]["warmth"],
+                "recs_sent": len(school_recs),
+                "warm_responses": warm_resp,
+                "response_rate": sr,
+            })
 
     return {
         "pipeline": pipeline,
@@ -285,22 +305,21 @@ def compute_advocacy_outcomes():
     }
 
 
-def compute_support_load():
+def compute_support_load(coach_id=None, athlete_ids=None):
     """Section 5: Who is overloaded? Where are ownership gaps?"""
+    interventions = _filter_interventions(athlete_ids)
     owner_stats = {}
 
-    for i in ALL_INTERVENTIONS:
+    for i in interventions:
         owner = i.get("owner", "Unassigned")
         if owner not in owner_stats:
             owner_stats[owner] = {"owner": owner, "open_actions": 0, "overdue": 0, "athletes": set(), "is_overloaded": False}
         owner_stats[owner]["open_actions"] += 1
         owner_stats[owner]["athletes"].add(i.get("athlete_id"))
 
-        # Count high-urgency as "overdue" proxy (since actions are mock)
         if i.get("urgency", 0) >= 8:
             owner_stats[owner]["overdue"] += 1
 
-    # Convert sets to counts
     by_owner = []
     for owner, stats in owner_stats.items():
         by_owner.append({
@@ -313,44 +332,76 @@ def compute_support_load():
 
     by_owner.sort(key=lambda x: x["open_actions"], reverse=True)
 
-    # Detect imbalance
-    unassigned = sum(s["open_actions"] for s in by_owner if s["owner"] == "Unassigned")
-    named_owners = [s for s in by_owner if s["owner"] not in ("Unassigned", "Parent/Guardian")]
-
+    # Imbalance detection (director view only)
     imbalance_detected = False
     imbalance_note = None
 
-    if len(named_owners) >= 2:
-        top = named_owners[0]
-        bottom = named_owners[-1]
-        if bottom["open_actions"] > 0 and top["open_actions"] >= bottom["open_actions"] * 2:
-            top["is_overloaded"] = True
+    if coach_id is None:
+        named_owners = [s for s in by_owner if s["owner"] not in ("Unassigned", "Parent/Guardian", "Needs assignment")]
+
+        if len(named_owners) >= 2:
+            top = named_owners[0]
+            bottom = named_owners[-1]
+            if bottom["open_actions"] > 0 and top["open_actions"] >= bottom["open_actions"] * 2:
+                top["is_overloaded"] = True
+                imbalance_detected = True
+                ratio = round(top["open_actions"] / max(bottom["open_actions"], 1))
+                imbalance_note = f"{top['owner']} has {ratio}x the open actions of {bottom['owner']}. Consider redistributing."
+        elif len(named_owners) == 1 and named_owners[0]["open_actions"] > 15:
+            named_owners[0]["is_overloaded"] = True
             imbalance_detected = True
-            ratio = round(top["open_actions"] / max(bottom["open_actions"], 1))
-            imbalance_note = f"{top['owner']} has {ratio}x the open actions of {bottom['owner']}. Consider redistributing."
-    elif len(named_owners) == 1 and named_owners[0]["open_actions"] > 15:
-        named_owners[0]["is_overloaded"] = True
-        imbalance_detected = True
-        imbalance_note = f"{named_owners[0]['owner']} is the sole owner with {named_owners[0]['open_actions']} actions."
+            imbalance_note = f"{named_owners[0]['owner']} is the sole owner with {named_owners[0]['open_actions']} actions."
+    else:
+        # Coach view: only show their own bar
+        by_owner = [o for o in by_owner if o["owner"] == coach_id]
 
     return {
         "by_owner": by_owner,
-        "unassigned_actions": unassigned,
+        "unassigned_actions": sum(s["open_actions"] for s in by_owner if s["owner"] in ("Unassigned", "Needs assignment")),
         "imbalance_detected": imbalance_detected,
         "imbalance_note": imbalance_note,
     }
 
 
-def compute_all():
-    """Compute all 5 sections in a single call"""
+def get_coaches():
+    """Return list of named coaches from intervention ownership data."""
+    coaches = {}
+    for i in ALL_INTERVENTIONS:
+        owner = i.get("owner", "")
+        if owner and owner not in ("Needs assignment", "Parent + Coach", "Coach + Athlete", "Unassigned", "Parent/Guardian"):
+            coaches.setdefault(owner, set()).add(i.get("athlete_id"))
+
+    return [
+        {"id": name, "name": name, "athlete_count": len(aids)}
+        for name, aids in sorted(coaches.items(), key=lambda x: -len(x[1]))
+    ]
+
+
+def compute_all(coach_id=None):
+    """Compute all 5 sections. Optionally filtered by coach_id."""
+    athlete_ids = None
+    view_mode = "director"
+
+    if coach_id:
+        # Determine which athletes this coach owns (from interventions)
+        athlete_ids = set()
+        for i in ALL_INTERVENTIONS:
+            if i.get("owner") == coach_id:
+                athlete_ids.add(i["athlete_id"])
+        view_mode = "coach"
+
+    athletes = _filter_athletes(athlete_ids)
+
     return {
-        "program_health": compute_program_health(),
-        "readiness": compute_readiness(),
-        "event_effectiveness": compute_event_effectiveness(),
-        "advocacy_outcomes": compute_advocacy_outcomes(),
-        "support_load": compute_support_load(),
+        "program_health": compute_program_health(athlete_ids),
+        "readiness": compute_readiness(athlete_ids),
+        "event_effectiveness": compute_event_effectiveness(athlete_ids),
+        "advocacy_outcomes": compute_advocacy_outcomes(athlete_ids),
+        "support_load": compute_support_load(coach_id=coach_id, athlete_ids=athlete_ids),
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "athlete_count": len(ATHLETES),
+        "athlete_count": len(athletes),
         "event_count": len(UPCOMING_EVENTS),
-        "recommendation_count": len(RECOMMENDATIONS),
+        "recommendation_count": len(_filter_recommendations(athlete_ids)),
+        "view_mode": view_mode,
+        "coach_id": coach_id,
     }

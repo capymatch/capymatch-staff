@@ -159,7 +159,7 @@ def detect_blocker(athlete: Dict) -> Dict or None:
             'why_this_surfaced': "Parent not yet added to Support Pod — coordination gap",
             'what_changed': "Family engagement declining, pod access could help",
             'recommended_action': "Invite parent to join the athlete's Support Pod",
-            'owner': "Coach Martinez",
+            'owner': "Coach Rivera",
 
             'details': {
                 'blocker_type': 'pod_gap',
@@ -259,7 +259,7 @@ def detect_engagement_drop(athlete: Dict) -> Dict or None:
                 'why_this_surfaced': f"Family hasn't engaged in {days} days — early warning",
                 'what_changed': f"No logins or responses since {athlete['lastActivity'][:10]}",
                 'recommended_action': "Personal phone call to check in before momentum drops further",
-                'owner': "Coach Martinez",
+                'owner': "Coach Rivera",
 
                 'details': {
                     'last_login': athlete['lastActivity'],

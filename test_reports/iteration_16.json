@@ -1,0 +1,119 @@
+{
+  "summary": "Coach-specific views and persona switcher for Program Intelligence tested successfully. All 28 backend API tests passed (100%). Frontend persona switcher works correctly with Program View, Martinez, and Rivera buttons switching between director and coach modes.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_coach_views.py",
+    "/app/test_reports/pytest/pytest_coach_views.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "program_engine.py: Clean implementation of coach filtering via athlete_ids from intervention ownership",
+    "get_coaches() correctly extracts unique coach names from ALL_INTERVENTIONS, filtering out non-person roles",
+    "compute_support_load() correctly filters by_owner to single entry for coach view",
+    "Director trends use historical comparison (improving/declining/stable), coach trends show current values only",
+    "Coach view correctly sets imbalance_detected=false (director-only concern)",
+    "Frontend persona switcher uses data-testid attributes for reliable testing",
+    "Title correctly changes between 'Program Intelligence' and 'My View — Coach {name}'"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_coach_views.py"
+  ],
+  "success_rate": {
+    "backend": "100% (28/28 tests passed)",
+    "frontend": "100% (persona switcher, all views, navigation working)"
+  },
+  "test_credentials": "No auth required",
+  "seed_data_creation": "None - uses existing mock data with coach ownership from decision_engine.py",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Coach-specific views feature complete. Coach Martinez owns ~8 athletes, Coach Rivera owns ~4. Coaches derived from intervention 'owner' field in decision_engine.py. Persona switcher buttons: view-program, view-coach-coach-martinez, view-coach-coach-rivera. Coach trends show direction='current' with delta=0. Director trends show improving/declining/stable with historical deltas.",
+  "tests_passed": {
+    "backend": {
+      "coaches_list_tests": [
+        "GET /api/program/coaches returns list",
+        "Each coach has id, name, athlete_count",
+        "Coach Martinez exists in list",
+        "Coach Rivera exists in list"
+      ],
+      "director_view_tests": [
+        "view_mode='director'",
+        "athlete_count=25",
+        "All 5 sections present",
+        "Trends have direction=improving/declining/stable",
+        "support_load.by_owner has multiple entries",
+        "imbalance_detected field present",
+        "school_activity populated in advocacy_outcomes"
+      ],
+      "coach_martinez_tests": [
+        "view_mode='coach'",
+        "athlete_count ~8 (range 5-12)",
+        "coach_id='Coach Martinez' in response",
+        "support_load.by_owner has exactly 1 entry (Coach Martinez)",
+        "imbalance_detected=false",
+        "Trends have direction='current'",
+        "school_activity is empty"
+      ],
+      "coach_rivera_tests": [
+        "view_mode='coach'",
+        "athlete_count ~4 (range 2-8)",
+        "support_load.by_owner has exactly 1 entry (Coach Rivera)",
+        "imbalance_detected=false",
+        "Trends have direction='current'"
+      ],
+      "filtering_tests": [
+        "Coach health data filtered (fewer athletes than director)",
+        "Coach recommendations filtered",
+        "Director and coach trends have proper structure",
+        "Coach trends have delta=0",
+        "Event effectiveness filtered for coach's athletes"
+      ]
+    },
+    "frontend": {
+      "persona_switcher": [
+        "View switcher visible with 3 buttons",
+        "Program View button shows director mode",
+        "Martinez button switches to coach view with 'My View — Coach Martinez' title",
+        "Rivera button switches to coach view with filtered data",
+        "Program View button returns to director mode"
+      ],
+      "trends_display": [
+        "Director mode shows 'What's Changing' heading",
+        "Coach mode shows 'My Stats' heading"
+      ],
+      "sections_visible": [
+        "Trends section",
+        "Program Health section",
+        "Readiness section",
+        "Event Effectiveness section",
+        "Advocacy Outcomes section",
+        "Support Load section"
+      ],
+      "other_pages": [
+        "Mission Control: Priority alerts visible",
+        "Events: Upcoming events section visible",
+        "Advocacy: Recommendations list visible"
+      ]
+    }
+  },
+  "verified_coach_features": [
+    "GET /api/program/coaches returns Coach Martinez and Coach Rivera",
+    "GET /api/program/intelligence returns director view (25 athletes, all data)",
+    "GET /api/program/intelligence?coach_id=Coach%20Martinez returns filtered coach view (~8 athletes)",
+    "GET /api/program/intelligence?coach_id=Coach%20Rivera returns filtered coach view (~4 athletes)",
+    "Coach view: support_load.by_owner has 1 entry (coach's own bar)",
+    "Coach view: imbalance_detected=false",
+    "Coach view: school_activity is empty",
+    "Coach view: trends have direction='current' and delta=0",
+    "Director view: trends have direction=improving/declining/stable with deltas",
+    "Frontend persona switcher toggles between Program View and coach views",
+    "Frontend title changes to 'My View — {coach}' in coach mode"
+  ]
+}
