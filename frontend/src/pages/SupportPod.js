@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import PodHeader from "@/components/support-pod/PodHeader";
@@ -10,6 +10,7 @@ import TreatmentTimeline from "@/components/support-pod/TreatmentTimeline";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const POLL_INTERVAL_MS = 30000; // 30 seconds
 
 function SupportPod() {
   const { athleteId } = useParams();
@@ -19,23 +20,36 @@ function SupportPod() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const pollRef = useRef(null);
 
-  const fetchPodData = useCallback(async () => {
+  const fetchPodData = useCallback(async (silent = false) => {
     try {
+      if (silent) setIsPolling(true);
       const url = context
         ? `${API}/support-pods/${athleteId}?context=${context}`
         : `${API}/support-pods/${athleteId}`;
       const response = await axios.get(url);
       setData(response.data);
+      setLastRefreshed(new Date());
     } catch (error) {
       console.error("Failed to load Support Pod:", error);
-      toast.error("Failed to load Support Pod");
+      if (!silent) toast.error("Failed to load Support Pod");
     } finally {
       setLoading(false);
+      setIsPolling(false);
     }
   }, [athleteId, context]);
 
-  useEffect(() => { fetchPodData(); }, [fetchPodData]);
+  // Initial fetch
+  useEffect(() => { fetchPodData(false); }, [fetchPodData]);
+
+  // Polling interval — silent background refresh
+  useEffect(() => {
+    pollRef.current = setInterval(() => fetchPodData(true), POLL_INTERVAL_MS);
+    return () => clearInterval(pollRef.current);
+  }, [fetchPodData]);
 
   if (loading) {
     return (
@@ -62,7 +76,13 @@ function SupportPod() {
 
   return (
     <div className="min-h-screen bg-gray-50" data-testid="support-pod-page">
-      <PodHeader athlete={athlete} podHealth={pod_health} />
+      <PodHeader
+        athlete={athlete}
+        podHealth={pod_health}
+        lastRefreshed={lastRefreshed}
+        isPolling={isPolling}
+        onManualRefresh={() => fetchPodData(true)}
+      />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Block 1: Active Issue Banner */}
