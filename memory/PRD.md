@@ -63,6 +63,13 @@ Build a "recruiting operating system" for clubs, coaches, families, and athletes
 | POST | /api/support-pods/:id/resolve | Resolve issue |
 | GET | /api/debug/interventions | Debug: all interventions |
 
+### Phase 5: Pod Health Indicators (COMPLETE — Feb 2026)
+- 3 states: green (Healthy), yellow (Needs Attention), red (At Risk)
+- 5 explainable signals: activity recency, open issue count, blockers, ownership gaps, issue severity
+- Shows on: Priority Alert cards (dot + label in owner row), Athlete cards (dot + label in meta row), Peek Panel (explanation below score)
+- Purely derived from athlete + intervention data (no DB queries needed)
+- Secondary to main intervention content — does not compete with why/what_changed/action/owner
+
 ## Prioritized Backlog
 
 ### P1 (Next)
