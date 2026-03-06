@@ -1,17 +1,58 @@
-# Mission Control Dashboard - Detailed Screen Specification
+# Mission Control Dashboard - Detailed Screen Specification (V2)
 
 ## Screen Overview
 
 **Route:** `/mission-control` (default home for coaches/directors)
 
 **Purpose:**  
-Command center that gives coaches and directors immediate visibility into what needs attention, what changed, and what to do next.
+Command center that gives coaches and directors immediate visibility into what needs attention, what changed, and what to do next—with full explainability for every surfaced item.
 
 **Primary Users:** Club Director, Club Coach
 
 **Design Philosophy:**  
 This is NOT a traditional dashboard with static widgets and tables.  
-This IS an intelligent operating system that actively surfaces priorities and coordinates action.
+This IS an intelligent operating system that actively surfaces priorities, explains its reasoning, and coordinates action.
+
+**Core Principle:**  
+Every item shown must answer: WHY (it surfaced), WHAT CHANGED (trigger), RECOMMENDED ACTION (next step), and OWNER (who acts).
+
+---
+
+## Explainability UI Pattern
+
+### Consistent Structure Across All Cards
+
+Every card in Mission Control follows this lightweight pattern:
+
+```
+┌─────────────────────────────────────┐
+│ [Badge] Athlete Name | Grad Year    │ ← Header
+│                                      │
+│ Short reason (1 line, bold)         │ ← WHY
+│ Context detail (1 line, subtle)     │ ← WHAT CHANGED
+│                                      │
+│ [?] More details                     │ ← Expandable (optional)
+│                                      │
+│ [Primary Action Button]              │ ← RECOMMENDED ACTION
+│ Owner: Coach Name                    │ ← OWNER
+└─────────────────────────────────────┘
+```
+
+### Design Principles for Explainability
+
+**DO:**
+- Keep visible reason to 1 sentence (8-12 words max)
+- Use bold for main reason, regular weight for context
+- Show owner name clearly (not just "Coach")
+- Make action button text specific ("Check In" not "View")
+- Use progressive disclosure for details (expand icon)
+
+**DON'T:**
+- Write paragraphs or multiple sentences
+- Show scores or numeric priorities to user
+- Use jargon or database language
+- Clutter card with too many details upfront
+- Make expanding mandatory (key info visible always)
 
 ---
 
@@ -25,23 +66,23 @@ This IS an intelligent operating system that actively surfaces priorities and co
 │ Mode Nav | Search | Quick Actions | Profile                        │
 ├───────────────────────────────────────────────────────────────┤
 │                                                                     │
-│ PRIORITY ALERTS (if any)                                           │
-│ High-priority cards for urgent items                               │
+│ PRIORITY ALERTS (2-4 urgent items)                                 │
+│ Full explainability: why, what changed, action, owner              │
 │                                                                     │
 ├───────────────────────────────────────────────────────────────┤
 │                                                                     │
-│ WHAT CHANGED TODAY                                                 │
-│ Timeline feed of recent momentum signals                           │
+│ WHAT CHANGED TODAY (5-8 recent signals)                            │
+│ Timeline with "why this matters" context                           │
 │                                                                     │
 ├───────────────────────────────────────────────────────────────┤
 │                                                                     │
-│ ATHLETES NEEDING ATTENTION                                         │
-│ Card-based layout of athletes with issues/blockers                 │
+│ ATHLETES NEEDING ATTENTION (up to 12 cards)                        │
+│ Sortable cards with explainability                                 │
 │                                                                     │
 ├───────────────────────────────────────────────────────────────┤
 │                                                                     │
-│ CRITICAL UPCOMING                                                  │
-│ Next 7-14 days of events, deadlines, milestones                    │
+│ CRITICAL UPCOMING (7-14 day window)                                │
+│ Events and deadlines with prep status                              │
 │                                                                     │
 └───────────────────────────────────────────────────────────────┘
 
@@ -52,508 +93,710 @@ This IS an intelligent operating system that actively surfaces priorities and co
 
 ## Section 1: Header
 
-### Components
-
-**Mode Navigation (Primary)**
-- Horizontal pill navigation or tabs
-- Options: Mission Control | Support Pods | Events | Advocacy | Program
-- Mission Control is highlighted/active
-- Smooth transitions between modes
-
-**Global Search**
-- Search athletes, schools, events
-- Prominent placement (top center)
-- Keyboard shortcut (Cmd/Ctrl + K)
-- Instant results dropdown
-
-**Quick Actions Button**
-- Icon button (+ or lightning bolt)
-- Opens quick action menu:
-  - Log interest/note
-  - Create task
-  - Start recommendation
-  - Add athlete to watch list
-
-**User Profile**
-- User avatar/name
-- Role indicator (Club Director, Coach)
-- Dropdown: Profile, Settings, Logout
-
-**Date/Time Context**
-- Current date
-- Optional: "Good morning, Coach"
-- Sets temporal context for "What Changed Today"
-
-### Visual Design
-- Clean, spacious header
-- Light background (or subtle gradient)
-- Clear visual separation from content below
-- Sticky on scroll
+(No changes from previous spec - omitted for brevity)
 
 ---
 
-## Section 2: Priority Alerts
+## Section 2: Priority Alerts (UPDATED)
 
 ### Purpose
-Immediately surface 2-4 highest-priority items that need attention RIGHT NOW.
+Surface 2-4 highest-priority items (score ≥70) that need immediate attention.
 
 ### Display Logic
-- Only show if there are critical/high-priority items
-- Maximum 4 alerts to avoid overwhelming
-- Sort by priority score
+- Show top 2-4 items from Decision Engine (Critical or High tier)
+- Never more than 4 (avoid overwhelming)
+- If same athlete has multiple issues, consolidate to 1 card
+- If zero critical/high priority, hide section entirely
 
-### Alert Card Components
+### Alert Card Structure
 
-**Each alert card contains:**
-- **Alert Type Badge** (visual indicator)
-  - Red: Critical blocker
-  - Amber: High priority  
-  - Blue: Opportunity
-  
-- **Athlete Name & Grad Year**
-  - Prominent display
-  - Quick visual identification
-  
-- **Issue Description**
-  - Clear, human-readable
-  - Examples:
-    * "No recruiting activity in 21 days"
-    * "College coach responded — no follow-up sent"
-    * "Showcase tomorrow — targets not set"
-    * "Official visit offer — response overdue"
-  
-- **Context**
-  - Relevant details (school name, event name, days overdue)
-  - Keep concise
-  
-- **Quick Action Button**
-  - Primary CTA relevant to alert
-  - Examples:
-    * "View Support Pod"
-    * "Send Follow-up"
-    * "Set Targets"
-    * "Review Offer"
+**Visual Layout:**
+```
+┌────────────────────────────────────────────┐
+│ [Red/Amber Badge]  Emma Chen | 2026        │
+│                                             │
+│ SoCal Showcase in 24 hours                 │ ← WHY (bold)
+│ Event starts tomorrow at 9am               │ ← WHAT CHANGED
+│                                             │
+│ [ⓘ] Show details ▼                         │ ← Expandable
+│                                             │
+│ [Set Targets & Review Prep] ────────       │ ← ACTION
+│ Owner: Coach Martinez                      │ ← OWNER
+└────────────────────────────────────────────┘
+```
 
-### Visual Design
-- Card-based layout
-- Horizontal layout on desktop (2x2 grid or horizontal scroll)
-- Stack vertically on mobile
-- Use color sparingly for meaning
-- Generous padding
-- Subtle drop shadow
-- Hover state for interactivity
+**Badge Colors:**
+- **Red:** Critical (score 90-100)
+- **Amber:** High Priority (score 70-89)
+
+**Expanded Details (when clicked):**
+```
+┌────────────────────────────────────────────┐
+│ ... (collapsed content above) ...          │
+│                                             │
+│ Details:                                    │
+│ • 12 target schools expected at event      │
+│ • No prep plan created yet                 │
+│ • Target list needs review                 │
+│                                             │
+│ Prep checklist:                             │
+│ ☐ Set target schools                       │
+│ ☐ Review Emma's current list               │
+│ ☐ Prepare intro talking points             │
+│                                             │
+│ [Collapse] ▲                                │
+└────────────────────────────────────────────┘
+```
+
+### Example Cards
+
+**Example 1: Deadline Proximity (Critical)**
+```
+[RED BADGE] Emma Chen | 2026 | Forward
+
+SoCal Showcase in 24 hours
+Event starts tomorrow at 9am
+
+[Set Targets & Review Prep]
+Owner: Coach Martinez
+```
+
+**Example 2: Momentum Drop (High)**
+```
+[AMBER BADGE] Sarah Martinez | 2026 | Midfielder
+
+No activity in 18 days
+Last activity: UCLA email on Dec 18
+
+[Check In with Family]
+Owner: Coach Martinez
+```
+
+**Example 3: Blocker (High)**
+```
+[AMBER BADGE] Jake Williams | 2025 | Defender
+
+Transcript missing for 3 target schools
+Application deadlines in 10-14 days
+
+[Request Transcript]
+Owner: Parent + Coach
+```
+
+**Example 4: Ownership Gap (High)**
+```
+[AMBER BADGE] Marcus Johnson | 2026 | Forward
+
+Boston College coach responded 3 days ago
+No follow-up owner assigned
+
+[Assign & Draft Response]
+Owner: Coach (needs to assign)
+```
 
 ### Interaction
-- Click card → Navigate to relevant context (Support Pod, Event, etc.)
-- Click action button → Open quick action modal or navigate
-- Dismiss option ("Handle this later")
+- Click card body → Navigate to Support Pod (with context)
+- Click action button → Primary action or quick modal
+- Click expand icon → Show details inline
+- Hover → Subtle lift effect
+
+### Empty State
+If no Priority Alerts (score <70), hide section entirely.
 
 ---
 
-## Section 3: What Changed Today
+## Section 3: What Changed Today (UPDATED)
 
 ### Purpose
-Timeline-style feed showing momentum signals and changes from the last 24-48 hours.
-
-### Content Types
-- New interest from college
-- Coach responses
-- Event outcomes
-- Commitments
-- Offer received
-- Stage changes
-- Support pod updates
-
-### Feed Item Components
-
-**Each feed item contains:**
-- **Timestamp** (e.g., "2 hours ago", "This morning")
-- **Signal Type Icon** 
-  - Positive signals: green/blue icons
-  - Negative signals: amber/red icons
-  - Neutral: gray icons
-- **Athlete Name** (prominent)
-- **Change Description**
-  - Examples:
-    * "Sarah Martinez received camp invite from UCLA"
-    * "Jake Williams moved to 'Actively Recruiting' stage"
-    * "Emma Chen — Stanford coach responded to coach outreach"
-    * "Marcus Johnson — no activity logged in 14 days"
-- **Quick Action Link** (optional)
-  - "View details"
-  - "Send follow-up"
-  - "Update status"
+Timeline of recent momentum signals (last 24-48 hours) with context on why each matters.
 
 ### Display Logic
-- Show 5-8 most recent/relevant changes
-- "View all activity" link at bottom
-- Group by time ("This Morning", "Earlier Today", "Yesterday")
-- Filter options: All | Positive | Needs Action
+- Show 5-8 most recent changes
+- Include positive and negative signals
+- Sort by recency (newest first)
+- Group by time: "This Morning", "Earlier Today", "Yesterday"
 
-### Visual Design
-- Timeline layout with left-aligned timestamps
-- Clean, scannable list
-- Icons for visual parsing
-- Use color to indicate sentiment
-- Subtle separators between items
-- Expandable for more context
+### Feed Item Structure
+
+**Visual Layout:**
+```
+┌────────────────────────────────────────────┐
+│ [Icon] Emma Chen                            │
+│ 2 hours ago                                 │
+│                                             │
+│ Received camp invite from Stanford         │ ← WHAT HAPPENED
+│                                             │
+│ Why this matters:                           │ ← WHY
+│ Stanford is Emma's top choice              │
+│                                             │
+│ [ⓘ] Show details ▼                         │
+│                                             │
+│ [Review Invite] →                           │ ← ACTION LINK
+└────────────────────────────────────────────┘
+```
+
+**Icons by Signal Type:**
+- ✅ Green check: Positive (new interest, response, progress)
+- ⚠️ Amber alert: Needs attention (deadline, gap, blocker)
+- ↗️ Blue arrow: Neutral change (stage change, update)
+
+**Expanded Details:**
+```
+Details:
+• Coach-initiated invite (strong signal)
+• Response needed within 48 hours
+• Stanford currently shows "high interest"
+
+Suggested next steps:
+• Review invite details with Emma & family
+• Confirm attendance
+• Log response in system
+
+[Collapse] ▲
+```
+
+### Example Feed Items
+
+**Example 1: Positive Signal**
+```
+✅ Emma Chen
+2 hours ago
+
+Received camp invite from Stanford
+
+Why this matters:
+Stanford is Emma's top choice school
+
+[Review Invite] →
+```
+
+**Example 2: Negative Signal**
+```
+⚠️ Sarah Martinez
+4 hours ago
+
+No activity logged in 14 days
+
+Why this matters:
+Momentum is declining, engagement at risk
+
+[Check In] →
+```
+
+**Example 3: Neutral Update**
+```
+↗️ Jake Williams
+Yesterday
+
+Moved to "Actively Recruiting" stage
+
+Why this matters:
+Jake is ramping up recruitment efforts
+
+[View Support Pod] →
+```
 
 ### Interaction
 - Click item → Expand for details
 - Click athlete name → Navigate to Support Pod
-- Click action link → Context-specific action
+- Click action link → Context-specific quick action
+- "View all activity" link → Full momentum timeline
+
+### Empty State
+```
+No new momentum signals yet today.
+
+Check back this afternoon or review [Athletes Needing Attention] below.
+```
 
 ---
 
-## Section 4: Athletes Needing Attention
+## Section 4: Athletes Needing Attention (UPDATED)
 
 ### Purpose
-Core operational view: show all athletes with issues, blockers, or declining momentum.
+Show all athletes with medium+ priority issues (score ≥50), sorted by Decision Engine priority.
 
 ### Display Logic
-- Sort by priority score (algorithm-driven or manual)
-- Default view: Show all athletes needing attention
-- Filters:
-  - Grad Year (2025, 2026, 2027, All)
-  - Team (if multi-team program)
-  - Issue Type (No activity, Blocker, Missed deadline, Opportunity)
-  - Momentum (Declining, Stalled)
+- Show up to 12 athletes (paginate if more)
+- Sort by priority score descending
+- Filter by grad year (via header dropdown)
+- Filter by issue type (optional advanced filter)
+- May include athletes already in Priority Alerts (with context)
 
-### Athlete Card Components
+### Athlete Card Structure
 
-**Each athlete card contains:**
+**Visual Layout:**
+```
+┌───────────────────────────────────────┐
+│ Sarah Martinez                         │
+│ 2026 | Midfielder                     │
+│ [Momentum Badge: ↓ Declining]         │
+│                                        │
+│ No activity in 18 days                │ ← WHY (bold)
+│ Last activity: Dec 18                 │ ← CONTEXT
+│                                        │
+│ [ⓘ] Details                           │
+│                                        │
+│ Stage: Actively Recruiting            │
+│ Schools: 6 targets                    │
+│                                        │
+│ [View Support Pod]  📝 💬             │ ← ACTIONS
+│ Owner: Coach Martinez                 │ ← OWNER
+└───────────────────────────────────────┘
+```
 
-1. **Header Section**
-   - Athlete Name (large, prominent)
-   - Grad Year & Position (secondary text)
-   - Momentum Indicator (visual badge or icon)
-     * Trending up (green)
-     * Stable (yellow)
-     * Trending down (red)
+**Momentum Badges:**
+- ↑ Rising (green): Positive momentum
+- → Stable (gray): Steady state
+- ↓ Declining (red): Needs attention
 
-2. **Issue/Blocker Description**
-   - Primary issue in clear language
-   - Examples:
-     * "No recruiting activity in 18 days"
-     * "Follow-up needed: Boston College coach responded"
-     * "Blocker: Transcript not submitted"
-     * "Opportunity: 3 schools showed interest at last event"
+**Quick Action Icons:**
+- 📝 Log note
+- 💬 Send message
+- ➕ Create task
 
-3. **Context Indicators**
-   - Days since last activity (if relevant)
-   - Recruiting stage (Exploring, Actively Recruiting, etc.)
-   - Support pod health indicator
-   - School interest count (e.g., "5 schools tracking")
+**Expanded Details:**
+```
+Issue details:
+• Last logged: UCLA email (Dec 18)
+• No coach contact in 12 days
+• No family engagement in 10 days
 
-4. **Quick Actions**
-   - Primary button: "View Support Pod"
-   - Secondary actions (icon buttons):
-     * Log update
-     * Send message
-     * Add note
-     * Set reminder
+Recommended actions:
+1. Phone call to check in
+2. Review target school engagement
+3. Update recruiting plan if needed
 
-### Layout Options
+Recent timeline:
+• Dec 18: UCLA coach email
+• Dec 10: Coach check-in call
+• Dec 5: Event attended (Vegas Showcase)
 
-**Desktop:**
-- Grid layout: 2-3 cards per row
-- Card width: 300-400px
-- Generous spacing
+[Collapse] ▲
+```
 
-**Mobile:**
-- Single column
-- Full-width cards
-- Stackable
+### Example Cards
 
-### Visual Design
-- Card-based (NOT table-based)
-- Clean, modern cards with subtle shadow
-- Use whitespace generously
-- Color only for meaning (momentum, priority)
-- Clear typography hierarchy
-- Hover states for interactivity
+**Example 1: Momentum Drop**
+```
+Sarah Martinez
+2026 | Midfielder
+[↓ Declining]
+
+No activity in 18 days
+Last activity: UCLA email on Dec 18
+
+Stage: Actively Recruiting | 6 targets
+
+[View Support Pod]  📝 💬
+Owner: Coach Martinez
+```
+
+**Example 2: Blocker**
+```
+Jake Williams
+2025 | Defender
+[→ Stable]
+
+Transcript missing for 3 target schools
+Application deadlines in 10-14 days
+
+Stage: Narrowing | 5 targets
+
+[View Support Pod]  📝 💬
+Owner: Parent + Coach
+```
+
+**Example 3: Readiness Issue**
+```
+Ryan Thomas
+2025 | Forward
+[↓ Declining]
+
+Only 2 target schools for 2025 grad
+Critical recruiting window (spring)
+
+Stage: Actively Recruiting | 2 targets
+
+[View Support Pod]  📝 💬
+Owner: Coach + Athlete
+```
+
+### Layout
+- **Desktop:** 3-column grid
+- **Tablet:** 2-column grid
+- **Mobile:** Single column, full width
 
 ### Interaction
 - Click card → Navigate to Support Pod
-- Click quick action → Open modal or perform action
-- Drag to reorder (optional advanced feature)
-- Mark as "handled" (optional)
+- Click quick action icon → Open quick modal (log note, send message)
+- Click expand → Show details inline
+- Sort/filter → Re-order or reduce visible cards
 
 ### Empty State
-"No athletes need immediate attention. Great work!"  
-Show program snapshot or positive momentum highlights instead.
+```
+┌─────────────────────────────────────────┐
+│                                          │
+│           ✅                             │
+│                                          │
+│     No athletes need immediate attention │
+│                                          │
+│     All athletes are looking good!       │
+│     Great work, Coach Martinez.          │
+│                                          │
+│     [View Program Snapshot] →            │
+│                                          │
+└─────────────────────────────────────────┘
+```
 
 ---
 
 ## Section 5: Critical Upcoming
 
-### Purpose
-Show next 7-14 days of events, deadlines, and scheduled activities.
+(This section remains largely unchanged - shows events/deadlines without full explainability since they're time-based, not issue-based)
 
-### Content Types
-- Tournaments/showcases
-- College visits (unofficial/official)
-- Application deadlines
-- Scheduled calls with college coaches
-- Important milestones
+### Brief Update
 
-### Display Logic
-- Chronological order
-- Group by date
-- Show date labels ("Tomorrow", "This Weekend", "Next Week")
-- Limit to 7-14 day window
+Add "Prep Status" explainability:
+```
+[Event Card]
+SoCal Showcase
+Tomorrow, 9:00 AM | San Diego
 
-### Event/Deadline Card Components
+8 athletes attending
+12 schools expected
 
-**Each item contains:**
-- **Date** (prominent)
-- **Event/Deadline Name**
-- **Type** (Tournament, Visit, Deadline, Call)
-- **Athletes Involved** (names or count)
-- **Prep Status** (for events)
-  - Ready (green)
-  - In Progress (yellow)
-  - Not Started (red)
-- **Quick Action**
-  - "View event details"
-  - "Set prep tasks"
-  - "View athlete(s)"
+Prep Status: [⚠️ Not Started]
+Why: Targets not set for 3 athletes
 
-### Visual Design
-- Compact list or timeline layout
-- Date labels as section headers
-- Icons for event types
-- Status indicators for prep
-- Clean, scannable
-
-### Interaction
-- Click event → Navigate to Event detail (or Event Prep)
-- Click athlete → Navigate to Support Pod
-- Quick add event (if permission)
+[View Event Details]
+```
 
 ---
 
 ## Section 6: Quick Actions Panel
 
-### Delivery Method
-**Option 1: Floating Action Button (FAB)**
-- Bottom right corner
-- Always accessible
-- Click to open action menu
-
-**Option 2: Sidebar Panel**
-- Right sidebar (if space allows)
-- Always visible
-
-### Quick Actions
-1. **Log Interest/Note**
-   - Quick form: Athlete + Note + School (optional)
-   - Timestamp automatically
-   
-2. **Create Task**
-   - Assign to: Coach, Parent, Athlete
-   - Set due date and priority
-   
-3. **Start Recommendation**
-   - Select athlete
-   - Select target schools
-   - Navigate to recommendation builder
-   
-4. **Add to Watch List**
-   - Flag athlete for extra attention
-   - Set reminder date
-
-### Visual Design
-- Modal or drawer UI
-- Fast, keyboard-friendly forms
-- Clear CTAs
-- Minimal fields (progressive disclosure)
+(No changes - remains FAB with quick log/task creation)
 
 ---
 
-## Section 7: Program Snapshot (Optional)
+## Section 7: Program Snapshot
 
-### Purpose
-High-level metrics for context. Not the focus, but helpful.
-
-### Metrics (Select 3-4)
-- Total athletes in program
-- Athletes by recruiting stage
-- Active support pods
-- Upcoming events (count)
-- Commitments this year
-- Athletes needing attention (count)
-
-### Visual Design
-- Compact display
-- Bottom of page or sidebar
-- Simple stat cards or metrics
-- Link to Program Intelligence for deep dive
-
-### Interaction
-- Click metric → Filter or navigate to relevant view
+(No changes - high-level metrics sidebar)
 
 ---
 
-## Responsive Design
+## Routing to Support Pod
 
-### Desktop (1200px+)
-- Full layout as described
-- Multi-column grids
-- Sidebar or FAB for quick actions
+### Context Preservation
 
-### Tablet (768px - 1199px)
-- Stack sections vertically
-- 2-column grid for athlete cards
-- Collapsible sections
+When coach clicks any Mission Control item, they navigate to Support Pod with:
 
-### Mobile (< 768px)
-- Full vertical stack
-- Single-column athlete cards
-- Sticky header with mode navigation
-- FAB for quick actions
-- Swipe gestures for cards
+**URL Pattern:**
+```
+/support-pods/[athleteId]?context=[issue-id]
+```
+
+**Support Pod Opens With:**
+1. **Issue Highlighted** - The specific problem from Mission Control shown at top
+2. **Action Pre-Loaded** - Recommended action ready to take
+3. **Owner Visible** - Clear assignment
+4. **Timeline Context** - Recent activity shown
+5. **Quick Actions** - [Log Call] [Send Message] [Create Task] immediately available
+
+**Example Flow:**
+
+**Mission Control:**
+```
+[AMBER] Sarah Martinez | 2026
+
+No activity in 18 days
+Last activity: UCLA email on Dec 18
+
+[Check In with Family]
+Owner: Coach Martinez
+```
+
+**↓ Click card**
+
+**Support Pod (Sarah Martinez):**
+```
+┌─────────────────────────────────────────┐
+│ ACTIVE ISSUE (from Mission Control)     │
+│                                          │
+│ [⚠️] Momentum Drop                       │
+│ No activity in 18 days                  │
+│ Last activity: UCLA email on Dec 18     │
+│                                          │
+│ Recommended: Check in with family       │
+│                                          │
+│ [Log Call] [Send Message] [Create Task] │
+└─────────────────────────────────────────┘
+
+[Rest of Support Pod interface below...]
+
+Recent Timeline:
+• Dec 18: UCLA coach email
+• Dec 10: Coach check-in call
+• Dec 5: Vegas Showcase attended
+
+Pod Members:
+• Coach Martinez (Primary)
+• Parent: Maria Martinez
+• Athlete: Sarah Martinez
+```
+
+### Seamless Flow
+
+**Mission Control** (Identify) → **Support Pod** (Coordinate) → **Action** (Resolve)
+
+The context from Mission Control becomes the entry point into the Support Pod workflow, making it clear why the coach is there and what needs to happen next.
 
 ---
 
-## Loading & Empty States
+## Data Requirements (UPDATED)
 
-### Loading State
-- Skeleton screens for each section
-- No generic spinners
-- Maintain layout structure while loading
-
-### Empty States
-
-**No Priority Alerts:**
-"No urgent items right now. You're on top of things."
-
-**No Changes Today:**
-"No new momentum signals yet today. Check back later."
-
-**No Athletes Needing Attention:**
-"All athletes are looking good! Great work."
-(Show positive momentum highlights or program metrics instead)
-
-**No Upcoming Events:**
-"No events scheduled in the next two weeks."
-
----
-
-## Data Requirements
-
-### API Endpoints Needed
+### API Endpoint
 
 ```
 GET /api/mission-control
-  Returns:
-  - priorityAlerts: array<Alert>
-  - recentChanges: array<MomentumSignal>
-  - athletesNeedingAttention: array<Athlete>
-  - upcomingEvents: array<Event>
-  - programSnapshot: object
+
+Returns:
+{
+  "priorityAlerts": [
+    {
+      "id": "alert_1",
+      "athleteId": "athlete_5",
+      "athleteName": "Emma Chen",
+      "gradYear": 2026,
+      "category": "deadline_proximity",
+      "priority": "critical",
+      "score": 92,
+      
+      // Explainability (required)
+      "why": "SoCal Showcase in 24 hours",
+      "whatChanged": "Event starts tomorrow at 9am",
+      "recommendedAction": "Set target schools and review prep checklist",
+      "owner": "Coach Martinez",
+      
+      // Details (for expansion)
+      "details": {
+        "expectedSchools": 12,
+        "prepStatus": "not_started",
+        "checklist": [
+          "Set target schools",
+          "Review current list",
+          "Prepare intro points"
+        ]
+      },
+      
+      // Routing
+      "actionLink": "/support-pods/athlete_5?context=alert_1",
+      "actionType": "navigate" | "quick_modal"
+    }
+  ],
   
-GET /api/mission-control/athletes/:athleteId
-  Returns athlete detail for quick view
+  "recentChanges": [
+    {
+      "id": "signal_1",
+      "athleteId": "athlete_5",
+      "athleteName": "Emma Chen",
+      "timestamp": "2025-01-06T10:30:00Z",
+      "hoursAgo": 2,
+      
+      "whatHappened": "Received camp invite from Stanford",
+      
+      // Why this matters (required)
+      "whyThisMatters": "Stanford is Emma's top choice school",
+      
+      "sentiment": "positive",
+      "icon": "check",
+      
+      // Details
+      "details": {
+        "schoolName": "Stanford",
+        "inviteType": "coach-initiated",
+        "responseDeadline": "48 hours"
+      }
+    }
+  ],
   
-POST /api/mission-control/quick-actions
-  Handles quick log, task creation, etc.
+  "athletesNeedingAttention": [
+    {
+      "id": "athlete_3",
+      "fullName": "Sarah Martinez",
+      "gradYear": 2026,
+      "position": "Midfielder",
+      "score": 74,
+      
+      // Explainability (required)
+      "why": "No activity in 18 days",
+      "whatChanged": "Last activity: Dec 18",
+      "recommendedAction": "Check in with family",
+      "owner": "Coach Martinez",
+      
+      // Context
+      "momentumTrend": "declining",
+      "recruitingStage": "actively_recruiting",
+      "schoolTargets": 6,
+      "daysSinceActivity": 18,
+      
+      // Details
+      "details": {
+        "lastActivity": "UCLA email",
+        "lastCoachContact": "12 days ago",
+        "recentTimeline": [...]
+      }
+    }
+  ],
+  
+  "upcomingEvents": [...],
+  "programSnapshot": {...}
+}
 ```
 
-### Mock Data Structure
+---
 
-See `/app/backend/mock_data.py` for detailed mock data.
+## Visual Design Guidelines (UPDATED)
 
-Key objects:
-- 20-30 athletes across grad years
-- 5-10 priority alerts
-- 10-15 recent momentum signals
-- 8-12 athletes needing attention
-- 5-8 upcoming events
+### Explainability Typography
+
+**WHY (Main Reason):**
+- Font: Inter, 14px, font-weight: 600 (semibold)
+- Color: Gray-900 (dark)
+- Max width: 1 line, truncate with ellipsis if needed
+
+**WHAT CHANGED (Context):**
+- Font: Inter, 13px, font-weight: 400 (regular)
+- Color: Gray-600 (muted)
+- Max width: 1 line
+
+**RECOMMENDED ACTION (Button):**
+- Font: Inter, 14px, font-weight: 500 (medium)
+- Button style: Primary (blue) or Secondary (outlined)
+- Text should be specific ("Check In" not "Action")
+
+**OWNER:**
+- Font: Inter, 12px, font-weight: 400
+- Color: Gray-500
+- Prefix: "Owner: " or icon
+- Format: "Coach [Name]" or "Coach + Parent"
+
+### Spacing
+- 16px padding inside cards
+- 8px gap between WHY and WHAT CHANGED
+- 12px gap before action button
+- 6px gap between action button and owner
+
+### Colors
+- Critical badge: Red-500 (#EF4444)
+- High badge: Amber-500 (#F59E0B)
+- Medium badge: Blue-500 (#3B82F6)
+- Momentum rising: Green-500 (#10B981)
+- Momentum declining: Red-500 (#EF4444)
 
 ---
 
-## Technical Implementation Notes
+## Mobile Considerations
 
-### Frontend
-- React components
-- State management for filters
-- Real-time updates (optional: WebSockets for live changes)
-- Smooth animations and transitions
-- Optimistic UI updates
+### Responsive Explainability
 
-### Backend
-- Mission Control aggregation logic
-- Momentum scoring algorithm
-- Priority calculation
-- Caching for performance
+**Mobile cards (< 768px):**
+- Stack all content vertically
+- WHY remains 1 line (may truncate)
+- WHAT CHANGED may wrap to 2 lines if needed
+- Action button full width
+- Expand icon prominent for details
 
-### Performance
-- Initial load < 2 seconds
-- Lazy load "Athletes Needing Attention" if many
-- Pagination or infinite scroll (if needed)
-- Optimize for mobile networks
+**Touch Targets:**
+- Minimum 44px height for action buttons
+- Expand icon 40px x 40px tap target
+- Card itself tappable (navigate to Support Pod)
 
 ---
 
-## Success Metrics
+## Performance & Loading
 
-### User Behavior
-- Time to identify athlete needing support (target: < 10 seconds)
-- Daily active coaches checking Mission Control
-- Click-through to Support Pods from Mission Control
-- Quick action usage
+### Skeleton States
 
-### Product Metrics
-- Reduction in athletes falling through cracks
-- Faster response to momentum changes
-- Increased coach coordination activity
+While loading, show skeleton cards with:
+- Gray placeholder for athlete name
+- Gray placeholder for reason text
+- Gray placeholder for action button
+- Maintain layout structure
 
----
+**Never show:**
+- Generic spinners
+- "Loading..." text
+- Blank screen
 
-## Design Differentiation Checklist
-
-☐ No traditional data tables  
-☐ No generic enterprise UI patterns  
-☐ Card-based, not row-based  
-☐ Action-oriented, not information-display  
-☐ Proactive alerts, not reactive reports  
-☐ Human language, not database labels  
-☐ Generous whitespace, not cramped  
-☐ Color for meaning, not decoration  
-☐ Mobile-first operations  
-☐ Calm, clear, premium feel  
+### Initial Load Time
+- Target: < 2 seconds for full Mission Control data
+- Cache explainability strings for fast rendering
+- Lazy load "details" expansion content
 
 ---
 
-## Visual Design References
+## Success Metrics (UPDATED)
 
-**Inspiration (tone, not literal):**
-- Apple Health app (clarity, card-based, actionable)
-- Linear app (clean, fast, modern)
-- Notion (calm, organized, spacious)
-- Flight tracking apps (real-time, status-focused)
-- Mission control interfaces (focused, high-signal)
+### Explainability Validation
+- **95%+ coaches understand** why each item surfaced (post-session survey)
+- **<5% "Why is this here?"** questions in user feedback
+- **80%+ coaches trust** the system's recommendations
+- **90%+ coaches find** recommended actions helpful
 
-**Avoid:**
-- Salesforce (too enterprise, cluttered)
-- Generic SaaS dashboards (too static)
-- Hudl (too data-dense for this use case)
-- Traditional CRMs (too transactional)
+### Engagement Metrics
+- **Time to identify priority:** < 10 seconds
+- **Click-through to Support Pod:** 70%+ from alerts
+- **Expand details usage:** 20-30% (details are helpful, not required)
+- **Action completion:** 60%+ within 24 hours of surfacing
 
 ---
 
-## Next Steps for Implementation
+## Implementation Checklist
 
-1. Create mock data (athletes, signals, events)
-2. Build component library (cards, badges, buttons)
-3. Implement header and navigation
-4. Build Priority Alerts section
-5. Build What Changed Today feed
-6. Build Athletes Needing Attention cards
-7. Build Critical Upcoming section
-8. Add Quick Actions FAB/panel
-9. Add filters and search
-10. Polish animations and interactions
-11. Test on mobile
-12. Get feedback from real coaches
+### Backend (API)
+- [ ] Decision Engine logic (6 categories, scoring)
+- [ ] Explainability fields in data model (why, whatChanged, action, owner)
+- [ ] Priority surfacing logic (top 2-4, consolidation)
+- [ ] Mock data with realistic explainability
+- [ ] Routing context preservation
+
+### Frontend (UI)
+- [ ] Alert card component with explainability
+- [ ] Momentum feed item with "why this matters"
+- [ ] Athlete card with issue reason
+- [ ] Expandable details component
+- [ ] Owner label component
+- [ ] Navigation to Support Pod with context
+- [ ] Skeleton loading states
+
+### Testing
+- [ ] Coaches understand every alert (user testing)
+- [ ] Explainability text is clear and concise
+- [ ] No information overload (cards feel calm)
+- [ ] Expansion works smoothly (progressive disclosure)
+- [ ] Mobile experience is touch-friendly
+- [ ] Support Pod context flows correctly
+
+---
+
+## Summary
+
+Mission Control V2 adds **full explainability** to every surfaced item while keeping the UI **calm, premium, and fast to scan**.
+
+**Key Improvements:**
+- Every card shows WHY, WHAT CHANGED, ACTION, OWNER
+- Progressive disclosure (expand for details)
+- Lightweight, not verbose
+- Consistent structure across all sections
+- Seamless routing to Support Pod
+
+**Design Principles Maintained:**
+- High signal, low noise
+- Action-oriented
+- Calm clarity
+- Premium feel
+- Mobile-ready
+
+The Decision Engine spec defines the logic. This spec defines how it looks and feels.
