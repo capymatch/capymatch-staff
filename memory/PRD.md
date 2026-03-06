@@ -4,86 +4,89 @@
 Build a recruiting operating system for clubs, coaches, families, and athletes. The system actively coordinates support, surfaces priorities, identifies blockers, and helps users know what to do next.
 
 ## Architecture
-- **Backend:** FastAPI (Python), MongoDB for persistence, in-memory mock data for athletes/events
+- **Backend:** FastAPI (Python), MongoDB for persistence
 - **Frontend:** React, Shadcn/UI, Tailwind CSS
-- **Database:** MongoDB (event_notes, recommendations, pod_actions, athlete_notes, assignments, messages, pod_resolutions, pod_action_events)
+- **Database:** MongoDB — 10 persisted collections. Only `schools` (static) and `interventions` (computed) remain in-memory.
 - **Core Loop:** Triage (MC) → Preview (Peek) → Treatment (Pod) → Capture (Event) → Promotion (Advocacy) → Oversight (Program)
 
 ## What's Been Implemented
 
 ### V1 — Mission Control + Support Pod (Complete)
 - Mission Control command surface: priority alerts, athletes needing attention, momentum feed, events, snapshot
-- Decision Engine: 7 detection categories (momentum_drop, blocker, deadline_proximity, engagement_drop, ownership_gap, readiness_issue, event_follow_up)
-- Peek Panel: slide-over preview with Quick Actions (Log Note, Assign, Message)
-- Support Pod: 5 blocks (Active Issue, Snapshot, Pod Members, Next Actions, Timeline)
-- Pod Health indicator, real-time polling (30s)
+- Decision Engine: 7 detection categories
+- Peek Panel, Support Pod with 5 blocks, Pod Health, real-time polling
 
 ### V2 — Event Mode (Complete)
-- Event Home, Event Prep, Live Event Mode, Post-Event Summary
+- Event Home, Prep, Live Event Mode, Post-Event Summary
 - Routing: event notes → Support Pod actions + timeline
 
 ### V2 — Advocacy Mode (Complete)
-- Advocacy Home, Recommendation Builder, Recommendation Detail, Relationship Detail
+- Advocacy Home, Recommendation Builder/Detail, Relationship Detail
 - Full lifecycle: draft → send → respond → follow-up → close
-- Routing: warm responses create Support Pod actions + timeline
 
 ### V2.5 — Program Intelligence (Complete)
-- Single scrollable oversight page with 5 decision sections:
-  1. Program Health: pod health distribution, issues by type, risk cluster callout
-  2. Team/Grad Year Readiness: per-cohort breakdown, on-track %, stalled athletes
-  3. Event Effectiveness: follow-up completion rates, downstream impact chain
-  4. Advocacy Outcomes: pipeline, response rates, aging recommendations, school activity
-  5. Support Load: per-owner load bars, overload detection, imbalance warnings
+- 5 decision sections: Program Health, Readiness, Event Effectiveness, Advocacy Outcomes, Support Load
 
 ### Persistence Phase 1 (Complete, Mar 2026)
-- MongoDB collections: `event_notes`, `recommendations`
-- Seed-if-empty strategy: mock data seeded on first run, preserves user data on restarts
-- Dual-write architecture: all mutations write to MongoDB AND update in-memory structures
-- Engine modules (decision_engine, program_engine) read from synced in-memory data
-- API reads: event notes list and recommendation detail read directly from MongoDB
-- Full recommendation lifecycle persisted: draft → sent → awaiting_reply → warm_response → follow_up_needed → closed
-- Response history embedded in recommendations collection
-- Event note routing (routed_to_pod flag) persisted
+- Collections: `event_notes`, `recommendations`
+- Seed-if-empty + dual-write architecture
+- Full recommendation lifecycle + response history persisted
+
+### Persistence Phase 2 (Complete, Mar 2026)
+- Collections: `athletes` (25 docs, read-only), `events` (7 seed docs, has write paths)
+- Events stored WITHOUT capturedNotes (those in `event_notes` collection)
+- Time-relative fields recomputed on load: `daysAway` from `date`, `daysSinceActivity` from `lastActivity`
+- Explicit startup ordering: athletes → events → event_notes → recommendations → recompute derived data
+- All derived data (interventions, alerts, signals, snapshot) recomputed from persisted state
+- Event write paths persisted: POST new event, PATCH checklist toggle
 
 ### Trust Cues & Admin Status (Complete, Mar 2026)
-- Action-level trust cues: "Saved" / "Synced" toast messages on all write operations
-- Inline "Saved" indicator with check icon on LiveEvent note feed (3s animation)
-- Internal admin status page at /admin (hidden, not in coach navigation)
-- GET /api/admin/status: persistence phase, collection counts, seed strategy, limitations
+- Action-level "Saved" / "Synced" toasts on all write operations
+- Internal admin page at /admin showing Phase 2 status
+
+## Persistence Summary
+
+### Persisted (MongoDB) — 10 Collections
+| Collection | Phase | Docs | Description |
+|---|---|---|---|
+| athletes | P2 | 25 | Athlete profiles, daysSinceActivity recomputed |
+| events | P2 | 7+ | Event records, daysAway recomputed, capturedNotes in event_notes |
+| event_notes | P1 | 5+ | Courtside notes, interest levels, follow-ups |
+| recommendations | P1 | 5+ | Full lifecycle with response history |
+| pod_actions | P0 | var | Support Pod action items |
+| athlete_notes | P0 | var | Athlete timeline entries |
+| assignments | P0 | var | Owner assignments |
+| messages | P0 | var | Quick messages |
+| pod_resolutions | P0 | var | Issue resolution records |
+| pod_action_events | P0 | var | Action audit log |
+
+### In-Memory Only — 2 Objects
+| Object | Source | Why |
+|---|---|---|
+| schools | mock_data.py | Static (10 entries), low priority |
+| interventions | decision_engine.py | Recomputed from persisted data on startup, stateless |
 
 ## Key Files
-- `backend/server.py` — All API endpoints, startup seed/load, admin status
-- `backend/database.py` — Seed-if-empty and load functions
-- `backend/decision_engine.py` — 7 intervention categories
-- `backend/support_pod.py` — Pod data & health
+- `backend/server.py` — All API endpoints, startup seed/load/recompute
+- `backend/database.py` — Seed-if-empty and load functions for all collections
+- `backend/decision_engine.py` — 7 intervention categories (recomputed on startup)
 - `backend/event_engine.py` — Event CRUD, prep, live capture, summary, routing
-- `backend/advocacy_engine.py` — Recommendations, relationships, event context
+- `backend/advocacy_engine.py` — Recommendations, relationships
 - `backend/program_engine.py` — 5 intelligence sections
-- `backend/mock_data.py` — Athletes, events, schools (still in-memory)
-
-## Specs & Plans
-- `/app/SUPPORT_POD_SPEC.md`
-- `/app/EVENT_MODE_SPEC.md`
-- `/app/ADVOCACY_MODE_SPEC.md`
-- `/app/PROGRAM_INTELLIGENCE_SPEC.md`
-- `/app/PERSISTENCE_PLAN.md` (Phase 1 — complete)
-- `/app/PERSISTENCE_PHASE_2_PLAN.md` (Phase 2 — planning complete)
+- `backend/mock_data.py` — Data generation (used for initial seed only)
 
 ## Backlog
 
 ### P0 — Next
-- Persistence Phase 2: Migrate athletes (Step 1) then events (Step 2) to MongoDB
-  - Athletes: read-only, zero writes, LOW risk
-  - Events: has write path + capturedNotes merge, MEDIUM risk
-  - Startup ordering: athletes → events → event_notes → interventions
+- Server refactoring: Split server.py into APIRouter modules (routers/events.py, routers/advocacy.py, etc.)
 
 ### P1 — Upcoming
-- Server refactoring: Split server.py into APIRouter modules
-- Historical trending for Program Intelligence (requires persistence)
+- Historical trending for Program Intelligence
 - Coach-specific views in Program Intelligence
+- Real athlete CRUD (create/edit/delete athletes via UI)
 
 ### P2 — Future
 - V3: AI/Intelligence Layer (enhanced Decision Engine, predictive analytics)
 - AI-suggested fit reasons, auto-generated intros
-- Event-to-event comparison, multi-coach support
+- Multi-coach support, role-based access
 - Platform integrations (calendar, messaging)
