@@ -215,7 +215,7 @@ def detect_deadline_proximity(athlete: Dict, upcoming_events: List[Dict]) -> Dic
                         'event_date': event['date'],
                         'expected_schools': event['expectedSchools'],
                         'prep_status': event['prepStatus'],
-                        'checklist': [
+                        'suggested_steps': [
                             'Identify target school coaches attending',
                             'Review athlete highlight reel',
                             'Prepare intro talking points'

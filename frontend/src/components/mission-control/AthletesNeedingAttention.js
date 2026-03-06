@@ -19,7 +19,7 @@ const CATEGORY_ICONS = {
   readiness_issue: Target,
 };
 
-function AthletesNeedingAttention({ athletes, selectedGradYear }) {
+function AthletesNeedingAttention({ athletes, selectedGradYear, onPeek }) {
   if (!athletes || athletes.length === 0) {
     return (
       <section className="space-y-4" data-testid="athletes-attention-section">
@@ -107,6 +107,7 @@ function AthletesNeedingAttention({ athletes, selectedGradYear }) {
           <div
             key={`${athlete.athlete_id}_${athlete.category}_${idx}`}
             data-testid={`athlete-card-${athlete.athlete_id}`}
+            onClick={() => onPeek?.(athlete)}
             className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 cursor-pointer group"
           >
             {/* Header */}

@@ -7,6 +7,7 @@ import AthletesNeedingAttention from "@/components/mission-control/AthletesNeedi
 import CriticalUpcoming from "@/components/mission-control/CriticalUpcoming";
 import ProgramSnapshot from "@/components/mission-control/ProgramSnapshot";
 import QuickActions from "@/components/mission-control/QuickActions";
+import PeekPanel from "@/components/mission-control/PeekPanel";
 import { toast } from "sonner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -16,6 +17,7 @@ function MissionControl() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [selectedGradYear, setSelectedGradYear] = useState("all");
+  const [peekedIntervention, setPeekedIntervention] = useState(null);
 
   useEffect(() => {
     fetchMissionControlData();
@@ -36,8 +38,11 @@ function MissionControl() {
 
   const filterAthletes = (athletes) => {
     if (selectedGradYear === "all") return athletes;
-    return athletes.filter((a) => a.gradYear === parseInt(selectedGradYear));
+    return athletes.filter((a) => a.grad_year === parseInt(selectedGradYear));
   };
+
+  const handlePeek = (intervention) => setPeekedIntervention(intervention);
+  const handleClosePeek = () => setPeekedIntervention(null);
 
   if (loading) {
     return (
@@ -73,23 +78,20 @@ function MissionControl() {
   return (
     <div className="min-h-screen bg-gray-50" data-testid="mission-control-page">
       <Header selectedGradYear={selectedGradYear} setSelectedGradYear={setSelectedGradYear} />
-      
+
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
-        {/* Priority Alerts */}
         {data.priorityAlerts && data.priorityAlerts.length > 0 && (
-          <PriorityAlerts alerts={data.priorityAlerts} />
+          <PriorityAlerts alerts={data.priorityAlerts} onPeek={handlePeek} />
         )}
 
-        {/* What Changed Today */}
         <MomentumFeed signals={data.recentChanges || []} />
 
-        {/* Athletes Needing Attention */}
-        <AthletesNeedingAttention 
+        <AthletesNeedingAttention
           athletes={filteredAthletes}
           selectedGradYear={selectedGradYear}
+          onPeek={handlePeek}
         />
 
-        {/* Two Column Layout for Events and Snapshot */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <CriticalUpcoming events={data.upcomingEvents || []} />
@@ -100,8 +102,12 @@ function MissionControl() {
         </div>
       </main>
 
-      {/* Quick Actions FAB */}
       <QuickActions />
+
+      {/* Peek Panel — slides in from right */}
+      {peekedIntervention && (
+        <PeekPanel intervention={peekedIntervention} onClose={handleClosePeek} />
+      )}
     </div>
   );
 }

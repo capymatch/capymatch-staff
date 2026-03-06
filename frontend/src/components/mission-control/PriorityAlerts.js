@@ -19,7 +19,7 @@ const CATEGORY_ICONS = {
   readiness_issue: Target,
 };
 
-function PriorityAlerts({ alerts }) {
+function PriorityAlerts({ alerts, onPeek }) {
   if (!alerts || alerts.length === 0) return null;
 
   const getAlertStyles = (color) => {
@@ -63,7 +63,8 @@ function PriorityAlerts({ alerts }) {
             <div
               key={`${alert.athlete_id}_${alert.category}_${idx}`}
               data-testid={`priority-alert-${alert.athlete_id}-${alert.category}`}
-              className={`bg-white rounded-xl border-l-4 p-5 shadow-sm hover:shadow-md transition-all duration-200 ${getAlertStyles(alert.badge_color)}`}
+              onClick={() => onPeek?.(alert)}
+              className={`bg-white rounded-xl border-l-4 p-5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer ${getAlertStyles(alert.badge_color)}`}
             >
               {/* Header: category badge + icon */}
               <div className="flex items-start justify-between mb-3">
