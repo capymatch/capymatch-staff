@@ -11,6 +11,7 @@ import RecommendationBuilder from "./pages/RecommendationBuilder";
 import RecommendationDetail from "./pages/RecommendationDetail";
 import RelationshipDetail from "./pages/RelationshipDetail";
 import ProgramIntelligence from "./pages/ProgramIntelligence";
+import AdminStatus from "./pages/AdminStatus";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/advocacy/:recommendationId" element={<RecommendationDetail />} />
           <Route path="/advocacy/relationships/:schoolId" element={<RelationshipDetail />} />
           <Route path="/program" element={<ProgramIntelligence />} />
+          <Route path="/admin" element={<AdminStatus />} />
           <Route path="/support-pods/:athleteId" element={<SupportPod />} />
           <Route path="*" element={<Navigate to="/mission-control" replace />} />
         </Routes>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { ArrowLeft, Radio, Send, Clock } from "lucide-react";
+import { ArrowLeft, Radio, Send, Clock, Check } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -45,6 +45,7 @@ function LiveEvent() {
   const [noteText, setNoteText] = useState("");
   const [followUps, setFollowUps] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [lastSavedId, setLastSavedId] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -86,13 +87,15 @@ function LiveEvent() {
         follow_ups: followUps,
       });
       setNotes((prev) => [res.data, ...prev]);
+      setLastSavedId(res.data.id);
+      setTimeout(() => setLastSavedId(null), 3000);
       // Clear form but keep athlete selected
       setSelectedSchool(null);
       setInterest(null);
       setNoteText("");
       setFollowUps([]);
       const ath = athletes.find((a) => a.id === selectedAthlete);
-      toast.success(`Logged: ${ath?.fullName || "Athlete"} × ${school?.name || "—"}`);
+      toast.success(`Saved — ${ath?.fullName || "Athlete"} × ${school?.name || "—"}`);
       noteRef.current?.focus();
     } catch {
       toast.error("Failed to save note");
@@ -262,6 +265,11 @@ function LiveEvent() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
+                          {lastSavedId === n.id && (
+                            <span className="flex items-center gap-0.5 text-[9px] text-emerald-400 font-medium animate-pulse" data-testid="saved-indicator">
+                              <Check className="w-2.5 h-2.5" /> Saved
+                            </span>
+                          )}
                           {intStyle && n.interest_level !== "none" && (
                             <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${intStyle.cls}`}>{intStyle.label}</span>
                           )}

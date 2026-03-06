@@ -963,6 +963,55 @@ async def program_intelligence():
     return compute_program_intelligence()
 
 
+# ============================================================================
+# ADMIN — internal status view (not part of coach experience)
+# ============================================================================
+
+@api_router.get("/admin/status")
+async def admin_status():
+    """Internal status view: persistence state, collection counts, data sources"""
+    # Collection counts
+    event_notes_count = await db.event_notes.count_documents({})
+    recommendations_count = await db.recommendations.count_documents({})
+    pod_actions_count = await db.pod_actions.count_documents({})
+    athlete_notes_count = await db.athlete_notes.count_documents({})
+    assignments_count = await db.assignments.count_documents({})
+    messages_count = await db.messages.count_documents({})
+    pod_resolutions_count = await db.pod_resolutions.count_documents({})
+    pod_action_events_count = await db.pod_action_events.count_documents({})
+
+    return {
+        "persistence_phase": "Phase 1",
+        "collections": {
+            "persisted": [
+                {"name": "event_notes", "count": event_notes_count, "source": "MongoDB", "phase": 1, "description": "Live event captures — courtside notes, interest levels, follow-ups"},
+                {"name": "recommendations", "count": recommendations_count, "source": "MongoDB", "phase": 1, "description": "Coach recommendations — full lifecycle with response history"},
+                {"name": "pod_actions", "count": pod_actions_count, "source": "MongoDB", "phase": 0, "description": "Support Pod action items"},
+                {"name": "athlete_notes", "count": athlete_notes_count, "source": "MongoDB", "phase": 0, "description": "Athlete timeline entries"},
+                {"name": "assignments", "count": assignments_count, "source": "MongoDB", "phase": 0, "description": "Owner assignments from quick actions"},
+                {"name": "messages", "count": messages_count, "source": "MongoDB", "phase": 0, "description": "Quick messages from peek panel"},
+                {"name": "pod_resolutions", "count": pod_resolutions_count, "source": "MongoDB", "phase": 0, "description": "Issue resolution records"},
+                {"name": "pod_action_events", "count": pod_action_events_count, "source": "MongoDB", "phase": 0, "description": "Action create/update audit log"},
+            ],
+            "in_memory_only": [
+                {"name": "athletes", "count": len(ATHLETES), "source": "mock_data.py", "description": "25 generated athlete profiles — resets on restart"},
+                {"name": "events", "count": len(UPCOMING_EVENTS), "source": "mock_data.py", "description": "7 generated events — resets on restart (Phase 2 target)"},
+                {"name": "schools", "count": len(SCHOOLS), "source": "mock_data.py", "description": "10 static school entries"},
+                {"name": "interventions", "count": len(ALL_INTERVENTIONS), "source": "decision_engine.py", "description": "Computed on startup — stateless, no persistence needed"},
+            ],
+        },
+        "seed_strategy": "seed-if-empty — mock data inserted on first run only, user data preserved across restarts",
+        "limitations": [
+            "Athletes are mock-generated and reset on restart (Phase 2 will persist)",
+            "Events are mock-generated and reset on restart (Phase 2 will persist)",
+            "Interventions are recomputed on every startup — not persisted",
+            "Event checklist state is in-memory only",
+            "New events created via API are in-memory only (lost on restart)",
+        ],
+        "architecture": "Dual-write: mutations update MongoDB AND in-memory. Engines read from synced in-memory.",
+    }
+
+
 # Debug endpoints for Decision Engine inspection
 @api_router.get("/debug/interventions")
 async def get_all_interventions():

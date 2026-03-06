@@ -36,7 +36,7 @@ function EventSummary() {
   const routeNote = async (noteId) => {
     try {
       await axios.post(`${API}/events/${eventId}/notes/${noteId}/route`);
-      toast.success("Routed to Support Pod");
+      toast.success("Routed to Support Pod — synced");
       fetchSummary();
     } catch {
       toast.error("Failed to route");
@@ -47,7 +47,7 @@ function EventSummary() {
     setRouting(true);
     try {
       const res = await axios.post(`${API}/events/${eventId}/route-to-pods`);
-      toast.success(`Routed ${res.data.routed_notes} notes to ${res.data.athletes_affected} Support Pods`);
+      toast.success(`Routed ${res.data.routed_notes} notes — synced to ${res.data.athletes_affected} Support Pods`);
       fetchSummary();
     } catch {
       toast.error("Failed to bulk route");

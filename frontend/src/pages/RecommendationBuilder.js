@@ -93,7 +93,7 @@ function RecommendationBuilder() {
 
       if (send) {
         await axios.post(`${API}/advocacy/recommendations/${res.data.id}/send`);
-        toast.success(`Recommendation sent to ${school?.name}`);
+        toast.success(`Sent to ${school?.name} — saved`);
       } else {
         toast.success("Draft saved");
       }

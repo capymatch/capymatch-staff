@@ -61,7 +61,7 @@ function RecommendationDetail() {
   const sendDraft = async () => {
     try {
       await axios.post(`${API}/advocacy/recommendations/${recommendationId}/send`);
-      toast.success(`Sent to ${rec.school_name}`);
+      toast.success(`Sent to ${rec.school_name} — saved`);
       fetchRec();
     } catch { toast.error("Failed to send"); }
   };
@@ -70,7 +70,7 @@ function RecommendationDetail() {
     if (!responseNote.trim()) { toast.error("Enter a response note"); return; }
     try {
       await axios.post(`${API}/advocacy/recommendations/${recommendationId}/respond`, { response_note: responseNote, response_type: responseType });
-      toast.success("Response logged");
+      toast.success("Response saved");
       setShowResponseForm(false);
       setResponseNote("");
       fetchRec();
@@ -80,7 +80,7 @@ function RecommendationDetail() {
   const markFollowUp = async () => {
     try {
       await axios.post(`${API}/advocacy/recommendations/${recommendationId}/follow-up`);
-      toast.success("Marked for follow-up");
+      toast.success("Follow-up saved");
       fetchRec();
     } catch { toast.error("Failed"); }
   };
@@ -88,7 +88,7 @@ function RecommendationDetail() {
   const closeRec = async () => {
     try {
       await axios.post(`${API}/advocacy/recommendations/${recommendationId}/close`, { reason: closeReason });
-      toast.success("Recommendation closed");
+      toast.success("Closed — saved");
       setShowCloseForm(false);
       fetchRec();
     } catch { toast.error("Failed to close"); }
