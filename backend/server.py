@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from mock_data import (
     ATHLETES,
     PRIORITY_ALERTS,
@@ -17,6 +17,15 @@ from mock_data import (
     ATHLETES_NEEDING_ATTENTION,
     PROGRAM_SNAPSHOT,
     ALL_INTERVENTIONS,
+)
+from support_pod import (
+    get_athlete as sp_get_athlete,
+    get_athlete_interventions,
+    generate_pod_members,
+    generate_suggested_actions,
+    calculate_pod_health,
+    get_relevant_events,
+    enrich_members_with_tasks,
 )
 
 
@@ -60,6 +69,22 @@ class AssignCreate(BaseModel):
 class MessageCreate(BaseModel):
     recipient: str
     text: str
+
+
+# Support Pod Models
+class ActionCreate(BaseModel):
+    title: str
+    owner: str
+    due_date: Optional[str] = None
+    source_category: Optional[str] = None
+
+class ActionUpdate(BaseModel):
+    status: Optional[str] = None
+    owner: Optional[str] = None
+
+class ResolveIssue(BaseModel):
+    category: str
+    resolution_note: Optional[str] = None
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
@@ -207,6 +232,169 @@ async def get_athlete_timeline(athlete_id: str):
     return {"notes": notes, "assignments": assignments, "messages": messages}
 
 
+# ============================================================================
+# SUPPORT POD — treatment and coordination environment
+# ============================================================================
+
+@api_router.get("/support-pods/{athlete_id}")
+async def get_support_pod(athlete_id: str, context: str = None):
+    """Get full Support Pod data for an athlete"""
+    athlete = sp_get_athlete(athlete_id)
+    if not athlete:
+        return {"error": "Athlete not found"}
+
+    interventions = get_athlete_interventions(athlete_id)
+    members = generate_pod_members(athlete)
+
+    # Merge saved actions (DB) with suggested actions (from interventions)
+    saved_actions = await db.pod_actions.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    suggested = generate_suggested_actions(athlete_id, interventions)
+    saved_ids = {a["id"] for a in saved_actions}
+    all_actions = saved_actions + [s for s in suggested if s["id"] not in saved_ids]
+
+    # Enrich members with task counts
+    members = enrich_members_with_tasks(members, all_actions)
+
+    # Get timeline data
+    notes = await db.athlete_notes.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    assignments = await db.assignments.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    messages = await db.messages.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    resolutions = await db.pod_resolutions.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+    action_events = await db.pod_action_events.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+
+    # Determine active intervention for banner
+    active_intervention = None
+    if context:
+        active_intervention = next((i for i in interventions if i["category"] == context), None)
+    if not active_intervention and interventions:
+        active_intervention = interventions[0]
+
+    pod_health = calculate_pod_health(athlete, members, all_actions)
+    events = get_relevant_events(athlete)
+
+    # Count unassigned actions
+    unassigned = [a for a in all_actions if a.get("owner") in ("Unassigned", None, "") and a.get("status") != "completed"]
+
+    return {
+        "athlete": {k: v for k, v in athlete.items() if k != "archetype"},
+        "active_intervention": active_intervention,
+        "all_interventions": interventions,
+        "pod_members": members,
+        "actions": all_actions,
+        "unassigned_count": len(unassigned),
+        "timeline": {
+            "notes": notes,
+            "assignments": assignments,
+            "messages": messages,
+            "resolutions": resolutions,
+            "action_events": action_events,
+        },
+        "pod_health": pod_health,
+        "upcoming_events": events,
+    }
+
+
+@api_router.post("/support-pods/{athlete_id}/actions")
+async def create_pod_action(athlete_id: str, action: ActionCreate):
+    """Create a new action item in the pod"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "title": action.title,
+        "owner": action.owner,
+        "status": "ready",
+        "due_date": action.due_date or (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+        "source": "manual",
+        "source_category": action.source_category,
+        "created_by": "Coach Martinez",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "is_suggested": False,
+        "completed_at": None,
+    }
+    await db.pod_actions.insert_one(doc)
+    doc.pop("_id", None)
+
+    # Log to timeline
+    event = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "type": "action_created",
+        "description": f"Created action: {action.title}",
+        "actor": "Coach Martinez",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.pod_action_events.insert_one(event)
+
+    return doc
+
+
+@api_router.patch("/support-pods/{athlete_id}/actions/{action_id}")
+async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdate):
+    """Update an action (complete, reassign, change status)"""
+    update_dict = {}
+    event_desc = ""
+
+    if update.status:
+        update_dict["status"] = update.status
+        if update.status == "completed":
+            update_dict["completed_at"] = datetime.now(timezone.utc).isoformat()
+            event_desc = "Completed action"
+        else:
+            event_desc = f"Status changed to {update.status}"
+
+    if update.owner:
+        update_dict["owner"] = update.owner
+        event_desc = f"Reassigned to {update.owner}"
+
+    existing = await db.pod_actions.find_one({"id": action_id, "athlete_id": athlete_id})
+
+    if existing:
+        await db.pod_actions.update_one({"id": action_id}, {"$set": update_dict})
+    else:
+        # Suggested action being modified — save to DB
+        doc = {
+            "id": action_id,
+            "athlete_id": athlete_id,
+            **update_dict,
+            "source": "intervention",
+            "is_suggested": False,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.pod_actions.insert_one(doc)
+
+    # Log event
+    if event_desc:
+        event = {
+            "id": str(uuid.uuid4()),
+            "athlete_id": athlete_id,
+            "type": "action_updated",
+            "description": event_desc,
+            "actor": "Coach Martinez",
+            "action_id": action_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.pod_action_events.insert_one(event)
+
+    result = await db.pod_actions.find_one({"id": action_id}, {"_id": 0})
+    return result or {"id": action_id, **update_dict}
+
+
+@api_router.post("/support-pods/{athlete_id}/resolve")
+async def resolve_issue(athlete_id: str, body: ResolveIssue):
+    """Resolve an active issue — logs to timeline, marks in DB"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "category": body.category,
+        "resolution_note": body.resolution_note or f"Resolved {body.category} issue",
+        "resolved_by": "Coach Martinez",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.pod_resolutions.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
 # Debug endpoints for Decision Engine inspection
 @api_router.get("/debug/interventions")
 async def get_all_interventions():
@@ -234,7 +422,7 @@ async def get_all_interventions():
     }
 
 @api_router.get("/debug/interventions/{athlete_id}")
-async def get_athlete_interventions(athlete_id: str):
+async def debug_athlete_interventions(athlete_id: str):
     """
     DEBUG: Get all interventions for a specific athlete
     Shows full scoring breakdown

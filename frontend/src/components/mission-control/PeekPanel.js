@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, ArrowRight, FileText, MessageSquare, UserPlus, Clock, ShieldAlert, Users, Target, Zap, AlertTriangle, ExternalLink, ChevronLeft, Send, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -226,6 +227,7 @@ function MessageForm({ athleteId, onDone, onCancel }) {
 // ─── Main PeekPanel ───
 function PeekPanel({ intervention, onClose }) {
   const panelRef = useRef(null);
+  const navigate = useNavigate();
   const [activeAction, setActiveAction] = useState(null); // null | "note" | "assign" | "message"
 
   useEffect(() => {
@@ -423,6 +425,10 @@ function PeekPanel({ intervention, onClose }) {
               <Button
                 className="w-full bg-primary hover:bg-primary/90 text-white rounded-full font-medium gap-2"
                 data-testid="peek-open-pod-btn"
+                onClick={() => {
+                  onClose();
+                  navigate(`/support-pods/${intervention.athlete_id}?context=${intervention.category}`);
+                }}
               >
                 Open Support Pod
                 <ArrowRight className="w-4 h-4" />
