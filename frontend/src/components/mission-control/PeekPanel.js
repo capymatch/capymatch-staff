@@ -375,6 +375,22 @@ function PeekPanel({ intervention, onClose }) {
             <span>·</span>
             <span>Impact: {intervention.impact}/10</span>
           </div>
+
+          {/* Pod health — secondary supporting signal */}
+          {intervention.pod_health && (
+            <div className="flex items-center gap-2 text-xs mt-2" data-testid="peek-pod-health">
+              <span className={`w-2 h-2 rounded-full ${
+                intervention.pod_health.status === "red" ? "bg-red-500" :
+                intervention.pod_health.status === "yellow" ? "bg-amber-400" : "bg-emerald-500"
+              }`} />
+              <span className="text-gray-500">Pod:</span>
+              <span className={`font-medium ${
+                intervention.pod_health.status === "red" ? "text-red-600" :
+                intervention.pod_health.status === "yellow" ? "text-amber-600" : "text-emerald-600"
+              }`}>{intervention.pod_health.label}</span>
+              <span className="text-gray-400">— {intervention.pod_health.reason}</span>
+            </div>
+          )}
         </div>
 
         {/* Footer — action forms or buttons */}

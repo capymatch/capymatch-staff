@@ -114,6 +114,60 @@ def calculate_pod_health(athlete, members, actions):
     return "green"
 
 
+def explain_pod_health(athlete, interventions):
+    """
+    Lightweight pod health for Mission Control cards.
+    Returns { status, reason } based on observable signals.
+    No DB queries — purely derived from athlete state + interventions.
+
+    Signals evaluated:
+    1. Recency of activity (daysSinceActivity)
+    2. Open issue count (number of interventions)
+    3. Unresolved blockers (blocker category present)
+    4. Ownership clarity (ownership_gap category present)
+    5. Issue severity (any critical-tier interventions)
+    """
+    days = athlete["daysSinceActivity"]
+    issue_count = len(interventions)
+    has_blocker = any(i["category"] == "blocker" for i in interventions)
+    has_ownership_gap = any(i["category"] == "ownership_gap" for i in interventions)
+    has_critical = any(i.get("priority_tier") == "critical" for i in interventions)
+
+    reasons = []
+
+    # --- RED: At Risk ---
+    if days > 21:
+        reasons.append(f"No activity in {days} days")
+    if issue_count >= 3:
+        reasons.append(f"{issue_count} open issues")
+    if has_blocker and days > 14:
+        reasons.append("Unresolved blocker + extended inactivity")
+
+    if reasons:
+        return {"status": "red", "label": "At Risk", "reason": reasons[0]}
+
+    # --- YELLOW: Needs Attention ---
+    if days > 7:
+        reasons.append(f"Inactive for {days} days")
+    if has_blocker:
+        reasons.append("Active blocker")
+    if has_ownership_gap:
+        reasons.append("Ownership gap — response needs assignment")
+    if issue_count >= 2:
+        reasons.append(f"{issue_count} open issues")
+    if has_critical:
+        reasons.append("Critical intervention active")
+
+    if reasons:
+        return {"status": "yellow", "label": "Needs Attention", "reason": reasons[0]}
+
+    # --- GREEN: Healthy ---
+    if issue_count == 1:
+        return {"status": "green", "label": "Healthy", "reason": "1 issue being tracked"}
+
+    return {"status": "green", "label": "Healthy", "reason": "On track"}
+
+
 def get_relevant_events(athlete):
     return [e for e in UPCOMING_EVENTS if e["daysAway"] <= 14][:3]
 

@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, FileText, MessageSquare, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, FileText, MessageSquare, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const CATEGORY_LABELS = {
@@ -18,6 +18,22 @@ const CATEGORY_ICONS = {
   ownership_gap: Users,
   readiness_issue: Target,
 };
+
+const HEALTH_STYLES = {
+  green: { dot: "bg-emerald-500", text: "text-emerald-700" },
+  yellow: { dot: "bg-amber-400", text: "text-amber-700" },
+  red: { dot: "bg-red-500", text: "text-red-700" },
+};
+
+function PodHealthDot({ health }) {
+  const s = HEALTH_STYLES[health.status] || HEALTH_STYLES.green;
+  return (
+    <span className={`inline-flex items-center gap-1 ${s.text}`} data-testid="pod-health-dot" title={health.reason}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      <span className="font-medium">{health.label}</span>
+    </span>
+  );
+}
 
 function AthletesNeedingAttention({ athletes, selectedGradYear, onPeek }) {
   if (!athletes || athletes.length === 0) {
@@ -138,12 +154,18 @@ function AthletesNeedingAttention({ athletes, selectedGradYear, onPeek }) {
             </div>
 
             {/* Meta row */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+            <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap">
               {getStageBadge(athlete.recruiting_stage)}
               <span>·</span>
               <span>{athlete.school_targets} schools</span>
               <span>·</span>
               <span>Owner: {athlete.owner}</span>
+              {athlete.pod_health && (
+                <>
+                  <span>·</span>
+                  <PodHealthDot health={athlete.pod_health} />
+                </>
+              )}
             </div>
 
             {/* Actions */}

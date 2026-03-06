@@ -88,9 +88,21 @@ function PriorityAlerts({ alerts, onPeek }) {
                 )}
               </div>
 
-              {/* Owner */}
-              <div className="text-xs text-gray-500 mb-3">
-                Owner: <span className="font-medium text-gray-700">{alert.owner}</span>
+              {/* Owner + pod health */}
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                <span>Owner: <span className="font-medium text-gray-700">{alert.owner}</span></span>
+                {alert.pod_health && (
+                  <span className="flex items-center gap-1" data-testid="alert-pod-health">
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      alert.pod_health.status === "red" ? "bg-red-500" :
+                      alert.pod_health.status === "yellow" ? "bg-amber-400" : "bg-emerald-500"
+                    }`} />
+                    <span className={`font-medium ${
+                      alert.pod_health.status === "red" ? "text-red-600" :
+                      alert.pod_health.status === "yellow" ? "text-amber-600" : "text-emerald-600"
+                    }`}>{alert.pod_health.label}</span>
+                  </span>
+                )}
               </div>
 
               {/* Action button */}

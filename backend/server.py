@@ -26,6 +26,7 @@ from support_pod import (
     calculate_pod_health,
     get_relevant_events,
     enrich_members_with_tasks,
+    explain_pod_health,
 )
 
 
@@ -119,10 +120,23 @@ async def get_status_checks():
 @api_router.get("/mission-control")
 async def get_mission_control_data():
     """Get all Mission Control data with Decision Engine explainability"""
+
+    # Enrich interventions with pod health
+    def enrich_with_health(interventions_list):
+        enriched = []
+        for item in interventions_list:
+            item_copy = {**item}
+            athlete = sp_get_athlete(item["athlete_id"])
+            if athlete:
+                athlete_interventions = get_athlete_interventions(item["athlete_id"])
+                item_copy["pod_health"] = explain_pod_health(athlete, athlete_interventions)
+            enriched.append(item_copy)
+        return enriched
+
     return {
-        "priorityAlerts": PRIORITY_ALERTS,
-        "recentChanges": MOMENTUM_SIGNALS,  # momentum signals
-        "athletesNeedingAttention": ATHLETES_NEEDING_ATTENTION,
+        "priorityAlerts": enrich_with_health(PRIORITY_ALERTS),
+        "recentChanges": MOMENTUM_SIGNALS,
+        "athletesNeedingAttention": enrich_with_health(ATHLETES_NEEDING_ATTENTION),
         "upcomingEvents": UPCOMING_EVENTS,
         "programSnapshot": PROGRAM_SNAPSHOT,
         
@@ -361,9 +375,6 @@ async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdat
             "athlete_id": athlete_id,
             **update_dict,
             "is_suggested": False,
-        }
-        await db.pod_actions.insert_one(doc)
-            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         await db.pod_actions.insert_one(doc)
 
