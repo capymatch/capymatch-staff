@@ -306,3 +306,157 @@ async def get_reassignment_history(
     ).sort("created_at", -1).to_list(50)
 
     return entries
+
+
+# ── Coach Activation / Engagement ──────────────────────────────────────────
+
+
+def _derive_status(coach_data: dict) -> str:
+    """Derive a concise activation status label for a coach."""
+    invite_status = coach_data.get("invite_status")
+    if invite_status == "pending":
+        return "pending"
+
+    onboarding = coach_data.get("onboarding_progress", 0)
+    total_steps = coach_data.get("onboarding_total", 5)
+    has_activity = coach_data.get("has_first_activity", False)
+    last_active = coach_data.get("last_active")
+
+    # Needs support: accepted 3+ days ago but zero onboarding or no activity in 14 days
+    accepted_at = coach_data.get("accepted_at")
+    if accepted_at:
+        try:
+            accepted_dt = datetime.fromisoformat(accepted_at)
+            days_since_accept = (datetime.now(timezone.utc) - accepted_dt).days
+        except Exception:
+            days_since_accept = 0
+    else:
+        days_since_accept = 0
+
+    if last_active:
+        try:
+            last_dt = datetime.fromisoformat(last_active)
+            days_inactive = (datetime.now(timezone.utc) - last_dt).days
+        except Exception:
+            days_inactive = 999
+    else:
+        days_inactive = 999
+
+    if days_since_accept >= 3 and onboarding == 0:
+        return "needs_support"
+    if days_inactive >= 14 and invite_status == "accepted":
+        return "needs_support"
+
+    # Active: onboarding complete or has recent activity
+    if onboarding >= total_steps or (has_activity and days_inactive < 7):
+        return "active"
+
+    # Activating: accepted but still working through onboarding
+    if invite_status == "accepted":
+        return "activating"
+
+    # Seed coaches without invite — check activity
+    if has_activity:
+        return "active"
+    return "activating"
+
+
+@router.get("/roster/activation")
+async def get_coach_activation(current_user: dict = get_current_user_dep()):
+    """Director: overview of coach activation and engagement signals."""
+    _require_director(current_user)
+
+    # Get all coaches
+    coaches = await db.users.find(
+        {"role": "coach"},
+        {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1,
+         "created_at": 1, "onboarding": 1, "last_active": 1},
+    ).to_list(100)
+
+    # Get all invites for cross-referencing
+    invites = await db.invites.find(
+        {}, {"_id": 0, "email": 1, "status": 1, "accepted_at": 1,
+             "accepted_user_id": 1, "team": 1}
+    ).to_list(200)
+    invite_by_email = {}
+    for inv in invites:
+        # Keep the most relevant invite per email (accepted > pending > others)
+        existing = invite_by_email.get(inv["email"])
+        if not existing or inv["status"] == "accepted" or (
+            inv["status"] == "pending" and existing.get("status") not in ("accepted",)
+        ):
+            invite_by_email[inv["email"]] = inv
+
+    # Athlete counts per coach
+    athlete_map = get_coach_athlete_map()
+
+    # Check for first activity per coach (notes, actions, event_notes)
+    result = []
+    for coach in coaches:
+        cid = coach["id"]
+        onboarding = coach.get("onboarding") or {}
+        completed_steps = onboarding.get("completed_steps", [])
+
+        # Cross-ref invite
+        invite = invite_by_email.get(coach["email"])
+        invite_status = invite["status"] if invite else None
+        accepted_at = invite.get("accepted_at") if invite else None
+
+        # First activity detection
+        first_note = await db.notes.find_one(
+            {"created_by": cid}, {"_id": 0, "created_at": 1}
+        )
+        first_action = await db.actions.find_one(
+            {"$or": [{"created_by": cid}, {"completed_by": cid}]},
+            {"_id": 0, "created_at": 1},
+        )
+        first_event_note = await db.event_notes.find_one(
+            {"created_by": cid}, {"_id": 0, "created_at": 1}
+        )
+
+        # Earliest activity timestamp
+        activity_dates = []
+        for item in [first_note, first_action, first_event_note]:
+            if item and item.get("created_at"):
+                activity_dates.append(item["created_at"])
+        first_activity_at = min(activity_dates) if activity_dates else None
+        has_first_activity = len(activity_dates) > 0
+
+        # Last active = latest of last_active field, onboarding update, or activity
+        last_active = coach.get("last_active")
+        if not last_active and activity_dates:
+            last_active = max(activity_dates)
+
+        athlete_count = len(athlete_map.get(cid, set()))
+
+        coach_data = {
+            "id": cid,
+            "name": coach["name"],
+            "email": coach["email"],
+            "team": coach.get("team"),
+            "invite_status": invite_status,
+            "accepted_at": accepted_at,
+            "created_at": coach.get("created_at"),
+            "onboarding_progress": len(completed_steps),
+            "onboarding_total": 5,
+            "onboarding_dismissed": onboarding.get("dismissed", False),
+            "onboarding_completed_at": onboarding.get("completed_at"),
+            "athlete_count": athlete_count,
+            "has_first_activity": has_first_activity,
+            "first_activity_at": first_activity_at,
+            "last_active": last_active,
+        }
+
+        coach_data["status"] = _derive_status(coach_data)
+        result.append(coach_data)
+
+    # Sort: needs_support first, then pending, then activating, then active
+    status_order = {"needs_support": 0, "pending": 1, "activating": 2, "active": 3}
+    result.sort(key=lambda c: status_order.get(c["status"], 99))
+
+    # Summary counts
+    counts = {"pending": 0, "activating": 0, "active": 0, "needs_support": 0}
+    for c in result:
+        counts[c["status"]] = counts.get(c["status"], 0) + 1
+
+    return {"coaches": result, "summary": counts, "total": len(result)}

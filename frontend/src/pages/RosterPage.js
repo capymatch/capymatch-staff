@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import Header from "@/components/mission-control/Header";
+import CoachActivationPanel from "@/components/CoachActivationPanel";
 import { Users, UserMinus, ArrowRightLeft, AlertTriangle, ChevronDown, ChevronUp, User } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -320,8 +321,10 @@ function RosterPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
           </div>
         ) : (
-          <div className="space-y-3">
-            {data?.groups?.map((group) => (
+          <>
+            <CoachActivationPanel />
+            <div className="space-y-3">
+              {data?.groups?.map((group) => (
               <CoachGroup
                 key={group.coach_id || "unassigned"}
                 group={group}
@@ -329,7 +332,8 @@ function RosterPage() {
                 onReload={fetchRoster}
               />
             ))}
-          </div>
+            </div>
+          </>
         )}
       </main>
     </div>

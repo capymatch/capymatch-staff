@@ -1,0 +1,81 @@
+{
+  "summary": "Coach Activation / Engagement Panel - Testing Complete. Backend: 15/15 tests passed (100%). Frontend: Core features verified with 1 minor issue (route protection). Panel renders correctly for directors, shows status badges, toggle works, auto-expands when needs_support > 0. Panel correctly does not show for coaches (API returns 403).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Roster page for coaches",
+        "issues": ["Coaches can navigate to /roster URL (not redirected at route level). API correctly returns 403, but user sees 'Failed to load roster' error instead of being redirected. Should add frontend route protection to redirect coaches away from /roster."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_coach_activation.py",
+    "/app/test_reports/pytest/pytest_coach_activation.xml"
+  ],
+  "action_items": [
+    "Consider adding frontend route protection to redirect coaches away from /roster page (currently they see an error toast instead of being redirected)"
+  ],
+  "critical_code_review_comments": [
+    "CoachActivationPanel has proper data-testid attributes for all key elements",
+    "Status derivation logic correctly handles pending, activating, active, needs_support statuses",
+    "Panel auto-expands when needs_support > 0 - good UX for directors",
+    "Sorting by status priority (needs_support first) works correctly",
+    "API correctly returns 403 for non-directors",
+    "Panel silently handles API errors (doesn't show for coaches) - acceptable behavior"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_coach_activation.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "95% (All core features working, minor route protection enhancement suggested)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "None - used existing test data from previous iterations",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Coach Activation Panel feature verified. Key endpoints: GET /api/roster/activation (director-only, returns coaches with status, onboarding progress, athlete counts). Status values: pending, activating, active, needs_support. Panel on /roster page for directors. Data-testid attributes: coach-activation-panel, activation-panel-toggle, activation-coach-list, activation-coach-{id}, activation-status-{status}. Panel auto-expands when needs_support > 0. 15 test coaches with needs_support status exist from previous invite acceptance tests.",
+  "verified_features": {
+    "backend_endpoints": [
+      "GET /api/roster/activation - returns coaches array with status derivation ✓",
+      "GET /api/roster/activation - returns summary counts (pending, activating, active, needs_support) ✓",
+      "GET /api/roster/activation - returns 403 for coaches ✓",
+      "GET /api/roster/activation - returns 401 without auth ✓",
+      "Status derivation: pending = invite pending ✓",
+      "Status derivation: needs_support = accepted 3+ days with 0 onboarding OR 14+ days inactive ✓",
+      "Status derivation: active = onboarding complete OR recent activity ✓",
+      "Status derivation: activating = accepted but still onboarding ✓",
+      "Coaches sorted by status priority (needs_support first, active last) ✓",
+      "Summary counts match actual coach status distribution ✓",
+      "Coach fields: id, name, email, status, onboarding_progress, athlete_count, etc. ✓"
+    ],
+    "frontend_components": [
+      "CoachActivationPanel renders on Roster page for directors ✓",
+      "Panel has data-testid='coach-activation-panel' ✓",
+      "Panel auto-expands when needs_support > 0 ✓",
+      "Collapsed header shows summary counts ✓",
+      "Collapsed header shows 'X need support' badge in red ✓",
+      "Expanded view shows columns: Coach, Status, Accepted, Onboarding, Athletes, First Activity, Last Active ✓",
+      "Status badges render with correct styling (Needs Support = red) ✓",
+      "Onboarding progress bars render with correct fill percentage ✓",
+      "Toggle expand/collapse works correctly ✓",
+      "Panel does NOT render for coaches (API 403 handled silently) ✓"
+    ],
+    "data_testid_attributes_verified": [
+      "coach-activation-panel",
+      "activation-panel-toggle",
+      "activation-coach-list",
+      "activation-coach-{id}",
+      "activation-status-{status}"
+    ]
+  }
+}
