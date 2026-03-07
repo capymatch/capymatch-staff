@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { LogIn, UserPlus, Eye, EyeOff, Shield } from "lucide-react";
 
@@ -125,6 +126,17 @@ export default function LoginPage() {
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {mode === "login" && (
+                <div className="text-right mt-1">
+                  <Link
+                    to="/forgot-password"
+                    className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
+                    data-testid="forgot-password-link"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
             </div>
 
             {error && (

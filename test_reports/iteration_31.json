@@ -1,0 +1,85 @@
+{
+  "summary": "Forgot Password / Password Reset Flow - Complete Testing. Backend: 12/12 tests passed (100%). Frontend: All UI components and flows verified. The feature implements a secure password reset flow with hashed tokens, 1-hour expiry, single-use tokens, and email enumeration protection.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_forgot_password.py",
+    "/app/test_reports/pytest/pytest_forgot_password.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "POST /api/auth/forgot-password correctly returns same generic message for both existing and non-existing emails (no email enumeration)",
+    "Tokens are stored as SHA-256 hashes in password_resets collection - raw tokens never stored",
+    "Older unused tokens for same email are invalidated when new token is requested",
+    "POST /api/auth/reset-password validates token hash, checks expiry, requires min 6 char password",
+    "Token is marked as 'used: true' after successful password reset (single-use)",
+    "All frontend components have proper data-testid attributes for testing",
+    "Frontend validates password length (min 6 chars) and password match before API call",
+    "Reset password page without token shows 'Invalid reset link' with link to request new one",
+    "Routes /forgot-password and /reset-password are accessible without authentication",
+    "MOCKED: Resend email service is in test mode - emails fail delivery but tokens are stored correctly in DB"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_forgot_password.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (All UI components and flows verified)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "Created test tokens directly in MongoDB password_resets collection for testing reset-password endpoint. All test tokens cleaned up and passwords restored to original.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Forgot Password feature fully verified. Key endpoints: POST /api/auth/forgot-password (returns generic message, stores hashed token, invalidates older tokens), POST /api/auth/reset-password (validates token hash, checks expiry, requires min 6 chars, marks token used). Frontend pages: /forgot-password (ForgotPasswordPage.js), /reset-password (ResetPasswordPage.js). Data-testid attributes: forgot-password-page, forgot-email-input, forgot-submit-btn, reset-email-sent, back-to-login-link, reset-password-page, reset-password-input, reset-confirm-input, reset-submit-btn, reset-error, reset-success, forgot-password-link (on login page), request-new-link (on invalid token page). Token storage: password_resets collection with {id, email, token_hash, expires_at, used, created_at}. Token expiry: 1 hour (RESET_TOKEN_EXPIRY_HOURS = 1). Email delivery is MOCKED (Resend test mode).",
+  "verified_features": {
+    "backend_endpoints": [
+      "POST /api/auth/forgot-password - returns generic message for existing email ✓",
+      "POST /api/auth/forgot-password - returns SAME generic message for non-existing email ✓",
+      "POST /api/auth/forgot-password - handles empty email gracefully ✓",
+      "POST /api/auth/forgot-password - stores hashed token (SHA-256, 64 hex chars) ✓",
+      "POST /api/auth/forgot-password - invalidates older unused tokens for same email ✓",
+      "POST /api/auth/reset-password - accepts valid token and updates password ✓",
+      "POST /api/auth/reset-password - marks token as used after success ✓",
+      "POST /api/auth/reset-password - rejects used token ✓",
+      "POST /api/auth/reset-password - rejects expired token ✓",
+      "POST /api/auth/reset-password - rejects invalid/unknown token ✓",
+      "POST /api/auth/reset-password - requires min 6 character password ✓",
+      "POST /api/auth/reset-password - requires both token and password ✓",
+      "POST /api/auth/login - works with new password after reset ✓",
+      "POST /api/auth/login - rejects old password after reset ✓"
+    ],
+    "frontend_components": [
+      "Login page has 'Forgot password?' link with data-testid='forgot-password-link' ✓",
+      "Forgot password link navigates to /forgot-password ✓",
+      "ForgotPasswordPage has data-testid='forgot-password-page' ✓",
+      "Email input with data-testid='forgot-email-input' ✓",
+      "Submit button with data-testid='forgot-submit-btn' ✓",
+      "Back to login link with data-testid='back-to-login-link' ✓",
+      "After submit shows success state with data-testid='reset-email-sent' ✓",
+      "Success message says 'Check your email' ✓",
+      "ResetPasswordPage has data-testid='reset-password-page' ✓",
+      "Reset password page without token shows 'Invalid reset link' ✓",
+      "Request new link with data-testid='request-new-link' navigates to /forgot-password ✓",
+      "Reset password page with token shows password form ✓",
+      "New password input with data-testid='reset-password-input' ✓",
+      "Confirm password input with data-testid='reset-confirm-input' ✓",
+      "Show/hide toggle with data-testid='toggle-password' ✓",
+      "Submit button with data-testid='reset-submit-btn' ✓",
+      "Validation error for short password (<6 chars) shows in data-testid='reset-error' ✓",
+      "Validation error for mismatched passwords shows in data-testid='reset-error' ✓",
+      "Backend error for invalid token shows in data-testid='reset-error' ✓",
+      "Routes /forgot-password and /reset-password accessible without auth ✓"
+    ]
+  },
+  "mocked_api_note": "Resend email service is in test mode. Password reset emails fail delivery but tokens are still created and stored in MongoDB. The forgot-password and reset-password endpoints work correctly - only email delivery is mocked."
+}

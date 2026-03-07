@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./AuthContext";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import MissionControl from "./pages/MissionControl";
 import SupportPod from "./pages/SupportPod";
 import EventHome from "./pages/EventHome";
@@ -44,6 +46,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/mission-control" replace /> : <LoginPage />} />
+      <Route path="/forgot-password" element={user ? <Navigate to="/mission-control" replace /> : <ForgotPasswordPage />} />
+      <Route path="/reset-password" element={user ? <Navigate to="/mission-control" replace /> : <ResetPasswordPage />} />
       <Route path="/invite/:token" element={user ? <Navigate to="/mission-control" replace /> : <AcceptInvitePage />} />
       <Route path="/mission-control" element={<ProtectedRoute><MissionControl /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute><EventHome /></ProtectedRoute>} />
