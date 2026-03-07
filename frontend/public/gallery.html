@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CapyMatch — Screen Gallery</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+      background: linear-gradient(180deg, #0f172a 0%, #0a0a0a 100%);
+    }
+    .hero-label {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fbbf24;
+      background: rgba(251,191,36,0.1);
+      border: 1px solid rgba(251,191,36,0.2);
+      padding: 5px 16px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .hero h1 { font-size: 52px; font-weight: 800; letter-spacing: -2px; color: #fff; margin-bottom: 12px; }
+    .hero p { font-size: 17px; color: #94a3b8; max-width: 560px; margin: 0 auto; line-height: 1.6; }
+
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      padding: 32px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin: 40px auto 0;
+      max-width: 700px;
+    }
+    .stat-item .num { font-size: 28px; font-weight: 800; color: #fbbf24; }
+    .stat-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; margin-top: 2px; }
+
+    .section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px 20px;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #fbbf24;
+      margin-bottom: 8px;
+    }
+    .section-desc {
+      font-size: 15px;
+      color: #64748b;
+      margin-bottom: 40px;
+    }
+
+    .screen-card {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 48px;
+      transition: border-color 0.2s;
+    }
+    .screen-card:hover { border-color: #333; }
+
+    .screen-img {
+      width: 100%;
+      display: block;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .screen-info {
+      padding: 24px 28px;
+    }
+    .screen-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .screen-info h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .screen-route {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+      color: #475569;
+      margin-top: 3px;
+    }
+    .screen-info p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #94a3b8;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tag-director { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .tag-all { background: rgba(16,185,129,0.15); color: #10b981; }
+    .tag-ai { background: rgba(139,92,246,0.15); color: #a78bfa; margin-left: 6px; }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .feat {
+      font-size: 11px;
+      padding: 5px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      color: #94a3b8;
+    }
+    .feat-ai {
+      background: rgba(139,92,246,0.1);
+      border-color: rgba(139,92,246,0.2);
+      color: #a78bfa;
+    }
+
+    .divider {
+      max-width: 1200px;
+      margin: 0 auto;
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 48px 24px;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .stats-bar { gap: 24px; flex-wrap: wrap; }
+      .screen-info { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="hero-label">Recruiting Operating System</div>
+    <h1>CapyMatch</h1>
+    <p>Every screen built for clubs, coaches, families, and athletes. Surfaces priorities, coordinates support, powers decisions with AI.</p>
+    <div class="stats-bar">
+      <div class="stat-item"><div class="num">13</div><div class="label">Screens</div></div>
+      <div class="stat-item"><div class="num">9</div><div class="label">AI Features</div></div>
+      <div class="stat-item"><div class="num">5</div><div class="label">Modes</div></div>
+      <div class="stat-item"><div class="num">30+</div><div class="label">Endpoints</div></div>
+    </div>
+  </section>
+
+  <!-- AUTH -->
+  <div class="section">
+    <div class="section-title">Authentication</div>
+    <div class="section-desc">Secure entry with JWT auth and director-managed invite system</div>
+
+    <div class="screen-card">
+      <img src="/screens/01_login.jpg" alt="Login Page" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Login</h3>
+            <div class="screen-route">/login</div>
+          </div>
+          <span class="tag tag-all">All Users</span>
+        </div>
+        <p>Email + password authentication with bcrypt hashing. Three demo accounts shown for quick access. Sign In and Create Account tabs. JWT tokens stored in AuthContext. Director self-registration is blocked — only coaches can register through the public form.</p>
+        <div class="features">
+          <span class="feat">JWT Auth</span>
+          <span class="feat">Bcrypt Hashing</span>
+          <span class="feat">Demo Accounts</span>
+          <span class="feat">Role-Based Registration</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <img src="/screens/12_invites.jpg" alt="Invite Coaches" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Invite Coaches</h3>
+            <div class="screen-route">/invites</div>
+          </div>
+          <span class="tag tag-director">Director Only</span>
+        </div>
+        <p>Directors manage their coaching staff. Create invitations by entering email, name, and optional team. Invites sent via Resend email API with delivery tracking (sent/failed/pending). Copy-link fallback when email fails. Resend count display.</p>
+        <div class="features">
+          <span class="feat">Resend Email API</span>
+          <span class="feat">Delivery Tracking</span>
+          <span class="feat">Copy Link Fallback</span>
+          <span class="feat">Resend Count</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <img src="/screens/13_accept_invite.jpg" alt="Accept Invite" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Accept Invite</h3>
+            <div class="screen-route">/accept-invite/:token</div>
+          </div>
+          <span class="tag tag-all">Invited Coaches</span>
+        </div>
+        <p>Token-based invite acceptance. Validates the unique link, displays invitation details (inviter, team), and lets the coach set a password. Auto-login on completion. Graceful handling for expired or invalid tokens.</p>
+        <div class="features">
+          <span class="feat">Token Validation</span>
+          <span class="feat">Auto-Login</span>
+          <span class="feat">Team Assignment</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- MISSION CONTROL -->
+  <div class="section">
+    <div class="section-title">Mission Control</div>
+    <div class="section-desc">The operational hub — know what to do next</div>
+
+    <div class="screen-card">
+      <img src="/screens/02_mission_control.jpg" alt="Mission Control" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Mission Control</h3>
+            <div class="screen-route">/mission-control</div>
+          </div>
+          <div>
+            <span class="tag tag-all">All Users</span>
+            <span class="tag tag-ai">AI V1+V2</span>
+          </div>
+        </div>
+        <p>Priority alerts with urgency levels, upcoming events with countdowns, athletes needing attention, and a live activity feed. Directors see the global view; coaches see only their athletes. Two AI buttons: "Generate Today's Priorities" (V1 narrative) and "What Should I Do Next?" (V2 structured actions with WHY, EVIDENCE, OWNER, PRIORITY).</p>
+        <div class="features">
+          <span class="feat">Priority Alerts</span>
+          <span class="feat">Upcoming Events</span>
+          <span class="feat">Attention Queue</span>
+          <span class="feat">Live Feed</span>
+          <span class="feat feat-ai">AI Daily Briefing (V1)</span>
+          <span class="feat feat-ai">AI Suggested Actions (V2)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- EVENTS -->
+  <div class="section">
+    <div class="section-title">Event Mode</div>
+    <div class="section-desc">Full event lifecycle — prep, capture, analyze</div>
+
+    <div class="screen-card">
+      <img src="/screens/03_events.jpg" alt="Events Home" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Events Home</h3>
+            <div class="screen-route">/events</div>
+          </div>
+          <span class="tag tag-all">All Users</span>
+        </div>
+        <p>Central event management. Upcoming and past events organized by timeline (Today, This Week, Later, Past). Each event shows location, athlete count, school count, and color-coded readiness (Not Started / In Progress / Ready). Coaches see events filtered to those with their athletes.</p>
+        <div class="features">
+          <span class="feat">Timeline Groups</span>
+          <span class="feat">Readiness Indicators</span>
+          <span class="feat">Type Filtering</span>
+          <span class="feat">Prep / Live / Summary Links</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <img src="/screens/04_event_prep.jpg" alt="Event Prep" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Event Prep</h3>
+            <div class="screen-route">/events/:id/prep</div>
+          </div>
+          <span class="tag tag-all">All Users</span>
+        </div>
+        <p>Pre-event preparation dashboard. Athlete attendance list, target schools with interest levels, prep checklist with completion tracking, and logistical notes. Helps coaches know exactly who to connect with and what to prepare.</p>
+        <div class="features">
+          <span class="feat">Athlete List</span>
+          <span class="feat">Target Schools</span>
+          <span class="feat">Prep Checklist</span>
+          <span class="feat">Logistics</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <img src="/screens/05_live_event.jpg" alt="Live Event Mode" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Live Event Mode</h3>
+            <div class="screen-route">/events/:id/live</div>
+          </div>
+          <span class="tag tag-all">All Users</span>
+        </div>
+        <p>Real-time note capture during events. Dark mode UI optimized for field use. Quick athlete/school chip selection, interest level tagging (Hot/Warm/Cool/None), free-text notes, and follow-up flags (Send film, Schedule call, Add to target list, Route to Support Pod). Recent notes feed on the right.</p>
+        <div class="features">
+          <span class="feat">Quick Capture</span>
+          <span class="feat">Interest Tagging</span>
+          <span class="feat">Follow-Up Flags</span>
+          <span class="feat">Real-Time Feed</span>
+          <span class="feat">Dark Mode UI</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <img src="/screens/06_event_summary.jpg" alt="Event Summary" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Event Summary</h3>
+            <div class="screen-route">/events/:id/summary</div>
+          </div>
+          <div>
+            <span class="tag tag-all">All Users</span>
+            <span class="tag tag-ai">AI V1+V2</span>
+          </div>
+        </div>
+        <p>Post-event analysis. Aggregated note stats (notes captured, schools interacted, athletes seen, follow-ups needed). Hot/Warm/Cool interest breakdowns. AI Recap generates a narrative summary. AI V2 Follow-Up Suggestions surface evidence-based next actions from the captured notes, each with WHY and EVIDENCE traced to specific observations.</p>
+        <div class="features">
+          <span class="feat">Note Aggregation</span>
+          <span class="feat">Interest Breakdown</span>
+          <span class="feat">Follow-Up Routing</span>
+          <span class="feat feat-ai">AI Event Recap (V1)</span>
+          <span class="feat feat-ai">AI Follow-Up Suggestions (V2)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ADVOCACY -->
+  <div class="section">
+    <div class="section-title">Advocacy Mode</div>
+    <div class="section-desc">School recommendation pipeline with AI-assisted drafting</div>
+
+    <div class="screen-card">
+      <img src="/screens/07_advocacy.jpg" alt="Advocacy Home" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Advocacy Home</h3>
+            <div class="screen-route">/advocacy</div>
+          </div>
+          <span class="tag tag-all">All Users</span>
+        </div>
+        <p>The recommendation pipeline. All athlete-to-school recommendations organized by status: Drafts, Sent, Awaiting Reply, Responded, Closed. "Needs Attention" section surfaces recommendations requiring follow-up. Next-action prompts per recommendation. Directors see full pipeline; coaches see only their athletes.</p>
+        <div class="features">
+          <span class="feat">Status Tabs</span>
+          <span class="feat">Needs Attention</span>
+          <span class="feat">Next Actions</span>
+          <span class="feat">Per-Coach Filtering</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <img src="/screens/08_rec_builder.jpg" alt="Recommendation Builder" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Recommendation Builder</h3>
+            <div class="screen-route">/advocacy/new</div>
+          </div>
+          <div>
+            <span class="tag tag-all">All Users</span>
+            <span class="tag tag-ai">AI V1</span>
+          </div>
+        </div>
+        <p>Create a school recommendation. Select athlete and school, specify fit reasons (Athletic ability, Tactical awareness, Academic fit, Character/leadership, Coachability, Program need match), write an intro message, and reference event notes. The "Draft with AI" button generates a personalized intro using GPT 5.2 based on athlete profile and event observations — review and personalize before sending.</p>
+        <div class="features">
+          <span class="feat">Athlete + School Selection</span>
+          <span class="feat">Fit Reason Tags</span>
+          <span class="feat">Event Note Attachment</span>
+          <span class="feat feat-ai">AI Draft with AI (V1)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- PROGRAM -->
+  <div class="section">
+    <div class="section-title">Program Intelligence</div>
+    <div class="section-desc">Strategic overview with AI-powered insights</div>
+
+    <div class="screen-card">
+      <img src="/screens/09_program.jpg" alt="Program Intelligence" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Program Intelligence</h3>
+            <div class="screen-route">/program</div>
+          </div>
+          <div>
+            <span class="tag tag-all">All Users</span>
+            <span class="tag tag-ai">AI V1+V2</span>
+          </div>
+        </div>
+        <p>Strategic program dashboard. "What's Changing" KPI cards (Pod Health, Open Issues, Overdue Actions, Advocacy Pipeline, Follow-Up Completion), program health distribution bar (Healthy/Attention/At Risk), team and grad year readiness breakdowns. Directors get AI V2 "Strategic Insights" with severity-rated findings, each with WHY, EVIDENCE, and RECOMMENDATION. Coaches see their scoped view with V1 narrative.</p>
+        <div class="features">
+          <span class="feat">KPI Trend Cards</span>
+          <span class="feat">Health Distribution</span>
+          <span class="feat">Readiness Breakdown</span>
+          <span class="feat">Coach View Toggle</span>
+          <span class="feat feat-ai">AI Program Narrative (V1)</span>
+          <span class="feat feat-ai">AI Strategic Insights (V2, Director)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SUPPORT POD -->
+  <div class="section">
+    <div class="section-title">Support Pod</div>
+    <div class="section-desc">Per-athlete war room with AI-powered briefings and actions</div>
+
+    <div class="screen-card">
+      <img src="/screens/10_support_pod.jpg" alt="Support Pod" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Support Pod</h3>
+            <div class="screen-route">/support-pods/:athleteId</div>
+          </div>
+          <div>
+            <span class="tag tag-all">All Users</span>
+            <span class="tag tag-ai">AI V2</span>
+          </div>
+        </div>
+        <p>The per-athlete support dashboard. Active issue banner with resolution actions. Athlete snapshot (momentum, stage, target schools, blockers). Support team with contact activity and task counts. Next actions with priority and ownership. Treatment timeline. AI V2 adds "Generate Pod Brief" (2-3 sentence status with signal and key facts) and "Suggest Actions" (structured next actions with WHY/EVIDENCE). Coach access restricted to assigned athletes only.</p>
+        <div class="features">
+          <span class="feat">Active Issue Banner</span>
+          <span class="feat">Athlete Snapshot</span>
+          <span class="feat">Support Team</span>
+          <span class="feat">Next Actions</span>
+          <span class="feat">Treatment Timeline</span>
+          <span class="feat feat-ai">AI Pod Brief (V2)</span>
+          <span class="feat feat-ai">AI Suggested Actions (V2)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ROSTER -->
+  <div class="section">
+    <div class="section-title">Administration</div>
+    <div class="section-desc">Director tools for managing assignments and coaching staff</div>
+
+    <div class="screen-card">
+      <img src="/screens/11_roster.jpg" alt="Roster" class="screen-img" />
+      <div class="screen-info">
+        <div class="screen-top">
+          <div>
+            <h3>Roster</h3>
+            <div class="screen-route">/roster</div>
+          </div>
+          <span class="tag tag-director">Director Only</span>
+        </div>
+        <p>Athlete-coach assignment management. All athletes grouped by their assigned coach with collapsible sections. Each athlete has Reassign (modal with coach dropdown + reason) and Unassign buttons. Unassigned athletes surface with reason labels (manually_unassigned, imported_without_owner, coach_left, newly_created). Open actions warning on reassignment. All changes logged to reassignment_log for timeline display.</p>
+        <div class="features">
+          <span class="feat">Coach Groups</span>
+          <span class="feat">Reassign Modal</span>
+          <span class="feat">Unassign + Reason</span>
+          <span class="feat">Open Actions Warning</span>
+          <span class="feat">Audit Log</span>
+          <span class="feat">Summary Stats</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>CapyMatch &mdash; FastAPI + React + MongoDB + GPT 5.2</p>
+  </div>
+
+</body>
+</html>
