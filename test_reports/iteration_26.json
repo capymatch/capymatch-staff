@@ -1,0 +1,64 @@
+{
+  "summary": "AI Confidence Indicators Testing Complete - All 4 V2 AI features now include confidence indicators with signal (strong/moderate/limited) and evidence-based basis text. Backend: 13/13 tests passed (100%). Frontend: 4/4 features verified with confidence indicators visible.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_confidence_indicators.py",
+    "/app/test_reports/pytest/pytest_confidence_indicators.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Confidence computation uses simple threshold checks (not AI), which is correct for deterministic trust signals",
+    "ConfidenceIndicator component correctly handles dark variant for AiProgramInsights panel",
+    "All confidence responses include both 'signal' (strong/moderate/limited) and 'basis' (human-readable evidence string)",
+    "Signal thresholds are appropriate: suggested-actions (>=8 strong, >=3 moderate), pod-brief (>=6 strong, >=2 moderate), program-insights (>=30 strong, >=10 moderate), event-followups (>=8 notes + >=3 athletes = strong)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_confidence_indicators.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (4/4 confidence indicators verified)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "AI Confidence Indicators feature verified. Each of the 4 V2 AI endpoints now returns a 'confidence' object with 'signal' (strong/moderate/limited) and 'basis' (e.g., 'Based on 14 event notes, 5 athletes observed'). Frontend ConfidenceIndicator component displays green dot + 'Strong signal' (or amber/gray for moderate/limited) + basis text. Dark variant used on Program Insights page.",
+  "verified_features": {
+    "backend_confidence_endpoints": [
+      "POST /api/ai/suggested-actions - Returns confidence: {signal: 'strong', basis: 'Based on 4 priority alerts, 10 upcoming events...'}",
+      "POST /api/ai/pod-brief/athlete_1 - Returns confidence: {signal: 'strong', basis: 'Based on 30 timeline events, 2 interventions, 8 pod actions'}",
+      "POST /api/ai/program-insights - Returns confidence: {signal: 'strong', basis: 'Based on 25 athletes, 10 events, 29 recommendations, 23 event notes'}",
+      "POST /api/ai/event-followups/event_1 - Returns confidence: {signal: 'strong', basis: 'Based on 14 event notes, 5 athletes observed, 7 schools mentioned'}",
+      "Coach scoped confidence works correctly - confidence based on coach's data subset"
+    ],
+    "frontend_confidence_indicators": [
+      "Mission Control 'What Should I Do Next?' - Green dot + 'Strong signal' + basis text visible at bottom of AI panel",
+      "Support Pod 'Generate Pod Brief' - Confidence indicator visible at bottom of pod brief card",
+      "Program Intelligence 'Generate Strategic Insights' - Dark variant confidence indicator (white text on dark bg)",
+      "Event Summary 'Generate Follow-Up Suggestions' - Confidence indicator visible at bottom of followups panel"
+    ],
+    "confidence_signal_types": {
+      "strong": "Green dot (bg-emerald-500), indicates high data confidence",
+      "moderate": "Amber dot (bg-amber-500), indicates moderate data confidence",
+      "limited": "Gray dot (bg-gray-400), indicates limited data available"
+    }
+  },
+  "confidence_threshold_logic": {
+    "suggested-actions": "total_signals (alerts + events + attention + recs) >= 8 = strong, >= 3 = moderate",
+    "pod-brief": "total (timeline + interventions + actions) >= 6 = strong, >= 2 = moderate",
+    "program-insights": "total (athletes + events + recs + notes) >= 30 = strong, >= 10 = moderate",
+    "event-followups": "notes >= 8 AND unique_athletes >= 3 = strong, notes >= 3 = moderate"
+  }
+}

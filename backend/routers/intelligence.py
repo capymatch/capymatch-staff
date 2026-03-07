@@ -324,10 +324,37 @@ async def suggested_actions(current_user: dict = get_current_user_dep()):
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
 
     actions = _parse_structured_actions(raw)
+
+    # Confidence indicator
+    n_alerts = len(alerts)
+    n_events = len(events)
+    n_attention = len(attention)
+    n_recs = len(aging_recs)
+    total_signals = n_alerts + n_events + n_attention + n_recs
+    parts = []
+    if n_alerts:
+        parts.append(f"{n_alerts} priority alert{'s' if n_alerts != 1 else ''}")
+    if n_events:
+        parts.append(f"{n_events} upcoming event{'s' if n_events != 1 else ''}")
+    if n_attention:
+        parts.append(f"{n_attention} athlete{'s' if n_attention != 1 else ''} needing attention")
+    if n_recs:
+        parts.append(f"{n_recs} open recommendation{'s' if n_recs != 1 else ''}")
+
+    if total_signals >= 8:
+        signal = "strong"
+    elif total_signals >= 3:
+        signal = "moderate"
+    else:
+        signal = "limited"
+
+    basis = f"Based on {', '.join(parts)}" if parts else "Limited data: no active alerts, events, or recommendations"
+
     return {
         "actions": actions,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "scope": scope,
+        "confidence": {"signal": signal, "basis": basis},
     }
 
 
@@ -385,10 +412,31 @@ async def pod_brief_ai(athlete_id: str, current_user: dict = get_current_user_de
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
 
     parsed = _parse_pod_brief(raw)
+
+    # Confidence indicator
+    n_interventions = len(interventions)
+    n_actions = len(saved_actions)
+    parts = []
+    if timeline_count:
+        parts.append(f"{timeline_count} timeline event{'s' if timeline_count != 1 else ''}")
+    if n_interventions:
+        parts.append(f"{n_interventions} intervention{'s' if n_interventions != 1 else ''}")
+    if n_actions:
+        parts.append(f"{n_actions} pod action{'s' if n_actions != 1 else ''}")
+    total = timeline_count + n_interventions + n_actions
+    if total >= 6:
+        signal = "strong"
+    elif total >= 2:
+        signal = "moderate"
+    else:
+        signal = "limited"
+    basis = f"Based on {', '.join(parts)}" if parts else "Limited data: no recent pod activity"
+
     return {
         **parsed,
         "athlete_name": athlete.get("fullName", athlete.get("name")),
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "confidence": {"signal": signal, "basis": basis},
     }
 
 
@@ -406,9 +454,34 @@ async def program_insights_ai(current_user: dict = get_current_user_dep()):
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
 
     parsed = _parse_program_insights(raw)
+
+    # Confidence indicator
+    n_athletes = len(ATHLETES)
+    n_events = len(UPCOMING_EVENTS)
+    n_recs = await db.recommendations.count_documents({})
+    n_notes = await db.event_notes.count_documents({})
+    parts = []
+    if n_athletes:
+        parts.append(f"{n_athletes} athlete{'s' if n_athletes != 1 else ''}")
+    if n_events:
+        parts.append(f"{n_events} event{'s' if n_events != 1 else ''}")
+    if n_recs:
+        parts.append(f"{n_recs} recommendation{'s' if n_recs != 1 else ''}")
+    if n_notes:
+        parts.append(f"{n_notes} event note{'s' if n_notes != 1 else ''}")
+    total = n_athletes + n_events + n_recs + n_notes
+    if total >= 30:
+        signal = "strong"
+    elif total >= 10:
+        signal = "moderate"
+    else:
+        signal = "limited"
+    basis = f"Based on {', '.join(parts)}" if parts else "Limited data: program has minimal activity"
+
     return {
         **parsed,
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "confidence": {"signal": signal, "basis": basis},
     }
 
 
@@ -452,9 +525,30 @@ async def event_followups_ai(event_id: str, current_user: dict = get_current_use
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
 
     followups = _parse_structured_actions(raw)
+
+    # Confidence indicator
+    unique_athletes = len(set(n.get("athlete_id") for n in notes))
+    unique_schools = len(set(n.get("school_name") for n in notes if n.get("school_name")))
+    n_notes = len(notes)
+    parts = [f"{n_notes} event note{'s' if n_notes != 1 else ''}"]
+    if unique_athletes > 1:
+        parts.append(f"{unique_athletes} athletes observed")
+    if unique_schools:
+        parts.append(f"{unique_schools} school{'s' if unique_schools != 1 else ''} mentioned")
+    if existing_followups:
+        parts.append(f"{len(existing_followups)} existing follow-up{'s' if len(existing_followups) != 1 else ''}")
+    if n_notes >= 8 and unique_athletes >= 3:
+        signal = "strong"
+    elif n_notes >= 3:
+        signal = "moderate"
+    else:
+        signal = "limited"
+    basis = f"Based on {', '.join(parts)}"
+
     return {
         "followups": followups,
         "event_name": event.get("name"),
-        "notes_analyzed": len(notes),
+        "notes_analyzed": n_notes,
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "confidence": {"signal": signal, "basis": basis},
     }

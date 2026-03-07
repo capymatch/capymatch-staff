@@ -1,7 +1,36 @@
 import { useState } from "react";
 import axios from "axios";
-import { Sparkles, RefreshCw, AlertCircle, ChevronRight, ArrowRight, ExternalLink } from "lucide-react";
+import { Sparkles, RefreshCw, AlertCircle, ChevronRight, ArrowRight, Signal, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const SIGNAL_CONFIG = {
+  strong: { dot: "bg-emerald-500", text: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100", label: "Strong signal" },
+  moderate: { dot: "bg-amber-500", text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100", label: "Moderate signal" },
+  limited: { dot: "bg-gray-400", text: "text-gray-500", bg: "bg-gray-50", border: "border-gray-200", label: "Limited signal" },
+};
+
+function ConfidenceIndicator({ confidence, dark = false }) {
+  if (!confidence) return null;
+  const cfg = SIGNAL_CONFIG[confidence.signal] || SIGNAL_CONFIG.limited;
+
+  if (dark) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 border-t border-white/5" data-testid="confidence-indicator">
+        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+        <span className="text-[10px] font-semibold text-white/50">{cfg.label}</span>
+        <span className="text-[10px] text-white/30">{confidence.basis}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex items-center gap-2 px-4 py-2 border-t ${cfg.border} ${cfg.bg}`} data-testid="confidence-indicator">
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      <span className={`text-[10px] font-semibold ${cfg.text}`}>{cfg.label}</span>
+      <span className="text-[10px] text-gray-400">{confidence.basis}</span>
+    </div>
+  );
+}
 
 const PRIORITY_STYLE = {
   high: "bg-red-50 border-red-100 text-red-700",
@@ -154,6 +183,7 @@ export function AiSuggestedActions({ endpoint, label, buttonLabel, className = "
           AI-generated · {new Date(meta.generated_at).toLocaleTimeString()}
         </div>
       )}
+      {meta?.confidence && !loading && <ConfidenceIndicator confidence={meta.confidence} />}
     </div>
   );
 }
@@ -272,6 +302,7 @@ export function AiPodBrief({ endpoint, className = "" }) {
           AI-generated · {new Date(data.generated_at).toLocaleTimeString()}
         </div>
       )}
+      {data?.confidence && !loading && <ConfidenceIndicator confidence={data.confidence} />}
     </div>
   );
 }
@@ -386,6 +417,7 @@ export function AiProgramInsights({ endpoint, className = "" }) {
           AI-generated · {new Date(data.generated_at).toLocaleTimeString()}
         </div>
       )}
+      {data?.confidence && !loading && <ConfidenceIndicator confidence={data.confidence} dark />}
     </div>
   );
 }
@@ -502,6 +534,7 @@ export function AiEventFollowups({ endpoint, className = "" }) {
           AI-generated · {new Date(data.generated_at).toLocaleTimeString()}
         </div>
       )}
+      {data?.confidence && !loading && <ConfidenceIndicator confidence={data.confidence} />}
     </div>
   );
 }
