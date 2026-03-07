@@ -87,7 +87,7 @@ async def create_pod_action(athlete_id: str, action: ActionCreate, current_user:
         "due_date": action.due_date or (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
         "source": "manual",
         "source_category": action.source_category,
-        "created_by": "Coach Martinez",
+        "created_by": current_user["name"],
         "created_at": datetime.now(timezone.utc).isoformat(),
         "is_suggested": False,
         "completed_at": None,
@@ -100,7 +100,7 @@ async def create_pod_action(athlete_id: str, action: ActionCreate, current_user:
         "athlete_id": athlete_id,
         "type": "action_created",
         "description": f"Created action: {action.title}",
-        "actor": "Coach Martinez",
+        "actor": current_user["name"],
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.pod_action_events.insert_one(event)
@@ -149,7 +149,7 @@ async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdat
             "athlete_id": athlete_id,
             "type": "action_updated",
             "description": event_desc,
-            "actor": "Coach Martinez",
+            "actor": current_user["name"],
             "action_id": action_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -167,7 +167,7 @@ async def resolve_issue(athlete_id: str, body: ResolveIssue, current_user: dict 
         "athlete_id": athlete_id,
         "category": body.category,
         "resolution_note": body.resolution_note or f"Resolved {body.category} issue",
-        "resolved_by": "Coach Martinez",
+        "resolved_by": current_user["name"],
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.pod_resolutions.insert_one(doc)

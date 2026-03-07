@@ -83,26 +83,10 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Role</label>
-                  <div className="flex gap-2" data-testid="role-selector">
-                    {[
-                      { val: "coach", label: "Coach" },
-                      { val: "director", label: "Director" },
-                    ].map((r) => (
-                      <button
-                        key={r.val}
-                        type="button"
-                        onClick={() => setRole(r.val)}
-                        className={`flex-1 py-2.5 text-xs font-medium rounded-lg border transition-colors ${
-                          role === r.val
-                            ? "bg-slate-900 text-white border-slate-900"
-                            : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                        }`}
-                        data-testid={`role-${r.val}`}
-                      >
-                        {r.label}
-                      </button>
-                    ))}
+                  <div className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
+                    Coach
                   </div>
+                  <p className="text-[10px] text-gray-400 mt-1">Director accounts are created by existing directors</p>
                 </div>
               </>
             )}

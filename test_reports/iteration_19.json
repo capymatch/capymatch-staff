@@ -1,0 +1,83 @@
+{
+  "summary": "RBAC Stabilization Pass Complete - All 22 backend tests pass (100%), all frontend flows verified. Director registration blocked, hardcoded 'Coach Martinez' replaced with current_user['name'], RBAC properly enforced.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_rbac_stabilization.py",
+    "/app/test_reports/pytest/pytest_rbac_stabilization.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "auth.py: Director self-registration properly blocked with 403 and clear message",
+    "athletes.py: current_user['name'] used for note author, not hardcoded",
+    "support_pods.py: current_user['name'] used for created_by and actor fields",
+    "events.py: current_user['name'] used for captured_by field in event notes",
+    "LoginPage.js: Registration form shows 'Coach' role only with director restriction message",
+    "Header: Invite button correctly visible to director only, hidden from coaches",
+    "Program Intelligence: View switcher (Program View/Martinez/Rivera) visible to director only, coaches see filtered 'My View'"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_rbac_stabilization.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 tests passed)",
+    "frontend": "100% (all flows verified)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123",
+    "coach_garcia": "coach.garcia@capymatch.com / coach123"
+  },
+  "seed_data_creation": "Test data created during invite flow test (invited_coach_* email)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All RBAC features working correctly. Director self-reg blocked (403), coach self-reg allowed. All routes require JWT (401 without). Director-only routes (/api/admin/status, /api/debug/interventions, /api/invites) return 403 for coaches. current_user['name'] used instead of hardcoded 'Coach Martinez' in all note/action endpoints.",
+  "verified_features": {
+    "registration_rbac": [
+      "POST /api/auth/register with role='director' returns 403 with clear message",
+      "POST /api/auth/register with role='coach' works normally",
+      "Frontend registration form shows 'Coach' role only (no director option)",
+      "Frontend shows 'Director accounts are created by existing directors' message"
+    ],
+    "route_protection": [
+      "GET /api/mission-control returns 401 without token",
+      "GET /api/events returns 401 without token",
+      "GET /api/athletes returns 401 without token",
+      "All routes return 200 with valid JWT token"
+    ],
+    "director_only_routes": [
+      "GET /api/admin/status returns 403 for coach, 200 for director",
+      "GET /api/debug/interventions returns 403 for coach, 200 for director",
+      "GET /api/invites returns 403 for coach, 200 for director",
+      "POST /api/invites returns 403 for coach"
+    ],
+    "current_user_name_fix": [
+      "POST /api/athletes/{id}/notes records current_user['name'] as author",
+      "POST /api/support-pods/{id}/actions records current_user['name'] as created_by",
+      "POST /api/events/{id}/notes records current_user['name'] as captured_by",
+      "No hardcoded 'Coach Martinez' in any response"
+    ],
+    "invite_flow_regression": [
+      "Director creates invite successfully",
+      "Validate invite token (public endpoint) works",
+      "Accept invite creates coach account (not director)",
+      "New coach can log in",
+      "Invite status updated to 'accepted'"
+    ],
+    "frontend_rbac": [
+      "Director sees Invite button in header",
+      "Coach does NOT see Invite button",
+      "Director sees view switcher (Program View/Martinez/Rivera) on Program Intelligence",
+      "Coach sees 'My View — Coach Williams' filtered view (no view switcher)",
+      "All 3 demo accounts login successfully",
+      "Logout redirects to login page"
+    ]
+  }
+}

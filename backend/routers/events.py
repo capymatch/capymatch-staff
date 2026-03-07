@@ -150,6 +150,8 @@ async def create_event_note(event_id: str, body: EventNoteCreate, current_user: 
     if not result:
         return {"error": "Event not found"}
 
+    result["captured_by"] = current_user["name"]
+
     # Persist event note to MongoDB
     await db.event_notes.insert_one({**result})
 
@@ -157,7 +159,7 @@ async def create_event_note(event_id: str, body: EventNoteCreate, current_user: 
     timeline_doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": body.athlete_id,
-        "author": "Coach Martinez",
+        "author": current_user["name"],
         "text": f"[{get_event(event_id)['name']}] {body.school_name or ''} — {body.note_text}".strip(),
         "tag": "event_note",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -209,12 +211,12 @@ async def route_single_note(event_id: str, note_id: str, current_user: dict = ge
             "id": str(uuid.uuid4()),
             "athlete_id": result["athlete_id"],
             "title": action_data["title"],
-            "owner": action_data["owner"],
+            "owner": current_user["name"],
             "status": "ready",
             "due_date": action_data["due_date"],
             "source": "event",
             "source_category": action_data["source_category"],
-            "created_by": "Coach Martinez",
+            "created_by": current_user["name"],
             "created_at": datetime.now(timezone.utc).isoformat(),
             "is_suggested": False,
             "completed_at": None,
@@ -224,7 +226,7 @@ async def route_single_note(event_id: str, note_id: str, current_user: dict = ge
     timeline_doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": result["athlete_id"],
-        "author": "Coach Martinez",
+        "author": current_user["name"],
         "text": result["timeline_text"],
         "tag": "event_routed",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -253,12 +255,12 @@ async def bulk_route_notes(event_id: str, current_user: dict = get_current_user_
                 "id": str(uuid.uuid4()),
                 "athlete_id": result["athlete_id"],
                 "title": action_data["title"],
-                "owner": action_data["owner"],
+                "owner": current_user["name"],
                 "status": "ready",
                 "due_date": action_data["due_date"],
                 "source": "event",
                 "source_category": action_data["source_category"],
-                "created_by": "Coach Martinez",
+                "created_by": current_user["name"],
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "is_suggested": False,
                 "completed_at": None,
@@ -269,7 +271,7 @@ async def bulk_route_notes(event_id: str, current_user: dict = get_current_user_
         timeline_doc = {
             "id": str(uuid.uuid4()),
             "athlete_id": result["athlete_id"],
-            "author": "Coach Martinez",
+            "author": current_user["name"],
             "text": result["timeline_text"],
             "tag": "event_routed",
             "created_at": datetime.now(timezone.utc).isoformat(),

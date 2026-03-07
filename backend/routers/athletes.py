@@ -30,7 +30,7 @@ async def create_note(athlete_id: str, note: NoteCreate, current_user: dict = ge
     doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
-        "author": "Coach Martinez",
+        "author": current_user["name"],
         "text": note.text,
         "tag": note.tag,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -46,7 +46,7 @@ async def assign_owner(athlete_id: str, assignment: AssignCreate, current_user: 
     doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
-        "previous_owner": "Coach Martinez",
+        "previous_owner": current_user["name"],
         "new_owner": assignment.new_owner,
         "reason": assignment.reason,
         "intervention_category": assignment.intervention_category,
@@ -63,7 +63,7 @@ async def send_message(athlete_id: str, message: MessageCreate, current_user: di
     doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
-        "sender": "Coach Martinez",
+        "sender": current_user["name"],
         "recipient": message.recipient,
         "text": message.text,
         "created_at": datetime.now(timezone.utc).isoformat(),

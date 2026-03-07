@@ -24,6 +24,10 @@ def _safe_user(doc):
 
 @router.post("/auth/register", response_model=TokenResponse)
 async def register(body: UserCreate):
+    # Self-registration is coach-only; directors are seeded or promoted
+    if body.role == "director":
+        raise HTTPException(status_code=403, detail="Director accounts cannot be self-registered")
+
     existing = await db.users.find_one({"email": body.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -34,7 +38,7 @@ async def register(body: UserCreate):
         "email": body.email,
         "password_hash": bcrypt.hash(body.password),
         "name": body.name,
-        "role": body.role,
+        "role": "coach",
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.users.insert_one(user_doc)
