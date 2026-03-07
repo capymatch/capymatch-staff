@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 from auth_middleware import get_current_user_dep
-from services.ownership import filter_by_athlete_id, filter_events_by_ownership, get_visible_athlete_ids
+from services.ownership import filter_by_athlete_id, filter_events_by_ownership, get_visible_athlete_ids, get_unassigned_athlete_ids
 from mock_data import (
     PRIORITY_ALERTS,
     MOMENTUM_SIGNALS,
@@ -45,6 +45,9 @@ async def get_mission_control_data(current_user: dict = get_current_user_dep()):
     # Compute snapshot for coach's athletes or full program
     if current_user["role"] == "director":
         snapshot = PROGRAM_SNAPSHOT
+        # Add unassigned count for director awareness
+        unassigned_ids = get_unassigned_athlete_ids()
+        snapshot = {**snapshot, "unassigned_count": len(unassigned_ids)}
     else:
         visible = get_visible_athlete_ids(current_user)
         my_athletes = [a for a in ATHLETES if a["id"] in visible]

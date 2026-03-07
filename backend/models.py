@@ -137,3 +137,13 @@ class InviteCreate(BaseModel):
 class InviteAccept(BaseModel):
     password: str
     name: Optional[str] = None
+
+
+# ── Roster / Reassignment ──
+
+class ReassignRequest(BaseModel):
+    new_coach_id: str
+    reason: Optional[str] = None
+
+class UnassignRequest(BaseModel):
+    reason: Optional[str] = "manually_unassigned"

@@ -1,0 +1,73 @@
+{
+  "summary": "Data Ownership Refinement Testing Complete - All roster, reassignment, and unassign features verified. Backend: 21/21 tests pass (100%). Frontend: 100% success. Roster page shows athletes grouped by coach, reassign/unassign modals work, coaches cannot access roster.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_roster_ownership.py",
+    "/app/test_reports/pytest/pytest_roster_ownership.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "roster.py correctly implements _require_director() check on all director-only endpoints",
+    "Reassignment creates proper audit log entry with type, from_coach, to_coach, reason, reassigned_by",
+    "Unassign correctly sets unassigned_reason label for timeline display",
+    "RosterPage.js has proper data-testid attributes for all interactive elements",
+    "Header.js conditionally renders Roster tab only for directors via user.role check"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_roster_ownership.py"
+  ],
+  "success_rate": {
+    "backend": "100% (21/21 tests passed)",
+    "frontend": "100% (All 7 test flows passed)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "None - used existing athletes. Test cleanup restores athlete_3→coach-williams, athlete_4→coach-garcia",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Data Ownership Refinement (iteration 24) verified. Roster page at /roster is director-only. All reassign/unassign APIs work correctly with audit logging. Valid athlete IDs: athlete_1 through athlete_25. Coach Williams has 13 athletes, Coach Garcia has 12 athletes. athlete_3 belongs to coach-williams, athlete_4 belongs to coach-garcia.",
+  "verified_features": {
+    "backend_endpoints": [
+      "GET /api/roster - Director: 200 OK with groups and summary stats ✓",
+      "GET /api/roster - Coach: 403 Forbidden ✓",
+      "GET /api/roster - No auth: 401 Unauthorized ✓",
+      "GET /api/roster/coaches - Returns list of all coaches ✓",
+      "GET /api/roster/coaches - Coach: 403 Forbidden ✓",
+      "POST /api/athletes/{id}/reassign - Success with audit log ✓",
+      "POST /api/athletes/{id}/reassign - Same coach returns 400 ✓",
+      "POST /api/athletes/{id}/reassign - Invalid athlete returns 404 ✓",
+      "POST /api/athletes/{id}/reassign - Invalid coach returns 404 ✓",
+      "POST /api/athletes/{id}/reassign - Coach: 403 Forbidden ✓",
+      "POST /api/athletes/{id}/unassign - Success with reason label ✓",
+      "POST /api/athletes/{id}/unassign - Already unassigned returns 400 ✓",
+      "POST /api/athletes/{id}/unassign - Coach: 403 Forbidden ✓",
+      "GET /api/athletes/{id}/reassignment-history - Returns audit entries ✓",
+      "GET /api/athletes/{id}/reassignment-history - Coach: 403 Forbidden ✓",
+      "Unassigned group appears in roster with reason labels ✓",
+      "Reassign from unassigned state works ✓"
+    ],
+    "frontend_features": [
+      "Roster tab visible in header for director ✓",
+      "Roster tab NOT visible for coach ✓",
+      "Roster page loads with coach groups ✓",
+      "Summary stats display (25 Athletes, 12 Coaches) ✓",
+      "Reassign modal opens with coach dropdown and reason input ✓",
+      "Unassign confirmation modal with warning message ✓",
+      "Toast notifications on reassign success ✓"
+    ]
+  },
+  "test_data_restored": {
+    "athlete_3": "coach-williams (original)",
+    "athlete_4": "coach-garcia (original)"
+  }
+}

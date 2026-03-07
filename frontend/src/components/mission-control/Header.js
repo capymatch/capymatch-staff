@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, Bell, LayoutDashboard, Calendar, Megaphone, BarChart3, LogOut, UserPlus } from "lucide-react";
+import { Search, Bell, LayoutDashboard, Calendar, Megaphone, BarChart3, LogOut, UserPlus, Users } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
@@ -20,6 +20,7 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
     { id: "events", label: "Events", icon: Calendar, path: "/events" },
     { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
     { id: "program", label: "Program", icon: BarChart3, path: "/program" },
+    ...(user?.role === "director" ? [{ id: "roster", label: "Roster", icon: Users, path: "/roster" }] : []),
   ];
 
   const initials = user?.name

@@ -16,6 +16,7 @@ import ProgramIntelligence from "./pages/ProgramIntelligence";
 import InvitesPage from "./pages/InvitesPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
 import AdminStatus from "./pages/AdminStatus";
+import RosterPage from "./pages/RosterPage";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -55,6 +56,7 @@ function AppRoutes() {
       <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute><RelationshipDetail /></ProtectedRoute>} />
       <Route path="/program" element={<ProtectedRoute><ProgramIntelligence /></ProtectedRoute>} />
       <Route path="/invites" element={<ProtectedRoute><InvitesPage /></ProtectedRoute>} />
+      <Route path="/roster" element={<ProtectedRoute><RosterPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminStatus /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute><SupportPod /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to={user ? "/mission-control" : "/login"} replace />} />
