@@ -4,6 +4,7 @@ import axios from "axios";
 import Header from "@/components/mission-control/Header";
 import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
+import { AiBriefing } from "@/components/AiBriefing";
 import {
   Shield, AlertTriangle, Users, Calendar, Megaphone, ExternalLink,
   TrendingDown, TrendingUp, Minus, Clock, UserX, ChevronRight, User,
@@ -480,6 +481,11 @@ function ProgramIntelligence() {
           </div>
         ) : (
           <div className="space-y-5">
+            <AiBriefing
+              endpoint={`${API}/ai/program-narrative`}
+              label="Program Intelligence"
+              buttonLabel="Generate Program Narrative"
+            />
             <ProgramTrends trends={data.trends} viewMode={data.view_mode} />
             <ProgramHealth data={data.program_health} />
             <ReadinessMatrix data={data.readiness} navigate={navigate} />

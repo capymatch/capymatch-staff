@@ -47,7 +47,7 @@ def _build_invite_url(request: Request, token: str) -> str:
             parsed = urlparse(referer)
             origin = f"{parsed.scheme}://{parsed.netloc}"
     if not origin:
-        origin = "https://capy-match.preview.emergentagent.com"
+        origin = "https://support-pod-1.preview.emergentagent.com"
     return f"{origin}/invite/{token}"
 
 

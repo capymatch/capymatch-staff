@@ -27,6 +27,7 @@ from routers.admin import router as admin_router
 from routers.debug import router as debug_router
 from routers.auth import router as auth_router
 from routers.invites import router as invites_router
+from routers.intelligence import router as intelligence_router
 
 # Create the main app
 app = FastAPI()
@@ -85,6 +86,7 @@ api_router.include_router(admin_router)
 api_router.include_router(debug_router)
 api_router.include_router(auth_router)
 api_router.include_router(invites_router)
+api_router.include_router(intelligence_router)
 
 app.include_router(api_router)
 

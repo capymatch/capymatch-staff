@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { ArrowLeft, FileText, GraduationCap, Users, ListChecks, ExternalLink, Check, ArrowRight } from "lucide-react";
+import { AiBriefing } from "@/components/AiBriefing";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -94,6 +95,13 @@ function EventSummary() {
       </header>
 
       <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* AI Event Recap */}
+        <AiBriefing
+          endpoint={`${API}/ai/event-recap/${eventId}`}
+          label="Event Recap"
+          buttonLabel="Generate AI Recap"
+        />
+
         {/* Event Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-testid="event-stats">
           {[

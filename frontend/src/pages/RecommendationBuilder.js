@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { ArrowLeft, User, GraduationCap, Check, Send, Save, ExternalLink } from "lucide-react";
+import { ArrowLeft, User, GraduationCap, Check, Send, Save, ExternalLink, Sparkles } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -40,6 +40,7 @@ function RecommendationBuilder() {
   const [nextStep, setNextStep] = useState("");
   const [selectedEventNotes, setSelectedEventNotes] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [aiDrafting, setAiDrafting] = useState(false);
 
   // Load athletes + schools
   useEffect(() => {
@@ -70,6 +71,24 @@ function RecommendationBuilder() {
 
   const toggleFit = (val) => setFitReasons((prev) => prev.includes(val) ? prev.filter((f) => f !== val) : [...prev, val]);
   const toggleEventNote = (id) => setSelectedEventNotes((prev) => prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]);
+
+  const draftWithAi = async () => {
+    if (!selectedAthlete || !selectedSchool) {
+      toast.error("Select an athlete and school first");
+      return;
+    }
+    setAiDrafting(true);
+    try {
+      const res = await axios.post(`${API}/ai/advocacy-draft/${selectedAthlete}/${selectedSchool}`);
+      setIntroMessage(res.data.text);
+      toast.success("AI draft generated — review and personalize before sending");
+    } catch (err) {
+      const msg = err.response?.data?.detail || "Failed to generate AI draft";
+      toast.error(msg);
+    } finally {
+      setAiDrafting(false);
+    }
+  };
 
   const saveOrSend = async (send = false) => {
     if (!selectedAthlete) { toast.error("Select an athlete"); return; }
@@ -231,7 +250,26 @@ function RecommendationBuilder() {
 
         {/* Intro message */}
         <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="builder-message-section">
-          <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Intro Message</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Intro Message</h2>
+            <button
+              onClick={draftWithAi}
+              disabled={aiDrafting || !selectedAthlete || !selectedSchool}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
+                aiDrafting || !selectedAthlete || !selectedSchool
+                  ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+              }`}
+              data-testid="ai-draft-btn"
+            >
+              {aiDrafting ? (
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-slate-400" />
+              ) : (
+                <Sparkles className="w-3 h-3 text-amber-500" />
+              )}
+              {aiDrafting ? "Drafting..." : "Draft with AI"}
+            </button>
+          </div>
           <input
             value={coachName}
             onChange={(e) => setCoachName(e.target.value)}

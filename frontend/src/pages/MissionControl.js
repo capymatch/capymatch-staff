@@ -8,6 +8,7 @@ import CriticalUpcoming from "@/components/mission-control/CriticalUpcoming";
 import ProgramSnapshot from "@/components/mission-control/ProgramSnapshot";
 import PeekPanel from "@/components/mission-control/PeekPanel";
 import { toast } from "sonner";
+import { AiBriefing } from "@/components/AiBriefing";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -69,6 +70,15 @@ function MissionControl() {
       <Header selectedGradYear={selectedGradYear} setSelectedGradYear={setSelectedGradYear} stats={stats} />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
+        {/* AI Daily Briefing */}
+        <div className="mb-8">
+          <AiBriefing
+            endpoint={`${API}/ai/briefing`}
+            label="Daily Briefing"
+            buttonLabel="Generate Today's Priorities"
+          />
+        </div>
+
         {/* Priority zone — alerts + live feed side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
           <div className="lg:col-span-2">
