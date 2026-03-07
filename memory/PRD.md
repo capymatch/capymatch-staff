@@ -39,11 +39,15 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Notes in athlete timeline, counts as engagement activity
 
 ### Weekly Coach Digest (2026-03-07)
-- Manual trigger "Send Digest" button on Roster page (director-only)
-- Command brief email: What Changed summary, coach activation, coaches needing support, notes logged, athletes needing attention (snapshotted), unassigned athletes, upcoming events
-- Digest history stored in `digests` collection with full summary_data snapshot
-- Recipients array for future multi-recipient support
-- API: POST /api/digest/generate, GET /api/digest/history, GET /api/digest/{id}
+- Manual trigger on Roster page (director-only)
+- Command brief email with coach activation, athletes needing attention, notes logged
+
+### Mission Control Redesign (2026-03-08)
+- **Role-based dashboards:** Single `/api/mission-control` endpoint returns different data based on user role
+- **Director Mission Control:** AI Program Brief (hero), Program Status Row (5 KPIs), Needs Attention (max 5 critical items), Upcoming Events, Program Activity
+- **Coach Mission Control:** Today's Actions (AI hero), My Roster (athletes with momentum/health/categories), Upcoming Events, Recent Activity
+- **Above-the-fold rule:** Max 3 modules per role above the fold
+- **Design:** Premium dark shell + light content surfaces, calm spacing, strong visual hierarchy
 
 ### Documentation
 - pages.html, gallery.html
@@ -64,24 +68,35 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 ## Code Architecture
 ```
 /app/backend/routers/
-  digest.py         # Weekly digest generation + history
-  profile.py        # Coach self-service profile
-  roster.py         # Roster + Activation + Nudge
-  onboarding.py     # Coach onboarding checklist
-  athletes.py       # Athletes + Quick Notes
-  auth.py, ai.py, intelligence.py, invites.py
-/app/frontend/src/components/
-  DigestPanel.js         # Digest trigger + history
-  CoachActivationPanel.js # Activation panel + nudge
-  QuickNote.js           # Inline note input
-  OnboardingChecklist.js
+  mission_control.py   # Role-based MC: director/coach views
+  digest.py            # Weekly digest generation + history
+  profile.py           # Coach self-service profile
+  roster.py            # Roster + Activation + Nudge
+  onboarding.py        # Coach onboarding checklist
+  athletes.py          # Athletes + Quick Notes
+  intelligence.py      # AI endpoints (briefing, actions, pod, insights)
+  auth.py, ai.py, invites.py, events.py, advocacy.py, program.py
+
+/app/frontend/src/components/mission-control/
+  Header.js            # Shared nav header
+  DirectorView.js      # Director MC container
+  CoachView.js         # Coach MC container
+  AIProgramBrief.js    # Director hero: AI program summary
+  ProgramStatusRow.js  # Director: 5 KPI pills
+  NeedsAttentionCard.js # Director: critical interventions (max 5)
+  TodaysActionsCard.js # Coach hero: AI work queue
+  MyRosterCard.js      # Coach: athlete roster with health
+  UpcomingEventsCard.js # Shared: upcoming events
+  ActivityFeed.js      # Shared: recent activity feed
+
 /app/frontend/src/pages/
+  MissionControl.js    # Role router: DirectorView or CoachView
   ProfilePage.js, ForgotPasswordPage.js, ResetPasswordPage.js
-  RosterPage.js, MissionControl.js, SupportPod.js, etc.
+  RosterPage.js, SupportPod.js, etc.
 ```
 
 ## Upcoming Tasks
-- P2: Platform Integrations (calendars, messaging)
+- P1: Platform Integrations (calendars, messaging)
 - P2: Smart Match Build (/app/SMART_MATCH_CONCEPT.md)
 - P2: Unified Platform Merge (/app/MERGE_ASSESSMENT_PLAN.md)
 - V2: Auto-scheduled digest (Monday 8am)
