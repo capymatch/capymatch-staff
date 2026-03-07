@@ -71,9 +71,12 @@ function TreatmentTimeline({ timeline }) {
             <>
               <p className="text-sm text-gray-800">{entry.text}</p>
               <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
-                <span>{entry.author || "Coach Martinez"}</span>
+                <span>{entry.created_by_name || entry.author || "Coach"}</span>
                 <span>·</span>
                 <span>{time}</span>
+                {entry.category && entry.category !== "other" && (
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-medium capitalize">{entry.category}</span>
+                )}
                 {entry.tag && (
                   <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-medium">{entry.tag}</span>
                 )}

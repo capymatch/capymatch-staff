@@ -33,12 +33,20 @@ async def create_note(athlete_id: str, note: NoteCreate, current_user: dict = ge
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
     """Log a quick note to an athlete's timeline"""
+    valid_categories = {"recruiting", "event", "parent", "follow-up", "other"}
+    category = (note.category or "other").lower().strip()
+    if category not in valid_categories:
+        category = "other"
+
     doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
         "author": current_user["name"],
+        "created_by": current_user["id"],
+        "created_by_name": current_user["name"],
         "text": note.text,
         "tag": note.tag,
+        "category": category,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.athlete_notes.insert_one(doc)

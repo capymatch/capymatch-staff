@@ -80,7 +80,7 @@ async def get_onboarding_status(current_user: dict = get_current_user_dep()):
 
     # Auto-detect log_activity: check for notes or completed actions by this coach
     if "log_activity" not in completed_steps:
-        has_note = await db.notes.find_one(
+        has_note = await db.athlete_notes.find_one(
             {"created_by": current_user["id"]}, {"_id": 0, "id": 1}
         )
         has_action = await db.actions.find_one(

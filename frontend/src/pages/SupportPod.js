@@ -10,6 +10,7 @@ import NextActions from "@/components/support-pod/NextActions";
 import TreatmentTimeline from "@/components/support-pod/TreatmentTimeline";
 import { toast } from "sonner";
 import { AiPodBrief, AiSuggestedActions } from "@/components/AiV2Components";
+import QuickNote from "@/components/QuickNote";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const POLL_INTERVAL_MS = 30000; // 30 seconds
@@ -135,8 +136,14 @@ function SupportPod() {
           buttonLabel="Suggest Actions for This Athlete"
         />
 
-        {/* Block 5: Treatment Timeline */}
-        <TreatmentTimeline timeline={timeline} />
+        {/* Quick Note + Treatment Timeline */}
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm" data-testid="pod-quick-note">
+            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Add Note</h3>
+            <QuickNote athleteId={athleteId} athleteName={athlete?.fullName} onSaved={fetchPodData} />
+          </div>
+          <TreatmentTimeline timeline={timeline} />
+        </div>
       </main>
     </div>
   );

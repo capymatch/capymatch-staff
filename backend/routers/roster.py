@@ -417,7 +417,7 @@ async def get_coach_activation(current_user: dict = get_current_user_dep()):
         accepted_at = invite.get("accepted_at") if invite else None
 
         # First activity detection
-        first_note = await db.notes.find_one(
+        first_note = await db.athlete_notes.find_one(
             {"created_by": cid}, {"_id": 0, "created_at": 1}
         )
         first_action = await db.actions.find_one(

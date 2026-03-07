@@ -23,6 +23,7 @@ class StatusCheckCreate(BaseModel):
 class NoteCreate(BaseModel):
     text: str
     tag: Optional[str] = None
+    category: Optional[str] = None
 
 class AssignCreate(BaseModel):
     new_owner: str

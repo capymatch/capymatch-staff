@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown, Minus, FileText, MessageSquare, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import QuickNote from "@/components/QuickNote";
 
 const CATEGORY_LABELS = {
   momentum_drop: "Momentum Drop",
@@ -107,10 +108,11 @@ function AthletesNeedingAttention({ athletes, selectedGradYear, onPeek }) {
               </p>
             </div>
 
-            {/* Right: pod health + owner */}
+            {/* Right: pod health + owner + quick note */}
             <div className="shrink-0 text-right space-y-1 pt-0.5">
               {athlete.pod_health && <PodHealthDot health={athlete.pod_health} />}
               <p className="text-[11px] text-slate-400">{athlete.owner}</p>
+              <QuickNote athleteId={athlete.athlete_id} athleteName={athlete.athlete_name} compact />
             </div>
           </div>
         ))}
