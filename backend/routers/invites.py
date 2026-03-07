@@ -1,6 +1,6 @@
-"""Invites — director-only coach invitation system."""
+"""Invites — director-only coach invitation system with email delivery."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from passlib.hash import bcrypt
 from datetime import datetime, timezone, timedelta
 import uuid
@@ -9,6 +9,7 @@ import secrets
 from db_client import db
 from models import InviteCreate, InviteAccept
 from auth_middleware import get_current_user_dep, create_token
+from services.email import send_invite_email
 
 router = APIRouter()
 
@@ -16,7 +17,7 @@ INVITE_EXPIRY_DAYS = 7
 
 
 def _safe_invite(doc):
-    """Return invite dict without _id. Include token for link sharing."""
+    """Return invite dict without _id."""
     return {
         "id": doc["id"],
         "email": doc["email"],
@@ -24,6 +25,10 @@ def _safe_invite(doc):
         "team": doc.get("team"),
         "token": doc.get("token", ""),
         "status": doc["status"],
+        "delivery_status": doc.get("delivery_status", "pending"),
+        "sent_at": doc.get("sent_at"),
+        "last_error": doc.get("last_error"),
+        "resend_count": doc.get("resend_count", 0),
         "invited_by": doc["invited_by"],
         "invited_by_name": doc.get("invited_by_name", ""),
         "created_at": doc["created_at"],
@@ -32,18 +37,62 @@ def _safe_invite(doc):
     }
 
 
+def _build_invite_url(request: Request, token: str) -> str:
+    """Build the frontend invite URL from the request origin."""
+    origin = request.headers.get("origin", "")
+    if not origin:
+        referer = request.headers.get("referer", "")
+        if referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            origin = f"{parsed.scheme}://{parsed.netloc}"
+    if not origin:
+        origin = "https://capy-match.preview.emergentagent.com"
+    return f"{origin}/invite/{token}"
+
+
+async def _send_and_track(invite_doc: dict, request: Request) -> dict:
+    """Send invite email and update delivery status in DB."""
+    invite_url = _build_invite_url(request, invite_doc["token"])
+
+    result = await send_invite_email(
+        to_email=invite_doc["email"],
+        invite_name=invite_doc["name"],
+        invited_by=invite_doc.get("invited_by_name", "A director"),
+        team=invite_doc.get("team"),
+        invite_url=invite_url,
+    )
+
+    now = datetime.now(timezone.utc).isoformat()
+    if result["success"]:
+        await db.invites.update_one(
+            {"id": invite_doc["id"]},
+            {"$set": {"delivery_status": "sent", "sent_at": now, "last_error": None}}
+        )
+        invite_doc["delivery_status"] = "sent"
+        invite_doc["sent_at"] = now
+        invite_doc["last_error"] = None
+    else:
+        await db.invites.update_one(
+            {"id": invite_doc["id"]},
+            {"$set": {"delivery_status": "failed", "last_error": result["error"]}}
+        )
+        invite_doc["delivery_status"] = "failed"
+        invite_doc["last_error"] = result["error"]
+
+    return invite_doc
+
+
 @router.post("/invites")
-async def create_invite(body: InviteCreate, current_user: dict = get_current_user_dep()):
-    """Director creates an invite for a new coach."""
+async def create_invite(body: InviteCreate, request: Request, current_user: dict = get_current_user_dep()):
+    """Director creates an invite for a new coach. Email sent automatically."""
     if current_user["role"] != "director":
         raise HTTPException(status_code=403, detail="Only directors can invite coaches")
 
-    # Check if email already has an account
     existing_user = await db.users.find_one({"email": body.email}, {"_id": 0})
     if existing_user:
         raise HTTPException(status_code=400, detail="A user with this email already exists")
 
-    # Check for existing pending invite
     existing_invite = await db.invites.find_one(
         {"email": body.email, "status": "pending"}, {"_id": 0}
     )
@@ -61,6 +110,10 @@ async def create_invite(body: InviteCreate, current_user: dict = get_current_use
         "role": "coach",
         "token": token,
         "status": "pending",
+        "delivery_status": "pending",
+        "sent_at": None,
+        "last_error": None,
+        "resend_count": 0,
         "invited_by": current_user["id"],
         "invited_by_name": current_user["name"],
         "created_at": now.isoformat(),
@@ -69,7 +122,43 @@ async def create_invite(body: InviteCreate, current_user: dict = get_current_use
     }
     await db.invites.insert_one(invite_doc)
 
-    return _safe_invite({**invite_doc, "token": token})
+    # Send email (non-blocking failure — invite still exists with copy-link fallback)
+    invite_doc = await _send_and_track(invite_doc, request)
+
+    return _safe_invite(invite_doc)
+
+
+@router.post("/invites/{invite_id}/resend")
+async def resend_invite(invite_id: str, request: Request, current_user: dict = get_current_user_dep()):
+    """Director resends an invite email."""
+    if current_user["role"] != "director":
+        raise HTTPException(status_code=403, detail="Only directors can resend invites")
+
+    invite = await db.invites.find_one(
+        {"id": invite_id, "invited_by": current_user["id"]}, {"_id": 0}
+    )
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if invite["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Cannot resend — invite is {invite['status']}")
+
+    # Check expiry
+    expires = datetime.fromisoformat(invite["expires_at"])
+    if datetime.now(timezone.utc) > expires:
+        await db.invites.update_one({"id": invite_id}, {"$set": {"status": "expired"}})
+        raise HTTPException(status_code=400, detail="Invite has expired")
+
+    # Increment resend count
+    new_count = invite.get("resend_count", 0) + 1
+    await db.invites.update_one(
+        {"id": invite_id}, {"$set": {"resend_count": new_count}}
+    )
+    invite["resend_count"] = new_count
+
+    # Send email
+    invite = await _send_and_track(invite, request)
+
+    return _safe_invite(invite)
 
 
 @router.get("/invites")
@@ -82,7 +171,6 @@ async def list_invites(current_user: dict = get_current_user_dep()):
         {"invited_by": current_user["id"]}, {"_id": 0}
     ).sort("created_at", -1).to_list(100)
 
-    # Auto-expire old pending invites
     now = datetime.now(timezone.utc)
     result = []
     for inv in invites:
@@ -150,12 +238,10 @@ async def accept_invite(token: str, body: InviteAccept):
         await db.invites.update_one({"id": invite["id"]}, {"$set": {"status": "expired"}})
         raise HTTPException(status_code=400, detail="Invite has expired")
 
-    # Check no user exists with this email yet
     existing = await db.users.find_one({"email": invite["email"]}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Account already exists for this email")
 
-    # Create the user
     final_name = body.name or invite["name"]
     user_doc = {
         "id": str(uuid.uuid4()),
@@ -169,7 +255,6 @@ async def accept_invite(token: str, body: InviteAccept):
     }
     await db.users.insert_one(user_doc)
 
-    # Mark invite accepted
     await db.invites.update_one(
         {"id": invite["id"]},
         {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc).isoformat()}}
