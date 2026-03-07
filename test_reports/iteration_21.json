@@ -1,0 +1,87 @@
+{
+  "summary": "Per-Coach Ownership Boundaries Testing Complete - 24/25 backend tests pass (96%), frontend ownership filtering verified. One critical bug found in /api/advocacy/recommendations for coach users (500 error).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/advocacy/recommendations",
+        "issue": "Returns 500 Internal Server Error for coach users. Root cause: filter_by_athlete_id() in advocacy.py is called on dict (from list_recommendations) instead of a list. The function iterates over dict keys (strings) causing AttributeError: 'str' object has no attribute 'get'.",
+        "priority": "HIGH",
+        "file": "/app/backend/routers/advocacy.py",
+        "line": 29,
+        "fix_suggestion": "filter_by_athlete_id() needs to filter each list inside the dict (needs_attention, drafts, recently_sent, closed) separately, not the dict itself"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdvocacyHome",
+        "issue": "Shows 'Failed to load recommendations' error toast and 'No recommendations found' for coach users due to backend 500 error",
+        "selector": "N/A - caused by backend bug",
+        "priority": "HIGH (blocked by backend)"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_ownership_boundaries.py",
+    "/app/test_reports/pytest/pytest_ownership_boundaries.xml"
+  ],
+  "action_items": [
+    "FIX: /app/backend/routers/advocacy.py line 29 - filter_by_athlete_id must filter each list inside the dict returned by list_recommendations(), not the dict itself"
+  ],
+  "critical_code_review_comments": [
+    "ownership.py: Well-designed ownership service with proper caching and clear API (get_visible_athlete_ids, can_access_athlete, filter_by_athlete_id, filter_events_by_ownership)",
+    "athletes.py: Properly implements 403 boundary check using can_access_athlete() for individual athlete access and notes",
+    "support_pods.py: Properly implements 403 boundary check for Support Pod access",
+    "mission_control.py: Correctly filters alerts, signals, events and computes coach-specific snapshot",
+    "events.py: Correctly filters events by athlete_ids using filter_events_by_ownership()",
+    "advocacy.py: BUG - filter_by_athlete_id called on dict instead of list items. list_recommendations() returns {needs_attention: [], drafts: [], ...} but filter expects a list"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_ownership_boundaries.py"
+  ],
+  "success_rate": {
+    "backend": "96% (24/25 tests passed, 1 xfail for known bug)",
+    "frontend": "90% (Ownership filtering works, Advocacy page blocked by backend bug)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123",
+    "coach_garcia": "coach.garcia@capymatch.com / coach123"
+  },
+  "seed_data_creation": "None - used existing seeded athletes with primary_coach_id assignments",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Ownership boundaries implemented and working for all endpoints EXCEPT /api/advocacy/recommendations which has a type mismatch bug. Director sees 25 athletes, Coach Williams sees 13 (odd-numbered), Coach Garcia sees 12 (even-numbered). The bug is in advocacy.py where filter_by_athlete_id() is called on the dict response from list_recommendations() instead of filtering each list inside the dict.",
+  "verified_features": {
+    "backend_ownership_filtering": [
+      "GET /api/athletes - Director sees 25, Williams sees 13, Garcia sees 12 ✓",
+      "GET /api/athletes/{id} - Coach gets 403 for another coach's athlete, 200 for own ✓",
+      "GET /api/support-pods/{athlete_id} - Coach gets 403 for another coach's athlete ✓",
+      "POST /api/athletes/{id}/notes - Coach gets 403 for another coach's athlete ✓",
+      "GET /api/mission-control - Filtered alerts/signals/events/snapshot per coach ✓",
+      "GET /api/events - Filtered by athlete_ids ownership ✓",
+      "GET /api/advocacy/recommendations - BROKEN for coaches (500 error) ✗"
+    ],
+    "frontend_ownership_ui": [
+      "Director Mission Control shows Athletes: 25 ✓",
+      "Coach Williams Mission Control shows Athletes: 13 ✓",
+      "Director sees all events ✓",
+      "Coach Williams Events page shows filtered events (6 upcoming) ✓",
+      "Coach Williams Advocacy page shows error due to backend bug ✗"
+    ]
+  },
+  "rca_of_the_issue": {
+    "bug": "GET /api/advocacy/recommendations returns 500 for coach users",
+    "root_cause": "In /app/backend/routers/advocacy.py line 28-29, list_recommendations() returns a dict with structure {needs_attention: [], drafts: [], recently_sent: [], closed: [], stats: {}}. The code then calls filter_by_athlete_id(all_recs, current_user) which expects a list. When iterating over a dict, Python iterates over keys (strings), so item.get('athlete_id') fails because strings don't have .get() method.",
+    "reproduction_steps": [
+      "Login as coach.williams@capymatch.com",
+      "Navigate to /advocacy or call GET /api/advocacy/recommendations",
+      "Observe 500 Internal Server Error"
+    ],
+    "mitigation": "Change advocacy.py to filter each list in the response dict separately: filtered_result = {key: filter_by_athlete_id(items, current_user) if isinstance(items, list) else items for key, items in all_recs.items()}"
+  }
+}

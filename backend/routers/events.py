@@ -1,10 +1,11 @@
 """Event Mode — capture, prep, live, summary, routing, schools."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone, timedelta
 import uuid
 from db_client import db
 from auth_middleware import get_current_user_dep
+from services.ownership import filter_events_by_ownership, get_visible_athlete_ids
 from mock_data import UPCOMING_EVENTS, SCHOOLS
 from models import EventNoteCreate, EventNoteUpdate, EventCreate, EventAthleteAdd
 from event_engine import (
@@ -24,8 +25,14 @@ router = APIRouter()
 
 @router.get("/events")
 async def list_events(team: str = None, type: str = None, current_user: dict = get_current_user_dep()):
-    """Get all events grouped by upcoming/past with urgency indicators"""
-    return get_all_events(team_filter=team, type_filter=type)
+    """Get all events, filtered by coach's athletes."""
+    result = get_all_events(team_filter=team, type_filter=type)
+    if current_user["role"] == "director":
+        return result
+    # Filter both upcoming and past lists
+    result["upcoming"] = filter_events_by_ownership(result.get("upcoming", []), current_user)
+    result["past"] = filter_events_by_ownership(result.get("past", []), current_user)
+    return result
 
 
 @router.get("/events/{event_id}")

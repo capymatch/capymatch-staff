@@ -1,10 +1,11 @@
 """Advocacy Mode — recommendations, relationships, response tracking."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone, timedelta
 import uuid
 from db_client import db
 from auth_middleware import get_current_user_dep
+from services.ownership import filter_by_athlete_id, get_visible_athlete_ids
 from models import RecommendationCreate, RecommendationUpdate, ResponseLog, CloseRequest
 from advocacy_engine import (
     list_recommendations,
@@ -24,7 +25,8 @@ router = APIRouter()
 
 @router.get("/advocacy/recommendations")
 async def list_all_recommendations(status: str = None, athlete: str = None, school: str = None, grad_year: str = None, current_user: dict = get_current_user_dep()):
-    return list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
+    all_recs = list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
+    return filter_by_athlete_id(all_recs, current_user)
 
 
 @router.get("/advocacy/context/{athlete_id}/{school_id}")
@@ -39,7 +41,17 @@ async def get_advocacy_context_athlete(athlete_id: str, current_user: dict = get
 
 @router.get("/advocacy/relationships")
 async def list_all_relationships_endpoint(current_user: dict = get_current_user_dep()):
-    return get_all_relationships()
+    all_rels = get_all_relationships()
+    if current_user["role"] == "director":
+        return all_rels
+    # Filter relationships to those involving coach's athletes
+    visible = get_visible_athlete_ids(current_user)
+    filtered = []
+    for rel in all_rels:
+        rec_athlete_ids = {r.get("athlete_id") for r in rel.get("recommendations", [])}
+        if rec_athlete_ids & visible:
+            filtered.append(rel)
+    return filtered
 
 
 @router.get("/advocacy/relationships/{school_id}")

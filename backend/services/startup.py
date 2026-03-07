@@ -50,6 +50,44 @@ async def seed_users(db):
     log.info(f"Seeded {len(DEFAULT_USERS)} default users.")
 
 
+async def assign_coaches_if_needed(db):
+    """Assign primary_coach_id to athletes that don't have one yet.
+
+    Splits athletes evenly between the two seed coaches.
+    Only runs once — skips athletes that already have an assignment.
+    """
+    unassigned = await db.athletes.count_documents({
+        "$or": [{"primary_coach_id": None}, {"primary_coach_id": {"$exists": False}}]
+    })
+    if unassigned == 0:
+        log.info("All athletes already have coach assignments — skipping.")
+        return
+
+    # Get seed coaches
+    coaches = await db.users.find(
+        {"role": "coach", "id": {"$in": ["coach-williams", "coach-garcia"]}},
+        {"_id": 0, "id": 1}
+    ).to_list(10)
+    if len(coaches) < 2:
+        log.warning("Not enough seed coaches to assign — skipping.")
+        return
+
+    coach_ids = [c["id"] for c in coaches]
+    athletes = await db.athletes.find(
+        {"$or": [{"primary_coach_id": None}, {"primary_coach_id": {"$exists": False}}]},
+        {"_id": 0, "id": 1}
+    ).to_list(500)
+
+    for i, a in enumerate(athletes):
+        coach_id = coach_ids[i % len(coach_ids)]
+        await db.athletes.update_one(
+            {"id": a["id"]},
+            {"$set": {"primary_coach_id": coach_id}}
+        )
+
+    log.info(f"Assigned {len(athletes)} athletes to {len(coach_ids)} coaches.")
+
+
 async def run_startup(db):
     """Run the full seed → load → recompute pipeline."""
     import mock_data
@@ -63,6 +101,9 @@ async def run_startup(db):
 
     # ── Step 0: Seed users if empty ──
     await seed_users(db)
+
+    # ── Step 0.5: Assign coaches to athletes if not yet assigned ──
+    await assign_coaches_if_needed(db)
 
     # ── Step 1: Seed all collections if empty ──
     await seed_athletes(db, mock_data.ATHLETES)
@@ -123,6 +164,10 @@ async def run_startup(db):
     program_data = compute_program_intelligence()
     current_metrics = extract_snapshot_metrics(program_data)
     await seed_historical_snapshots(db, current_metrics)
+
+    # ── Step 8: Refresh ownership cache ──
+    from services.ownership import refresh_ownership_cache
+    await refresh_ownership_cache()
 
     log.info(
         f"Persistence startup complete: "
