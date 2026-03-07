@@ -3,118 +3,77 @@
 ## Original Problem Statement
 Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, and athletes. The system actively coordinates support, surfaces priorities, and helps users know what to do next.
 
-## Tech Stack
-- **Backend:** FastAPI (Python), MongoDB (motor async driver)
+## Core Architecture
+- **Backend:** FastAPI (Python), Motor (async MongoDB)
 - **Frontend:** React, Tailwind CSS, Shadcn/UI
-- **Auth:** JWT-based (PyJWT, bcrypt/passlib)
-- **Email:** Resend (transactional invite emails)
-- **AI:** GPT 5.2 via emergentintegrations (Emergent LLM Key)
+- **Database:** MongoDB
+- **AI:** emergentintegrations (GPT 5.2)
+- **Auth:** JWT with passlib (director + coach roles)
+- **Email:** Resend API
 
-## What's Been Implemented
+## User Roles
+- **Director:** Full access, manages coaches, athletes, invites, roster
+- **Coach:** Sees only assigned athletes, can use AI features for their athletes
 
-### Core Features (Phase 1-3)
-- 5 operating modes: Mission Control, Support Pod, Event, Advocacy, Program Intelligence
-- Decision Engine, historical trending, coach-specific views
-- Full MongoDB persistence
+## Completed Features
 
-### Auth & Security (Phase 4-6)
-- JWT auth (login, register, /me), 3 seeded accounts
-- All routes protected, director-only admin/debug/invites
-- RBAC stabilization, hardcoded names replaced with current_user
-- Director self-registration blocked
+### Core Platform
+- JWT-based auth (director/coach roles)
+- Mission Control dashboard with priority alerts, momentum signals
+- Athlete profiles with recruiting stages, momentum scores
+- Decision Engine with intervention detection and ranking
+- Support Pod with action management
+- Event Mode with notes, schools, follow-ups
+- Advocacy Mode with recommendations, intro messages
+- Program Intelligence with metrics, trending
 
-### Invite Email Delivery (Phase 7)
-- Resend integration with delivery tracking (sent/failed/pending)
-- Resend endpoint, copy-link fallback, resend count
+### AI Layer V1
+- Mission Control Briefing
+- Support Pod Insights
+- Program Intelligence Analysis
+- Advocacy Assistant
 
-### Per-Coach Data Ownership (Phase 8 — 2026-03-07)
-- **primary_coach_id** field added to athletes
-- 25 athletes split: 13 to Coach Williams (odd), 12 to Coach Garcia (even)
-- **Ownership service** (`services/ownership.py`): cached coach-to-athlete mapping
-- Filtered views across all modes (Mission Control, Events, Advocacy, Support Pods)
-- Directors see everything; coaches see only their athletes
+### AI Layer V2
+- Suggested Next Actions
+- Support Pod Brief
+- Program Strategic Insights
+- Event Follow-Up Suggestions
+- AI Confidence Indicators on all V2 features
 
-### AI/Intelligence Layer V1 (Phase 9 — 2026-03-07)
-- **Program Briefing:** AI-generated 2-3 sentence narrative on /program page
-- **Mission Control Briefing:** Prioritized daily actions on /mission-control
-- **Event Recap:** AI summary of captured event notes on /events/{id}/summary
-- **Advocacy Assistant:** "Draft with AI" button on /advocacy/new that generates intro messages
-- All 4 features respect role-based access and data ownership boundaries
-- Backend: `/api/ai/program-narrative`, `/api/ai/briefing`, `/api/ai/event-recap/{event_id}`, `/api/ai/advocacy-draft/{athlete_id}/{school_id}`
+### Coach Invite System
+- Director-only invite creation with email delivery (Resend)
+- Token-based invite acceptance flow
+- Resend, cancel, copy-link functionality
+- Delivery tracking (sent/failed status)
 
-### AI V1 Stabilization (Phase 9.1 — 2026-03-07)
-- Backend: 45s timeout + 1 retry on all LLM calls (`_send_with_retry` in `services/ai.py`)
-- Backend: 503 error responses when AI fails (all 4 endpoints in `routers/intelligence.py`)
-- Frontend: 50s axios timeout on all AI calls
-- Frontend: Differentiated error messages (timeout, 503, 400, 403, 401)
-- Frontend: "Try Again" button on error state in AiBriefing component
-- Resolved: intermittent coach briefing timeout issue
+### Roster Management
+- Director-only roster page with coach-athlete grouping
+- Athlete reassignment between coaches
+- Unassignment with reason tracking
+- Audit trail (reassignment_history)
 
-### Data Ownership Refinement (Phase 10 — 2026-03-07)
-- **Roster page** (`/roster`): director-only view of all athletes grouped by coach
-- **Reassignment API** (`POST /api/athletes/{id}/reassign`): move athlete between coaches with audit log
-- **Unassign API** (`POST /api/athletes/{id}/unassign`): remove coach with reason label
-- **Reassignment history** (`GET /api/athletes/{id}/reassignment-history`): structured for timeline display
-- **Unassigned visibility**: directors see unassigned athletes with reason labels (newly_created, coach_left, manually_unassigned, imported_without_owner)
-- **Open actions warning**: on reassignment, warns about work still owned by previous coach
-- **Ownership rules**: immediate ownership change, open actions stay with previous coach, director always confirms
-- New collection: `reassignment_log`
+### Team-Aware Invite Suggestions (Completed 2026-03-07)
+- When a coach accepts an invite with a team context, the director sees a suggestion banner on the Invites page
+- Banner shows unassigned athletes on that team with checkboxes
+- Director can bulk-assign selected athletes or dismiss the suggestion
+- Assignment is recorded in reassignment_log with team onboarding reason
 
-### AI/Intelligence Layer V2 (Phase 11 — 2026-03-07)
-- **Suggested Next Actions** (`POST /api/ai/suggested-actions`): structured actions with WHY/EVIDENCE/OWNER/PRIORITY on Mission Control
-- **Pod Actions** (`POST /api/ai/pod-actions/{athlete_id}`): AI-suggested actions scoped to a single athlete on Support Pod
-- **Pod Brief** (`POST /api/ai/pod-brief/{athlete_id}`): 2-3 sentence status brief with signal and key facts at top of Support Pod
-- **Program Insights** (`POST /api/ai/program-insights`): strategic narrative + structured insights with severity for directors only
-- **Event Follow-Ups** (`POST /api/ai/event-followups/{event_id}`): follow-up suggestions from event notes with evidence
-- All features: on-demand, WHY + EVIDENCE + OWNER + CTA, no black-box, no auto-send
-- All features respect role-based scope (coach=owned athletes, director=full program)
+### Documentation
+- Auto-generated pages.html and gallery.html
 
-### AI Confidence Indicators (Phase 11.1 — 2026-03-07)
-- Trust labels: Strong signal (green) / Moderate signal (amber) / Limited signal (gray)
-- Each label backed by evidence-based basis text (e.g., "Based on 14 event notes, 5 athletes observed")
-- No fake numeric percentages — only data-backed signal strength
-- Added to all 4 V2 features: Suggested Actions, Pod Brief, Program Insights, Event Follow-ups
-- Confidence computed from actual data counts (alerts, notes, athletes, interventions, etc.)
-
-## Ownership Model V1
-```
-Athlete.primary_coach_id -> Users.id
-
-Director: sees all athletes, all data, global view
-Coach: sees only athletes where primary_coach_id == coach's user.id
-```
-
-## Default Credentials
+## Key Credentials
 - Director: director@capymatch.com / director123
 - Coach Williams: coach.williams@capymatch.com / coach123
 - Coach Garcia: coach.garcia@capymatch.com / coach123
 
-## Environment Variables
-```
-MONGO_URL, DB_NAME, JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, CORS_ORIGINS, EMERGENT_LLM_KEY
-```
+## DB Schema (Key Collections)
+- **users**: {id, email, password_hash, name, role, team, invited_by, created_at}
+- **athletes**: {id, fullName, gradYear, position, team, primary_coach_id, unassigned_reason, ...}
+- **invites**: {id, email, name, team, token, status, delivery_status, accepted_user_id, assignment_reviewed, ...}
+- **reassignment_log**: {id, athlete_id, type, from_coach_id, to_coach_id, reason, ...}
 
-## Prioritized Backlog
-
-### Completed
-- [x] Core modes + persistence
-- [x] JWT auth + route protection + RBAC
-- [x] Invite Coach + email delivery
-- [x] Per-coach data ownership boundaries
-- [x] AI/Intelligence Layer V1 (all 4 features)
-- [x] AI V1 Stabilization (timeout/retry, error handling, coach briefing fix)
-- [x] Data Ownership Refinement (roster, reassignment, unassign, audit log)
-- [x] AI/Intelligence Layer V2 (suggested actions, pod brief, program insights, event follow-ups)
-- [x] AI Confidence Indicators (trust labels with evidence-based basis text)
-
-### P1 — Next Up
-- [ ] Team-aware invite suggestions (optional bulk assignment prompt after invite accepted)
-- [ ] Smart Match (concept note at /app/SMART_MATCH_CONCEPT.md)
-
-### P2 — Future
-- [ ] Forgot Password flow
-- [ ] Platform Integrations (calendars, messaging)
-- [ ] Multi-coach support (secondary coach field)
-- [ ] Coach-to-athlete reassignment UI
-- [ ] Verify Resend domain for production
-- [ ] Merge assessment with main CapyMatch app (see /app/MERGE_ASSESSMENT_PLAN.md)
+## Upcoming Tasks (Prioritized Backlog)
+- P1: Forgot Password Flow (secure password reset via Resend email)
+- P2: Platform Integrations (calendars, messaging)
+- P2: Smart Match Build (AI school-athlete pairing — concept at /app/SMART_MATCH_CONCEPT.md)
+- P2: Unified Platform Merge (plan at /app/MERGE_ASSESSMENT_PLAN.md)
