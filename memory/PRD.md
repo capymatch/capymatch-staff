@@ -69,6 +69,13 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - All features: on-demand, WHY + EVIDENCE + OWNER + CTA, no black-box, no auto-send
 - All features respect role-based scope (coach=owned athletes, director=full program)
 
+### AI Confidence Indicators (Phase 11.1 — 2026-03-07)
+- Trust labels: Strong signal (green) / Moderate signal (amber) / Limited signal (gray)
+- Each label backed by evidence-based basis text (e.g., "Based on 14 event notes, 5 athletes observed")
+- No fake numeric percentages — only data-backed signal strength
+- Added to all 4 V2 features: Suggested Actions, Pod Brief, Program Insights, Event Follow-ups
+- Confidence computed from actual data counts (alerts, notes, athletes, interventions, etc.)
+
 ## Ownership Model V1
 ```
 Athlete.primary_coach_id -> Users.id
@@ -98,6 +105,7 @@ MONGO_URL, DB_NAME, JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, CORS_ORIGINS,
 - [x] AI V1 Stabilization (timeout/retry, error handling, coach briefing fix)
 - [x] Data Ownership Refinement (roster, reassignment, unassign, audit log)
 - [x] AI/Intelligence Layer V2 (suggested actions, pod brief, program insights, event follow-ups)
+- [x] AI Confidence Indicators (trust labels with evidence-based basis text)
 
 ### P1 — Next Up
 - [ ] Team-aware invite suggestions (optional bulk assignment prompt after invite accepted)
