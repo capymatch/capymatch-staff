@@ -1,0 +1,111 @@
+{
+  "summary": "Mission Control Director/Coach Role Split - Complete Testing. Backend: 23/23 tests passed (100%). Frontend: Both Director and Coach views verified with all required components rendering correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/ai/briefing",
+        "issue": "Returns 503 Service Unavailable - AI service not configured/available in test environment",
+        "note": "Expected behavior for test environment without LLM key"
+      },
+      {
+        "endpoint": "POST /api/ai/suggested-actions",
+        "issue": "Returns 503 Service Unavailable - AI service not configured/available in test environment",
+        "note": "Expected behavior for test environment without LLM key"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mission_control_role_split.py",
+    "/app/test_reports/pytest/pytest_mission_control_role_split.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend endpoint correctly returns role-specific data: director gets programStatus/needsAttention/programActivity/programSnapshot, coach gets todays_summary/myRoster/recentActivity",
+    "Director needsAttention properly limited to max 5 items with pod_health enrichment",
+    "Coach myRoster correctly sorted by momentum (lowest first) with category badges, podHealth dots, momentum indicators",
+    "Different coaches see different roster data (Williams: 12 athletes, Garcia: different set)",
+    "Frontend properly detects role from API response and renders DirectorView or CoachView",
+    "All required data-testid attributes present for automated testing"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mission_control_role_split.py"
+  ],
+  "success_rate": {
+    "backend": "100% (23/23 tests passed)",
+    "frontend": "100% (All UI components verified)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123",
+    "coach_garcia": "coach.garcia@capymatch.com / coach123"
+  },
+  "seed_data_creation": "None - uses existing mock data from /app/backend/mock_data.py",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mission Control role split fully verified. Key endpoint: GET /api/mission-control returns different data structures based on user role. Director response: {role:'director', programStatus, needsAttention (max 5), upcomingEvents, programActivity, programSnapshot}. Coach response: {role:'coach', todays_summary, myRoster, upcomingEvents, recentActivity}. Frontend: MissionControl.js detects role from API and renders DirectorView.js or CoachView.js. Director components: AIProgramBrief (dark hero), ProgramStatusRow (5 KPI pills), NeedsAttentionCard (max 5 interventions), UpcomingEventsCard, ActivityFeed. Coach components: OnboardingChecklist, TodaysActionsCard (dark hero), MyRosterCard (with momentum/category/podHealth), UpcomingEventsCard, ActivityFeed. AI endpoints return 503 in test environment (expected). Data-testids: mission-control-page, director-mission-control, coach-mission-control, ai-program-brief, ai-brief-generate, program-status-row, status-pill-*, needs-attention-card, attention-item-*, todays-actions-card, actions-generate, my-roster-card, roster-athlete-*, upcoming-events-card, activity-feed.",
+  "verified_features": {
+    "backend_endpoints": [
+      "GET /api/mission-control requires auth (401 without) ✓",
+      "GET /api/mission-control returns role='director' for director users ✓",
+      "GET /api/mission-control returns programStatus with 5 KPIs for director ✓",
+      "GET /api/mission-control returns needsAttention limited to max 5 items ✓",
+      "GET /api/mission-control needsAttention items have pod_health enrichment ✓",
+      "GET /api/mission-control returns upcomingEvents for director ✓",
+      "GET /api/mission-control returns programActivity for director ✓",
+      "GET /api/mission-control returns programSnapshot with unassigned_count ✓",
+      "Director response does NOT have coach-specific fields (todays_summary, myRoster, recentActivity) ✓",
+      "GET /api/mission-control returns role='coach' for coach users ✓",
+      "GET /api/mission-control returns todays_summary with athlete/action/event counts ✓",
+      "GET /api/mission-control returns myRoster with assigned athletes ✓",
+      "myRoster athletes have required fields: id, name, momentumScore, momentumTrend, podHealth ✓",
+      "myRoster athletes with issues have category, badgeColor fields ✓",
+      "myRoster is sorted by momentum (lowest first) ✓",
+      "GET /api/mission-control returns upcomingEvents for coach ✓",
+      "GET /api/mission-control returns recentActivity for coach ✓",
+      "Coach response does NOT have director-specific fields (programStatus, needsAttention, programActivity, programSnapshot) ✓",
+      "Different coaches see different roster data ✓",
+      "POST /api/ai/briefing endpoint accessible (returns 503 without LLM key) ✓",
+      "POST /api/ai/suggested-actions endpoint accessible (returns 503 without LLM key) ✓"
+    ],
+    "frontend_components_director": [
+      "Mission Control page loads with data-testid='mission-control-page' ✓",
+      "DirectorView renders with data-testid='director-mission-control' ✓",
+      "AI Program Brief hero (dark background) renders with data-testid='ai-program-brief' ✓",
+      "AI Program Brief shows health signal indicator (pulse dot) ✓",
+      "AI Program Brief shows program chips (need attention count, active coaches) ✓",
+      "'Generate Program Brief' button present with data-testid='ai-brief-generate' ✓",
+      "Program Status Row renders with data-testid='program-status-row' ✓",
+      "5 KPI pills render: Athletes (25), Coaches (5), Unassigned (0), Need Attention (12), Events (8) ✓",
+      "Need Attention pill shows red pulse indicator ✓",
+      "Needs Attention section renders intervention cards (4 visible) ✓",
+      "Intervention cards have color-coded borders (red/amber) ✓",
+      "Intervention cards show category badges (DEADLINE) ✓",
+      "Intervention cards show athlete name, grad year, reason ✓",
+      "Upcoming Events section renders below the fold ✓",
+      "Program Activity section renders below the fold ✓",
+      "Header shows director-specific stats ✓"
+    ],
+    "frontend_components_coach": [
+      "CoachView renders with data-testid='coach-mission-control' ✓",
+      "Onboarding Checklist renders at top with data-testid='onboarding-checklist' ✓",
+      "Today's Actions hero (dark background) renders with data-testid='todays-actions-card' ✓",
+      "Today's Actions shows summary chips (12 athletes, 10 need action, 5 events this week) ✓",
+      "'What Should I Do Today?' button present with data-testid='actions-generate' ✓",
+      "My Roster card renders with data-testid='my-roster-card' ✓",
+      "My Roster shows 12 athletes for Coach Williams ✓",
+      "Athletes show momentum indicators (-5, -0, -4, +6, +7 etc.) ✓",
+      "Athletes show category badges (MOMENTUM, DEADLINE, ENGAGEMENT, BLOCKER, READINESS, UNASSIGNED) ✓",
+      "Athletes show pod health dots (colored indicators) ✓",
+      "Athletes have quick note access (pen icons) ✓",
+      "Upcoming Events card renders ✓",
+      "Activity Feed renders below the fold ✓",
+      "Header shows coach-specific stats (3 ALERTS, 12 ATHLETES MONITORING, 5 EVENTS AHEAD) ✓"
+    ]
+  }
+}

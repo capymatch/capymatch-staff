@@ -1,8 +1,14 @@
-"""Mission Control — command surface endpoints with ownership filtering."""
+"""Mission Control — role-specific command surface endpoints."""
 
 from fastapi import APIRouter
 from auth_middleware import get_current_user_dep
-from services.ownership import filter_by_athlete_id, filter_events_by_ownership, get_visible_athlete_ids, get_unassigned_athlete_ids
+from services.ownership import (
+    filter_by_athlete_id,
+    filter_events_by_ownership,
+    get_visible_athlete_ids,
+    get_unassigned_athlete_ids,
+    get_coach_athlete_map,
+)
 from mock_data import (
     PRIORITY_ALERTS,
     MOMENTUM_SIGNALS,
@@ -18,6 +24,7 @@ from support_pod import (
     get_athlete_interventions,
     explain_pod_health,
 )
+from db_client import db
 
 router = APIRouter()
 
@@ -34,39 +41,126 @@ def enrich_with_health(interventions_list):
     return enriched
 
 
-@router.get("/mission-control")
-async def get_mission_control_data(current_user: dict = get_current_user_dep()):
-    """Get all Mission Control data, filtered by ownership."""
-    alerts = filter_by_athlete_id(PRIORITY_ALERTS, current_user)
-    attention = filter_by_athlete_id(ATHLETES_NEEDING_ATTENTION, current_user)
-    signals = filter_by_athlete_id(MOMENTUM_SIGNALS, current_user)
-    events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
+def _build_athlete_roster_item(athlete: dict) -> dict:
+    """Build a compact athlete object for coach roster view."""
+    interventions = get_athlete_interventions(athlete["id"])
+    health = explain_pod_health(athlete, interventions)
 
-    # Compute snapshot for coach's athletes or full program
-    if current_user["role"] == "director":
-        snapshot = PROGRAM_SNAPSHOT
-        # Add unassigned count for director awareness
-        unassigned_ids = get_unassigned_athlete_ids()
-        snapshot = {**snapshot, "unassigned_count": len(unassigned_ids)}
-    else:
-        visible = get_visible_athlete_ids(current_user)
-        my_athletes = [a for a in ATHLETES if a["id"] in visible]
-        snapshot = get_program_snapshot(my_athletes)
+    # Find any active intervention for this athlete
+    category = None
+    badge_color = None
+    why = None
+    for item in ALL_INTERVENTIONS:
+        if item["athlete_id"] == athlete["id"]:
+            category = item.get("category")
+            badge_color = item.get("badge_color")
+            why = item.get("why_this_surfaced")
+            break
 
     return {
-        "priorityAlerts": enrich_with_health(alerts),
-        "recentChanges": signals,
-        "athletesNeedingAttention": enrich_with_health(attention),
-        "upcomingEvents": events,
-        "programSnapshot": snapshot,
-        "_debug": {
-            "total_interventions_detected": len(ALL_INTERVENTIONS),
-            "priority_alerts_count": len(alerts),
-            "athletes_attention_count": len(attention),
-            "decision_engine_version": "v1.0"
-        }
+        "id": athlete["id"],
+        "name": athlete.get("fullName", athlete.get("name", "Unknown")),
+        "gradYear": athlete.get("gradYear"),
+        "position": athlete.get("position"),
+        "team": athlete.get("team"),
+        "momentumScore": athlete.get("momentumScore", 0),
+        "momentumTrend": athlete.get("momentumTrend", "stable"),
+        "recruitingStage": athlete.get("recruitingStage", "exploring"),
+        "daysSinceActivity": athlete.get("daysSinceActivity", 0),
+        "schoolTargets": athlete.get("schoolTargets", 0),
+        "activeInterest": athlete.get("activeInterest", 0),
+        "podHealth": health,
+        "category": category,
+        "badgeColor": badge_color,
+        "why": why,
     }
 
+
+@router.get("/mission-control")
+async def get_mission_control_data(current_user: dict = get_current_user_dep()):
+    """Role-specific Mission Control data."""
+
+    role = current_user["role"]
+    alerts = filter_by_athlete_id(PRIORITY_ALERTS, current_user)
+    signals = filter_by_athlete_id(MOMENTUM_SIGNALS, current_user, athlete_id_key="athleteId")
+    events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
+    attention = filter_by_athlete_id(ATHLETES_NEEDING_ATTENTION, current_user)
+
+    if role == "director":
+        return _build_director_response(alerts, attention, signals, events)
+    else:
+        return _build_coach_response(current_user, alerts, attention, signals, events)
+
+
+def _build_director_response(alerts, attention, signals, events):
+    """Director: program oversight surface."""
+    unassigned_ids = get_unassigned_athlete_ids()
+    coach_map = get_coach_athlete_map()
+
+    # Program status KPIs
+    program_status = {
+        "totalAthletes": len(ATHLETES),
+        "activeCoaches": len(coach_map),
+        "unassignedCount": len(unassigned_ids),
+        "upcomingEvents": len([e for e in events if e.get("daysAway", 99) <= 14]),
+        "needingAttention": len(attention),
+    }
+
+    # Needs attention — max 5, enriched with health
+    needs_attention = enrich_with_health(alerts[:5])
+
+    # Upcoming events — next 5
+    upcoming = sorted(events, key=lambda e: e.get("daysAway", 99))[:5]
+
+    # Program activity — latest 8 signals
+    activity = sorted(signals, key=lambda s: s.get("hoursAgo", 0))[:8]
+
+    return {
+        "role": "director",
+        "programStatus": program_status,
+        "needsAttention": needs_attention,
+        "upcomingEvents": upcoming,
+        "programActivity": activity,
+        "programSnapshot": {**PROGRAM_SNAPSHOT, "unassigned_count": len(unassigned_ids)},
+    }
+
+
+def _build_coach_response(user, alerts, attention, signals, events):
+    """Coach: personal work dashboard."""
+    visible_ids = get_visible_athlete_ids(user)
+    my_athletes = [a for a in ATHLETES if a["id"] in visible_ids]
+
+    # Build roster items with health info
+    roster = [_build_athlete_roster_item(a) for a in my_athletes]
+    roster.sort(key=lambda a: a.get("momentumScore", 0))  # lowest momentum first
+
+    # Count how many need action
+    needing_action = len([a for a in roster if a.get("category")])
+
+    # Today's summary for the hero
+    todays_summary = {
+        "athleteCount": len(roster),
+        "needingAction": needing_action,
+        "upcomingEvents": len([e for e in events if e.get("daysAway", 99) <= 7]),
+        "alertCount": len(alerts),
+    }
+
+    # Upcoming events — next 5
+    upcoming = sorted(events, key=lambda e: e.get("daysAway", 99))[:5]
+
+    # Recent activity — latest 8
+    activity = sorted(signals, key=lambda s: s.get("hoursAgo", 0))[:8]
+
+    return {
+        "role": "coach",
+        "todays_summary": todays_summary,
+        "myRoster": roster,
+        "upcomingEvents": upcoming,
+        "recentActivity": activity,
+    }
+
+
+# ── Sub-endpoints (kept for backward compatibility) ──
 
 @router.get("/mission-control/alerts")
 async def get_priority_alerts_endpoint(current_user: dict = get_current_user_dep()):
