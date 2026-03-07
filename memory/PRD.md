@@ -11,78 +11,60 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - **Auth:** JWT with passlib (director + coach roles)
 - **Email:** Resend API
 
-## User Roles
-- **Director:** Full access, manages coaches, athletes, invites, roster, activation monitoring, nudge
-- **Coach:** Sees only assigned athletes, onboarding checklist, AI features
-
 ## Completed Features
 
 ### Core Platform
-- JWT-based auth (director/coach roles)
-- Mission Control, Athlete profiles, Decision Engine, Support Pod, Event Mode, Advocacy Mode, Program Intelligence
+- JWT-based auth, Mission Control, Athlete profiles, Decision Engine, Support Pod, Event Mode, Advocacy Mode, Program Intelligence
 
 ### AI Layer V1 & V2
 - 8 AI features with confidence indicators
 
-### Coach Invite System
-- Invite creation, token-based acceptance, resend/cancel, delivery tracking
-- Team-aware invite suggestions (2026-03-07)
+### Coach Management
+- Invite system with team-aware suggestions
+- Roster management with reassignment/audit trail
+- Coach onboarding checklist (5 steps, auto-completion, personalization)
+- Coach activation panel (status: Pending/Activating/Active/Needs Support)
+- Nudge coach (supportive check-in emails with reason presets, 24h cooldown)
 
-### Roster Management
-- Director-only roster page, reassignment, unassignment, audit trail, route protection
-
-### Coach Onboarding Checklist (2026-03-07)
-- 5-step non-blocking checklist on Mission Control (coach-only)
-- Auto-completion, progress tracking, dismiss, personalization
-- API: GET /api/onboarding/status, POST /api/onboarding/complete-step, POST /api/onboarding/dismiss
-
-### Coach Activation Panel (2026-03-07)
-- Director-only panel on Roster page
-- Status per coach: Pending, Activating, Active, Needs Support
-- Signals: invite status, onboarding progress, athlete count, last active, last nudge
-- Auto-expands when coaches need support, sorted by urgency
-- API: GET /api/roster/activation
-
-### Nudge Coach (2026-03-07)
-- Director sends supportive check-in email to coaches needing support
-- Reason presets: Onboarding incomplete, No recent activity, Needs help getting started, Custom
-- Prefilled editable subject + message, personalized with names
-- 24-hour cooldown per coach, delivery status tracking
-- Nudge history stored in `nudges` collection with delivery_status, last_error
-- Last nudge timestamp shown in activation panel
-- API: POST /api/roster/nudge, GET /api/roster/nudge-history/{coach_id}
+### Forgot Password (2026-03-07)
+- "Forgot password?" link on login page → /forgot-password
+- Secure flow: email → hashed token stored → email with reset link → /reset-password?token=xxx
+- Security: no email enumeration (generic response), SHA-256 hashed tokens, 1-hour expiry, single-use, older tokens invalidated
+- Frontend: ForgotPasswordPage (email form → success state), ResetPasswordPage (new password + confirm → success → redirect)
+- Backend: POST /api/auth/forgot-password, POST /api/auth/reset-password
+- Storage: password_resets collection {id, email, token_hash, expires_at, used, created_at}
 
 ### Documentation
-- pages.html and gallery.html
+- pages.html, gallery.html
 
 ## Key Credentials
 - Director: director@capymatch.com / director123
 - Coach Williams: coach.williams@capymatch.com / coach123
 - Coach Garcia: coach.garcia@capymatch.com / coach123
 
-## DB Schema (Key Collections)
+## DB Schema
 - **users**: {id, email, password_hash, name, role, team, onboarding, last_active, created_at}
 - **athletes**: {id, fullName, gradYear, position, team, primary_coach_id, ...}
 - **invites**: {id, email, name, team, token, status, accepted_user_id, assignment_reviewed, ...}
-- **nudges**: {id, coach_id, coach_email, coach_name, sent_by, sent_by_name, reason, reason_label, subject, message, delivery_status, last_error, sent_at}
-- **reassignment_log**: {id, athlete_id, type, from_coach_id, to_coach_id, reason, ...}
+- **nudges**: {id, coach_id, coach_email, reason, subject, message, delivery_status, last_error, sent_at}
+- **password_resets**: {id, email, token_hash, expires_at, used, created_at}
 
 ## Code Architecture
 ```
 /app/backend/routers/
-  roster.py         # Roster + Activation + Nudge endpoints
-  onboarding.py     # Coach onboarding checklist API
-  invites.py, auth.py, ai.py, intelligence.py
-/app/frontend/src/components/
-  CoachActivationPanel.js   # Activation panel + NudgeModal
-  OnboardingChecklist.js    # Coach onboarding UI
+  auth.py           # Login, register, forgot-password, reset-password
+  roster.py         # Roster + Activation + Nudge
+  onboarding.py     # Coach onboarding checklist
+  invites.py, ai.py, intelligence.py
 /app/frontend/src/pages/
-  RosterPage.js      # Renders CoachActivationPanel
-  MissionControl.js  # Renders OnboardingChecklist
+  LoginPage.js            # Updated: forgot password link
+  ForgotPasswordPage.js   # NEW
+  ResetPasswordPage.js    # NEW
+  MissionControl.js, RosterPage.js, etc.
 ```
 
-## Upcoming Tasks (Prioritized Backlog)
-- P1: Forgot Password Flow (secure password reset via Resend email)
+## Upcoming Tasks
+- P1: Coach Self-Service Profile (lightweight V1 — name, avatar, contact, availability, bio, team)
 - P2: Platform Integrations (calendars, messaging)
-- P2: Smart Match Build (concept at /app/SMART_MATCH_CONCEPT.md)
-- P2: Unified Platform Merge (plan at /app/MERGE_ASSESSMENT_PLAN.md)
+- P2: Smart Match Build (/app/SMART_MATCH_CONCEPT.md)
+- P2: Unified Platform Merge (/app/MERGE_ASSESSMENT_PLAN.md)
