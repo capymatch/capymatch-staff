@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import Header from "@/components/mission-control/Header";
+import { useAuth } from "@/AuthContext";
 import CoachActivationPanel from "@/components/CoachActivationPanel";
 import { Users, UserMinus, ArrowRightLeft, AlertTriangle, ChevronDown, ChevronUp, User } from "lucide-react";
 
@@ -261,9 +263,15 @@ function CoachGroup({ group, coaches, onReload }) {
 }
 
 function RosterPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [coaches, setCoaches] = useState([]);
+
+  useEffect(() => {
+    if (user?.role !== "director") { navigate("/mission-control"); }
+  }, [user, navigate]);
 
   const fetchRoster = useCallback(async () => {
     try {

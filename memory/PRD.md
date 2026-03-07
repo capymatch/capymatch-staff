@@ -12,8 +12,8 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - **Email:** Resend API
 
 ## User Roles
-- **Director:** Full access, manages coaches, athletes, invites, roster
-- **Coach:** Sees only assigned athletes, can use AI features for their athletes
+- **Director:** Full access, manages coaches, athletes, invites, roster, activation monitoring
+- **Coach:** Sees only assigned athletes, onboarding checklist, AI features
 
 ## Completed Features
 
@@ -27,36 +27,40 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Advocacy Mode with recommendations, intro messages
 - Program Intelligence with metrics, trending
 
-### AI Layer V1
-- Mission Control Briefing, Support Pod Insights, Program Intelligence Analysis, Advocacy Assistant
-
-### AI Layer V2
-- Suggested Next Actions, Support Pod Brief, Program Strategic Insights, Event Follow-Up Suggestions
-- AI Confidence Indicators on all V2 features
+### AI Layer V1 & V2
+- V1: Mission Control Briefing, Support Pod Insights, Program Analysis, Advocacy Assistant
+- V2: Suggested Next Actions, Pod Brief, Strategic Insights, Event Follow-Ups
+- Confidence Indicators on all V2 features
 
 ### Coach Invite System
-- Director-only invite creation with email delivery (Resend)
-- Token-based invite acceptance flow
-- Resend, cancel, copy-link functionality, delivery tracking
+- Director-only invite creation with Resend email delivery
+- Token-based acceptance, resend, cancel, copy-link, delivery tracking
 
-### Team-Aware Invite Suggestions (Completed 2026-03-07)
+### Team-Aware Invite Suggestions (2026-03-07)
 - Suggestion banner on Invites page for newly accepted coaches with team context
 - Bulk-assign or dismiss unassigned athletes from the team
 
 ### Roster Management
 - Director-only roster page with coach-athlete grouping
 - Reassignment, unassignment with audit trail
+- Route protection: coaches redirected away from /roster
 
-### Coach Onboarding Checklist (Completed 2026-03-07)
+### Coach Onboarding Checklist (2026-03-07)
 - Lightweight, non-blocking checklist on Mission Control (coach-only)
 - 5 steps: Explore Mission Control, Meet your roster, Open Support Pod, Check Events, Log a note/action
-- Auto-completion: Mission Control on first visit, log_activity from DB detection
-- Tracking: Support Pod visit completes meet_roster + support_pod, Events page completes events
-- Personalization: Shows "Awaiting athlete assignments" if no athletes assigned
-- Progress bar, "Take me to the next step" CTA, "Dismiss for now" option
-- Success state with auto-hide when all steps completed
-- State stored in users.onboarding: {completed_steps, dismissed, started_at, completed_at}
-- Backend: GET /api/onboarding/status, POST /api/onboarding/complete-step, POST /api/onboarding/dismiss
+- Auto-completion, progress tracking, "Take me to the next step" CTA, dismiss option
+- Personalization for coaches without assigned athletes
+- State: users.onboarding {completed_steps, dismissed, started_at, completed_at}
+- API: GET /api/onboarding/status, POST /api/onboarding/complete-step, POST /api/onboarding/dismiss
+
+### Coach Activation Panel (2026-03-07)
+- Director-only panel on Roster page showing coach engagement signals
+- Status per coach: Pending, Activating, Active, Needs Support
+- Signals: invite status, accepted date, onboarding progress, athlete count, first activity, last active
+- Auto-expands when coaches need support
+- Summary counts at top
+- Sorted by urgency (needs_support first)
+- API: GET /api/roster/activation (director-only)
 
 ### Documentation
 - Auto-generated pages.html and gallery.html
@@ -67,7 +71,7 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Coach Garcia: coach.garcia@capymatch.com / coach123
 
 ## DB Schema (Key Collections)
-- **users**: {id, email, password_hash, name, role, team, invited_by, onboarding: {...}, created_at}
+- **users**: {id, email, password_hash, name, role, team, invited_by, onboarding: {...}, last_active, created_at}
 - **athletes**: {id, fullName, gradYear, position, team, primary_coach_id, unassigned_reason, ...}
 - **invites**: {id, email, name, team, token, status, delivery_status, accepted_user_id, assignment_reviewed, ...}
 - **reassignment_log**: {id, athlete_id, type, from_coach_id, to_coach_id, reason, ...}
@@ -75,15 +79,18 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 ## Code Architecture
 ```
 /app/backend/routers/
-  onboarding.py    # NEW: Coach onboarding checklist API
-  invites.py, roster.py, auth.py, ai.py, intelligence.py, etc.
+  onboarding.py     # Coach onboarding checklist API
+  roster.py         # Roster + Coach Activation endpoint
+  invites.py, auth.py, ai.py, intelligence.py, etc.
 /app/frontend/src/components/
-  OnboardingChecklist.js  # NEW: Checklist UI component
+  OnboardingChecklist.js    # Coach onboarding UI
+  CoachActivationPanel.js   # Director activation panel
   ai/, mission-control/, support-pod/
 /app/frontend/src/pages/
-  MissionControl.js  # Updated: renders OnboardingChecklist
-  SupportPod.js      # Updated: tracks meet_roster + support_pod steps
-  EventHome.js       # Updated: tracks events step
+  MissionControl.js  # Renders OnboardingChecklist for coaches
+  RosterPage.js      # Renders CoachActivationPanel for directors
+  SupportPod.js      # Tracks onboarding steps
+  EventHome.js       # Tracks onboarding steps
 ```
 
 ## Upcoming Tasks (Prioritized Backlog)
