@@ -1,0 +1,72 @@
+{
+  "summary": "Team-Aware Invite Suggestions Feature Testing Complete - All 5 endpoints verified. Backend: 24/24 tests pass (100%). Frontend: All UI components working (PendingAssignmentBanner, athlete checkboxes, assign/dismiss buttons). Full E2E flow verified: create invite with team → accept → banner appears → assign athletes → banner removed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_team_aware_invites.py",
+    "/app/test_reports/pytest/pytest_team_aware_invites.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PendingAssignmentBanner component correctly renders with all required elements (data-testid attributes present)",
+    "Dismiss flow correctly sets assignment_reviewed=True and removes banner from UI",
+    "Assign flow correctly bulk-assigns athletes and refreshes ownership cache",
+    "Edge case handled: Invites without team do NOT appear in pending-assignments",
+    "Edge case handled: Invites with 0 unassigned athletes show appropriate fallback message",
+    "Email delivery shows 'Send failed' in test environment but invite is created with copy-link fallback"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_team_aware_invites.py"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24 tests passed)",
+    "frontend": "100% (All UI tests passed)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "E2E test unassigned one athlete (Jake Williams) to test the full flow",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Team-Aware Invite Suggestions feature fully verified. Key endpoints: POST /api/invites (with optional team field), POST /api/invites/accept/{token} (sets assignment_reviewed=False), GET /api/invites/pending-assignments (returns accepted invites with team context + unassigned athletes), POST /api/invites/{id}/assign-athletes (bulk assign + sets assignment_reviewed=True), POST /api/invites/{id}/dismiss-assignment (sets assignment_reviewed=True). Teams are: 'U18 Academy', 'U17 Premier', 'U16 Elite'. PendingAssignmentBanner component renders between invite form and invite list on /invites page.",
+  "verified_features": {
+    "backend_endpoints": [
+      "POST /api/invites - Creates invite with optional team field ✓",
+      "POST /api/invites/accept/{token} - Creates coach account, sets accepted_user_id and assignment_reviewed=False ✓",
+      "GET /api/invites/pending-assignments - Returns accepted invites with unassigned team athletes (director only) ✓",
+      "POST /api/invites/{id}/assign-athletes - Bulk assigns athletes, sets assignment_reviewed=True ✓",
+      "POST /api/invites/{id}/dismiss-assignment - Dismisses without assigning, sets assignment_reviewed=True ✓"
+    ],
+    "frontend_components": [
+      "PendingAssignmentBanner component renders correctly with coach name and team ✓",
+      "Athlete checkboxes with data-testid='assign-athlete-{id}' ✓",
+      "Select All/None buttons functional ✓",
+      "Assign button shows count (e.g., 'Assign 1 athlete') with data-testid='assign-selected-btn' ✓",
+      "Skip for now button with data-testid='dismiss-assignment-btn' ✓",
+      "Banner disappears after assign or dismiss ✓",
+      "Empty state shows 'No unassigned athletes found' message ✓"
+    ],
+    "edge_cases_verified": [
+      "Invite without team does NOT appear in pending-assignments ✓",
+      "Already-reviewed invites (assignment_reviewed=True) do NOT appear again ✓",
+      "Empty athlete list returns 400 error ✓",
+      "Invalid invite ID returns 404 ✓",
+      "Auth required (401) and director-only (403) enforced ✓"
+    ],
+    "e2e_flow_verified": {
+      "step1": "Director creates invite with team 'U16 Elite' ✓",
+      "step2": "Coach accepts invite via POST /api/invites/accept/{token} ✓",
+      "step3": "Director sees PendingAssignmentBanner on /invites page ✓",
+      "step4": "Director selects and assigns athletes ✓",
+      "step5": "Banner removed after assignment ✓"
+    }
+  }
+}

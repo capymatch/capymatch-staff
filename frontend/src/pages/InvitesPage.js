@@ -6,10 +6,128 @@ import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import {
   Mail, UserPlus, Clock, CheckCircle, XCircle, Trash2, Copy, Users,
-  RefreshCw, AlertTriangle, Send,
+  RefreshCw, AlertTriangle, Send, UserCheck,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+function PendingAssignmentBanner({ assignment, onComplete }) {
+  const [selected, setSelected] = useState(new Set(assignment.suggested_athletes.map((a) => a.id)));
+  const [assigning, setAssigning] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
+
+  const toggleAthlete = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelected(new Set(assignment.suggested_athletes.map((a) => a.id)));
+  const selectNone = () => setSelected(new Set());
+
+  const handleAssign = async () => {
+    if (selected.size === 0) { toast.error("Select at least one athlete"); return; }
+    setAssigning(true);
+    try {
+      const res = await axios.post(`${API}/invites/${assignment.invite_id}/assign-athletes`, {
+        athlete_ids: [...selected],
+      });
+      toast.success(`${res.data.assigned_count} athlete(s) assigned to ${res.data.coach_name}`);
+      onComplete();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to assign");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleDismiss = async () => {
+    setDismissing(true);
+    try {
+      await axios.post(`${API}/invites/${assignment.invite_id}/dismiss-assignment`);
+      toast.success("Assignment suggestion dismissed");
+      onComplete();
+    } catch (err) {
+      toast.error("Failed to dismiss");
+    } finally {
+      setDismissing(false);
+    }
+  };
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-6" data-testid="pending-assignment-banner">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+          <UserCheck className="w-4 h-4 text-amber-700" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-amber-900">
+            {assignment.coach_name} joined — assign {assignment.team} athletes?
+          </h3>
+          <p className="text-xs text-amber-700 mt-0.5">
+            {assignment.suggested_count} unassigned athlete{assignment.suggested_count !== 1 ? "s" : ""} on {assignment.team}
+            {assignment.already_assigned_on_team > 0 && (
+              <span className="text-amber-500"> · {assignment.already_assigned_on_team} already assigned to other coaches</span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {assignment.suggested_athletes.length > 0 ? (
+        <>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Select athletes</span>
+            <button onClick={selectAll} className="text-[10px] text-amber-600 hover:text-amber-800 underline">All</button>
+            <button onClick={selectNone} className="text-[10px] text-amber-600 hover:text-amber-800 underline">None</button>
+          </div>
+          <div className="space-y-1.5 mb-4">
+            {assignment.suggested_athletes.map((a) => (
+              <label key={a.id} className="flex items-center gap-3 px-3 py-2 bg-white/70 rounded-lg border border-amber-100 cursor-pointer hover:bg-white transition-colors" data-testid={`assign-athlete-${a.id}`}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(a.id)}
+                  onChange={() => toggleAthlete(a.id)}
+                  className="w-3.5 h-3.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                />
+                <div className="flex-1">
+                  <span className="text-sm text-gray-800">{a.name}</span>
+                  <span className="text-[11px] text-gray-400 ml-2">
+                    {a.position}{a.grad_year ? ` · '${String(a.grad_year).slice(-2)}` : ""}
+                  </span>
+                </div>
+                <span className="text-[10px] text-amber-500">{a.team}</span>
+              </label>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-amber-600 mb-4">No unassigned athletes found on {assignment.team}. You can assign athletes manually from the Roster page.</p>
+      )}
+
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleAssign}
+          disabled={assigning || selected.size === 0}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-amber-700 text-white rounded-lg hover:bg-amber-800 disabled:opacity-50 transition-colors"
+          data-testid="assign-selected-btn"
+        >
+          <UserCheck className="w-3 h-3" />
+          {assigning ? "Assigning..." : `Assign ${selected.size} athlete${selected.size !== 1 ? "s" : ""}`}
+        </button>
+        <button
+          onClick={handleDismiss}
+          disabled={dismissing}
+          className="px-3 py-2 text-xs text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors"
+          data-testid="dismiss-assignment-btn"
+        >
+          {dismissing ? "..." : "Skip for now"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function StatusBadge({ status }) {
   const styles = {
@@ -48,6 +166,7 @@ export default function InvitesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [invites, setInvites] = useState([]);
+  const [pendingAssignments, setPendingAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [email, setEmail] = useState("");
@@ -59,12 +178,20 @@ export default function InvitesPage() {
   useEffect(() => {
     if (user?.role !== "director") { navigate("/mission-control"); return; }
     fetchInvites();
+    fetchPendingAssignments();
   }, [user, navigate]);
 
   const fetchInvites = async () => {
     try { const res = await axios.get(`${API}/invites`); setInvites(res.data); }
     catch { toast.error("Failed to load invites"); }
     finally { setLoading(false); }
+  };
+
+  const fetchPendingAssignments = async () => {
+    try {
+      const res = await axios.get(`${API}/invites/pending-assignments`);
+      setPendingAssignments(res.data);
+    } catch { /* silent */ }
   };
 
   const handleInvite = async (e) => {
@@ -155,6 +282,18 @@ export default function InvitesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {pendingAssignments.length > 0 && (
+          <div data-testid="pending-assignments-section">
+            {pendingAssignments.map((a) => (
+              <PendingAssignmentBanner
+                key={a.invite_id}
+                assignment={a}
+                onComplete={() => { fetchPendingAssignments(); fetchInvites(); }}
+              />
+            ))}
           </div>
         )}
 

@@ -10,6 +10,8 @@ from db_client import db
 from models import InviteCreate, InviteAccept
 from auth_middleware import get_current_user_dep, create_token
 from services.email import send_invite_email
+from services.ownership import refresh_ownership_cache
+from mock_data import ATHLETES
 
 router = APIRouter()
 
@@ -47,7 +49,7 @@ def _build_invite_url(request: Request, token: str) -> str:
             parsed = urlparse(referer)
             origin = f"{parsed.scheme}://{parsed.netloc}"
     if not origin:
-        origin = "https://support-pod-1.preview.emergentagent.com"
+        origin = "https://roster-intelligence.preview.emergentagent.com"
     return f"{origin}/invite/{token}"
 
 
@@ -257,7 +259,12 @@ async def accept_invite(token: str, body: InviteAccept):
 
     await db.invites.update_one(
         {"id": invite["id"]},
-        {"$set": {"status": "accepted", "accepted_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "status": "accepted",
+            "accepted_at": datetime.now(timezone.utc).isoformat(),
+            "accepted_user_id": user_doc["id"],
+            "assignment_reviewed": False,
+        }}
     )
 
     safe_user = {
@@ -269,3 +276,163 @@ async def accept_invite(token: str, body: InviteAccept):
     }
     jwt_token = create_token(safe_user)
     return {"token": jwt_token, "user": safe_user}
+
+
+
+# ── Team-Aware Assignment Suggestions ─────────────────────────────────────
+
+
+@router.get("/invites/pending-assignments")
+async def get_pending_assignments(current_user: dict = get_current_user_dep()):
+    """Director: get accepted invites with team context that need athlete assignment."""
+    if current_user["role"] != "director":
+        raise HTTPException(status_code=403, detail="Director only")
+
+    accepted = await db.invites.find(
+        {"status": "accepted", "assignment_reviewed": {"$ne": True}},
+        {"_id": 0},
+    ).to_list(50)
+
+    # Filter to invites that have a team
+    results = []
+    for inv in accepted:
+        team = inv.get("team")
+        if not team:
+            continue
+
+        coach_id = inv.get("accepted_user_id")
+        if not coach_id:
+            continue
+
+        # Find unassigned athletes on this team
+        unassigned_on_team = [
+            {
+                "id": a["id"],
+                "name": a.get("fullName", a.get("name", "Unknown")),
+                "position": a.get("position"),
+                "grad_year": a.get("gradYear"),
+                "team": a.get("team"),
+            }
+            for a in ATHLETES
+            if a.get("team") == team and not a.get("primary_coach_id")
+        ]
+
+        # Also count assigned athletes on the team (for context, not suggestion)
+        assigned_on_team = sum(
+            1 for a in ATHLETES
+            if a.get("team") == team and a.get("primary_coach_id")
+        )
+
+        results.append({
+            "invite_id": inv["id"],
+            "coach_name": inv["name"],
+            "coach_email": inv["email"],
+            "coach_id": coach_id,
+            "team": team,
+            "accepted_at": inv.get("accepted_at"),
+            "suggested_athletes": unassigned_on_team,
+            "suggested_count": len(unassigned_on_team),
+            "already_assigned_on_team": assigned_on_team,
+        })
+
+    return results
+
+
+@router.post("/invites/{invite_id}/assign-athletes")
+async def assign_athletes_from_invite(
+    invite_id: str,
+    body: dict,
+    current_user: dict = get_current_user_dep(),
+):
+    """Director: bulk-assign selected athletes to the coach from an accepted invite."""
+    if current_user["role"] != "director":
+        raise HTTPException(status_code=403, detail="Director only")
+
+    invite = await db.invites.find_one({"id": invite_id}, {"_id": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    if invite["status"] != "accepted":
+        raise HTTPException(status_code=400, detail="Invite not in accepted state")
+
+    coach_id = invite.get("accepted_user_id")
+    if not coach_id:
+        raise HTTPException(status_code=400, detail="No coach account linked to this invite")
+
+    athlete_ids = body.get("athlete_ids", [])
+    if not athlete_ids:
+        raise HTTPException(status_code=400, detail="No athletes selected")
+
+    # Validate all athletes exist and are unassigned
+    assigned = []
+    for aid in athlete_ids:
+        athlete = next((a for a in ATHLETES if a["id"] == aid), None)
+        if not athlete:
+            continue
+        if athlete.get("primary_coach_id"):
+            continue  # skip already-assigned — no silent reassignment
+
+        await db.athletes.update_one(
+            {"id": aid},
+            {"$set": {"primary_coach_id": coach_id, "unassigned_reason": None}},
+        )
+        # Update in-memory
+        for a in ATHLETES:
+            if a["id"] == aid:
+                a["primary_coach_id"] = coach_id
+                a.pop("unassigned_reason", None)
+                break
+
+        # Log the assignment
+        await db.reassignment_log.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": aid,
+            "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+            "type": "assign",
+            "from_coach_id": None,
+            "from_coach_name": None,
+            "to_coach_id": coach_id,
+            "to_coach_name": invite["name"],
+            "reassigned_by": current_user["id"],
+            "reassigned_by_name": current_user["name"],
+            "reason": f"Team onboarding: {invite.get('team', '')}",
+            "open_actions_at_time": 0,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        assigned.append(aid)
+
+    # Mark invite as reviewed
+    await db.invites.update_one(
+        {"id": invite_id},
+        {"$set": {"assignment_reviewed": True}},
+    )
+
+    await refresh_ownership_cache()
+
+    return {
+        "status": "assigned",
+        "assigned_count": len(assigned),
+        "assigned_ids": assigned,
+        "coach_name": invite["name"],
+        "team": invite.get("team"),
+    }
+
+
+@router.post("/invites/{invite_id}/dismiss-assignment")
+async def dismiss_assignment(
+    invite_id: str,
+    current_user: dict = get_current_user_dep(),
+):
+    """Director: dismiss the assignment suggestion without assigning anyone."""
+    if current_user["role"] != "director":
+        raise HTTPException(status_code=403, detail="Director only")
+
+    invite = await db.invites.find_one({"id": invite_id}, {"_id": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+
+    await db.invites.update_one(
+        {"id": invite_id},
+        {"$set": {"assignment_reviewed": True}},
+    )
+
+    return {"status": "dismissed"}
