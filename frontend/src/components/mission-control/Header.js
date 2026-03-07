@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, Bell, LayoutDashboard, Calendar, Megaphone, BarChart3, LogOut } from "lucide-react";
+import { Search, Bell, LayoutDashboard, Calendar, Megaphone, BarChart3, LogOut, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
@@ -116,6 +116,19 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
               <Bell className="w-4 h-4 text-white/60" />
               <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-orange-400 rounded-full" />
             </button>
+
+            {/* Director-only: Invite coaches link */}
+            {user?.role === "director" && (
+              <button
+                onClick={() => navigate("/invites")}
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"
+                title="Invite Coaches"
+                data-testid="invite-coaches-btn"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-medium">Invite</span>
+              </button>
+            )}
 
             {/* User profile + role badge */}
             <div className="flex items-center gap-2" data-testid="user-profile-area">

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
 import uuid
 from db_client import db
+from auth_middleware import get_current_user_dep
 from models import RecommendationCreate, RecommendationUpdate, ResponseLog, CloseRequest
 from advocacy_engine import (
     list_recommendations,
@@ -22,27 +23,27 @@ router = APIRouter()
 
 
 @router.get("/advocacy/recommendations")
-async def list_all_recommendations(status: str = None, athlete: str = None, school: str = None, grad_year: str = None):
+async def list_all_recommendations(status: str = None, athlete: str = None, school: str = None, grad_year: str = None, current_user: dict = get_current_user_dep()):
     return list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
 
 
 @router.get("/advocacy/context/{athlete_id}/{school_id}")
-async def get_advocacy_context(athlete_id: str, school_id: str):
+async def get_advocacy_context(athlete_id: str, school_id: str, current_user: dict = get_current_user_dep()):
     return get_event_context(athlete_id, school_id)
 
 
 @router.get("/advocacy/context/{athlete_id}")
-async def get_advocacy_context_athlete(athlete_id: str):
+async def get_advocacy_context_athlete(athlete_id: str, current_user: dict = get_current_user_dep()):
     return get_event_context(athlete_id)
 
 
 @router.get("/advocacy/relationships")
-async def list_all_relationships_endpoint():
+async def list_all_relationships_endpoint(current_user: dict = get_current_user_dep()):
     return get_all_relationships()
 
 
 @router.get("/advocacy/relationships/{school_id}")
-async def get_relationship(school_id: str):
+async def get_relationship(school_id: str, current_user: dict = get_current_user_dep()):
     result = get_school_relationship(school_id)
     if not result:
         return {"error": "School not found"}
@@ -50,7 +51,7 @@ async def get_relationship(school_id: str):
 
 
 @router.post("/advocacy/recommendations")
-async def create_new_recommendation(body: RecommendationCreate):
+async def create_new_recommendation(body: RecommendationCreate, current_user: dict = get_current_user_dep()):
     rec = create_recommendation(body.model_dump())
 
     # Persist to MongoDB
@@ -60,7 +61,7 @@ async def create_new_recommendation(body: RecommendationCreate):
 
 
 @router.get("/advocacy/recommendations/{rec_id}")
-async def get_rec_detail(rec_id: str):
+async def get_rec_detail(rec_id: str, current_user: dict = get_current_user_dep()):
     rec = await db.recommendations.find_one({"id": rec_id}, {"_id": 0})
     if not rec:
         return {"error": "Recommendation not found"}
@@ -71,7 +72,7 @@ async def get_rec_detail(rec_id: str):
 
 
 @router.patch("/advocacy/recommendations/{rec_id}")
-async def update_rec(rec_id: str, body: RecommendationUpdate):
+async def update_rec(rec_id: str, body: RecommendationUpdate, current_user: dict = get_current_user_dep()):
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     result = update_recommendation(rec_id, updates)
     if not result:
@@ -86,7 +87,7 @@ async def update_rec(rec_id: str, body: RecommendationUpdate):
 
 
 @router.post("/advocacy/recommendations/{rec_id}/send")
-async def send_rec(rec_id: str):
+async def send_rec(rec_id: str, current_user: dict = get_current_user_dep()):
     rec = send_recommendation(rec_id)
     if not rec:
         return {"error": "Cannot send — not a draft or not found"}
@@ -108,7 +109,7 @@ async def send_rec(rec_id: str):
 
 
 @router.post("/advocacy/recommendations/{rec_id}/respond")
-async def respond_to_rec(rec_id: str, body: ResponseLog):
+async def respond_to_rec(rec_id: str, body: ResponseLog, current_user: dict = get_current_user_dep()):
     rec = log_response(rec_id, body.response_note, body.response_type)
     if not rec:
         return {"error": "Cannot log response"}
@@ -148,7 +149,7 @@ async def respond_to_rec(rec_id: str, body: ResponseLog):
 
 
 @router.post("/advocacy/recommendations/{rec_id}/follow-up")
-async def follow_up_rec(rec_id: str):
+async def follow_up_rec(rec_id: str, current_user: dict = get_current_user_dep()):
     rec = mark_follow_up(rec_id)
     if not rec:
         return {"error": "Cannot follow up"}
@@ -162,7 +163,7 @@ async def follow_up_rec(rec_id: str):
 
 
 @router.post("/advocacy/recommendations/{rec_id}/close")
-async def close_rec(rec_id: str, body: CloseRequest):
+async def close_rec(rec_id: str, body: CloseRequest, current_user: dict = get_current_user_dep()):
     rec = close_recommendation(rec_id, body.reason)
     if not rec:
         return {"error": "Cannot close"}

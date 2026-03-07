@@ -1,14 +1,17 @@
-"""Debug — Decision Engine inspection endpoints."""
+"""Debug — Decision Engine inspection endpoints (director-only)."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from auth_middleware import get_current_user_dep
 from mock_data import ALL_INTERVENTIONS
 
 router = APIRouter()
 
 
 @router.get("/debug/interventions")
-async def get_all_interventions():
+async def get_all_interventions(current_user: dict = get_current_user_dep()):
     """DEBUG: Get all detected interventions with scoring details"""
+    if current_user["role"] != "director":
+        raise HTTPException(status_code=403, detail="Director access only")
     return {
         "total_interventions": len(ALL_INTERVENTIONS),
         "by_category": {
@@ -31,7 +34,7 @@ async def get_all_interventions():
 
 
 @router.get("/debug/interventions/{athlete_id}")
-async def debug_athlete_interventions(athlete_id: str):
+async def debug_athlete_interventions(athlete_id: str, current_user: dict = get_current_user_dep()):
     """DEBUG: Get all interventions for a specific athlete"""
     athlete_interventions = [i for i in ALL_INTERVENTIONS if i['athlete_id'] == athlete_id]
 
@@ -52,7 +55,7 @@ async def debug_athlete_interventions(athlete_id: str):
 
 
 @router.get("/debug/scoring/{intervention_id}")
-async def get_intervention_scoring(intervention_id: str):
+async def get_intervention_scoring(intervention_id: str, current_user: dict = get_current_user_dep()):
     """DEBUG: Get detailed scoring breakdown for a specific intervention"""
     for intervention in ALL_INTERVENTIONS:
         pseudo_id = f"{intervention['athlete_id']}_{intervention['category']}"

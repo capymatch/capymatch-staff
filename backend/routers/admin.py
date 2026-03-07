@@ -1,15 +1,18 @@
-"""Admin — internal status view (not part of coach experience)."""
+"""Admin — internal status view (director-only)."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from db_client import db
+from auth_middleware import get_current_user_dep
 from mock_data import SCHOOLS, ALL_INTERVENTIONS
 
 router = APIRouter()
 
 
 @router.get("/admin/status")
-async def admin_status():
+async def admin_status(current_user: dict = get_current_user_dep()):
     """Internal status view: persistence state, collection counts, data sources"""
+    if current_user["role"] != "director":
+        raise HTTPException(status_code=403, detail="Director access only")
     event_notes_count = await db.event_notes.count_documents({})
     recommendations_count = await db.recommendations.count_documents({})
     athletes_count = await db.athletes.count_documents({})

@@ -1,6 +1,7 @@
 """Mission Control — command surface endpoints."""
 
 from fastapi import APIRouter
+from auth_middleware import get_current_user_dep
 from mock_data import (
     PRIORITY_ALERTS,
     MOMENTUM_SIGNALS,
@@ -31,7 +32,7 @@ def enrich_with_health(interventions_list):
 
 
 @router.get("/mission-control")
-async def get_mission_control_data():
+async def get_mission_control_data(current_user: dict = get_current_user_dep()):
     """Get all Mission Control data with Decision Engine explainability"""
     return {
         "priorityAlerts": enrich_with_health(PRIORITY_ALERTS),
@@ -49,25 +50,25 @@ async def get_mission_control_data():
 
 
 @router.get("/mission-control/alerts")
-async def get_priority_alerts_endpoint():
+async def get_priority_alerts_endpoint(current_user: dict = get_current_user_dep()):
     return PRIORITY_ALERTS
 
 
 @router.get("/mission-control/signals")
-async def get_momentum_signals():
+async def get_momentum_signals(current_user: dict = get_current_user_dep()):
     return MOMENTUM_SIGNALS
 
 
 @router.get("/mission-control/athletes")
-async def get_athletes_attention():
+async def get_athletes_attention(current_user: dict = get_current_user_dep()):
     return ATHLETES_NEEDING_ATTENTION
 
 
 @router.get("/mission-control/events")
-async def get_upcoming_events():
+async def get_upcoming_events(current_user: dict = get_current_user_dep()):
     return UPCOMING_EVENTS
 
 
 @router.get("/mission-control/snapshot")
-async def get_program_snapshot():
+async def get_program_snapshot(current_user: dict = get_current_user_dep()):
     return PROGRAM_SNAPSHOT

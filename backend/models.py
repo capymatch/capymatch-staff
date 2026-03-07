@@ -125,3 +125,15 @@ class UserLogin(BaseModel):
 class TokenResponse(BaseModel):
     token: str
     user: dict
+
+
+# ── Invites ──
+
+class InviteCreate(BaseModel):
+    email: str
+    name: str
+    team: Optional[str] = None
+
+class InviteAccept(BaseModel):
+    password: str
+    name: Optional[str] = None

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
 import uuid
 from db_client import db
+from auth_middleware import get_current_user_dep
 from mock_data import UPCOMING_EVENTS, SCHOOLS
 from models import EventNoteCreate, EventNoteUpdate, EventCreate, EventAthleteAdd
 from event_engine import (
@@ -22,13 +23,13 @@ router = APIRouter()
 
 
 @router.get("/events")
-async def list_events(team: str = None, type: str = None):
+async def list_events(team: str = None, type: str = None, current_user: dict = get_current_user_dep()):
     """Get all events grouped by upcoming/past with urgency indicators"""
     return get_all_events(team_filter=team, type_filter=type)
 
 
 @router.get("/events/{event_id}")
-async def get_event_detail(event_id: str):
+async def get_event_detail(event_id: str, current_user: dict = get_current_user_dep()):
     """Get single event detail"""
     event = get_event(event_id)
     if not event:
@@ -37,7 +38,7 @@ async def get_event_detail(event_id: str):
 
 
 @router.post("/events")
-async def create_event(body: EventCreate):
+async def create_event(body: EventCreate, current_user: dict = get_current_user_dep()):
     """Create a new event"""
     from datetime import datetime as dt
     try:
@@ -80,7 +81,7 @@ async def create_event(body: EventCreate):
 
 
 @router.get("/events/{event_id}/prep")
-async def get_prep_data(event_id: str):
+async def get_prep_data(event_id: str, current_user: dict = get_current_user_dep()):
     """Get prep data: athletes, schools, checklist, blockers"""
     result = get_event_prep(event_id)
     if not result:
@@ -89,7 +90,7 @@ async def get_prep_data(event_id: str):
 
 
 @router.patch("/events/{event_id}/checklist/{item_id}")
-async def toggle_checklist(event_id: str, item_id: str):
+async def toggle_checklist(event_id: str, item_id: str, current_user: dict = get_current_user_dep()):
     """Toggle a prep checklist item"""
     result = toggle_checklist_item(event_id, item_id)
     if not result:
@@ -110,7 +111,7 @@ async def toggle_checklist(event_id: str, item_id: str):
 
 
 @router.post("/events/{event_id}/athletes")
-async def add_event_athlete(event_id: str, body: EventAthleteAdd):
+async def add_event_athlete(event_id: str, body: EventAthleteAdd, current_user: dict = get_current_user_dep()):
     """Add an athlete to an event roster"""
     event = get_event(event_id)
     if not event:
@@ -122,7 +123,7 @@ async def add_event_athlete(event_id: str, body: EventAthleteAdd):
 
 
 @router.delete("/events/{event_id}/athletes/{athlete_id}")
-async def remove_event_athlete(event_id: str, athlete_id: str):
+async def remove_event_athlete(event_id: str, athlete_id: str, current_user: dict = get_current_user_dep()):
     """Remove an athlete from an event roster"""
     event = get_event(event_id)
     if not event:
@@ -134,7 +135,7 @@ async def remove_event_athlete(event_id: str, athlete_id: str):
 
 
 @router.get("/events/{event_id}/notes")
-async def list_event_notes(event_id: str):
+async def list_event_notes(event_id: str, current_user: dict = get_current_user_dep()):
     """Get all captured notes for an event (reads from MongoDB)"""
     notes = await db.event_notes.find(
         {"event_id": event_id}, {"_id": 0}
@@ -143,7 +144,7 @@ async def list_event_notes(event_id: str):
 
 
 @router.post("/events/{event_id}/notes")
-async def create_event_note(event_id: str, body: EventNoteCreate):
+async def create_event_note(event_id: str, body: EventNoteCreate, current_user: dict = get_current_user_dep()):
     """Capture a live event note"""
     result = capture_note(event_id, body.model_dump())
     if not result:
@@ -167,7 +168,7 @@ async def create_event_note(event_id: str, body: EventNoteCreate):
 
 
 @router.patch("/events/{event_id}/notes/{note_id}")
-async def edit_event_note(event_id: str, note_id: str, body: EventNoteUpdate):
+async def edit_event_note(event_id: str, note_id: str, body: EventNoteUpdate, current_user: dict = get_current_user_dep()):
     """Edit a captured note"""
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     result = update_note(event_id, note_id, updates)
@@ -182,7 +183,7 @@ async def edit_event_note(event_id: str, note_id: str, body: EventNoteUpdate):
 
 
 @router.get("/events/{event_id}/summary")
-async def event_summary(event_id: str):
+async def event_summary(event_id: str, current_user: dict = get_current_user_dep()):
     """Get aggregated summary data for post-event debrief"""
     result = get_event_summary(event_id)
     if not result:
@@ -191,7 +192,7 @@ async def event_summary(event_id: str):
 
 
 @router.post("/events/{event_id}/notes/{note_id}/route")
-async def route_single_note(event_id: str, note_id: str):
+async def route_single_note(event_id: str, note_id: str, current_user: dict = get_current_user_dep()):
     """Route a single note's follow-ups to the athlete's Support Pod"""
     result = route_note_to_pod(event_id, note_id)
     if not result:
@@ -234,7 +235,7 @@ async def route_single_note(event_id: str, note_id: str):
 
 
 @router.post("/events/{event_id}/route-to-pods")
-async def bulk_route_notes(event_id: str):
+async def bulk_route_notes(event_id: str, current_user: dict = get_current_user_dep()):
     """Bulk route all eligible notes to Support Pods"""
     results = bulk_route_to_pods(event_id)
 
@@ -284,5 +285,5 @@ async def bulk_route_notes(event_id: str):
 
 
 @router.get("/schools")
-async def list_schools():
+async def list_schools(current_user: dict = get_current_user_dep()):
     return SCHOOLS

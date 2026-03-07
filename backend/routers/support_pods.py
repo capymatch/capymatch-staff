@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
 import uuid
 from db_client import db
+from auth_middleware import get_current_user_dep
 from models import ActionCreate, ActionUpdate, ResolveIssue
 from support_pod import (
     get_athlete as sp_get_athlete,
@@ -19,7 +20,7 @@ router = APIRouter()
 
 
 @router.get("/support-pods/{athlete_id}")
-async def get_support_pod(athlete_id: str, context: str = None):
+async def get_support_pod(athlete_id: str, context: str = None, current_user: dict = get_current_user_dep()):
     """Get full Support Pod data for an athlete"""
     athlete = sp_get_athlete(athlete_id)
     if not athlete:
@@ -75,7 +76,7 @@ async def get_support_pod(athlete_id: str, context: str = None):
 
 
 @router.post("/support-pods/{athlete_id}/actions")
-async def create_pod_action(athlete_id: str, action: ActionCreate):
+async def create_pod_action(athlete_id: str, action: ActionCreate, current_user: dict = get_current_user_dep()):
     """Create a new action item in the pod"""
     doc = {
         "id": str(uuid.uuid4()),
@@ -108,7 +109,7 @@ async def create_pod_action(athlete_id: str, action: ActionCreate):
 
 
 @router.patch("/support-pods/{athlete_id}/actions/{action_id}")
-async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdate):
+async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdate, current_user: dict = get_current_user_dep()):
     """Update an action (complete, reassign, change status)"""
     update_dict = {}
     event_desc = ""
@@ -159,7 +160,7 @@ async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdat
 
 
 @router.post("/support-pods/{athlete_id}/resolve")
-async def resolve_issue(athlete_id: str, body: ResolveIssue):
+async def resolve_issue(athlete_id: str, body: ResolveIssue, current_user: dict = get_current_user_dep()):
     """Resolve an active issue"""
     doc = {
         "id": str(uuid.uuid4()),

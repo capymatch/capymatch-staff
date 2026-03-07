@@ -13,6 +13,8 @@ import RecommendationBuilder from "./pages/RecommendationBuilder";
 import RecommendationDetail from "./pages/RecommendationDetail";
 import RelationshipDetail from "./pages/RelationshipDetail";
 import ProgramIntelligence from "./pages/ProgramIntelligence";
+import InvitesPage from "./pages/InvitesPage";
+import AcceptInvitePage from "./pages/AcceptInvitePage";
 import AdminStatus from "./pages/AdminStatus";
 
 function ProtectedRoute({ children }) {
@@ -41,6 +43,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/mission-control" replace /> : <LoginPage />} />
+      <Route path="/invite/:token" element={user ? <Navigate to="/mission-control" replace /> : <AcceptInvitePage />} />
       <Route path="/mission-control" element={<ProtectedRoute><MissionControl /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute><EventHome /></ProtectedRoute>} />
       <Route path="/events/:eventId/prep" element={<ProtectedRoute><EventPrep /></ProtectedRoute>} />
@@ -51,6 +54,7 @@ function AppRoutes() {
       <Route path="/advocacy/:recommendationId" element={<ProtectedRoute><RecommendationDetail /></ProtectedRoute>} />
       <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute><RelationshipDetail /></ProtectedRoute>} />
       <Route path="/program" element={<ProtectedRoute><ProgramIntelligence /></ProtectedRoute>} />
+      <Route path="/invites" element={<ProtectedRoute><InvitesPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminStatus /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute><SupportPod /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to={user ? "/mission-control" : "/login"} replace />} />
