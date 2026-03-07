@@ -1,5 +1,6 @@
 """AI Intelligence endpoints — GPT-5.2 powered insights."""
 
+import logging
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
 from auth_middleware import get_current_user_dep
@@ -25,6 +26,7 @@ from advocacy_engine import get_event_context
 from support_pod import get_athlete as sp_get_athlete
 from db_client import db
 
+log = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -38,7 +40,11 @@ async def program_narrative(current_user: dict = get_current_user_dep()):
     data = compute_program_intelligence(coach_id=coach_id)
     view_mode = data.get("view_mode", "program")
 
-    text = await generate_program_narrative(data, view_mode)
+    try:
+        text = await generate_program_narrative(data, view_mode)
+    except RuntimeError as e:
+        log.error(f"AI program narrative failed: {e}")
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
     return {
         "text": text,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -74,7 +80,11 @@ async def event_recap(event_id: str, current_user: dict = get_current_user_dep()
     if not enriched_notes:
         raise HTTPException(status_code=400, detail="No notes for your athletes at this event")
 
-    text = await generate_event_recap(event, enriched_notes)
+    try:
+        text = await generate_event_recap(event, enriched_notes)
+    except RuntimeError as e:
+        log.error(f"AI event recap failed: {e}")
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
     return {
         "text": text,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -102,7 +112,11 @@ async def advocacy_draft(
     school = context.get("school", {"id": school_id, "name": school_id})
     event_notes = context.get("notes", [])
 
-    text = await generate_advocacy_draft(athlete, school, event_notes)
+    try:
+        text = await generate_advocacy_draft(athlete, school, event_notes)
+    except RuntimeError as e:
+        log.error(f"AI advocacy draft failed: {e}")
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
     return {
         "text": text,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -140,7 +154,11 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
         "snapshot": snapshot,
     }
 
-    text = await generate_daily_briefing(data, current_user["name"])
+    try:
+        text = await generate_daily_briefing(data, current_user["name"])
+    except RuntimeError as e:
+        log.error(f"AI daily briefing failed: {e}")
+        raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")
     return {
         "text": text,
         "generated_at": datetime.now(timezone.utc).isoformat(),

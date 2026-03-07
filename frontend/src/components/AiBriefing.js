@@ -1,26 +1,45 @@
 import { useState } from "react";
-import { Sparkles, RefreshCw } from "lucide-react";
+import { Sparkles, RefreshCw, AlertCircle } from "lucide-react";
 
 export function AiBriefing({ endpoint, label, buttonLabel, className = "" }) {
   const [text, setText] = useState(null);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState(null);
+  const [error, setError] = useState(null);
 
   const generate = async () => {
     setLoading(true);
+    setError(null);
     try {
       const axios = (await import("axios")).default;
-      const res = await axios.post(endpoint);
+      const res = await axios.post(endpoint, {}, { timeout: 50000 });
       setText(res.data.text);
       setMeta(res.data);
     } catch (err) {
-      setText("Unable to generate briefing right now.");
+      const status = err.response?.status;
+      const detail = err.response?.data?.detail;
+      let msg;
+      if (err.code === "ECONNABORTED" || err.message?.includes("timeout")) {
+        msg = "Request timed out. The AI service is busy — please try again.";
+      } else if (status === 503) {
+        msg = detail || "AI service temporarily unavailable. Please try again.";
+      } else if (status === 400) {
+        msg = detail || "Not enough data to generate this briefing.";
+      } else if (status === 403) {
+        msg = "You don't have access to this data.";
+      } else if (status === 401) {
+        msg = "Session expired. Please log in again.";
+      } else {
+        msg = "Unable to generate briefing right now.";
+      }
+      setError(msg);
+      setText(null);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!text && !loading) {
+  if (!text && !loading && !error) {
     return (
       <button
         onClick={generate}
@@ -30,6 +49,26 @@ export function AiBriefing({ endpoint, label, buttonLabel, className = "" }) {
         <Sparkles className="w-3.5 h-3.5" />
         {buttonLabel || "Generate Briefing"}
       </button>
+    );
+  }
+
+  if (error && !loading) {
+    return (
+      <div className={`bg-slate-900/90 rounded-xl p-5 ${className}`} data-testid="ai-briefing-error">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-white/70">{error}</p>
+            <button
+              onClick={generate}
+              className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-white/60 hover:text-white/90 bg-white/5 hover:bg-white/10 rounded-md transition-colors"
+              data-testid="ai-retry-btn"
+            >
+              <RefreshCw className="w-3 h-3" /> Try Again
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

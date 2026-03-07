@@ -2,6 +2,7 @@
 
 import os
 import uuid
+import asyncio
 import logging
 from datetime import datetime, timezone
 from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -14,6 +15,9 @@ log = logging.getLogger(__name__)
 
 API_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
 
+LLM_TIMEOUT_SECONDS = 45
+LLM_MAX_RETRIES = 1
+
 
 def _build_chat(system_message: str) -> LlmChat:
     return LlmChat(
@@ -21,6 +25,29 @@ def _build_chat(system_message: str) -> LlmChat:
         session_id=str(uuid.uuid4()),
         system_message=system_message,
     ).with_model("openai", "gpt-5.2")
+
+
+async def _send_with_retry(chat: LlmChat, message: UserMessage) -> str:
+    """Send a message to the LLM with timeout and retry."""
+    last_error = None
+    for attempt in range(1 + LLM_MAX_RETRIES):
+        try:
+            result = await asyncio.wait_for(
+                chat.send_message(message),
+                timeout=LLM_TIMEOUT_SECONDS,
+            )
+            if result and result.strip():
+                return result
+            raise ValueError("Empty response from LLM")
+        except asyncio.TimeoutError:
+            last_error = "LLM request timed out"
+            log.warning(f"LLM timeout on attempt {attempt + 1}")
+        except Exception as e:
+            last_error = str(e)
+            log.warning(f"LLM error on attempt {attempt + 1}: {e}")
+        if attempt < LLM_MAX_RETRIES:
+            await asyncio.sleep(1)
+    raise RuntimeError(f"AI generation failed after {1 + LLM_MAX_RETRIES} attempts: {last_error}")
 
 
 async def generate_program_narrative(data: dict, view_mode: str = "program") -> str:
@@ -43,7 +70,7 @@ Data:
 - Readiness: {data.get('readiness', {})}"""
 
     chat = _build_chat("You are a concise recruiting intelligence analyst. Write brief, data-driven briefings. No markdown formatting. No bullet points. Just clear prose sentences.")
-    return await chat.send_message(UserMessage(text=prompt))
+    return await _send_with_retry(chat, UserMessage(text=prompt))
 
 
 async def generate_event_recap(event: dict, notes: list) -> str:
@@ -70,7 +97,7 @@ Write 3-4 sentences covering:
 Be specific with names and details from the notes."""
 
     chat = _build_chat("You are a recruiting event analyst. Write concise, actionable event recaps. No markdown. No bullet points. Clear prose with specific names and details.")
-    return await chat.send_message(UserMessage(text=prompt))
+    return await _send_with_retry(chat, UserMessage(text=prompt))
 
 
 async def generate_advocacy_draft(athlete: dict, school: dict, event_notes: list, existing_context: str = "") -> str:
@@ -102,7 +129,7 @@ Write a 3-4 sentence recommendation that:
 4. Is ready for the coach to review and personalize before sending"""
 
     chat = _build_chat("You are an experienced recruiting coach writing recommendations to college coaches. Write authentic, specific, personalized introductions. No generic praise. Reference concrete observations. No markdown formatting.")
-    return await chat.send_message(UserMessage(text=prompt))
+    return await _send_with_retry(chat, UserMessage(text=prompt))
 
 
 async def generate_daily_briefing(data: dict, user_name: str) -> str:
@@ -140,4 +167,4 @@ Format each as: "(N) Action — Reason"
 Be specific with names. Focus on time-sensitive items first."""
 
     chat = _build_chat("You are a recruiting operations assistant. Write crisp, prioritized daily action lists. Each action should be specific and time-aware. No markdown. Use format: (1) Action — Reason.")
-    return await chat.send_message(UserMessage(text=prompt))
+    return await _send_with_retry(chat, UserMessage(text=prompt))

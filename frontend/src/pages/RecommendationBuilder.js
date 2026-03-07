@@ -79,12 +79,21 @@ function RecommendationBuilder() {
     }
     setAiDrafting(true);
     try {
-      const res = await axios.post(`${API}/ai/advocacy-draft/${selectedAthlete}/${selectedSchool}`);
+      const res = await axios.post(`${API}/ai/advocacy-draft/${selectedAthlete}/${selectedSchool}`, {}, { timeout: 50000 });
       setIntroMessage(res.data.text);
       toast.success("AI draft generated — review and personalize before sending");
     } catch (err) {
-      const msg = err.response?.data?.detail || "Failed to generate AI draft";
-      toast.error(msg);
+      const status = err.response?.status;
+      const detail = err.response?.data?.detail;
+      if (err.code === "ECONNABORTED" || err.message?.includes("timeout")) {
+        toast.error("Request timed out — the AI service is busy. Please try again.");
+      } else if (status === 503) {
+        toast.error(detail || "AI service temporarily unavailable. Please try again.");
+      } else if (status === 403) {
+        toast.error("You don't have access to this athlete.");
+      } else {
+        toast.error(detail || "Failed to generate AI draft");
+      }
     } finally {
       setAiDrafting(false);
     }
