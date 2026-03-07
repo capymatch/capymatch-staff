@@ -50,6 +50,16 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Frontend: "Try Again" button on error state in AiBriefing component
 - Resolved: intermittent coach briefing timeout issue
 
+### Data Ownership Refinement (Phase 10 — 2026-03-07)
+- **Roster page** (`/roster`): director-only view of all athletes grouped by coach
+- **Reassignment API** (`POST /api/athletes/{id}/reassign`): move athlete between coaches with audit log
+- **Unassign API** (`POST /api/athletes/{id}/unassign`): remove coach with reason label
+- **Reassignment history** (`GET /api/athletes/{id}/reassignment-history`): structured for timeline display
+- **Unassigned visibility**: directors see unassigned athletes with reason labels (newly_created, coach_left, manually_unassigned, imported_without_owner)
+- **Open actions warning**: on reassignment, warns about work still owned by previous coach
+- **Ownership rules**: immediate ownership change, open actions stay with previous coach, director always confirms
+- New collection: `reassignment_log`
+
 ## Ownership Model V1
 ```
 Athlete.primary_coach_id -> Users.id
@@ -77,10 +87,11 @@ MONGO_URL, DB_NAME, JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, CORS_ORIGINS,
 - [x] Per-coach data ownership boundaries
 - [x] AI/Intelligence Layer V1 (all 4 features)
 - [x] AI V1 Stabilization (timeout/retry, error handling, coach briefing fix)
+- [x] Data Ownership Refinement (roster, reassignment, unassign, audit log)
 
 ### P1 — Next Up
-- [ ] Refine Data Ownership Model (unassigned athletes, team assignments in invite flow)
-- [ ] AI/Intelligence Layer V2: cross-object analysis, predictive analytics, suggested next actions
+- [ ] Team-aware invite suggestions (optional bulk assignment prompt after invite accepted)
+- [ ] AI/Intelligence Layer V2: suggested next actions, support pod summaries, program-level insights, event follow-up suggestions
 
 ### P2 — Future
 - [ ] Forgot Password flow
