@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "@/components/mission-control/Header";
+import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import { Calendar, MapPin, Users, GraduationCap, ChevronRight, Plus, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
 
@@ -96,10 +97,18 @@ function EventCard({ event }) {
 }
 
 function EventHome() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ upcoming: [], past: [] });
   const [tab, setTab] = useState("upcoming");
   const [typeFilter, setTypeFilter] = useState("all");
+
+  // Track onboarding step for coaches
+  useEffect(() => {
+    if (user?.role === "coach") {
+      axios.post(`${API}/onboarding/complete-step`, { step: "events" }).catch(() => {});
+    }
+  }, [user]);
 
   useEffect(() => {
     (async () => {

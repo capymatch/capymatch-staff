@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "@/AuthContext";
 import PodHeader from "@/components/support-pod/PodHeader";
 import ActiveIssueBanner from "@/components/support-pod/ActiveIssueBanner";
 import AthleteSnapshot from "@/components/support-pod/AthleteSnapshot";
@@ -17,6 +18,7 @@ function SupportPod() {
   const { athleteId } = useParams();
   const [searchParams] = useSearchParams();
   const context = searchParams.get("context");
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -24,6 +26,20 @@ function SupportPod() {
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
   const pollRef = useRef(null);
+
+  // Track onboarding steps for coaches
+  useEffect(() => {
+    if (user?.role !== "coach") return;
+    const track = async () => {
+      try {
+        await Promise.all([
+          axios.post(`${API}/onboarding/complete-step`, { step: "meet_roster" }),
+          axios.post(`${API}/onboarding/complete-step`, { step: "support_pod" }),
+        ]);
+      } catch { /* silent */ }
+    };
+    track();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPodData = useCallback(async (silent = false) => {
     try {

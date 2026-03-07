@@ -10,6 +10,7 @@ import PeekPanel from "@/components/mission-control/PeekPanel";
 import { toast } from "sonner";
 import { AiBriefing } from "@/components/AiBriefing";
 import { AiSuggestedActions } from "@/components/AiV2Components";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -71,6 +72,8 @@ function MissionControl() {
       <Header selectedGradYear={selectedGradYear} setSelectedGradYear={setSelectedGradYear} stats={stats} />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
+        {/* Coach Onboarding Checklist */}
+        <OnboardingChecklist />
         {/* AI Daily Briefing */}
         <div className="mb-8">
           <AiBriefing
