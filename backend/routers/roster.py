@@ -1,6 +1,7 @@
 """Roster — athlete assignment, reassignment, and roster views (director-only)."""
 
 import logging
+import os
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone
 import uuid
@@ -378,6 +379,15 @@ async def get_coach_activation(current_user: dict = get_current_user_dep()):
         {}, {"_id": 0, "email": 1, "status": 1, "accepted_at": 1,
              "accepted_user_id": 1, "team": 1}
     ).to_list(200)
+
+    # Get latest nudge per coach
+    nudge_pipeline = [
+        {"$sort": {"sent_at": -1}},
+        {"$group": {"_id": "$coach_id", "sent_at": {"$first": "$sent_at"},
+                     "delivery_status": {"$first": "$delivery_status"}}},
+    ]
+    nudge_docs = await db.nudges.aggregate(nudge_pipeline).to_list(200)
+    nudge_map = {n["_id"]: n for n in nudge_docs}
     invite_by_email = {}
     for inv in invites:
         # Keep the most relevant invite per email (accepted > pending > others)
@@ -445,7 +455,15 @@ async def get_coach_activation(current_user: dict = get_current_user_dep()):
             "has_first_activity": has_first_activity,
             "first_activity_at": first_activity_at,
             "last_active": last_active,
+            "last_nudge_at": None,
+            "last_nudge_status": None,
         }
+
+        # Add nudge info
+        nudge_info = nudge_map.get(cid)
+        if nudge_info:
+            coach_data["last_nudge_at"] = nudge_info.get("sent_at")
+            coach_data["last_nudge_status"] = nudge_info.get("delivery_status")
 
         coach_data["status"] = _derive_status(coach_data)
         result.append(coach_data)
@@ -460,3 +478,144 @@ async def get_coach_activation(current_user: dict = get_current_user_dep()):
         counts[c["status"]] = counts.get(c["status"], 0) + 1
 
     return {"coaches": result, "summary": counts, "total": len(result)}
+
+
+# ── Nudge Coach ────────────────────────────────────────────────────────────
+
+NUDGE_COOLDOWN_HOURS = 24
+
+REASON_PRESETS = {
+    "onboarding_incomplete": "Onboarding incomplete",
+    "no_recent_activity": "No recent activity",
+    "needs_help": "Needs help getting started",
+    "custom": "Custom",
+}
+
+
+def _build_nudge_html(coach_name: str, director_name: str, message: str) -> str:
+    # Convert newlines to <br> for HTML
+    html_message = message.replace("\n", "<br/>")
+    return f"""
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:32px 0;">
+      <div style="background:#0f172a;border-radius:12px 12px 0 0;padding:24px 28px;text-align:center;">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,0.1);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">CM</span>
+        </div>
+        <h1 style="margin:0;color:#fff;font-size:18px;font-weight:600;">CapyMatch</h1>
+      </div>
+      <div style="background:#ffffff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:28px;">
+        <p style="margin:0 0 16px;font-size:14px;color:#111827;line-height:1.6;">{html_message}</p>
+        <p style="margin:16px 0 0;font-size:11px;color:#9ca3af;text-align:center;">
+          Sent via CapyMatch by {director_name}
+        </p>
+      </div>
+    </div>
+    """
+
+
+@router.post("/roster/nudge")
+async def nudge_coach(body: dict, current_user: dict = get_current_user_dep()):
+    """Director: send a supportive check-in email to a coach."""
+    _require_director(current_user)
+
+    coach_id = body.get("coach_id")
+    subject = body.get("subject", "").strip()
+    message = body.get("message", "").strip()
+    reason = body.get("reason", "custom")
+
+    if not coach_id or not subject or not message:
+        raise HTTPException(status_code=400, detail="coach_id, subject, and message are required")
+
+    if reason not in REASON_PRESETS:
+        reason = "custom"
+
+    # Validate coach exists
+    coach = await db.users.find_one(
+        {"id": coach_id, "role": "coach"},
+        {"_id": 0, "id": 1, "name": 1, "email": 1},
+    )
+    if not coach:
+        raise HTTPException(status_code=404, detail="Coach not found")
+
+    # Check cooldown
+    last_nudge = await db.nudges.find_one(
+        {"coach_id": coach_id},
+        {"_id": 0, "sent_at": 1},
+        sort=[("sent_at", -1)],
+    )
+    if last_nudge and last_nudge.get("sent_at"):
+        try:
+            last_dt = datetime.fromisoformat(last_nudge["sent_at"])
+            hours_since = (datetime.now(timezone.utc) - last_dt).total_seconds() / 3600
+            if hours_since < NUDGE_COOLDOWN_HOURS:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Cooldown active — last nudge sent {int(hours_since)}h ago. Try again in {int(NUDGE_COOLDOWN_HOURS - hours_since)}h.",
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            pass
+
+    # Send email via Resend
+    import resend
+    import asyncio
+
+    from_email = os.environ.get("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+    html = _build_nudge_html(coach["name"], current_user["name"], message)
+
+    now = datetime.now(timezone.utc).isoformat()
+    nudge_doc = {
+        "id": str(uuid.uuid4()),
+        "coach_id": coach_id,
+        "coach_email": coach["email"],
+        "coach_name": coach["name"],
+        "sent_by": current_user["id"],
+        "sent_by_name": current_user["name"],
+        "reason": reason,
+        "reason_label": REASON_PRESETS.get(reason, reason),
+        "subject": subject,
+        "message": message,
+        "delivery_status": "pending",
+        "last_error": None,
+        "sent_at": now,
+    }
+
+    try:
+        result = await asyncio.to_thread(resend.Emails.send, {
+            "from": from_email,
+            "to": [coach["email"]],
+            "subject": subject,
+            "html": html,
+        })
+        email_id = result.get("id") if isinstance(result, dict) else getattr(result, "id", None)
+        nudge_doc["delivery_status"] = "sent"
+        nudge_doc["email_id"] = email_id
+        log.info(f"Nudge sent to {coach['email']}, id={email_id}")
+    except Exception as e:
+        nudge_doc["delivery_status"] = "failed"
+        nudge_doc["last_error"] = str(e)
+        log.error(f"Failed to send nudge to {coach['email']}: {e}")
+
+    await db.nudges.insert_one(nudge_doc)
+    nudge_doc.pop("_id", None)
+
+    return {
+        "status": nudge_doc["delivery_status"],
+        "nudge_id": nudge_doc["id"],
+        "coach_name": coach["name"],
+        "sent_at": now,
+        "last_error": nudge_doc["last_error"],
+    }
+
+
+@router.get("/roster/nudge-history/{coach_id}")
+async def get_nudge_history(coach_id: str, current_user: dict = get_current_user_dep()):
+    """Director: get nudge history for a specific coach."""
+    _require_director(current_user)
+
+    nudges = await db.nudges.find(
+        {"coach_id": coach_id}, {"_id": 0}
+    ).sort("sent_at", -1).to_list(20)
+
+    return nudges

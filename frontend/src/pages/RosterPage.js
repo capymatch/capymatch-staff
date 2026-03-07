@@ -330,7 +330,7 @@ function RosterPage() {
           </div>
         ) : (
           <>
-            <CoachActivationPanel />
+            <CoachActivationPanel directorName={user?.name} />
             <div className="space-y-3">
               {data?.groups?.map((group) => (
               <CoachGroup
