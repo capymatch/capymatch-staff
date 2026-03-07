@@ -60,6 +60,15 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - **Ownership rules**: immediate ownership change, open actions stay with previous coach, director always confirms
 - New collection: `reassignment_log`
 
+### AI/Intelligence Layer V2 (Phase 11 — 2026-03-07)
+- **Suggested Next Actions** (`POST /api/ai/suggested-actions`): structured actions with WHY/EVIDENCE/OWNER/PRIORITY on Mission Control
+- **Pod Actions** (`POST /api/ai/pod-actions/{athlete_id}`): AI-suggested actions scoped to a single athlete on Support Pod
+- **Pod Brief** (`POST /api/ai/pod-brief/{athlete_id}`): 2-3 sentence status brief with signal and key facts at top of Support Pod
+- **Program Insights** (`POST /api/ai/program-insights`): strategic narrative + structured insights with severity for directors only
+- **Event Follow-Ups** (`POST /api/ai/event-followups/{event_id}`): follow-up suggestions from event notes with evidence
+- All features: on-demand, WHY + EVIDENCE + OWNER + CTA, no black-box, no auto-send
+- All features respect role-based scope (coach=owned athletes, director=full program)
+
 ## Ownership Model V1
 ```
 Athlete.primary_coach_id -> Users.id
@@ -88,10 +97,11 @@ MONGO_URL, DB_NAME, JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, CORS_ORIGINS,
 - [x] AI/Intelligence Layer V1 (all 4 features)
 - [x] AI V1 Stabilization (timeout/retry, error handling, coach briefing fix)
 - [x] Data Ownership Refinement (roster, reassignment, unassign, audit log)
+- [x] AI/Intelligence Layer V2 (suggested actions, pod brief, program insights, event follow-ups)
 
 ### P1 — Next Up
 - [ ] Team-aware invite suggestions (optional bulk assignment prompt after invite accepted)
-- [ ] AI/Intelligence Layer V2: suggested next actions, support pod summaries, program-level insights, event follow-up suggestions
+- [ ] Smart Match (concept note at /app/SMART_MATCH_CONCEPT.md)
 
 ### P2 — Future
 - [ ] Forgot Password flow
