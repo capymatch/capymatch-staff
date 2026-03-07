@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CapyMatch — Mission Control Redesign Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --shell: #0f1419;
+    --shell-hover: #1a2029;
+    --shell-active: rgba(255,255,255,0.06);
+    --shell-border: rgba(255,255,255,0.06);
+    --hero-bg: #141b24;
+    --surface: #ffffff;
+    --surface-muted: #f8f9fb;
+    --surface-border: #e8ebf0;
+    --text-primary: #0f1419;
+    --text-secondary: #5c6672;
+    --text-tertiary: #9ca8b4;
+    --text-inverse: #ffffff;
+    --accent-teal: #2ba89e;
+    --accent-teal-bg: #edf8f7;
+    --accent-orange: #d4854a;
+    --accent-orange-bg: #fef4ec;
+    --accent-red: #d9534f;
+    --accent-red-bg: #fdf0f0;
+    --accent-blue: #4a8ed4;
+    --accent-blue-bg: #eef5fc;
+    --accent-green: #3ba55c;
+    --accent-green-bg: #eef8f1;
+    --sidebar-w: 220px;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--surface-muted); color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+
+  /* ─── Page Switcher ─── */
+  .page-switcher {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: var(--shell); display: flex; align-items: center; justify-content: center; gap: 2px; padding: 12px 0;
+    border-bottom: 1px solid var(--shell-border);
+  }
+  .page-switcher button {
+    padding: 10px 28px; border: none; background: transparent; color: rgba(255,255,255,0.5);
+    font: 600 13px/1 'Inter', sans-serif; cursor: pointer; border-radius: 8px; transition: all 0.2s;
+  }
+  .page-switcher button:hover { color: rgba(255,255,255,0.7); background: var(--shell-hover); }
+  .page-switcher button.active { color: #fff; background: rgba(255,255,255,0.1); }
+
+  .view { display: none; padding-top: 56px; }
+  .view.active { display: flex; min-height: 100vh; }
+
+  /* ─── Sidebar ─── */
+  .sidebar {
+    width: var(--sidebar-w); background: var(--shell); position: fixed; top: 56px; left: 0; bottom: 0;
+    display: flex; flex-direction: column; padding: 24px 14px; overflow-y: auto;
+  }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 8px 28px; border-bottom: 1px solid var(--shell-border); margin-bottom: 20px; }
+  .sidebar-logo .logo-mark { width: 34px; height: 34px; background: var(--accent-teal); border-radius: 10px; display: flex; align-items: center; justify-content: center; font: 700 12px/1 'Inter'; color: #fff; }
+  .sidebar-logo span { font: 600 15px/1 'Inter'; color: #fff; letter-spacing: -0.3px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+    color: rgba(255,255,255,0.45); font: 500 13px/1.2 'Inter'; cursor: pointer; transition: all 0.15s; margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--shell-hover); color: rgba(255,255,255,0.7); }
+  .nav-item.active { background: var(--shell-active); color: #fff; }
+  .nav-item svg { width: 18px; height: 18px; opacity: 0.6; }
+  .nav-item.active svg { opacity: 1; }
+
+  /* ─── Main Content ─── */
+  .main { margin-left: var(--sidebar-w); flex: 1; min-height: calc(100vh - 56px); }
+  .content-area { max-width: 960px; margin: 0 auto; padding: 32px 40px 60px; }
+
+  /* ─── Hero / AI Brief ─── */
+  .hero-brief {
+    background: var(--hero-bg); border-radius: var(--radius); padding: 28px 32px; margin-bottom: 28px; position: relative; overflow: hidden;
+  }
+  .hero-brief::before {
+    content: ''; position: absolute; top: -40px; right: -40px; width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(43,168,158,0.08) 0%, transparent 70%); pointer-events: none;
+  }
+  .hero-label { display: inline-flex; align-items: center; gap: 6px; font: 600 10px/1 'Inter'; color: var(--accent-teal); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+  .hero-label svg { width: 14px; height: 14px; }
+  .hero-greeting { font: 300 26px/1.25 'Inter'; color: var(--text-inverse); letter-spacing: -0.5px; margin-bottom: 6px; }
+  .hero-greeting strong { font-weight: 600; color: var(--accent-teal); }
+  .hero-narrative { font: 400 14px/1.65 'Inter'; color: rgba(255,255,255,0.55); max-width: 600px; }
+  .hero-date { position: absolute; top: 28px; right: 32px; font: 500 12px/1 'Inter'; color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 20px; }
+  .hero-refresh { display: inline-flex; align-items: center; gap: 5px; margin-top: 14px; padding: 7px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.5); font: 500 11px/1 'Inter'; cursor: pointer; transition: all 0.2s; }
+  .hero-refresh:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
+
+  /* ─── Stats Row ─── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 18px 20px; transition: box-shadow 0.2s;
+  }
+  .stat-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+  .stat-number { font: 700 28px/1 'Inter'; letter-spacing: -1px; margin-bottom: 4px; }
+  .stat-number.teal { color: var(--accent-teal); }
+  .stat-number.orange { color: var(--accent-orange); }
+  .stat-number.red { color: var(--accent-red); }
+  .stat-number.blue { color: var(--accent-blue); }
+  .stat-label { font: 600 10px/1 'Inter'; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+  .stat-detail { font: 400 11px/1.3 'Inter'; color: var(--text-tertiary); }
+
+  /* ─── Section ─── */
+  .section { margin-bottom: 28px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { display: flex; align-items: center; gap: 8px; font: 600 14px/1 'Inter'; color: var(--text-primary); }
+  .section-title .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .section-title .dot.red { background: var(--accent-red); }
+  .section-title .dot.orange { background: var(--accent-orange); }
+  .section-title .dot.teal { background: var(--accent-teal); }
+  .section-title .dot.blue { background: var(--accent-blue); }
+  .section-count { font: 500 11px/1 'Inter'; color: var(--text-tertiary); background: var(--surface-muted); padding: 4px 10px; border-radius: 20px; }
+  .section-link { font: 500 12px/1 'Inter'; color: var(--accent-teal); cursor: pointer; }
+
+  /* ─── Attention List ─── */
+  .attention-list { display: flex; flex-direction: column; gap: 8px; }
+  .attention-item {
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm);
+    padding: 16px 20px; display: flex; align-items: center; gap: 14px; transition: all 0.15s; cursor: pointer;
+  }
+  .attention-item:hover { border-color: #d0d5dd; box-shadow: 0 1px 8px rgba(0,0,0,0.03); }
+  .attention-avatar { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font: 600 13px/1 'Inter'; color: #fff; flex-shrink: 0; }
+  .attention-avatar.red { background: var(--accent-red); }
+  .attention-avatar.orange { background: var(--accent-orange); }
+  .attention-avatar.teal { background: var(--accent-teal); }
+  .attention-avatar.blue { background: var(--accent-blue); }
+  .attention-body { flex: 1; min-width: 0; }
+  .attention-name { font: 600 13px/1.3 'Inter'; color: var(--text-primary); }
+  .attention-signal { font: 400 12px/1.4 'Inter'; color: var(--text-secondary); }
+  .attention-badge { padding: 4px 10px; border-radius: 20px; font: 600 10px/1 'Inter'; text-transform: uppercase; letter-spacing: 0.03em; flex-shrink: 0; }
+  .attention-badge.critical { background: var(--accent-red-bg); color: var(--accent-red); }
+  .attention-badge.warning { background: var(--accent-orange-bg); color: var(--accent-orange); }
+  .attention-badge.info { background: var(--accent-blue-bg); color: var(--accent-blue); }
+
+  /* ─── Events ─── */
+  .event-list { display: flex; flex-direction: column; gap: 8px; }
+  .event-item {
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm);
+    padding: 16px 20px; display: flex; align-items: center; gap: 16px;
+  }
+  .event-date-box { width: 48px; text-align: center; flex-shrink: 0; }
+  .event-date-num { font: 700 22px/1 'Inter'; color: var(--text-primary); }
+  .event-date-mon { font: 600 10px/1 'Inter'; color: var(--text-tertiary); text-transform: uppercase; }
+  .event-body { flex: 1; }
+  .event-name { font: 600 13px/1.3 'Inter'; color: var(--text-primary); }
+  .event-meta { font: 400 11px/1.3 'Inter'; color: var(--text-tertiary); }
+  .event-prep { padding: 4px 10px; border-radius: 20px; font: 600 10px/1 'Inter'; flex-shrink: 0; }
+  .event-prep.ready { background: var(--accent-green-bg); color: var(--accent-green); }
+  .event-prep.at-risk { background: var(--accent-red-bg); color: var(--accent-red); }
+  .event-prep.in-progress { background: var(--accent-orange-bg); color: var(--accent-orange); }
+
+  /* ─── Activity Feed ─── */
+  .activity-list { display: flex; flex-direction: column; }
+  .activity-item { padding: 11px 0; display: flex; align-items: flex-start; gap: 12px; border-bottom: 1px solid var(--surface-border); }
+  .activity-item:last-child { border: none; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .activity-dot.green { background: var(--accent-green); }
+  .activity-dot.blue { background: var(--accent-blue); }
+  .activity-dot.orange { background: var(--accent-orange); }
+  .activity-dot.teal { background: var(--accent-teal); }
+  .activity-text { font: 400 12px/1.5 'Inter'; color: var(--text-secondary); }
+  .activity-text strong { font-weight: 600; color: var(--text-primary); }
+  .activity-time { font: 400 11px/1 'Inter'; color: var(--text-tertiary); margin-left: auto; white-space: nowrap; flex-shrink: 0; padding-top: 3px; }
+
+  /* ─── Coach: Today's Actions ─── */
+  .action-hero {
+    background: var(--hero-bg); border-radius: var(--radius); padding: 28px 32px; margin-bottom: 28px; position: relative; overflow: hidden;
+  }
+  .action-hero::before {
+    content: ''; position: absolute; top: -30px; right: -30px; width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(212,133,74,0.1) 0%, transparent 70%); pointer-events: none;
+  }
+  .action-list-hero { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+  .action-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.15s;
+  }
+  .action-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+  .action-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .action-icon.call { background: rgba(43,168,158,0.15); color: var(--accent-teal); }
+  .action-icon.send { background: rgba(212,133,74,0.15); color: var(--accent-orange); }
+  .action-icon.review { background: rgba(74,142,212,0.15); color: var(--accent-blue); }
+  .action-icon.prep { background: rgba(59,165,92,0.15); color: var(--accent-green); }
+  .action-icon svg { width: 16px; height: 16px; }
+  .action-body { flex: 1; }
+  .action-title { font: 600 13px/1.3 'Inter'; color: var(--text-inverse); }
+  .action-subtitle { font: 400 11px/1.3 'Inter'; color: rgba(255,255,255,0.4); }
+  .action-arrow { color: rgba(255,255,255,0.2); }
+
+  /* ─── Coach: My Athletes ─── */
+  .athlete-list { display: flex; flex-direction: column; gap: 6px; }
+  .athlete-row {
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.15s;
+  }
+  .athlete-row:hover { border-color: #d0d5dd; box-shadow: 0 1px 6px rgba(0,0,0,0.03); }
+  .athlete-initials { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font: 600 12px/1 'Inter'; color: #fff; flex-shrink: 0; }
+  .athlete-info { flex: 1; }
+  .athlete-info-name { font: 600 13px/1.3 'Inter'; color: var(--text-primary); }
+  .athlete-info-detail { font: 400 11px/1.3 'Inter'; color: var(--text-tertiary); }
+  .athlete-status { padding: 4px 10px; border-radius: 20px; font: 600 10px/1 'Inter'; flex-shrink: 0; }
+  .athlete-status.critical { background: var(--accent-red-bg); color: var(--accent-red); }
+  .athlete-status.rising { background: var(--accent-green-bg); color: var(--accent-green); }
+  .athlete-status.deadline { background: var(--accent-orange-bg); color: var(--accent-orange); }
+  .athlete-status.stable { background: var(--accent-blue-bg); color: var(--accent-blue); }
+  .athlete-momentum { display: flex; gap: 2px; align-items: center; }
+  .athlete-momentum .bar { width: 4px; border-radius: 2px; }
+
+  /* ─── Two Column ─── */
+  .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+  .two-col .col-main { }
+  .two-col .col-aside { }
+
+  /* ─── Quick Note ─── */
+  .quick-note-box {
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 16px 18px;
+  }
+  .quick-note-box textarea {
+    width: 100%; border: 1px solid var(--surface-border); border-radius: 8px; padding: 10px 12px;
+    font: 400 13px/1.5 'Inter'; resize: none; outline: none; color: var(--text-primary);
+  }
+  .quick-note-box textarea:focus { border-color: var(--accent-teal); }
+  .quick-note-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .quick-note-pills { display: flex; gap: 4px; }
+  .quick-note-pill { padding: 4px 10px; border: 1px solid var(--surface-border); border-radius: 20px; font: 500 10px/1 'Inter'; color: var(--text-tertiary); cursor: pointer; background: none; transition: all 0.15s; }
+  .quick-note-pill.active { background: var(--shell); color: #fff; border-color: var(--shell); }
+  .quick-note-save { padding: 6px 14px; border-radius: 8px; background: var(--shell); color: #fff; border: none; font: 600 11px/1 'Inter'; cursor: pointer; }
+
+  /* ─── Role Label ─── */
+  .role-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font: 700 9px/1 'Inter'; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px; }
+  .role-badge.director { background: rgba(43,168,158,0.12); color: var(--accent-teal); }
+  .role-badge.coach { background: rgba(212,133,74,0.12); color: var(--accent-orange); }
+
+  /* ─── Layout annotation ─── */
+  .layout-note {
+    background: #fffbe6; border: 1px dashed #e6d96c; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+    font: 500 11px/1.5 'Inter'; color: #8a7d2e;
+  }
+  .layout-note code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; font-size: 10px; }
+</style>
+</head>
+<body>
+
+<!-- Page Switcher -->
+<div class="page-switcher">
+  <button class="active" onclick="showView('director')">Director Mission Control</button>
+  <button onclick="showView('coach')">Coach Mission Control</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DIRECTOR MISSION CONTROL                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="view active" id="view-director">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">CM</div>
+      <span>CapyMatch</span>
+    </div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Mission Control
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Roster
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Events
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Program
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Invites
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="content-area">
+      <div class="role-badge director">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        Director View
+      </div>
+
+      <!-- A. AI Program Brief -->
+      <div class="hero-brief">
+        <div class="hero-date">Sat, Mar 7</div>
+        <div class="hero-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          AI Program Brief
+        </div>
+        <h1 class="hero-greeting">Good morning, <strong>Director Adams</strong></h1>
+        <p class="hero-narrative">
+          Two athletes need your attention today — Sarah Martinez's momentum is declining and Tyler Brooks remains unassigned. Coach Garcia hasn't been active in 9 days. Regional Showcase prep is at risk with 2 days remaining.
+        </p>
+        <button class="hero-refresh">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh brief
+        </button>
+      </div>
+
+      <!-- B. Program Status -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-number teal">25</div>
+          <div class="stat-label">Athletes</div>
+          <div class="stat-detail">3 teams active</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number red">4</div>
+          <div class="stat-label">Need Attention</div>
+          <div class="stat-detail">2 critical, 2 monitoring</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number blue">3</div>
+          <div class="stat-label">Events Ahead</div>
+          <div class="stat-detail">Next: Regional Showcase</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number orange">1</div>
+          <div class="stat-label">Coach Needs Support</div>
+          <div class="stat-detail">Garcia — inactive 9d</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="col-main">
+          <!-- C. Needs Attention -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title"><span class="dot red"></span> Needs Attention</div>
+              <span class="section-count">5 items</span>
+            </div>
+            <div class="attention-list">
+              <div class="attention-item">
+                <div class="attention-avatar red">SM</div>
+                <div class="attention-body">
+                  <div class="attention-name">Sarah Martinez</div>
+                  <div class="attention-signal">Momentum declining for 3 weeks — no outreach since Feb 18</div>
+                </div>
+                <span class="attention-badge critical">Critical</span>
+              </div>
+              <div class="attention-item">
+                <div class="attention-avatar orange">TB</div>
+                <div class="attention-body">
+                  <div class="attention-name">Tyler Brooks</div>
+                  <div class="attention-signal">Unassigned athlete — no primary coach since roster change</div>
+                </div>
+                <span class="attention-badge warning">Unassigned</span>
+              </div>
+              <div class="attention-item">
+                <div class="attention-avatar orange">CG</div>
+                <div class="attention-body">
+                  <div class="attention-name">Coach Garcia</div>
+                  <div class="attention-signal">No activity in 9 days — 5 athletes assigned, 0/5 onboarding</div>
+                </div>
+                <span class="attention-badge warning">Inactive</span>
+              </div>
+              <div class="attention-item">
+                <div class="attention-avatar blue">RS</div>
+                <div class="attention-body">
+                  <div class="attention-name">Regional Showcase</div>
+                  <div class="attention-signal">Event in 2 days — prep not started for 3 athletes</div>
+                </div>
+                <span class="attention-badge info">Event Risk</span>
+              </div>
+              <div class="attention-item">
+                <div class="attention-avatar teal">LM</div>
+                <div class="attention-body">
+                  <div class="attention-name">Liam Moore</div>
+                  <div class="attention-signal">Georgetown coach responded — needs follow-up within 24h</div>
+                </div>
+                <span class="attention-badge info">Time-Sensitive</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- D. Upcoming Events -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title"><span class="dot blue"></span> Upcoming Events</div>
+              <span class="section-link">View all</span>
+            </div>
+            <div class="event-list">
+              <div class="event-item">
+                <div class="event-date-box">
+                  <div class="event-date-num">9</div>
+                  <div class="event-date-mon">Mar</div>
+                </div>
+                <div class="event-body">
+                  <div class="event-name">Regional Showcase</div>
+                  <div class="event-meta">Atlanta, GA · 8 athletes · 12 schools expected</div>
+                </div>
+                <span class="event-prep at-risk">At Risk</span>
+              </div>
+              <div class="event-item">
+                <div class="event-date-box">
+                  <div class="event-date-num">12</div>
+                  <div class="event-date-mon">Mar</div>
+                </div>
+                <div class="event-body">
+                  <div class="event-name">ACC Spring Camp</div>
+                  <div class="event-meta">Charlotte, NC · 4 athletes · 6 schools expected</div>
+                </div>
+                <span class="event-prep in-progress">In Progress</span>
+              </div>
+              <div class="event-item">
+                <div class="event-date-box">
+                  <div class="event-date-num">16</div>
+                  <div class="event-date-mon">Mar</div>
+                </div>
+                <div class="event-body">
+                  <div class="event-name">Spring Tournament</div>
+                  <div class="event-meta">Raleigh, NC · 6 athletes · 9 schools expected</div>
+                </div>
+                <span class="event-prep ready">Ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- E. Recent Activity -->
+        <div class="col-aside">
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">Recent Activity</div>
+            </div>
+            <div style="background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 4px 16px;">
+              <div class="activity-list">
+                <div class="activity-item">
+                  <div class="activity-dot green"></div>
+                  <div class="activity-text"><strong>Emily Chen</strong> received interest from Stanford</div>
+                  <div class="activity-time">2h</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot blue"></div>
+                  <div class="activity-text"><strong>Marcus Johnson</strong> uploaded showcase video</div>
+                  <div class="activity-time">4h</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot teal"></div>
+                  <div class="activity-text"><strong>Coach Williams</strong> logged 3 notes today</div>
+                  <div class="activity-time">5h</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot orange"></div>
+                  <div class="activity-text"><strong>Ryan Thompson</strong> invited to Duke showcase</div>
+                  <div class="activity-time">8h</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot green"></div>
+                  <div class="activity-text"><strong>Olivia Anderson</strong> moved to Actively Recruiting</div>
+                  <div class="activity-time">1d</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- COACH MISSION CONTROL                                  -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="view" id="view-coach">
+  <!-- Sidebar (reused) -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">CM</div>
+      <span>CapyMatch</span>
+    </div>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Mission Control
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Support Pods
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Events
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Advocacy
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      Profile
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="content-area">
+      <div class="role-badge coach">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+        Coach View
+      </div>
+
+      <!-- A. Today's Actions (Hero) -->
+      <div class="action-hero">
+        <div class="hero-date">Sat, Mar 7</div>
+        <div class="hero-label" style="color: var(--accent-orange);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Today's Actions
+        </div>
+        <h1 class="hero-greeting">Good morning, <strong style="color: var(--accent-orange);">Coach Williams</strong></h1>
+        <p class="hero-narrative">You have 4 priority actions today. Sarah Martinez needs a check-in call, and Emily Chen's highlights should go out to Georgia Tech before end of day.</p>
+
+        <div class="action-list-hero">
+          <div class="action-card">
+            <div class="action-icon call">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div class="action-body">
+              <div class="action-title">Call Sarah Martinez</div>
+              <div class="action-subtitle">Momentum declining — last contact 3 weeks ago</div>
+            </div>
+            <div class="action-arrow">›</div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </div>
+            <div class="action-body">
+              <div class="action-title">Send highlights to Georgia Tech for Emily Chen</div>
+              <div class="action-subtitle">Coach requested updated film — due today</div>
+            </div>
+            <div class="action-arrow">›</div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon review">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="action-body">
+              <div class="action-title">Review Marcus Johnson showcase prep</div>
+              <div class="action-subtitle">Regional Showcase in 2 days — needs video review</div>
+            </div>
+            <div class="action-arrow">›</div>
+          </div>
+          <div class="action-card">
+            <div class="action-icon prep">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="action-body">
+              <div class="action-title">Complete event notes for Jake Williams</div>
+              <div class="action-subtitle">Spring camp debrief — pending from last week</div>
+            </div>
+            <div class="action-arrow">›</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="col-main">
+          <!-- B. My Athletes -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title"><span class="dot teal"></span> My Athletes</div>
+              <span class="section-count">10 assigned</span>
+            </div>
+            <div class="athlete-list">
+              <div class="athlete-row">
+                <div class="athlete-initials" style="background: var(--accent-red);">SM</div>
+                <div class="athlete-info">
+                  <div class="athlete-info-name">Sarah Martinez</div>
+                  <div class="athlete-info-detail">Class of 2026 · U17 Premier · Midfielder</div>
+                </div>
+                <div class="athlete-momentum">
+                  <div class="bar" style="height:12px;background:var(--accent-red);"></div>
+                  <div class="bar" style="height:9px;background:var(--accent-red);"></div>
+                  <div class="bar" style="height:5px;background:var(--accent-red);"></div>
+                </div>
+                <span class="athlete-status critical">Critical</span>
+              </div>
+              <div class="athlete-row">
+                <div class="athlete-initials" style="background: var(--accent-orange);">MJ</div>
+                <div class="athlete-info">
+                  <div class="athlete-info-name">Marcus Johnson</div>
+                  <div class="athlete-info-detail">Class of 2026 · U17 Premier · Forward</div>
+                </div>
+                <div class="athlete-momentum">
+                  <div class="bar" style="height:8px;background:var(--accent-orange);"></div>
+                  <div class="bar" style="height:10px;background:var(--accent-orange);"></div>
+                  <div class="bar" style="height:12px;background:var(--accent-orange);"></div>
+                </div>
+                <span class="athlete-status deadline">Deadline</span>
+              </div>
+              <div class="athlete-row">
+                <div class="athlete-initials" style="background: var(--accent-green);">EC</div>
+                <div class="athlete-info">
+                  <div class="athlete-info-name">Emily Chen</div>
+                  <div class="athlete-info-detail">Class of 2026 · U17 Premier · Defender</div>
+                </div>
+                <div class="athlete-momentum">
+                  <div class="bar" style="height:6px;background:var(--accent-green);"></div>
+                  <div class="bar" style="height:9px;background:var(--accent-green);"></div>
+                  <div class="bar" style="height:14px;background:var(--accent-green);"></div>
+                </div>
+                <span class="athlete-status rising">Rising</span>
+              </div>
+              <div class="athlete-row">
+                <div class="athlete-initials" style="background: var(--accent-blue);">RT</div>
+                <div class="athlete-info">
+                  <div class="athlete-info-name">Ryan Thompson</div>
+                  <div class="athlete-info-detail">Class of 2027 · U16 Elite · Goalkeeper</div>
+                </div>
+                <div class="athlete-momentum">
+                  <div class="bar" style="height:10px;background:var(--accent-blue);"></div>
+                  <div class="bar" style="height:10px;background:var(--accent-blue);"></div>
+                  <div class="bar" style="height:10px;background:var(--accent-blue);"></div>
+                </div>
+                <span class="athlete-status stable">Stable</span>
+              </div>
+              <div class="athlete-row">
+                <div class="athlete-initials" style="background: var(--accent-green);">JW</div>
+                <div class="athlete-info">
+                  <div class="athlete-info-name">Jake Williams</div>
+                  <div class="athlete-info-detail">Class of 2025 · U18 Academy · Midfielder</div>
+                </div>
+                <div class="athlete-momentum">
+                  <div class="bar" style="height:8px;background:var(--accent-green);"></div>
+                  <div class="bar" style="height:11px;background:var(--accent-green);"></div>
+                  <div class="bar" style="height:13px;background:var(--accent-green);"></div>
+                </div>
+                <span class="athlete-status rising">Rising</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- C. Upcoming Events -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title"><span class="dot orange"></span> My Upcoming Events</div>
+            </div>
+            <div class="event-list">
+              <div class="event-item">
+                <div class="event-date-box">
+                  <div class="event-date-num">9</div>
+                  <div class="event-date-mon">Mar</div>
+                </div>
+                <div class="event-body">
+                  <div class="event-name">Regional Showcase</div>
+                  <div class="event-meta">3 of your athletes attending · Prep 60%</div>
+                </div>
+                <span class="event-prep in-progress">In Progress</span>
+              </div>
+              <div class="event-item">
+                <div class="event-date-box">
+                  <div class="event-date-num">12</div>
+                  <div class="event-date-mon">Mar</div>
+                </div>
+                <div class="event-body">
+                  <div class="event-name">ACC Spring Camp</div>
+                  <div class="event-meta">2 of your athletes attending · All set</div>
+                </div>
+                <span class="event-prep ready">Ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-aside">
+          <!-- D. Recent Activity -->
+          <div class="section">
+            <div class="section-header">
+              <div class="section-title">Recent Activity</div>
+            </div>
+            <div style="background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-sm); padding: 4px 16px;">
+              <div class="activity-list">
+                <div class="activity-item">
+                  <div class="activity-dot green"></div>
+                  <div class="activity-text"><strong>Emily Chen</strong> received interest from Stanford</div>
+                  <div class="activity-time">2h</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot blue"></div>
+                  <div class="activity-text"><strong>Marcus Johnson</strong> uploaded showcase video</div>
+                  <div class="activity-time">4h</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot orange"></div>
+                  <div class="activity-text"><strong>Sarah Martinez</strong> missed weekly check-in</div>
+                  <div class="activity-time">1d</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot teal"></div>
+                  <div class="activity-text"><strong>Jake Williams</strong> moved to Actively Recruiting</div>
+                  <div class="activity-time">1d</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot green"></div>
+                  <div class="activity-text"><strong>Ryan Thompson</strong> completed Duke camp registration</div>
+                  <div class="activity-time">2d</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- E. Quick Note -->
+          <div class="section" style="margin-top: 20px;">
+            <div class="section-header">
+              <div class="section-title">Quick Note</div>
+            </div>
+            <div class="quick-note-box">
+              <textarea rows="3" placeholder="What did you observe or want to remember?"></textarea>
+              <div class="quick-note-actions">
+                <div class="quick-note-pills">
+                  <button class="quick-note-pill active">Other</button>
+                  <button class="quick-note-pill">Recruiting</button>
+                  <button class="quick-note-pill">Event</button>
+                  <button class="quick-note-pill">Follow-up</button>
+                </div>
+                <button class="quick-note-save">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+function showView(role) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.page-switcher button').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + role).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

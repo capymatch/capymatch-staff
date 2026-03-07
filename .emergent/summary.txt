@@ -1,70 +1,68 @@
 <analysis>**original_problem_statement:**
-The user wants to build CapyMatch, a recruiting operating system for clubs, coaches, families, and athletes. The vision is to create a system that actively coordinates support, surfaces priorities, and helps users know what to do next.
+The user wants to build CapyMatch, a recruiting operating system. The current focus is a major UI/UX redesign of the Mission Control page to create two distinct, role-based experiences for Directors and Coaches, moving away from a single, shared dashboard.
 
-Over the course of this session, the user requested:
-- Completion and stabilization of the V1 AI Layer.
-- Refinement of the data ownership model with a new Roster management page.
-- Implementation of a V2 AI Layer with four new features (Suggested Actions, Pod Briefs, Program Insights, Event Follow-ups).
-- Creation of HTML documentation and visual gallery pages.
-- Addition of evidence-based confidence indicators to AI-generated content.
-- Implementation of team-aware invite suggestions to streamline coach onboarding.
+**PRODUCT REQUIREMENTS (for the current task):**
+The user has provided a detailed design brief for a complete redesign of the Mission Control page, specifying two separate views:
+
+**1. Director Mission Control:**
+- **Purpose:** A calm command surface for program oversight and intervention signals.
+- **Mental Model:** Program health, leadership attention, coach support, unassigned athletes.
+- **Key Sections:** AI Program Brief (hero section), Program Status (compact row), Needs Attention (critical interventions), Upcoming Events, and Recent Activity.
+- **Layout:** High signal, low noise. Strategic, not operational. Max 3 modules above the fold.
+
+**2. Coach Mission Control:**
+- **Purpose:** A focused, personal work dashboard for managing assigned athletes.
+- **Mental Model:** Today’s work, athlete follow-up, event prep.
+- **Key Sections:** Today’s Actions (hero section), My Athletes, Upcoming Events, and Recent Activity.
+- **Layout:** Action-oriented, operational work queue.
+
+**General UI/UX Principles:**
+- Use CapyMatch's premium dark shell with light content surfaces.
+- Employ strong visual hierarchy, calm spacing, and premium typography.
+- Avoid generic SaaS dashboard aesthetics; aim for Apple/Linear/Stripe level clarity.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A mature full-stack application with a FastAPI backend, React frontend, and MongoDB database. It has a robust feature set including JWT-based authentication for 'director' and 'coach' roles, a Resend-integrated coach invite system, and a fine-grained data ownership model ensuring coaches only see their assigned athletes.
-
-The application now includes:
-- **AI Layers V1 & V2:** Eight distinct, fully-integrated AI features for briefings, content drafting, and strategic suggestions.
-- **AI Stability & Trust:** AI features include error handling, timeouts, retries, and evidence-based confidence indicators (e.g., Strong signal).
-- **Roster Management:** A director-only page to view all coaches, their assigned athletes, and reassign athletes with a recorded history.
-- **HTML Documentation:** Auto-generated  and  pages documenting all features and screens.
-- **Team-Aware Onboarding:** The backend and frontend logic to suggest athlete assignments to directors when a new coach with a specific team context accepts an invite.
+A mature full-stack application with a FastAPI backend, React frontend, and MongoDB database. The application includes JWT authentication, a Resend-based invite system, roster management, AI-driven features (V1 & V2), a coach onboarding checklist, a coach activation/engagement panel with a nudge feature, a secure forgot password flow, a coach self-service profile page, a quick notes system, and a manually-triggered weekly email digest for directors.
 
 **Last working item**:
-    - Last item agent was working: Implementing Team-aware invite suggestions. The goal is to prompt a director to assign relevant, unassigned athletes to a newly accepted coach based on the team specified in the invite. The agent has completed the full implementation for both backend and frontend.
-    - Status: IN PROGRESS
-    - Agent Testing Done: N
-    - Which testing method agent to use? both. A full end-to-end test is required. This involves: 1. Creating an invite with a team. 2. Simulating coach acceptance. 3. Verifying the new suggestion banner appears on the Invites page for the director. 4. Testing the Assign and Dismiss actions work correctly and update the database.
-    - User Testing Done: N
+    - Last item agent was working: Analyzing and structuring the user's detailed design brief for a complete UI/UX redesign of the Mission Control page. The agent broke down the user's request into a clear, actionable plan to create two distinct, role-based dashboards for Directors and Coaches.
+    - Status: NOT STARTED
+    - Agent Testing Done: N/A
+    - Which testing method agent to use? frontend testing agent
+    - User Testing Done: N/A
 
 **All Pending/In progress Issue list**:
 - No outstanding issues.
 
 **In progress Task List**:
-  - Task 1: (P0) Test and Finalize Team-Aware Invite Suggestions
-    - **Where to resume**: The implementation is complete. The next step is to perform comprehensive end-to-end testing of the entire flow as described in the Last working item section.
-    - **What will be achieved with this?**: This will complete a key workflow improvement, making it faster and easier for directors to integrate new coaches into their teams.
-    - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: Both
-    - **Blocked on something**: No
+  - Task 1: (P0) Redesign Mission Control into two distinct role-based experiences (Director & Coach)
+     - **Where to resume**: The plan and component structure have been defined based on the user's brief. The next step is to begin implementation, creating the new reusable components (, , etc.) and restructuring  to serve the correct view based on the user's role.
+     - **What will be achieved with this?**: This will fundamentally improve the user experience by providing tailored, role-specific dashboards that reduce cognitive load and align with the distinct jobs to be done for directors and coaches.
+     - **Status**: NOT STARTED
+     - **Should Test frontend/backend/both after fix?**: Both (Frontend primarily, but backend data sources for the new components will need verification).
+     - **Blocked on something**: No.
 
 **Upcoming and Future Tasks**
 
 **Upcoming Tasks:**
-- (P1) **Forgot Password Flow:** Implement a secure password reset mechanism for users.
-- (P2) **Platform Integrations:** Integrate with external tools like calendars or messaging platforms, as per the original vision.
+- (P1) **Platform Integrations:** Integrate with external tools like calendars or messaging platforms, as per the original vision.
 
 **Future Tasks:**
-- (P2) **Smart Match (Build Phase):** The concept note () is complete. The next step would be to build this feature, which automatically suggests school-athlete pairings. The user has marked this as a lower priority.
+- (P2) **Smart Match (Build Phase):** Build the AI feature for suggesting school-athlete pairings, based on the concept note at .
 - (P2) **Unified Platform Merge:** Execute the long-term strategy of merging this prototype with the main CapyMatch application, using the plan in .
 
 **Completed work in this session**
-- **AI V1 Completion & Stabilization:** Finished frontend integration for the Advocacy Assistant and stabilized all four V1 features with timeouts, retries, and improved error handling.
-- **Data Ownership Refinement:**
-  - Created a **Roster page** () for directors to manage coach-athlete assignments.
-  - Implemented athlete **reassignment and unassignment** logic.
-  - Added an **audit trail** () to the athlete model.
-- **AI V2 Implementation:**
-  - Authored a spec ().
-  - Implemented four new AI features: **Suggested Next Actions**, **Support Pod Brief**, **Program Strategic Insights**, and **Event Follow-Up Suggestions**.
-  - Integrated these features into the Mission Control, Support Pod, Program Intelligence, and Event Summary pages.
-- **AI Confidence Indicators:** Added evidence-based trust signals (e.g., Strong signal, Limited signal) to all AI V2 features, explaining the data basis for each suggestion.
-- **Documentation Generation:**
-  - Created a comprehensive feature documentation page at .
-  - Created a visual screen gallery at .
-- **Smart Match Concept Note:** Created  detailing the requirements and risks for a future AI matching feature.
-- **Team-Aware Invite Suggestions (Implementation):** Built the backend APIs and frontend UI for suggesting athlete assignments to newly invited coaches.
+- **Team-Aware Invite Suggestions:** Implemented and fully tested the feature to suggest athlete assignments to new coaches based on team context.
+- **Coach Onboarding Checklist:** Implemented and tested a lightweight checklist for new coaches to guide them through initial actions.
+- **Coach Activation Panel:** Created a director-only panel to track coach engagement status (Pending, Activating, Active, Needs Support).
+- **Nudge Coach Action:** Added a feature for directors to send a pre-filled, editable email to inactive coaches directly from the activation panel.
+- **Forgot Password Flow:** Implemented and tested a secure password reset mechanism with hashed tokens and email verification.
+- **Coach Self-Service Profile:** Built a page for coaches to edit their profile information (name, contact, bio), with completeness tracked and visible to directors.
+- **Coach Quick Notes:** Implemented a lightweight system for coaches to add private, categorized notes on athletes from Mission Control.
+- **Weekly Coach Digest:** Created an on-demand, email-based weekly summary for directors covering coach activation and athlete support signals.
+- **Bug Fix:** Suppressed a benign  error overlay that was appearing on login.
 
 **Earlier issues found/mentioned but not fixed**
 - None.
@@ -81,51 +79,49 @@ The application now includes:
 - **Database:** MongoDB
 - **AI:**  (GPT 5.2)
 - **Authentication:** JWT with 
-- **Authorization:** Role-based access control (RBAC) via FastAPI dependencies, with a central  service.
+- **Authorization:** Role-based access control (RBAC) via FastAPI dependencies.
 - **Email:** Resend API
 
 **key DB schema**
 - ****: 
 - ****: 
 - ****: 
+- ****: 
+- ****:  (updated schema)
+- ****: 
 
 **changes in tech stack**
-- No new technologies were introduced. Existing stack was extended.
+- No new technologies were introduced.
 
 **All files of reference**
-- **Current Task:**
-    - : Contains the new  banner.
-    - : Contains the new endpoints for suggesting and confirming assignments.
-    - : Contains schema changes for  and .
-- **Recent Features:**
-    - : The Roster management UI.
-    - : The Roster management API.
-    - : UI for all V2 AI features.
-    - : Business logic for all AI features, including confidence indicators.
-- **Planning Docs:**
-    - 
-    - 
+- **Current Task (Mission Control Redesign):**
+    - : The primary file to be redesigned.
+    - : May contain logic to be split into new components.
+    - : Provides data for the current Mission Control; may need new endpoints.
+- **Recently Created/Modified:**
+    - : Logic for coach activation, nudges, and digests.
+    - : UI for the director-facing panels.
+    - , : Coach self-service profile.
+    - , : Password reset flow.
+    - , : Onboarding checklist.
+    - : All new and updated Pydantic models.
 
 **Critical Info for New Agent**
-- **Your immediate task is to test the Team-aware invite suggestions feature.** The code is fully written but has not been tested end-to-end.
-- **Test setup:** To test properly, you must simulate the full flow: create an invite for a coach with a specific , ensure there are unassigned athletes on that same team, simulate the coach accepting the invite, and then, as a director, verify the suggestion banner appears on the  page and that the assignment/dismissal actions work.
-- **Credentials:** The correct credentials were found to be different from the initial handoff. Use these for testing:
-    - **Director:**  / 
-    - **Coach:**  /  (and other coaches from seed data)
+- **Your immediate task is the role-based redesign of Mission Control.** This is a significant product-level change, not a simple restyle.
+- **Follow the User's Brief:** Adhere strictly to the detailed design brief provided by the user, which specifies two distinct experiences for Directors and Coaches. The previous agent has already analyzed and structured this brief.
+- **Component-Based Approach:** Build the new UI using the reusable components outlined in the plan (, , etc.).
+- **Role-Based Rendering:** The main  will need to fetch the user's role and conditionally render either the Director or Coach version of the dashboard.
 
 **documents and test reports created in this job**
-- 
-- 
-- 
-- 
-- Test reports from  onwards.
+-  (and many others from this session)
+- Existing planning docs from previous sessions: , 
 
 **Last 10 User Messages and any pending HUMAN messages**
-- User approved the plan to add AI Confidence Indicators.
-- User requested team-aware invite suggestions as the next feature.
-- User provided detailed goals and constraints for the feature.
-- User approved the agent's implementation plan for team-aware suggestions.
-- **Pending:** User is waiting for the completion and confirmation of the team-aware suggestions feature.
+- **User:** Reported an error when logging in as a director.
+- **Agent:** Identified it as a benign  browser error and implemented a fix to suppress the error overlay.
+- **User:** Provided a screenshot of the target CapyMatch design and requested a major UI/UX redesign of the Mission Control page.
+- **Agent:** (ask_human) Broke down the redesign into a core product principle: creating two distinct, role-based Mission Control experiences (Director vs. Coach), and provided a detailed plan for the layout, components, and information architecture for each.
+- **Status:** The agent has provided the plan. The user has not yet responded to approve it, but the plan is a direct interpretation of the user's detailed request. The next step is to await user approval or proceed with implementation based on the detailed brief.
 
 **Project Health Check:**
 - **Broken:** None
@@ -133,11 +129,11 @@ The application now includes:
 
 **3rd Party Integrations**
 - **MongoDB:** Primary database.
-- **Resend:** (API Key provided) Used for sending invite emails. Uses User API Key.
+- **Resend:** (API Key provided) Used for sending invite, nudge, and password reset emails. Requires User API Key.
 - **OpenAI GPT 5.2:** (via ) Used for all AI features. Uses Emergent LLM Key.
 
 **Testing status**
-  - Testing agent used after significant changes: YES
+  - Testing agent used after significant changes: YES (for all completed features in this session)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
   - Known regressions: None
@@ -145,7 +141,7 @@ The application now includes:
 **Credentials to test flow:**
 - **Director:**  / 
 - **Coach (Williams):**  / 
-- **Coach (Martinez):**  / 
+- **Coach (Garcia):**  / 
 
 **What agent forgot to execute**
-- The agent has not forgotten any tasks but is in the middle of completing the Team-aware invite suggestions feature. The final testing step is pending.</analysis>
+- Nothing. The agent successfully completed multiple features and was in the planning phase for a new, large user request when the session ended.</analysis>
