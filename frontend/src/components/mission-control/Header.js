@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, Bell, LayoutDashboard, Calendar, Megaphone, BarChart3, LogOut, UserPlus, Users } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Search, Bell, LayoutDashboard, Calendar, Megaphone, BarChart3, LogOut, UserPlus, Users, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
@@ -14,6 +15,16 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    if (menuOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   const modes = [
     { id: "mission-control", label: "Mission Control", icon: LayoutDashboard, path: "/mission-control" },
@@ -132,8 +143,12 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
             )}
 
             {/* User profile + role badge */}
-            <div className="flex items-center gap-2" data-testid="user-profile-area">
-              <div className="flex items-center gap-2">
+            <div className="relative" data-testid="user-profile-area">
+              <button
+                onClick={() => setMenuOpen((p) => !p)}
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors"
+                data-testid="user-menu-trigger"
+              >
                 <Avatar className="w-7 h-7">
                   <AvatarFallback className="text-[10px] bg-white/20 text-white">{initials}</AvatarFallback>
                 </Avatar>
@@ -141,15 +156,33 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
                   <span className="text-xs font-medium text-white/80 leading-tight" data-testid="user-display-name">{user?.name || "User"}</span>
                   <span className="text-[9px] text-white/40 leading-tight uppercase tracking-wider" data-testid="user-role-badge">{roleLabel}</span>
                 </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-1.5 rounded-md hover:bg-white/10 transition-colors ml-1"
-                title="Sign out"
-                data-testid="logout-button"
-              >
-                <LogOut className="w-3.5 h-3.5 text-white/40 hover:text-white/70" />
               </button>
+
+              {menuOpen && (
+                <div
+                  ref={menuRef}
+                  className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
+                  data-testid="user-menu-dropdown"
+                >
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/profile"); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                    data-testid="menu-profile-link"
+                  >
+                    <User className="w-3.5 h-3.5 text-gray-400" />
+                    Profile
+                  </button>
+                  <div className="border-t border-gray-100 my-1" />
+                  <button
+                    onClick={() => { setMenuOpen(false); handleLogout(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                    data-testid="menu-logout-link"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-gray-400" />
+                    Sign out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

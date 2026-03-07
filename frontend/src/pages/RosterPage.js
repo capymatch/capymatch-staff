@@ -178,6 +178,14 @@ function CoachGroup({ group, coaches, onReload }) {
             {group.coach_email && (
               <p className="text-[11px] text-gray-400">{group.coach_email}</p>
             )}
+            {/* Profile context */}
+            {(group.coach_contact_method || group.coach_availability) && (
+              <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400">
+                {group.coach_contact_method && <span>Prefers {group.coach_contact_method}</span>}
+                {group.coach_contact_method && group.coach_availability && <span className="text-gray-200">|</span>}
+                {group.coach_availability && <span>{group.coach_availability}</span>}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">

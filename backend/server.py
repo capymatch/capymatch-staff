@@ -30,6 +30,7 @@ from routers.invites import router as invites_router
 from routers.intelligence import router as intelligence_router
 from routers.roster import router as roster_router
 from routers.onboarding import router as onboarding_router
+from routers.profile import router as profile_router
 
 # Create the main app
 app = FastAPI()
@@ -91,6 +92,7 @@ api_router.include_router(invites_router)
 api_router.include_router(intelligence_router)
 api_router.include_router(roster_router)
 api_router.include_router(onboarding_router)
+api_router.include_router(profile_router)
 
 app.include_router(api_router)
 

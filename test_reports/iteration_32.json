@@ -1,0 +1,101 @@
+{
+  "summary": "Coach Profile Self-Service V1 - Complete Testing. Backend: 24/24 tests passed (100%). Frontend: All Profile page features verified. Profile form, contact method pills, save functionality, completeness badges, and avatar dropdown all working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_profile.py",
+    "/app/test_reports/pytest/pytest_profile.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "GET /api/profile correctly returns current user's profile with completeness calculation",
+    "PUT /api/profile validates: empty name (400), invalid contact_method (400), bio >500 chars (400)",
+    "Valid contact methods: email, phone, text, slack - all working correctly",
+    "Profile completeness logic: incomplete (name only), basic (name + 2 fields), complete (name + contact + availability + bio)",
+    "GET /api/profile/{coach_id} restricted to directors (403 for coaches)",
+    "GET /api/roster/activation includes profile_completeness per coach",
+    "GET /api/roster includes coach_contact_method, coach_availability, coach_bio per group",
+    "Profile page has all required data-testid attributes for testing",
+    "Avatar dropdown in header correctly shows Profile link",
+    "Contact method pills toggle correctly with visual selection state",
+    "Save button disabled when no changes, enabled when changes made",
+    "Bio shows character count (/500) and enforces max length",
+    "Team field is read-only (managed by director)",
+    "Completeness badge updates correctly after save"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_profile.py"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24 tests passed)",
+    "frontend": "100% (All UI components and flows verified)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123 (has complete profile)",
+    "coach_garcia": "coach.garcia@capymatch.com / coach123 (profile modified during tests)"
+  },
+  "seed_data_creation": "Coach Williams has seeded profile data (contact_method=text, phone=555-123-4567, availability='Weekday mornings, Tues/Thurs evenings', bio='10 years coaching...'). Coach Garcia's profile was modified during testing to verify completeness logic.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Profile Self-Service V1 fully verified. Key endpoints: GET /api/profile (own profile with completeness), PUT /api/profile (update name/phone/contact_method/availability/bio), GET /api/profile/{coach_id} (director-only view). Profile page data-testid: profile-page, profile-form, profile-name-input, profile-contact-{email/phone/text/slack}, profile-phone-input, profile-availability-input, profile-bio-input, profile-save-btn, profile-completeness-badge. Header dropdown: user-menu-trigger, menu-profile-link, menu-logout-link. Activation panel: coach-activation-panel, activation-panel-toggle, profile-badge-{coach_id}. Roster groups include coach_contact_method, coach_availability, coach_bio. Login page: input-email, input-password, auth-submit-btn.",
+  "verified_features": {
+    "backend_endpoints": [
+      "GET /api/profile - requires auth (401 without) ✓",
+      "GET /api/profile - returns profile with all fields ✓",
+      "GET /api/profile - includes completeness calculation ✓",
+      "PUT /api/profile - requires auth ✓",
+      "PUT /api/profile - can update name ✓",
+      "PUT /api/profile - rejects empty name (400) ✓",
+      "PUT /api/profile - rejects whitespace-only name (400) ✓",
+      "PUT /api/profile - accepts valid contact methods (email/phone/text/slack) ✓",
+      "PUT /api/profile - rejects invalid contact method (400) ✓",
+      "PUT /api/profile - rejects bio >500 chars (400) ✓",
+      "PUT /api/profile - accepts bio exactly 500 chars ✓",
+      "PUT /api/profile - can update phone (optional) ✓",
+      "PUT /api/profile - can update availability ✓",
+      "PUT /api/profile - can update multiple fields at once ✓",
+      "Completeness: 'complete' when name + contact + availability + bio ✓",
+      "Completeness: 'basic' when name + 2 fields ✓",
+      "Completeness: 'incomplete' when name only ✓",
+      "GET /api/profile/{coach_id} - requires auth ✓",
+      "GET /api/profile/{coach_id} - director can view any coach ✓",
+      "GET /api/profile/{coach_id} - non-director gets 403 ✓",
+      "GET /api/profile/{coach_id} - nonexistent returns 404 ✓",
+      "GET /api/roster/activation - includes profile_completeness per coach ✓",
+      "GET /api/roster - includes coach_contact_method per group ✓",
+      "GET /api/roster - includes coach_availability per group ✓",
+      "GET /api/roster - includes coach_bio per group ✓"
+    ],
+    "frontend_components": [
+      "Login page loads with correct testid attributes ✓",
+      "Avatar dropdown shows Profile link (menu-profile-link) ✓",
+      "Avatar dropdown shows Sign out link (menu-logout-link) ✓",
+      "Profile page accessible via /profile route ✓",
+      "Profile page has data-testid='profile-page' ✓",
+      "Profile form has data-testid='profile-form' ✓",
+      "Name input (profile-name-input) displays current name ✓",
+      "Phone input (profile-phone-input) editable ✓",
+      "Availability input (profile-availability-input) editable ✓",
+      "Bio textarea (profile-bio-input) editable ✓",
+      "Bio shows character count /500 ✓",
+      "Contact method pills exist: email, phone, text, slack ✓",
+      "Contact method pills toggle selection correctly ✓",
+      "Save button (profile-save-btn) disabled when no changes ✓",
+      "Save button enables when field changed ✓",
+      "Save updates profile and shows toast ✓",
+      "Completeness badge (profile-completeness-badge) shows status ✓",
+      "Completeness badge updates after save ✓",
+      "Director can access own profile page ✓",
+      "Coach Activation panel shows profile completeness column ✓",
+      "Roster groups show coach contact info (Prefers email, availability) ✓"
+    ]
+  }
+}

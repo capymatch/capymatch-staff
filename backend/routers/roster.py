@@ -8,6 +8,7 @@ import uuid
 
 from db_client import db
 from auth_middleware import get_current_user_dep
+from routers.profile import compute_completeness
 from models import ReassignRequest, UnassignRequest
 from services.ownership import (
     refresh_ownership_cache,
@@ -67,7 +68,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
 
     # Get all coaches
     coaches = await db.users.find(
-        {"role": "coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1}
+        {"role": "coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1, "profile": 1}
     ).to_list(100)
 
     # Build roster groups
@@ -117,6 +118,9 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             "coach_name": coach["name"],
             "coach_email": coach["email"],
             "coach_team": coach.get("team"),
+            "coach_contact_method": (coach.get("profile") or {}).get("contact_method"),
+            "coach_availability": (coach.get("profile") or {}).get("availability"),
+            "coach_bio": (coach.get("profile") or {}).get("bio"),
             "athletes": coach_athletes,
             "count": len(coach_athletes),
         })
@@ -371,7 +375,7 @@ async def get_coach_activation(current_user: dict = get_current_user_dep()):
     coaches = await db.users.find(
         {"role": "coach"},
         {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1,
-         "created_at": 1, "onboarding": 1, "last_active": 1},
+         "created_at": 1, "onboarding": 1, "last_active": 1, "profile": 1},
     ).to_list(100)
 
     # Get all invites for cross-referencing
@@ -457,6 +461,7 @@ async def get_coach_activation(current_user: dict = get_current_user_dep()):
             "last_active": last_active,
             "last_nudge_at": None,
             "last_nudge_status": None,
+            "profile_completeness": compute_completeness(coach),
         }
 
         # Add nudge info

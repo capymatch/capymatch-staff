@@ -292,10 +292,11 @@ export default function CoachActivationPanel({ directorName }) {
             <div className="grid grid-cols-12 gap-2 px-5 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-gray-50">
               <div className="col-span-3">Coach</div>
               <div className="col-span-1 text-center">Status</div>
+              <div className="col-span-1 text-center">Profile</div>
               <div className="col-span-1 text-center">Onboarding</div>
               <div className="col-span-1 text-center">Athletes</div>
               <div className="col-span-1 text-center">Last Active</div>
-              <div className="col-span-2 text-center">Last Nudge</div>
+              <div className="col-span-1 text-center">Nudge</div>
               <div className="col-span-3 text-center">Action</div>
             </div>
 
@@ -315,6 +316,19 @@ export default function CoachActivationPanel({ directorName }) {
                 {/* Status */}
                 <div className="col-span-1 flex justify-center">
                   <StatusBadge status={coach.status} />
+                </div>
+
+                {/* Profile completeness */}
+                <div className="col-span-1 flex justify-center">
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                    coach.profile_completeness === "complete" ? "bg-emerald-50 text-emerald-600"
+                    : coach.profile_completeness === "basic" ? "bg-amber-50 text-amber-600"
+                    : "bg-slate-50 text-slate-400"
+                  }`} data-testid={`profile-badge-${coach.id}`}>
+                    {coach.profile_completeness === "complete" ? "Complete"
+                     : coach.profile_completeness === "basic" ? "Basic"
+                     : "Incomplete"}
+                  </span>
                 </div>
 
                 {/* Onboarding progress */}
@@ -355,16 +369,13 @@ export default function CoachActivationPanel({ directorName }) {
                 </div>
 
                 {/* Last nudge */}
-                <div className="col-span-2 text-center text-[11px]">
+                <div className="col-span-1 text-center text-[11px]">
                   {coach.last_nudge_at ? (
-                    <span className={`inline-flex items-center gap-1 ${
+                    <span className={`inline-flex items-center gap-0.5 ${
                       coach.last_nudge_status === "sent" ? "text-slate-500" : "text-red-400"
                     }`}>
-                      <Mail className="w-3 h-3" />
+                      <Mail className="w-2.5 h-2.5" />
                       {formatAgo(coach.last_nudge_at)}
-                      {coach.last_nudge_status === "failed" && (
-                        <span className="text-red-400 text-[9px]">(failed)</span>
-                      )}
                     </span>
                   ) : (
                     <span className="text-slate-300">—</span>
