@@ -25,8 +25,14 @@ router = APIRouter()
 
 @router.get("/advocacy/recommendations")
 async def list_all_recommendations(status: str = None, athlete: str = None, school: str = None, grad_year: str = None, current_user: dict = get_current_user_dep()):
-    all_recs = list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
-    return filter_by_athlete_id(all_recs, current_user)
+    result = list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
+    if current_user["role"] == "director":
+        return result
+    # Filter each list inside the dict
+    return {
+        key: filter_by_athlete_id(val, current_user) if isinstance(val, list) else val
+        for key, val in result.items()
+    }
 
 
 @router.get("/advocacy/context/{athlete_id}/{school_id}")
