@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import Header from "@/components/mission-control/Header";
 import { useAuth } from "@/AuthContext";
 import CoachActivationPanel from "@/components/CoachActivationPanel";
+import DigestPanel from "@/components/DigestPanel";
 import { Users, UserMinus, ArrowRightLeft, AlertTriangle, ChevronDown, ChevronUp, User } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -339,6 +340,7 @@ function RosterPage() {
         ) : (
           <>
             <CoachActivationPanel directorName={user?.name} />
+            <DigestPanel />
             <div className="space-y-3">
               {data?.groups?.map((group) => (
               <CoachGroup

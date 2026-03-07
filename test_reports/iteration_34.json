@@ -1,0 +1,91 @@
+{
+  "summary": "Weekly Coach Digest V1 - Complete Testing. Backend: 20/20 tests passed (100%). Frontend: All DigestPanel features verified on Roster page. Digest generation, result display, history toggle, and director-only access all working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/digest/generate",
+        "issue": "Email delivery fails in test mode (expected - Resend API test mode limitation)",
+        "note": "Digest is still generated and stored with delivery_status='failed', which is correct behavior"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_weekly_digest.py",
+    "/app/test_reports/pytest/pytest_weekly_digest.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Digest data assembly correctly pulls from multiple sources: users collection (coach activation), athlete_notes (notes), ATHLETES_NEEDING_ATTENTION mock data, ownership cache (unassigned), UPCOMING_EVENTS mock data",
+    "summary_data snapshot is properly stored in digests collection with all required fields",
+    "what_changed text is dynamically generated based on actual data",
+    "History endpoint correctly sorts by sent_at descending",
+    "403 access control properly implemented for both backend (raises HTTPException) and frontend (redirects to mission-control)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_weekly_digest.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (All UI components and flows verified)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach_williams": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "Multiple digests created during testing, stored in digests collection",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Weekly Digest V1 fully verified. Key endpoints: POST /api/digest/generate (director-only, assembles data, sends email via Resend, stores digest record), GET /api/digest/history (returns past digests sorted by sent_at desc), GET /api/digest/{digest_id} (returns full digest detail with summary_data snapshot). Frontend: DigestPanel component on Roster page (director-only page). Data-testids: digest-panel, digest-send-btn, digest-result, digest-history-toggle, digest-history-list. Email delivery fails in Resend test mode but digest data is correctly assembled and stored. The digest includes: coach_summary (total, status_counts, coaches_needing_support, new_coaches), notes (total, by_coach, by_category), athletes_needing_attention (snapshot), unassigned_athletes, upcoming_events, nudges_sent. Period is last 7 days from generation time.",
+  "verified_features": {
+    "backend_endpoints": [
+      "POST /api/digest/generate - requires auth (401 without) ✓",
+      "POST /api/digest/generate - returns 403 for non-directors ✓",
+      "POST /api/digest/generate - returns summary with what_changed, coach_count, needs_support, notes_this_week, athletes_attention, unassigned ✓",
+      "POST /api/digest/generate - stores full summary_data snapshot in digests collection ✓",
+      "POST /api/digest/generate - includes athletes_needing_attention in snapshot ✓",
+      "GET /api/digest/history - requires auth (401 without) ✓",
+      "GET /api/digest/history - returns 403 for non-directors ✓",
+      "GET /api/digest/history - returns past digests sorted by sent_at desc ✓",
+      "GET /api/digest/history - includes correct record structure (id, sent_by_name, recipients, period_start, period_end, delivery_status, sent_at) ✓",
+      "GET /api/digest/{digest_id} - requires auth ✓",
+      "GET /api/digest/{digest_id} - returns 403 for non-directors ✓",
+      "GET /api/digest/{digest_id} - returns full digest with summary_data snapshot ✓",
+      "GET /api/digest/{digest_id} - returns 404 for non-existent digest ✓",
+      "Digest data assembly: coach_count matches coach_summary.total ✓",
+      "Digest data assembly: needs_support matches coaches_needing_support length ✓",
+      "Digest data assembly: athletes_attention matches snapshot length ✓",
+      "Digest data assembly: unassigned matches unassigned_athletes length ✓"
+    ],
+    "frontend_components": [
+      "DigestPanel renders on Roster page ✓",
+      "DigestPanel has Send Digest button with data-testid='digest-send-btn' ✓",
+      "Clicking Send Digest triggers API call and shows toast notification ✓",
+      "Toast shows 'Digest generated but email delivery failed' (expected in test mode) ✓",
+      "After send, summary result appears below button with what_changed text ✓",
+      "Summary result shows stats: X coaches, Y notes this week, Z needing attention ✓",
+      "History toggle button shows/hides past digest records ✓",
+      "History list shows date, status icon, sender name, and summary stats ✓",
+      "DigestPanel is NOT visible to coaches (roster page redirects to mission-control) ✓",
+      "Coach access to /roster returns 403 from backend APIs ✓"
+    ]
+  },
+  "mocked_api_note": "Resend email API is in test mode - email delivery intentionally fails but all digest data is correctly assembled and stored with delivery_status='failed'. This is expected behavior for testing.",
+  "digest_record_structure_verified": {
+    "id": "UUID string",
+    "sent_by": "User ID who triggered digest",
+    "sent_by_name": "User's name",
+    "recipients": "Array of email addresses",
+    "period_start": "ISO timestamp (7 days before generation)",
+    "period_end": "ISO timestamp (generation time)",
+    "summary_data": "Full snapshot of all digest data sections",
+    "delivery_status": "pending/sent/failed",
+    "last_error": "Error message if failed",
+    "sent_at": "ISO timestamp"
+  }
+}
