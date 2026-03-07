@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CapyMatch — Page Documentation</title>
+  <style>
+    :root {
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-400: #94a3b8;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --amber-500: #f59e0b;
+      --amber-400: #fbbf24;
+      --red-500: #ef4444;
+      --emerald-500: #10b981;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--slate-50);
+      color: var(--slate-700);
+      line-height: 1.6;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-800) 100%);
+      color: white;
+      padding: 80px 40px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      color: var(--amber-400);
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: rgba(255,255,255,0.6);
+      max-width: 600px;
+      margin: 0 auto 30px;
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 30px;
+    }
+
+    .hero-stat {
+      text-align: center;
+    }
+
+    .hero-stat .num {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--amber-400);
+    }
+
+    .hero-stat .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+
+    .section-header {
+      margin-bottom: 40px;
+    }
+
+    .section-header h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 8px;
+    }
+
+    .section-header p {
+      color: var(--slate-500);
+      font-size: 15px;
+    }
+
+    .page-card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 16px;
+      margin-bottom: 32px;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .page-card:hover {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+
+    .page-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--slate-100);
+    }
+
+    .page-card-header .left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .page-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .page-card-header h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--slate-900);
+    }
+
+    .page-card-header .route {
+      font-size: 12px;
+      color: var(--slate-400);
+      font-family: 'SF Mono', Monaco, monospace;
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-director { background: #fef3c7; color: #92400e; }
+    .badge-all { background: #dcfce7; color: #166534; }
+    .badge-ai { background: #ede9fe; color: #5b21b6; }
+    .badge-new { background: #fce7f3; color: #9d174d; }
+
+    .page-card-body {
+      padding: 24px 28px;
+    }
+
+    .page-card-body > p {
+      color: var(--slate-600);
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--slate-600);
+      padding: 8px 12px;
+      background: var(--slate-50);
+      border-radius: 8px;
+    }
+
+    .feature-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber-500);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .ai-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, var(--slate-900), var(--slate-800));
+      color: var(--amber-400);
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .api-endpoints {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--slate-900);
+      border-radius: 10px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      overflow-x: auto;
+    }
+
+    .api-endpoints .method {
+      color: var(--emerald-500);
+      font-weight: 700;
+    }
+
+    .api-endpoints .path {
+      color: var(--amber-400);
+    }
+
+    .api-endpoints .comment {
+      color: rgba(255,255,255,0.3);
+    }
+
+    .api-line {
+      margin-bottom: 6px;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--slate-200);
+      margin: 60px 0;
+    }
+
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .tech-pill {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      background: white;
+      border: 1px solid var(--slate-200);
+      color: var(--slate-600);
+    }
+
+    .architecture-section {
+      background: var(--slate-900);
+      color: white;
+      padding: 60px 24px;
+      margin-top: 60px;
+    }
+
+    .architecture-section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .arch-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .arch-card h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--amber-400);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .arch-card p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 40px 24px;
+      font-size: 13px;
+      color: var(--slate-400);
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .hero-stats { flex-direction: column; gap: 16px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .arch-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">Recruiting Operating System</div>
+    <h1>CapyMatch</h1>
+    <p>A recruiting operating system for clubs, coaches, families, and athletes. Surfaces priorities, coordinates support, and helps you know what to do next.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="num">16</div>
+        <div class="label">Pages</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">9</div>
+        <div class="label">AI Features</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">3</div>
+        <div class="label">Roles</div>
+      </div>
+      <div class="hero-stat">
+        <div class="num">30+</div>
+        <div class="label">API Endpoints</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Auth Pages -->
+  <div class="container">
+    <div class="section-header">
+      <h2>Authentication & Onboarding</h2>
+      <p>Secure access with JWT-based authentication and a director-managed invite system</p>
+    </div>
+
+    <!-- Login -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: var(--slate-900);">&#x1F511;</div>
+          <div>
+            <h3>Login Page</h3>
+            <div class="route">/login</div>
+          </div>
+        </div>
+        <span class="badge badge-all">All Users</span>
+      </div>
+      <div class="page-card-body">
+        <p>The entry point to CapyMatch. Supports Sign In and Create Account tabs. Three demo accounts are displayed for quick access. JWT tokens are issued on successful login and stored in the AuthContext for all subsequent API requests.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Email + password authentication with bcrypt hashing</div>
+          <div class="feature-item"><span class="dot"></span> Demo account quick-fill for Director, Coach Williams, Coach Garcia</div>
+          <div class="feature-item"><span class="dot"></span> Create Account tab (coach-only registration; directors are blocked)</div>
+          <div class="feature-item"><span class="dot"></span> Redirects to Mission Control on success</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accept Invite -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #059669;">&#x2709;</div>
+          <div>
+            <h3>Accept Invite Page</h3>
+            <div class="route">/accept-invite/:token</div>
+          </div>
+        </div>
+        <span class="badge badge-all">Invited Coaches</span>
+      </div>
+      <div class="page-card-body">
+        <p>When a director invites a coach, they receive a unique link with a token. This page validates the token, displays the invitation details, and allows the coach to set their password and create their account. The invite is marked as "accepted" and the coach is immediately logged in.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Token-based invite validation</div>
+          <div class="feature-item"><span class="dot"></span> Set password + auto-login on accept</div>
+          <div class="feature-item"><span class="dot"></span> Shows inviter name and team assignment</div>
+          <div class="feature-item"><span class="dot"></span> Graceful error for expired/invalid tokens</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invites -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #7c3aed;">&#x1F4E8;</div>
+          <div>
+            <h3>Invite Coaches</h3>
+            <div class="route">/invites</div>
+          </div>
+        </div>
+        <span class="badge badge-director">Director Only</span>
+      </div>
+      <div class="page-card-body">
+        <p>Directors manage their coaching staff here. Create invitations by entering an email, name, and optional team assignment. Invites are sent via Resend email API. The page shows delivery status (sent/failed/pending), allows resending, and provides a copy-link fallback for when email delivery fails (sandbox mode).</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Create invite with name, email, team</div>
+          <div class="feature-item"><span class="dot"></span> Resend email delivery with status tracking</div>
+          <div class="feature-item"><span class="dot"></span> Copy invite link fallback</div>
+          <div class="feature-item"><span class="dot"></span> Resend count and expiry display</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Core Operating Modes -->
+    <div class="section-header">
+      <h2>Core Operating Modes</h2>
+      <p>Five interconnected modes that power the recruiting workflow</p>
+    </div>
+
+    <!-- Mission Control -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #dc2626;">&#x1F3AF;</div>
+          <div>
+            <h3>Mission Control</h3>
+            <div class="route">/mission-control</div>
+          </div>
+        </div>
+        <div>
+          <span class="badge badge-all">All Users</span>
+          <span class="ai-tag">AI V1 + V2</span>
+        </div>
+      </div>
+      <div class="page-card-body">
+        <p>The operational hub of CapyMatch. Directors see a global view with all priority alerts, upcoming events, and athletes needing attention across the entire program. Coaches see a filtered view showing only their assigned athletes. The live feed on the right shows recent activity across the system.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Priority alerts with urgency levels and owner attribution</div>
+          <div class="feature-item"><span class="dot"></span> Upcoming events countdown with prep status</div>
+          <div class="feature-item"><span class="dot"></span> Athletes needing attention (monitoring list)</div>
+          <div class="feature-item"><span class="dot"></span> Live activity feed with timestamps</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V1:</strong> "Generate Today's Priorities" — daily briefing narrative</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V2:</strong> "What Should I Do Next?" — structured actions with WHY/EVIDENCE/OWNER</div>
+        </div>
+        <div class="api-endpoints">
+          <div class="api-line"><span class="method">GET</span> <span class="path">/api/mission-control</span> <span class="comment">— alerts, events, attention, snapshot</span></div>
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/briefing</span> <span class="comment">— V1 daily briefing</span></div>
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/suggested-actions</span> <span class="comment">— V2 structured next actions</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Events Home -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #2563eb;">&#x1F4C5;</div>
+          <div>
+            <h3>Events Home</h3>
+            <div class="route">/events</div>
+          </div>
+        </div>
+        <span class="badge badge-all">All Users</span>
+      </div>
+      <div class="page-card-body">
+        <p>The central event management view. Shows upcoming and past events organized by timeline (Today, This Week, Later, Past). Each event displays location, athlete count, school count, and prep status with color-coded readiness indicators. Coaches see events filtered to those with their athletes attending.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Upcoming vs Past tabs with event counts</div>
+          <div class="feature-item"><span class="dot"></span> Event type filter dropdown</div>
+          <div class="feature-item"><span class="dot"></span> Color-coded readiness (Not Started / In Progress / Ready)</div>
+          <div class="feature-item"><span class="dot"></span> Direct links to Prep, Live Mode, and Summary</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Prep -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #0891b2;">&#x1F4CB;</div>
+          <div>
+            <h3>Event Prep</h3>
+            <div class="route">/events/:eventId/prep</div>
+          </div>
+        </div>
+        <span class="badge badge-all">All Users</span>
+      </div>
+      <div class="page-card-body">
+        <p>Pre-event preparation dashboard. Shows the event checklist, athletes attending, target schools to connect with, and logistical notes. Helps coaches prepare by surfacing which athletes need school introductions and which schools will have representatives present.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Athlete attendance list with profiles</div>
+          <div class="feature-item"><span class="dot"></span> Target schools with interest levels</div>
+          <div class="feature-item"><span class="dot"></span> Prep checklist with completion tracking</div>
+          <div class="feature-item"><span class="dot"></span> Logistical notes and action items</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Event -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #dc2626;">&#x1F534;</div>
+          <div>
+            <h3>Live Event Mode</h3>
+            <div class="route">/events/:eventId/live</div>
+          </div>
+        </div>
+        <span class="badge badge-all">All Users</span>
+      </div>
+      <div class="page-card-body">
+        <p>Real-time note capture during events. Coaches can quickly log observations about athlete-school interactions, interest levels, and follow-up needs. Notes are captured with athlete ID, school context, interest signals (cold/warm/hot), and flags for follow-up or advocacy routing.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Quick note capture with athlete + school pairing</div>
+          <div class="feature-item"><span class="dot"></span> Interest level tagging (cold/warm/hot)</div>
+          <div class="feature-item"><span class="dot"></span> Follow-up and advocacy candidate flags</div>
+          <div class="feature-item"><span class="dot"></span> Persistent storage in MongoDB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Summary -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #7c3aed;">&#x1F4CA;</div>
+          <div>
+            <h3>Event Summary</h3>
+            <div class="route">/events/:eventId/summary</div>
+          </div>
+        </div>
+        <div>
+          <span class="badge badge-all">All Users</span>
+          <span class="ai-tag">AI V1 + V2</span>
+        </div>
+      </div>
+      <div class="page-card-body">
+        <p>Post-event analysis. Aggregates all captured notes into a summary view with interest breakdowns by school, athlete highlight moments, and routing decisions. AI-powered recap generates a narrative of what happened, and V2 follow-up suggestions surface evidence-based next actions from the notes.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Note aggregation by athlete and school</div>
+          <div class="feature-item"><span class="dot"></span> Interest signal breakdown (hot/warm/cold counts)</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V1:</strong> "Generate AI Recap" — narrative event summary</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V2:</strong> "Generate Follow-Up Suggestions" — structured follow-ups with WHY/EVIDENCE per athlete</div>
+        </div>
+        <div class="api-endpoints">
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/event-recap/:eventId</span> <span class="comment">— V1 narrative recap</span></div>
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/event-followups/:eventId</span> <span class="comment">— V2 structured follow-ups</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advocacy Home -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #ea580c;">&#x1F4E3;</div>
+          <div>
+            <h3>Advocacy Home</h3>
+            <div class="route">/advocacy</div>
+          </div>
+        </div>
+        <span class="badge badge-all">All Users</span>
+      </div>
+      <div class="page-card-body">
+        <p>The recommendation pipeline. Shows all athlete-to-school recommendations organized by status: Drafts, Sent, Awaiting Reply, Responded, Closed. The "Needs Attention" section surfaces recommendations requiring follow-up. Directors see the full pipeline; coaches see only recommendations for their athletes.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Status-filtered tabs (Drafts, Sent, Awaiting, Responded, Closed)</div>
+          <div class="feature-item"><span class="dot"></span> "Needs Attention" priority section at top</div>
+          <div class="feature-item"><span class="dot"></span> Next-action suggestions per recommendation</div>
+          <div class="feature-item"><span class="dot"></span> New Recommendation builder link</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendation Builder -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #b45309;">&#x270D;</div>
+          <div>
+            <h3>Recommendation Builder</h3>
+            <div class="route">/advocacy/new</div>
+          </div>
+        </div>
+        <div>
+          <span class="badge badge-all">All Users</span>
+          <span class="ai-tag">AI V1</span>
+        </div>
+      </div>
+      <div class="page-card-body">
+        <p>Create a new school recommendation for an athlete. Select the athlete and school, specify fit reasons (athletic ability, tactical awareness, academic fit, etc.), write a personalized intro message, and optionally reference event notes. The "Draft with AI" button generates a full intro message using GPT 5.2 based on the athlete's profile and event observations.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Athlete + school dropdowns with details</div>
+          <div class="feature-item"><span class="dot"></span> Fit reason tags (Athletic ability, Academic fit, Character, etc.)</div>
+          <div class="feature-item"><span class="dot"></span> Event note attachment from past events</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V1:</strong> "Draft with AI" — generates personalized intro message from athlete data</div>
+        </div>
+        <div class="api-endpoints">
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/advocacy-draft/:athleteId/:schoolId</span> <span class="comment">— AI draft generation</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendation Detail -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #ca8a04;">&#x1F4C4;</div>
+          <div>
+            <h3>Recommendation Detail</h3>
+            <div class="route">/advocacy/:recId</div>
+          </div>
+        </div>
+        <span class="badge badge-all">All Users</span>
+      </div>
+      <div class="page-card-body">
+        <p>Full view of a single recommendation. Shows the athlete-school pairing, fit reasons, intro message, response history, and status timeline. Coaches can update the status, log follow-ups, and track college coach responses. The relationship warmth score reflects the cumulative interaction quality.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Full recommendation details with message</div>
+          <div class="feature-item"><span class="dot"></span> Status progression tracking</div>
+          <div class="feature-item"><span class="dot"></span> Response logging and follow-up actions</div>
+          <div class="feature-item"><span class="dot"></span> Warmth score and relationship timeline</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Program Intelligence -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #0f766e;">&#x1F4C8;</div>
+          <div>
+            <h3>Program Intelligence</h3>
+            <div class="route">/program</div>
+          </div>
+        </div>
+        <div>
+          <span class="badge badge-all">All Users</span>
+          <span class="ai-tag">AI V1 + V2</span>
+        </div>
+      </div>
+      <div class="page-card-body">
+        <p>Strategic program overview with metrics, trends, and health indicators. Shows "What's Changing" KPIs (Pod Health, Open Issues, Overdue Actions, Advocacy Pipeline, Follow-Up Completion), program health distribution, and team/grad year readiness breakdowns. Directors see the full program; coaches see their scoped view. Directors also get AI V2 strategic insights with severity-rated findings.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> KPI trend cards: Pod Health, Open Issues, Overdue Actions, Advocacy, Follow-Ups</div>
+          <div class="feature-item"><span class="dot"></span> Program health bar (Healthy / Needs Attention / At Risk)</div>
+          <div class="feature-item"><span class="dot"></span> Team / Grad Year readiness breakdown with on-track %</div>
+          <div class="feature-item"><span class="dot"></span> Coach view toggle (Program View, Martinez, Rivera)</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V1:</strong> "Generate Program Narrative" — 2-3 sentence program brief</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V2 (Director):</strong> "Generate Strategic Insights" — narrative + structured insights with WHY/EVIDENCE/RECOMMENDATION/SEVERITY</div>
+        </div>
+        <div class="api-endpoints">
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/program-narrative</span> <span class="comment">— V1 narrative</span></div>
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/program-insights</span> <span class="comment">— V2 director-only strategic insights</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support Pod -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #be185d;">&#x1F6E1;</div>
+          <div>
+            <h3>Support Pod</h3>
+            <div class="route">/support-pods/:athleteId</div>
+          </div>
+        </div>
+        <div>
+          <span class="badge badge-all">All Users</span>
+          <span class="ai-tag">AI V2</span>
+        </div>
+      </div>
+      <div class="page-card-body">
+        <p>The per-athlete support dashboard. Shows the athlete's current state, active issues, support team, upcoming events, and action items. The support pod is the "war room" for each athlete — everything needed to coordinate their recruiting journey in one place. AI V2 adds a brief summary at the top and structured action suggestions.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Active issue banner with resolution actions</div>
+          <div class="feature-item"><span class="dot"></span> Athlete snapshot (momentum, stage, target schools, blockers)</div>
+          <div class="feature-item"><span class="dot"></span> Support team with contact activity and task counts</div>
+          <div class="feature-item"><span class="dot"></span> Next actions with priority and ownership</div>
+          <div class="feature-item"><span class="dot"></span> Treatment timeline with historical events</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V2:</strong> "Generate Pod Brief" — 2-3 sentence status summary with signal (needs_attention/stable/improving) and key facts</div>
+          <div class="feature-item"><span class="dot"></span> <strong>AI V2:</strong> "Suggest Actions" — structured next actions with WHY/EVIDENCE for this specific athlete</div>
+          <div class="feature-item"><span class="dot"></span> Coach access restricted to assigned athletes only</div>
+        </div>
+        <div class="api-endpoints">
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/pod-brief/:athleteId</span> <span class="comment">— V2 pod status brief</span></div>
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/ai/pod-actions/:athleteId</span> <span class="comment">— V2 suggested actions</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Admin & Management -->
+    <div class="section-header">
+      <h2>Admin & Management</h2>
+      <p>Director-only tools for managing the coaching staff and athlete assignments</p>
+    </div>
+
+    <!-- Roster -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #4f46e5;">&#x1F465;</div>
+          <div>
+            <h3>Roster</h3>
+            <div class="route">/roster</div>
+          </div>
+        </div>
+        <div>
+          <span class="badge badge-director">Director Only</span>
+          <span class="badge badge-new" style="margin-left: 4px;">New</span>
+        </div>
+      </div>
+      <div class="page-card-body">
+        <p>Athlete-coach assignment management. Directors see all 25 athletes grouped by their assigned coach, with collapsible sections. Each athlete can be reassigned to a different coach via a modal with coach dropdown and reason field. Athletes can also be unassigned. A warning surfaces if open actions still belong to the previous coach. All changes are logged for timeline display.</p>
+        <div class="features-grid">
+          <div class="feature-item"><span class="dot"></span> Athletes grouped by coach with expand/collapse</div>
+          <div class="feature-item"><span class="dot"></span> Reassign via modal (select new coach + optional reason)</div>
+          <div class="feature-item"><span class="dot"></span> Unassign with confirmation and reason labeling</div>
+          <div class="feature-item"><span class="dot"></span> Unassigned section with reason badges (manually_unassigned, imported_without_owner, etc.)</div>
+          <div class="feature-item"><span class="dot"></span> Summary stats: total athletes, coaches, unassigned</div>
+          <div class="feature-item"><span class="dot"></span> Open actions warning on reassignment</div>
+          <div class="feature-item"><span class="dot"></span> Audit log with timeline-ready entries</div>
+          <div class="feature-item"><span class="dot"></span> Ownership change is immediate; open actions stay with previous coach</div>
+        </div>
+        <div class="api-endpoints">
+          <div class="api-line"><span class="method">GET</span> <span class="path">/api/roster</span> <span class="comment">— grouped roster view</span></div>
+          <div class="api-line"><span class="method">GET</span> <span class="path">/api/roster/coaches</span> <span class="comment">— coach list for dropdowns</span></div>
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/athletes/:id/reassign</span> <span class="comment">— reassign to new coach</span></div>
+          <div class="api-line"><span class="method">POST</span> <span class="path">/api/athletes/:id/unassign</span> <span class="comment">— remove coach assignment</span></div>
+          <div class="api-line"><span class="method">GET</span> <span class="path">/api/athletes/:id/reassignment-history</span> <span class="comment">— audit log</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relationship Detail -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: #0d9488;">&#x1F91D;</div>
+          <div>
+            <h3>Relationship Detail</h3>
+            <div class="route">/relationships/:id</div>
+          </div>
+        </div>
+        <span class="badge badge-all">All Users</span>
+      </div>
+      <div class="page-card-body">
+        <p>Detailed view of a coach-to-school relationship. Tracks interaction history, warmth score, and response patterns over time. Used to understand the strength and health of recruiting relationships.</p>
+      </div>
+    </div>
+
+    <!-- Admin Status -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="left">
+          <div class="page-icon" style="background: var(--slate-600);">&#x2699;</div>
+          <div>
+            <h3>Admin Status</h3>
+            <div class="route">/admin</div>
+          </div>
+        </div>
+        <span class="badge badge-director">Director Only</span>
+      </div>
+      <div class="page-card-body">
+        <p>System health and debug dashboard. Shows database connection status, collection sizes, and system configuration. Used for operational monitoring.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Architecture -->
+  <section class="architecture-section">
+    <h2>Architecture & Tech Stack</h2>
+    <div class="arch-grid">
+      <div class="arch-card">
+        <h4>Frontend</h4>
+        <p>React 18 with JavaScript. Tailwind CSS for styling. Shadcn/UI component library. React Router for navigation. Axios for API calls with JWT auth headers. AuthContext for global authentication state.</p>
+      </div>
+      <div class="arch-card">
+        <h4>Backend</h4>
+        <p>FastAPI (Python) with modular routers. JWT auth middleware on all routes. Motor async MongoDB driver. Service layer for ownership, AI, email, and startup logic. 30+ API endpoints across 12 routers.</p>
+      </div>
+      <div class="arch-card">
+        <h4>Database</h4>
+        <p>MongoDB with collections: users, athletes, invites, events, event_notes, recommendations, actions, assignments, messages, reassignment_log. All queries exclude _id from responses.</p>
+      </div>
+      <div class="arch-card">
+        <h4>AI Layer</h4>
+        <p>GPT 5.2 via emergentintegrations library. 9 AI features across V1 and V2. 45s timeout with 1 retry. Structured output parsing. Every suggestion includes WHY + EVIDENCE + OWNER + CTA.</p>
+      </div>
+      <div class="arch-card">
+        <h4>Authentication</h4>
+        <p>JWT (PyJWT) with bcrypt password hashing. Two roles: director (global access) and coach (scoped to assigned athletes). Invite-based onboarding for coaches. Director self-registration blocked.</p>
+      </div>
+      <div class="arch-card">
+        <h4>Data Ownership</h4>
+        <p>primary_coach_id links athletes to coaches. In-memory ownership cache refreshed on startup and after reassignments. Directors see all; coaches see only their athletes across every mode.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>CapyMatch Recruiting Operating System &mdash; Built with FastAPI, React, MongoDB, and GPT 5.2</p>
+  </div>
+
+</body>
+</html>
