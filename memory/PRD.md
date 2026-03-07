@@ -3,96 +3,98 @@
 ## Original Problem Statement
 Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, and athletes. The vision is to create a system that actively coordinates support, surfaces priorities, and helps users know what to do next, moving beyond a traditional CRM.
 
-## Core Modes
-- **Mission Control:** Command surface showing priority alerts and athletes needing attention
-- **Support Pod:** Dedicated "treatment" environment for an athlete
-- **Event Mode:** Capture live recruiting moments and manage follow-up
-- **Advocacy Mode:** Coach-backed promotion and relationship tracking
-- **Program Intelligence:** Strategic overview with historical trending and role-based views
-- **Decision Engine:** Backend logic analyzing data to generate and rank interventions
-
 ## Tech Stack
 - **Backend:** FastAPI (Python), MongoDB (motor async driver)
 - **Frontend:** React, Tailwind CSS, Shadcn/UI
 - **Auth:** JWT-based (PyJWT, bcrypt/passlib)
+- **Email:** Resend (transactional invite emails)
 - **Architecture:** Service-oriented backend with APIRouter modules
 
 ## What's Been Implemented
 
 ### Phase 1-2: Core Features & Persistence
-- All 5 operating modes
+- All 5 operating modes (Mission Control, Support Pod, Event, Advocacy, Program Intelligence)
 - Decision Engine with intervention detection and ranking
-- Full MongoDB persistence for athletes, events, event_notes, recommendations
-- Backend refactored from monolithic server.py to modular routers/
+- Full MongoDB persistence, seed-if-empty strategy
+- Backend refactored to modular routers
 
 ### Phase 3: Program Intelligence Enhancements
-- Historical trending via snapshot-based system
+- Historical trending via snapshot system
 - Coach-specific views with filtered data
 
-### Phase 4: Real Authentication (2026-03-06)
-- JWT-based auth system (login, register, /me)
-- 3 seeded user accounts (1 Director, 2 Coaches)
-- Frontend AuthContext with token management
-- Login page with demo account quick-fill
-- Role-based UI on Program Intelligence
+### Phase 4: JWT Authentication
+- Login, register, /me endpoints
+- 3 seeded accounts (1 Director, 2 Coaches)
+- Frontend AuthContext, protected routes, role-based UI
 
-### Phase 5: Route Protection + Invite Coach (2026-03-07)
+### Phase 5: Route Protection + Invite Coach
 - All API routes require JWT auth (401 without token)
-- Director-only routes: admin, debug, invites (403 for coaches)
-- Invite Coach: director creates invites, coaches accept via token link
-- Invite statuses: pending / accepted / expired / cancelled
+- Director-only routes (admin, debug, invites) return 403 for coaches
+- Invite system: create, validate, accept, cancel, copy-link
 
-### Phase 6: Stabilization + RBAC Review (2026-03-07)
-- **Models consolidated:** All Pydantic models in central models.py, zero duplicates
-- **Hardcoded names removed:** All 18 instances of "Coach Martinez" in routers replaced with `current_user["name"]`
-- **Director self-registration blocked:** POST /api/auth/register rejects role="director" with 403
-- **Frontend updated:** Registration form shows coach-only with explanation message
+### Phase 6: Stabilization + RBAC
+- Hardcoded "Coach Martinez" replaced with current_user["name"] in all routers
+- Director self-registration blocked
+- Models consolidated in central models.py
+
+### Phase 7: Invite Email Delivery (2026-03-07)
+- **Resend integration** for transactional invite emails
+- Auto-send on invite creation with HTML template
+- **Delivery tracking:** delivery_status (pending/sent/failed), sent_at, last_error, resend_count
+- **Resend endpoint:** POST /api/invites/{id}/resend (director-only)
+- **Graceful failure:** if email fails, invite still exists with copy-link fallback
+- **Frontend:** delivery badges (Email sent/Send failed/Sending...), resend button with spinner, resend count display
+- **Sandbox note:** Resend account is in test mode — emails only deliver to verified addresses. Verify domain at resend.com/domains for production use.
+
+## Environment Variables
+```
+MONGO_URL          # MongoDB connection
+DB_NAME            # Database name
+JWT_SECRET         # JWT signing key
+RESEND_API_KEY     # Resend email API key (re_...)
+RESEND_FROM_EMAIL  # Sender address (default: onboarding@resend.dev)
+CORS_ORIGINS       # Allowed origins
+```
 
 ## RBAC Permission Matrix
-| Route | Director | Coach | Unauthenticated |
+| Route | Director | Coach | Public |
 |---|---|---|---|
-| POST /api/auth/login | ✅ | ✅ | ✅ (public) |
-| POST /api/auth/register | N/A (coach-only) | ✅ | ✅ (public) |
-| GET/POST/DELETE /api/invites | ✅ | ❌ 403 | ❌ 401 |
-| GET/POST /api/invites/validate,accept/{token} | ✅ | ✅ | ✅ (public) |
-| GET /api/mission-control | ✅ | ✅ | ❌ 401 |
-| GET/POST /api/events/* | ✅ | ✅ | ❌ 401 |
-| GET/POST /api/advocacy/* | ✅ | ✅ | ❌ 401 |
-| GET/POST /api/athletes/* | ✅ | ✅ | ❌ 401 |
-| GET/POST /api/support-pods/* | ✅ | ✅ | ❌ 401 |
-| GET /api/program/intelligence | ✅ (full + filter) | ✅ (auto-filtered) | ❌ 401 |
-| GET /api/admin/status | ✅ | ❌ 403 | ❌ 401 |
-| GET /api/debug/* | ✅ | ❌ 403 | ❌ 401 |
+| POST /api/auth/login, /register | - | coach-only reg | Yes |
+| GET/POST/DELETE /api/invites | Yes | 403 | 401 |
+| POST /api/invites/{id}/resend | Yes | 403 | 401 |
+| GET/POST /api/invites/validate,accept/{token} | - | - | Yes |
+| /api/mission-control, events, advocacy, athletes, support-pods | Yes | Yes | 401 |
+| /api/program/intelligence | Full + filter | Auto-filtered | 401 |
+| /api/admin, /api/debug | Yes | 403 | 401 |
 
-## Known RBAC Decisions (documented, not gaps)
-- **No data ownership enforcement:** Coaches can access all athletes, not just "their own." Acceptable at current team size; becomes P1 with multi-team support.
-- **Engine files retain "Coach Martinez":** The mock data seed and computed intervention data still reference the original seed coach. This is correct — it's historical seed data, not runtime user-facing fields.
-- **Advocacy creation is role-agnostic:** Both directors and coaches can create/send/close recommendations. Correct for the operational model.
-
-## Default Credentials
-- Director: director@capymatch.com / director123
-- Coach Williams: coach.williams@capymatch.com / coach123
-- Coach Garcia: coach.garcia@capymatch.com / coach123
-
-## Key DB Collections
-- `users`: {id, email, password_hash, name, role, team, invited_by, created_at}
-- `invites`: {id, email, name, team, role, token, status, invited_by, invited_by_name, created_at, expires_at, accepted_at}
-- `athletes`, `events`, `event_notes`, `recommendations`, `program_snapshots`
+## Invite Schema
+```
+{
+  id, email, name, team, role, token,
+  status: pending | accepted | expired | cancelled,
+  delivery_status: pending | sent | failed,
+  sent_at, last_error, resend_count,
+  invited_by, invited_by_name,
+  created_at, expires_at, accepted_at
+}
+```
 
 ## Prioritized Backlog
 
-### P0 (Completed)
-- [x] Real JWT Authentication
-- [x] Protect all API routes
-- [x] Invite Coach flow
-- [x] Model consolidation + RBAC stabilization
+### Completed
+- [x] Core modes + persistence
+- [x] JWT auth + route protection
+- [x] Invite Coach + email delivery
+- [x] RBAC stabilization + model consolidation
 
 ### P1 — Next Up
-- [ ] Invite email delivery (SendGrid/Resend integration)
+- [ ] Per-coach data ownership (coaches see only their athletes)
 - [ ] Deeper AI/Intelligence Layer (V3)
+- [ ] Merge assessment with main CapyMatch app (Option B → A path)
 
 ### P2 — Future
 - [ ] Forgot Password flow
-- [ ] Data ownership enforcement (coach sees only their athletes)
+- [ ] Verify Resend domain for production email delivery
 - [ ] Platform integrations (calendars, messaging)
 - [ ] User management admin panel
+- [ ] Full merge to unified CapyMatch platform
