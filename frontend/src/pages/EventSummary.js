@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { ArrowLeft, FileText, GraduationCap, Users, ListChecks, ExternalLink, Check, ArrowRight } from "lucide-react";
 import { AiBriefing } from "@/components/AiBriefing";
+import { AiEventFollowups } from "@/components/AiV2Components";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -100,6 +101,11 @@ function EventSummary() {
           endpoint={`${API}/ai/event-recap/${eventId}`}
           label="Event Recap"
           buttonLabel="Generate AI Recap"
+        />
+
+        {/* AI V2: Event Follow-Up Suggestions */}
+        <AiEventFollowups
+          endpoint={`${API}/ai/event-followups/${eventId}`}
         />
 
         {/* Event Stats */}

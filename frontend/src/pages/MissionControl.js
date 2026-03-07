@@ -9,6 +9,7 @@ import ProgramSnapshot from "@/components/mission-control/ProgramSnapshot";
 import PeekPanel from "@/components/mission-control/PeekPanel";
 import { toast } from "sonner";
 import { AiBriefing } from "@/components/AiBriefing";
+import { AiSuggestedActions } from "@/components/AiV2Components";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -76,6 +77,15 @@ function MissionControl() {
             endpoint={`${API}/ai/briefing`}
             label="Daily Briefing"
             buttonLabel="Generate Today's Priorities"
+          />
+        </div>
+
+        {/* AI V2: Suggested Next Actions */}
+        <div className="mb-8">
+          <AiSuggestedActions
+            endpoint={`${API}/ai/suggested-actions`}
+            label="Suggested Next Actions"
+            buttonLabel="What Should I Do Next?"
           />
         </div>
 

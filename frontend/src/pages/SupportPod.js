@@ -8,6 +8,7 @@ import PodMembers from "@/components/support-pod/PodMembers";
 import NextActions from "@/components/support-pod/NextActions";
 import TreatmentTimeline from "@/components/support-pod/TreatmentTimeline";
 import { toast } from "sonner";
+import { AiPodBrief, AiSuggestedActions } from "@/components/AiV2Components";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const POLL_INTERVAL_MS = 30000; // 30 seconds
@@ -85,6 +86,9 @@ function SupportPod() {
       />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* AI V2: Pod Brief */}
+        <AiPodBrief endpoint={`${API}/ai/pod-brief/${athleteId}`} />
+
         {/* Block 1: Active Issue Banner */}
         {!bannerDismissed && active_intervention && (
           <ActiveIssueBanner
@@ -107,6 +111,13 @@ function SupportPod() {
 
         {/* Block 4: Next Actions */}
         <NextActions actions={actions} athleteId={athleteId} onRefresh={fetchPodData} />
+
+        {/* AI V2: Pod Suggested Actions */}
+        <AiSuggestedActions
+          endpoint={`${API}/ai/pod-actions/${athleteId}`}
+          label="AI Suggested Actions"
+          buttonLabel="Suggest Actions for This Athlete"
+        />
 
         {/* Block 5: Treatment Timeline */}
         <TreatmentTimeline timeline={timeline} />
