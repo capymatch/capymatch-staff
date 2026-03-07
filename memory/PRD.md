@@ -12,58 +12,48 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - **Email:** Resend API
 
 ## User Roles
-- **Director:** Full access, manages coaches, athletes, invites, roster, activation monitoring
+- **Director:** Full access, manages coaches, athletes, invites, roster, activation monitoring, nudge
 - **Coach:** Sees only assigned athletes, onboarding checklist, AI features
 
 ## Completed Features
 
 ### Core Platform
 - JWT-based auth (director/coach roles)
-- Mission Control dashboard with priority alerts, momentum signals
-- Athlete profiles with recruiting stages, momentum scores
-- Decision Engine with intervention detection and ranking
-- Support Pod with action management
-- Event Mode with notes, schools, follow-ups
-- Advocacy Mode with recommendations, intro messages
-- Program Intelligence with metrics, trending
+- Mission Control, Athlete profiles, Decision Engine, Support Pod, Event Mode, Advocacy Mode, Program Intelligence
 
 ### AI Layer V1 & V2
-- V1: Mission Control Briefing, Support Pod Insights, Program Analysis, Advocacy Assistant
-- V2: Suggested Next Actions, Pod Brief, Strategic Insights, Event Follow-Ups
-- Confidence Indicators on all V2 features
+- 8 AI features with confidence indicators
 
 ### Coach Invite System
-- Director-only invite creation with Resend email delivery
-- Token-based acceptance, resend, cancel, copy-link, delivery tracking
-
-### Team-Aware Invite Suggestions (2026-03-07)
-- Suggestion banner on Invites page for newly accepted coaches with team context
-- Bulk-assign or dismiss unassigned athletes from the team
+- Invite creation, token-based acceptance, resend/cancel, delivery tracking
+- Team-aware invite suggestions (2026-03-07)
 
 ### Roster Management
-- Director-only roster page with coach-athlete grouping
-- Reassignment, unassignment with audit trail
-- Route protection: coaches redirected away from /roster
+- Director-only roster page, reassignment, unassignment, audit trail, route protection
 
 ### Coach Onboarding Checklist (2026-03-07)
-- Lightweight, non-blocking checklist on Mission Control (coach-only)
-- 5 steps: Explore Mission Control, Meet your roster, Open Support Pod, Check Events, Log a note/action
-- Auto-completion, progress tracking, "Take me to the next step" CTA, dismiss option
-- Personalization for coaches without assigned athletes
-- State: users.onboarding {completed_steps, dismissed, started_at, completed_at}
+- 5-step non-blocking checklist on Mission Control (coach-only)
+- Auto-completion, progress tracking, dismiss, personalization
 - API: GET /api/onboarding/status, POST /api/onboarding/complete-step, POST /api/onboarding/dismiss
 
 ### Coach Activation Panel (2026-03-07)
-- Director-only panel on Roster page showing coach engagement signals
+- Director-only panel on Roster page
 - Status per coach: Pending, Activating, Active, Needs Support
-- Signals: invite status, accepted date, onboarding progress, athlete count, first activity, last active
-- Auto-expands when coaches need support
-- Summary counts at top
-- Sorted by urgency (needs_support first)
-- API: GET /api/roster/activation (director-only)
+- Signals: invite status, onboarding progress, athlete count, last active, last nudge
+- Auto-expands when coaches need support, sorted by urgency
+- API: GET /api/roster/activation
+
+### Nudge Coach (2026-03-07)
+- Director sends supportive check-in email to coaches needing support
+- Reason presets: Onboarding incomplete, No recent activity, Needs help getting started, Custom
+- Prefilled editable subject + message, personalized with names
+- 24-hour cooldown per coach, delivery status tracking
+- Nudge history stored in `nudges` collection with delivery_status, last_error
+- Last nudge timestamp shown in activation panel
+- API: POST /api/roster/nudge, GET /api/roster/nudge-history/{coach_id}
 
 ### Documentation
-- Auto-generated pages.html and gallery.html
+- pages.html and gallery.html
 
 ## Key Credentials
 - Director: director@capymatch.com / director123
@@ -71,30 +61,28 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Coach Garcia: coach.garcia@capymatch.com / coach123
 
 ## DB Schema (Key Collections)
-- **users**: {id, email, password_hash, name, role, team, invited_by, onboarding: {...}, last_active, created_at}
-- **athletes**: {id, fullName, gradYear, position, team, primary_coach_id, unassigned_reason, ...}
-- **invites**: {id, email, name, team, token, status, delivery_status, accepted_user_id, assignment_reviewed, ...}
+- **users**: {id, email, password_hash, name, role, team, onboarding, last_active, created_at}
+- **athletes**: {id, fullName, gradYear, position, team, primary_coach_id, ...}
+- **invites**: {id, email, name, team, token, status, accepted_user_id, assignment_reviewed, ...}
+- **nudges**: {id, coach_id, coach_email, coach_name, sent_by, sent_by_name, reason, reason_label, subject, message, delivery_status, last_error, sent_at}
 - **reassignment_log**: {id, athlete_id, type, from_coach_id, to_coach_id, reason, ...}
 
 ## Code Architecture
 ```
 /app/backend/routers/
+  roster.py         # Roster + Activation + Nudge endpoints
   onboarding.py     # Coach onboarding checklist API
-  roster.py         # Roster + Coach Activation endpoint
-  invites.py, auth.py, ai.py, intelligence.py, etc.
+  invites.py, auth.py, ai.py, intelligence.py
 /app/frontend/src/components/
+  CoachActivationPanel.js   # Activation panel + NudgeModal
   OnboardingChecklist.js    # Coach onboarding UI
-  CoachActivationPanel.js   # Director activation panel
-  ai/, mission-control/, support-pod/
 /app/frontend/src/pages/
-  MissionControl.js  # Renders OnboardingChecklist for coaches
-  RosterPage.js      # Renders CoachActivationPanel for directors
-  SupportPod.js      # Tracks onboarding steps
-  EventHome.js       # Tracks onboarding steps
+  RosterPage.js      # Renders CoachActivationPanel
+  MissionControl.js  # Renders OnboardingChecklist
 ```
 
 ## Upcoming Tasks (Prioritized Backlog)
 - P1: Forgot Password Flow (secure password reset via Resend email)
 - P2: Platform Integrations (calendars, messaging)
-- P2: Smart Match Build (AI school-athlete pairing — concept at /app/SMART_MATCH_CONCEPT.md)
+- P2: Smart Match Build (concept at /app/SMART_MATCH_CONCEPT.md)
 - P2: Unified Platform Merge (plan at /app/MERGE_ASSESSMENT_PLAN.md)
