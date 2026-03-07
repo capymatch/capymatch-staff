@@ -42,6 +42,14 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - All 4 features respect role-based access and data ownership boundaries
 - Backend: `/api/ai/program-narrative`, `/api/ai/briefing`, `/api/ai/event-recap/{event_id}`, `/api/ai/advocacy-draft/{athlete_id}/{school_id}`
 
+### AI V1 Stabilization (Phase 9.1 — 2026-03-07)
+- Backend: 45s timeout + 1 retry on all LLM calls (`_send_with_retry` in `services/ai.py`)
+- Backend: 503 error responses when AI fails (all 4 endpoints in `routers/intelligence.py`)
+- Frontend: 50s axios timeout on all AI calls
+- Frontend: Differentiated error messages (timeout, 503, 400, 403, 401)
+- Frontend: "Try Again" button on error state in AiBriefing component
+- Resolved: intermittent coach briefing timeout issue
+
 ## Ownership Model V1
 ```
 Athlete.primary_coach_id -> Users.id
@@ -68,6 +76,7 @@ MONGO_URL, DB_NAME, JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, CORS_ORIGINS,
 - [x] Invite Coach + email delivery
 - [x] Per-coach data ownership boundaries
 - [x] AI/Intelligence Layer V1 (all 4 features)
+- [x] AI V1 Stabilization (timeout/retry, error handling, coach briefing fix)
 
 ### P1 — Next Up
 - [ ] Refine Data Ownership Model (unassigned athletes, team assignments in invite flow)
