@@ -26,69 +26,54 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Coach activation panel with status labels + profile completeness
 - Nudge coach (check-in emails with reason presets, 24h cooldown)
 
-### Forgot Password (2026-03-07)
-- Secure reset flow: hashed tokens, 1-hour expiry, no email enumeration
+### Forgot Password, Coach Profile, Quick Notes, Weekly Digest
+- All implemented and tested
 
-### Coach Self-Service Profile (2026-03-07)
-- /profile page via avatar dropdown: name, contact method, phone, availability, bio
-- Completeness tracking, director visibility in activation + roster
+### Left Sidebar Layout (2026-03-08)
+- Sidebar with CapyMatch logo, role-based nav (Roster hidden from coaches)
+- Top bar with auto-detected page title, notifications, user menu
+- All pages wrapped in AppLayout
 
-### Coach Quick Notes (2026-03-07)
-- Inline quick note on Mission Control athlete cards and Support Pod
-- Category pills (Recruiting/Event/Parent/Follow-up/Other)
+### Director Mission Control — Leadership Command Surface (2026-03-08)
+- **Hero:** Dark card (#1E213A) with personalized greeting, date badge, 5 KPIs with vertical dividers
+- **AI Program Brief:** Leadership summary (2-4 sentences, strategic, no task lists). Updated prompt: risks first, positive progress, event readiness
+- **Needs Attention:** Max 5 leadership-level alerts with quick actions (View, Assign Coach, Nudge)
+- **Coach Health:** NEW — Coach engagement visibility (status: active/inactive/activating, athlete count, last activity). Filters out test coaches.
+- **Upcoming Events:** Simplified day labels (Tomorrow, 3 days, 1 week), readiness indicators
+- **Recruiting Signals:** NEW — Weekly summary (school interests, hot interests, recommendations sent, coach notes logged)
+- **Program Activity:** Limited to 6 meaningful items
+- **Section order:** Overview > AI Brief > Needs Attention > Coach Health > Events > Recruiting Signals + Activity
 
-### Weekly Coach Digest (2026-03-07)
-- Manual trigger on Roster page (director-only)
-
-### Mission Control Redesign (2026-03-08)
-- **Role-based dashboards:** Single `/api/mission-control` endpoint returns role-specific data
-- **Director MC:** AI Program Brief, Program Status Row (5 KPIs), Needs Attention (max 5), Upcoming Events, Program Activity
-- **Coach MC:** Today's Actions (AI), My Roster (athletes with momentum/health), Upcoming Events, Recent Activity
-- **Above-the-fold rule:** Max 3 modules per role
-
-### UI/UX Redesign to Match CapyMatch App (2026-03-08)
-- **Left Sidebar Navigation:** CapyMatch logo (CM), nav items (Dashboard, Events, Advocacy, Program, Roster/director-only, AI Features), active state highlighting in emerald
-- **Minimal Top Bar:** Page title with icon, notification bell, dark mode toggle, user avatar with initials + name, dropdown menu (Profile, Sign out)
-- **Dark Hero Section:** Personalized greeting ("Good evening, [Name]" with green name #4CAF50), date badge, 4 inline KPI metrics with colored indicator dots
-- **AppLayout Wrapper:** All authenticated pages wrapped in Sidebar + TopBar via ProtectedRoute in App.js
-- **Route-based page titles:** AppLayout auto-detects page title from current route
-- **Login page excluded from sidebar layout**
+### Coach Mission Control (2026-03-08)
+- Today's Actions (AI hero), My Roster, Upcoming Events, Recent Activity
+- Unchanged by director refinements
 
 ## Key Credentials
-- Director: director@capymatch.com / director123
+- Director: director@capymatch.com / director123 (name: Clara Adams)
 - Coach Williams: coach.williams@capymatch.com / coach123
 - Coach Garcia: coach.garcia@capymatch.com / coach123
 
 ## Code Architecture
 ```
-/app/frontend/src/
-  components/
-    layout/
-      AppLayout.js       # Sidebar + TopBar wrapper, auto-detects page title
-      Sidebar.js         # Left nav: logo, role-based items, active state
-      TopBar.js          # Page title, notifications, theme toggle, user menu
-    mission-control/
-      DirectorView.js    # Dark hero + KPIs + Program Brief + Needs Attention
-      CoachView.js       # Onboarding + Dark hero + KPIs + Actions + Roster
-      AIProgramBrief.js  # Director: AI program summary card
-      ProgramStatusRow.js # (legacy, KPIs now inline in hero)
-      NeedsAttentionCard.js # Director: critical interventions (max 5)
-      TodaysActionsCard.js  # Coach: AI work queue card
-      MyRosterCard.js    # Coach: athlete roster with health
-      UpcomingEventsCard.js # Shared: upcoming events
-      ActivityFeed.js    # Shared: recent activity feed
-  pages/
-    MissionControl.js    # Role router: DirectorView or CoachView
-    (All pages render inside AppLayout via ProtectedRoute in App.js)
+/app/frontend/src/components/
+  layout/
+    AppLayout.js, Sidebar.js, TopBar.js
+  mission-control/
+    DirectorView.js, CoachView.js
+    AIProgramBrief.js       # Leadership summary (paragraph)
+    NeedsAttentionCard.js   # Quick actions (View, Nudge, Assign)
+    CoachHealthCard.js      # NEW: coach engagement
+    RecruitingSignalsCard.js # NEW: weekly recruiting metrics
+    UpcomingEventsCard.js   # Simplified day labels + readiness
+    ActivityFeed.js         # Max 6 items
+    TodaysActionsCard.js, MyRosterCard.js
 
 /app/backend/routers/
-  mission_control.py     # Single endpoint, role-based response
-  (other routers unchanged)
+  mission_control.py   # coachHealth, recruitingSignals, programActivity(6)
+  /app/backend/services/ai.py  # Updated briefing prompt
 ```
 
 ## Upcoming Tasks
 - P1: Platform Integrations (calendars, messaging)
-- P2: Smart Match Build (/app/SMART_MATCH_CONCEPT.md)
-- P2: Unified Platform Merge (/app/MERGE_ASSESSMENT_PLAN.md)
-- V2: Auto-scheduled digest (Monday 8am)
-- V2: Multi-recipient digest support
+- P2: Smart Match Build
+- P2: Unified Platform Merge
