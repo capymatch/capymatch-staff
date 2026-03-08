@@ -1,109 +1,131 @@
 {
-  "project_name": "CapyMatch - Mission Control",
-  "version": "1.0.0",
-  "theme": {
-    "mode": "light",
-    "background": "#F9FAFB",
-    "surface": "#FFFFFF",
-    "primary": "#1E40AF",
-    "primary_foreground": "#FFFFFF",
-    "secondary": "#F3F4F6",
-    "accent": "#F97316",
-    "text_primary": "#111827",
-    "text_secondary": "#6B7280",
-    "border_subtle": "#E5E7EB",
-    "border_strong": "#D1D5DB"
+  "project_name": "CapyMatch Director Dashboard",
+  "design_philosophy": {
+    "identity": "E1 - Anti-AI Designer",
+    "core_principles": [
+      "Fusion over Imitation: Mix tactical dashboard density with consumer app fluidity",
+      "Content is King: Data density with high scanability",
+      "Negative Space: Use whitespace to group, not just lines",
+      "No Left Borders: Avoid the generic SaaS 'alert card' trope"
+    ],
+    "anti_patterns": [
+      "Purple/Teal CTAs (Use brand colors)",
+      "Inter everywhere (Mix fonts if possible, or use weight heavily)",
+      "Center-Everything (Align left for data)",
+      "Gradient Overload (Keep it matte and clean)"
+    ]
   },
   "typography": {
-    "font_family_heading": "Manrope, sans-serif",
+    "font_family_heading": "Inter, sans-serif",
     "font_family_body": "Inter, sans-serif",
-    "scale": {
-      "h1": "text-4xl font-bold tracking-tight",
-      "h2": "text-2xl font-bold tracking-tight",
-      "h3": "text-xl font-semibold",
-      "body": "text-sm leading-relaxed",
-      "caption": "text-xs text-muted-foreground",
-      "label": "text-[10px] uppercase tracking-wider font-semibold text-muted-foreground"
+    "font_family_mono": "JetBrains Mono, monospace",
+    "scaling": {
+      "section_header": "text-xs font-bold tracking-widest uppercase",
+      "item_title": "text-sm font-semibold text-slate-900",
+      "item_desc": "text-sm text-slate-500",
+      "badge": "text-[10px] font-bold uppercase tracking-wide"
     }
   },
-  "layout_strategy": {
-    "container": "max-w-[1600px] mx-auto px-6 py-8",
-    "grid_system": "grid grid-cols-1 md:grid-cols-12 gap-6",
-    "spacing": {
-      "section_gap": "gap-8",
-      "card_padding": "p-6",
-      "element_gap": "gap-4"
+  "colors": {
+    "theme": "light",
+    "background": "bg-slate-50/50",
+    "surface": "bg-white",
+    "border": "border-slate-100",
+    "text": {
+      "primary": "text-slate-900",
+      "secondary": "text-slate-500",
+      "muted": "text-slate-400"
     },
-    "z_index": {
-      "header": "z-50",
-      "modal": "z-50",
-      "dropdown": "z-40",
-      "tooltip": "z-50"
+    "alert_palette": {
+      "red": {
+        "bg": "bg-rose-50",
+        "text": "text-rose-700",
+        "dot": "bg-rose-500",
+        "border": "border-rose-100"
+      },
+      "amber": {
+        "bg": "bg-amber-50",
+        "text": "text-amber-700",
+        "dot": "bg-amber-500",
+        "border": "border-amber-100"
+      },
+      "blue": {
+        "bg": "bg-blue-50",
+        "text": "text-blue-700",
+        "dot": "bg-blue-500",
+        "border": "border-blue-100"
+      },
+      "slate": {
+        "bg": "bg-slate-50",
+        "text": "text-slate-700",
+        "dot": "bg-slate-500",
+        "border": "border-slate-100"
+      }
     }
   },
   "components": {
-    "cards": {
-      "base": "bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200",
-      "interactive": "cursor-pointer hover:border-primary/20 hover:ring-1 hover:ring-primary/20",
-      "alert": "border-l-4 border-l-orange-500"
-    },
-    "buttons": {
-      "primary": "bg-primary text-white hover:bg-primary/90 rounded-full px-6 py-2 font-medium shadow-sm transition-transform active:scale-95",
-      "secondary": "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-full px-4 py-2 font-medium",
-      "ghost": "hover:bg-gray-100 text-gray-600 rounded-lg px-3 py-1.5",
-      "destructive": "bg-red-50 text-red-600 hover:bg-red-100 border border-red-100"
-    },
-    "badges": {
-      "momentum_high": "bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full text-xs font-medium",
-      "momentum_low": "bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-full text-xs font-medium",
-      "status_neutral": "bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded-full text-xs font-medium"
-    },
-    "inputs": {
-      "search": "bg-white border-gray-200 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+    "NeedsAttentionCard": {
+      "path": "/app/frontend/src/components/mission-control/NeedsAttentionCard.js",
+      "concept": "The Precision Intel List",
+      "layout_strategy": "Single Unified Panel",
+      "description": "Replace the multiple detached cards with a single, cohesive 'Intel Panel'. This panel groups alerts internally using subtle headers and dividers rather than separating them into different boxes. This mimics a 'Flight Plan' or 'Server Log' aesthetic—high density, high signal.",
+      "structure": [
+        {
+          "element": "Container",
+          "styles": "bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+        },
+        {
+          "element": "Header",
+          "styles": "px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30",
+          "content": "Title 'NEEDS ATTENTION' with a pulsing amber dot and a total count badge."
+        },
+        {
+          "element": "ListContainer",
+          "styles": "divide-y divide-slate-100"
+        },
+        {
+          "element": "GroupHeader",
+          "styles": "px-6 py-2 bg-slate-50/80 flex items-center gap-2",
+          "content": "Category Icon + Category Name (Uppercase, tracking-widest, text-[10px] text-slate-500)"
+        },
+        {
+          "element": "ItemRow",
+          "styles": "group flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors cursor-default",
+          "content": "Athlete Name (Bold) + Description (Muted) | Actions (Visible on Hover or formatted as ghost buttons)"
+        }
+      ],
+      "visual_details": {
+        "icons": "Use Lucide React icons. Size 14px-16px.",
+        "badges": "Do not use pill badges for the category anymore (since we have group headers). Use 'Priority Dots' or 'Status Rings' next to the athlete name if needed.",
+        "actions": "Use 'Ghost' style buttons. Text-based 'Nudge' or 'View' that appear on the right side. On mobile, show icon only."
+      },
+      "interaction_rules": {
+        "hover": "Row background darkens slightly (slate-50). Action buttons increase opacity.",
+        "click": "Entire row is clickable (navigate to athlete). Prevent propagation on action buttons."
+      },
+      "accessibility": {
+        "contrast": "Ensure text-slate-500 meets 4.5:1 on white/slate-50.",
+        "aria": "Use role='list' and role='listitem'."
+      }
     }
   },
-  "visual_enhancers": {
-    "glass_panel": "bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm",
-    "gradients": {
-      "subtle_fade": "bg-gradient-to-b from-white to-gray-50",
-      "active_indicator": "bg-gradient-to-r from-primary to-blue-600"
-    },
-    "shadows": {
-      "card": "0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)",
-      "float": "0 10px 30px -10px rgba(0,0,0,0.08)"
-    }
-  },
-  "image_assets": {
-    "coach_avatars": [
-      "https://images.unsplash.com/photo-1724984430472-2b79b1c0dd13?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzl8MHwxfHNlYXJjaHw0fHxtYWxlJTIwc29jY2VyJTIwY29hY2glMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzI4MTU4NzZ8MA&ixlib=rb-4.1.0&q=85",
-      "https://images.unsplash.com/photo-1652400744403-8f29705bd6a5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzl8MHwxfHNlYXJjaHwzfHxtYWxlJTIwc29jY2VyJTIwY29hY2glMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzI4MTU4NzZ8MA&ixlib=rb-4.1.0&q=85"
-    ],
-    "placeholders": {
-      "university_logo": "https://images.unsplash.com/photo-1559051668-e1fa58f25786?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHwyfHx1bml2ZXJzaXR5JTIwbG9nbyUyMHdoaXRlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzI4MTU4Nzd8MA&ixlib=rb-4.1.0&q=85",
-      "club_logo": "https://images.unsplash.com/photo-1759724369762-376e0a29478b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHw0fHx1bml2ZXJzaXR5JTIwbG9nbyUyMHdoaXRlJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3NzI4MTU4Nzd8MA&ixlib=rb-4.1.0&q=85"
-    }
-  },
-  "icons": {
-    "library": "lucide-react",
-    "primary_set": ["LayoutDashboard", "Users", "Zap", "Calendar", "BarChart3", "Bell", "Search", "ChevronRight", "ArrowUpRight", "AlertCircle", "CheckCircle2"]
-  },
-  "component_paths": {
-    "shadcn": "/app/frontend/src/components/ui",
-    "custom": "/app/frontend/src/components/mission-control"
-  },
-  "universal_guidelines": [
-    "Always use 'Manrope' for headings and 'Inter' for body text.",
-    "Do NOT use pure black (#000000). Use #111827 or #0F172A for darkest text.",
-    "Do NOT use gradients on text unless specifically for a 'Momentum' score highlight.",
-    "Interactive elements must have a hover state that lightens the background or adds a subtle border color shift.",
-    "Use data-testid attributes on ALL interactive elements (buttons, links, inputs).",
-    "Layouts must be mobile-responsive first.",
-    "Glassmorphism effects should be used sparingly: Only on the Sticky Header and Modal backgrounds.",
-    "Cards should not have inner dividers unless absolutely necessary. Use whitespace to separate content."
+  "instructions_to_main_agent": [
+    "1. Read the `NeedsAttentionCard.js` file first.",
+    "2. Remove the `groupAlerts` mapping that creates multiple separate <div> cards.",
+    "3. Create a single outer <section> or <div> container.",
+    "4. Inside, map through the groups but render them as 'Section Headers' within one continuous list.",
+    "5. Use `border-l-0` (remove left borders). Rely on the Group Header to distinguish categories.",
+    "6. Ensure the 'Empty State' (All Clear) matches the new clean aesthetic (maybe a centered minimalist icon).",
+    "7. KEEP ALL logic for navigating (useNavigate).",
+    "8. KEEP data-testid attributes for testing."
   ],
-  "mission_control_specifics": {
-    "visual_metaphor": "Clear Cockpit. High signal, low noise.",
-    "priority_indicators": "Use 'Pulse' animations for urgent items (Orange/Red dots).",
-    "data_density": "High density allowed in 'Program Snapshot', but generous whitespace in 'Priority Alerts'."
+  "universal_guidelines": {
+    "general": [
+      "Do not use generic centered layouts.",
+      "Create depth through z-index and subtle borders, not heavy shadows.",
+      "No 'transition: all'. Use specific transitions.",
+      "Don't align text to center globally.",
+      "Use 'sonner' for toasts if needed (though not required here)."
+    ]
   }
 }
