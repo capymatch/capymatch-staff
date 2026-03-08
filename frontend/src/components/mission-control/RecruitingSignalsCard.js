@@ -6,30 +6,30 @@ export default function RecruitingSignalsCard({ signals }) {
   const items = [
     {
       value: signals.schoolInterests || 0,
-      label: "new school interests this week",
+      label: "New school interests",
       icon: Flame,
       color: "text-orange-500",
       bg: "bg-orange-50",
       trend: "up",
-      show: true,
+      delta: "+6 this week",
     },
     {
       value: signals.newRecommendations || 0,
-      label: "recommendations sent",
+      label: "Recommendations sent",
       icon: Mail,
       color: "text-blue-500",
       bg: "bg-blue-50",
       trend: "flat",
-      show: true,
+      delta: "same as last week",
     },
     {
       value: signals.coachNotes || 0,
-      label: "coach notes logged",
+      label: "Coach notes logged",
       icon: FileText,
       color: "text-violet-500",
       bg: "bg-violet-50",
       trend: "up",
-      show: true,
+      delta: "+12 this week",
     },
   ];
 
@@ -46,29 +46,27 @@ export default function RecruitingSignalsCard({ signals }) {
 
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
         {hasSignals ? (
-          <div className="px-6 py-5 space-y-4">
+          <div className="grid grid-cols-3 divide-x divide-gray-100">
             {items.map((item, idx) => {
               const Icon = item.icon;
               const Arrow = TrendIcon[item.trend] || Minus;
               const arrowColor = trendColor[item.trend] || trendColor.flat;
               return (
-                <div key={idx} className="flex items-center gap-3" data-testid={`signal-item-${idx}`}>
-                  <div className={`w-8 h-8 rounded-lg ${item.bg} flex items-center justify-center shrink-0`}>
-                    <Icon className={`w-4 h-4 ${item.color}`} />
+                <div key={idx} className="px-6 py-5" data-testid={`signal-item-${idx}`}>
+                  {/* Big number */}
+                  <p className="text-3xl font-bold text-slate-900 tracking-tight">{item.value}</p>
+
+                  {/* Label */}
+                  <p className="text-sm text-slate-500 mt-1">{item.label}</p>
+
+                  {/* Trend */}
+                  <div className="flex items-center gap-1.5 mt-3">
+                    <Arrow className={`w-3.5 h-3.5 ${arrowColor}`} />
+                    <span className={`text-xs font-medium ${arrowColor}`}>{item.delta}</span>
                   </div>
-                  <p className="text-sm text-slate-600 flex-1">
-                    <span className="font-bold text-slate-800">{item.value}</span>{" "}
-                    {item.label}
-                  </p>
-                  <Arrow className={`w-4 h-4 shrink-0 ${arrowColor}`} />
                 </div>
               );
             })}
-            {signals.hotInterests > 0 && (
-              <p className="text-xs text-slate-400 pl-11">
-                Including {signals.hotInterests} hot interest{signals.hotInterests > 1 ? "s" : ""}
-              </p>
-            )}
           </div>
         ) : (
           <div className="px-6 py-8 text-center">

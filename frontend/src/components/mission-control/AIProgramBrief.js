@@ -4,6 +4,17 @@ import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+function formatBriefLines(text) {
+  if (!text) return [];
+  // Split on sentence boundaries (. followed by space + uppercase letter)
+  const sentences = text
+    .replace(/\.\s+/g, ".\n")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  return sentences;
+}
+
 export default function AIProgramBrief() {
   const [text, setText] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,6 +35,8 @@ export default function AIProgramBrief() {
       setLoading(false);
     }
   };
+
+  const lines = formatBriefLines(text);
 
   return (
     <section data-testid="ai-program-brief">
@@ -92,10 +105,14 @@ export default function AIProgramBrief() {
           )}
 
           {text && !loading && (
-            <div data-testid="ai-brief-content">
-              <p className="text-sm text-slate-600 leading-relaxed">{text}</p>
+            <div data-testid="ai-brief-content" className="space-y-3">
+              {lines.map((line, idx) => (
+                <p key={idx} className="text-sm text-slate-600 leading-relaxed">
+                  {line}
+                </p>
+              ))}
               {generatedAt && (
-                <p className="text-[10px] text-slate-300 mt-4">
+                <p className="text-[10px] text-slate-300 pt-1">
                   AI-generated · {new Date(generatedAt).toLocaleTimeString()}
                 </p>
               )}

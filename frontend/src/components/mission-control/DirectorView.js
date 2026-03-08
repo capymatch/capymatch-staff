@@ -131,22 +131,22 @@ export default function DirectorView({ data, userName }) {
       {/* 2. AI PROGRAM BRIEF */}
       <AIProgramBrief />
 
-      {/* 3. NEEDS ATTENTION */}
+      {/* 3. RECRUITING SIGNALS */}
+      <RecruitingSignalsCard signals={data.recruitingSignals} />
+
+      {/* 4. NEEDS ATTENTION */}
       <NeedsAttentionCard items={data.needsAttention || []} />
 
       {/* ═══ BELOW THE FOLD ═══ */}
 
-      {/* 4. COACH HEALTH */}
+      {/* 5. COACH HEALTH */}
       <CoachHealthCard coaches={data.coachHealth || []} />
 
-      {/* 5. UPCOMING EVENTS */}
+      {/* 6. UPCOMING EVENTS */}
       <UpcomingEventsCard events={data.upcomingEvents || []} />
 
-      {/* 6 + 7. RECRUITING SIGNALS + ACTIVITY */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <RecruitingSignalsCard signals={data.recruitingSignals} />
-        <ActivityFeed items={data.programActivity || []} title="Program Activity" />
-      </div>
+      {/* 7. PROGRAM ACTIVITY */}
+      <ActivityFeed items={data.programActivity || []} title="Program Activity" />
     </div>
   );
 }
