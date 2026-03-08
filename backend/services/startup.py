@@ -25,7 +25,7 @@ from database import (
 log = logging.getLogger(__name__)
 
 DEFAULT_USERS = [
-    {"id": "director-1", "email": "director@capymatch.com", "name": "Director Adams", "role": "director", "password": "director123"},
+    {"id": "director-1", "email": "director@capymatch.com", "name": "Clara Adams", "role": "director", "password": "director123"},
     {"id": "coach-williams", "email": "coach.williams@capymatch.com", "name": "Coach Williams", "role": "coach", "password": "coach123"},
     {"id": "coach-garcia", "email": "coach.garcia@capymatch.com", "name": "Coach Garcia", "role": "coach", "password": "coach123"},
 ]
