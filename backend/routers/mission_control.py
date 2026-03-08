@@ -1,5 +1,6 @@
 """Mission Control — role-specific command surface endpoints."""
 
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter
 from auth_middleware import get_current_user_dep
 from services.ownership import (
@@ -106,6 +107,9 @@ async def _build_director_response(alerts, attention, signals, events):
         "needingAttention": len(attention),
     }
 
+    # Compute trend data from historical snapshots
+    trend_data = await _compute_trends(program_status)
+
     # Needs attention — use ATHLETES_NEEDING_ATTENTION (matches KPI count), top 8
     needs_attention = enrich_with_health(attention[:8])
 
@@ -127,6 +131,7 @@ async def _build_director_response(alerts, attention, signals, events):
     return {
         "role": "director",
         "programStatus": program_status,
+        "trendData": trend_data,
         "needsAttention": needs_attention,
         "upcomingEvents": upcoming,
         "programActivity": activity,
@@ -134,6 +139,74 @@ async def _build_director_response(alerts, attention, signals, events):
         "recruitingSignals": recruiting_signals,
         "programSnapshot": {**PROGRAM_SNAPSHOT, "unassigned_count": len(unassigned_ids)},
     }
+
+
+async def _compute_trends(current_status):
+    """Compute trend deltas from historical snapshots for KPIs and momentum."""
+    try:
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        cursor = db.program_snapshots.find(
+            {"captured_at": {"$lt": today_start.isoformat()}},
+            {"_id": 0}
+        ).sort("captured_at", -1).limit(1)
+        prev_list = await cursor.to_list(1)
+        prev = prev_list[0] if prev_list else None
+
+        current_needing = current_status.get("needingAttention", 0)
+
+        if prev:
+            prev_needing = prev.get("pod_health", {}).get("needs_attention", 0) + prev.get("pod_health", {}).get("at_risk", 0)
+            attention_delta = current_needing - prev_needing
+            prev_issues = prev.get("open_issues", {}).get("total", 0)
+            current_issues = len(ALL_INTERVENTIONS)
+            issues_delta = current_issues - prev_issues
+            prev_healthy = prev.get("pod_health", {}).get("healthy", 0)
+            current_healthy = PROGRAM_SNAPSHOT.get("positiveMomentum", 0)
+            health_delta = current_healthy - prev_healthy
+        else:
+            attention_delta = 0
+            issues_delta = 0
+            health_delta = 0
+
+        # Compute overall momentum
+        positive_signals = 0
+        negative_signals = 0
+        if health_delta > 0:
+            positive_signals += 1
+        elif health_delta < 0:
+            negative_signals += 1
+        if attention_delta < 0:
+            positive_signals += 1
+        elif attention_delta > 0:
+            negative_signals += 1
+        if issues_delta < 0:
+            positive_signals += 1
+        elif issues_delta > 0:
+            negative_signals += 1
+
+        if positive_signals > negative_signals:
+            momentum_state = "improving"
+        elif negative_signals > positive_signals:
+            momentum_state = "declining"
+        else:
+            momentum_state = "stable"
+
+        momentum_pct = 0
+        if current_healthy > 0 and prev:
+            momentum_pct = round((health_delta / max(prev_healthy, 1)) * 100)
+
+        return {
+            "needAttentionDelta": attention_delta,
+            "momentum": {
+                "state": momentum_state,
+                "engagementDelta": momentum_pct,
+            },
+        }
+    except Exception:
+        return {
+            "needAttentionDelta": 0,
+            "momentum": {"state": "stable", "engagementDelta": 0},
+        }
 
 
 async def _get_coach_health(coach_map):

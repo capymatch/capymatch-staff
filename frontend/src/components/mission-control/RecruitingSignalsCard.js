@@ -34,7 +34,8 @@ export default function RecruitingSignalsCard({ signals }) {
   ];
 
   const TrendIcon = { up: TrendingUp, down: TrendingDown, flat: Minus };
-  const trendColor = { up: "text-emerald-500", down: "text-red-400", flat: "text-slate-300" };
+  const trendColor = { up: "text-emerald-500", down: "text-red-400", flat: "text-slate-400" };
+  const trendArrow = { up: "\u2191", down: "\u2193", flat: "\u2192" };
 
   const hasSignals = items.some((i) => i.value > 0);
 
@@ -48,20 +49,19 @@ export default function RecruitingSignalsCard({ signals }) {
         {hasSignals ? (
           <div className="grid grid-cols-3 divide-x divide-gray-100">
             {items.map((item, idx) => {
-              const Icon = item.icon;
-              const Arrow = TrendIcon[item.trend] || Minus;
               const arrowColor = trendColor[item.trend] || trendColor.flat;
+              const arrow = trendArrow[item.trend] || "\u2192";
               return (
-                <div key={idx} className="px-6 py-5" data-testid={`signal-item-${idx}`}>
-                  {/* Big number */}
-                  <p className="text-3xl font-bold text-slate-900 tracking-tight">{item.value}</p>
+                <div key={idx} className="px-6 py-6 text-center" data-testid={`signal-item-${idx}`}>
+                  {/* Big prominent number */}
+                  <p className="text-4xl font-extrabold text-slate-900 tracking-tight leading-none">{item.value}</p>
 
                   {/* Label */}
-                  <p className="text-sm text-slate-500 mt-1">{item.label}</p>
+                  <p className="text-sm text-slate-500 mt-2">{item.label}</p>
 
-                  {/* Trend */}
-                  <div className="flex items-center gap-1.5 mt-3">
-                    <Arrow className={`w-3.5 h-3.5 ${arrowColor}`} />
+                  {/* Trend with arrow */}
+                  <div className="flex items-center justify-center gap-1.5 mt-3">
+                    <span className={`text-sm font-semibold ${arrowColor}`}>{arrow}</span>
                     <span className={`text-xs font-medium ${arrowColor}`}>{item.delta}</span>
                   </div>
                 </div>

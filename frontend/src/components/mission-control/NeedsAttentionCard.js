@@ -25,19 +25,23 @@ const SEVERITY = {
 const ACTIONS_BY_CATEGORY = {
   event_follow_up: [
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
+    { key: "assign", icon: UserPlus, label: "Assign Coach" },
     { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   ownership_gap: [
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "assign", icon: UserPlus, label: "Assign Coach" },
+    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   momentum_drop: [
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
+    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   blocker: [
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "document", icon: FileText, label: "Request Document" },
+    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   engagement_drop: [
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
@@ -47,10 +51,12 @@ const ACTIONS_BY_CATEGORY = {
   deadline_proximity: [
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
+    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   readiness_issue: [
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "document", icon: FileText, label: "Request Document" },
+    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
 };
 

@@ -1,4 +1,4 @@
-import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock, AlertTriangle } from "lucide-react";
+import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock, AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import AIProgramBrief from "./AIProgramBrief";
 import NeedsAttentionCard from "./NeedsAttentionCard";
 import CoachHealthCard from "./CoachHealthCard";
@@ -17,9 +17,20 @@ function getDateLabel() {
   return new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
+const MOMENTUM_CONFIG = {
+  improving: { label: "Improving", icon: TrendingUp, color: "#30C5BE", textColor: "text-emerald-400" },
+  stable: { label: "Stable", icon: Minus, color: "#8A92A3", textColor: "text-slate-400" },
+  declining: { label: "Declining", icon: TrendingDown, color: "#FF6B6B", textColor: "text-red-400" },
+};
+
 export default function DirectorView({ data, userName }) {
   const firstName = userName?.split(" ")[0] || "Director";
   const ps = data.programStatus || {};
+  const trend = data.trendData || {};
+  const momentum = trend.momentum || { state: "stable", engagementDelta: 0 };
+  const needDelta = trend.needAttentionDelta || 0;
+  const momConfig = MOMENTUM_CONFIG[momentum.state] || MOMENTUM_CONFIG.stable;
+  const MomIcon = momConfig.icon;
 
   const kpis = [
     {
@@ -46,6 +57,7 @@ export default function DirectorView({ data, userName }) {
       icon: AlertTriangle,
       iconBg: "#4A2C2C",
       emphasized: ps.needingAttention > 0,
+      trend: needDelta,
     },
     {
       value: ps.upcomingEvents || 0,
@@ -67,8 +79,6 @@ export default function DirectorView({ data, userName }) {
 
   return (
     <div className="space-y-8" data-testid="director-mission-control">
-      {/* ═══ ABOVE THE FOLD ═══ */}
-
       {/* 1. PROGRAM OVERVIEW */}
       <section
         className="relative rounded-[10px] overflow-hidden"
@@ -94,6 +104,7 @@ export default function DirectorView({ data, userName }) {
 
         <div style={{ borderTop: "1px solid #363D59", margin: "20px 0 24px 0" }} />
 
+        {/* KPI Row */}
         <div className="flex flex-wrap sm:flex-nowrap">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
@@ -116,7 +127,20 @@ export default function DirectorView({ data, userName }) {
                         {kpi.label}
                       </p>
                     </div>
-                    <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3", marginTop: 4 }}>{kpi.subtitle}</p>
+                    {/* Trend indicator for Need Attention */}
+                    {kpi.trend !== undefined && kpi.trend !== 0 && (
+                      <p data-testid="need-attention-trend" style={{ fontSize: 12, fontWeight: 500, color: kpi.trend > 0 ? "#FF6B6B" : "#30C5BE", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                        {kpi.trend > 0 ? "\u2191" : "\u2193"} {kpi.trend > 0 ? "+" : ""}{kpi.trend} this week
+                      </p>
+                    )}
+                    {kpi.trend !== undefined && kpi.trend === 0 && (
+                      <p style={{ fontSize: 12, fontWeight: 500, color: "#8A92A3", marginTop: 4 }}>
+                        No change this week
+                      </p>
+                    )}
+                    {kpi.trend === undefined && (
+                      <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3", marginTop: 4 }}>{kpi.subtitle}</p>
+                    )}
                   </div>
                   <div className="flex items-center justify-center shrink-0" style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: kpi.iconBg, marginTop: 4 }}>
                     <Icon style={{ width: 18, height: 18, color: kpi.color }} />
@@ -125,6 +149,26 @@ export default function DirectorView({ data, userName }) {
               </div>
             );
           })}
+        </div>
+
+        {/* Program Momentum Indicator */}
+        <div style={{ borderTop: "1px solid #363D59", marginTop: 24, paddingTop: 16 }} data-testid="program-momentum">
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase" }}>
+              Program Momentum
+            </span>
+            <div className="flex items-center gap-1.5">
+              <MomIcon style={{ width: 14, height: 14, color: momConfig.color }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: momConfig.color }}>
+                {momConfig.label}
+              </span>
+            </div>
+            {momentum.engagementDelta !== 0 && (
+              <span style={{ fontSize: 12, color: "#8A92A3" }}>
+                Recruiting engagement {momentum.engagementDelta > 0 ? "+" : ""}{momentum.engagementDelta}% this week
+              </span>
+            )}
+          </div>
         </div>
       </section>
 
@@ -136,8 +180,6 @@ export default function DirectorView({ data, userName }) {
 
       {/* 4. NEEDS ATTENTION */}
       <NeedsAttentionCard items={data.needsAttention || []} />
-
-      {/* ═══ BELOW THE FOLD ═══ */}
 
       {/* 5. COACH HEALTH */}
       <CoachHealthCard coaches={data.coachHealth || []} />

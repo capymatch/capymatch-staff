@@ -4,15 +4,16 @@ import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-function formatBriefLines(text) {
+function formatBullets(text) {
   if (!text) return [];
-  // Split on sentence boundaries (. followed by space + uppercase letter)
-  const sentences = text
+  // Strip any existing bullet/number markers from AI output
+  const cleaned = text
+    .replace(/^[\s]*[-*\u2022\d.]+[\s]*/gm, "")
     .replace(/\.\s+/g, ".\n")
     .split("\n")
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
-  return sentences;
+  return cleaned.slice(0, 4);
 }
 
 export default function AIProgramBrief() {
@@ -41,7 +42,7 @@ export default function AIProgramBrief() {
     }
   };
 
-  const lines = formatBriefLines(text);
+  const bullets = formatBullets(text);
 
   return (
     <section data-testid="ai-program-brief">
@@ -110,14 +111,17 @@ export default function AIProgramBrief() {
           )}
 
           {text && !loading && (
-            <div data-testid="ai-brief-content" className="space-y-3">
-              {lines.map((line, idx) => (
-                <p key={idx} className="text-sm text-slate-600 leading-relaxed">
-                  {line}
-                </p>
-              ))}
+            <div data-testid="ai-brief-content">
+              <ul className="space-y-2">
+                {bullets.map((line, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600 leading-relaxed">
+                    <span className="text-slate-400 shrink-0 mt-px select-none">&bull;</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
               {generatedAt && (
-                <p className="text-[10px] text-slate-300 pt-1">
+                <p className="text-[10px] text-slate-300 mt-3">
                   AI-generated · {new Date(generatedAt).toLocaleTimeString()}
                   {dataBasis && (
                     <span className="ml-1">

@@ -1,12 +1,12 @@
 import { Star, FileText, MessageCircle, AlertCircle, Mail, TrendingUp } from "lucide-react";
 
 const TYPE_ICONS = {
-  interest: { icon: Star, color: "text-amber-500", bg: "bg-amber-50" },
-  note: { icon: FileText, color: "text-violet-500", bg: "bg-violet-50" },
-  response: { icon: MessageCircle, color: "text-blue-500", bg: "bg-blue-50" },
-  inactivity: { icon: AlertCircle, color: "text-red-400", bg: "bg-red-50" },
-  positive: { icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
-  mail: { icon: Mail, color: "text-slate-400", bg: "bg-slate-50" },
+  interest: { icon: Star, color: "text-amber-500", bg: "bg-amber-50", prefix: "" },
+  note: { icon: FileText, color: "text-violet-500", bg: "bg-violet-50", prefix: "" },
+  response: { icon: MessageCircle, color: "text-blue-500", bg: "bg-blue-50", prefix: "" },
+  inactivity: { icon: AlertCircle, color: "text-red-400", bg: "bg-red-50", prefix: "" },
+  positive: { icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50", prefix: "" },
+  mail: { icon: Mail, color: "text-slate-400", bg: "bg-slate-50", prefix: "" },
 };
 
 function detectType(item) {
@@ -14,15 +14,14 @@ function detectType(item) {
   if (desc.includes("interest") || desc.includes("school")) return "interest";
   if (desc.includes("note") || desc.includes("logged")) return "note";
   if (desc.includes("response") || desc.includes("replied")) return "response";
-  if (desc.includes("inactive") || desc.includes("missed") || desc.includes("dropped")) return "inactivity";
+  if (desc.includes("inactive") || desc.includes("missed") || desc.includes("dropped") || desc.includes("no activity")) return "inactivity";
   if (item.sentiment === "positive") return "positive";
   if (item.sentiment === "negative") return "inactivity";
   return "mail";
 }
 
-function shortenText(text) {
+function formatDescription(text) {
   if (!text) return "";
-  // Remove filler words and trim
   return text
     .replace(/^(just |recently |has been |was |is )/i, "")
     .replace(/\s+/g, " ")
@@ -52,8 +51,9 @@ export default function ActivityFeed({ items = [], title = "Recent Activity" }) 
 
   return (
     <section data-testid="activity-feed">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center justify-between mb-4">
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{title}</span>
+        <span className="text-xs text-slate-400">{Math.min(items.length, 6)} most recent</span>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
@@ -66,7 +66,7 @@ export default function ActivityFeed({ items = [], title = "Recent Activity" }) 
             <div
               key={item.id || idx}
               data-testid={`activity-item-${item.id || idx}`}
-              className={`flex items-center gap-3 px-5 py-3 hover:bg-slate-50/40 transition-colors ${
+              className={`flex items-center gap-3.5 px-5 py-3.5 hover:bg-slate-50/40 transition-colors ${
                 idx < Math.min(items.length, 6) - 1 ? "border-b border-gray-50" : ""
               }`}
             >
@@ -74,12 +74,15 @@ export default function ActivityFeed({ items = [], title = "Recent Activity" }) 
                 <Icon className={`w-3.5 h-3.5 ${config.color}`} />
               </div>
 
-              <div className="flex-1 min-w-0 flex items-baseline gap-1.5">
-                <span className="text-xs font-semibold text-slate-700 shrink-0">{item.athleteName}</span>
-                <span className="text-xs text-slate-500 truncate">{shortenText(item.description)}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-[13px] text-slate-700">
+                  <span className="font-semibold">{item.athleteName}</span>
+                  <span className="text-slate-400 mx-1.5">&mdash;</span>
+                  <span className="text-slate-500">{formatDescription(item.description)}</span>
+                </span>
               </div>
 
-              <span className="text-[10px] text-slate-300 font-medium shrink-0">
+              <span className="text-[10px] text-slate-300 font-medium shrink-0 tabular-nums">
                 {getTimeLabel(item.hoursAgo)}
               </span>
             </div>
