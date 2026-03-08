@@ -1,48 +1,14 @@
 import { useState } from "react";
-import { Sparkles, RefreshCw, AlertCircle, Clock, ChevronRight } from "lucide-react";
+import { Sparkles, RefreshCw, AlertCircle } from "lucide-react";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-function parseActions(raw) {
-  if (!raw) return [];
-
-  // Split on numbered patterns: (1), (2), 1., 2., etc.
-  const parts = raw.split(/\(\d+\)\s*|\b\d+\.\s+/).filter((s) => s && s.trim());
-
-  return parts.map((part) => {
-    const trimmed = part.trim().replace(/^\s*[-–—]\s*/, "");
-
-    // Try to extract a time range (e.g. "9:00-10:00 AM:")
-    const timeMatch = trimmed.match(/^(\d{1,2}:\d{2}\s*(?:AM|PM)?\s*[-–]\s*\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[:.]?\s*/i);
-    const time = timeMatch ? timeMatch[1].trim() : null;
-    const body = timeMatch ? trimmed.slice(timeMatch[0].length) : trimmed;
-
-    // Try to split action from reason on " — " or " – "
-    const reasonSplit = body.split(/\s[—–]\s/);
-    const action = reasonSplit[0]?.trim() || body;
-    const reason = reasonSplit.length > 1 ? reasonSplit.slice(1).join(" — ").trim() : null;
-
-    // Extract first sentence as headline, rest as details
-    const sentenceEnd = action.search(/[.:;]\s/);
-    let headline, details;
-    if (sentenceEnd > 20 && sentenceEnd < action.length - 10) {
-      headline = action.slice(0, sentenceEnd + 1).trim();
-      details = action.slice(sentenceEnd + 2).trim();
-    } else {
-      headline = action;
-      details = null;
-    }
-
-    return { time, headline, details, reason };
-  });
-}
-
-export default function AIProgramBrief({ programStatus }) {
+export default function AIProgramBrief() {
   const [text, setText] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [meta, setMeta] = useState(null);
+  const [generatedAt, setGeneratedAt] = useState(null);
 
   const generate = async () => {
     setLoading(true);
@@ -50,17 +16,14 @@ export default function AIProgramBrief({ programStatus }) {
     try {
       const res = await axios.post(`${API}/ai/briefing`, {}, { timeout: 50000 });
       setText(res.data.text);
-      setMeta(res.data);
+      setGeneratedAt(res.data.generated_at);
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      setError(detail || "Unable to generate briefing right now.");
+      setError(err.response?.data?.detail || "Unable to generate briefing right now.");
       setText(null);
     } finally {
       setLoading(false);
     }
   };
-
-  const actions = parseActions(text);
 
   return (
     <section data-testid="ai-program-brief">
@@ -102,7 +65,7 @@ export default function AIProgramBrief({ programStatus }) {
           {loading && (
             <div className="flex items-center gap-3 py-2">
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-500 border-t-transparent" />
-              <span className="text-sm text-slate-400">Analyzing program data...</span>
+              <span className="text-sm text-slate-400">Analyzing program signals...</span>
             </div>
           )}
 
@@ -123,61 +86,11 @@ export default function AIProgramBrief({ programStatus }) {
           )}
 
           {text && !loading && (
-            <div data-testid="ai-brief-content" className="space-y-3">
-              {actions.length > 0 ? (
-                actions.map((item, idx) => (
-                  <div
-                    key={idx}
-                    data-testid={`brief-action-${idx}`}
-                    className="flex gap-4 rounded-xl bg-[#F7FAFC] px-5 py-4"
-                  >
-                    {/* Number badge */}
-                    <div className="shrink-0 mt-0.5">
-                      <span
-                        className="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
-                        style={{ backgroundColor: "#1E213A", color: "#30C5BE" }}
-                      >
-                        {idx + 1}
-                      </span>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      {/* Time badge */}
-                      {item.time && (
-                        <span className="inline-flex items-center gap-1 mb-2 px-2.5 py-1 rounded-md bg-slate-100 text-[11px] font-semibold text-slate-500">
-                          <Clock className="w-3 h-3" />
-                          {item.time}
-                        </span>
-                      )}
-
-                      {/* Headline */}
-                      <p className="text-sm font-semibold text-slate-800 leading-snug">
-                        {item.headline}
-                      </p>
-
-                      {/* Details */}
-                      {item.details && (
-                        <p className="text-[13px] text-slate-500 leading-relaxed mt-1">
-                          {item.details}
-                        </p>
-                      )}
-
-                      {/* Reason / why */}
-                      {item.reason && (
-                        <p className="text-xs text-slate-400 italic mt-2 leading-relaxed">
-                          {item.reason}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-600 leading-relaxed">{text}</p>
-              )}
-
-              {meta?.generated_at && (
-                <p className="text-[10px] text-slate-300 pt-1">
-                  AI-generated · {new Date(meta.generated_at).toLocaleTimeString()}
+            <div data-testid="ai-brief-content">
+              <p className="text-sm text-slate-600 leading-relaxed">{text}</p>
+              {generatedAt && (
+                <p className="text-[10px] text-slate-300 mt-4">
+                  AI-generated · {new Date(generatedAt).toLocaleTimeString()}
                 </p>
               )}
             </div>

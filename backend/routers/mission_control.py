@@ -87,12 +87,12 @@ async def get_mission_control_data(current_user: dict = get_current_user_dep()):
     attention = filter_by_athlete_id(ATHLETES_NEEDING_ATTENTION, current_user)
 
     if role == "director":
-        return _build_director_response(alerts, attention, signals, events)
+        return await _build_director_response(alerts, attention, signals, events)
     else:
         return _build_coach_response(current_user, alerts, attention, signals, events)
 
 
-def _build_director_response(alerts, attention, signals, events):
+async def _build_director_response(alerts, attention, signals, events):
     """Director: program oversight surface."""
     unassigned_ids = get_unassigned_athlete_ids()
     coach_map = get_coach_athlete_map()
@@ -109,11 +109,20 @@ def _build_director_response(alerts, attention, signals, events):
     # Needs attention — max 5, enriched with health
     needs_attention = enrich_with_health(alerts[:5])
 
-    # Upcoming events — next 5
-    upcoming = sorted(events, key=lambda e: e.get("daysAway", 99))[:5]
+    # Upcoming events — next 5, only future
+    upcoming = sorted(
+        [e for e in events if e.get("daysAway", 99) >= 0],
+        key=lambda e: e.get("daysAway", 99),
+    )[:5]
 
-    # Program activity — latest 8 signals
-    activity = sorted(signals, key=lambda s: s.get("hoursAgo", 0))[:8]
+    # Program activity — latest 6 signals
+    activity = sorted(signals, key=lambda s: s.get("hoursAgo", 0))[:6]
+
+    # Coach health — from DB
+    coach_health = await _get_coach_health(coach_map)
+
+    # Recruiting signals — from event notes and advocacy data
+    recruiting_signals = await _get_recruiting_signals()
 
     return {
         "role": "director",
@@ -121,7 +130,98 @@ def _build_director_response(alerts, attention, signals, events):
         "needsAttention": needs_attention,
         "upcomingEvents": upcoming,
         "programActivity": activity,
+        "coachHealth": coach_health,
+        "recruitingSignals": recruiting_signals,
         "programSnapshot": {**PROGRAM_SNAPSHOT, "unassigned_count": len(unassigned_ids)},
+    }
+
+
+async def _get_coach_health(coach_map):
+    """Build coach health summary for Director MC."""
+    coaches = await db.users.find(
+        {"role": "coach"},
+        {"_id": 0, "id": 1, "name": 1, "last_active": 1, "onboarding": 1, "profile": 1},
+    ).to_list(50)
+
+    results = []
+    for coach in coaches:
+        cid = coach["id"]
+        last_active = coach.get("last_active")
+        onboarding = coach.get("onboarding") or {}
+        completed = len(onboarding.get("completed_steps", []))
+        total = 5
+        athlete_count = len(coach_map.get(cid, []))
+
+        # Only show coaches that have athletes assigned or are known seed coaches
+        if athlete_count == 0 and cid not in coach_map:
+            continue
+
+        # Derive status
+        days_inactive = None
+        if last_active:
+            try:
+                from datetime import datetime, timezone
+                last_dt = datetime.fromisoformat(last_active)
+                days_inactive = (datetime.now(timezone.utc) - last_dt).days
+            except Exception:
+                pass
+
+        if days_inactive is not None and days_inactive < 7 and completed >= total:
+            status = "active"
+        elif days_inactive is not None and days_inactive > 7:
+            status = "inactive"
+        elif completed < total:
+            status = "activating"
+        elif days_inactive is None:
+            status = "activating"
+        else:
+            status = "active"
+
+        results.append({
+            "id": cid,
+            "name": coach.get("name", "Unknown"),
+            "status": status,
+            "athleteCount": athlete_count,
+            "daysInactive": days_inactive,
+            "onboardingProgress": f"{completed}/{total}",
+            "profileCompleteness": (coach.get("profile") or {}).get("completeness", 0),
+        })
+
+    return results
+
+
+async def _get_recruiting_signals():
+    """Build recruiting signals summary for Director MC."""
+    from datetime import datetime, timezone, timedelta
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+
+    # Count event notes with school interest this week
+    interest_notes = await db.event_notes.find(
+        {"captured_at": {"$gte": week_ago}, "interest_level": {"$in": ["hot", "warm"]}},
+        {"_id": 0, "interest_level": 1},
+    ).to_list(200)
+
+    hot_count = len([n for n in interest_notes if n.get("interest_level") == "hot"])
+    warm_count = len([n for n in interest_notes if n.get("interest_level") == "warm"])
+
+    # Count recent advocacy recommendations
+    recent_recs = await db.recommendations.find(
+        {"created_at": {"$gte": week_ago}},
+        {"_id": 0},
+    ).to_list(200)
+
+    # Count recent athlete notes (coach engagement)
+    recent_notes = await db.athlete_notes.find(
+        {"created_at": {"$gte": week_ago}},
+        {"_id": 0},
+    ).to_list(200)
+
+    return {
+        "schoolInterests": hot_count + warm_count,
+        "hotInterests": hot_count,
+        "warmInterests": warm_count,
+        "newRecommendations": len(recent_recs),
+        "coachNotes": len(recent_notes),
     }
 
 

@@ -133,9 +133,9 @@ Write a 3-4 sentence recommendation that:
 
 
 async def generate_daily_briefing(data: dict, user_name: str) -> str:
-    """Generate prioritized daily action suggestions for Mission Control."""
+    """Generate a leadership-level program brief for the Director's Mission Control."""
     alerts_text = "\n".join([
-        f"- {a.get('title', 'Alert')}: {a.get('description', '')} (urgency: {a.get('urgency', 'N/A')}, athlete: {a.get('athlete_name', 'N/A')})"
+        f"- {a.get('athlete_name', 'Unknown')}: {a.get('title', '')} (urgency: {a.get('urgency', 'N/A')})"
         for a in data.get("alerts", [])[:8]
     ])
 
@@ -149,7 +149,9 @@ async def generate_daily_briefing(data: dict, user_name: str) -> str:
         for a in data.get("attention", [])[:6]
     ])
 
-    prompt = f"""Generate 2-3 prioritized actions for {user_name}'s day.
+    snapshot = data.get('snapshot', {})
+
+    prompt = f"""Summarize the most important program-level signals for the Director.
 
 Current alerts:
 {alerts_text or 'No active alerts.'}
@@ -160,13 +162,29 @@ Upcoming events:
 Athletes needing attention:
 {attention_text or 'No athletes flagged.'}
 
-Program snapshot: {data.get('snapshot', {})}
+Program snapshot: {snapshot}
 
-Write 2-3 specific, actionable priorities with brief reasoning.
-Format each as: "(N) Action — Reason"
-Be specific with names. Focus on time-sensitive items first."""
+Rules:
+- Maximum 4 sentences
+- No task instructions or step-by-step actions
+- Focus on signals and context
+- Highlight risks first
+- Mention positive progress if relevant
+- Mention upcoming events if they create pressure
 
-    chat = _build_chat("You are a recruiting operations assistant. Write crisp, prioritized daily action lists. Each action should be specific and time-aware. No markdown. Use format: (1) Action — Reason.")
+Structure:
+Sentence 1: top risk or change in program health
+Sentence 2: additional risk or attention area
+Sentence 3: positive progress or recruiting momentum
+Sentence 4: event readiness or operational context"""
+
+    chat = _build_chat(
+        "You are the Director's recruiting operations assistant. "
+        "Write concise leadership briefings that summarize program state. "
+        "Never write task lists, action items, or step-by-step instructions. "
+        "Write calm, strategic, observational prose. "
+        "No markdown formatting. No bullet points. No numbering. Just clear sentences."
+    )
     return await _send_with_retry(chat, UserMessage(text=prompt))
 
 

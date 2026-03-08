@@ -1,7 +1,9 @@
 import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock, AlertTriangle } from "lucide-react";
 import AIProgramBrief from "./AIProgramBrief";
 import NeedsAttentionCard from "./NeedsAttentionCard";
+import CoachHealthCard from "./CoachHealthCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
+import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
 
 function getGreeting() {
@@ -64,29 +66,23 @@ export default function DirectorView({ data, userName }) {
 
   return (
     <div className="space-y-6" data-testid="director-mission-control">
-      {/* ── Hero Card ── */}
+      {/* ═══ ABOVE THE FOLD ═══ */}
+
+      {/* 1. PROGRAM OVERVIEW (hero metrics) */}
       <section
         className="relative rounded-[10px] overflow-hidden"
         style={{ backgroundColor: "#1E213A", padding: "32px" }}
         data-testid="director-hero"
       >
-        {/* Date badge */}
         <div className="absolute" style={{ top: 24, right: 28 }}>
           <span
             className="inline-block font-medium"
-            style={{
-              backgroundColor: "#363D59",
-              color: "#E5E5E5",
-              fontSize: 14,
-              padding: "8px 16px",
-              borderRadius: 6,
-            }}
+            style={{ backgroundColor: "#363D59", color: "#E5E5E5", fontSize: 14, padding: "8px 16px", borderRadius: 6 }}
           >
             {getDateLabel()}
           </span>
         </div>
 
-        {/* Greeting */}
         <h2 style={{ fontSize: 28, fontWeight: 600, color: "#FFFFFF", marginBottom: 2 }}>
           {getGreeting()},{" "}
           <span style={{ color: "#30C5BE" }}>{firstName}</span>
@@ -95,10 +91,8 @@ export default function DirectorView({ data, userName }) {
           Here's your program overview for today
         </p>
 
-        {/* Separator */}
         <div style={{ borderTop: "1px solid #363D59", margin: "20px 0 24px 0" }} />
 
-        {/* KPIs */}
         <div className="flex flex-wrap sm:flex-nowrap">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
@@ -106,26 +100,11 @@ export default function DirectorView({ data, userName }) {
               <div key={kpi.label} className="flex flex-1 min-w-0" style={{ paddingRight: idx < kpis.length - 1 ? 24 : 0, marginRight: idx < kpis.length - 1 ? 24 : 0, borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none" }}>
                 <div className="flex items-start justify-between w-full">
                   <div>
-                    <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>
-                      {kpi.value}
-                    </p>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
-                      {kpi.label}
-                    </p>
-                    <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>
-                      {kpi.subtitle}
-                    </p>
+                    <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>{kpi.value}</p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{kpi.label}</p>
+                    <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>{kpi.subtitle}</p>
                   </div>
-                  <div
-                    className="flex items-center justify-center shrink-0"
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      backgroundColor: kpi.iconBg,
-                      marginTop: 4,
-                    }}
-                  >
+                  <div className="flex items-center justify-center shrink-0" style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: kpi.iconBg, marginTop: 4 }}>
                     <Icon style={{ width: 18, height: 18, color: kpi.color }} />
                   </div>
                 </div>
@@ -135,20 +114,24 @@ export default function DirectorView({ data, userName }) {
         </div>
       </section>
 
-      {/* ── AI Program Brief ── */}
-      <AIProgramBrief programStatus={ps} />
+      {/* 2. AI PROGRAM BRIEF */}
+      <AIProgramBrief />
 
-      {/* ── Needs Attention ── */}
+      {/* 3. NEEDS ATTENTION */}
       <NeedsAttentionCard items={data.needsAttention || []} />
 
-      {/* ── Events + Activity ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <UpcomingEventsCard events={data.upcomingEvents || []} />
-        </div>
-        <div className="lg:col-span-2">
-          <ActivityFeed items={data.programActivity || []} title="Program Activity" />
-        </div>
+      {/* ═══ BELOW THE FOLD ═══ */}
+
+      {/* 4. COACH HEALTH */}
+      <CoachHealthCard coaches={data.coachHealth || []} />
+
+      {/* 5. UPCOMING EVENTS */}
+      <UpcomingEventsCard events={data.upcomingEvents || []} />
+
+      {/* 6. RECRUITING SIGNALS + 7. PROGRAM ACTIVITY (side by side) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecruitingSignalsCard signals={data.recruitingSignals} />
+        <ActivityFeed items={data.programActivity || []} title="Program Activity" />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ShieldAlert, Clock, Zap, AlertTriangle, Users, Target, ChevronRight } from "lucide-react";
+import { ShieldAlert, Clock, Zap, AlertTriangle, Users, Target, Eye, UserPlus, Mail } from "lucide-react";
 
 const CATEGORY_CONFIG = {
   momentum_drop: { icon: Zap, label: "Momentum Drop" },
@@ -11,22 +11,23 @@ const CATEGORY_CONFIG = {
 };
 
 const COLOR_MAP = {
-  red: {
-    border: "border-l-red-500",
-    badge: "bg-red-50 text-red-600",
-    accent: "text-red-600",
-  },
-  amber: {
-    border: "border-l-amber-500",
-    badge: "bg-amber-50 text-amber-600",
-    accent: "text-amber-600",
-  },
-  blue: {
-    border: "border-l-blue-500",
-    badge: "bg-blue-50 text-blue-600",
-    accent: "text-blue-600",
-  },
+  red: { border: "border-l-red-500", badge: "bg-red-50 text-red-600", accent: "text-red-600" },
+  amber: { border: "border-l-amber-500", badge: "bg-amber-50 text-amber-600", accent: "text-amber-600" },
+  blue: { border: "border-l-blue-500", badge: "bg-blue-50 text-blue-600", accent: "text-blue-600" },
 };
+
+function QuickAction({ icon: Icon, label, onClick }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-400 hover:text-slate-600 bg-gray-50 hover:bg-gray-100 transition-colors"
+      data-testid={`quick-action-${label.toLowerCase().replace(/\s/g, "-")}`}
+    >
+      <Icon className="w-3 h-3" />
+      {label}
+    </button>
+  );
+}
 
 export default function NeedsAttentionCard({ items = [] }) {
   const navigate = useNavigate();
@@ -63,44 +64,42 @@ export default function NeedsAttentionCard({ items = [] }) {
           const cat = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.momentum_drop;
           const colors = COLOR_MAP[item.badge_color] || COLOR_MAP.amber;
           const CatIcon = cat.icon;
+          const isUnassigned = item.category === "ownership_gap";
 
           return (
             <div
               key={`${item.athlete_id}_${item.category}_${idx}`}
               data-testid={`attention-item-${item.athlete_id}`}
-              onClick={() => navigate(`/support-pods/${item.athlete_id}`)}
-              className={`flex items-start gap-4 bg-white rounded-xl border border-gray-100 border-l-[3px] ${colors.border} px-5 py-4 cursor-pointer hover:shadow-md transition-all group`}
+              className={`bg-white rounded-xl border border-gray-100 border-l-[3px] ${colors.border} px-5 py-4`}
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${colors.badge}`}>
-                    <CatIcon className="w-3 h-3" />
-                    {cat.label}
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {item.athlete_name} · {item.grad_year}
-                  </span>
-                </div>
-
-                <p className={`text-sm font-semibold leading-snug ${colors.accent}`} data-testid="attention-why">
-                  {item.why_this_surfaced}
-                </p>
-
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-[11px] text-slate-400">{item.what_changed}</span>
-                  {item.pod_health && (
-                    <span className="flex items-center gap-1 text-[11px]">
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        item.pod_health.status === "red" ? "bg-red-500" :
-                        item.pod_health.status === "yellow" ? "bg-amber-400" : "bg-emerald-500"
-                      }`} />
-                      <span className="text-slate-400">{item.pod_health.label}</span>
+              <div className="flex items-start gap-4 cursor-pointer" onClick={() => navigate(`/support-pods/${item.athlete_id}`)}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${colors.badge}`}>
+                      <CatIcon className="w-3 h-3" />
+                      {cat.label}
                     </span>
-                  )}
+                    <span className="text-xs text-slate-400 font-medium">
+                      {item.athlete_name} · {item.grad_year}
+                    </span>
+                  </div>
+
+                  <p className={`text-sm font-semibold leading-snug ${colors.accent}`}>
+                    {item.why_this_surfaced}
+                  </p>
                 </div>
               </div>
 
-              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0 mt-1" />
+              {/* Quick Actions */}
+              <div className="flex items-center gap-2 mt-3 pl-0">
+                <QuickAction icon={Eye} label="View" onClick={() => navigate(`/support-pods/${item.athlete_id}`)} />
+                {isUnassigned && (
+                  <QuickAction icon={UserPlus} label="Assign Coach" onClick={() => navigate("/roster")} />
+                )}
+                {!isUnassigned && (
+                  <QuickAction icon={Mail} label="Nudge" onClick={() => navigate("/roster")} />
+                )}
+              </div>
             </div>
           );
         })}
