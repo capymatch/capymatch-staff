@@ -106,24 +106,33 @@ const STAGE_COLOR = {
 
 function MiniPipeline({ stage }) {
   const activeIdx = PIPELINE.findIndex((p) => p.key === stage);
+  const activeLabel = PIPELINE[activeIdx]?.label || stage;
+  const activeColor = STAGE_COLOR[stage] || "bg-slate-400";
   return (
-    <div className="flex items-center gap-0.5" data-testid="mini-pipeline">
-      {PIPELINE.map((p, idx) => {
-        const isActive = idx === activeIdx;
-        const isPast = idx < activeIdx;
-        const color = isActive ? STAGE_COLOR[p.key] : isPast ? "bg-slate-300" : "bg-slate-100";
-        return (
-          <div key={p.key} className="relative group/pip">
-            <div className={`h-1.5 rounded-full transition-all ${isActive ? "w-5" : "w-2.5"} ${color}`} />
-            {isActive && (
-              <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-slate-500 whitespace-nowrap">
-                {p.label}
-              </span>
-            )}
-          </div>
-        );
-      })}
-    </div>
+    <>
+      {/* Desktop: full dots */}
+      <div className="hidden sm:flex items-center gap-0.5" data-testid="mini-pipeline">
+        {PIPELINE.map((p, idx) => {
+          const isActive = idx === activeIdx;
+          const isPast = idx < activeIdx;
+          const color = isActive ? STAGE_COLOR[p.key] : isPast ? "bg-slate-300" : "bg-slate-100";
+          return (
+            <div key={p.key} className="relative">
+              <div className={`h-1.5 rounded-full transition-all ${isActive ? "w-5" : "w-2.5"} ${color}`} />
+              {isActive && (
+                <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-slate-500 whitespace-nowrap">
+                  {p.label}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {/* Mobile: compact badge */}
+      <span className={`sm:hidden inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white ${activeColor}`}>
+        {activeLabel}
+      </span>
+    </>
   );
 }
 
@@ -155,15 +164,15 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
 
   return (
     <div className={`group ${rowBorder} transition-colors hover:bg-slate-50/70`} data-testid={`roster-athlete-${athlete.id}`}>
-      <div className="flex items-start gap-3 px-4 py-3">
+      <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-3">
         {/* Checkbox */}
         <button onClick={(e) => { e.stopPropagation(); onToggle(athlete.id); }}
           className="mt-1 shrink-0 text-slate-300 hover:text-slate-500 transition-colors" data-testid={`select-${athlete.id}`}>
           {selected ? <CheckSquare className="w-4 h-4 text-slate-700" /> : <Square className="w-4 h-4" />}
         </button>
 
-        {/* Avatar */}
-        <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+        {/* Avatar — hidden on mobile */}
+        <div className="w-8 h-8 bg-slate-100 rounded-full items-center justify-center shrink-0 mt-0.5 hidden sm:flex">
           <span className="text-[10px] font-bold text-slate-500">
             {athlete.name?.split(" ").map((w) => w[0]).join("").slice(0, 2)}
           </span>
@@ -172,7 +181,7 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Line 1: Name */}
-          <p className="text-sm font-semibold text-gray-900 leading-snug">{athlete.name}</p>
+          <p className="text-[13px] sm:text-sm font-semibold text-gray-900 leading-snug">{athlete.name}</p>
 
           {/* Line 2: Position • Grad Year */}
           <p className="text-[11px] text-slate-400 mt-0.5">
@@ -180,22 +189,22 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
           </p>
 
           {/* Line 3: Momentum | Pipeline */}
-          <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-2 sm:gap-3 mt-1.5">
             <MomentumLabel label={athlete.momentum_label} />
-            <span className="text-slate-200">|</span>
+            <span className="text-slate-200 hidden sm:inline">|</span>
             <MiniPipeline stage={athlete.recruiting_stage} />
           </div>
 
           {/* Line 4: Coach • Last Activity */}
           <p className="text-[11px] text-slate-400 mt-1">
-            {athlete.coach_name || "Unassigned"} <span className="mx-1">&middot;</span> Last activity{" "}
-            {athlete.days_since_activity == null ? "none" :
-              athlete.days_since_activity === 0 ? "today" : `${athlete.days_since_activity}d ago`}
+            {athlete.coach_name || "Unassigned"} <span className="mx-1">&middot;</span>{" "}
+            {athlete.days_since_activity == null ? "No activity" :
+              athlete.days_since_activity === 0 ? "Active today" : `${athlete.days_since_activity}d ago`}
           </p>
 
           {/* Warnings below */}
           {hasRisk && (
-            <div className="flex items-center gap-1.5 mt-1.5" data-testid="inline-warnings">
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5" data-testid="inline-warnings">
               {athlete.risk_alerts.slice(0, 3).map((alert, i) => {
                 const isRed = alert.badge_color === "red";
                 return (
@@ -206,20 +215,36 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
               })}
             </div>
           )}
+
+          {/* Mobile-only actions row */}
+          <div className="flex items-center gap-1.5 mt-2 sm:hidden">
+            <button onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md" data-testid={`open-profile-${athlete.id}`}>
+              <ExternalLink className="w-3 h-3" />Open
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); onReassign(athlete); }}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md" data-testid={`reassign-btn-${athlete.id}`}>
+              <UserPlus className="w-3 h-3" />Assign
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md" data-testid={`notes-btn-${athlete.id}`}>
+              <FileText className="w-3 h-3" />Notes
+            </button>
+          </div>
         </div>
 
-        {/* Quick actions */}
-        <div className="flex items-center gap-1 shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Desktop-only quick actions (hover) */}
+        <div className="hidden sm:flex items-center gap-1 shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors" data-testid={`open-profile-${athlete.id}`}>
+            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors">
             <ExternalLink className="w-3 h-3" />Open
           </button>
           <button onClick={(e) => { e.stopPropagation(); onReassign(athlete); }}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors" data-testid={`reassign-btn-${athlete.id}`}>
+            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors">
             <UserPlus className="w-3 h-3" />Assign
           </button>
           <button onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors" data-testid={`notes-btn-${athlete.id}`}>
+            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors">
             <FileText className="w-3 h-3" />Notes
           </button>
         </div>
@@ -282,20 +307,20 @@ function GroupCard({ title, subtitle, count, athletes, coaches, onReload, naviga
 function BulkActionBar({ count, onClear, onAssign, onReminder, onNote }) {
   if (count === 0) return null;
   return (
-    <div className="sticky top-0 z-30 bg-slate-900 text-white rounded-xl px-5 py-3 mb-4 flex items-center justify-between shadow-lg" data-testid="bulk-action-bar">
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold">{count} selected</span>
+    <div className="sticky top-0 z-30 bg-slate-900 text-white rounded-xl px-3 sm:px-5 py-3 mb-4 flex items-center justify-between shadow-lg" data-testid="bulk-action-bar">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <span className="text-xs sm:text-sm font-semibold">{count} selected</span>
         <button onClick={onClear} className="text-slate-400 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
       </div>
-      <div className="flex items-center gap-2">
-        <button onClick={onAssign} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors" data-testid="bulk-assign">
-          <UserPlus className="w-3 h-3" />Assign Coach
+      <div className="flex items-center gap-1 sm:gap-2">
+        <button onClick={onAssign} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors" data-testid="bulk-assign">
+          <UserPlus className="w-3 h-3" /><span className="hidden sm:inline">Assign Coach</span><span className="sm:hidden">Assign</span>
         </button>
-        <button onClick={onReminder} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors" data-testid="bulk-reminder">
-          <Bell className="w-3 h-3" />Send Reminder
+        <button onClick={onReminder} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors" data-testid="bulk-reminder">
+          <Bell className="w-3 h-3" /><span className="hidden sm:inline">Send Reminder</span><span className="sm:hidden">Remind</span>
         </button>
-        <button onClick={onNote} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors" data-testid="bulk-note">
-          <FileText className="w-3 h-3" />Add Note
+        <button onClick={onNote} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors" data-testid="bulk-note">
+          <FileText className="w-3 h-3" /><span className="hidden sm:inline">Add Note</span><span className="sm:hidden">Note</span>
         </button>
       </div>
     </div>
@@ -353,15 +378,15 @@ const VIEWS = [
 
 function ViewSwitcher({ active, onChange }) {
   return (
-    <div className="flex items-center bg-slate-100 rounded-lg p-0.5" data-testid="view-switcher">
+    <div className="flex items-center bg-slate-100 rounded-lg p-0.5 overflow-x-auto" data-testid="view-switcher">
       {VIEWS.map((v) => {
         const Icon = v.icon;
         const isActive = active === v.key;
         return (
           <button key={v.key} onClick={() => onChange(v.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap ${isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
             data-testid={`view-tab-${v.key}`}>
-            <Icon className="w-3.5 h-3.5" />{v.label}
+            <Icon className="w-3.5 h-3.5" /><span className="hidden sm:inline">{v.label}</span><span className="sm:hidden">{v.key === "team" ? "Team" : v.key === "coach" ? "Coach" : "Age"}</span>
           </button>
         );
       })}
@@ -371,10 +396,10 @@ function ViewSwitcher({ active, onChange }) {
 
 function SearchBar({ value, onChange }) {
   return (
-    <div className="relative">
+    <div className="relative flex-1 sm:flex-none">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder="Search athletes..."
-        className="w-56 pl-9 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-slate-300 focus:outline-none" data-testid="roster-search" />
+      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder="Search..."
+        className="w-full sm:w-56 pl-9 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:ring-1 focus:ring-slate-300 focus:outline-none" data-testid="roster-search" />
     </div>
   );
 }
