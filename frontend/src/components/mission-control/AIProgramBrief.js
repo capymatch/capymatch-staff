@@ -52,14 +52,20 @@ export default function AIProgramBrief() {
         {/* Content */}
         <div className="px-6 py-5">
           {!text && !loading && !error && (
-            <button
-              onClick={generate}
-              className="flex items-center gap-2.5 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-all active:scale-[0.98]"
-              data-testid="ai-brief-generate"
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              Generate Program Brief
-            </button>
+            <div data-testid="ai-brief-empty-state">
+              <p className="text-sm text-slate-400 leading-relaxed mb-4">
+                Generate a strategic overview of the program including athlete momentum,
+                coach activity, recruiting signals, and event readiness.
+              </p>
+              <button
+                onClick={generate}
+                className="flex items-center gap-2.5 px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-all active:scale-[0.98]"
+                data-testid="ai-brief-generate"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                Generate Brief
+              </button>
+            </div>
           )}
 
           {loading && (

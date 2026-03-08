@@ -152,8 +152,13 @@ async def _get_coach_health(coach_map):
         total = 5
         athlete_count = len(coach_map.get(cid, []))
 
-        # Only show coaches that have athletes assigned or are known seed coaches
-        if athlete_count == 0 and cid not in coach_map:
+        # Only show coaches that have athletes assigned
+        if athlete_count == 0:
+            continue
+
+        # Skip obvious test accounts
+        name_lower = (coach.get("name") or "").lower()
+        if "test" in name_lower or "e2e" in name_lower:
             continue
 
         # Derive status

@@ -42,9 +42,10 @@ export default function DirectorView({ data, userName }) {
       value: ps.needingAttention || 0,
       label: "NEED ATTENTION",
       subtitle: "Require intervention",
-      color: ps.needingAttention > 0 ? "#FFC649" : "#30C5BE",
+      color: "#FF6B6B",
       icon: AlertTriangle,
-      iconBg: ps.needingAttention > 0 ? "#4A3C36" : "#363D59",
+      iconBg: "#4A2C2C",
+      emphasized: ps.needingAttention > 0,
     },
     {
       value: ps.upcomingEvents || 0,
@@ -65,10 +66,10 @@ export default function DirectorView({ data, userName }) {
   ];
 
   return (
-    <div className="space-y-6" data-testid="director-mission-control">
+    <div className="space-y-8" data-testid="director-mission-control">
       {/* ═══ ABOVE THE FOLD ═══ */}
 
-      {/* 1. PROGRAM OVERVIEW (hero metrics) */}
+      {/* 1. PROGRAM OVERVIEW */}
       <section
         className="relative rounded-[10px] overflow-hidden"
         style={{ backgroundColor: "#1E213A", padding: "32px" }}
@@ -100,9 +101,22 @@ export default function DirectorView({ data, userName }) {
               <div key={kpi.label} className="flex flex-1 min-w-0" style={{ paddingRight: idx < kpis.length - 1 ? 24 : 0, marginRight: idx < kpis.length - 1 ? 24 : 0, borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none" }}>
                 <div className="flex items-start justify-between w-full">
                   <div>
-                    <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>{kpi.value}</p>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>{kpi.label}</p>
-                    <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>{kpi.subtitle}</p>
+                    <p style={{
+                      fontSize: kpi.emphasized ? 42 : 36,
+                      fontWeight: 700,
+                      color: kpi.color,
+                      lineHeight: 1,
+                      marginBottom: 8,
+                    }}>
+                      {kpi.value}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      {kpi.emphasized && <AlertTriangle style={{ width: 12, height: 12, color: kpi.color }} />}
+                      <p style={{ fontSize: 12, fontWeight: 700, color: kpi.emphasized ? kpi.color : "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 0 }}>
+                        {kpi.label}
+                      </p>
+                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3", marginTop: 4 }}>{kpi.subtitle}</p>
                   </div>
                   <div className="flex items-center justify-center shrink-0" style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: kpi.iconBg, marginTop: 4 }}>
                     <Icon style={{ width: 18, height: 18, color: kpi.color }} />
@@ -128,8 +142,8 @@ export default function DirectorView({ data, userName }) {
       {/* 5. UPCOMING EVENTS */}
       <UpcomingEventsCard events={data.upcomingEvents || []} />
 
-      {/* 6. RECRUITING SIGNALS + 7. PROGRAM ACTIVITY (side by side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 6 + 7. RECRUITING SIGNALS + ACTIVITY */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <RecruitingSignalsCard signals={data.recruitingSignals} />
         <ActivityFeed items={data.programActivity || []} title="Program Activity" />
       </div>

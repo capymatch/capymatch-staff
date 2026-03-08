@@ -13,7 +13,21 @@ function getReadiness(event) {
   if (!checklist.length) return null;
   const done = checklist.filter((c) => c.completed).length;
   const pct = Math.round((done / checklist.length) * 100);
-  return { pct, done, total: checklist.length };
+  return pct;
+}
+
+function ProgressBar({ pct }) {
+  const color = pct < 50 ? "bg-amber-400" : pct < 80 ? "bg-blue-400" : "bg-emerald-500";
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      <div className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className={`text-[11px] font-semibold ${pct < 50 ? "text-amber-500" : pct < 80 ? "text-blue-500" : "text-emerald-500"}`}>
+        {pct}%
+      </span>
+    </div>
+  );
 }
 
 export default function UpcomingEventsCard({ events = [] }) {
@@ -40,19 +54,19 @@ export default function UpcomingEventsCard({ events = [] }) {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
-        {events.map((event) => {
+        {events.map((event, idx) => {
           const readiness = getReadiness(event);
           const timeLabel = getDateLabel(event.daysAway);
           const urgent = event.daysAway <= 2;
+          const isFirst = idx === 0;
 
           return (
             <div
               key={event.id}
               data-testid={`event-row-${event.id}`}
               onClick={() => navigate(`/events/${event.id}/prep`)}
-              className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group"
+              className={`flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group ${isFirst ? "bg-slate-50/40" : ""}`}
             >
-              {/* Event info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-900 transition-colors truncate">
@@ -69,13 +83,10 @@ export default function UpcomingEventsCard({ events = [] }) {
                   </span>
                   <span>{event.athleteCount || event.athlete_ids?.length || 0} athletes</span>
                   <span>{event.expectedSchools} schools</span>
-                  {readiness && (
-                    <span className={readiness.pct < 50 ? "text-amber-500 font-medium" : "text-emerald-500"}>
-                      {readiness.pct}% ready
-                    </span>
-                  )}
                 </div>
               </div>
+
+              {readiness != null && <ProgressBar pct={readiness} />}
 
               <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
             </div>

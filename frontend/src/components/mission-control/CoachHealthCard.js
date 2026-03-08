@@ -2,10 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Users, ChevronRight } from "lucide-react";
 
 const STATUS_STYLES = {
-  active: { label: "Active", dot: "bg-emerald-500", text: "text-emerald-600" },
-  activating: { label: "Activating", dot: "bg-blue-400", text: "text-blue-600" },
-  inactive: { label: "Inactive", dot: "bg-red-500", text: "text-red-600" },
-  needs_support: { label: "Needs Support", dot: "bg-amber-500", text: "text-amber-600" },
+  active: { label: "Active", dot: "bg-emerald-500", bg: "bg-emerald-50", text: "text-emerald-700" },
+  activating: { label: "Activating", dot: "bg-amber-400", bg: "bg-amber-50", text: "text-amber-700" },
+  inactive: { label: "Inactive", dot: "bg-red-500", bg: "bg-red-50", text: "text-red-700" },
 };
 
 export default function CoachHealthCard({ coaches = [] }) {
@@ -38,49 +37,50 @@ export default function CoachHealthCard({ coaches = [] }) {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
-        {coaches.map((coach) => {
-          const style = STATUS_STYLES[coach.status] || STATUS_STYLES.activating;
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-100">
+          {coaches.map((coach) => {
+            const style = STATUS_STYLES[coach.status] || STATUS_STYLES.activating;
 
-          return (
-            <div
-              key={coach.id}
-              data-testid={`coach-health-${coach.id}`}
-              className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50/60 transition-colors group"
-            >
-              {/* Status dot */}
-              <span className={`w-2 h-2 rounded-full shrink-0 ${style.dot}`} />
+            return (
+              <div
+                key={coach.id}
+                data-testid={`coach-health-${coach.id}`}
+                className="bg-white px-5 py-4 hover:bg-slate-50/60 transition-colors cursor-pointer group"
+                onClick={() => navigate("/roster")}
+              >
+                {/* Name */}
+                <p className="text-sm font-semibold text-slate-800 mb-2 group-hover:text-slate-900 transition-colors">
+                  {coach.name}
+                </p>
 
-              {/* Name + status */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-700">{coach.name}</span>
-                  <span className={`text-[11px] font-semibold ${style.text}`}>{style.label}</span>
-                </div>
-              </div>
-
-              {/* Meta */}
-              <div className="flex items-center gap-4 text-[11px] text-slate-400 shrink-0">
-                {coach.athleteCount > 0 && (
-                  <span>{coach.athleteCount} athletes</span>
-                )}
-                {coach.daysInactive != null && coach.daysInactive > 0 && (
-                  <span className={coach.daysInactive > 7 ? "text-red-400" : ""}>
-                    {coach.daysInactive === 1 ? "1 day ago" : `${coach.daysInactive} days ago`}
+                {/* Status badge */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold ${style.bg} ${style.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                    {style.label}
                   </span>
-                )}
-                {coach.daysInactive === 0 && (
-                  <span className="text-emerald-400">Active today</span>
-                )}
-                {coach.daysInactive == null && (
-                  <span className="text-slate-300">No activity</span>
-                )}
-              </div>
+                </div>
 
-              <ChevronRight className="w-4 h-4 text-slate-200 group-hover:text-slate-400 transition-colors shrink-0" />
-            </div>
-          );
-        })}
+                {/* Meta */}
+                <p className="text-[12px] text-slate-400">
+                  {coach.athleteCount} athlete{coach.athleteCount !== 1 ? "s" : ""} assigned
+                  {coach.daysInactive != null && coach.daysInactive > 0 && (
+                    <span className={coach.daysInactive > 7 ? " text-red-400" : ""}>
+                      {" "}· Last active {coach.daysInactive}d ago
+                    </span>
+                  )}
+                  {coach.daysInactive === 0 && (
+                    <span className="text-emerald-500"> · Active today</span>
+                  )}
+                  {coach.daysInactive == null && (
+                    <span className="text-slate-300"> · No activity yet</span>
+                  )}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
