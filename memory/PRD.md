@@ -62,9 +62,13 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - **Team View**: Groups by team (U16 Elite, U17 Premier, U18 Academy) with coach names
 - **Coach View**: Groups by assigned coach
 - **Age Group View**: Groups by graduation year (Class of 2025/2026/2027)
-- **Athlete rows**: Name, momentum badge (score+trend), stage badge, position, grad year, coach, last activity
+- **Recruiting Intelligence (2026-03-08):**
+  - **Momentum indicator**: Strong (green) / Stable (gray) / Declining (red) — computed from score, trend, activity
+  - **7-stage pipeline**: Prospect → Contacted → Responded → Talking → Visit → Offer → Committed — with colored dots and mini progress bars
+  - **Inline risk alerts**: Amber/red warning badges on athlete rows from decision engine (12 athletes flagged). Tinted row backgrounds for at-risk athletes.
+- **Athlete rows**: Name, momentum badge, stage badge, risk alert, position, grad year, coach, last activity
 - **Quick actions on hover**: Open Profile, Assign Coach, Notes
-- **Needs Attention banner**: Amber section showing 12 flagged athletes with expand/collapse
+- **Needs Attention banner**: Amber section showing flagged athletes with expand/collapse
 - **Search**: Filters across name, position, team
 - **Reassign modal**: Select new coach + optional reason
 
