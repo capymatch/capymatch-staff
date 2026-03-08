@@ -42,6 +42,17 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 7. **Program Activity:** Typed icons (star=interest, file=note, message=response, alert=inactivity), max 6 items, shortened text
 8. **Section spacing:** space-y-8 for calmer layout
 
+### AI Brief Data Alignment Fix (2026-03-08)
+- **Root cause:** AI Program Brief was fed different data than what the dashboard displayed
+- **Fixes applied:**
+  1. Needs Attention card now uses `ATHLETES_NEEDING_ATTENTION` (matching KPI count) instead of `PRIORITY_ALERTS` — shows top 8 items
+  2. AI briefing endpoint now filters to future events only (same as dashboard) and uses same attention data
+  3. AI prompt explicitly instructs model to only reference provided data
+  4. Decision engine `detect_deadline_proximity` now skips past events (daysAway < 0)
+  5. Events KPI now counts only future events (0 <= daysAway <= 14)
+  6. Cleaned test artifacts (TEST_REFACTOR, TEST_Phase2) from MongoDB
+  7. Added data source transparency footer to AI Brief card ("Based on X flagged athletes, Y upcoming events")
+
 ### Coach Mission Control (2026-03-08)
 - Today's Actions (AI hero), My Roster, Upcoming Events, Recent Activity
 - Unchanged by director refinements
