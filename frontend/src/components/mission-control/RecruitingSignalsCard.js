@@ -47,7 +47,7 @@ export default function RecruitingSignalsCard({ signals }) {
 
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
         {hasSignals ? (
-          <div className="grid grid-cols-3 divide-x divide-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
             {items.map((item, idx) => {
               const arrowColor = trendColor[item.trend] || trendColor.flat;
               const arrow = trendArrow[item.trend] || "\u2192";

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -29,9 +29,16 @@ export default function Sidebar() {
 
   const isActive = (path) => location.pathname.startsWith(path);
 
+  const handleNav = (path) => {
+    navigate(path);
+    onClose?.();
+  };
+
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 w-[220px] bg-white border-r border-gray-100 flex flex-col z-40"
+      className={`fixed left-0 top-0 bottom-0 w-[220px] bg-white border-r border-gray-100 flex flex-col z-50 transition-transform duration-200 ${
+        open ? "translate-x-0" : "-translate-x-full"
+      } lg:translate-x-0`}
       data-testid="sidebar"
     >
       {/* Logo */}
@@ -51,7 +58,7 @@ export default function Sidebar() {
             <button
               key={item.id}
               data-testid={`nav-${item.id}`}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNav(item.path)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 active
                   ? "bg-emerald-50 text-emerald-700"

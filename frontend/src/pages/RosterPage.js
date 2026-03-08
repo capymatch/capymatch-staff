@@ -474,7 +474,7 @@ function RosterPage() {
   return (
     <div data-testid="roster-page">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold text-gray-900" data-testid="roster-title">Roster</h1>
           {data?.summary && (

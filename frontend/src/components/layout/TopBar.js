@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Moon, LogOut, User } from "lucide-react";
+import { Bell, Moon, LogOut, User, Menu } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/AuthContext";
 
-export default function TopBar({ title, icon: Icon }) {
+export default function TopBar({ title, icon: Icon, onMenuToggle }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,17 +29,24 @@ export default function TopBar({ title, icon: Icon }) {
 
   return (
     <header
-      className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6"
+      className="h-14 sm:h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6"
       data-testid="topbar"
     >
-      {/* Left: Page title */}
+      {/* Left: Hamburger + title */}
       <div className="flex items-center gap-2.5">
-        {Icon && <Icon className="w-5 h-5 text-slate-400" />}
-        <h1 className="text-lg font-semibold text-slate-800 tracking-tight">{title || "Dashboard"}</h1>
+        <button
+          onClick={onMenuToggle}
+          className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors lg:hidden"
+          data-testid="mobile-menu-toggle"
+        >
+          <Menu className="w-5 h-5 text-slate-500" />
+        </button>
+        {Icon && <Icon className="w-5 h-5 text-slate-400 hidden sm:block" />}
+        <h1 className="text-base sm:text-lg font-semibold text-slate-800 tracking-tight">{title || "Dashboard"}</h1>
       </div>
 
       {/* Right: Actions + Profile */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         <button
           className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors"
           data-testid="notifications-button"
@@ -48,21 +55,20 @@ export default function TopBar({ title, icon: Icon }) {
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
         </button>
 
-        <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors" data-testid="theme-toggle">
+        <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors hidden sm:block" data-testid="theme-toggle">
           <Moon className="w-[18px] h-[18px] text-slate-400" />
         </button>
 
-        {/* User menu */}
         <div className="relative" data-testid="user-profile-area">
           <button
             onClick={() => setMenuOpen((p) => !p)}
-            className="flex items-center gap-2.5 pl-2 pr-1 py-1 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 pl-1 pr-1 py-1 rounded-lg hover:bg-gray-50 transition-colors"
             data-testid="user-menu-trigger"
           >
             <Avatar className="w-8 h-8">
               <AvatarFallback className="text-[11px] bg-slate-800 text-white font-semibold">{initials}</AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium text-slate-700" data-testid="user-display-name">
+            <span className="text-sm font-medium text-slate-700 hidden sm:inline" data-testid="user-display-name">
               {user?.name?.split(" ")[0] || "User"}
             </span>
           </button>

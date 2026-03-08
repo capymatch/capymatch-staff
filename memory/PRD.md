@@ -57,7 +57,14 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Today's Actions (AI hero), My Roster, Upcoming Events, Recent Activity
 - Unchanged by director refinements
 
-### Roster Page — Recruiting Operations Hub (2026-03-08)
+### Mobile Responsiveness (2026-03-08)
+- **Sidebar**: Hidden on mobile (`-translate-x-full`), slides in as overlay via hamburger menu with dark backdrop
+- **TopBar**: Hamburger menu button (`lg:hidden`), responsive padding, name hidden on small screens
+- **AppLayout**: `lg:ml-[220px]` only on desktop, responsive padding (`px-4 py-4 sm:px-6 sm:py-6`)
+- **Director Hero KPIs**: 2-column grid on mobile, 3-column on tablet, flex row on desktop. Icon circles hidden on mobile.
+- **Recruiting Signals**: Stacked vertically on mobile, 3-column on desktop
+- **Coach Health**: Already responsive (1/2/3 columns)
+- **Roster header**: Stacks vertically on mobile (search + view switcher below title)
 - **Three view modes** via tab switcher: Team View (default), Coach View, Age Group View
 - **Team View**: Groups by team (U16 Elite, U17 Premier, U18 Academy) with coach names
 - **Coach View**: Groups by assigned coach
