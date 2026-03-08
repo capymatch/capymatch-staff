@@ -153,19 +153,21 @@ async def generate_daily_briefing(data: dict, user_name: str) -> str:
 
     prompt = f"""Summarize the most important program-level signals for the Director.
 
-Current alerts:
-{alerts_text or 'No active alerts.'}
+Current athletes needing attention ({len(data.get('alerts', []))} flagged):
+{alerts_text or 'No athletes flagged.'}
 
-Upcoming events:
+Upcoming events (next 14 days):
 {events_text or 'No upcoming events.'}
 
-Athletes needing attention:
+Additional athletes needing attention:
 {attention_text or 'No athletes flagged.'}
 
 Program snapshot: {snapshot}
 
 Rules:
 - Maximum 4 sentences
+- ONLY reference athletes, events, and numbers that appear in the data above
+- Do NOT invent names, events, or statistics not present in the data
 - No task instructions or step-by-step actions
 - Focus on signals and context
 - Highlight risks first

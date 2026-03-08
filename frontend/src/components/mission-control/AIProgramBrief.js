@@ -20,6 +20,7 @@ export default function AIProgramBrief() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [generatedAt, setGeneratedAt] = useState(null);
+  const [dataBasis, setDataBasis] = useState(null);
 
   const generate = async () => {
     setLoading(true);
@@ -28,6 +29,10 @@ export default function AIProgramBrief() {
       const res = await axios.post(`${API}/ai/briefing`, {}, { timeout: 50000 });
       setText(res.data.text);
       setGeneratedAt(res.data.generated_at);
+      setDataBasis({
+        alerts: res.data.alerts_count || 0,
+        events: res.data.events_count || 0,
+      });
     } catch (err) {
       setError(err.response?.data?.detail || "Unable to generate briefing right now.");
       setText(null);
@@ -114,6 +119,11 @@ export default function AIProgramBrief() {
               {generatedAt && (
                 <p className="text-[10px] text-slate-300 pt-1">
                   AI-generated · {new Date(generatedAt).toLocaleTimeString()}
+                  {dataBasis && (
+                    <span className="ml-1">
+                      · Based on {dataBasis.alerts} flagged athlete{dataBasis.alerts !== 1 ? "s" : ""}, {dataBasis.events} upcoming event{dataBasis.events !== 1 ? "s" : ""}
+                    </span>
+                  )}
                 </p>
               )}
             </div>

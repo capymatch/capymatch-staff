@@ -185,6 +185,8 @@ def detect_deadline_proximity(athlete: Dict, upcoming_events: List[Dict]) -> Dic
         return None
 
     for event in upcoming_events:
+        if event.get('daysAway', 99) < 0:
+            continue  # Skip past events
         if event['daysAway'] <= 2 and event['prepStatus'] == 'not_started':
             # Only fire for ~25% of eligible athletes (simulates not all athletes attend every event)
             if random.random() < 0.25:

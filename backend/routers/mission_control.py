@@ -102,12 +102,12 @@ async def _build_director_response(alerts, attention, signals, events):
         "totalAthletes": len(ATHLETES),
         "activeCoaches": len(coach_map),
         "unassignedCount": len(unassigned_ids),
-        "upcomingEvents": len([e for e in events if e.get("daysAway", 99) <= 14]),
+        "upcomingEvents": len([e for e in events if 0 <= e.get("daysAway", 99) <= 14]),
         "needingAttention": len(attention),
     }
 
-    # Needs attention — max 5, enriched with health
-    needs_attention = enrich_with_health(alerts[:5])
+    # Needs attention — use ATHLETES_NEEDING_ATTENTION (matches KPI count), top 8
+    needs_attention = enrich_with_health(attention[:8])
 
     # Upcoming events — next 5, only future
     upcoming = sorted(

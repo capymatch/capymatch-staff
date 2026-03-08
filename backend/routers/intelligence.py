@@ -139,10 +139,19 @@ async def advocacy_draft(
 
 @router.post("/ai/briefing")
 async def daily_briefing(current_user: dict = get_current_user_dep()):
-    """Generate prioritized daily actions for Mission Control."""
-    alerts = filter_by_athlete_id(PRIORITY_ALERTS, current_user)
+    """Generate prioritized daily actions for Mission Control.
+
+    Uses the SAME data filters as the director's dashboard to ensure
+    the AI brief is consistent with what the user sees on screen.
+    """
     attention = filter_by_athlete_id(ATHLETES_NEEDING_ATTENTION, current_user)
     events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
+
+    # Filter to future events only — same as dashboard
+    upcoming_events = sorted(
+        [e for e in events if e.get("daysAway", 99) >= 0],
+        key=lambda e: e.get("daysAway", 99),
+    )[:5]
 
     if current_user["role"] == "director":
         snapshot = PROGRAM_SNAPSHOT
@@ -151,16 +160,15 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
         my_athletes = [a for a in ATHLETES if a["id"] in visible]
         snapshot = get_program_snapshot(my_athletes)
 
-    # Enrich alerts and attention with athlete names
+    # Enrich attention items with athlete names
     athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in ATHLETES}
-    for a in alerts:
-        a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
     for a in attention:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
+    # Use attention items (same source as dashboard "Needs Attention" section)
     data = {
-        "alerts": alerts,
-        "events": events,
+        "alerts": attention[:8],
+        "events": upcoming_events,
         "attention": attention,
         "snapshot": snapshot,
     }
@@ -173,8 +181,8 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
     return {
         "text": text,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "alerts_count": len(alerts),
-        "events_count": len(events),
+        "alerts_count": len(attention),
+        "events_count": len(upcoming_events),
     }
 
 
