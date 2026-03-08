@@ -62,10 +62,13 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - **Team View**: Groups by team (U16 Elite, U17 Premier, U18 Academy) with coach names
 - **Coach View**: Groups by assigned coach
 - **Age Group View**: Groups by graduation year (Class of 2025/2026/2027)
-- **Recruiting Intelligence (2026-03-08):**
-  - **Momentum indicator**: Strong (green) / Stable (gray) / Declining (red) — computed from score, trend, activity
-  - **7-stage pipeline**: Prospect → Contacted → Responded → Talking → Visit → Offer → Committed — with colored dots and mini progress bars
-  - **Inline risk alerts**: Amber/red warning badges on athlete rows from decision engine (12 athletes flagged). Tinted row backgrounds for at-risk athletes.
+- **UI Refinements (2026-03-08):**
+  - **4-line athlete row**: Name → Position · GradYear → Momentum | Pipeline → Coach · Last Activity. Warnings below.
+  - **Mini pipeline indicator**: 7-stage dots (Prospect→Contacted→Responded→Talking→Visit→Offer→Committed), active stage wider with label
+  - **Shortened warning labels**: Inactive, Missing Docs, No Owner, Follow-Up, At Risk, Momentum Drop, Disengaged
+  - **Stronger momentum colors**: Green=Strong, Amber=Stable, Red=Declining
+  - **Bulk actions**: Checkboxes + sticky action bar (Assign Coach, Send Reminder, Add Note)
+  - **AI Roster Insights panel**: Computed insights above roster (strong interest count, declining momentum, missing docs, no ownership)
 - **Athlete rows**: Name, momentum badge, stage badge, risk alert, position, grad year, coach, last activity
 - **Quick actions on hover**: Open Profile, Assign Coach, Notes
 - **Needs Attention banner**: Amber section showing flagged athletes with expand/collapse
