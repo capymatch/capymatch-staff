@@ -171,10 +171,12 @@ async def _get_coach_health(coach_map):
             except Exception:
                 pass
 
-        if days_inactive is not None and days_inactive < 7 and completed >= total:
+        if days_inactive is not None and days_inactive < 3 and completed >= total:
             status = "active"
         elif days_inactive is not None and days_inactive > 7:
             status = "inactive"
+        elif days_inactive is not None and 3 <= days_inactive <= 7:
+            status = "needs_support"
         elif completed < total:
             status = "activating"
         elif days_inactive is None:
@@ -182,13 +184,23 @@ async def _get_coach_health(coach_map):
         else:
             status = "active"
 
+        # Workload signal
+        if athlete_count >= 12:
+            workload = "high"
+        elif athlete_count >= 6:
+            workload = "moderate"
+        else:
+            workload = "light"
+
         results.append({
             "id": cid,
             "name": coach.get("name", "Unknown"),
             "status": status,
             "athleteCount": athlete_count,
             "daysInactive": days_inactive,
+            "workload": workload,
             "onboardingProgress": f"{completed}/{total}",
+            "onboardingComplete": completed >= total,
             "profileCompleteness": (coach.get("profile") or {}).get("completeness", 0),
         })
 
