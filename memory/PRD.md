@@ -36,63 +36,54 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 ### Coach Quick Notes (2026-03-07)
 - Inline quick note on Mission Control athlete cards and Support Pod
 - Category pills (Recruiting/Event/Parent/Follow-up/Other)
-- Notes in athlete timeline, counts as engagement activity
 
 ### Weekly Coach Digest (2026-03-07)
 - Manual trigger on Roster page (director-only)
-- Command brief email with coach activation, athletes needing attention, notes logged
 
 ### Mission Control Redesign (2026-03-08)
-- **Role-based dashboards:** Single `/api/mission-control` endpoint returns different data based on user role
-- **Director Mission Control:** AI Program Brief (hero), Program Status Row (5 KPIs), Needs Attention (max 5 critical items), Upcoming Events, Program Activity
-- **Coach Mission Control:** Today's Actions (AI hero), My Roster (athletes with momentum/health/categories), Upcoming Events, Recent Activity
-- **Above-the-fold rule:** Max 3 modules per role above the fold
-- **Design:** Premium dark shell + light content surfaces, calm spacing, strong visual hierarchy
+- **Role-based dashboards:** Single `/api/mission-control` endpoint returns role-specific data
+- **Director MC:** AI Program Brief, Program Status Row (5 KPIs), Needs Attention (max 5), Upcoming Events, Program Activity
+- **Coach MC:** Today's Actions (AI), My Roster (athletes with momentum/health), Upcoming Events, Recent Activity
+- **Above-the-fold rule:** Max 3 modules per role
 
-### Documentation
-- pages.html, gallery.html
+### UI/UX Redesign to Match CapyMatch App (2026-03-08)
+- **Left Sidebar Navigation:** CapyMatch logo (CM), nav items (Dashboard, Events, Advocacy, Program, Roster/director-only, AI Features), active state highlighting in emerald
+- **Minimal Top Bar:** Page title with icon, notification bell, dark mode toggle, user avatar with initials + name, dropdown menu (Profile, Sign out)
+- **Dark Hero Section:** Personalized greeting ("Good evening, [Name]" with green name #4CAF50), date badge, 4 inline KPI metrics with colored indicator dots
+- **AppLayout Wrapper:** All authenticated pages wrapped in Sidebar + TopBar via ProtectedRoute in App.js
+- **Route-based page titles:** AppLayout auto-detects page title from current route
+- **Login page excluded from sidebar layout**
 
 ## Key Credentials
 - Director: director@capymatch.com / director123
 - Coach Williams: coach.williams@capymatch.com / coach123
 - Coach Garcia: coach.garcia@capymatch.com / coach123
 
-## DB Schema
-- **users**: {id, email, password_hash, name, role, team, onboarding, profile, last_active, created_at}
-- **athlete_notes**: {id, athlete_id, author, created_by, created_by_name, text, tag, category, created_at}
-- **invites**: {id, email, name, team, token, status, accepted_user_id, assignment_reviewed, ...}
-- **nudges**: {id, coach_id, reason, subject, message, delivery_status, last_error, sent_at}
-- **password_resets**: {id, email, token_hash, expires_at, used, created_at}
-- **digests**: {id, sent_by, sent_by_name, recipients[], period_start, period_end, summary_data, delivery_status, last_error, sent_at}
-
 ## Code Architecture
 ```
+/app/frontend/src/
+  components/
+    layout/
+      AppLayout.js       # Sidebar + TopBar wrapper, auto-detects page title
+      Sidebar.js         # Left nav: logo, role-based items, active state
+      TopBar.js          # Page title, notifications, theme toggle, user menu
+    mission-control/
+      DirectorView.js    # Dark hero + KPIs + Program Brief + Needs Attention
+      CoachView.js       # Onboarding + Dark hero + KPIs + Actions + Roster
+      AIProgramBrief.js  # Director: AI program summary card
+      ProgramStatusRow.js # (legacy, KPIs now inline in hero)
+      NeedsAttentionCard.js # Director: critical interventions (max 5)
+      TodaysActionsCard.js  # Coach: AI work queue card
+      MyRosterCard.js    # Coach: athlete roster with health
+      UpcomingEventsCard.js # Shared: upcoming events
+      ActivityFeed.js    # Shared: recent activity feed
+  pages/
+    MissionControl.js    # Role router: DirectorView or CoachView
+    (All pages render inside AppLayout via ProtectedRoute in App.js)
+
 /app/backend/routers/
-  mission_control.py   # Role-based MC: director/coach views
-  digest.py            # Weekly digest generation + history
-  profile.py           # Coach self-service profile
-  roster.py            # Roster + Activation + Nudge
-  onboarding.py        # Coach onboarding checklist
-  athletes.py          # Athletes + Quick Notes
-  intelligence.py      # AI endpoints (briefing, actions, pod, insights)
-  auth.py, ai.py, invites.py, events.py, advocacy.py, program.py
-
-/app/frontend/src/components/mission-control/
-  Header.js            # Shared nav header
-  DirectorView.js      # Director MC container
-  CoachView.js         # Coach MC container
-  AIProgramBrief.js    # Director hero: AI program summary
-  ProgramStatusRow.js  # Director: 5 KPI pills
-  NeedsAttentionCard.js # Director: critical interventions (max 5)
-  TodaysActionsCard.js # Coach hero: AI work queue
-  MyRosterCard.js      # Coach: athlete roster with health
-  UpcomingEventsCard.js # Shared: upcoming events
-  ActivityFeed.js      # Shared: recent activity feed
-
-/app/frontend/src/pages/
-  MissionControl.js    # Role router: DirectorView or CoachView
-  ProfilePage.js, ForgotPasswordPage.js, ResetPasswordPage.js
-  RosterPage.js, SupportPod.js, etc.
+  mission_control.py     # Single endpoint, role-based response
+  (other routers unchanged)
 ```
 
 ## Upcoming Tasks
