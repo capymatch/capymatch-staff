@@ -87,34 +87,79 @@ async def get_roster(current_user: dict = get_current_user_dep()):
     for a in ATHLETES:
         cid = athlete_to_coach.get(a["id"])
         coach = coach_by_id.get(cid) if cid else None
+
+        # Momentum label: Strong / Stable / Declining
+        mscore = a.get("momentumScore", 0) or 0
+        mtrend = a.get("momentumTrend", "stable")
+        days_inactive = a.get("daysSinceActivity")
+        if mtrend == "rising" and mscore >= 5:
+            momentum_label = "strong"
+        elif mscore <= 0 or (mtrend == "declining" and (days_inactive or 0) > 10):
+            momentum_label = "declining"
+        else:
+            momentum_label = "stable"
+
+        # Detailed recruiting stage pipeline (7-stage)
+        raw_stage = a.get("recruitingStage", "exploring")
+        active_interest = a.get("activeInterest", 0) or 0
+        school_targets = a.get("schoolTargets", 0) or 0
+        if raw_stage == "committed":
+            detailed_stage = "committed"
+        elif raw_stage == "narrowing" and active_interest >= 3:
+            detailed_stage = "offer"
+        elif raw_stage == "narrowing":
+            detailed_stage = "visit"
+        elif raw_stage == "actively_recruiting" and active_interest >= 2:
+            detailed_stage = "talking"
+        elif raw_stage == "actively_recruiting" and active_interest >= 1:
+            detailed_stage = "responded"
+        elif raw_stage == "actively_recruiting":
+            detailed_stage = "contacted"
+        elif school_targets > 0:
+            detailed_stage = "contacted"
+        else:
+            detailed_stage = "prospect"
+
         enriched_athletes.append({
             "id": a["id"],
             "name": a.get("fullName", a.get("name", "Unknown")),
             "grad_year": a.get("gradYear"),
             "position": a.get("position"),
             "team": a.get("team"),
-            "recruiting_stage": a.get("recruitingStage"),
-            "momentum_score": a.get("momentumScore"),
-            "momentum_trend": a.get("momentumTrend"),
+            "recruiting_stage": detailed_stage,
+            "momentum_score": mscore,
+            "momentum_trend": mtrend,
+            "momentum_label": momentum_label,
             "last_activity": a.get("lastActivity"),
-            "days_since_activity": a.get("daysSinceActivity"),
+            "days_since_activity": days_inactive,
             "coach_id": cid,
             "coach_name": coach["name"] if coach else None,
             "unassigned": a["id"] in unassigned_ids,
             "unassigned_reason": a.get("unassigned_reason") if a["id"] in unassigned_ids else None,
         })
 
-    # Needs attention athletes (from decision engine)
+    # Needs attention — build per-athlete risk alerts
     attention_ids = {item["athlete_id"] for item in ATHLETES_NEEDING_ATTENTION}
     attention_lookup = {}
     for item in ATHLETES_NEEDING_ATTENTION:
         aid = item["athlete_id"]
         if aid not in attention_lookup:
-            attention_lookup[aid] = {
-                "category": item.get("category"),
-                "why": item.get("why_this_surfaced"),
-                "badge_color": item.get("badge_color"),
-            }
+            attention_lookup[aid] = []
+        attention_lookup[aid].append({
+            "category": item.get("category"),
+            "why": item.get("why_this_surfaced"),
+            "badge_color": item.get("badge_color"),
+        })
+
+    # Attach risk alerts inline to each athlete
+    for ea in enriched_athletes:
+        alerts = attention_lookup.get(ea["id"])
+        if alerts:
+            ea["risk_alerts"] = alerts
+            ea["risk_level"] = "critical" if any(a["badge_color"] == "red" for a in alerts) else "warning"
+        else:
+            ea["risk_alerts"] = []
+            ea["risk_level"] = None
 
     # Coach groups (for Coach View)
     groups = []
@@ -161,8 +206,8 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         "teamGroups": team_groups,
         "ageGroups": age_groups,
         "needsAttention": [
-            {**attention_lookup[a["id"]], "athlete_id": a["id"], "athlete_name": a["name"]}
-            for a in enriched_athletes if a["id"] in attention_ids
+            {"athlete_id": ea["id"], "athlete_name": ea["name"], "alerts": ea["risk_alerts"], "risk_level": ea["risk_level"]}
+            for ea in enriched_athletes if ea["risk_level"]
         ],
         "summary": {
             "total_athletes": total,

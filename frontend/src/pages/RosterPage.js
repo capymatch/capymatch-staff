@@ -63,13 +63,18 @@ function ReassignModal({ athlete, coaches, currentCoachId, onClose, onConfirm })
 
 /* ── Momentum badge ── */
 
-function MomentumBadge({ score, trend }) {
-  if (score == null) return null;
-  const TrendIcon = trend === "rising" ? TrendingUp : trend === "declining" ? TrendingDown : Minus;
-  const color = score >= 70 ? "text-emerald-600 bg-emerald-50" : score >= 40 ? "text-amber-600 bg-amber-50" : "text-red-500 bg-red-50";
+function MomentumBadge({ label, score }) {
+  if (!label) return null;
+  const cfg = {
+    strong: { text: "Strong", cls: "text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200", icon: TrendingUp },
+    stable: { text: "Stable", cls: "text-slate-600 bg-slate-50 ring-1 ring-slate-200", icon: Minus },
+    declining: { text: "Declining", cls: "text-red-600 bg-red-50 ring-1 ring-red-200", icon: TrendingDown },
+  };
+  const c = cfg[label] || cfg.stable;
+  const Icon = c.icon;
   return (
-    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${color}`} data-testid="momentum-badge">
-      <TrendIcon className="w-3 h-3" />{score}
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${c.cls}`} data-testid="momentum-badge">
+      <Icon className="w-3 h-3" />{c.text}
     </span>
   );
 }
@@ -78,31 +83,71 @@ function MomentumBadge({ score, trend }) {
 
 function ActivityLabel({ days }) {
   if (days == null) return <span className="text-slate-400">No activity</span>;
-  if (days === 0) return <span className="text-emerald-600">Active today</span>;
+  if (days === 0) return <span className="text-emerald-600 font-medium">Active today</span>;
   if (days <= 3) return <span className="text-slate-500">{days}d ago</span>;
   if (days <= 7) return <span className="text-amber-500">{days}d ago</span>;
-  return <span className="text-red-500">{days}d ago</span>;
+  return <span className="text-red-500 font-medium">{days}d ago</span>;
 }
 
-/* ── Stage badge ── */
+/* ── Stage badge (7-stage pipeline) ── */
+
+const STAGE_ORDER = ["prospect", "contacted", "responded", "talking", "visit", "offer", "committed"];
 
 function StageBadge({ stage }) {
   if (!stage) return null;
   const map = {
-    exploring: { label: "Exploring", cls: "text-blue-600 bg-blue-50" },
-    actively_recruiting: { label: "Recruiting", cls: "text-emerald-600 bg-emerald-50" },
-    narrowing: { label: "Narrowing", cls: "text-violet-600 bg-violet-50" },
-    committed: { label: "Committed", cls: "text-slate-600 bg-slate-100" },
+    prospect: { label: "Prospect", cls: "text-slate-500 bg-slate-50", dot: "bg-slate-400" },
+    contacted: { label: "Contacted", cls: "text-blue-600 bg-blue-50", dot: "bg-blue-500" },
+    responded: { label: "Responded", cls: "text-cyan-600 bg-cyan-50", dot: "bg-cyan-500" },
+    talking: { label: "Talking", cls: "text-violet-600 bg-violet-50", dot: "bg-violet-500" },
+    visit: { label: "Visit", cls: "text-amber-600 bg-amber-50", dot: "bg-amber-500" },
+    offer: { label: "Offer", cls: "text-orange-600 bg-orange-50", dot: "bg-orange-500" },
+    committed: { label: "Committed", cls: "text-emerald-700 bg-emerald-50", dot: "bg-emerald-500" },
   };
-  const cfg = map[stage] || { label: stage, cls: "text-slate-500 bg-slate-50" };
-  return <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${cfg.cls}`}>{cfg.label}</span>;
+  const cfg = map[stage] || { label: stage, cls: "text-slate-500 bg-slate-50", dot: "bg-slate-400" };
+  const idx = STAGE_ORDER.indexOf(stage);
+  const progress = idx >= 0 ? ((idx + 1) / STAGE_ORDER.length) * 100 : 0;
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold ${cfg.cls}`} data-testid="stage-badge">
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+      {/* Mini progress bar */}
+      <span className="w-8 h-1 rounded-full bg-slate-200 overflow-hidden ml-0.5">
+        <span className={`block h-full rounded-full ${cfg.dot}`} style={{ width: `${progress}%` }} />
+      </span>
+    </span>
+  );
+}
+
+/* ── Inline risk alert ── */
+
+function RiskAlert({ alerts }) {
+  if (!alerts || alerts.length === 0) return null;
+  const primary = alerts[0];
+  const parts = (primary.why || "").split(" \u2014 ");
+  const shortLabel = parts.length > 1 ? parts[parts.length - 1] : primary.why;
+  const isRed = primary.badge_color === "red";
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${isRed ? "text-red-600 bg-red-50 ring-1 ring-red-200" : "text-amber-600 bg-amber-50 ring-1 ring-amber-200"}`} data-testid="risk-alert">
+      <AlertTriangle className="w-3 h-3" />
+      {shortLabel}
+      {alerts.length > 1 && <span className="text-[9px] opacity-70">+{alerts.length - 1}</span>}
+    </span>
+  );
 }
 
 /* ── Athlete Row ── */
 
 function AthleteRow({ athlete, onReassign, navigate }) {
+  const hasRisk = athlete.risk_alerts && athlete.risk_alerts.length > 0;
+  const rowBg = hasRisk
+    ? athlete.risk_level === "critical" ? "bg-red-50/30 hover:bg-red-50/50" : "bg-amber-50/20 hover:bg-amber-50/40"
+    : "hover:bg-slate-50/60";
+
   return (
-    <div className="group flex items-center justify-between px-5 py-3 border-b border-gray-50 last:border-0 hover:bg-slate-50/60 transition-colors" data-testid={`roster-athlete-${athlete.id}`}>
+    <div className={`group flex items-center justify-between px-5 py-3 border-b border-gray-50 last:border-0 transition-colors ${rowBg}`} data-testid={`roster-athlete-${athlete.id}`}>
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
           <span className="text-[9px] font-bold text-slate-500">
@@ -110,10 +155,11 @@ function AthleteRow({ athlete, onReassign, navigate }) {
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-gray-900">{athlete.name}</span>
-            <MomentumBadge score={athlete.momentum_score} trend={athlete.momentum_trend} />
+            <MomentumBadge label={athlete.momentum_label} score={athlete.momentum_score} />
             <StageBadge stage={athlete.recruiting_stage} />
+            <RiskAlert alerts={athlete.risk_alerts} />
           </div>
           <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-0.5">
             {athlete.position && <span>{athlete.position}</span>}
@@ -212,16 +258,20 @@ function NeedsAttentionBanner({ items, navigate }) {
         )}
       </div>
       <div className="divide-y divide-amber-100">
-        {shown.map((item) => (
-          <div key={item.athlete_id} className="flex items-center justify-between px-5 py-2.5 hover:bg-amber-100/30 transition-colors cursor-pointer"
-            onClick={() => navigate(`/support-pods/${item.athlete_id}`)} data-testid={`attention-${item.athlete_id}`}>
-            <div className="min-w-0">
-              <span className="text-sm font-medium text-amber-900">{item.athlete_name}</span>
-              <span className="text-xs text-amber-600 ml-2">{item.why}</span>
+        {shown.map((item) => {
+          const primaryAlert = item.alerts?.[0];
+          const why = primaryAlert?.why || "";
+          return (
+            <div key={item.athlete_id} className="flex items-center justify-between px-5 py-2.5 hover:bg-amber-100/30 transition-colors cursor-pointer"
+              onClick={() => navigate(`/support-pods/${item.athlete_id}`)} data-testid={`attention-${item.athlete_id}`}>
+              <div className="min-w-0">
+                <span className="text-sm font-medium text-amber-900">{item.athlete_name}</span>
+                <span className="text-xs text-amber-600 ml-2">{why}</span>
+              </div>
+              <span className={`shrink-0 w-2 h-2 rounded-full ${item.risk_level === "critical" ? "bg-red-500" : "bg-amber-500"}`} />
             </div>
-            <span className={`shrink-0 w-2 h-2 rounded-full ${item.badge_color === "red" ? "bg-red-500" : item.badge_color === "amber" ? "bg-amber-500" : "bg-yellow-400"}`} />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
