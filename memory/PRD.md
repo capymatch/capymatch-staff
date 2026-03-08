@@ -30,17 +30,17 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - All pages wrapped in AppLayout
 
 ### Director Mission Control — Leadership Command Surface (2026-03-08)
-**Page structure:** Overview > AI Brief > Needs Attention > Coach Health > Events > Recruiting Signals + Activity
+**Page structure:** Overview > AI Brief > Recruiting Signals > Needs Attention > Coach Health > Events > Activity
 
-**Visual refinements (latest):**
-1. **Program Overview:** "Need Attention" KPI uses red #FF6B6B, 42px font, AlertTriangle icon
-2. **AI Program Brief:** Explanatory empty state text + "Generate Brief" button. Leadership summaries (2-4 sentences, no task lists)
-3. **Needs Attention — Director Intervention Console (2026-03-08):** Category card groups (Follow-Up Overdue, Ownership Gap, Momentum Drop, Blocker, Engagement Drop), three-line athlete rows (name, problem, impact), severity dot system (red=critical, orange=attention, yellow=warning), contextual quick actions on hover (Open Athlete, Assign Coach, Send Reminder, Log Check-In, Request Document), expand/collapse for 3+ items, header with issue+athlete count summary.
-4. **Coach Health — Management Control Panel (2026-03-08):** Individual coach cards with status badges (Active=green, Activating=yellow, Needs Support=orange, Inactive=red), workload signal bar (High/Moderate/Light), last activity signal, quick actions (View Roster, Send Nudge, Reassign), header with coach+athlete count summary. Backend computes workload from athlete count thresholds.
-5. **Upcoming Events:** First event highlighted, progress bars instead of percentages, simplified labels (Tomorrow, 3 days, 1 week)
-6. **Recruiting Signals:** Trend arrows (TrendingUp/Minus) next to each metric
-7. **Program Activity:** Typed icons (star=interest, file=note, message=response, alert=inactivity), max 6 items, shortened text
-8. **Section spacing:** space-y-8 for calmer layout
+**Final UX Refinements (2026-03-08):**
+1. **Program Overview KPIs:** "Need Attention" shows trend indicator ("↑ +5 this week") from historical snapshot comparison. Other KPIs unchanged.
+2. **Program Momentum Indicator:** Below KPI row — shows Improving/Stable/Declining state with engagement delta percentage. Computed from pod health, issues, and attention changes.
+3. **AI Program Brief:** Always renders as bullet points (max 4 lines, • prefix). Never paragraphs. Data source footer shows signal count.
+4. **Recruiting Signals:** Large centered numbers (text-4xl font-extrabold), centered layout, trend arrows with delta text (↑ +6 this week / → same as last week).
+5. **Needs Attention — Director Intervention Console:** Category card groups with 3 quick actions per row (Open Athlete + 2 context-specific: Assign Coach, Send Reminder, Log Check-In, Request Document). Expand/collapse for 3+ items. Header with issue+athlete count summary.
+6. **Coach Health — Management Control Panel:** Status badges (Active/Activating/Needs Support/Inactive), workload bars (High/Moderate/Light), last activity signal, quick actions (View Roster, Send Nudge, Reassign).
+7. **Upcoming Events:** Unchanged — timeline, athlete/school counts, readiness progress bars.
+8. **Activity Feed:** Typed icons (Star=interest, MessageCircle=response, FileText=note, AlertCircle=inactivity), "Name — description" format with mdash, "6 most recent" counter.
 
 ### AI Brief Data Alignment Fix (2026-03-08)
 - **Root cause:** AI Program Brief was fed different data than what the dashboard displayed
