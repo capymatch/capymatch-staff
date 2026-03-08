@@ -703,3 +703,105 @@ async def get_nudge_history(coach_id: str, current_user: dict = get_current_user
     ).sort("sent_at", -1).to_list(20)
 
     return nudges
+
+
+# ── Bulk Operations ──
+
+@router.post("/roster/bulk-assign")
+async def bulk_assign(body: dict, current_user: dict = get_current_user_dep()):
+    """Bulk reassign multiple athletes to a coach. Director-only."""
+    _require_director(current_user)
+
+    athlete_ids = body.get("athlete_ids", [])
+    coach_id = body.get("coach_id")
+    if not athlete_ids or not coach_id:
+        raise HTTPException(status_code=400, detail="athlete_ids and coach_id required")
+
+    coach = await db.users.find_one({"id": coach_id, "role": "coach"}, {"_id": 0, "id": 1, "name": 1})
+    if not coach:
+        raise HTTPException(status_code=404, detail="Coach not found")
+
+    updated = 0
+    for aid in athlete_ids:
+        athlete = _athlete_by_id(aid)
+        if not athlete:
+            continue
+        if athlete.get("primary_coach_id") == coach_id:
+            continue
+        await db.athletes.update_one(
+            {"id": aid},
+            {"$set": {"primary_coach_id": coach_id, "unassigned_reason": None}},
+        )
+        for a in ATHLETES:
+            if a["id"] == aid:
+                a["primary_coach_id"] = coach_id
+                a.pop("unassigned_reason", None)
+                break
+        updated += 1
+
+    await refresh_ownership_cache()
+    return {"updated": updated, "coach_name": coach["name"]}
+
+
+@router.post("/roster/bulk-remind")
+async def bulk_remind(body: dict, current_user: dict = get_current_user_dep()):
+    """Bulk send reminders for multiple athletes. Director-only."""
+    _require_director(current_user)
+
+    athlete_ids = body.get("athlete_ids", [])
+    message = body.get("message", "Please follow up on this athlete.")
+    if not athlete_ids:
+        raise HTTPException(status_code=400, detail="athlete_ids required")
+
+    from datetime import datetime, timezone
+    reminders = []
+    for aid in athlete_ids:
+        athlete = _athlete_by_id(aid)
+        if not athlete:
+            continue
+        reminders.append({
+            "athlete_id": aid,
+            "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+            "message": message,
+            "created_by": current_user["id"],
+            "created_by_name": current_user.get("name", "Director"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "type": "reminder",
+        })
+
+    if reminders:
+        await db.coach_notes.insert_many(reminders)
+
+    return {"sent": len(reminders)}
+
+
+@router.post("/roster/bulk-note")
+async def bulk_note(body: dict, current_user: dict = get_current_user_dep()):
+    """Bulk add a note to multiple athletes. Director-only."""
+    _require_director(current_user)
+
+    athlete_ids = body.get("athlete_ids", [])
+    note_text = body.get("note", "")
+    if not athlete_ids or not note_text:
+        raise HTTPException(status_code=400, detail="athlete_ids and note required")
+
+    from datetime import datetime, timezone
+    notes = []
+    for aid in athlete_ids:
+        athlete = _athlete_by_id(aid)
+        if not athlete:
+            continue
+        notes.append({
+            "athlete_id": aid,
+            "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+            "text": note_text,
+            "created_by": current_user["id"],
+            "created_by_name": current_user.get("name", "Director"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "type": "director_note",
+        })
+
+    if notes:
+        await db.coach_notes.insert_many(notes)
+
+    return {"added": len(notes)}

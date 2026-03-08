@@ -17,7 +17,7 @@ import uuid
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 if not BASE_URL:
-    BASE_URL = "https://data-source-trace.preview.emergentagent.com"
+    BASE_URL = "https://director-ops-center.preview.emergentagent.com"
 
 API = f"{BASE_URL}/api"
 

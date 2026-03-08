@@ -327,6 +327,79 @@ function BulkActionBar({ count, onClear, onAssign, onReminder, onNote }) {
   );
 }
 
+/* ── Bulk Assign Modal ── */
+
+function BulkAssignModal({ count, names, coaches, onClose, onConfirm }) {
+  const [coachId, setCoachId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!coachId) { toast.error("Select a coach"); return; }
+    setSubmitting(true);
+    await onConfirm(coachId);
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()} data-testid="bulk-assign-modal">
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">Assign Coach to {count} Athlete{count !== 1 ? "s" : ""}</h3>
+        <p className="text-xs text-gray-400 mb-1">{names.slice(0, 4).join(", ")}{names.length > 4 ? ` +${names.length - 4} more` : ""}</p>
+        <div className="mt-4">
+          <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Coach</label>
+          <select value={coachId} onChange={(e) => setCoachId(e.target.value)}
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 bg-white" data-testid="bulk-assign-select">
+            <option value="">Select coach...</option>
+            {coaches.map((c) => <option key={c.id} value={c.id}>{c.name}{c.team ? ` · ${c.team}` : ""}</option>)}
+          </select>
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose} className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+          <button onClick={handleSubmit} disabled={submitting || !coachId}
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-md hover:bg-slate-800 disabled:opacity-50" data-testid="bulk-assign-confirm">
+            <UserPlus className="w-3 h-3" />{submitting ? "Assigning..." : "Assign"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Bulk Text Modal (for Remind / Note) ── */
+
+function BulkTextModal({ title, placeholder, count, names, buttonLabel, buttonIcon: BtnIcon, onClose, onConfirm }) {
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!text.trim()) { toast.error("Please enter a message"); return; }
+    setSubmitting(true);
+    await onConfirm(text.trim());
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()} data-testid="bulk-text-modal">
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">{title} — {count} Athlete{count !== 1 ? "s" : ""}</h3>
+        <p className="text-xs text-gray-400 mb-1">{names.slice(0, 4).join(", ")}{names.length > 4 ? ` +${names.length - 4} more` : ""}</p>
+        <div className="mt-4">
+          <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Message</label>
+          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} rows={3}
+            className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 placeholder-gray-400 resize-none" data-testid="bulk-text-input" />
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose} className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+          <button onClick={handleSubmit} disabled={submitting || !text.trim()}
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-md hover:bg-slate-800 disabled:opacity-50" data-testid="bulk-text-confirm">
+            <BtnIcon className="w-3 h-3" />{submitting ? "Sending..." : buttonLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── AI Roster Insights ── */
 
 function RosterInsights({ athletes }) {
@@ -491,9 +564,12 @@ function RosterPage() {
     }));
   }, [data]);
 
-  const handleBulkAction = (action) => {
-    toast.info(`${action} for ${selectedIds.size} athlete(s) — coming soon`);
-    setSelectedIds(new Set());
+  // Bulk action modals
+  const [bulkModal, setBulkModal] = useState(null); // "assign" | "remind" | "note" | null
+
+  const getSelectedNames = () => {
+    if (!data) return [];
+    return data.athletes.filter((a) => selectedIds.has(a.id)).map((a) => a.name);
   };
 
   return (
@@ -523,9 +599,78 @@ function RosterPage() {
         <>
           {/* Bulk Action Bar */}
           <BulkActionBar count={selectedIds.size} onClear={() => setSelectedIds(new Set())}
-            onAssign={() => handleBulkAction("Assign Coach")}
-            onReminder={() => handleBulkAction("Send Reminder")}
-            onNote={() => handleBulkAction("Add Note")} />
+            onAssign={() => setBulkModal("assign")}
+            onReminder={() => setBulkModal("remind")}
+            onNote={() => setBulkModal("note")} />
+
+          {/* Bulk Modals */}
+          {bulkModal === "assign" && (
+            <BulkAssignModal
+              count={selectedIds.size}
+              names={getSelectedNames()}
+              coaches={coaches}
+              onClose={() => setBulkModal(null)}
+              onConfirm={async (coachId) => {
+                try {
+                  const res = await axios.post(`${API}/roster/bulk-assign`, {
+                    athlete_ids: [...selectedIds], coach_id: coachId,
+                  });
+                  toast.success(`${res.data.updated} athlete(s) assigned to ${res.data.coach_name}`);
+                  setSelectedIds(new Set());
+                  setBulkModal(null);
+                  fetchRoster();
+                } catch (err) {
+                  toast.error(err.response?.data?.detail || "Failed to assign");
+                }
+              }}
+            />
+          )}
+          {bulkModal === "remind" && (
+            <BulkTextModal
+              title="Send Reminder"
+              placeholder="Please follow up on this athlete's recruiting progress."
+              count={selectedIds.size}
+              names={getSelectedNames()}
+              buttonLabel="Send Reminder"
+              buttonIcon={Bell}
+              onClose={() => setBulkModal(null)}
+              onConfirm={async (message) => {
+                try {
+                  const res = await axios.post(`${API}/roster/bulk-remind`, {
+                    athlete_ids: [...selectedIds], message,
+                  });
+                  toast.success(`Reminder sent for ${res.data.sent} athlete(s)`);
+                  setSelectedIds(new Set());
+                  setBulkModal(null);
+                } catch (err) {
+                  toast.error(err.response?.data?.detail || "Failed to send reminders");
+                }
+              }}
+            />
+          )}
+          {bulkModal === "note" && (
+            <BulkTextModal
+              title="Add Note"
+              placeholder="Director note for selected athletes..."
+              count={selectedIds.size}
+              names={getSelectedNames()}
+              buttonLabel="Add Note"
+              buttonIcon={FileText}
+              onClose={() => setBulkModal(null)}
+              onConfirm={async (note) => {
+                try {
+                  const res = await axios.post(`${API}/roster/bulk-note`, {
+                    athlete_ids: [...selectedIds], note,
+                  });
+                  toast.success(`Note added to ${res.data.added} athlete(s)`);
+                  setSelectedIds(new Set());
+                  setBulkModal(null);
+                } catch (err) {
+                  toast.error(err.response?.data?.detail || "Failed to add notes");
+                }
+              }}
+            />
+          )}
 
           {/* AI Roster Insights */}
           <RosterInsights athletes={data?.athletes} />
