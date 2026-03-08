@@ -95,33 +95,35 @@ export default function CoachView({ data, userName }) {
         <div style={{ borderTop: "1px solid #363D59", margin: "20px 0 24px 0" }} />
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 24 }}>
-          {kpis.map((kpi) => {
+        <div className="flex flex-wrap sm:flex-nowrap">
+          {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
             return (
-              <div key={kpi.label} className="flex items-start justify-between">
-                <div>
-                  <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>
-                    {kpi.value}
-                  </p>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
-                    {kpi.label}
-                  </p>
-                  <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>
-                    {kpi.subtitle}
-                  </p>
-                </div>
-                <div
-                  className="flex items-center justify-center shrink-0"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    backgroundColor: kpi.iconBg,
-                    marginTop: 4,
-                  }}
-                >
-                  <Icon style={{ width: 18, height: 18, color: kpi.color }} />
+              <div key={kpi.label} className="flex flex-1 min-w-0" style={{ paddingRight: idx < kpis.length - 1 ? 24 : 0, marginRight: idx < kpis.length - 1 ? 24 : 0, borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none" }}>
+                <div className="flex items-start justify-between w-full">
+                  <div>
+                    <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>
+                      {kpi.value}
+                    </p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
+                      {kpi.label}
+                    </p>
+                    <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>
+                      {kpi.subtitle}
+                    </p>
+                  </div>
+                  <div
+                    className="flex items-center justify-center shrink-0"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      backgroundColor: kpi.iconBg,
+                      marginTop: 4,
+                    }}
+                  >
+                    <Icon style={{ width: 18, height: 18, color: kpi.color }} />
+                  </div>
                 </div>
               </div>
             );
