@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "@/components/mission-control/Header";
 import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import {
@@ -241,9 +240,8 @@ export default function InvitesPage() {
   const others = invites.filter((i) => i.status !== "pending");
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="invites-page">
-      <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
-      <main className="max-w-[800px] mx-auto px-4 sm:px-6 py-6">
+    <div data-testid="invites-page">
+      <main className="max-w-[800px] mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-lg font-semibold text-gray-900" data-testid="invites-title">Invite Coaches</h1>

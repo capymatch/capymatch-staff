@@ -60,7 +60,7 @@ function EventSummary() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
       </div>
     );
@@ -68,7 +68,7 @@ function EventSummary() {
 
   if (!data || data.error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <p className="text-gray-500">No summary data available. Capture notes in Live Mode first.</p>
       </div>
     );
@@ -78,7 +78,7 @@ function EventSummary() {
   const unroutedActions = followUpActions.filter((a) => !a.routed);
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="event-summary-page">
+    <div data-testid="event-summary-page">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">

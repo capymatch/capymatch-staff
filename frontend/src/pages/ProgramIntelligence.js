@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "@/components/mission-control/Header";
 import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import { AiBriefing } from "@/components/AiBriefing";
@@ -421,22 +420,15 @@ function ProgramIntelligence() {
 
   if (loading && !data) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="program-intelligence-page">
-      <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
-
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
-        {/* Title + Director Persona Switcher */}
-        <div className="flex items-start justify-between mb-6">
+    <div data-testid="program-intelligence-page">
+      <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-lg font-semibold text-gray-900" data-testid="program-title">
               {isCoachView ? `My View — ${data.coach_id}` : "Program Intelligence"}
@@ -501,8 +493,7 @@ function ProgramIntelligence() {
             <SupportLoad data={data.support_load} />
           </div>
         )}
-      </main>
-    </div>
+      </div>
   );
 }
 

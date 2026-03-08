@@ -71,12 +71,10 @@ function SupportPod() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center justify-center py-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-3" />
-            <p className="text-sm text-gray-500">Loading Support Pod...</p>
-          </div>
+      <div className="flex items-center justify-center py-32">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Loading Support Pod...</p>
         </div>
       </div>
     );
@@ -84,7 +82,7 @@ function SupportPod() {
 
   if (!data || data.error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center py-32">
         <p className="text-gray-500">Athlete not found</p>
       </div>
     );
@@ -93,7 +91,7 @@ function SupportPod() {
   const { athlete, active_intervention, all_interventions, pod_members, actions, timeline, pod_health, upcoming_events, unassigned_count } = data;
 
   return (
-    <div className="min-h-screen bg-gray-50" data-testid="support-pod-page">
+    <div data-testid="support-pod-page">
       <PodHeader
         athlete={athlete}
         podHealth={pod_health}

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./AuthContext";
+import AppLayout from "./components/layout/AppLayout";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -21,16 +22,18 @@ import AdminStatus from "./pages/AdminStatus";
 import RosterPage from "./pages/RosterPage";
 import ProfilePage from "./pages/ProfilePage";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, useLayout = true }) {
   const { user, loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" />
+      <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
       </div>
     );
   }
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (useLayout) return <AppLayout>{children}</AppLayout>;
+  return children;
 }
 
 function AppRoutes() {
@@ -38,8 +41,8 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" />
+      <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
       </div>
     );
   }
@@ -50,6 +53,8 @@ function AppRoutes() {
       <Route path="/forgot-password" element={user ? <Navigate to="/mission-control" replace /> : <ForgotPasswordPage />} />
       <Route path="/reset-password" element={user ? <Navigate to="/mission-control" replace /> : <ResetPasswordPage />} />
       <Route path="/invite/:token" element={user ? <Navigate to="/mission-control" replace /> : <AcceptInvitePage />} />
+
+      {/* All protected routes get the sidebar layout automatically */}
       <Route path="/mission-control" element={<ProtectedRoute><MissionControl /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute><EventHome /></ProtectedRoute>} />
       <Route path="/events/:eventId/prep" element={<ProtectedRoute><EventPrep /></ProtectedRoute>} />

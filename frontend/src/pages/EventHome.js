@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Header from "@/components/mission-control/Header";
 import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import { Calendar, MapPin, Users, GraduationCap, ChevronRight, Plus, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
@@ -138,12 +137,8 @@ function EventHome() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="event-home-page">
-      <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
-
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
-        {/* Title + Filters */}
-        <div className="flex items-center justify-between mb-6">
+    <div data-testid="event-home-page">
+      <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-lg font-semibold text-gray-900" data-testid="events-title">Events</h1>
             <p className="text-xs text-gray-500 mt-0.5">Capture recruiting moments. Organize later.</p>
@@ -214,8 +209,7 @@ function EventHome() {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
   );
 }
 

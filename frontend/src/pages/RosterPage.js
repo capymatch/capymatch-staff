@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import Header from "@/components/mission-control/Header";
 import { useAuth } from "@/AuthContext";
 import CoachActivationPanel from "@/components/CoachActivationPanel";
 import DigestPanel from "@/components/DigestPanel";
@@ -300,49 +299,46 @@ function RosterPage() {
   useEffect(() => { fetchRoster(); }, [fetchRoster]);
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="roster-page">
-      <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
-
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900" data-testid="roster-title">Roster</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Athlete assignments by coach</p>
-          </div>
-          {data?.summary && (
-            <div className="flex items-center gap-3" data-testid="roster-summary">
-              <div className="text-center px-3">
-                <div className="text-lg font-bold text-gray-900">{data.summary.total_athletes}</div>
-                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Athletes</div>
-              </div>
-              <div className="h-8 w-px bg-gray-200" />
-              <div className="text-center px-3">
-                <div className="text-lg font-bold text-gray-900">{data.summary.coach_count}</div>
-                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Coaches</div>
-              </div>
-              {data.summary.unassigned > 0 && (
-                <>
-                  <div className="h-8 w-px bg-gray-200" />
-                  <div className="text-center px-3">
-                    <div className="text-lg font-bold text-amber-600">{data.summary.unassigned}</div>
-                    <div className="text-[10px] text-amber-500 uppercase tracking-wider">Unassigned</div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+    <div data-testid="roster-page">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-900" data-testid="roster-title">Roster</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Athlete assignments by coach</p>
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
+        {data?.summary && (
+          <div className="flex items-center gap-3" data-testid="roster-summary">
+            <div className="text-center px-3">
+              <div className="text-lg font-bold text-gray-900">{data.summary.total_athletes}</div>
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider">Athletes</div>
+            </div>
+            <div className="h-8 w-px bg-gray-200" />
+            <div className="text-center px-3">
+              <div className="text-lg font-bold text-gray-900">{data.summary.coach_count}</div>
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider">Coaches</div>
+            </div>
+            {data.summary.unassigned > 0 && (
+              <>
+                <div className="h-8 w-px bg-gray-200" />
+                <div className="text-center px-3">
+                  <div className="text-lg font-bold text-amber-600">{data.summary.unassigned}</div>
+                  <div className="text-[10px] text-amber-500 uppercase tracking-wider">Unassigned</div>
+                </div>
+              </>
+            )}
           </div>
-        ) : (
-          <>
-            <CoachActivationPanel directorName={user?.name} />
-            <DigestPanel />
-            <div className="space-y-3">
-              {data?.groups?.map((group) => (
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
+        </div>
+      ) : (
+        <>
+          <CoachActivationPanel directorName={user?.name} />
+          <DigestPanel />
+          <div className="space-y-3">
+            {data?.groups?.map((group) => (
               <CoachGroup
                 key={group.coach_id || "unassigned"}
                 group={group}
@@ -350,10 +346,9 @@ function RosterPage() {
                 onReload={fetchRoster}
               />
             ))}
-            </div>
-          </>
-        )}
-      </main>
+          </div>
+        </>
+      )}
     </div>
   );
 }

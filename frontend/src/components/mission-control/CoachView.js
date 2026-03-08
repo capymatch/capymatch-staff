@@ -4,27 +4,112 @@ import UpcomingEventsCard from "./UpcomingEventsCard";
 import ActivityFeed from "./ActivityFeed";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 
-export default function CoachView({ data }) {
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getDateLabel() {
+  return new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+export default function CoachView({ data, userName }) {
+  const firstName = userName?.split(" ")[0] || "Coach";
+  const summary = data.todays_summary || {};
+
   return (
-    <div className="space-y-8" data-testid="coach-mission-control">
-      {/* Coach Onboarding Checklist (dismissible) */}
+    <div className="space-y-6" data-testid="coach-mission-control">
+      {/* Coach Onboarding (dismissible) */}
       <OnboardingChecklist />
 
-      {/* === ABOVE THE FOLD (3 modules) === */}
+      {/* ── Hero Section ── */}
+      <section className="relative rounded-2xl bg-[#1A232A] overflow-hidden px-8 pt-7 pb-8" data-testid="coach-hero">
+        {/* Date badge */}
+        <div className="absolute top-6 right-7">
+          <span className="px-3 py-1.5 rounded-full bg-white/10 text-[12px] text-white/50 font-medium">
+            {getDateLabel()}
+          </span>
+        </div>
 
-      {/* 1. Today's Actions — hero */}
-      <TodaysActionsCard summary={data.todays_summary} />
+        {/* Greeting */}
+        <h2 className="text-xl text-white/70 font-normal mb-0.5">
+          {getGreeting()}, <span className="text-[#4CAF50] font-bold text-2xl">{firstName}</span>
+        </h2>
+        <p className="text-sm text-white/40 mb-8">
+          Here's what's happening with your athletes today
+        </p>
 
-      {/* 2. My Roster — assigned athletes */}
+        {/* Inline KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+          <KpiItem
+            value={summary.athleteCount || 0}
+            label="MY ATHLETES"
+            subtitle="Assigned to you"
+            iconBg="bg-emerald-500/20"
+            iconColor="text-emerald-400"
+          />
+          <KpiItem
+            value={summary.needingAction || 0}
+            label="NEED ACTION"
+            subtitle="Require follow-up"
+            iconBg="bg-amber-500/20"
+            iconColor="text-amber-400"
+            alert={summary.needingAction > 0}
+          />
+          <KpiItem
+            value={summary.upcomingEvents || 0}
+            label="EVENTS THIS WEEK"
+            subtitle="Coming up"
+            iconBg="bg-violet-500/20"
+            iconColor="text-violet-400"
+          />
+          <KpiItem
+            value={summary.alertCount || 0}
+            label="ALERTS"
+            subtitle="Priority items"
+            iconBg="bg-red-500/20"
+            iconColor="text-red-400"
+            alert={summary.alertCount > 0}
+          />
+        </div>
+      </section>
+
+      {/* ── Today's Actions (AI) ── */}
+      <TodaysActionsCard summary={summary} />
+
+      {/* ── My Roster ── */}
       <MyRosterCard athletes={data.myRoster || []} />
 
-      {/* 3. Upcoming Events */}
-      <UpcomingEventsCard events={data.upcomingEvents || []} />
+      {/* ── Events + Activity ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <UpcomingEventsCard events={data.upcomingEvents || []} />
+        </div>
+        <div className="lg:col-span-2">
+          <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      {/* === BELOW THE FOLD === */}
-
-      {/* 4. Recent Activity */}
-      <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />
+function KpiItem({ value, label, subtitle, iconBg, iconColor, alert }) {
+  return (
+    <div className="flex items-start justify-between">
+      <div>
+        <p className={`text-3xl font-bold tracking-tight ${alert ? "text-amber-400" : "text-[#4CAF50]"}`}>
+          {value}
+        </p>
+        <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mt-1">{label}</p>
+        <p className="text-[11px] text-white/25 mt-0.5">{subtitle}</p>
+      </div>
+      <div className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center shrink-0 mt-1`}>
+        <div className={`w-2.5 h-2.5 rounded-full ${iconColor} ${alert ? "animate-pulse" : ""}`}
+          style={{ backgroundColor: "currentColor" }}
+        />
+      </div>
     </div>
   );
 }

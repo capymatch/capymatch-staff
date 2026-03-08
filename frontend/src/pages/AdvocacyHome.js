@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import Header from "@/components/mission-control/Header";
 import { toast } from "sonner";
 import { Plus, ChevronRight, Clock, MessageCircle, AlertCircle, Check, X } from "lucide-react";
 
@@ -116,10 +115,9 @@ function AdvocacyHome() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="advocacy-home-page">
-      <Header selectedGradYear="all" setSelectedGradYear={() => {}} stats={null} />
+    <div data-testid="advocacy-home-page">
 
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-[1200px] mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-lg font-semibold text-gray-900" data-testid="advocacy-title">Advocacy</h1>

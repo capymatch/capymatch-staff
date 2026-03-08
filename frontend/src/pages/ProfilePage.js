@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@/AuthContext";
-import Header from "@/components/mission-control/Header";
 import { toast } from "sonner";
 import {
   User, Phone, MessageSquare, Clock, FileText, Save, CheckCircle, AlertCircle, Minus,
@@ -87,19 +86,15 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" />
-        </div>
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="profile-page">
-      <Header />
-      <main className="max-w-xl mx-auto px-4 sm:px-6 py-8">
+    <div data-testid="profile-page">
+      <main className="max-w-xl mx-auto">
         {/* Avatar + name header */}
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center shrink-0">
