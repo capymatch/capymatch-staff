@@ -35,8 +35,8 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 **Visual refinements (latest):**
 1. **Program Overview:** "Need Attention" KPI uses red #FF6B6B, 42px font, AlertTriangle icon
 2. **AI Program Brief:** Explanatory empty state text + "Generate Brief" button. Leadership summaries (2-4 sentences, no task lists)
-3. **Needs Attention:** Grouped by category (Event Prep Risk, Momentum Drop, etc.), red count badge, quick actions (View, Nudge, Assign Coach)
-4. **Coach Health:** Grid cards with colored status badges (Active=green, Activating=yellow, Inactive=red), athlete counts, activity info. Filters test coaches.
+3. **Needs Attention — Director Intervention Console (2026-03-08):** Category card groups (Follow-Up Overdue, Ownership Gap, Momentum Drop, Blocker, Engagement Drop), three-line athlete rows (name, problem, impact), severity dot system (red=critical, orange=attention, yellow=warning), contextual quick actions on hover (Open Athlete, Assign Coach, Send Reminder, Log Check-In, Request Document), expand/collapse for 3+ items, header with issue+athlete count summary.
+4. **Coach Health — Management Control Panel (2026-03-08):** Individual coach cards with status badges (Active=green, Activating=yellow, Needs Support=orange, Inactive=red), workload signal bar (High/Moderate/Light), last activity signal, quick actions (View Roster, Send Nudge, Reassign), header with coach+athlete count summary. Backend computes workload from athlete count thresholds.
 5. **Upcoming Events:** First event highlighted, progress bars instead of percentages, simplified labels (Tomorrow, 3 days, 1 week)
 6. **Recruiting Signals:** Trend arrows (TrendingUp/Minus) next to each metric
 7. **Program Activity:** Typed icons (star=interest, file=note, message=response, alert=inactivity), max 6 items, shortened text
