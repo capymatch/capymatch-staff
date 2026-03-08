@@ -1,4 +1,4 @@
-import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock } from "lucide-react";
+import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock, AlertTriangle } from "lucide-react";
 import AIProgramBrief from "./AIProgramBrief";
 import NeedsAttentionCard from "./NeedsAttentionCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
@@ -23,7 +23,7 @@ export default function DirectorView({ data, userName }) {
     {
       value: ps.totalAthletes || 0,
       label: "ATHLETES",
-      subtitle: `${ps.needingAttention || 0} need attention`,
+      subtitle: "In program",
       color: "#30C5BE",
       icon: Target,
       iconBg: "#363D59",
@@ -37,6 +37,14 @@ export default function DirectorView({ data, userName }) {
       iconBg: "#363D59",
     },
     {
+      value: ps.needingAttention || 0,
+      label: "NEED ATTENTION",
+      subtitle: "Require intervention",
+      color: ps.needingAttention > 0 ? "#FFC649" : "#30C5BE",
+      icon: AlertTriangle,
+      iconBg: ps.needingAttention > 0 ? "#4A3C36" : "#363D59",
+    },
+    {
       value: ps.upcomingEvents || 0,
       label: "EVENTS AHEAD",
       subtitle: "Next 14 days",
@@ -47,7 +55,7 @@ export default function DirectorView({ data, userName }) {
     {
       value: ps.unassignedCount || 0,
       label: "UNASSIGNED",
-      subtitle: ps.unassignedCount > 0 ? "Need coach assignment" : "All athletes assigned",
+      subtitle: ps.unassignedCount > 0 ? "Need coach assignment" : "All assigned",
       color: ps.unassignedCount > 0 ? "#FFC649" : "#30C5BE",
       icon: Clock,
       iconBg: ps.unassignedCount > 0 ? "#4A3C36" : "#363D59",
