@@ -1,5 +1,5 @@
+import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock } from "lucide-react";
 import AIProgramBrief from "./AIProgramBrief";
-import ProgramStatusRow from "./ProgramStatusRow";
 import NeedsAttentionCard from "./NeedsAttentionCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import ActivityFeed from "./ActivityFeed";
@@ -19,56 +19,109 @@ export default function DirectorView({ data, userName }) {
   const firstName = userName?.split(" ")[0] || "Director";
   const ps = data.programStatus || {};
 
+  const kpis = [
+    {
+      value: ps.totalAthletes || 0,
+      label: "ATHLETES",
+      subtitle: `${ps.needingAttention || 0} need attention`,
+      color: "#30C5BE",
+      icon: Target,
+      iconBg: "#363D59",
+    },
+    {
+      value: ps.activeCoaches || 0,
+      label: "COACHES",
+      subtitle: "Active in program",
+      color: "#7F92FF",
+      icon: MessageCircle,
+      iconBg: "#363D59",
+    },
+    {
+      value: ps.upcomingEvents || 0,
+      label: "EVENTS AHEAD",
+      subtitle: "Next 14 days",
+      color: "#30C5BE",
+      icon: Mail,
+      iconBg: "#363D59",
+    },
+    {
+      value: ps.unassignedCount || 0,
+      label: "UNASSIGNED",
+      subtitle: ps.unassignedCount > 0 ? "Need coach assignment" : "All athletes assigned",
+      color: ps.unassignedCount > 0 ? "#FFC649" : "#30C5BE",
+      icon: Clock,
+      iconBg: ps.unassignedCount > 0 ? "#4A3C36" : "#363D59",
+    },
+  ];
+
   return (
     <div className="space-y-6" data-testid="director-mission-control">
-      {/* ── Hero Section ── */}
-      <section className="relative rounded-2xl bg-[#1A232A] overflow-hidden px-8 pt-7 pb-8" data-testid="director-hero">
+      {/* ── Hero Card ── */}
+      <section
+        className="relative rounded-[10px] overflow-hidden"
+        style={{ backgroundColor: "#1E213A", padding: "32px" }}
+        data-testid="director-hero"
+      >
         {/* Date badge */}
-        <div className="absolute top-6 right-7">
-          <span className="px-3 py-1.5 rounded-full bg-white/10 text-[12px] text-white/50 font-medium">
+        <div className="absolute" style={{ top: 24, right: 28 }}>
+          <span
+            className="inline-block font-medium"
+            style={{
+              backgroundColor: "#363D59",
+              color: "#E5E5E5",
+              fontSize: 14,
+              padding: "8px 16px",
+              borderRadius: 6,
+            }}
+          >
             {getDateLabel()}
           </span>
         </div>
 
         {/* Greeting */}
-        <h2 className="text-xl text-white/70 font-normal mb-0.5">
-          {getGreeting()}, <span className="text-[#4CAF50] font-bold text-2xl">{firstName}</span>
+        <h2 style={{ fontSize: 28, fontWeight: 600, color: "#FFFFFF", marginBottom: 2 }}>
+          {getGreeting()},{" "}
+          <span style={{ color: "#30C5BE" }}>{firstName}</span>
         </h2>
-        <p className="text-sm text-white/40 mb-8">
+        <p style={{ fontSize: 16, color: "#8A92A3", marginBottom: 0 }}>
           Here's your program overview for today
         </p>
 
-        {/* Inline KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-          <KpiItem
-            value={ps.totalAthletes || 0}
-            label="ATHLETES"
-            subtitle={`${ps.needingAttention || 0} need attention`}
-            iconBg="bg-emerald-500/20"
-            iconColor="text-emerald-400"
-          />
-          <KpiItem
-            value={ps.activeCoaches || 0}
-            label="COACHES"
-            subtitle="Active in program"
-            iconBg="bg-blue-500/20"
-            iconColor="text-blue-400"
-          />
-          <KpiItem
-            value={ps.upcomingEvents || 0}
-            label="EVENTS AHEAD"
-            subtitle="Next 14 days"
-            iconBg="bg-violet-500/20"
-            iconColor="text-violet-400"
-          />
-          <KpiItem
-            value={ps.unassignedCount || 0}
-            label="UNASSIGNED"
-            subtitle={ps.unassignedCount > 0 ? "Need coach assignment" : "All athletes assigned"}
-            iconBg="bg-amber-500/20"
-            iconColor="text-amber-400"
-            alert={ps.unassignedCount > 0}
-          />
+        {/* Separator */}
+        <div style={{ borderTop: "1px solid #363D59", margin: "20px 0 24px 0" }} />
+
+        {/* KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 24 }}>
+          {kpis.map((kpi) => {
+            const Icon = kpi.icon;
+            return (
+              <div key={kpi.label} className="flex items-start justify-between">
+                <div>
+                  <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>
+                    {kpi.value}
+                  </p>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
+                    {kpi.label}
+                  </p>
+                  <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>
+                    {kpi.subtitle}
+                  </p>
+                </div>
+                <div
+                  className="flex items-center justify-center shrink-0"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    backgroundColor: kpi.iconBg,
+                    marginTop: 4,
+                  }}
+                >
+                  <Icon style={{ width: 18, height: 18, color: kpi.color }} />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -86,25 +139,6 @@ export default function DirectorView({ data, userName }) {
         <div className="lg:col-span-2">
           <ActivityFeed items={data.programActivity || []} title="Program Activity" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function KpiItem({ value, label, subtitle, iconBg, iconColor, alert }) {
-  return (
-    <div className="flex items-start justify-between">
-      <div>
-        <p className={`text-3xl font-bold tracking-tight ${alert ? "text-amber-400" : "text-[#4CAF50]"}`}>
-          {value}
-        </p>
-        <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mt-1">{label}</p>
-        <p className="text-[11px] text-white/25 mt-0.5">{subtitle}</p>
-      </div>
-      <div className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center shrink-0 mt-1`}>
-        <div className={`w-2.5 h-2.5 rounded-full ${iconColor} ${alert ? "animate-pulse" : ""}`}
-          style={{ backgroundColor: "currentColor" }}
-        />
       </div>
     </div>
   );

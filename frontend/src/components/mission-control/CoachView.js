@@ -1,3 +1,4 @@
+import { Target, AlertTriangle, Calendar, Bell } from "lucide-react";
 import TodaysActionsCard from "./TodaysActionsCard";
 import MyRosterCard from "./MyRosterCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
@@ -19,60 +20,112 @@ export default function CoachView({ data, userName }) {
   const firstName = userName?.split(" ")[0] || "Coach";
   const summary = data.todays_summary || {};
 
+  const kpis = [
+    {
+      value: summary.athleteCount || 0,
+      label: "MY ATHLETES",
+      subtitle: "Assigned to you",
+      color: "#30C5BE",
+      icon: Target,
+      iconBg: "#363D59",
+    },
+    {
+      value: summary.needingAction || 0,
+      label: "NEED ACTION",
+      subtitle: "Require follow-up",
+      color: summary.needingAction > 0 ? "#FFC649" : "#30C5BE",
+      icon: AlertTriangle,
+      iconBg: summary.needingAction > 0 ? "#4A3C36" : "#363D59",
+    },
+    {
+      value: summary.upcomingEvents || 0,
+      label: "EVENTS THIS WEEK",
+      subtitle: "Coming up",
+      color: "#7F92FF",
+      icon: Calendar,
+      iconBg: "#363D59",
+    },
+    {
+      value: summary.alertCount || 0,
+      label: "ALERTS",
+      subtitle: "Priority items",
+      color: summary.alertCount > 0 ? "#FFC649" : "#30C5BE",
+      icon: Bell,
+      iconBg: summary.alertCount > 0 ? "#4A3C36" : "#363D59",
+    },
+  ];
+
   return (
     <div className="space-y-6" data-testid="coach-mission-control">
       {/* Coach Onboarding (dismissible) */}
       <OnboardingChecklist />
 
-      {/* ── Hero Section ── */}
-      <section className="relative rounded-2xl bg-[#1A232A] overflow-hidden px-8 pt-7 pb-8" data-testid="coach-hero">
+      {/* ── Hero Card ── */}
+      <section
+        className="relative rounded-[10px] overflow-hidden"
+        style={{ backgroundColor: "#1E213A", padding: "32px" }}
+        data-testid="coach-hero"
+      >
         {/* Date badge */}
-        <div className="absolute top-6 right-7">
-          <span className="px-3 py-1.5 rounded-full bg-white/10 text-[12px] text-white/50 font-medium">
+        <div className="absolute" style={{ top: 24, right: 28 }}>
+          <span
+            className="inline-block font-medium"
+            style={{
+              backgroundColor: "#363D59",
+              color: "#E5E5E5",
+              fontSize: 14,
+              padding: "8px 16px",
+              borderRadius: 6,
+            }}
+          >
             {getDateLabel()}
           </span>
         </div>
 
         {/* Greeting */}
-        <h2 className="text-xl text-white/70 font-normal mb-0.5">
-          {getGreeting()}, <span className="text-[#4CAF50] font-bold text-2xl">{firstName}</span>
+        <h2 style={{ fontSize: 28, fontWeight: 600, color: "#FFFFFF", marginBottom: 2 }}>
+          {getGreeting()},{" "}
+          <span style={{ color: "#30C5BE" }}>{firstName}</span>
         </h2>
-        <p className="text-sm text-white/40 mb-8">
+        <p style={{ fontSize: 16, color: "#8A92A3", marginBottom: 0 }}>
           Here's what's happening with your athletes today
         </p>
 
-        {/* Inline KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-          <KpiItem
-            value={summary.athleteCount || 0}
-            label="MY ATHLETES"
-            subtitle="Assigned to you"
-            iconBg="bg-emerald-500/20"
-            iconColor="text-emerald-400"
-          />
-          <KpiItem
-            value={summary.needingAction || 0}
-            label="NEED ACTION"
-            subtitle="Require follow-up"
-            iconBg="bg-amber-500/20"
-            iconColor="text-amber-400"
-            alert={summary.needingAction > 0}
-          />
-          <KpiItem
-            value={summary.upcomingEvents || 0}
-            label="EVENTS THIS WEEK"
-            subtitle="Coming up"
-            iconBg="bg-violet-500/20"
-            iconColor="text-violet-400"
-          />
-          <KpiItem
-            value={summary.alertCount || 0}
-            label="ALERTS"
-            subtitle="Priority items"
-            iconBg="bg-red-500/20"
-            iconColor="text-red-400"
-            alert={summary.alertCount > 0}
-          />
+        {/* Separator */}
+        <div style={{ borderTop: "1px solid #363D59", margin: "20px 0 24px 0" }} />
+
+        {/* KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 24 }}>
+          {kpis.map((kpi) => {
+            const Icon = kpi.icon;
+            return (
+              <div key={kpi.label} className="flex items-start justify-between">
+                <div>
+                  <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>
+                    {kpi.value}
+                  </p>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
+                    {kpi.label}
+                  </p>
+                  <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>
+                    {kpi.subtitle}
+                  </p>
+                </div>
+                <div
+                  className="flex items-center justify-center shrink-0"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    backgroundColor: kpi.iconBg,
+                    marginTop: 4,
+                  }}
+                >
+                  <Icon style={{ width: 18, height: 18, color: kpi.color }} />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -90,25 +143,6 @@ export default function CoachView({ data, userName }) {
         <div className="lg:col-span-2">
           <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function KpiItem({ value, label, subtitle, iconBg, iconColor, alert }) {
-  return (
-    <div className="flex items-start justify-between">
-      <div>
-        <p className={`text-3xl font-bold tracking-tight ${alert ? "text-amber-400" : "text-[#4CAF50]"}`}>
-          {value}
-        </p>
-        <p className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mt-1">{label}</p>
-        <p className="text-[11px] text-white/25 mt-0.5">{subtitle}</p>
-      </div>
-      <div className={`w-9 h-9 rounded-full ${iconBg} flex items-center justify-center shrink-0 mt-1`}>
-        <div className={`w-2.5 h-2.5 rounded-full ${iconColor} ${alert ? "animate-pulse" : ""}`}
-          style={{ backgroundColor: "currentColor" }}
-        />
       </div>
     </div>
   );
