@@ -15,7 +15,7 @@ from services.ownership import (
     get_coach_athlete_map,
     get_unassigned_athlete_ids,
 )
-from mock_data import ATHLETES
+from mock_data import ATHLETES, ATHLETES_NEEDING_ATTENTION
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -63,79 +63,113 @@ async def _get_open_actions_warning(athlete_id: str, from_coach_id: str) -> list
 
 @router.get("/roster")
 async def get_roster(current_user: dict = get_current_user_dep()):
-    """Director view: all athletes grouped by coach, with unassigned section."""
+    """Director view: all athletes with recruiting insights, grouped data."""
     _require_director(current_user)
 
-    # Get all coaches
     coaches = await db.users.find(
         {"role": "coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1, "profile": 1}
     ).to_list(100)
 
-    # Build roster groups
     athlete_map = get_coach_athlete_map()
     unassigned_ids = get_unassigned_athlete_ids()
 
-    groups = []
+    # Build coach lookup
+    coach_by_id = {c["id"]: c for c in coaches}
 
-    # Unassigned group first
-    if unassigned_ids:
-        unassigned_athletes = []
-        for a in ATHLETES:
-            if a["id"] in unassigned_ids:
-                unassigned_athletes.append({
-                    "id": a["id"],
-                    "name": a.get("fullName", a.get("name", "Unknown")),
-                    "grad_year": a.get("gradYear"),
-                    "position": a.get("position"),
-                    "team": a.get("team"),
-                    "unassigned_reason": a.get("unassigned_reason", "imported_without_owner"),
-                })
-        groups.append({
-            "coach_id": None,
-            "coach_name": "Unassigned",
-            "coach_email": None,
-            "coach_team": None,
-            "athletes": unassigned_athletes,
-            "count": len(unassigned_athletes),
+    # Build reverse map: athlete -> coach
+    athlete_to_coach = {}
+    for cid, aids in athlete_map.items():
+        for aid in aids:
+            athlete_to_coach[aid] = cid
+
+    # Build enriched athlete list
+    enriched_athletes = []
+    for a in ATHLETES:
+        cid = athlete_to_coach.get(a["id"])
+        coach = coach_by_id.get(cid) if cid else None
+        enriched_athletes.append({
+            "id": a["id"],
+            "name": a.get("fullName", a.get("name", "Unknown")),
+            "grad_year": a.get("gradYear"),
+            "position": a.get("position"),
+            "team": a.get("team"),
+            "recruiting_stage": a.get("recruitingStage"),
+            "momentum_score": a.get("momentumScore"),
+            "momentum_trend": a.get("momentumTrend"),
+            "last_activity": a.get("lastActivity"),
+            "days_since_activity": a.get("daysSinceActivity"),
+            "coach_id": cid,
+            "coach_name": coach["name"] if coach else None,
+            "unassigned": a["id"] in unassigned_ids,
+            "unassigned_reason": a.get("unassigned_reason") if a["id"] in unassigned_ids else None,
         })
 
-    # Coach groups
+    # Needs attention athletes (from decision engine)
+    attention_ids = {item["athlete_id"] for item in ATHLETES_NEEDING_ATTENTION}
+    attention_lookup = {}
+    for item in ATHLETES_NEEDING_ATTENTION:
+        aid = item["athlete_id"]
+        if aid not in attention_lookup:
+            attention_lookup[aid] = {
+                "category": item.get("category"),
+                "why": item.get("why_this_surfaced"),
+                "badge_color": item.get("badge_color"),
+            }
+
+    # Coach groups (for Coach View)
+    groups = []
+    if unassigned_ids:
+        unassigned_athletes = [a for a in enriched_athletes if a["unassigned"]]
+        groups.append({
+            "coach_id": None, "coach_name": "Unassigned", "coach_email": None,
+            "coach_team": None, "athletes": unassigned_athletes, "count": len(unassigned_athletes),
+        })
     for coach in coaches:
         cid = coach["id"]
-        assigned_ids = athlete_map.get(cid, set())
-        coach_athletes = []
-        for a in ATHLETES:
-            if a["id"] in assigned_ids:
-                coach_athletes.append({
-                    "id": a["id"],
-                    "name": a.get("fullName", a.get("name", "Unknown")),
-                    "grad_year": a.get("gradYear"),
-                    "position": a.get("position"),
-                    "team": a.get("team"),
-                })
+        coach_athletes = [a for a in enriched_athletes if a["coach_id"] == cid]
         groups.append({
-            "coach_id": cid,
-            "coach_name": coach["name"],
-            "coach_email": coach["email"],
+            "coach_id": cid, "coach_name": coach["name"], "coach_email": coach["email"],
             "coach_team": coach.get("team"),
             "coach_contact_method": (coach.get("profile") or {}).get("contact_method"),
             "coach_availability": (coach.get("profile") or {}).get("availability"),
-            "coach_bio": (coach.get("profile") or {}).get("bio"),
-            "athletes": coach_athletes,
-            "count": len(coach_athletes),
+            "athletes": coach_athletes, "count": len(coach_athletes),
         })
 
-    # Summary stats
-    total = len(ATHLETES)
-    assigned = total - len(unassigned_ids)
+    # Team groups (for Team View)
+    team_map = {}
+    for a in enriched_athletes:
+        team = a.get("team") or "No Team"
+        if team not in team_map:
+            team_map[team] = []
+        team_map[team].append(a)
+    team_groups = [{"team": t, "athletes": ats, "count": len(ats)} for t, ats in sorted(team_map.items())]
 
+    # Age groups (for Age Group View)
+    age_map = {}
+    for a in enriched_athletes:
+        gy = a.get("grad_year") or "Unknown"
+        label = f"Class of {gy}"
+        if label not in age_map:
+            age_map[label] = []
+        age_map[label].append(a)
+    age_groups = [{"label": l, "athletes": ats, "count": len(ats)} for l, ats in sorted(age_map.items())]
+
+    total = len(ATHLETES)
     return {
+        "athletes": enriched_athletes,
         "groups": groups,
+        "teamGroups": team_groups,
+        "ageGroups": age_groups,
+        "needsAttention": [
+            {**attention_lookup[a["id"]], "athlete_id": a["id"], "athlete_name": a["name"]}
+            for a in enriched_athletes if a["id"] in attention_ids
+        ],
         "summary": {
             "total_athletes": total,
-            "assigned": assigned,
+            "assigned": total - len(unassigned_ids),
             "unassigned": len(unassigned_ids),
             "coach_count": len(coaches),
+            "teams": len(team_map),
         },
     }
 
