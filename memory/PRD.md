@@ -57,6 +57,17 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Today's Actions (AI hero), My Roster, Upcoming Events, Recent Activity
 - Unchanged by director refinements
 
+### Roster Page — Recruiting Operations Hub (2026-03-08)
+- **Three view modes** via tab switcher: Team View (default), Coach View, Age Group View
+- **Team View**: Groups by team (U16 Elite, U17 Premier, U18 Academy) with coach names
+- **Coach View**: Groups by assigned coach
+- **Age Group View**: Groups by graduation year (Class of 2025/2026/2027)
+- **Athlete rows**: Name, momentum badge (score+trend), stage badge, position, grad year, coach, last activity
+- **Quick actions on hover**: Open Profile, Assign Coach, Notes
+- **Needs Attention banner**: Amber section showing 12 flagged athletes with expand/collapse
+- **Search**: Filters across name, position, team
+- **Reassign modal**: Select new coach + optional reason
+
 ## Key Credentials
 - Director: director@capymatch.com / director123 (name: Clara Adams)
 - Coach Williams: coach.williams@capymatch.com / coach123
