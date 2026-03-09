@@ -49,7 +49,7 @@ def _build_invite_url(request: Request, token: str) -> str:
             parsed = urlparse(referer)
             origin = f"{parsed.scheme}://{parsed.netloc}"
     if not origin:
-        origin = "https://capymatch-journey-v2.preview.emergentagent.com"
+        origin = "https://kb-scraper-unify.preview.emergentagent.com"
     return f"{origin}/invite/{token}"
 
 
