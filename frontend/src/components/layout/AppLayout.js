@@ -16,7 +16,7 @@ const ROUTE_META = {
   "/invite": { title: "Invite", icon: UserPlus },
   "/admin": { title: "Admin", icon: Shield },
   "/board": { title: "Dashboard", icon: LayoutDashboard },
-  "/pipeline": { title: "Pipeline", icon: LayoutDashboard },
+  "/pipeline": { title: "My Schools", icon: LayoutDashboard },
   "/schools": { title: "Find Schools", icon: LayoutDashboard },
   "/calendar": { title: "Calendar", icon: Calendar },
   "/inbox": { title: "Inbox", icon: LayoutDashboard },

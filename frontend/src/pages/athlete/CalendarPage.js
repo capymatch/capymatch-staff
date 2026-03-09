@@ -247,8 +247,7 @@ export default function CalendarPage() {
 
   return (
     <div data-testid="calendar-page" className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold" style={{ color: "var(--cm-text)" }}>Calendar</h2>
+      <div className="flex items-center justify-end">
         <button data-testid="add-event-btn" onClick={() => { setEditEvent(null); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
           <Plus className="w-4 h-4" /> Add Event

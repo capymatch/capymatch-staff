@@ -188,17 +188,6 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen pb-16" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="settings-page">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-teal-700/15 flex items-center justify-center">
-            <Settings className="w-5 h-5 text-teal-600" />
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }} data-testid="settings-title">Settings</h1>
-            <p className="text-xs" style={{ color: "var(--cm-text-2)" }}>Manage your account, integrations, and preferences</p>
-          </div>
-        </div>
-
         <div className="space-y-5">
           {/* ── Personal Info ── */}
           <SectionCard icon={User} title="Personal Information" testId="section-personal">

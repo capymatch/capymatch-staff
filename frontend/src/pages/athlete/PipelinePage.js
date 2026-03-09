@@ -554,7 +554,7 @@ export default function PipelinePage() {
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <PipelineStyles />
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "var(--cm-text)" }} data-testid="pipeline-title">My Schools</h1>
+          <span style={{ flex: 1 }} />
         </div>
         <EmptyBoardState navigate={navigate} />
       </div>
@@ -579,7 +579,6 @@ export default function PipelinePage() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "var(--cm-text)" }} data-testid="pipeline-title">My Schools</h1>
         <span style={{ flex: 1 }} />
         <button
           onClick={() => navigate("/schools")}

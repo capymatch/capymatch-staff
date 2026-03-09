@@ -200,8 +200,7 @@ export default function ProfilePage() {
   return (
     <div data-testid="profile-page" className="max-w-2xl">
       {/* Top Bar */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold" style={{ color: "var(--cm-text)" }}>Athlete Profile</h2>
+      <div className="flex items-center justify-end mb-4">
         {autoSaved && (
           <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-500 animate-pulse">
             <Check className="w-3.5 h-3.5" /> Auto-saved
