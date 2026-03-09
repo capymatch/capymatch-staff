@@ -151,10 +151,20 @@ async def run_startup(db):
     from services.ownership import refresh_ownership_cache
     await refresh_ownership_cache()
 
-    # ── Step 9: Seed Knowledge Base (idempotent upsert) ──
-    from seeders.seed_kb import seed_kb
-    kb_count = await seed_kb(db)
-    log.info(f"Knowledge Base: {kb_count} schools seeded/refreshed")
+    # ── Step 9: Ensure Knowledge Base indexes ──
+    kb_count = await db.university_knowledge_base.count_documents({})
+    if kb_count > 0:
+        # Data already imported from BSON dump — just ensure search indexes
+        await db.university_knowledge_base.create_index("university_name")
+        await db.university_knowledge_base.create_index("division")
+        await db.university_knowledge_base.create_index("region")
+        await db.university_knowledge_base.create_index("conference")
+        await db.university_knowledge_base.create_index("domain")
+        log.info(f"Knowledge Base: {kb_count} schools present (indexes ensured)")
+    else:
+        from seeders.seed_kb import seed_kb
+        kb_count = await seed_kb(db)
+        log.info(f"Knowledge Base: {kb_count} schools seeded/refreshed")
 
     from services.athlete_store import get_all, get_interventions
     log.info(

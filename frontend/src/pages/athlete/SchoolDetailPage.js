@@ -3,78 +3,127 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-  ArrowLeft, MapPin, Trophy, Users, DollarSign, GraduationCap,
-  Globe, Mail, Plus, Check, Loader2, Building, ExternalLink,
-  BarChart3, BookOpen, Shield,
+  ChevronLeft, Plus, Mail, ExternalLink, Users, User,
+  Check, Loader2, Activity, GraduationCap, DollarSign, BookOpen, Sparkles, PieChart
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-function StatBox({ icon: Icon, label, value, sub }) {
+/* ── Match Ring ── */
+function MatchRing({ score }) {
+  const pct = score || 0;
+  const r = 44, c = 2 * Math.PI * r;
+  const offset = c - (pct / 100) * c;
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-4 h-4 text-slate-400" />
-        <span className="text-[10px] font-bold tracking-widest uppercase text-slate-400">{label}</span>
+    <div className="relative flex-shrink-0 w-[100px] h-[100px]" data-testid="match-score-ring">
+      <svg width="100" height="100" viewBox="0 0 100 100" className="absolute inset-0">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="#1a8a80" strokeWidth="6"
+          strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
+          transform="rotate(-90 50 50)" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[22px] font-extrabold text-[#1a8a80] leading-none">{pct}%</span>
+        <span className="text-[9px] font-semibold text-white/35 uppercase tracking-[1px] mt-0.5">Match</span>
       </div>
-      <div className="text-lg font-bold text-slate-900">{value || "—"}</div>
-      {sub && <div className="text-[10px] text-slate-500 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
-function CoachCard({ coach }) {
+/* ── Stat Card ── */
+function StatCard({ value, label, subtitle, accent }) {
+  const isEmpty = !value && value !== 0;
   return (
-    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
-      <div>
-        <p className="text-sm font-semibold text-slate-900">{coach.name}</p>
-        <p className="text-xs text-slate-500">{coach.role}</p>
+    <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5 flex flex-col items-center text-center" data-testid={`stat-card-${label?.replace(/\s+/g, '-').toLowerCase()}`}>
+      <div className={`text-[26px] sm:text-[30px] font-black tracking-tight leading-none mb-2 ${
+        isEmpty ? "text-white/20" : accent ? "text-[#1a8a80]" : "text-white"
+      }`}>
+        {isEmpty ? "N/A" : value}
       </div>
-      {coach.email && (
-        <a
-          href={`mailto:${coach.email}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 transition-colors"
-          data-testid={`coach-email-${coach.name?.replace(/\s/g, "-")}`}
-        >
-          <Mail className="w-3.5 h-3.5" /> Email
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/30 mb-0.5">{label}</div>
+      {subtitle && <div className="text-[11px] text-white/20">{subtitle}</div>}
+    </div>
+  );
+}
+
+/* ── Section Header ── */
+function SectionHeader({ icon: Icon, title, testId }) {
+  return (
+    <div className="flex items-center gap-2 mb-4" data-testid={testId}>
+      {Icon && <Icon className="w-4 h-4 text-[#1a8a80]" />}
+      <h3 className="text-[13px] font-bold uppercase tracking-[0.1em] text-white/40">{title}</h3>
+    </div>
+  );
+}
+
+/* ── Overview Field ── */
+function OverviewField({ label, value, isLink }) {
+  const linkText = label === "Recruiting Questionnaire" ? "Fill out questionnaire" : "Visit website";
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/30 mb-1.5">{label}</div>
+      {isLink && value ? (
+        <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noreferrer"
+          className="text-[13px] text-[#1a8a80] font-semibold hover:underline inline-flex items-center gap-1">
+          {linkText} <ExternalLink className="w-3 h-3" />
         </a>
+      ) : (
+        <div className="text-[13px] font-semibold text-white/70">{value || "\u2014"}</div>
       )}
     </div>
   );
 }
 
+/* ── Helpers ── */
+function selectivityLabel(rate) {
+  if (rate == null) return null;
+  if (rate < 0.15) return "Highly selective";
+  if (rate < 0.30) return "Selective";
+  if (rate < 0.60) return "Moderate";
+  return "Open admission";
+}
+
+function sizeLabel(size) {
+  if (size == null) return null;
+  if (size < 2000) return "Small";
+  if (size < 10000) return "Medium-sized";
+  return "Large";
+}
+
+function gradLabel(rate) {
+  if (rate == null) return null;
+  if (rate > 0.75) return "Excellent";
+  if (rate > 0.50) return "Good";
+  return "Fair";
+}
 
 export default function SchoolDetailPage() {
   const { domain } = useParams();
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await axios.get(`${API}/athlete/knowledge/${domain}`);
-        setSchool(data);
-      } catch (err) {
-        toast.error("Failed to load school data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [domain]);
+  const token = localStorage.getItem("token");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const handleAddToPipeline = async () => {
+  useEffect(() => {
+    axios.get(`${API}/knowledge-base/school/${domain}`, { headers })
+      .then(res => setSchool(res.data))
+      .catch(() => { toast.error("School not found"); navigate("/schools"); })
+      .finally(() => setLoading(false));
+  }, [domain, navigate]);
+
+  const addToBoard = async () => {
+    if (!school) return;
     setAdding(true);
     try {
-      await axios.post(`${API}/athlete/knowledge/${domain}/add-to-pipeline`);
-      toast.success(`${school.university_name} added to your pipeline`);
-      setSchool((prev) => ({ ...prev, in_pipeline: true }));
+      await axios.post(`${API}/knowledge-base/add-to-board`, { university_name: school.university_name }, { headers });
+      toast.success(`${school.university_name} added to your board!`);
+      setSchool(prev => ({ ...prev, on_board: true }));
     } catch (err) {
-      const msg = err.response?.data?.detail || "Failed to add school";
-      toast.error(msg);
+      const detail = err.response?.data?.detail;
+      toast.error(typeof detail === "string" ? detail : "Failed to add");
     } finally {
       setAdding(false);
     }
@@ -82,180 +131,254 @@ export default function SchoolDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
-        <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-6 h-6 text-[#1a8a80] animate-spin" />
       </div>
     );
   }
+  if (!school) return null;
 
-  if (!school) {
-    return (
-      <div className="text-center py-32" data-testid="school-not-found">
-        <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-        <p className="text-sm text-slate-500">School not found</p>
-        <button onClick={() => nav("/schools")} className="text-xs text-emerald-600 hover:underline mt-2">
-          Back to Knowledge Base
-        </button>
-      </div>
-    );
-  }
+  const coaches = school.coaches_scraped?.length
+    ? school.coaches_scraped
+    : [
+        school.primary_coach && { name: school.primary_coach, title: "Head Coach", email: school.coach_email },
+        school.recruiting_coordinator && { name: school.recruiting_coordinator, title: "Recruiting Coordinator", email: school.coordinator_email },
+      ].filter(Boolean);
 
-  const stats = school.program_stats || {};
-  const DIVISION_COLORS = {
-    D1: "bg-emerald-100 text-emerald-800",
-    D2: "bg-blue-100 text-blue-800",
-    D3: "bg-amber-100 text-amber-800",
-    NAIA: "bg-slate-100 text-slate-700",
-  };
-  const divClass = DIVISION_COLORS[school.division] || "bg-slate-100 text-slate-700";
+  const sc = school.scorecard || {};
+  const divLabel = { D1: "NCAA D1", D2: "NCAA D2", D3: "NCAA D3", NAIA: "NAIA", JUCO: "JUCO" };
+
+  const fmtPct = (v) => v != null ? `${(v * 100).toFixed(1)}%` : null;
+  const fmtMoney = (v) => v != null ? `$${Number(v).toLocaleString()}` : null;
+  const fmtRatio = (v) => v != null ? `${v}:1` : null;
+
+  // Extract social links
+  const socialLinks = school.social_links || {};
+  const twitterUrl = socialLinks.twitter || null;
+  const instagramUrl = socialLinks.instagram || null;
+  const facebookUrl = socialLinks.facebook || null;
 
   return (
-    <div className="space-y-6" data-testid="school-detail-page">
-      {/* Back nav */}
-      <button
-        onClick={() => nav("/schools")}
-        className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
-        data-testid="back-to-schools"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to Knowledge Base
+    <div className="max-w-[960px] mx-auto px-4 sm:px-6 pb-16" data-testid="school-info-page">
+      {/* Back link */}
+      <button onClick={() => navigate(-1)} data-testid="back-button"
+        className="inline-flex items-center gap-1.5 text-[12px] text-white/30 font-semibold mb-5 hover:text-[#1a8a80] transition-colors">
+        <ChevronLeft className="w-3.5 h-3.5" /> Back to Find Schools
       </button>
 
-      {/* Hero */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden" data-testid="school-hero">
-        <div
-          className="h-3 w-full"
-          style={{ backgroundColor: school.colors?.[0] || "#64748b" }}
-        />
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div
-                className="w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-xl shrink-0"
-                style={{ backgroundColor: school.colors?.[0] || "#64748b" }}
-              >
-                {(school.mascot || "?")[0]}
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900" data-testid="school-detail-name">
-                  {school.university_name}
-                </h1>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <span className={`text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full ${divClass}`}>
-                    {school.division}
-                  </span>
-                  <span className="text-xs text-slate-500">{school.conference}</span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <MapPin className="w-3 h-3" /> {school.city}, {school.state}
-                  </span>
+      {/* Dark Hero Card */}
+      <div className="rounded-[20px] overflow-hidden mb-6 border border-white/[0.06]"
+        style={{ background: "linear-gradient(135deg, #1a1f2e 0%, #1e2640 60%, #2a1a2e 100%)" }}
+        data-testid="school-hero">
+        <div className="p-5 sm:p-9 flex flex-col sm:flex-row gap-4 sm:gap-7 items-center sm:items-start">
+          {school.match_score != null && school.match_score > 0 && (
+            <div className="flex flex-col items-center order-first sm:order-last mb-2 sm:mb-0">
+              <MatchRing score={school.match_score} />
+              {school.match_reasons?.length > 0 && (
+                <div className="flex flex-wrap gap-1 justify-center mt-2">
+                  {school.match_reasons.map(r => (
+                    <span key={r} className="text-[9px] px-1.5 py-0.5 rounded-[5px] font-medium"
+                      style={{ backgroundColor: "rgba(26,138,128,0.1)", color: "rgba(26,138,128,0.7)", border: "1px solid rgba(26,138,128,0.15)" }}>{r}</span>
+                  ))}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">{school.mascot}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              {school.website && (
-                <a
-                  href={school.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
-                  data-testid="school-website-link"
-                >
-                  <Globe className="w-3.5 h-3.5" /> Website
-                </a>
               )}
-              {school.in_pipeline ? (
-                <span
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg"
-                  data-testid="already-in-pipeline"
-                >
-                  <Check className="w-3.5 h-3.5" /> In Pipeline
-                </span>
-              ) : (
-                <button
-                  data-testid="add-to-pipeline-btn"
-                  onClick={handleAddToPipeline}
-                  disabled={adding}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                >
-                  {adding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                  Add to Pipeline
-                </button>
+            </div>
+          )}
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            {school.logo_url && (
+              <img src={school.logo_url} alt="" className="w-12 h-12 rounded-lg object-contain mb-3 mx-auto sm:mx-0" onError={e => e.target.style.display = 'none'} />
+            )}
+            <h1 className="text-xl sm:text-[28px] font-extrabold text-white tracking-tight mb-1.5 leading-tight" data-testid="school-name">
+              {school.university_name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-1.5 mb-3 justify-center sm:justify-start">
+              {school.division && (
+                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold" data-testid="school-division"
+                  style={{ backgroundColor: "rgba(26,138,128,0.2)", color: "#1a8a80" }}>{school.division}</span>
+              )}
+              {school.conference && (
+                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-white/[0.06] text-white/50">{school.conference}</span>
+              )}
+              {school.region && (
+                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-white/[0.06] text-white/50">{school.region}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+              <button onClick={addToBoard} disabled={adding || school.on_board} data-testid="add-to-board-btn"
+                className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 text-white transition-all border-none"
+                style={school.on_board
+                  ? { background: "rgba(16,185,129,0.2)", color: "#10b981" }
+                  : { background: "linear-gradient(135deg, #1a8a80, #25a99e)" }}>
+                {school.on_board ? <><Check className="w-4 h-4" /> On Your Board</> : <><Plus className="w-4 h-4" /> {adding ? "Adding..." : "Add to Board"}</>}
+              </button>
+              {school.website && (
+                <a href={school.website} target="_blank" rel="noreferrer" data-testid="visit-website-btn"
+                  className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 bg-white/[0.06] text-white/60 border border-white/[0.08]">
+                  <ExternalLink className="w-4 h-4" /> Visit Website
+                </a>
               )}
             </div>
           </div>
-
-          {/* Description */}
-          {school.description && (
-            <p className="text-sm text-slate-600 mt-4 leading-relaxed" data-testid="school-description">
-              {school.description}
-            </p>
-          )}
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" data-testid="stats-grid">
-        <StatBox icon={Trophy} label="Championships" value={stats.national_championships} />
-        <StatBox icon={BarChart3} label="Record" value={stats.win_loss_record} sub={stats.home_record ? `Home: ${stats.home_record}` : null} />
-        <StatBox icon={Users} label="Roster Size" value={school.roster_size} />
-        <StatBox icon={Trophy} label="Conf. Titles" value={stats.conference_titles} />
-        <StatBox icon={BookOpen} label="Enrollment" value={school.enrollment?.toLocaleString()} />
-        <StatBox icon={GraduationCap} label="Acceptance" value={school.acceptance_rate ? `${school.acceptance_rate}%` : "—"} />
-        <StatBox icon={DollarSign} label="In-State Tuition" value={school.tuition_in_state ? `$${school.tuition_in_state.toLocaleString()}` : "—"} />
-        <StatBox icon={DollarSign} label="Out-State Tuition" value={school.tuition_out_state ? `$${school.tuition_out_state.toLocaleString()}` : "—"} />
+      {/* Key Statistics */}
+      <div className="mb-6" data-testid="key-statistics-section">
+        <SectionHeader icon={Activity} title="Key Statistics" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard value={fmtMoney(sc.tuition_out_of_state || sc.tuition_in_state)} label="Tuition" subtitle="Out-of-state" />
+          <StatCard value={fmtPct(sc.admission_rate)} label="Acceptance Rate" subtitle={selectivityLabel(sc.admission_rate)} accent={sc.admission_rate != null && sc.admission_rate < 0.30} />
+          <StatCard value={sc.student_size ? Number(sc.student_size).toLocaleString() : null} label="Undergrads" subtitle={sizeLabel(sc.student_size)} />
+          <StatCard value={fmtPct(sc.graduation_rate)} label="Graduation Rate" subtitle={gradLabel(sc.graduation_rate)} accent={sc.graduation_rate != null && sc.graduation_rate > 0.50} />
+        </div>
       </div>
 
-      {/* Program details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="flex flex-col gap-5">
+        {/* Program Overview */}
+        <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5 sm:p-6" data-testid="program-overview-section">
+          <SectionHeader icon={BookOpen} title="Program Overview" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 pb-4 border-b border-white/[0.06]">
+            <OverviewField label="Division" value={
+              school.division ? <span className="inline-block px-2 py-0.5 rounded text-[12px] font-bold border border-[#1a8a80]/20 text-[#1a8a80] bg-[#1a8a80]/5">{divLabel[school.division] || school.division}</span> : "\u2014"
+            } />
+            <OverviewField label="Conference" value={school.conference || "\u2014"} />
+            <OverviewField label="Program Website" value={school.website} isLink />
+            <OverviewField label="Academic Website" value={school.domain ? `https://${school.domain}` : null} isLink />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <OverviewField label="Recruiting Questionnaire" value={school.questionnaire_url} isLink />
+            <OverviewField label="Twitter/X" value={twitterUrl} isLink />
+            <OverviewField label="Instagram" value={instagramUrl} isLink />
+            <OverviewField label="Facebook" value={facebookUrl} isLink />
+          </div>
+        </div>
+
         {/* Coaching Staff */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5" data-testid="coaching-staff-section">
-          <h2 className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-4">
-            Coaching Staff
-          </h2>
-          {(school.coaching_staff || []).length > 0 ? (
-            <div>
-              {school.coaching_staff.map((coach, i) => (
-                <CoachCard key={i} coach={coach} />
+        <div data-testid="coaching-staff-section">
+          <SectionHeader icon={Users} title="Coaching Staff" />
+          {coaches.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              {coaches.map((c, i) => (
+                <div key={i} className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5" data-testid={`coach-card-${i}`}>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#1a8a80]/10">
+                      <User className="w-5 h-5 text-[#1a8a80]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[15px] font-bold text-white">{c.name}</div>
+                      <div className="text-[12px] text-white/30 mt-0.5">{c.title || c.role || "Coach"}</div>
+                    </div>
+                  </div>
+                  {c.email && (
+                    <div className="flex items-center gap-2.5 mt-4">
+                      <Mail className="w-3.5 h-3.5 text-white/30" />
+                      <a href={`mailto:${c.email}`} className="text-[13px] text-[#1a8a80] font-medium hover:underline">{c.email}</a>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">No coaching staff listed</p>
+            <p className="text-[13px] text-white/30 mb-4">No coaching staff data available.</p>
           )}
         </div>
 
-        {/* Program Info */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5" data-testid="program-info-section">
-          <h2 className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-4">
-            Program Info
-          </h2>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-slate-100">
-              <span className="text-xs text-slate-500">Facilities</span>
-              <span className="text-sm font-medium text-slate-900">{school.facilities || "—"}</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-slate-100">
-              <span className="text-xs text-slate-500">Scholarships</span>
-              <span className="text-sm font-medium text-slate-900">
-                {school.athletic_scholarships ? school.scholarship_type || "Yes" : "None (D3/Academic)"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-slate-100">
-              <span className="text-xs text-slate-500">NCAA Appearances</span>
-              <span className="text-sm font-medium text-slate-900">{stats.ncaa_appearances || "—"}</span>
-            </div>
-            {stats.rpi_ranking && (
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-xs text-slate-500">RPI Ranking</span>
-                <span className="text-sm font-medium text-slate-900">#{stats.rpi_ranking}</span>
-              </div>
-            )}
-            <div className="flex items-center justify-between py-2">
-              <span className="text-xs text-slate-500">Avg GPA</span>
-              <span className="text-sm font-medium text-slate-900">{school.avg_gpa || "—"}</span>
-            </div>
+        {/* School Profile */}
+        <div data-testid="school-profile-section">
+          <SectionHeader icon={GraduationCap} title="School Profile" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatCard value={fmtPct(sc.graduation_rate)} label="Graduation Rate" subtitle={gradLabel(sc.graduation_rate)} accent={sc.graduation_rate > 0.50} />
+            <StatCard value={fmtPct(sc.retention_rate)} label="Retention Rate" />
+            <StatCard value={fmtRatio(sc.student_faculty_ratio)} label="Student-Faculty Ratio" />
+            <StatCard value={sc.student_size ? Number(sc.student_size).toLocaleString() : null} label="Undergrad Students" subtitle={sizeLabel(sc.student_size)} />
           </div>
         </div>
+
+        {/* Admissions */}
+        <div data-testid="admissions-section">
+          <SectionHeader icon={BookOpen} title="Admissions" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatCard value={sc.avg_gpa || null} label="Average GPA" />
+            <StatCard value={sc.act_midpoint ? String(sc.act_midpoint) : null} label="ACT" />
+            <StatCard value={sc.sat_avg ? String(sc.sat_avg) : null} label="SAT" />
+            <StatCard value={fmtPct(sc.admission_rate)} label="Acceptance Rate" subtitle={selectivityLabel(sc.admission_rate)} accent={sc.admission_rate != null && sc.admission_rate < 0.30} />
+          </div>
+        </div>
+
+        {/* Financial */}
+        <div data-testid="financial-section">
+          <SectionHeader icon={DollarSign} title="Financial" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <StatCard value={fmtMoney(sc.avg_annual_cost || sc.tuition_out_of_state)} label="Avg. Annual Cost" />
+            <StatCard value={fmtMoney(sc.tuition_in_state)} label="Tuition (In-State)" />
+            <StatCard value={fmtMoney(sc.median_debt)} label="Median Debt" subtitle="At graduation" />
+            <StatCard value={fmtMoney(sc.median_earnings)} label="Median Earnings" subtitle="After graduation" accent />
+            <StatCard value={sc.school_type || null} label="School Type" />
+          </div>
+        </div>
+
+        {/* Campus Diversity */}
+        {school.campus_diversity && Object.keys(school.campus_diversity).length > 0 && (
+          <div data-testid="campus-diversity-section">
+            <SectionHeader icon={PieChart} title="Campus Diversity" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Object.entries(school.campus_diversity)
+                .sort((a, b) => b[1].students - a[1].students)
+                .map(([category, data]) => (
+                  <div key={category} className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4" data-testid={`diversity-${category.replace(/[\s/]+/g, '-').toLowerCase()}`}>
+                    <div className="text-[13px] font-semibold mb-3 text-white">{category}</div>
+                    <div className="space-y-2.5">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30">Students</span>
+                          <span className="text-[12px] font-bold text-white">{data.students}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden bg-white/[0.06]">
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.students, 100)}%`, background: "#1a8a80" }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30">Faculty</span>
+                          <span className="text-[12px] font-bold text-white">{data.faculty}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden bg-white/[0.06]">
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.faculty, 100)}%`, background: "#6366f1" }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Additional Details */}
+        {(school.mascot || school.scholarship_type || school.region) && (
+          <div data-testid="additional-details-section">
+            <SectionHeader title="Additional Details" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {school.region && (
+                <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/30 mb-1">Location</div>
+                  <div className="text-[15px] font-bold text-white">{school.region}{sc.city ? ` \u00B7 ${sc.city}, ${sc.state}` : ""}</div>
+                </div>
+              )}
+              {school.mascot && (
+                <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/30 mb-1">Mascot</div>
+                  <div className="text-[15px] font-bold text-white">{school.mascot}</div>
+                </div>
+              )}
+              {school.scholarship_type && (
+                <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/30 mb-1">Scholarship</div>
+                  <div className="text-[15px] font-bold text-white">{school.scholarship_type}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
