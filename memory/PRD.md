@@ -60,11 +60,10 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - **Testing:** 100% pass rate across all 11 pages in both light and dark modes (iteration_61)
 
 ### Phase 10 — My Schools Page Redesign V3 (DONE - March 9, 2026)
-- **Hero Card** = Original dark school-focus card: teal accent bar, logo + name, 6-stage progress rail, badges (Neutral/D1/Match%/Fit Label/Confidence), social links (X/IG/FB), "What to do next" advice box with lightbulb icon, Follow Up CTA
-- **Actions Carousel** = Below hero, "ACTIONS NEEDED TODAY" label, carousel dots + arrows, one action per slide with context + CTA
+- **Hero Card = Actions Carousel** = Single dark card that IS the "Actions Needed Today" carousel: teal accent bar, carousel dots + prev/next arrows, each slide shows school logo + name, 6-stage progress rail, badges (Neutral/D1/Match%/Fit Label/Confidence), social links (X/IG/FB), "What to do next" advice box, CTA button, and "Next:" preview
 - **Upcoming Events** = 3 events with dates and "View Calendar" link
 - **Kanban Board** = CRM-style: thin colored bar per column (6 columns), bold header + school count, minimal cards with school name, division/conference, logo + match %, status dot (green/red/amber)
-- **Testing:** 100% pass rate (12/12 features, iteration_65), both themes verified
+- **Testing:** 100% pass rate (iteration_66), both themes verified
 
 ### Phase 9 — AI Gmail Intelligence V1 (DONE - March 9, 2026)
 **Backend:**
