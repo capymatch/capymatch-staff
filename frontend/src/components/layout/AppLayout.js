@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Megaphone, BarChart3, Users, UserPlus, User, Shield, Sparkles } from "lucide-react";
+import { LayoutDashboard, Calendar, Megaphone, BarChart3, Users, UserPlus, User, Shield, Sparkles, Kanban, GraduationCap, Mail, Video } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { useAuth } from "@/AuthContext";
@@ -16,11 +16,11 @@ const ROUTE_META = {
   "/invite": { title: "Invite", icon: UserPlus },
   "/admin": { title: "Admin", icon: Shield },
   "/board": { title: "Dashboard", icon: LayoutDashboard },
-  "/pipeline": { title: "My Schools", icon: LayoutDashboard },
-  "/schools": { title: "Find Schools", icon: LayoutDashboard },
+  "/pipeline": { title: "My Schools", icon: Kanban },
+  "/schools": { title: "Find Schools", icon: GraduationCap },
   "/calendar": { title: "Calendar", icon: Calendar },
-  "/inbox": { title: "Inbox", icon: LayoutDashboard },
-  "/highlights": { title: "Highlights", icon: LayoutDashboard },
+  "/inbox": { title: "Inbox", icon: Mail },
+  "/highlights": { title: "Highlights", icon: Video },
   "/analytics": { title: "Analytics", icon: BarChart3 },
   "/athlete-profile": { title: "Profile", icon: User },
   "/athlete-settings": { title: "Settings", icon: Shield },
