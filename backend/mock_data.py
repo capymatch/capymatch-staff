@@ -101,6 +101,7 @@ def generate_athletes():
             "firstName": first_names[i],
             "lastName": last_names[i],
             "fullName": f"{first_names[i]} {last_names[i]}",
+            "email": f"{first_names[i].lower()}.{last_names[i].lower()}@athlete.capymatch.com",
             "gradYear": grad_year,
             "position": positions[i % len(positions)],
             "team": teams[str(grad_year)],

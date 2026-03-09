@@ -11,6 +11,10 @@ from db_client import db
 from models import UserCreate, UserLogin, TokenResponse
 from auth_middleware import create_token, get_current_user_dep
 
+import logging
+
+log_auth = logging.getLogger(__name__)
+
 router = APIRouter()
 
 
@@ -28,6 +32,69 @@ def _safe_user(doc):
         "org_id": doc.get("org_id"),
         "created_at": doc.get("created_at", ""),
     }
+
+
+async def _try_claim_athlete(user_doc: dict) -> dict | None:
+    """Attempt to claim an athlete record by exact email match.
+
+    Rules:
+    - Match: athletes.email == user.email (case-insensitive, exact match)
+    - Skip if athlete already has user_id set (already claimed)
+    - On match: set athlete.user_id, generate tenant_id, update user.org_id
+    - Returns the claimed athlete dict, or None if no match/already claimed
+    """
+    email = user_doc["email"].strip().lower()
+    user_id = user_doc["id"]
+
+    # Find unclaimed athlete with matching email
+    athlete = await db.athletes.find_one(
+        {"email": {"$regex": f"^{email}$", "$options": "i"}, "user_id": None},
+        {"_id": 0},
+    )
+
+    if not athlete:
+        log_auth.info(f"Claim: no unclaimed athlete match for {email}")
+        return None
+
+    athlete_id = athlete["id"]
+    athlete_org_id = athlete.get("org_id")
+
+    # Check idempotency — if this exact user already claimed this athlete
+    if athlete.get("user_id") == user_id:
+        log_auth.info(f"Claim: athlete {athlete_id} already claimed by this user — idempotent skip")
+        return athlete
+
+    # Generate tenant_id for the athlete's private data space
+    tenant_id = f"tenant-{user_id}"
+
+    # Claim the athlete record
+    result = await db.athletes.update_one(
+        {"id": athlete_id, "user_id": None},  # double-check unclaimed
+        {"$set": {
+            "user_id": user_id,
+            "tenant_id": tenant_id,
+            "claimed_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+
+    if result.modified_count == 0:
+        # Race condition: another request claimed it between our read and write
+        log_auth.warning(f"Claim: athlete {athlete_id} was claimed by another user concurrently")
+        return None
+
+    # Update user's org_id from the athlete record
+    if athlete_org_id:
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"org_id": athlete_org_id}},
+        )
+        user_doc["org_id"] = athlete_org_id
+
+    log_auth.info(
+        f"Claim successful: user {user_id} claimed athlete {athlete_id} "
+        f"(org_id={athlete_org_id}, tenant_id={tenant_id})"
+    )
+    return {**athlete, "user_id": user_id, "tenant_id": tenant_id}
 
 
 @router.post("/auth/register", response_model=TokenResponse)
@@ -53,9 +120,17 @@ async def register(body: UserCreate):
     }
     await db.users.insert_one(user_doc)
 
+    # If registering as athlete, attempt to claim an existing athlete record
+    claimed_athlete = None
+    if body.role == "athlete":
+        claimed_athlete = await _try_claim_athlete(user_doc)
+
     safe = _safe_user(user_doc)
     token = create_token(safe)
-    return {"token": token, "user": safe}
+    response = {"token": token, "user": safe}
+    if claimed_athlete:
+        response["claimed_athlete_id"] = claimed_athlete["id"]
+    return response
 
 
 @router.post("/auth/login", response_model=TokenResponse)

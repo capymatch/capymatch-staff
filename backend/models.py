@@ -126,6 +126,7 @@ class UserLogin(BaseModel):
 class TokenResponse(BaseModel):
     token: str
     user: dict
+    claimed_athlete_id: str | None = None
 
 
 # ── Invites ──

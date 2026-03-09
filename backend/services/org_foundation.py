@@ -64,6 +64,28 @@ async def ensure_org_foundation(db):
     if users_null.modified_count > 0:
         log.info(f"Fixed null org_id on {users_null.modified_count} users")
 
+    # 4. Backfill email on athletes that don't have one (for claim flow)
+    athletes_no_email = await db.athletes.find(
+        {"$or": [{"email": {"$exists": False}}, {"email": None}]},
+        {"_id": 0, "id": 1, "firstName": 1, "lastName": 1},
+    ).to_list(10000)
+    if athletes_no_email:
+        for a in athletes_no_email:
+            fn = a.get("firstName", "unknown").lower()
+            ln = a.get("lastName", "unknown").lower()
+            email = f"{fn}.{ln}@athlete.capymatch.com"
+            await db.athletes.update_one(
+                {"id": a["id"]},
+                {"$set": {"email": email}},
+            )
+        log.info(f"Backfilled email on {len(athletes_no_email)} athletes")
+
+    # 5. Ensure claim fields exist on all athletes
+    await db.athletes.update_many(
+        {"user_id": {"$exists": False}},
+        {"$set": {"user_id": None, "tenant_id": None, "claimed_at": None}},
+    )
+
     # Verify
     total_athletes = await db.athletes.count_documents({"org_id": DEFAULT_ORG_ID})
     total_users = await db.users.count_documents({"org_id": DEFAULT_ORG_ID})

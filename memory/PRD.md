@@ -77,6 +77,14 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Backup branches created for both repos before unification work begins
 - Target: One platform, role-based experiences (Director, Coach, Athlete, Parent)
 
+### Step 1.4 — Athlete Claim Flow (2026-02-13) ✅
+- Claim by exact email match (case-insensitive) during athlete registration
+- On match: sets `user_id`, generates `tenant_id`, sets `claimed_at`, updates user `org_id`
+- No match: registration succeeds, user left unlinked (org_id=null)
+- Already claimed: skipped (idempotent, race-condition safe via atomic update)
+- Response includes `claimed_athlete_id` when claim succeeds
+- Backfilled `email` on all 25 existing athletes + added claim fields (user_id, tenant_id, claimed_at)
+
 ### Step 1.3 — Auth Model Expansion (2026-02-13) ✅
 - Extended auth to support 4 roles: `director`, `coach`, `athlete`, `parent`
 - Registration rules: coach/athlete/parent can self-register; director cannot
