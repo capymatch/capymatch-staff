@@ -215,6 +215,21 @@ function HeroRail({ journeyStage }) {
 /* ═══════════════════════════════════════════ */
 /* ── Hero Card (Journey-style)  ──           */
 /* ═══════════════════════════════════════════ */
+const FIT_COLORS = {
+  "Strong Fit": { bg: "rgba(22,163,74,0.15)", text: "#4ade80", border: "rgba(22,163,74,0.2)" },
+  "Possible Fit": { bg: "rgba(13,148,136,0.15)", text: "#5eead4", border: "rgba(13,148,136,0.2)" },
+  "Stretch": { bg: "rgba(245,158,11,0.12)", text: "#fbbf24", border: "rgba(245,158,11,0.2)" },
+  "Less Likely Fit": { bg: "rgba(239,68,68,0.1)", text: "#f87171", border: "rgba(239,68,68,0.15)" },
+  "Not Enough Data": { bg: "var(--cm-surface-2)", text: "var(--cm-text-3)", border: "var(--cm-border)" },
+};
+
+const CONFIDENCE_LABELS = {
+  high: "High Confidence",
+  medium: "Medium Confidence",
+  low: "Low Confidence",
+  estimated: "Estimated",
+};
+
 function PipelineHeroCard({ program: p, matchScore, navigate }) {
   if (!p) return null;
   const ms = matchScore?.match_score;
@@ -223,6 +238,11 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
   const fundingBadge = riskBadges.find(b => b.key === "funding_dependent");
   const socialLinks = matchScore?.social_links || p.social_links;
   const meta = [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ");
+  const fitLabel = matchScore?.measurables_fit?.label;
+  const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
+  const confidence = matchScore?.confidence;
+  const confLabel = CONFIDENCE_LABELS[confidence] || "";
+  const explanation = matchScore?.explanation;
 
   return (
     <div style={{ background: "var(--cm-surface)", borderRadius: 14, overflow: "hidden", position: "relative" }} data-testid="pipeline-hero-card">
@@ -251,6 +271,14 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
               {ms}% Match
             </span>
           )}
+          {fitLabel && (
+            <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>
+              {fitLabel}
+            </span>
+          )}
+          {confLabel && confidence !== "high" && (
+            <span style={{ fontSize: 10, fontWeight: 600, color: "var(--cm-text-3)", fontStyle: "italic" }}>{confLabel}</span>
+          )}
           {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{meta}</span>}
           {/* Social icons */}
           {socialLinks && (
@@ -266,6 +294,13 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
         {fundingBadge && (
           <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 14px", borderRadius: 8, background: "rgba(22,163,74,0.15)", color: "#4ade80", fontSize: 12, fontWeight: 700, marginBottom: 18, border: "1px solid rgba(22,163,74,0.2)" }}>
             $ {fundingBadge.label}
+          </div>
+        )}
+
+        {/* Explanation */}
+        {explanation && (
+          <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 8, background: "var(--cm-surface-2)", fontSize: 12, lineHeight: 1.6, color: "var(--cm-text-2)" }} data-testid="hero-explanation">
+            {explanation}
           </div>
         )}
 
