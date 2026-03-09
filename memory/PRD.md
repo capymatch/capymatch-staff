@@ -1,142 +1,68 @@
 # CapyMatch — Product Requirements Document
 
 ## Original Problem Statement
-Unify two separate applications (`capymatch-staff` for coaches/directors and `capymatch` for athletes/parents) into a single platform with shared backend, data model, and authentication. Provides role-based experiences for Directors, Coaches, Athletes, and Parents.
+Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app) into a single platform with shared backend, data model, and auth. Provide role-based experiences for Directors, Coaches, Athletes, and Parents.
 
-## Architecture
-- **Backend:** FastAPI (Python), MongoDB (Motor async driver)
-- **Frontend:** React, Tailwind CSS, Shadcn/UI
-- **Auth:** JWT-based, role-based routing
-- **AI:** Claude Sonnet 4.5 via Emergent LLM key (emergentintegrations library)
-- **Theme:** Dual light/dark theme system using CSS variables (`--cm-*`) and ThemeContext
+## Core Architecture
+- **Backend:** FastAPI + MongoDB (Motor)
+- **Frontend:** React + Tailwind + Shadcn/UI
+- **Auth:** JWT-based, multi-role (director, coach, athlete, parent)
+- **AI:** Emergent LLM Key (Claude Sonnet) for Gmail intelligence
 
-## What's Been Implemented
+## Completed Phases
 
-### Phase 1 — Core Platform (DONE)
-- Unified auth (JWT, multi-role: director, coach, athlete, parent)
-- Role-based routing & navigation
-- Director/Coach mission control dashboard
-- Athlete onboarding quiz
+### Phase 1-6 — Foundation & Staff Features (DONE)
+- Unified auth, role-based routing, mission control, events, advocacy, onboarding
 
-### Phase 2 — Athlete Pipeline (DONE)
-- Pipeline page (list-based view of recruiting programs)
-- Journey page (detailed program view with timeline, automations, signals)
+### Phase 7 — Athlete Experience (DONE)
+- Dashboard, pipeline, schools/knowledge base, inbox, journey, settings, Gmail integration
 
-### Phase 3 — Settings & Gmail Integration (DONE)
-- Settings page (profile, privacy, password, data management)
-- Google OAuth flow for Gmail
-- 4-stage Gmail import (scan, match, review, add schools)
+### Phase 8 — Match Scoring V2 (DONE)
+- Fit labels, confidence scores, match breakdowns on school cards and detail pages
 
-### Phase 4 — Dashboard (DONE)
-- Complete athlete dashboard with dynamic widgets
-- Today's Actions, School Spotlight, Recent Activity
-- Stats overview (schools tracked, replies, etc.)
-
-### Phase 5 — Knowledge Base Upgrade (DONE - March 2026)
-- 953 universities from BSON dump with rich data (scorecard, logos, coaches, social)
-- Match scoring algorithm (division, region, priorities, academic fit)
-- Smart bucket filters, filter panel, Top Match banner
-- Admin scraper job management (4 background scrapers)
-
-### Phase 6 — AI Features (DONE - March 2026)
-- **AI Draft Email** — LLM-generated recruiting emails (intro/follow-up/thank-you/interest-update) with athlete profile + program context
-- **AI Next Step** — Smart next action recommendation per program (urgency, action type, reasoning)
-- **AI Journey Summary** — Relationship summary + highlights + suggested action for each program
-- **AI Assistant** — Conversational recruiting advisor with multi-turn chat, session history, quick suggestions
-- **AI Outreach Analysis** — Score ring, stats dashboard, AI-generated strengths/improvements/next-steps
-- **AI Highlight Reel Advisor** — Video structure, must-include skills, technical tips, coach perspective, distribution tips
-- **AI Coach Watch** — Scan coaching staff stability for pipeline schools, severity alerts (red/yellow/green)
-- **AI School Insight** — Source-aware school fit analysis with strengths, concerns, unknowns (24hr cache)
-- **Inbox Page** — Gmail-connected email client with thread view, compose, reply, AI draft, coach badge detection
-- **AI FAB Button** — Floating action button on all athlete pages to open AI Assistant drawer
-- **EmailComposer AI Draft** — Email type selector (4 types) + custom instructions + one-click AI draft in Journey page
-
-### Phase 7 — Light/Dark Theme System (DONE - March 9, 2026)
-- **ThemeContext** — React Context (`/app/frontend/src/ThemeContext.js`) that toggles `.dark` class on `<html>`, persists to localStorage
-- **CSS Variables** — Comprehensive set of `--cm-*` variables in `index.css` for both `:root` (light) and `.dark` (dark) themes
-- **Full Visual Refactoring** — All athlete pages, layout components, and shared components converted from hardcoded colors to CSS theme variables
-- **Theme Toggle** — Sun/Moon button in TopBar for instant theme switching
-- **Pages refactored:** Dashboard, Pipeline, Schools, Calendar, Settings, Profile, Journey, Inbox, Highlights, Analytics, SchoolDetail, AI Assistant Drawer
-- **Testing:** 100% pass rate across all 11 pages in both light and dark modes (iteration_61)
+### Phase 9 — AI Gmail Intelligence (DONE)
+- Background email scanning, LLM analysis, signal detection, actionable insights
 
 ### Phase 10 — My Schools Page Redesign V3 (DONE - March 9, 2026)
-- **Hero Card = Actions Carousel** = Single dark card that IS the "Actions Needed Today" carousel: teal accent bar, carousel dots + prev/next arrows, each slide shows school logo + name, 6-stage progress rail, badges (Neutral/D1/Match%/Fit Label/Confidence), social links (X/IG/FB), "What to do next" advice box, CTA button, and "Next:" preview
-- **Upcoming Events** = 3 events with dates and "View Calendar" link
-- **Kanban Board** = CRM-style: thin colored bar per column (6 columns), bold header + school count, minimal cards with school name, division/conference, logo + match %, status dot (green/red/amber)
-- **Testing:** 100% pass rate (iteration_66), both themes verified
+- Hero card = Actions carousel with prev/next navigation
+- Pro Kanban board: clean white cards, division/conference tags, match %, urgency labels
+- Upcoming events section, guidance banner
 
-### Phase 9 — AI Gmail Intelligence V1 (DONE - March 9, 2026)
-**Backend:**
-- New `services/gmail_intelligence.py` — AI analysis engine with LLM-powered email thread analysis
-- New `routers/athlete_gmail_intelligence.py` — 7 API endpoints (scan, status, insights, signals, confirm, dismiss, program insights)
-- Background scan on login (12-hour cooldown), matches emails to schools via domain mapper + coach DB
-- 10 signal categories: Coach Interest, Info Requested, Camp Invite, Visit Invite, Scholarship Talk, Offer, Reply Needed, Going Cold, Not a Fit, Info Only
-- Confidence levels (high/medium/low), urgency levels (critical/high/medium/low), suggested actions
-- Selective confirmation — stage changes and interactions applied independently, never auto-applied
-- Stored in `gmail_insights` and `gmail_scan_state` collections
-
-**Frontend (4 surfaces):**
-- **Dashboard "Inbox Intelligence" widget** — Above Today's Actions, shows top 3 insights by default with expand, confirm/dismiss per insight
-- **Pipeline signal dots** — Colored urgency dots on school cards when pending insights exist
-- **Inbox signal badges** — Signal type badges on email thread rows
-- **Journey timeline events** — Confirmed insights render as "AI Intelligence" bubbles with violet styling
-
-**Testing:** 100% backend (17/17) + 100% frontend (iteration_63)
-
-### Phase 8 — Match Scoring V2 Frontend (DONE - March 9, 2026)
-- **School List Cards** — Pipeline cards now display match %, fit label badges (Strong Fit, Possible Fit, Stretch, Less Likely Fit), and confidence levels (High/Medium/Low Confidence, Estimated)
-- **Match Breakdown Section** — SchoolDetailPage shows full V2 breakdown with sub-score bars (Division, Region, Priorities, Academics, Measurables), athletic measurables detail with benchmark comparison, risk badges, and explanation text
-- **Guidance Banner** — Pipeline page shows "Improve your match accuracy" banner when measurables are incomplete, with "Update Profile" CTA
-- **Testing:** 100% pass rate across all V2 elements, both themes, and navigation flows (iteration_62)
-
-## Key Collections
-- `university_knowledge_base` — 953 schools
-- `school_domain_aliases` — 2,534 aliases
-- `programs` — Athlete pipeline programs
-- `athletes`, `athlete_profiles` — Athlete data & preferences
-- `college_coaches` — Coaching staff
-- `interactions` — Recruiting interactions timeline
-- `ai_conversations` — AI Assistant chat history
-- `ai_school_insights` — Cached school insights (24hr TTL)
-- `coach_watch_alerts` — Coaching staff change alerts
-- `integrations` — OAuth credentials (Gmail)
+### Phase 11 — Subscription Tiers & Drag-and-Drop Kanban (DONE - March 9, 2026)
+- **Subscription system** matching capymatch repo exactly:
+  - Starter (Free): 5 schools, 3 AI drafts/month, basic features
+  - Pro ($12/mo): 25 schools, 50 AI drafts, Gmail, analytics, insights
+  - Premium ($29/mo): Unlimited everything, priority support
+- **School limit enforcement**: Backend 403 with subscription_limit error type
+- **Upgrade modal**: 3-tier comparison, "Most Popular" badge on Pro, "Current Plan" indicator
+- **Frontend integration**: SubscriptionProvider context, useSubscription hook, canAccess/getUsage helpers
+- **Drag-and-drop Kanban**: @hello-pangea/dnd library, 6 columns (Added → Committed)
+  - Optimistic UI updates on drag
+  - Backend persistence via PUT /api/athlete/programs/{id}
+  - Toast notifications on stage change
+  - Visual feedback (shadow, outline) during drag
+- **Testing:** 100% pass rate (backend 9/9, frontend all verified - iteration_67)
+- **Note:** Stripe checkout is MOCKED — shows toast instead of redirecting
 
 ## Key API Endpoints
-### Knowledge Base
-- `GET /api/knowledge-base` — Paginated school list with filters
-- `GET /api/knowledge-base/school/{domain}` — School detail + match score
-- `POST /api/knowledge-base/add-to-board` — Add to pipeline
-- `GET /api/suggested-schools` — Match-ranked suggestions
-
-### AI Features
-- `POST /api/ai/draft-email` — Generate recruiting email
-- `POST /api/ai/next-step` — AI next action recommendation
-- `POST /api/ai/journey-summary` — Journey relationship summary
-- `POST /api/ai/assistant` — Conversational advisor
-- `GET /api/ai/outreach-analysis` — Outreach effectiveness analysis
-- `POST /api/ai/highlight-advice` — Highlight reel recommendations
-- `POST /api/ai/coach-watch/scan` — Coaching staff scan
-- `POST /api/ai/school-insight/{program_id}` — School fit analysis
-
-### Gmail/Inbox
-- `GET /api/athlete/gmail/emails` — List recruiting emails
-- `GET /api/athlete/gmail/threads/{thread_id}` — Thread view
-- `POST /api/athlete/gmail/reply` — Reply to email
-- `POST /api/athlete/gmail/check-replies` — Auto-detect coach replies
+- `GET /api/subscription` — Current user's tier, limits, usage
+- `GET /api/subscription/tiers` — All available tiers for comparison
+- `POST /api/knowledge-base/add-to-board` — Add school (enforces limit)
+- `PUT /api/athlete/programs/{id}` — Update program (used by DnD)
+- `POST /api/gmail-intelligence/scan` — Trigger Gmail scan
+- `GET /api/gmail-intelligence/insights` — Fetch AI insights
 
 ## Credentials
-- Director: `director@capymatch.com` / `director123`
-- Athlete: `emma.chen@athlete.capymatch.com` / `password123`
+- **Athlete:** emma.chen@athlete.capymatch.com / password123
+- **Director:** director@capymatch.com / director123
 
-## Backlog
+## P1 Upcoming
+- Normalize camelCase → snake_case in database fields
 
-### P1 — Upcoming
-- AI-Powered Gmail Scanning (background email analysis to auto-suggest schools)
-
-### P2 — Future
-- Normalize camelCase -> snake_case in DB fields
-- Connected Experiences (Director <-> Athlete visibility)
-- Stripe subscriptions & engagement analytics
-- Smart Match AI (advanced matching algorithm)
+## P2 Future/Backlog
+- Stripe integration for real payment processing
+- Connected Experiences (Director ↔ Athlete visibility)
+- Engagement analytics
+- Smart Match AI (advanced matching)
 - Parent/Family experience
 - Coach Watch scheduled auto-scanning
