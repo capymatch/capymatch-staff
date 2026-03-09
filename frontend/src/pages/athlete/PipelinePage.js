@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Plus, ChevronRight, ChevronLeft, Loader2,
-  Send, GraduationCap, AlertTriangle,
+  Send, GraduationCap, AlertTriangle, Lightbulb,
   Archive, RotateCcw, Calendar,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
@@ -14,7 +14,7 @@ import { RAIL_STAGES } from "../../components/journey/constants";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 /* ═══════════════════════════════════════════ */
-/* ── Helpers (unchanged)                     */
+/* ── Helpers                                 */
 /* ═══════════════════════════════════════════ */
 const FIT_COLORS = {
   "Strong Fit": { bg: "rgba(22,163,74,0.15)", text: "#4ade80", border: "rgba(22,163,74,0.2)" },
@@ -24,13 +24,12 @@ const FIT_COLORS = {
   "Not Enough Data": { bg: "var(--cm-surface-2)", text: "var(--cm-text-3)", border: "var(--cm-border)" },
 };
 
+const CONFIDENCE_LABELS = { high: "High Confidence", medium: "Medium Confidence", low: "Low Confidence", estimated: "Estimated" };
+
 function computeRail(journeyStage) {
   const activeIdx = journeyStage ? RAIL_STAGES.findIndex(st => st.key === journeyStage) : 0;
   const idx = activeIdx >= 0 ? activeIdx : 0;
-  return RAIL_STAGES.map((st, i) => ({
-    ...st,
-    state: i < idx ? "past" : i === idx ? "active" : "future",
-  }));
+  return RAIL_STAGES.map((st, i) => ({ ...st, state: i < idx ? "past" : i === idx ? "active" : "future" }));
 }
 
 function getDueInfo(p) {
@@ -42,9 +41,8 @@ function getDueInfo(p) {
     if (diff <= 3) return { text: `Due in ${diff}d`, color: "#d97706", urgent: false };
   }
   const sig = p.signals || {};
-  if (sig.days_since_activity != null && sig.days_since_activity > 0) {
-    return { text: `${sig.days_since_activity}d since last activity`, color: "#94a3b8", urgent: false };
-  }
+  if (sig.days_since_activity != null && sig.days_since_activity > 0)
+    return { text: `${sig.days_since_activity}d ago`, color: "#94a3b8", urgent: false };
   return null;
 }
 
@@ -54,33 +52,37 @@ function getCTA(p) {
   return { label: "View Journey", style: "outline" };
 }
 
-function getActionContext(p) {
+function getHeroAdvice(p) {
+  if (!p) return "";
   const g = p.board_group;
   const s = p.signals || {};
   if (g === "overdue") {
-    const days = p.next_action_due
-      ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000))
-      : "several";
-    return `It's been ${days} days since your last contact. A short follow-up would help keep momentum going.`;
+    const days = p.next_action_due ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000)) : "several";
+    return `Coach hasn't heard from you in ${days} days. Send a short follow-up mentioning your recent results.`;
   }
   if (g === "needs_outreach") return "This school matches your profile well. Send an introductory email with your highlight reel.";
-  if (g === "waiting_on_reply") {
-    return s.days_since_outreach > 5
-      ? "It's been a while since your outreach. A brief follow-up would help."
-      : "Give the coach a bit more time, then follow up with a quick check-in.";
-  }
-  if (g === "in_conversation") return "You've got momentum here — keep the conversation going and ask about next steps.";
+  if (g === "waiting_on_reply") return s.days_since_outreach > 5 ? "It's been a while since your outreach. Consider a brief follow-up." : "Give the coach a bit more time, then follow up with a quick check-in.";
+  if (g === "in_conversation") return "You've got momentum here — keep the conversation going and ask about a campus visit.";
   return "Review this school's program and plan your next outreach.";
 }
 
-/* ── Journey stage → kanban column mapping ── */
+function getActionContext(p) {
+  const g = p.board_group;
+  if (g === "overdue") return "A short follow-up would help keep momentum going with the coaching staff.";
+  if (g === "needs_outreach") return "Send an introductory email with your highlight reel.";
+  if (g === "waiting_on_reply") return "Consider a brief follow-up to keep the conversation alive.";
+  if (g === "in_conversation") return "Keep the conversation going and ask about next steps.";
+  return "Plan your next outreach.";
+}
+
+/* ── Kanban column config ── */
 const KANBAN_COLS = [
-  { key: "added", label: "Added", dot: "#94a3b8" },
-  { key: "outreach", label: "Outreach", dot: "#0d9488" },
-  { key: "in_conversation", label: "Talking", dot: "#22c55e" },
-  { key: "campus_visit", label: "Visit", dot: "#3b82f6" },
-  { key: "offer", label: "Offer", dot: "#a855f7" },
-  { key: "committed", label: "Committed", dot: "#fbbf24" },
+  { key: "added", label: "Added", color: "#94a3b8" },
+  { key: "outreach", label: "Outreach", color: "#0d9488" },
+  { key: "in_conversation", label: "Talking", color: "#22c55e" },
+  { key: "campus_visit", label: "Visit", color: "#3b82f6" },
+  { key: "offer", label: "Offer", color: "#a855f7" },
+  { key: "committed", label: "Committed", color: "#fbbf24" },
 ];
 
 function programToKanbanCol(p) {
@@ -92,17 +94,25 @@ function programToKanbanCol(p) {
   return "added";
 }
 
-/* ── Generate action items from programs ── */
+/* Status dot color for kanban cards */
+function getStatusDot(p) {
+  const due = getDueInfo(p);
+  if (due?.urgent) return "#dc2626"; // red
+  if (p.board_group === "overdue") return "#dc2626";
+  if (p.board_group === "waiting_on_reply") return "#f59e0b"; // amber
+  if (p.board_group === "in_conversation" || p.signals?.has_coach_reply) return "#22c55e"; // green
+  if (p.board_group === "needs_outreach") return "#22c55e";
+  return "#d1d5db"; // grey
+}
+
+/* Generate action items */
 function generateActions(programs, matchScores) {
   const actions = [];
-  const priorityOrder = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
-
-  // Sort programs by urgency
+  const order = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
   const sorted = [...programs]
     .filter(p => p.board_group !== "archived" && p.recruiting_status !== "Committed" && p.journey_stage !== "committed")
     .sort((a, b) => {
-      const ai = priorityOrder.indexOf(a.board_group);
-      const bi = priorityOrder.indexOf(b.board_group);
+      const ai = order.indexOf(a.board_group); const bi = order.indexOf(b.board_group);
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
 
@@ -110,68 +120,117 @@ function generateActions(programs, matchScores) {
     const ms = matchScores[p.program_id];
     const cta = getCTA(p);
     const due = getDueInfo(p);
-    actions.push({
-      id: p.program_id,
-      type: "school",
-      program: p,
-      title: cta.label === "Start Outreach" ? `Start outreach to ${p.university_name}` : `Follow up with ${p.university_name}`,
-      context: getActionContext(p),
-      match_score: ms?.match_score,
-      stage: p.journey_stage || "added",
-      division: p.division,
-      due,
-      cta,
-      matchScore: ms,
-    });
+    actions.push({ id: p.program_id, type: "school", program: p, title: cta.label === "Start Outreach" ? `Start outreach to ${p.university_name}` : `Follow up with ${p.university_name}`, context: getActionContext(p), match_score: ms?.match_score, stage: p.journey_stage || "added", division: p.division, due, cta, matchScore: ms });
   }
-
-  // Add "add more schools" if pipeline is small
   const activeCount = programs.filter(p => p.board_group !== "archived").length;
   if (activeCount < 8) {
-    const needed = Math.max(3, 8 - activeCount);
-    actions.push({
-      id: "add-schools",
-      type: "growth",
-      title: "Grow Your Target List",
-      context: `You need ${needed} more target schools to keep your pipeline healthy. A wider net gives you better options.`,
-      cta: { label: "Browse Schools", style: "primary" },
-    });
+    actions.push({ id: "add-schools", type: "growth", title: "Grow Your Target List", context: `Add ${Math.max(3, 8 - activeCount)} more target schools to keep your pipeline healthy.`, cta: { label: "Browse Schools", style: "primary" } });
   }
-
   return actions;
 }
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Hero Progress Rail                     ── */
+/* ── Hero Card (original dark style)        ── */
 /* ═══════════════════════════════════════════ */
-function HeroRail({ journeyStage }) {
-  const stages = computeRail(journeyStage || "added");
-  const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Commit" };
+function PipelineHeroCard({ program: p, matchScore, navigate }) {
+  if (!p) return null;
+  const ms = matchScore?.match_score;
+  const sig = p.signals || {};
+  const socialLinks = matchScore?.social_links || p.social_links;
+  const meta = [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ");
+  const fitLabel = matchScore?.measurables_fit?.label;
+  const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
+  const confidence = matchScore?.confidence;
+  const confLabel = CONFIDENCE_LABELS[confidence] || "";
+  const advice = getHeroAdvice(p);
+  const stages = computeRail(p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach"));
+  const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Committed" };
+
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", height: 22 }}>
-        {stages.map((s, i) => (
-          <React.Fragment key={s.key}>
-            {i > 0 && <div style={{ flex: 1, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
-            <div style={{
-              width: s.state === "active" ? 12 : 10, height: s.state === "active" ? 12 : 10,
-              borderRadius: "50%",
-              background: s.state === "future" ? "rgba(255,255,255,0.12)" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
-              boxShadow: s.state === "active" ? "0 0 10px rgba(13,148,136,0.4)" : "none",
-            }} />
-          </React.Fragment>
-        ))}
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
-        {stages.map(s => (
-          <span key={s.key} style={{
-            flex: 1, textAlign: "center", fontSize: 9, fontWeight: s.state === "active" ? 700 : 600,
-            color: s.state === "active" ? "#0d9488" : "rgba(255,255,255,0.25)",
-          }}>
-            {stageLabels[s.key] || s.label}
+    <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
+      {/* Teal accent bar */}
+      <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
+      {/* Subtle glow */}
+      <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+      <div style={{ padding: "24px 28px 22px", position: "relative", zIndex: 1 }}>
+        {/* Top row: logo + name on left, progress rail on right */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={matchScore?.logo_url} size={48} className="rounded-[14px]" />
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{p.university_name}</span>
+          </div>
+          {/* Progress Rail */}
+          <div style={{ width: 320, flexShrink: 0 }} className="hidden md:block">
+            <div style={{ display: "flex", alignItems: "center", height: 24 }}>
+              {stages.map((s, i) => (
+                <React.Fragment key={s.key}>
+                  {i > 0 && <div style={{ flex: 1, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
+                  <div style={{ position: "relative" }}>
+                    <div style={{
+                      width: s.state === "active" ? 16 : 10, height: s.state === "active" ? 16 : 10,
+                      borderRadius: "50%",
+                      background: s.state === "future" ? "transparent" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
+                      border: s.state === "future" ? "2px solid rgba(255,255,255,0.15)" : s.state === "active" ? "none" : "none",
+                      boxShadow: s.state === "active" ? "0 0 12px rgba(13,148,136,0.5)" : "none",
+                    }} />
+                    {s.state === "active" && <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2px solid rgba(13,148,136,0.4)", animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+              {stages.map(s => (
+                <span key={s.key} style={{ flex: 1, textAlign: "center", fontSize: 9, fontWeight: s.state === "active" ? 800 : 600, color: s.state === "active" ? "#5eead4" : "rgba(255,255,255,0.25)" }}>
+                  {stageLabels[s.key] || s.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Badges row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#94a3b8" }} />
+            {sig.has_coach_reply ? "Interested" : "Neutral"}
           </span>
-        ))}
+          {p.division && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>}
+          {ms != null && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>{ms}% Match</span>}
+          {fitLabel && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>{fitLabel}</span>}
+          {confLabel && confidence !== "high" && <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>{confLabel}</span>}
+          {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.3)" }}>{meta}</span>}
+          {socialLinks && (
+            <div style={{ display: "flex", gap: 8, marginLeft: 4 }}>
+              {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>X</a>}
+              {socialLinks.instagram && <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>IG</a>}
+              {socialLinks.facebook && <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>FB</a>}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom: Advice box + CTA button */}
+        <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
+          {advice && (
+            <div style={{ flex: 1, minWidth: 0, background: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.15)", borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }} data-testid="hero-advice-card">
+              <Lightbulb style={{ width: 16, height: 16, color: "rgba(255,255,255,0.3)", flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>What to do next</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.7)", lineHeight: 1.55 }}>{advice}</div>
+              </div>
+            </div>
+          )}
+          <button onClick={() => navigate(`/pipeline/${p.program_id}`)} style={{
+            padding: "16px 28px", borderRadius: 12, border: "none", background: "#0d9488",
+            color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit", flexShrink: 0,
+            minWidth: 140, transition: "all 0.2s",
+          }} data-testid="hero-cta-btn">
+            <Send style={{ width: 15, height: 15 }} />
+            {p.board_group === "needs_outreach" ? "Start Outreach" : "Follow Up"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -179,9 +238,9 @@ function HeroRail({ journeyStage }) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Actions Hero Carousel                  ── */
+/* ── Actions Carousel (below hero)          ── */
 /* ═══════════════════════════════════════════ */
-function ActionsHeroCarousel({ actions, matchScores, navigate }) {
+function ActionsCarousel({ actions, navigate }) {
   const [idx, setIdx] = useState(0);
   const total = actions.length;
   if (total === 0) return null;
@@ -189,15 +248,12 @@ function ActionsHeroCarousel({ actions, matchScores, navigate }) {
   const prev = () => setIdx(i => (i - 1 + total) % total);
   const next = () => setIdx(i => (i + 1) % total);
   const action = actions[idx];
-  const isSchool = action.type === "school";
   const p = action.program;
-  const ms = action.matchScore;
-  const socialLinks = ms?.social_links || p?.social_links;
 
   const ctaStyles = {
     primary: { background: "#0d9488", color: "white" },
     warn: { background: "#f59e0b", color: "white" },
-    outline: { background: "transparent", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)" },
+    outline: { background: "transparent", color: "#0d9488", border: "1px solid rgba(13,148,136,0.25)" },
   };
 
   const handleCTA = () => {
@@ -206,124 +262,33 @@ function ActionsHeroCarousel({ actions, matchScores, navigate }) {
   };
 
   return (
-    <div style={{
-      background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)",
-      borderRadius: 20, marginBottom: 16, position: "relative", overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.04)",
-    }} data-testid="actions-hero-carousel">
-      {/* Subtle glow */}
-      <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-      {/* Header */}
-      <div style={{ padding: "22px 28px 0", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>
-          Actions Needed Today
-        </span>
-      </div>
-
-      {/* Slide */}
-      <div style={{ padding: "18px 28px 0", display: "flex", alignItems: "flex-start", gap: 28, position: "relative", zIndex: 1 }}>
-        {/* Left: content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {isSchool && p && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={44} className="rounded-[12px]" />
-              <span style={{ fontSize: 21, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{p.university_name}</span>
-            </div>
-          )}
-          {!isSchool && (
-            <div style={{ fontSize: 21, fontWeight: 800, color: "#fff", letterSpacing: -0.3, marginBottom: 10 }}>{action.title}</div>
-          )}
-
-          {/* Badges */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-            {isSchool && p?.journey_stage && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>
-                {KANBAN_COLS.find(c => c.key === programToKanbanCol(p))?.label || p.journey_stage}
-              </span>
-            )}
-            {action.match_score != null && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>
-                {action.match_score}% Match
-              </span>
-            )}
-            {action.division && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: "rgba(99,102,241,0.15)", color: "#a5b4fc" }}>
-                {action.division}
-              </span>
-            )}
-            {action.due && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: action.due.urgent ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.06)", color: action.due.urgent ? "#fcd34d" : "rgba(255,255,255,0.4)" }}>
-                {action.due.text}
-              </span>
-            )}
-          </div>
-
-          <p style={{ fontSize: 13, lineHeight: 1.65, color: "rgba(255,255,255,0.45)", marginBottom: 20, maxWidth: 520 }}>
-            {action.context}
-          </p>
-
-          <button
-            onClick={handleCTA}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "12px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700,
-              border: "none", cursor: "pointer", letterSpacing: -0.2, fontFamily: "inherit",
-              transition: "all 0.2s",
-              ...(ctaStyles[action.cta.style] || ctaStyles.primary),
-            }}
-            data-testid="hero-action-cta"
-          >
-            <Send style={{ width: 15, height: 15 }} />
-            {action.cta.label}
-          </button>
-        </div>
-
-        {/* Right: rail + social */}
-        {isSchool && p && (
-          <div style={{ flexShrink: 0, paddingTop: 8, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 14, width: 260 }} className="hidden md:flex">
-            <HeroRail journeyStage={p.journey_stage || "added"} />
-            {socialLinks && (
-              <div style={{ display: "flex", gap: 8 }}>
-                {socialLinks.twitter && (
-                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 9, fontWeight: 700 }}>X</a>
-                )}
-                {socialLinks.instagram && (
-                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 9, fontWeight: 700 }}>IG</a>
-                )}
-                {socialLinks.facebook && (
-                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 9, fontWeight: 700 }}>FB</a>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Footer: Next preview + carousel controls */}
-      <div style={{ padding: "14px 28px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.22)", display: "flex", alignItems: "center", gap: 6 }}>
-          {idx + 1 < total && (
-            <>Next: <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>{actions[(idx + 1) % total]?.title}</span></>
-          )}
-        </div>
+    <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }} data-testid="actions-carousel">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid var(--cm-border)" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--cm-text-3)" }}>Actions Needed Today</span>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev">
-            <ChevronLeft style={{ width: 14, height: 14 }} />
-          </button>
-          <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--cm-text-3)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
+          <div style={{ display: "flex", gap: 5 }}>
             {actions.map((_, i) => (
-              <div key={i} onClick={() => setIdx(i)} style={{
-                width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%",
-                background: i === idx ? "#0d9488" : "rgba(255,255,255,0.15)",
-                cursor: "pointer", transition: "all 0.2s",
-              }} data-testid={`carousel-dot-${i}`} />
+              <div key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%", background: i === idx ? "#0d9488" : "var(--cm-border)", cursor: "pointer", transition: "all 0.2s" }} data-testid={`carousel-dot-${i}`} />
             ))}
           </div>
-          <button onClick={next} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next">
-            <ChevronRight style={{ width: 14, height: 14 }} />
-          </button>
+          <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--cm-text-3)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
         </div>
+      </div>
+
+      <div style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--cm-text)", marginBottom: 3 }}>{action.title}</div>
+          <div style={{ fontSize: 12, color: "var(--cm-text-2)", lineHeight: 1.5, marginBottom: 6 }}>{action.context}</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {action.stage && action.type === "school" && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: "rgba(13,148,136,0.1)", color: "#0d9488" }}>{KANBAN_COLS.find(c => c.key === (action.stage === "added" ? "added" : programToKanbanCol(p)))?.label || action.stage}</span>}
+            {action.match_score != null && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{action.match_score}% Match</span>}
+            {action.due && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: "rgba(245,158,11,0.1)", color: "#d97706" }}>{action.due.text}</span>}
+          </div>
+        </div>
+        <button onClick={handleCTA} style={{ padding: "10px 20px", borderRadius: 9, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, transition: "all 0.15s", ...(ctaStyles[action.cta.style] || ctaStyles.primary) }} data-testid="carousel-cta">
+          <Send style={{ width: 13, height: 13 }} /> {action.cta.label}
+        </button>
       </div>
     </div>
   );
@@ -331,7 +296,7 @@ function ActionsHeroCarousel({ actions, matchScores, navigate }) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Upcoming Events Section                ── */
+/* ── Upcoming Events                        ── */
 /* ═══════════════════════════════════════════ */
 function UpcomingEventsSection({ events, navigate }) {
   if (!events || events.length === 0) return null;
@@ -339,21 +304,16 @@ function UpcomingEventsSection({ events, navigate }) {
     .filter(e => new Date(e.date || e.start_date || e.event_date) >= new Date(new Date().toDateString()))
     .sort((a, b) => new Date(a.date || a.start_date || a.event_date) - new Date(b.date || b.start_date || b.event_date))
     .slice(0, 3);
-
   if (upcoming.length === 0) return null;
-
   const dotColors = ["#0d9488", "#f59e0b", "#3b82f6"];
 
   return (
     <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }} data-testid="upcoming-events">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
-          <Calendar style={{ width: 15, height: 15, color: "#0d9488" }} />
-          Upcoming Events
+          <Calendar style={{ width: 15, height: 15, color: "#0d9488" }} /> Upcoming Events
         </div>
-        <button onClick={() => navigate("/calendar")} style={{ fontSize: 11, fontWeight: 600, color: "#0d9488", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 3 }}>
-          View Calendar <ChevronRight style={{ width: 12, height: 12 }} />
-        </button>
+        <button onClick={() => navigate("/calendar")} style={{ fontSize: 11, fontWeight: 600, color: "#0d9488", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 3 }}>View Calendar <ChevronRight style={{ width: 12, height: 12 }} /></button>
       </div>
       {upcoming.map((ev, i) => {
         const d = new Date(ev.date || ev.start_date || ev.event_date);
@@ -372,69 +332,38 @@ function UpcomingEventsSection({ events, navigate }) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Kanban School Card                     ── */
+/* ── CRM-style Kanban Board                 ── */
 /* ═══════════════════════════════════════════ */
 function KanbanCard({ program: p, matchScore, navigate }) {
   const ms = matchScore?.match_score;
-  const due = getDueInfo(p);
-  const cta = getCTA(p);
-  const meta = [p.division, p.conference, p.state].filter(Boolean);
-
-  const ctaClass = {
-    primary: { background: "#0d9488", color: "white", border: "none" },
-    warn: { background: "#f59e0b", color: "white", border: "none" },
-    outline: { background: "transparent", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" },
-  };
+  const dotColor = getStatusDot(p);
+  const meta = [p.division, p.conference].filter(Boolean).join(" · ");
 
   return (
-    <div
-      onClick={() => navigate(`/pipeline/${p.program_id}`)}
-      style={{
-        background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12,
-        padding: 14, marginBottom: 8, cursor: "pointer", transition: "all 0.15s",
-      }}
-      className="hover:shadow-sm"
-      data-testid={`kanban-card-${p.program_id}`}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-        <UniversityLogo domain={p.domain} name={p.university_name} size={34} className="rounded-[9px] flex-shrink-0" />
-        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</span>
-        {ms != null && <span style={{ fontSize: 10, fontWeight: 700, color: "#0d9488", marginLeft: "auto", flexShrink: 0 }}>{ms}%</span>}
-      </div>
-      <div style={{ display: "flex", gap: 5, marginBottom: 10, flexWrap: "wrap" }}>
-        {meta.slice(0, 3).map(m => (
-          <span key={m} style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{m}</span>
-        ))}
-      </div>
-      {due && (
-        <div style={{ fontSize: 10, color: due.urgent ? due.color : "var(--cm-text-3)", fontWeight: due.urgent ? 700 : 500, marginBottom: 10 }}>
-          {due.text}
+    <div onClick={() => navigate(`/pipeline/${p.program_id}`)} style={{
+      background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 10,
+      padding: "14px 16px", marginBottom: 6, cursor: "pointer", transition: "all 0.15s",
+    }} className="hover:shadow-sm" data-testid={`kanban-card-${p.program_id}`}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", marginBottom: 3, lineHeight: 1.3 }}>{p.university_name}</div>
+          {meta && <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginBottom: 6 }}>{meta}</div>}
+          {ms != null && (
+            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
+              <UniversityLogo domain={p.domain} name={p.university_name} size={18} className="rounded-[5px]" />
+              {ms}%
+            </div>
+          )}
         </div>
-      )}
-      <button
-        onClick={e => { e.stopPropagation(); navigate(`/pipeline/${p.program_id}`); }}
-        style={{
-          display: "block", width: "100%", padding: "8px 0", borderRadius: 8,
-          fontSize: 11, fontWeight: 700, textAlign: "center", cursor: "pointer",
-          fontFamily: "inherit", transition: "all 0.15s",
-          ...(ctaClass[cta.style] || ctaClass.outline),
-        }}
-        data-testid={`kanban-cta-${p.program_id}`}
-      >
-        {cta.label}
-      </button>
+        <div style={{ width: 10, height: 10, borderRadius: "50%", background: dotColor, flexShrink: 0, marginTop: 4 }} />
+      </div>
     </div>
   );
 }
 
-
-/* ═══════════════════════════════════════════ */
-/* ── Kanban Board                           ── */
-/* ═══════════════════════════════════════════ */
 function KanbanBoard({ programs, matchScores, navigate }) {
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
-
   for (const p of programs) {
     if (p.board_group === "archived") continue;
     const col = programToKanbanCol(p);
@@ -442,31 +371,24 @@ function KanbanBoard({ programs, matchScores, navigate }) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, minHeight: 200 }} className="kanban-grid" data-testid="kanban-board">
-      {KANBAN_COLS.map(col => (
-        <div key={col.key} style={{ minWidth: 0 }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "10px 12px", borderRadius: 10, marginBottom: 8,
-            background: "var(--cm-surface)", border: "1px solid var(--cm-border)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 7, height: 7, borderRadius: "50%", background: col.dot }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)" }}>{col.label}</span>
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 5, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
-              {columns[col.key].length}
-            </span>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 0, minHeight: 200, border: "1px solid var(--cm-border)", borderRadius: 14, overflow: "hidden", background: "var(--cm-surface)" }} className="kanban-grid" data-testid="kanban-board">
+      {KANBAN_COLS.map((col, ci) => (
+        <div key={col.key} style={{ borderRight: ci < 5 ? "1px solid var(--cm-border)" : "none", minWidth: 0 }}>
+          {/* Thin colored bar */}
+          <div style={{ height: 3, background: col.color }} />
+          {/* Header */}
+          <div style={{ padding: "14px 14px 10px" }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--cm-text)", marginBottom: 2 }}>{col.label}</div>
+            <div style={{ fontSize: 11, color: "var(--cm-text-3)" }}>{columns[col.key].length} school{columns[col.key].length !== 1 ? "s" : ""}</div>
           </div>
-          {columns[col.key].length > 0 ? (
-            columns[col.key].map(p => (
-              <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} />
-            ))
-          ) : (
-            <div style={{ textAlign: "center", padding: "30px 10px", color: "var(--cm-text-3)", fontSize: 11 }}>
-              {col.key === "offer" ? "No offers yet" : col.key === "committed" ? "—" : ""}
-            </div>
-          )}
+          {/* Cards */}
+          <div style={{ padding: "0 8px 8px" }}>
+            {columns[col.key].length > 0 ? (
+              columns[col.key].map(p => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} />)
+            ) : (
+              <div style={{ padding: "20px 8px", textAlign: "center", fontSize: 11, color: "var(--cm-text-4)" }}>—</div>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -480,11 +402,7 @@ function KanbanBoard({ programs, matchScores, navigate }) {
 function MeasurablesGuidanceBanner({ guidance, navigate }) {
   if (!guidance) return null;
   return (
-    <div style={{
-      background: "var(--cm-surface)", border: "1px solid rgba(245,158,11,0.2)",
-      borderLeft: "3px solid #f59e0b", borderRadius: 12, padding: "14px 18px",
-      display: "flex", alignItems: "center", gap: 14, marginBottom: 16,
-    }} data-testid="measurables-guidance-banner">
+    <div style={{ background: "var(--cm-surface)", border: "1px solid rgba(245,158,11,0.2)", borderLeft: "3px solid #f59e0b", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }} data-testid="measurables-guidance-banner">
       <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         <AlertTriangle style={{ width: 16, height: 16, color: "#f59e0b" }} />
       </div>
@@ -492,19 +410,25 @@ function MeasurablesGuidanceBanner({ guidance, navigate }) {
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", marginBottom: 2 }}>Improve your match accuracy</div>
         <div style={{ fontSize: 11, color: "var(--cm-text-3)", lineHeight: 1.5 }}>{guidance}</div>
       </div>
-      <button onClick={() => navigate("/profile")} style={{
-        padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700,
-        background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)",
-        cursor: "pointer", fontFamily: "inherit", flexShrink: 0, whiteSpace: "nowrap",
-      }} data-testid="update-profile-btn">Update Profile</button>
+      <button onClick={() => navigate("/profile")} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }} data-testid="update-profile-btn">Update Profile</button>
     </div>
   );
 }
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Empty State                            ── */
+/* ── Styles + Empty State                   ── */
 /* ═══════════════════════════════════════════ */
+function PipelineStyles() {
+  return (
+    <style>{`
+      @keyframes heroPulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
+      @media (max-width: 1024px) { .kanban-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+      @media (max-width: 640px) { .kanban-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+    `}</style>
+  );
+}
+
 function EmptyBoardState({ navigate }) {
   return (
     <div className="text-center py-20" data-testid="empty-pipeline">
@@ -515,24 +439,6 @@ function EmptyBoardState({ navigate }) {
         <Plus className="w-4 h-4 mr-1.5" /> Find Schools
       </Button>
     </div>
-  );
-}
-
-
-/* ═══════════════════════════════════════════ */
-/* ── Responsive styles                      ── */
-/* ═══════════════════════════════════════════ */
-function PipelineStyles() {
-  return (
-    <style>{`
-      @keyframes heroPulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
-      @media (max-width: 1024px) {
-        .kanban-grid { grid-template-columns: repeat(3, 1fr) !important; }
-      }
-      @media (max-width: 640px) {
-        .kanban-grid { grid-template-columns: repeat(2, 1fr) !important; }
-      }
-    `}</style>
   );
 }
 
@@ -552,15 +458,11 @@ export default function PipelinePage() {
     try {
       const res = await axios.get(`${API}/athlete/programs`);
       setAllPrograms(Array.isArray(res.data) ? res.data : []);
-    } catch {
-      toast.error("Failed to load programs");
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error("Failed to load programs"); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
-
   useEffect(() => {
     axios.get(`${API}/match-scores`).then(res => {
       const byId = {};
@@ -568,20 +470,12 @@ export default function PipelinePage() {
       setMatchScores(byId);
     }).catch(() => {});
   }, [allPrograms.length]);
-
-  useEffect(() => {
-    axios.get(`${API}/athlete/events`).then(res => {
-      setEvents(Array.isArray(res.data) ? res.data : []);
-    }).catch(() => {});
-  }, []);
+  useEffect(() => { axios.get(`${API}/athlete/events`).then(res => setEvents(Array.isArray(res.data) ? res.data : [])).catch(() => {}); }, []);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24" data-testid="board-loading">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#999" }} />
-          <span className="text-sm" style={{ color: "#999" }}>Loading your board...</span>
-        </div>
+        <div className="flex flex-col items-center gap-3"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#999" }} /><span className="text-sm" style={{ color: "#999" }}>Loading your board...</span></div>
       </div>
     );
   }
@@ -590,13 +484,15 @@ export default function PipelinePage() {
   const archivedPrograms = allPrograms.filter(p => p.board_group === "archived");
 
   if (activePrograms.length === 0 && archivedPrograms.length === 0) {
-    return (
-      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-        <PipelineStyles />
-        <EmptyBoardState navigate={navigate} />
-      </div>
-    );
+    return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><EmptyBoardState navigate={navigate} /></div>;
   }
+
+  /* Focus program = most urgent */
+  const priorityOrder = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
+  const focusProgram = [...activePrograms].sort((a, b) => {
+    const ai = priorityOrder.indexOf(a.board_group); const bi = priorityOrder.indexOf(b.board_group);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  })[0];
 
   const actions = generateActions(allPrograms, matchScores);
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
@@ -607,40 +503,34 @@ export default function PipelinePage() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, marginBottom: 20 }}>
-        <button
-          onClick={() => navigate("/schools")}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "10px 20px", borderRadius: 10, border: "1px solid var(--cm-border)",
-            background: "var(--cm-surface)", fontSize: 13, fontWeight: 700,
-            color: "var(--cm-text)", cursor: "pointer", fontFamily: "inherit",
-          }}
-          data-testid="add-school-btn"
-        >
+        <button onClick={() => navigate("/schools")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", borderRadius: 10, border: "1px solid var(--cm-border)", background: "var(--cm-surface)", fontSize: 13, fontWeight: 700, color: "var(--cm-text)", cursor: "pointer", fontFamily: "inherit" }} data-testid="add-school-btn">
           <Plus style={{ width: 14, height: 14 }} /> Add School
         </button>
       </div>
 
-      {/* 1. Hero = Actions Needed Today carousel */}
-      <ActionsHeroCarousel actions={actions} matchScores={matchScores} navigate={navigate} />
+      {/* 1. Hero Card */}
+      {focusProgram && (
+        <div style={{ marginBottom: 16 }}>
+          <PipelineHeroCard program={focusProgram} matchScore={matchScores[focusProgram.program_id]} navigate={navigate} />
+        </div>
+      )}
+
+      {/* 2. Actions Carousel */}
+      <ActionsCarousel actions={actions} navigate={navigate} />
 
       {/* Guidance Banner */}
       {guidance && <MeasurablesGuidanceBanner guidance={guidance} navigate={navigate} />}
 
-      {/* 2. Upcoming Events */}
+      {/* 3. Upcoming Events */}
       <UpcomingEventsSection events={events} navigate={navigate} />
 
-      {/* 3. Kanban Board */}
+      {/* 4. Kanban Board */}
       <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (
         <div data-testid="section-archived" style={{ marginTop: 24 }}>
-          <div
-            onClick={() => setCollapsedArchived(!collapsedArchived)}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 0 10px", cursor: "pointer" }}
-            data-testid="section-header-archived"
-          >
+          <div onClick={() => setCollapsedArchived(!collapsedArchived)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 0 10px", cursor: "pointer" }} data-testid="section-header-archived">
             <ChevronRight style={{ width: 14, height: 14, color: "#94a3b8", transition: "transform 0.2s", transform: collapsedArchived ? "none" : "rotate(90deg)" }} />
             <Archive style={{ width: 13, height: 13, color: "#94a3b8" }} />
             <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>Archived</span>
@@ -648,36 +538,13 @@ export default function PipelinePage() {
             <div style={{ flex: 1, height: 1, background: "var(--cm-border)", marginLeft: 6 }} />
           </div>
           {!collapsedArchived && archivedPrograms.map(p => (
-            <div key={p.program_id}
-              style={{
-                background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12,
-                padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, opacity: 0.7,
-              }}
-              data-testid={`archived-card-${p.program_id}`}
-            >
+            <div key={p.program_id} style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, opacity: 0.7 }} data-testid={`archived-card-${p.program_id}`}>
               <UniversityLogo domain={p.domain} name={p.university_name} size={34} className="rounded-[10px] grayscale" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
-                <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 1 }}>
-                  {[p.division, p.conference, p.state].filter(Boolean).join(" · ")}
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>{p.university_name}</div>
+                <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 1 }}>{[p.division, p.conference, p.state].filter(Boolean).join(" · ")}</div>
               </div>
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  try {
-                    await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true });
-                    toast.success(`${p.university_name} reactivated`);
-                    fetchPrograms();
-                  } catch { toast.error("Failed to reactivate"); }
-                }}
-                style={{
-                  padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700,
-                  background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)",
-                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
-                }}
-                data-testid={`reactivate-btn-${p.program_id}`}
-              >
+              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchPrograms(); } catch { toast.error("Failed"); } }} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }} data-testid={`reactivate-btn-${p.program_id}`}>
                 <RotateCcw style={{ width: 12, height: 12 }} /> Reactivate
               </button>
             </div>
