@@ -30,6 +30,8 @@ DEFAULT_USERS = [
     {"id": "coach-garcia", "email": "coach.garcia@capymatch.com", "name": "Coach Garcia", "role": "coach", "password": "coach123"},
 ]
 
+DEFAULT_ORG_ID = "org-capymatch-default"
+
 
 async def seed_users(db):
     """Seed default user accounts if the collection is empty."""
@@ -45,6 +47,7 @@ async def seed_users(db):
             "role": u["role"],
             "password_hash": bcrypt.hash(u["password"]),
             "created_at": "2025-01-01T00:00:00+00:00",
+            "org_id": DEFAULT_ORG_ID,
         }
         await db.users.insert_one(doc)
     log.info(f"Seeded {len(DEFAULT_USERS)} default users.")
@@ -99,7 +102,11 @@ async def run_startup(db):
         get_athletes_needing_attention,
     )
 
-    # ── Step 0: Seed users if empty ──
+    # ── Step 0: Organization foundation (create org, backfill org_id) ──
+    from services.org_foundation import ensure_org_foundation
+    await ensure_org_foundation(db)
+
+    # ── Step 0.5: Seed users if empty ──
     await seed_users(db)
 
     # ── Step 1: Seed all collections if empty ──

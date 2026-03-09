@@ -25,7 +25,8 @@ async def seed_athletes(db, athletes):
         logger.info(f"athletes already has {count} docs — skipping seed")
         return False
 
-    docs = [{**a} for a in athletes]
+    from services.org_foundation import DEFAULT_ORG_ID
+    docs = [{**a, "org_id": DEFAULT_ORG_ID} for a in athletes]
     if docs:
         await db.athletes.insert_many(docs)
         logger.info(f"Seeded {len(docs)} athletes to MongoDB")

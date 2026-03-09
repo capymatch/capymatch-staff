@@ -77,6 +77,13 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Backup branches created for both repos before unification work begins
 - Target: One platform, role-based experiences (Director, Coach, Athlete, Parent)
 
+### Step 1.2 — Organizations & org_id Foundation (2026-02-13) ✅
+- Created `organizations` collection with default org (`org-capymatch-default`)
+- Backfilled `org_id` on all 25 athletes and 8 users
+- Updated seed functions to include `org_id` for new data
+- Idempotent migration runs on every startup — safe to re-run
+- No read/write path filtering by `org_id` yet (deferred to later)
+
 ### Step 1.1 — Canonical Athletes Collection (2026-02-13) ✅
 - Created `services/athlete_store.py` — single data access layer for all athlete reads
 - Migrated all 13 backend files from `mock_data.ATHLETES` to `athlete_store` sync getters
