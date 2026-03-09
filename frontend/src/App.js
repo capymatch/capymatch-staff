@@ -29,15 +29,17 @@ import AthleteSchoolsPage from "./pages/athlete/SchoolsPage";
 import AthleteSchoolDetailPage from "./pages/athlete/SchoolDetailPage";
 import AthletePipelinePage from "./pages/athlete/PipelinePage";
 import AthleteJourneyPage from "./pages/athlete/JourneyPage";
+import AthleteOnboardingQuiz from "./pages/athlete/OnboardingQuiz";
 import AthletePublicProfile from "./pages/public/AthletePublicProfile";
 
-function getHomeRoute(role) {
+function getHomeRoute(role, onboardingDone) {
   if (role === "director" || role === "coach") return "/mission-control";
+  if ((role === "athlete" || role === "parent") && onboardingDone === false) return "/onboarding";
   return "/board"; // athlete, parent
 }
 
 function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
-  const { user, loading } = useAuth();
+  const { user, loading, onboardingDone } = useAuth();
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
@@ -47,14 +49,26 @@ function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
   }
   if (!user) return <Navigate to="/login" replace />;
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to={getHomeRoute(user.role)} replace />;
+    return <Navigate to={getHomeRoute(user.role, onboardingDone)} replace />;
+  }
+  // For athletes: wait for onboarding check, then redirect if needed
+  const isAthlete = user.role === "athlete" || user.role === "parent";
+  if (isAthlete && onboardingDone === null) {
+    return (
+      <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      </div>
+    );
+  }
+  if (isAthlete && onboardingDone === false && window.location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
   }
   if (useLayout) return <AppLayout>{children}</AppLayout>;
   return children;
 }
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
+  const { user, loading, onboardingDone } = useAuth();
 
   if (loading) {
     return (
@@ -64,7 +78,7 @@ function AppRoutes() {
     );
   }
 
-  const home = user ? getHomeRoute(user.role) : "/login";
+  const home = user ? getHomeRoute(user.role, onboardingDone) : "/login";
 
   return (
     <Routes>
@@ -91,6 +105,7 @@ function AppRoutes() {
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","coach"]}><SupportPod /></ProtectedRoute>} />
 
       {/* ── Athlete / Parent routes ── */}
+      <Route path="/onboarding" element={<ProtectedRoute useLayout={false} allowedRoles={["athlete","parent"]}><AthleteOnboardingQuiz /></ProtectedRoute>} />
       <Route path="/board" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteDashboard /></ProtectedRoute>} />
       <Route path="/pipeline" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthletePipelinePage /></ProtectedRoute>} />
       <Route path="/pipeline/:programId" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteJourneyPage /></ProtectedRoute>} />

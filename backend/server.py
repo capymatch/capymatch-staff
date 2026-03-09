@@ -36,6 +36,7 @@ from routers.athlete_self import router as athlete_self_router
 from routers.athlete_dashboard import router as athlete_dashboard_router
 from routers.athlete_profile import router as athlete_profile_router
 from routers.athlete_knowledge import router as athlete_knowledge_router
+from routers.athlete_onboarding import router as athlete_onboarding_router
 
 # Create the main app
 app = FastAPI()
@@ -103,6 +104,7 @@ api_router.include_router(athlete_self_router)
 api_router.include_router(athlete_dashboard_router)
 api_router.include_router(athlete_profile_router)
 api_router.include_router(athlete_knowledge_router)
+api_router.include_router(athlete_onboarding_router)
 
 app.include_router(api_router)
 
