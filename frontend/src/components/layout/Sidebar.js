@@ -18,8 +18,8 @@ const DIRECTOR_EXTRA = [
 
 const ATHLETE_NAV = [
   { id: "board", label: "Dashboard", icon: LayoutDashboard, path: "/board" },
-  { id: "pipeline", label: "Pipeline", icon: Kanban, path: "/pipeline" },
-  { id: "schools", label: "Schools", icon: GraduationCap, path: "/schools" },
+  { id: "pipeline", label: "My Schools", icon: Kanban, path: "/pipeline" },
+  { id: "schools", label: "Find Schools", icon: GraduationCap, path: "/schools" },
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "inbox", label: "Inbox", icon: Mail, path: "/inbox" },
   { id: "highlights", label: "Highlights", icon: Video, path: "/highlights" },
