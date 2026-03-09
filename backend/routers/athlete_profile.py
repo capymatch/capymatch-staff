@@ -347,12 +347,12 @@ def _score_program(p, profile, all_kb_indexed):
     per_priority = 25 / max(len(pref_priorities), 1)
     for pr in pref_priorities:
         pr_lower = pr.lower()
-        if "academ" in pr_lower:
+        if "academ" in pr_lower or "strong academ" in pr_lower:
             if prog_div and ("d1" in prog_div or "d2" in prog_div):
                 priority_score += per_priority
                 if "Academics" not in match_reasons:
                     match_reasons.append("Academics")
-        elif "athlet" in pr_lower:
+        elif "athlet" in pr_lower or "top athlet" in pr_lower:
             if "d1" in prog_div:
                 priority_score += per_priority
                 match_reasons.append("Athletics")
@@ -367,14 +367,14 @@ def _score_program(p, profile, all_kb_indexed):
             region_name = p.get("region") or CONFERENCE_REGIONS.get(conf, "")
             if region_name in pref_regions:
                 priority_score += per_priority
-        elif "campus" in pr_lower or "culture" in pr_lower:
+        elif "campus" in pr_lower or "culture" in pr_lower or "social" in pr_lower:
             priority_score += per_priority * 0.5
         elif "coach" in pr_lower:
             priority_score += per_priority * 0.5
         elif "conference" in pr_lower:
             if p.get("conference"):
                 priority_score += per_priority * 0.7
-        elif "playing" in pr_lower or "roster" in pr_lower:
+        elif "playing" in pr_lower or "roster" in pr_lower or "competitive" in pr_lower:
             if "d2" in prog_div or "d3" in prog_div or "naia" in prog_div:
                 priority_score += per_priority
             else:
@@ -447,8 +447,27 @@ async def get_match_scores(current_user: dict = get_current_user_dep()):
     if cached and (now - cached["ts"]) < _SCORES_TTL:
         return cached["data"]
 
-    profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0})
-    if not profile:
+    # Primary: use recruiting_profile from the onboarding questionnaire (athletes collection)
+    # Fallback: use athlete_profiles collection
+    recruiting_profile = athlete.get("recruiting_profile") or {}
+    fallback_profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    if not fallback_profile:
+        fallback_profile = {}
+
+    # Merge: questionnaire answers take priority over athlete_profiles
+    profile = {
+        "division": recruiting_profile.get("division") or fallback_profile.get("division") or [],
+        "regions": recruiting_profile.get("regions") or fallback_profile.get("regions") or [],
+        "priorities": recruiting_profile.get("priorities") or fallback_profile.get("priorities") or [],
+        "gpa": recruiting_profile.get("gpa") or fallback_profile.get("gpa") or athlete.get("gpa"),
+        "sat_score": recruiting_profile.get("sat_score") or fallback_profile.get("sat_score") or athlete.get("sat_score"),
+        "act_score": recruiting_profile.get("act_score") or fallback_profile.get("act_score") or athlete.get("act_score"),
+        "graduation_year": athlete.get("gradYear") or athlete.get("grad_year"),
+        "position": recruiting_profile.get("position") or athlete.get("position"),
+        "academic_interests": recruiting_profile.get("academic_interests"),
+    }
+
+    if not profile["division"] and not profile["regions"]:
         return {"scores": [], "profile_exists": False}
 
     programs = await db.programs.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(200)
