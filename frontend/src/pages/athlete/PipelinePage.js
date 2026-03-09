@@ -171,7 +171,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
       <div style={{ padding: "24px 28px 0", position: "relative", zIndex: 1 }}>
         {/* Header: label + carousel nav */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Actions Needed Today</span>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{idx + 1} of {total}</span>
           {total > 1 && (
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 14, height: 14 }} /></button>
@@ -489,6 +489,7 @@ export default function PipelinePage() {
       {/* Hero Card = Actions Carousel */}
       {actions.length > 0 && (
         <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cm-text-3)", marginBottom: 8 }}>Actions Needed Today</div>
           <HeroActionsCarousel actions={actions} matchScores={matchScores} navigate={navigate} />
         </div>
       )}
