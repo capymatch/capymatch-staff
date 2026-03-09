@@ -59,6 +59,24 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - **Pages refactored:** Dashboard, Pipeline, Schools, Calendar, Settings, Profile, Journey, Inbox, Highlights, Analytics, SchoolDetail, AI Assistant Drawer
 - **Testing:** 100% pass rate across all 11 pages in both light and dark modes (iteration_61)
 
+### Phase 9 — AI Gmail Intelligence V1 (DONE - March 9, 2026)
+**Backend:**
+- New `services/gmail_intelligence.py` — AI analysis engine with LLM-powered email thread analysis
+- New `routers/athlete_gmail_intelligence.py` — 7 API endpoints (scan, status, insights, signals, confirm, dismiss, program insights)
+- Background scan on login (12-hour cooldown), matches emails to schools via domain mapper + coach DB
+- 10 signal categories: Coach Interest, Info Requested, Camp Invite, Visit Invite, Scholarship Talk, Offer, Reply Needed, Going Cold, Not a Fit, Info Only
+- Confidence levels (high/medium/low), urgency levels (critical/high/medium/low), suggested actions
+- Selective confirmation — stage changes and interactions applied independently, never auto-applied
+- Stored in `gmail_insights` and `gmail_scan_state` collections
+
+**Frontend (4 surfaces):**
+- **Dashboard "Inbox Intelligence" widget** — Above Today's Actions, shows top 3 insights by default with expand, confirm/dismiss per insight
+- **Pipeline signal dots** — Colored urgency dots on school cards when pending insights exist
+- **Inbox signal badges** — Signal type badges on email thread rows
+- **Journey timeline events** — Confirmed insights render as "AI Intelligence" bubbles with violet styling
+
+**Testing:** 100% backend (17/17) + 100% frontend (iteration_63)
+
 ### Phase 8 — Match Scoring V2 Frontend (DONE - March 9, 2026)
 - **School List Cards** — Pipeline cards now display match %, fit label badges (Strong Fit, Possible Fit, Stretch, Less Likely Fit), and confidence levels (High/Medium/Low Confidence, Estimated)
 - **Match Breakdown Section** — SchoolDetailPage shows full V2 breakdown with sub-score bars (Division, Region, Priorities, Academics, Measurables), athletic measurables detail with benchmark comparison, risk badges, and explanation text
