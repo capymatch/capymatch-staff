@@ -92,16 +92,19 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 
 ### Pipeline & Journey Pages — COMPLETE (2026-03-09)
 
-#### Pipeline (Recruiting Board)
+#### Pipeline (Recruiting Board) — REBUILT to match original app
 - **Frontend**: `pages/athlete/PipelinePage.js`
   - Route: `/pipeline`
-  - Kanban board with 5 columns: Overdue, Needs Outreach, Waiting on Reply, In Conversation, Archived
-  - Board/List view toggle — list shows table with School, Status, Coach, Activity, Priority
-  - Program cards: school name, division, conference, priority badge, coach, interaction signals
-  - Quick actions: Log Interaction, Mark Replied, View Journey
-  - Add School modal (manual entry with name, division, conference, priority, notes)
-  - Summary chips with counts per column
-  - Empty state with links to KB and manual add
+  - NOT a Kanban board — list-based pipeline matching original capymatch design
+  - **Hero Card**: Dark prominent card showing most urgent school with 6-stage progress rail (Added → Outreach → Talking → Visit → Offer → Committed), contextual "What to do next" advice, Follow Up CTA
+  - **Filter Chips**: All/Outreach/Upcoming/In Convo/Committed with counts
+  - **Collapsible Sections**: Needs outreach, Upcoming follow-ups, In conversation, Committed
+  - **School Row Cards**: University logo initials, division badge, conference, progress rail, temperature tags (New/Hot/Warm/Active), engagement metrics, status, CTA buttons (Start Outreach / Follow Up / Journey)
+  - **Committed Cards**: Green highlighted with checkmark
+  - **Archived Section**: Collapsed by default with reactivate button
+  - Supporting: `components/UniversityLogo.js`, `components/journey/constants.js` (RAIL_STAGES)
+
+**Pipeline Rebuild Tested: 14/14 frontend features — 100% pass (iteration_55)**
 
 #### Journey (School Timeline)
 - **Frontend**: `pages/athlete/JourneyPage.js`
@@ -113,7 +116,7 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
   - Sidebar: Coaching Staff with email links, Notes, Details (priority, status, follow-up interval, added date)
   - Back to Pipeline navigation
 
-**Pipeline & Journey Tested: 19/19 frontend features — 100% pass (iteration_53)**
+**Pipeline & Journey Tested: 14/14 pipeline (iteration_55), Journey unchanged**
 
 ### Athlete Onboarding Quiz — COMPLETE (2026-03-09)
 
