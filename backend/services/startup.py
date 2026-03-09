@@ -151,6 +151,11 @@ async def run_startup(db):
     from services.ownership import refresh_ownership_cache
     await refresh_ownership_cache()
 
+    # ── Step 9: Seed Knowledge Base (idempotent upsert) ──
+    from seeders.seed_kb import seed_kb
+    kb_count = await seed_kb(db)
+    log.info(f"Knowledge Base: {kb_count} schools seeded/refreshed")
+
     from services.athlete_store import get_all, get_interventions
     log.info(
         f"Persistence startup complete: "

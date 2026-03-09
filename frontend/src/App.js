@@ -25,6 +25,8 @@ import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import AthleteProfilePage from "./pages/athlete/ProfilePage";
 import AthleteCalendarPage from "./pages/athlete/CalendarPage";
+import AthleteSchoolsPage from "./pages/athlete/SchoolsPage";
+import AthleteSchoolDetailPage from "./pages/athlete/SchoolDetailPage";
 import AthletePublicProfile from "./pages/public/AthletePublicProfile";
 
 function getHomeRoute(role) {
@@ -89,7 +91,8 @@ function AppRoutes() {
       {/* ── Athlete / Parent routes ── */}
       <Route path="/board" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteDashboard /></ProtectedRoute>} />
       <Route path="/pipeline" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
-      <Route path="/schools" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
+      <Route path="/schools" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSchoolsPage /></ProtectedRoute>} />
+      <Route path="/schools/:domain" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSchoolDetailPage /></ProtectedRoute>} />
       <Route path="/calendar" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteCalendarPage /></ProtectedRoute>} />
       <Route path="/inbox" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
       <Route path="/athlete-profile" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteProfilePage /></ProtectedRoute>} />
