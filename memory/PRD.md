@@ -77,6 +77,15 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Backup branches created for both repos before unification work begins
 - Target: One platform, role-based experiences (Director, Coach, Athlete, Parent)
 
+### Step 1.1 — Canonical Athletes Collection (2026-02-13) ✅
+- Created `services/athlete_store.py` — single data access layer for all athlete reads
+- Migrated all 13 backend files from `mock_data.ATHLETES` to `athlete_store` sync getters
+- Removed all dual-write patterns (writes go to DB only, cache refreshed from DB)
+- Added `recompute_derived_data()` — single authoritative path for refreshing interventions, signals, snapshot, attention alerts
+- All write operations (reassign, bulk-assign, unassign, invite-assign) trigger `recompute_derived_data()`
+- `mock_data.ATHLETES` retained for DB seeding only — never read at runtime
+- E2E tested: 19/19 backend tests passed, frontend verified for Director + Coach
+
 ## Upcoming Tasks
 - P0: Unified Platform — Phase 1 Foundation (add athlete/parent roles, role-based routing, migrate mock data to MongoDB)
 - P1: Unified Platform — Phase 2 Athlete Dashboard
