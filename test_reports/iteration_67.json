@@ -1,0 +1,96 @@
+{
+  "summary": "Completed testing of Subscription Tiers and Kanban DnD features. Fixed critical bug where subscription was not loading due to wrong localStorage key ('token' instead of 'capymatch_token'). All backend APIs pass (9/9 tests). Frontend features verified working after fix.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Schools Page",
+        "issues": ["ERR_BLOCKED_BY_RESPONSE.NotSameOrigin errors for external university logo resources - not blocking functionality"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_subscription_kanban.py",
+    "/app/test_reports/pytest/pytest_subscription_kanban.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/frontend/src/lib/subscription.js"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% - All features verified working"
+  },
+  "test_credentials": {
+    "email": "emma.chen@athlete.capymatch.com",
+    "password": "password123",
+    "localStorage_key": "capymatch_token"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Subscription features fully working. Token key is 'capymatch_token'. Emma (athlete) has 12 schools on basic tier (limit 5). The Add School button on Pipeline page now correctly shows upgrade modal when at limit.",
+  "tests_passed": {
+    "backend": {
+      "subscription_tiers": [
+        "GET /api/subscription/tiers returns all 3 tiers (basic, pro, premium)",
+        "GET /api/subscription returns tier, label, price, features, limits, usage",
+        "Pricing: Starter=$0, Pro=$12, Premium=$29 - VERIFIED",
+        "Max schools: Starter=5, Pro=25, Premium=unlimited - VERIFIED"
+      ],
+      "school_limit_enforcement": [
+        "POST /api/knowledge-base/add-to-board returns 403 with subscription_limit when over limit",
+        "Error includes type='subscription_limit', message, current, limit, upgrade_to fields"
+      ],
+      "kanban_dnd": [
+        "GET /api/athlete/programs returns programs with journey_stage",
+        "PUT /api/athlete/programs/{id} updates journey_stage and recruiting_status",
+        "All 6 stage mappings work: added, outreach, in_conversation, campus_visit, offer, committed"
+      ],
+      "subscription_usage": [
+        "usage.schools matches actual program count",
+        "schools_remaining is correctly calculated (limit - used)"
+      ]
+    },
+    "frontend": {
+      "pipeline_page": [
+        "School limit badge (data-testid='school-limit-badge') shows '12/5 schools'",
+        "Add School button (data-testid='add-school-btn') triggers upgrade modal when over limit",
+        "Kanban board (data-testid='kanban-board') renders correctly",
+        "6 columns: Added, Outreach, Talking, Visit, Offer, Committed",
+        "12 kanban cards displayed with data-testid='kanban-card-{id}'",
+        "Cards have cursor: grab (draggable)",
+        "Cards show: school name, division tags, conference tags, match %, status dot"
+      ],
+      "upgrade_modal": [
+        "Upgrade modal (data-testid='upgrade-modal') appears on Add School click",
+        "3 tier cards: basic, pro, premium with correct pricing",
+        "'Current Plan' shown on Starter tier (data-testid='tier-current-basic')",
+        "'Most Popular' badge shown on Pro tier",
+        "Trigger message: 'You've reached your limit of 5 schools. Upgrade to add more.'",
+        "Close button (data-testid='upgrade-modal-close') works"
+      ],
+      "schools_page": [
+        "Add to Board triggers 403 handling correctly",
+        "Upgrade modal appears with subscription_limit error",
+        "All tier cards render correctly"
+      ]
+    }
+  },
+  "bug_fixed": {
+    "file": "/app/frontend/src/lib/subscription.js",
+    "line": 13,
+    "issue": "Subscription provider was using localStorage.getItem('token') instead of localStorage.getItem('capymatch_token')",
+    "fix": "Changed 'token' to 'capymatch_token' to match the actual localStorage key used by AuthContext",
+    "impact": "School limit badge now shows on Pipeline page, and Add School button now correctly triggers upgrade modal"
+  },
+  "mocked_apis": {
+    "stripe_checkout": "Clicking 'Upgrade to Pro' or 'Upgrade to Premium' shows toast 'Stripe checkout coming soon! Contact support to upgrade.'"
+  }
+}

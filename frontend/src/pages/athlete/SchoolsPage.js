@@ -7,6 +7,8 @@ import {
   Target, MapPinned, GraduationCap, X, Filter, ExternalLink,
   Loader2, RotateCcw, Sparkles, ArrowRight, Database
 } from "lucide-react";
+import UpgradeModal from "../../components/UpgradeModal";
+import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -260,6 +262,9 @@ export default function SchoolsPage() {
   const [viewMode, setViewMode] = useState("grid");
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [upgradeMessage, setUpgradeMessage] = useState("");
+  const { subscription, refresh: refreshSub } = useSubscription();
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -312,10 +317,17 @@ export default function SchoolsPage() {
       toast.success(`${uni.university_name} added to your board`);
       setSuggestions(prev => prev.filter(s => s.university_name !== uni.university_name));
       setBoardSchools(prev => new Set([...prev, uni.university_name]));
+      refreshSub();
       if (fromOnboarding) navigate("/pipeline?congrats=true");
     } catch (err) {
       const detail = err.response?.data?.detail;
-      toast.error(typeof detail === "string" ? detail : "Failed to add");
+      if (detail?.type === "subscription_limit" || err.response?.status === 403) {
+        const msg = typeof detail === "object" ? detail.message : "You've reached your school limit. Upgrade to add more.";
+        setUpgradeMessage(msg);
+        setShowUpgrade(true);
+      } else {
+        toast.error(typeof detail === "string" ? detail : "Failed to add");
+      }
     } finally {
       setAdding(prev => ({ ...prev, [uni.university_name]: false }));
     }
@@ -491,6 +503,13 @@ export default function SchoolsPage() {
         onConference={toggleConf}
         onApply={() => setFiltersOpen(false)}
         onClear={() => { resetFilters(); setFiltersOpen(false); }}
+      />
+
+      <UpgradeModal
+        isOpen={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        message={upgradeMessage}
+        currentTier={subscription?.tier || "basic"}
       />
     </div>
   );

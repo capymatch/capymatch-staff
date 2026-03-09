@@ -184,6 +184,21 @@ async def add_to_board(request: Request):
     if existing:
         raise HTTPException(status_code=400, detail="University already on your board")
 
+    # Enforce subscription school limit
+    from subscriptions import enforce_school_limit
+    limit_check = await enforce_school_limit(tenant_id)
+    if not limit_check["allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "type": "subscription_limit",
+                "message": f"You've reached your limit of {limit_check['limit']} schools. Upgrade to add more.",
+                "current": limit_check["current"],
+                "limit": limit_check["limit"],
+                "upgrade_to": limit_check["upgrade_to"],
+            },
+        )
+
     now = datetime.now(timezone.utc).isoformat()
     program_id = f"prog_{uuid.uuid4().hex[:12]}"
     doc = {
@@ -816,6 +831,21 @@ async def add_school_to_pipeline_legacy(
     )
     if existing:
         raise HTTPException(400, "School already in your pipeline")
+
+    # Enforce subscription school limit
+    from subscriptions import enforce_school_limit
+    limit_check = await enforce_school_limit(tenant_id)
+    if not limit_check["allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "type": "subscription_limit",
+                "message": f"You've reached your limit of {limit_check['limit']} schools. Upgrade to add more.",
+                "current": limit_check["current"],
+                "limit": limit_check["limit"],
+                "upgrade_to": limit_check["upgrade_to"],
+            },
+        )
 
     now = datetime.now(timezone.utc).isoformat()
     program_id = f"prog_{uuid.uuid4().hex[:12]}"

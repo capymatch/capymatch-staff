@@ -6,10 +6,13 @@ import {
   Send, GraduationCap, AlertTriangle, Lightbulb,
   Archive, RotateCcw, Calendar,
 } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RAIL_STAGES } from "../../components/journey/constants";
+import { useSubscription, getUsage } from "../../lib/subscription";
+import UpgradeModal from "../../components/UpgradeModal";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -317,15 +320,24 @@ function UpcomingEventsSection({ events, navigate }) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Pro Kanban Board                       ── */
+/* ── Pro Kanban Board (Drag & Drop)         ── */
 /* ═══════════════════════════════════════════ */
 const DIV_TAG_STYLES = {
-  D1: { bg: "#e0f2fe", color: "#0369a1", darkBg: "rgba(14,165,233,0.15)", darkColor: "#38bdf8" },
-  D2: { bg: "#dcfce7", color: "#15803d", darkBg: "rgba(34,197,94,0.15)", darkColor: "#4ade80" },
-  D3: { bg: "#fef3c7", color: "#92400e", darkBg: "rgba(251,191,36,0.15)", darkColor: "#fbbf24" },
+  D1: { bg: "#e0f2fe", color: "#0369a1" },
+  D2: { bg: "#dcfce7", color: "#15803d" },
+  D3: { bg: "#fef3c7", color: "#92400e" },
 };
 
-function KanbanCard({ program: p, matchScore, navigate }) {
+const COL_TO_STAGE = {
+  added: { journey_stage: "added", recruiting_status: "Not Contacted" },
+  outreach: { journey_stage: "outreach", recruiting_status: "Contacted" },
+  in_conversation: { journey_stage: "in_conversation", recruiting_status: "In Conversation" },
+  campus_visit: { journey_stage: "campus_visit", recruiting_status: "Campus Visit" },
+  offer: { journey_stage: "offer", recruiting_status: "Offer" },
+  committed: { journey_stage: "committed", recruiting_status: "Committed" },
+};
+
+function KanbanCard({ program: p, matchScore, navigate, index }) {
   const ms = matchScore?.match_score;
   const dotColor = getStatusDot(p);
   const due = getDueInfo(p);
@@ -333,28 +345,43 @@ function KanbanCard({ program: p, matchScore, navigate }) {
   const matchColor = ms >= 65 ? "#16a34a" : ms >= 40 ? "#d97706" : ms != null ? "#ef4444" : "var(--cm-text-3)";
 
   return (
-    <div onClick={() => navigate(`/pipeline/${p.program_id}`)} className="kanban-card" style={{
-      background: "var(--cm-surface)", borderRadius: 10,
-      padding: "16px 16px 14px", cursor: "pointer", transition: "box-shadow 0.15s ease",
-    }} data-testid={`kanban-card-${p.program_id}`}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35, marginBottom: 10 }}>{p.university_name}</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
-        {p.division && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: divStyle.bg || "var(--cm-surface-2)", color: divStyle.color || "var(--cm-text-3)" }} className="kanban-div-tag">{p.division}</span>}
-        {p.conference && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{p.conference}</span>}
-        {due?.urgent && <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 7px", borderRadius: 4, background: due.color === "#dc2626" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)", color: due.color === "#dc2626" ? "#dc2626" : "#d97706" }}>{due.text}</span>}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <UniversityLogo domain={p.domain} name={p.university_name} size={18} className="rounded-[5px]" />
-          {ms != null && <span style={{ fontSize: 12, fontWeight: 700, color: matchColor }}>{ms}%</span>}
+    <Draggable draggableId={p.program_id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          onClick={() => navigate(`/pipeline/${p.program_id}`)}
+          className="kanban-card"
+          style={{
+            background: "var(--cm-surface)", borderRadius: 10,
+            padding: "16px 16px 14px", cursor: "grab", transition: "box-shadow 0.15s ease",
+            boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.12)" : undefined,
+            opacity: snapshot.isDragging ? 0.95 : 1,
+            ...provided.draggableProps.style,
+          }}
+          data-testid={`kanban-card-${p.program_id}`}
+        >
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35, marginBottom: 10 }}>{p.university_name}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
+            {p.division && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: divStyle.bg || "var(--cm-surface-2)", color: divStyle.color || "var(--cm-text-3)" }}>{p.division}</span>}
+            {p.conference && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{p.conference}</span>}
+            {due?.urgent && <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 7px", borderRadius: 4, background: due.color === "#dc2626" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)", color: due.color === "#dc2626" ? "#dc2626" : "#d97706" }}>{due.text}</span>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <UniversityLogo domain={p.domain} name={p.university_name} size={18} className="rounded-[5px]" />
+              {ms != null && <span style={{ fontSize: 12, fontWeight: 700, color: matchColor }}>{ms}%</span>}
+            </div>
+            <div style={{ width: 9, height: 9, borderRadius: "50%", background: dotColor }} />
+          </div>
         </div>
-        <div style={{ width: 9, height: 9, borderRadius: "50%", background: dotColor }} />
-      </div>
-    </div>
+      )}
+    </Draggable>
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate }) {
+function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
   for (const p of programs) {
@@ -364,24 +391,40 @@ function KanbanBoard({ programs, matchScores, navigate }) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }} className="kanban-grid" data-testid="kanban-board">
-      {KANBAN_COLS.map(col => (
-        <div key={col.key} style={{ background: "var(--cm-surface-2)", borderRadius: 12, minHeight: 200, overflow: "hidden" }}>
-          <div style={{ height: 3, background: col.color }} />
-          <div style={{ padding: "14px 14px 10px", display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--cm-text-2)" }}>{col.label}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-4)" }}>{columns[col.key].length}</span>
-          </div>
-          <div style={{ padding: "0 8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
-            {columns[col.key].length > 0 ? (
-              columns[col.key].map(p => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} />)
-            ) : (
-              <div style={{ padding: "30px 14px", textAlign: "center", fontSize: 12, color: "var(--cm-text-4)", fontWeight: 500 }}>No schools yet</div>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }} className="kanban-grid" data-testid="kanban-board">
+        {KANBAN_COLS.map(col => (
+          <Droppable droppableId={col.key} key={col.key}>
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                style={{
+                  background: snapshot.isDraggingOver ? "var(--cm-surface-3, var(--cm-surface-2))" : "var(--cm-surface-2)",
+                  borderRadius: 12, minHeight: 200, overflow: "hidden",
+                  transition: "background 0.2s ease",
+                  outline: snapshot.isDraggingOver ? "2px dashed rgba(13,148,136,0.3)" : "none",
+                }}
+              >
+                <div style={{ height: 3, background: col.color }} />
+                <div style={{ padding: "14px 14px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--cm-text-2)" }}>{col.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-4)" }}>{columns[col.key].length}</span>
+                </div>
+                <div style={{ padding: "0 8px 10px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
+                  {columns[col.key].length > 0 ? (
+                    columns[col.key].map((p, idx) => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} index={idx} />)
+                  ) : (
+                    <div style={{ padding: "30px 14px", textAlign: "center", fontSize: 12, color: "var(--cm-text-4)", fontWeight: 500 }}>No schools yet</div>
+                  )}
+                  {provided.placeholder}
+                </div>
+              </div>
             )}
-          </div>
-        </div>
-      ))}
-    </div>
+          </Droppable>
+        ))}
+      </div>
+    </DragDropContext>
   );
 }
 
@@ -443,7 +486,9 @@ export default function PipelinePage() {
   const [matchScores, setMatchScores] = useState({});
   const [events, setEvents] = useState([]);
   const [collapsedArchived, setCollapsedArchived] = useState(true);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const navigate = useNavigate();
+  const { subscription, refresh: refreshSub } = useSubscription();
 
   const fetchPrograms = useCallback(async () => {
     try {
@@ -463,6 +508,43 @@ export default function PipelinePage() {
   }, [allPrograms.length]);
   useEffect(() => { axios.get(`${API}/athlete/events`).then(res => setEvents(Array.isArray(res.data) ? res.data : [])).catch(() => {}); }, []);
 
+  /* ── Drag & Drop handler ── */
+  const handleDragEnd = useCallback(async (result) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId) return;
+
+    const newCol = destination.droppableId;
+    const stageUpdate = COL_TO_STAGE[newCol];
+    if (!stageUpdate) return;
+
+    // Optimistic update
+    setAllPrograms(prev => prev.map(p =>
+      p.program_id === draggableId
+        ? { ...p, journey_stage: stageUpdate.journey_stage, recruiting_status: stageUpdate.recruiting_status }
+        : p
+    ));
+
+    try {
+      await axios.put(`${API}/athlete/programs/${draggableId}`, stageUpdate);
+      toast.success(`Moved to ${KANBAN_COLS.find(c => c.key === newCol)?.label || newCol}`);
+    } catch {
+      toast.error("Failed to update stage");
+      fetchPrograms(); // revert
+    }
+  }, [fetchPrograms]);
+
+  /* ── Add school with limit check ── */
+  const handleAddSchool = useCallback(() => {
+    if (!subscription) { navigate("/schools"); return; }
+    const usage = getUsage(subscription, "schools");
+    if (!usage.unlimited && usage.remaining !== undefined && usage.remaining <= 0) {
+      setShowUpgrade(true);
+      return;
+    }
+    navigate("/schools");
+  }, [subscription, navigate]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24" data-testid="board-loading">
@@ -480,6 +562,7 @@ export default function PipelinePage() {
 
   const actions = generateActions(allPrograms, matchScores);
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
+  const usage = getUsage(subscription, "schools");
 
   return (
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
@@ -487,7 +570,13 @@ export default function PipelinePage() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, marginBottom: 20 }}>
-        <button onClick={() => navigate("/schools")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", borderRadius: 10, border: "1px solid var(--cm-border)", background: "var(--cm-surface)", fontSize: 13, fontWeight: 700, color: "var(--cm-text)", cursor: "pointer", fontFamily: "inherit" }} data-testid="add-school-btn">
+        {/* Usage badge */}
+        {subscription && !usage.unlimited && (
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)", display: "flex", alignItems: "center", gap: 4 }} data-testid="school-limit-badge">
+            {usage.used}/{usage.limit} schools
+          </div>
+        )}
+        <button onClick={handleAddSchool} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", borderRadius: 10, border: "1px solid var(--cm-border)", background: "var(--cm-surface)", fontSize: 13, fontWeight: 700, color: "var(--cm-text)", cursor: "pointer", fontFamily: "inherit" }} data-testid="add-school-btn">
           <Plus style={{ width: 14, height: 14 }} /> Add School
         </button>
       </div>
@@ -506,8 +595,8 @@ export default function PipelinePage() {
       {/* 3. Upcoming Events */}
       <UpcomingEventsSection events={events} navigate={navigate} />
 
-      {/* 4. Kanban Board */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} />
+      {/* 4. Kanban Board (Drag & Drop) */}
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (
@@ -533,6 +622,14 @@ export default function PipelinePage() {
           ))}
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        message={`You've reached your limit of ${usage.limit || 5} schools. Upgrade to add more.`}
+        currentTier={subscription?.tier || "basic"}
+      />
     </div>
   );
 }
