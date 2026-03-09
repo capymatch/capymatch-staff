@@ -647,9 +647,6 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Guidance Banner */}
-      {guidance && <MeasurablesGuidanceBanner guidance={guidance} navigate={navigate} />}
-
       {/* 3. Upcoming Events */}
       <UpcomingEventsSection events={events} navigate={navigate} />
 

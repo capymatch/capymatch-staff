@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   User, Camera, Check, Copy, ExternalLink, ChevronDown,
-  Eye, EyeOff, Share2, Loader2,
+  Eye, EyeOff, Share2, Loader2, AlertTriangle,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -270,6 +270,19 @@ export default function ProfilePage() {
           <Field testId="field-jersey" label="Jersey #" value={profile.jersey_number} onChange={(v) => updateField("jersey_number", v)} />
         </div>
       </SectionCard>
+
+      {/* Match Accuracy Guidance Banner */}
+      {(!profile.approach_touch || !profile.block_touch) && (
+        <div style={{ background: "var(--cm-surface)", border: "1px solid rgba(245,158,11,0.2)", borderLeft: "3px solid #f59e0b", borderRadius: 12, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }} data-testid="measurables-guidance-banner">
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <AlertTriangle style={{ width: 16, height: 16, color: "#f59e0b" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", marginBottom: 2 }}>Improve your match accuracy</div>
+            <div style={{ fontSize: 11, color: "var(--cm-text-3)", lineHeight: 1.5 }}>Add approach touch and block touch to improve match accuracy.</div>
+          </div>
+        </div>
+      )}
 
       {/* Section: Athletic Measurables */}
       <SectionCard testId="section-measurables" defaultOpen={true}
