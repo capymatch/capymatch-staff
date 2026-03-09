@@ -480,13 +480,6 @@ export default function PipelinePage() {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><EmptyBoardState navigate={navigate} /></div>;
   }
 
-  /* Focus program = most urgent */
-  const priorityOrder = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
-  const focusProgram = [...activePrograms].sort((a, b) => {
-    const ai = priorityOrder.indexOf(a.board_group); const bi = priorityOrder.indexOf(b.board_group);
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  })[0];
-
   const actions = generateActions(allPrograms, matchScores);
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
 
@@ -501,15 +494,12 @@ export default function PipelinePage() {
         </button>
       </div>
 
-      {/* 1. Hero Card */}
-      {focusProgram && (
+      {/* Hero Card = Actions Carousel */}
+      {actions.length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          <PipelineHeroCard program={focusProgram} matchScore={matchScores[focusProgram.program_id]} navigate={navigate} />
+          <HeroActionsCarousel actions={actions} matchScores={matchScores} navigate={navigate} />
         </div>
       )}
-
-      {/* 2. Actions Carousel */}
-      <ActionsCarousel actions={actions} navigate={navigate} />
 
       {/* Guidance Banner */}
       {guidance && <MeasurablesGuidanceBanner guidance={guidance} navigate={navigate} />}
