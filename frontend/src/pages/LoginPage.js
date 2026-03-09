@@ -188,6 +188,7 @@ export default function LoginPage() {
               <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-2 font-medium">Demo Accounts</p>
               <div className="space-y-1.5">
                 {[
+                  { label: "Athlete (Emma)", email: "emma.chen@athlete.capymatch.com", pw: "password123" },
                   { label: "Director", email: "director@capymatch.com", pw: "director123" },
                   { label: "Coach Williams", email: "coach.williams@capymatch.com", pw: "coach123" },
                   { label: "Coach Garcia", email: "coach.garcia@capymatch.com", pw: "coach123" },
