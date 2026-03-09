@@ -8,8 +8,41 @@ import {
   Users,
   Sparkles,
   ChevronRight,
+  Kanban,
+  GraduationCap,
+  Mail,
+  User,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
+
+const STAFF_NAV = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/mission-control" },
+  { id: "events", label: "Events", icon: Calendar, path: "/events" },
+  { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
+  { id: "program", label: "Program", icon: BarChart3, path: "/program" },
+];
+
+const DIRECTOR_EXTRA = [
+  { id: "roster", label: "Roster", icon: Users, path: "/roster" },
+];
+
+const ATHLETE_NAV = [
+  { id: "board", label: "Dashboard", icon: LayoutDashboard, path: "/board" },
+  { id: "pipeline", label: "Pipeline", icon: Kanban, path: "/pipeline" },
+  { id: "schools", label: "Schools", icon: GraduationCap, path: "/schools" },
+  { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
+  { id: "inbox", label: "Inbox", icon: Mail, path: "/inbox" },
+  { id: "athlete-profile", label: "Profile", icon: User, path: "/athlete-profile" },
+  { id: "analytics", label: "Analytics", icon: BarChart3, path: "/analytics" },
+  { id: "athlete-settings", label: "Settings", icon: Settings, path: "/athlete-settings" },
+];
+
+function getNavItems(role) {
+  if (role === "director") return [...STAFF_NAV, ...DIRECTOR_EXTRA];
+  if (role === "coach") return STAFF_NAV;
+  return ATHLETE_NAV; // athlete + parent
+}
 
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
@@ -17,15 +50,9 @@ export default function Sidebar({ open, onClose }) {
   const { user } = useAuth();
   const [aiOpen, setAiOpen] = useState(false);
 
-  const isDirector = user?.role === "director";
-
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/mission-control" },
-    { id: "events", label: "Events", icon: Calendar, path: "/events" },
-    { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
-    { id: "program", label: "Program", icon: BarChart3, path: "/program" },
-    ...(isDirector ? [{ id: "roster", label: "Roster", icon: Users, path: "/roster" }] : []),
-  ];
+  const role = user?.role || "coach";
+  const isStaff = role === "director" || role === "coach";
+  const navItems = getNavItems(role);
 
   const isActive = (path) => location.pathname.startsWith(path);
 
@@ -71,20 +98,27 @@ export default function Sidebar({ open, onClose }) {
           );
         })}
 
-        {/* AI Features expandable */}
-        <button
-          data-testid="nav-ai-features"
-          onClick={() => setAiOpen(!aiOpen)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-gray-50 hover:text-slate-700 transition-all"
-        >
-          <Sparkles className="w-[18px] h-[18px] text-slate-400" />
-          AI Features
-          <ChevronRight className={`w-3.5 h-3.5 ml-auto text-slate-300 transition-transform ${aiOpen ? "rotate-90" : ""}`} />
-        </button>
+        {/* AI Features — staff only */}
+        {isStaff && (
+          <button
+            data-testid="nav-ai-features"
+            onClick={() => setAiOpen(!aiOpen)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-gray-50 hover:text-slate-700 transition-all"
+          >
+            <Sparkles className="w-[18px] h-[18px] text-slate-400" />
+            AI Features
+            <ChevronRight className={`w-3.5 h-3.5 ml-auto text-slate-300 transition-transform ${aiOpen ? "rotate-90" : ""}`} />
+          </button>
+        )}
       </nav>
 
-      {/* Bottom spacer */}
-      <div className="p-4" />
+      {/* Role badge */}
+      <div className="px-5 pb-4">
+        <div className="px-3 py-2 bg-gray-50 rounded-lg">
+          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">{role}</p>
+          <p className="text-xs text-gray-600 truncate">{user?.name || user?.email}</p>
+        </div>
+      </div>
     </aside>
   );
 }

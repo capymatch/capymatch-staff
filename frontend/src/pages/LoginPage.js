@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState("coach");
+  const [role, setRole] = useState("athlete");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -77,17 +77,34 @@ export default function LoginPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    placeholder="Coach Williams"
+                    placeholder="Your full name"
                     className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
                     data-testid="input-name"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Role</label>
-                  <div className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
-                    Coach
+                  <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider block mb-1.5">I am a...</label>
+                  <div className="grid grid-cols-3 gap-2" data-testid="role-selector">
+                    {[
+                      { value: "athlete", label: "Athlete" },
+                      { value: "parent", label: "Parent" },
+                      { value: "coach", label: "Coach" },
+                    ].map((r) => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => setRole(r.value)}
+                        data-testid={`role-${r.value}`}
+                        className={`py-2 text-xs font-medium rounded-lg border transition-all ${
+                          role === r.value
+                            ? "bg-slate-900 text-white border-slate-900"
+                            : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">Director accounts are created by existing directors</p>
                 </div>
               </>
             )}
