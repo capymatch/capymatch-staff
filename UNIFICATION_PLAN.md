@@ -1,6 +1,6 @@
 # CapyMatch — Unified Platform Architecture Plan
 **Last revised:** 2026-02-13
-**Status:** Pre-implementation — finalizing before Phase 2 begins
+**Status:** Phase 1 implementation beginning
 
 ---
 
@@ -255,6 +255,8 @@ It replaces:
 - The in-memory `ATHLETES` array in `mock_data.py` (staff app)
 - The `athlete_profiles` collection (athlete app, migrated later)
 
+**Phase 1 keeps existing camelCase field names.** See Migration Risk #1 in Section 15 for why. Unified snake_case field names are a Phase 2 task that pairs with the athlete-facing UI build.
+
 ```
 athletes {
   id: string (uuid)
@@ -264,41 +266,35 @@ athletes {
   tenant_id: string            // null = no self-service yet
                                // set = private data space created (pipeline, Gmail, etc.)
 
-  // ── Identity ──
-  full_name: string
+  // ── Identity (camelCase in Phase 1, matching existing frontend contracts) ──
+  firstName: string
+  lastName: string
+  fullName: string
   email: string                // nullable (staff may not have it yet)
   phone: string
-  grad_year: string
+  gradYear: number
   position: string
   team: string                 // e.g., "U16 Elite"
-  jersey_number: string
 
-  // ── Physical ──
+  // ── Physical (added when athlete claims record or staff enters) ──
   height: string
   weight: string
   standing_reach: string
   approach_touch: string
   block_touch: string
-  wingspan: string
-  handed: string               // "Right" | "Left" | "Both"
 
   // ── Academic ──
   gpa: string
   high_school: string
 
-  // ── Club Info ──
-  club_team: string
-  city: string
-  state: string
-
   // ── Recruiting Intel (staff-managed) ──
-  recruiting_stage: string     // "exploring" | "actively_recruiting" | "narrowing" | "committed"
-  momentum_score: number
-  momentum_trend: string       // "rising" | "stable" | "declining"
-  school_targets: number
-  active_interest: number
-  days_since_activity: number
-  last_activity: datetime
+  recruitingStage: string      // "exploring" | "actively_recruiting" | "narrowing" | "committed"
+  momentumScore: number
+  momentumTrend: string        // "rising" | "stable" | "declining"
+  lastActivity: datetime (ISO string)
+  daysSinceActivity: number    // recomputed on startup
+  schoolTargets: number
+  activeInterest: number
 
   // ── Media ──
   hudl_url: string
@@ -313,7 +309,7 @@ athletes {
 
   // ── Staff-Managed ──
   primary_coach_id: string     // club coach user id
-  unassigned_reason: string    // null if assigned
+  archetype: string            // internal classification, not shown to athletes
 
   // ── Metadata ──
   created_at: datetime
@@ -326,8 +322,8 @@ athletes {
 
 | Fields | Who can write | When |
 |--------|--------------|------|
-| Recruiting intel: `recruiting_stage`, `momentum_score`, `momentum_trend`, `school_targets`, `active_interest`, `days_since_activity`, `last_activity` | Director, Coach | Always |
-| Staff fields: `primary_coach_id`, `unassigned_reason`, `team` | Director | Always |
+| Recruiting intel: `recruitingStage`, `momentumScore`, `momentumTrend`, `schoolTargets`, `activeInterest`, `daysSinceActivity`, `lastActivity` | Director, Coach | Always |
+| Staff fields: `primary_coach_id`, `team` | Director | Always |
 | Identity, Physical, Academic, Media, Contact | Athlete (self) | Only when `user_id` is set |
 | Identity, Physical, Academic, Media, Contact | Director, Coach | Only when `user_id` is null (staff-created, not yet claimed) |
 | `user_id`, `tenant_id` | System | Set during claim/registration flow |
@@ -501,14 +497,14 @@ Stripe powers subscription gating in the athlete app. Until migrated:
 
 | # | Surface | Current Home | Future Home | Phase | Changes Required |
 |---|---------|-------------|-------------|-------|-----------------|
-| 1 | Director Mission Control | Staff app | Unified | Exists | None — already built |
-| 2 | Coach Mission Control | Staff app | Unified | Exists | None — already built |
+| 1 | Director Mission Control | Staff app | Unified | Exists | Phase 1: reads from `db.athletes` instead of in-memory array |
+| 2 | Coach Mission Control | Staff app | Unified | Exists | Phase 1: same data source change |
 | 3 | Roster | Staff app | Unified | Phase 1 | Switch from `ATHLETES` mock array to `db.athletes` queries |
 | 4 | Bulk Actions (Assign, Remind, Note) | Staff app | Unified | Phase 1 | Switch from mock array to `db.athletes` writes |
-| 5 | Support Pods | Staff app | Unified | Exists | None in Phase 1. Phase 4: athlete can see coach notes |
-| 6 | Program Intelligence | Staff app | Unified | Exists | None |
+| 5 | Support Pods | Staff app | Unified | Exists | Phase 1: reads from DB. Phase 4: athlete can see coach notes |
+| 6 | Program Intelligence | Staff app | Unified | Exists | Phase 1: reads from DB |
 | 7 | Event Mode | Staff app | Unified | Exists | Phase 4: merge with unified events model |
-| 8 | Advocacy Mode | Staff app | Unified | Exists | None |
+| 8 | Advocacy Mode | Staff app | Unified | Exists | Phase 1: reads from DB |
 | 9 | Coach Invitation / Onboarding | Staff app | Unified | Exists | None |
 | 10 | Coach Nudge (Resend email) | Staff app | Unified | Exists | None |
 
@@ -547,55 +543,109 @@ Stripe powers subscription gating in the athlete app. Until migrated:
 
 ---
 
-## 12. Phased Implementation Plan
+## 12. Phase 1 Implementation — Ordered Steps
 
-### Phase 1: Foundation
+**The goal of Phase 1:** Any user with any role can log in, land on their home screen, and see data from the canonical `athletes` collection in MongoDB. All existing staff features continue working identically.
 
-**The goal of Phase 1 is: any user with any role can log in, land on their home screen, and see data from the canonical `athletes` collection.**
+### Step 1.1 — Canonical `athletes` collection (FOUNDATION)
 
-Ordered by dependency:
+**What:** Make MongoDB `db.athletes` the single source of truth. Remove all runtime reads from the in-memory `ATHLETES` array.
 
-| Step | Deliverable | Depends on | Validates |
-|------|-------------|------------|-----------|
-| 1.1 | **Canonical `athletes` collection** — migration script converts `ATHLETES` mock array into MongoDB documents. All 25 athletes inserted. | Nothing | `db.athletes.find()` returns all athletes |
-| 1.2 | **Staff code updated** — Roster, Mission Control, Bulk Actions, Support Pods, Decision Engine all read/write from `db.athletes` instead of in-memory array. `mock_data.py` dependency on `ATHLETES` removed. | 1.1 | Existing director/coach flows work identically |
-| 1.3 | **`organizations` collection** — create default org for existing club. Link all director/coach users via `org_id`. | Nothing | `db.organizations.find()` returns the club |
-| 1.4 | **Auth extended** — `role` field accepts `"athlete"` and `"parent"`. New `POST /api/auth/register` endpoint for athlete/parent self-registration. | Nothing | Can register as athlete, get JWT with `role: "athlete"` |
-| 1.5 | **Athlete claim flow** — When an athlete registers with an email matching an existing `athletes.email`, system links `athletes.user_id` to the new user and generates `tenant_id`. | 1.1, 1.4 | Athlete registers → claimed record has `user_id` set |
-| 1.6 | **Role-based routing** — Frontend sidebar and home screen adapt per `user.role`. Directors/coaches see existing nav. Athletes see placeholder dashboard. | 1.4 | Login as athlete → lands on `/board` with athlete sidebar |
+**Current state:** Athletes ARE already in MongoDB (seeded on startup by `database.py`). But all runtime code reads from the in-memory `mock_data.ATHLETES` list, not from the DB. The startup flow is: generate mock → seed to DB if empty → load from DB back into in-memory list → all code reads the in-memory list.
 
-### Phase 2: Athlete Dashboard
-- Build athlete dashboard (recruiting stats, follow-up reminders)
-- Build athlete profile editor (self-managed, writes to canonical `athletes` record)
-- Build public profile page (shareable link at `/s/:id`)
-- Import university knowledge base data, build Schools page
-- Build athlete settings page
+**Target state:** All code reads directly from `db.athletes`. The in-memory `ATHLETES` list is eliminated as a runtime data source.
 
-### Phase 3: Pipeline & Communication
-- Build recruiting pipeline/board (kanban with drag-and-drop)
-- Build journey page (per-school detail and interaction timeline)
-- Port Gmail OAuth integration (connect, send, receive)
-- Port AI email drafts (compose flow with LLM)
-- Build calendar page (unified events model)
-- Implement background tasks (reply checker, inbound scanner)
+**Complication — Derived Data:** `ALL_INTERVENTIONS`, `ATHLETES_NEEDING_ATTENTION`, `MOMENTUM_SIGNALS`, and `PROGRAM_SNAPSHOT` are computed from the athletes list. These remain as in-memory caches (they are computed, not stored), but they are rebuilt from DB-loaded data on startup and refreshed when athletes change.
 
-### Phase 4: Connected Experiences
-- Director reads athlete's pipeline (read-only cross-boundary query)
-- Coach sees assigned athlete's school list and engagement
-- Athlete sees staff-written notes and recommendations (read-only)
-- Shared org event calendar (org events visible to athletes in that org)
-- Cross-role notification system
+**Files to change (13 files import ATHLETES):**
+- `routers/roster.py` — 6 references
+- `routers/mission_control.py` — 4 references
+- `routers/intelligence.py` — 7 references
+- `routers/athletes.py` — 2 references
+- `routers/invites.py` — 4 references
+- `routers/digest.py` — 2 references
+- `program_engine.py` — 2 references
+- `event_engine.py` — 4 references
+- `support_pod.py` — 1 reference
+- `advocacy_engine.py` — 4 references
+- `services/startup.py` — refactor to remove dual-write pattern
+- `database.py` — update seed/load functions
+- `mock_data.py` — retain as generator only (for initial seed), remove module-level ATHLETES global
 
-### Phase 5: Advanced Features
-- Stripe subscription integration (free/premium gating)
-- Engagement tracking / analytics (profile views, .edu visitors)
-- Smart Match (AI school-athlete pairing)
-- Parent experience (dashboard, family linking, athlete selector)
-- Social Spotlight, Highlight Advisor, Outreach Analysis
+**Validation:** Director logs in → Mission Control shows same KPIs → Roster shows same 25 athletes → Bulk actions work → All existing features unchanged.
+
+### Step 1.2 — Add `org_id` to athletes and users
+
+**What:** Add `org_id` field to all athlete documents and user documents. Create `organizations` collection with a default org for the existing club.
+
+**Migration script:** Insert one org document, then `db.athletes.update_many({}, {"$set": {"org_id": "org-default"}})` and `db.users.update_many({}, {"$set": {"org_id": "org-default"}})`.
+
+**Validation:** `db.athletes.find({"org_id": "org-default"})` returns all 25. `db.users.find({"org_id": "org-default"})` returns all staff users.
+
+### Step 1.3 — Extend auth for athlete/parent roles
+
+**What:** Update auth middleware to accept `role ∈ {director, coach, athlete, parent}`. Add `POST /api/auth/register` endpoint for athlete/parent self-registration.
+
+**Changes:**
+- `auth_middleware.py` — accept new roles in JWT validation
+- `server.py` or new `routers/auth.py` — add register endpoint
+- `services/startup.py` — seed a test athlete user for development
+
+**Validation:** `POST /api/auth/register` with `role: "athlete"` succeeds. Login returns JWT with `role: "athlete"`. Existing director/coach login unchanged.
+
+### Step 1.4 — Athlete claim flow
+
+**What:** When an athlete registers, if their email matches an existing `athletes.email`, link the records: set `athletes.user_id` to the new user's ID and generate a `tenant_id`.
+
+**Changes:**
+- Register endpoint checks `db.athletes.find_one({"email": new_user.email, "user_id": null})`
+- If match found: `db.athletes.update_one({"id": athlete.id}, {"$set": {"user_id": user.id, "tenant_id": generated_uuid}})`
+- Return claim status in registration response
+
+**Validation:** Register as `athlete_1`'s email → athlete record now has `user_id` set. Register with non-matching email → new unlinked athlete user (no athlete record claimed).
+
+### Step 1.5 — Role-based routing (frontend)
+
+**What:** After login, the frontend redirects based on `user.role`. Sidebar navigation shows role-appropriate items.
+
+**Changes:**
+- `frontend/src/components/layout/Sidebar.js` — render different nav items per role
+- `frontend/src/App.js` — role-based route guards and default redirects
+- `frontend/src/contexts/AuthContext.js` — store and expose `user.role`
+
+**Validation:** Login as director → lands on `/mission-control` with staff sidebar. Login as athlete → lands on `/board` (placeholder page) with athlete sidebar.
+
+### Step 1.6 — Athlete placeholder dashboard
+
+**What:** Build a minimal placeholder page for athletes after login, confirming the role-based routing works end-to-end. Not the full athlete dashboard (that's Phase 2) — just a welcome screen showing the athlete's name, team, and a "coming soon" state for Pipeline, Schools, etc.
+
+**Validation:** Login as athlete → see welcome page with athlete's name and team from the canonical `athletes` record.
 
 ---
 
-## 13. Naming Clarification
+## 13. Migration Strategy
+
+### Phase 1 data work (immediate)
+1. **Athletes**: Make `db.athletes` the runtime data source. Add `org_id`, `user_id` (null), `tenant_id` (null) fields.
+2. **Organizations**: Create `organizations` collection with default org.
+3. **Users**: Add `org_id` to existing user documents. Extend `role` enum.
+
+### What stays separate (until migrated in later phases)
+- **Gmail integration** → Phase 3
+- **Stripe subscriptions** → Phase 5
+- **Admin panel** → Not migrated (platform admin is a separate concern)
+- **College coach database** → Phase 3
+- **Background tasks** (reply checker, inbound scanner, coach watch) → Phase 3+
+
+### What gets shared immediately (Phase 1)
+- Auth system (unified JWT, all 4 roles)
+- User collection (all roles in one collection)
+- Athlete data (one canonical collection in MongoDB)
+- Role-based routing
+
+---
+
+## 14. Naming Clarification
 
 | Term in unified app | Meaning |
 |---------------------|---------|
@@ -608,7 +658,51 @@ Ordered by dependency:
 
 ---
 
-## 14. Files of Reference
+## 15. Migration Risks
+
+### Risk 1: camelCase vs snake_case field names (HIGH IMPACT)
+
+**Problem:** The entire existing codebase — 13 backend files and all frontend components — uses camelCase field names for athlete data (`fullName`, `gradYear`, `momentumScore`, etc.). The unified schema ideally uses snake_case. Converting now would require changing every field reference in 30+ files across backend and frontend simultaneously, with high regression risk.
+
+**Decision:** Phase 1 keeps camelCase field names. The canonical `athletes` collection uses the same field names the frontend already expects. Schema normalization to snake_case is a Phase 2 task, done alongside the athlete-facing UI build when we're already touching all components.
+
+**Risk level:** LOW (because we are deferring, not ignoring).
+
+### Risk 2: Derived data cache coherence (MEDIUM IMPACT)
+
+**Problem:** `ALL_INTERVENTIONS`, `ATHLETES_NEEDING_ATTENTION`, `MOMENTUM_SIGNALS`, and `PROGRAM_SNAPSHOT` are computed from the athletes list. Currently computed once on startup. After Phase 1, athlete data can change via API writes (bulk actions, reassignment). The in-memory caches will become stale unless we add a recompute trigger.
+
+**Mitigation:** Add a `recompute_derived_data()` function called after any athlete write operation (reassignment, bulk update). This function reloads athletes from DB and recomputes all derived caches. For Phase 1, this is acceptable performance-wise (25 athletes, <100ms to recompute).
+
+**Risk level:** MEDIUM — stale caches could show incorrect data if we forget to trigger recompute.
+
+### Risk 3: Events and schools remain in-memory (LOW IMPACT)
+
+**Problem:** `UPCOMING_EVENTS` and `SCHOOLS` are also generated by `mock_data.py` and follow the same seed→load→in-memory pattern. Phase 1 only migrates athletes. Events and schools continue using the existing pattern.
+
+**Mitigation:** No action needed in Phase 1. Events already persist to MongoDB via `database.py`. The in-memory runtime pattern is acceptable until Phase 4 (unified events model).
+
+**Risk level:** LOW — these are read-mostly data that change infrequently.
+
+### Risk 4: Startup timing and order (LOW IMPACT)
+
+**Problem:** `services/startup.py` has a specific dependency order: seed → load → assign coaches → recompute. Removing the in-memory ATHLETES array changes this flow.
+
+**Mitigation:** Refactor startup to: seed if empty → assign coaches → recompute derived caches (loading directly from DB). The startup function becomes simpler, not more complex.
+
+**Risk level:** LOW.
+
+### Risk 5: Dual-write during transition (MEDIUM IMPACT)
+
+**Problem:** Some current code writes to both MongoDB AND the in-memory array (e.g., `roster.py` coach reassignment). During migration, if we miss a write path, the DB and in-memory state diverge.
+
+**Mitigation:** After Phase 1 Step 1.1, there IS no in-memory ATHLETES array. All reads come from DB. This risk exists only during the implementation of Step 1.1 — not after it's complete.
+
+**Risk level:** MEDIUM during implementation, ZERO after completion.
+
+---
+
+## 16. Files of Reference
 
 ### Athlete App (capymatch/capymatch)
 - `backend/server.py` — 25+ route modules, background tasks, Stripe webhooks
@@ -621,7 +715,13 @@ Ordered by dependency:
 ### Staff App (capymatch/capymatch-staff) — this workspace
 - `backend/server.py` — FastAPI app with JWT auth
 - `backend/auth_middleware.py` — JWT auth middleware
-- `backend/mock_data.py` — In-memory ATHLETES data (**to be replaced in Phase 1, step 1.1**)
+- `backend/mock_data.py` — In-memory ATHLETES data (**to be replaced in Phase 1, Step 1.1**)
+- `backend/database.py` — Seed/load functions (**to be refactored in Phase 1**)
+- `backend/services/startup.py` — Startup pipeline (**to be refactored in Phase 1**)
+- `backend/services/ownership.py` — Coach→athlete mapping (already reads from DB)
 - `backend/routers/roster.py` — Roster management + bulk actions
+- `backend/routers/mission_control.py` — Mission Control endpoints
+- `backend/routers/intelligence.py` — Program Intelligence endpoints
 - `frontend/src/pages/RosterPage.js` — Roster UI
 - `frontend/src/pages/MissionControlPage.js` — Director/Coach dashboards
+- `frontend/src/components/layout/Sidebar.js` — Navigation (**to be extended in Phase 1**)
