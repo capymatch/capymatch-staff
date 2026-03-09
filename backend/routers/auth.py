@@ -125,6 +125,15 @@ async def register(body: UserCreate):
     if body.role == "athlete":
         claimed_athlete = await _try_claim_athlete(user_doc)
 
+    # Seed demo pipeline data for a newly claimed athlete
+    if claimed_athlete and claimed_athlete.get("tenant_id"):
+        from seeders.seed_athlete_demo import seed_athlete_demo_data
+        await seed_athlete_demo_data(
+            db,
+            claimed_athlete["tenant_id"],
+            claimed_athlete.get("fullName", body.name),
+        )
+
     safe = _safe_user(user_doc)
     token = create_token(safe)
     response = {"token": token, "user": safe}

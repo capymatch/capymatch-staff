@@ -1,18 +1,25 @@
-"""Athlete-facing routes — programs (school pipeline), events, interactions, dashboard.
+"""Athlete-facing routes: programs CRUD, college coaches, interactions, dashboard.
 
-All endpoints are scoped by the athlete's tenant_id, derived from the
-athletes collection via the user's JWT user_id.
+All data is scoped by `tenant_id`, resolved from the athlete's claimed record.
+Uses the unified JWT auth middleware throughout.
 """
 
-from fastapi import APIRouter, HTTPException
-from datetime import datetime, timezone
+from fastapi import APIRouter, HTTPException, Query
+from datetime import datetime, timezone, timedelta
+from typing import Optional
+import asyncio
+import uuid
+
 from auth_middleware import get_current_user_dep
 from db_client import db
 
 router = APIRouter()
 
+# ─────────────────────────────────────────────────────────────────────────
+# Adapter: JWT user → tenant_id
+# ─────────────────────────────────────────────────────────────────────────
 
-async def _get_tenant_id(current_user: dict) -> str:
+async def get_athlete_tenant(current_user: dict) -> str:
     """Resolve tenant_id from the user's linked athlete record."""
     if current_user["role"] not in ("athlete", "parent"):
         raise HTTPException(403, "Only athletes/parents can access this")
@@ -24,33 +31,221 @@ async def _get_tenant_id(current_user: dict) -> str:
     return athlete["tenant_id"]
 
 
-# ── Programs (School Pipeline) ───────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────
+# Interaction signal computation (ported from athlete app programs.py)
+# ─────────────────────────────────────────────────────────────────────────
 
+def _compute_signals_from_interactions(interactions: list) -> dict:
+    """Pure computation of signals from a list of interactions."""
+    now = datetime.now(timezone.utc)
+    outreach_count = 0
+    has_coach_reply = False
+    last_outreach_date = None
+    last_reply_date = None
+    last_activity_date = None
+    total_interactions = len(interactions)
+
+    for ix in interactions:
+        ix_type = (ix.get("type") or "").lower()
+        dt_str = ix.get("date_time") or ix.get("created_at", "")
+        try:
+            dt = datetime.fromisoformat(str(dt_str).replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            dt = None
+
+        if dt and (last_activity_date is None or dt > last_activity_date):
+            last_activity_date = dt
+
+        if ix_type not in ("coach_reply", "email_received"):
+            outreach_count += 1
+            if dt and (last_outreach_date is None or dt > last_outreach_date):
+                last_outreach_date = dt
+
+        if ix_type in ("coach_reply", "email_received"):
+            has_coach_reply = True
+            if dt and (last_reply_date is None or dt > last_reply_date):
+                last_reply_date = dt
+
+    days_since_outreach = (now - last_outreach_date).days if last_outreach_date else None
+    days_since_reply = (now - last_reply_date).days if last_reply_date else None
+    days_since_activity = (now - last_activity_date).days if last_activity_date else None
+
+    return {
+        "outreach_count": outreach_count,
+        "has_coach_reply": has_coach_reply,
+        "last_outreach_date": last_outreach_date.isoformat() if last_outreach_date else None,
+        "last_reply_date": last_reply_date.isoformat() if last_reply_date else None,
+        "days_since_outreach": days_since_outreach,
+        "days_since_reply": days_since_reply,
+        "days_since_activity": days_since_activity,
+        "total_interactions": total_interactions,
+    }
+
+
+async def _batch_signals(tenant_id: str, program_ids: list) -> dict:
+    """Batch compute interaction signals for multiple programs in ONE query."""
+    all_interactions = await db.interactions.find(
+        {"tenant_id": tenant_id, "program_id": {"$in": program_ids}},
+        {"_id": 0},
+    ).to_list(5000)
+
+    by_program = {}
+    for ix in all_interactions:
+        pid = ix.get("program_id")
+        by_program.setdefault(pid, []).append(ix)
+
+    return {
+        pid: _compute_signals_from_interactions(by_program.get(pid, []))
+        for pid in program_ids
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Board grouping (ported from athlete app programs.py)
+# ─────────────────────────────────────────────────────────────────────────
+
+def categorize_program(program: dict) -> str:
+    """
+    5-stage recruiting funnel:
+    1. archived — is_active = false
+    2. overdue  — follow-up date has passed
+    3. in_conversation — college coach has replied
+    4. waiting_on_reply — outreach sent, no reply
+    5. needs_outreach — no interactions yet
+    """
+    if not program.get("is_active", True):
+        return "archived"
+
+    next_action_due = program.get("next_action_due", "")
+    if next_action_due:
+        try:
+            due_date = datetime.strptime(next_action_due, "%Y-%m-%d").date()
+            if due_date < datetime.now(timezone.utc).date():
+                return "overdue"
+        except ValueError:
+            pass
+
+    signals = program.get("signals", {})
+
+    if signals.get("has_coach_reply", False):
+        return "in_conversation"
+
+    if signals.get("outreach_count", 0) > 0:
+        return "waiting_on_reply"
+
+    return "needs_outreach"
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Programs CRUD
+# ─────────────────────────────────────────────────────────────────────────
 
 @router.get("/athlete/programs")
-async def list_programs(current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
-    programs = await db.programs.find(
-        {"tenant_id": tenant_id}, {"_id": 0}
-    ).sort("updated_at", -1).to_list(200)
+async def list_programs(
+    current_user: dict = get_current_user_dep(),
+    grouped: Optional[bool] = Query(False),
+    recruiting_status: Optional[str] = None,
+    division: Optional[str] = None,
+    priority: Optional[str] = None,
+    search: Optional[str] = None,
+):
+    tenant_id = await get_athlete_tenant(current_user)
+    query = {"tenant_id": tenant_id}
+    if recruiting_status:
+        query["recruiting_status"] = recruiting_status
+    if division:
+        query["division"] = division
+    if priority:
+        query["priority"] = priority
+    if search:
+        query["university_name"] = {"$regex": search, "$options": "i"}
+
+    programs = await db.programs.find(query, {"_id": 0}).to_list(200)
+
+    # Batch-fetch signals and college coaches
+    program_ids = [p["program_id"] for p in programs]
+    signals_map, all_coaches = await asyncio.gather(
+        _batch_signals(tenant_id, program_ids),
+        db.college_coaches.find(
+            {"tenant_id": tenant_id, "program_id": {"$in": program_ids}},
+            {"_id": 0},
+        ).to_list(2000),
+    )
+
+    coaches_by_program = {}
+    for c in all_coaches:
+        coaches_by_program.setdefault(c["program_id"], []).append(c)
+
+    for p in programs:
+        pid = p["program_id"]
+        coaches = coaches_by_program.get(pid, [])
+        primary = next(
+            (c for c in coaches if c.get("role") == "Head Coach"),
+            coaches[0] if coaches else None,
+        )
+        p["primary_college_coach"] = primary.get("coach_name", "") if primary else ""
+        p["college_coach_email"] = primary.get("email", "") if primary else ""
+        p["signals"] = signals_map.get(pid, {})
+        p["board_group"] = categorize_program(p)
+
+    if grouped:
+        groups = {
+            "overdue": [],
+            "needs_outreach": [],
+            "waiting_on_reply": [],
+            "in_conversation": [],
+            "archived": [],
+        }
+        for p in programs:
+            g = p.get("board_group", "needs_outreach")
+            if g in groups:
+                groups[g].append(p)
+        return {
+            "groups": groups,
+            "counts": {k: len(v) for k, v in groups.items()},
+            "total": len(programs),
+        }
+
     return programs
 
 
 @router.get("/athlete/programs/{program_id}")
 async def get_program(program_id: str, current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
+    tenant_id = await get_athlete_tenant(current_user)
     prog = await db.programs.find_one(
         {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
     )
     if not prog:
         raise HTTPException(404, "Program not found")
+
+    coaches_f = db.college_coaches.find(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    ).to_list(50)
+    interactions_f = db.interactions.find(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    ).sort("date_time", -1).to_list(100)
+
+    coaches, interactions = await asyncio.gather(coaches_f, interactions_f)
+    prog["college_coaches"] = coaches
+    prog["interactions"] = interactions
+    prog["signals"] = _compute_signals_from_interactions(interactions)
+    prog["board_group"] = categorize_program(prog)
     return prog
 
 
 @router.post("/athlete/programs")
-async def add_program(body: dict, current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
-    import uuid
+async def create_program(body: dict, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+
+    existing = await db.programs.find_one(
+        {"tenant_id": tenant_id, "university_name": body.get("university_name", "")},
+        {"_id": 0},
+    )
+    if existing:
+        raise HTTPException(400, "University already on your board")
+
     now = datetime.now(timezone.utc).isoformat()
     doc = {
         "program_id": str(uuid.uuid4()),
@@ -62,13 +257,14 @@ async def add_program(body: dict, current_user: dict = get_current_user_dep()):
         "recruiting_status": body.get("recruiting_status", "Not Contacted"),
         "reply_status": body.get("reply_status", "No Reply"),
         "priority": body.get("priority", "Medium"),
+        "is_active": body.get("is_active", True),
         "next_action": body.get("next_action", ""),
         "next_action_due": body.get("next_action_due", ""),
         "notes": body.get("notes", ""),
         "website": body.get("website", ""),
-        "initial_contact_sent": "",
-        "last_follow_up": "",
-        "follow_up_days": 14,
+        "initial_contact_sent": body.get("initial_contact_sent", ""),
+        "last_follow_up": body.get("last_follow_up", ""),
+        "follow_up_days": body.get("follow_up_days", 14),
         "created_at": now,
         "updated_at": now,
     }
@@ -79,10 +275,9 @@ async def add_program(body: dict, current_user: dict = get_current_user_dep()):
 
 @router.put("/athlete/programs/{program_id}")
 async def update_program(program_id: str, body: dict, current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
-    body.pop("_id", None)
-    body.pop("program_id", None)
-    body.pop("tenant_id", None)
+    tenant_id = await get_athlete_tenant(current_user)
+    for key in ("_id", "program_id", "tenant_id"):
+        body.pop(key, None)
     body["updated_at"] = datetime.now(timezone.utc).isoformat()
     result = await db.programs.update_one(
         {"tenant_id": tenant_id, "program_id": program_id},
@@ -98,21 +293,279 @@ async def update_program(program_id: str, body: dict, current_user: dict = get_c
 
 @router.delete("/athlete/programs/{program_id}")
 async def delete_program(program_id: str, current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
+    tenant_id = await get_athlete_tenant(current_user)
     result = await db.programs.delete_one(
         {"tenant_id": tenant_id, "program_id": program_id}
     )
     if result.deleted_count == 0:
         raise HTTPException(404, "Program not found")
+    # Cascade delete related college coaches and interactions
+    await db.college_coaches.delete_many(
+        {"tenant_id": tenant_id, "program_id": program_id}
+    )
+    await db.interactions.delete_many(
+        {"tenant_id": tenant_id, "program_id": program_id}
+    )
     return {"deleted": True}
 
 
-# ── Events ────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────
+# College Coaches CRUD
+# ─────────────────────────────────────────────────────────────────────────
 
+@router.get("/athlete/college-coaches")
+async def list_college_coaches(
+    current_user: dict = get_current_user_dep(),
+    program_id: Optional[str] = None,
+):
+    tenant_id = await get_athlete_tenant(current_user)
+    query = {"tenant_id": tenant_id}
+    if program_id:
+        query["program_id"] = program_id
+    coaches = await db.college_coaches.find(query, {"_id": 0}).to_list(500)
+    return coaches
+
+
+@router.post("/athlete/college-coaches")
+async def create_college_coach(body: dict, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    program_id = body.get("program_id")
+    prog = await db.programs.find_one(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    )
+    if not prog:
+        raise HTTPException(404, "Program not found")
+
+    doc = {
+        "coach_id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "program_id": program_id,
+        "university_name": prog["university_name"],
+        "coach_name": body.get("coach_name", ""),
+        "role": body.get("role", "Head Coach"),
+        "email": body.get("email", ""),
+        "phone": body.get("phone", ""),
+        "notes": body.get("notes", ""),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.college_coaches.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@router.put("/athlete/college-coaches/{coach_id}")
+async def update_college_coach(coach_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    for key in ("_id", "coach_id", "tenant_id"):
+        body.pop(key, None)
+    result = await db.college_coaches.update_one(
+        {"tenant_id": tenant_id, "coach_id": coach_id},
+        {"$set": body},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "College coach not found")
+    updated = await db.college_coaches.find_one(
+        {"tenant_id": tenant_id, "coach_id": coach_id}, {"_id": 0}
+    )
+    return updated
+
+
+@router.delete("/athlete/college-coaches/{coach_id}")
+async def delete_college_coach(coach_id: str, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    result = await db.college_coaches.delete_one(
+        {"tenant_id": tenant_id, "coach_id": coach_id}
+    )
+    if result.deleted_count == 0:
+        raise HTTPException(404, "College coach not found")
+    return {"deleted": True}
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Interactions CRUD
+# ─────────────────────────────────────────────────────────────────────────
+
+@router.get("/athlete/interactions")
+async def list_interactions(
+    current_user: dict = get_current_user_dep(),
+    program_id: Optional[str] = None,
+):
+    tenant_id = await get_athlete_tenant(current_user)
+    query = {"tenant_id": tenant_id}
+    if program_id:
+        query["program_id"] = program_id
+    interactions = await db.interactions.find(query, {"_id": 0}).sort(
+        "date_time", -1
+    ).to_list(200)
+    return interactions
+
+
+@router.post("/athlete/interactions")
+async def create_interaction(body: dict, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    program_id = body.get("program_id")
+    prog = await db.programs.find_one(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    )
+    if not prog:
+        raise HTTPException(404, "Program not found")
+
+    now = datetime.now(timezone.utc)
+    doc = {
+        "interaction_id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "program_id": program_id,
+        "university_name": prog.get("university_name", ""),
+        "type": body.get("type", "Email"),
+        "outcome": body.get("outcome", "No Response"),
+        "notes": body.get("notes", ""),
+        "date_time": body.get("date_time") or now.isoformat(),
+        "created_at": now.isoformat(),
+    }
+    await db.interactions.insert_one(doc)
+    doc.pop("_id", None)
+
+    # Auto-set follow-up on program based on interaction type
+    event_type = (doc["type"]).lower().replace(" ", "_")
+    follow_up_days_map = {
+        "camp": 3, "campus_visit": 2, "phone_call": 7, "video_call": 7,
+        "email_sent": 14, "showcase": 5, "text_message": 7,
+        "coach_reply": 2, "email_received": 2,
+    }
+    days = follow_up_days_map.get(event_type)
+    if days:
+        follow_up_date = (now + timedelta(days=days)).strftime("%Y-%m-%d")
+        await db.programs.update_one(
+            {"program_id": program_id, "tenant_id": tenant_id},
+            {"$set": {
+                "next_action_due": follow_up_date,
+                "updated_at": now.isoformat(),
+            }},
+        )
+
+    return doc
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Mark program as replied
+# ─────────────────────────────────────────────────────────────────────────
+
+@router.post("/athlete/programs/{program_id}/mark-replied")
+async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    prog = await db.programs.find_one(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    )
+    if not prog:
+        raise HTTPException(404, "Program not found")
+
+    note = (body.get("note") or "").strip()
+    if not note:
+        raise HTTPException(400, "A note is required when marking a reply")
+
+    now = datetime.now(timezone.utc)
+    doc = {
+        "interaction_id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "program_id": program_id,
+        "university_name": prog.get("university_name", ""),
+        "type": "coach_reply",
+        "outcome": "Positive",
+        "notes": note,
+        "date_time": now.isoformat(),
+        "created_at": now.isoformat(),
+    }
+    await db.interactions.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Follow-ups
+# ─────────────────────────────────────────────────────────────────────────
+
+@router.get("/athlete/follow-ups")
+async def list_follow_ups(current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    programs = await db.programs.find(
+        {
+            "tenant_id": tenant_id,
+            "next_action_due": {"$ne": "", "$lte": today},
+            "is_active": {"$ne": False},
+        },
+        {"_id": 0},
+    ).sort("next_action_due", 1).to_list(200)
+
+    # Enrich with primary college coach
+    pids = [p["program_id"] for p in programs]
+    coaches = await db.college_coaches.find(
+        {"tenant_id": tenant_id, "program_id": {"$in": pids}}, {"_id": 0}
+    ).to_list(1000)
+    by_pid = {}
+    for c in coaches:
+        by_pid.setdefault(c["program_id"], []).append(c)
+
+    for p in programs:
+        cs = by_pid.get(p["program_id"], [])
+        primary = next((c for c in cs if c.get("role") == "Head Coach"), cs[0] if cs else None)
+        p["primary_college_coach"] = primary.get("coach_name", "") if primary else ""
+        p["college_coach_email"] = primary.get("email", "") if primary else ""
+
+    return programs
+
+
+@router.post("/athlete/follow-ups/{program_id}/mark-sent")
+async def mark_follow_up_sent(program_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    prog = await db.programs.find_one(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    )
+    if not prog:
+        raise HTTPException(404, "Program not found")
+
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    follow_up_days = prog.get("follow_up_days", 14)
+    next_due = (now + timedelta(days=follow_up_days)).strftime("%Y-%m-%d")
+
+    await db.programs.update_one(
+        {"program_id": program_id, "tenant_id": tenant_id},
+        {"$set": {
+            "last_follow_up": today,
+            "next_action_due": next_due,
+            "reply_status": body.get("reply_status", prog.get("reply_status", "No Reply")),
+            "updated_at": now.isoformat(),
+        }},
+    )
+
+    # Log follow-up as interaction
+    interaction_doc = {
+        "interaction_id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "program_id": program_id,
+        "university_name": prog.get("university_name", ""),
+        "type": "Follow Up",
+        "outcome": body.get("outcome", "No Response"),
+        "notes": f"Follow-up marked sent on {today}",
+        "date_time": now.isoformat(),
+        "created_at": now.isoformat(),
+    }
+    await db.interactions.insert_one(interaction_doc)
+
+    updated = await db.programs.find_one(
+        {"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0}
+    )
+    return updated
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Events CRUD
+# ─────────────────────────────────────────────────────────────────────────
 
 @router.get("/athlete/events")
 async def list_events(current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
+    tenant_id = await get_athlete_tenant(current_user)
     events = await db.athlete_events.find(
         {"tenant_id": tenant_id}, {"_id": 0}
     ).sort("start_date", 1).to_list(200)
@@ -121,8 +574,7 @@ async def list_events(current_user: dict = get_current_user_dep()):
 
 @router.post("/athlete/events")
 async def create_event(body: dict, current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
-    import uuid
+    tenant_id = await get_athlete_tenant(current_user)
     now = datetime.now(timezone.utc).isoformat()
     doc = {
         "event_id": str(uuid.uuid4()),
@@ -143,62 +595,140 @@ async def create_event(body: dict, current_user: dict = get_current_user_dep()):
     return doc
 
 
-# ── Interactions ──────────────────────────────────────────────────────────
+@router.put("/athlete/events/{event_id}")
+async def update_event(event_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    for key in ("_id", "event_id", "tenant_id"):
+        body.pop(key, None)
+    result = await db.athlete_events.update_one(
+        {"tenant_id": tenant_id, "event_id": event_id},
+        {"$set": body},
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "Event not found")
+    updated = await db.athlete_events.find_one(
+        {"tenant_id": tenant_id, "event_id": event_id}, {"_id": 0}
+    )
+    return updated
 
 
-@router.get("/athlete/interactions")
-async def list_interactions(current_user: dict = get_current_user_dep()):
-    tenant_id = await _get_tenant_id(current_user)
-    interactions = await db.interactions.find(
-        {"tenant_id": tenant_id}, {"_id": 0}
-    ).sort("date_time", -1).to_list(50)
-    return interactions
+@router.delete("/athlete/events/{event_id}")
+async def delete_event(event_id: str, current_user: dict = get_current_user_dep()):
+    tenant_id = await get_athlete_tenant(current_user)
+    result = await db.athlete_events.delete_one(
+        {"tenant_id": tenant_id, "event_id": event_id}
+    )
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Event not found")
+    return {"deleted": True}
 
 
-# ── Dashboard ─────────────────────────────────────────────────────────────
-
+# ─────────────────────────────────────────────────────────────────────────
+# Dashboard aggregation
+# ─────────────────────────────────────────────────────────────────────────
 
 @router.get("/athlete/dashboard")
 async def get_athlete_dashboard(current_user: dict = get_current_user_dep()):
-    """Aggregated dashboard data for the athlete."""
-    tenant_id = await _get_tenant_id(current_user)
+    """Aggregated dashboard for the athlete home page."""
+    tenant_id = await get_athlete_tenant(current_user)
 
-    programs = await db.programs.find(
-        {"tenant_id": tenant_id}, {"_id": 0}
-    ).to_list(200)
-
-    events = await db.athlete_events.find(
+    # Parallel fetch
+    programs_f = db.programs.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(200)
+    events_f = db.athlete_events.find(
         {"tenant_id": tenant_id}, {"_id": 0}
     ).sort("start_date", 1).to_list(50)
-
-    interactions = await db.interactions.find(
+    interactions_f = db.interactions.find(
         {"tenant_id": tenant_id}, {"_id": 0}
     ).sort("date_time", -1).to_list(50)
+    athlete_f = db.athletes.find_one({"user_id": current_user["id"]}, {"_id": 0})
 
-    # Get athlete profile
-    athlete = await db.athletes.find_one(
-        {"user_id": current_user["id"]}, {"_id": 0}
+    programs, events, interactions, athlete = await asyncio.gather(
+        programs_f, events_f, interactions_f, athlete_f
     )
 
+    # Compute signals for each program
+    program_ids = [p["program_id"] for p in programs]
+    signals_map = await _batch_signals(tenant_id, program_ids) if program_ids else {}
+
+    for p in programs:
+        p["signals"] = signals_map.get(p["program_id"], {})
+        p["board_group"] = categorize_program(p)
+
+    # Stats
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    follow_ups_due = len([
-        p for p in programs
+    total_schools = len(programs)
+    active_programs = [p for p in programs if p.get("is_active", True)]
+
+    follow_ups_due = [
+        p for p in active_programs
         if p.get("next_action_due") and p["next_action_due"] <= today
-        and p.get("recruiting_status") != "Not a Fit / Closed"
-    ])
+    ]
+
+    needs_first_outreach = [
+        p for p in active_programs
+        if p.get("board_group") == "needs_outreach"
+    ]
+
+    replied_count = sum(
+        1 for p in active_programs
+        if p.get("reply_status") in ("Reply Received", "In Conversation")
+    )
+
+    awaiting_reply_count = sum(
+        1 for p in active_programs
+        if p.get("reply_status") == "Awaiting Reply"
+    )
+
+    # Response rate
+    contacted = [p for p in active_programs if p.get("recruiting_status") not in ("Not Contacted", None)]
+    response_rate = round(replied_count / len(contacted) * 100) if contacted else 0
+
+    # Recent interactions for activity feed (last 10)
+    recent_interactions = interactions[:10]
+
+    # Upcoming events (future only)
+    upcoming_events = [
+        e for e in events
+        if e.get("start_date", "") >= today
+    ][:5]
+
+    # School spotlight — programs with active conversation or recent activity
+    spotlight = [
+        p for p in active_programs
+        if p.get("board_group") in ("in_conversation", "overdue")
+    ][:5]
+
+    # Club coach info
+    club_coach = None
+    if athlete and athlete.get("primary_coach_id"):
+        coach_doc = await db.users.find_one(
+            {"id": athlete["primary_coach_id"]},
+            {"_id": 0, "id": 1, "name": 1, "email": 1},
+        )
+        if coach_doc:
+            club_coach = {"name": coach_doc["name"], "email": coach_doc["email"]}
 
     return {
-        "programs": programs,
-        "events": events,
-        "interactions": interactions,
         "profile": {
-            "athlete_name": athlete.get("fullName", "") if athlete else "",
             "firstName": athlete.get("firstName", "") if athlete else "",
+            "lastName": athlete.get("lastName", "") if athlete else "",
+            "fullName": athlete.get("fullName", "") if athlete else "",
             "position": athlete.get("position", "") if athlete else "",
             "team": athlete.get("team", "") if athlete else "",
             "gradYear": athlete.get("gradYear") if athlete else None,
         },
-        "total_schools": len(programs),
+        "stats": {
+            "total_schools": total_schools,
+            "response_rate": response_rate,
+            "replied_count": replied_count,
+            "awaiting_reply": awaiting_reply_count,
+            "follow_ups_due": len(follow_ups_due),
+        },
         "follow_ups_due": follow_ups_due,
-        "gmail_connected": False,  # Gmail not migrated yet
+        "needs_first_outreach": needs_first_outreach,
+        "spotlight": spotlight,
+        "recent_activity": recent_interactions,
+        "upcoming_events": upcoming_events,
+        "club_coach": club_coach,
+        "gmail_connected": False,
     }
