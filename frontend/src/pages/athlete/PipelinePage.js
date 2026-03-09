@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Plus, ChevronRight, ChevronDown, Loader2,
-  Send, Eye, Link2, Users, Lightbulb,
-  Archive, RotateCcw, CheckCircle2, GraduationCap, AlertTriangle,
+  Plus, ChevronRight, ChevronLeft, Loader2,
+  Send, GraduationCap, AlertTriangle,
+  Archive, RotateCcw, Calendar,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
@@ -13,207 +13,8 @@ import { RAIL_STAGES } from "../../components/journey/constants";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-/* ── Section Config ── */
-const SECTIONS = [
-  { key: "outreach", label: "Needs outreach", color: "#d97706", bg: "#fffbeb" },
-  { key: "waiting", label: "Upcoming follow-ups", color: "#dc2626", bg: "#fef2f2" },
-  { key: "convo", label: "In conversation", color: "#2563eb", bg: "#eff6ff" },
-  { key: "committed", label: "Committed", color: "#16a34a", bg: "#f0fdf4" },
-];
-
-/* ── Grouping ── */
-function groupIntoSections(programs) {
-  const s = { outreach: [], waiting: [], convo: [], committed: [] };
-  for (const p of programs) {
-    if (p.recruiting_status === "Committed" || p.journey_stage === "committed") {
-      s.committed.push(p); continue;
-    }
-    const g = p.board_group;
-    if (g === "needs_outreach") s.outreach.push(p);
-    else if (g === "waiting_on_reply" || g === "overdue") s.waiting.push(p);
-    else if (g === "in_conversation") s.convo.push(p);
-    else if (g !== "archived") s.outreach.push(p);
-  }
-  return s;
-}
-
-/* ── Compute rail from journey_stage ── */
-function computeRail(journeyStage) {
-  const activeIdx = journeyStage ? RAIL_STAGES.findIndex(st => st.key === journeyStage) : 0;
-  const idx = activeIdx >= 0 ? activeIdx : 0;
-  return RAIL_STAGES.map((st, i) => ({
-    ...st,
-    state: i < idx ? "past" : i === idx ? "active" : "future",
-  }));
-}
-
-/* ── Temperature tag ── */
-function getTemperature(p) {
-  const sig = p.signals || {};
-  if (p.board_group === "in_conversation") {
-    if (sig.days_since_activity != null && sig.days_since_activity <= 3) return { label: "Hot", cls: "hot" };
-    if (sig.days_since_activity != null && sig.days_since_activity <= 7) return { label: "Active", cls: "active-tag" };
-    return { label: "Warm", cls: "warm" };
-  }
-  if (p.board_group === "overdue") return { label: "Hot", cls: "hot" };
-  if (p.board_group === "waiting_on_reply") return { label: "Warm", cls: "warm" };
-  if (p.board_group === "needs_outreach" && !sig.outreach_count) return { label: "New", cls: "new-tag" };
-  if (sig.outreach_count > 0) return { label: "Warm", cls: "warm" };
-  return { label: "New", cls: "new-tag" };
-}
-
-/* ── Due text ── */
-function getDueInfo(p) {
-  const sig = p.signals || {};
-  if (p.next_action_due) {
-    const today = new Date().toISOString().split("T")[0];
-    const diff = Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date(today + "T00:00:00")) / 86400000);
-    if (diff < 0) return { text: `Due ${Math.abs(diff)}d`, color: "#dc2626", bg: "#fef2f2" };
-    if (diff === 0) return { text: "Due today", color: "#d97706", bg: "#fffbeb" };
-    if (diff <= 3) return { text: `Due ${diff}d`, color: "#d97706", bg: "#fffbeb" };
-  }
-  if (sig.days_since_activity != null && sig.days_since_activity > 0) {
-    return { text: `${sig.days_since_activity}d ago`, color: "#16a34a", bg: "#f0fdf4" };
-  }
-  return null;
-}
-
-/* ── Next action ── */
-function getNextAction(p) {
-  const status = p.recruiting_status || "";
-  if (status === "Committed" || p.journey_stage === "committed") return { label: "Committed" };
-  if (status) return { label: status };
-  if (p.board_group === "needs_outreach") return { label: "New" };
-  if (p.board_group === "waiting_on_reply" || p.board_group === "overdue") return { label: "Waiting" };
-  if (p.board_group === "in_conversation") return { label: "In Conversation" };
-  return { label: "Active" };
-}
-
-/* ── CTA config ── */
-function getCTA(p) {
-  if (p.board_group === "needs_outreach") return { label: "Start Outreach", cls: "primary" };
-  if (p.board_group === "waiting_on_reply" || p.board_group === "overdue") return { label: "Follow Up", cls: "warn" };
-  return { label: "Journey >", cls: "outline" };
-}
-
-/* ── Hero advice ── */
-function getHeroAdvice(p) {
-  if (!p) return "";
-  const g = p.board_group;
-  const s = p.signals || {};
-  if (g === "overdue") {
-    const days = p.next_action_due
-      ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000))
-      : "several";
-    return `Coach hasn't heard from you in ${days} days. Send a short follow-up mentioning your recent results.`;
-  }
-  if (g === "needs_outreach") return "This school matches your profile well. Send an introductory email with your highlight reel.";
-  if (g === "waiting_on_reply") {
-    return s.days_since_outreach > 5
-      ? "It's been a while since your outreach. Consider a brief follow-up."
-      : "Give the coach a bit more time, then follow up with a quick check-in.";
-  }
-  if (g === "in_conversation") return "You've got momentum here — keep the conversation going and ask about a campus visit.";
-  return "Review this school's program and plan your next outreach.";
-}
-
-
 /* ═══════════════════════════════════════════ */
-/* ── Mini Progress Rail (for school cards) ── */
-/* ═══════════════════════════════════════════ */
-function SchoolRail({ journeyStage }) {
-  const stages = computeRail(journeyStage || "added");
-  const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Committed" };
-  return (
-    <div data-testid="school-rail">
-      <div style={{ display: "flex", alignItems: "center", height: 22 }}>
-        {stages.map((s, i) => (
-          <React.Fragment key={s.key}>
-            {i > 0 && (
-              <div style={{
-                flex: 1, height: 3,
-                background: s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active") ? "#0d9488" : "var(--cm-border)",
-              }} />
-            )}
-            <div className="rail-dot-wrap" style={{ position: "relative", flexShrink: 0 }}>
-              <div style={{
-                width: s.state === "active" ? 18 : 12,
-                height: s.state === "active" ? 18 : 12,
-                borderRadius: "50%",
-                background: s.state === "future" ? "var(--cm-surface)" : s.color,
-                border: s.state === "future" ? "2px solid var(--cm-border)" : `2px solid ${s.color}`,
-                boxShadow: s.state === "active" ? `0 0 10px ${s.color}66` : "none",
-                cursor: "default",
-              }} />
-              {s.state === "active" && (
-                <div style={{
-                  position: "absolute", inset: -3, borderRadius: "50%",
-                  border: `2px solid ${s.color}`,
-                  animation: "scPulse 2s ease-out infinite", pointerEvents: "none",
-                }} />
-              )}
-              <span className="rail-dot-tip">{stageLabels[s.key]}</span>
-            </div>
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════ */
-/* ── Hero Progress Rail (Journey style) ──   */
-/* ═══════════════════════════════════════════ */
-function HeroRail({ journeyStage }) {
-  const stages = computeRail(journeyStage || "added");
-  return (
-    <div data-testid="hero-rail">
-      <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-        {stages.map((s, i) => (
-          <React.Fragment key={s.key}>
-            {i > 0 && (
-              <div style={{
-                flex: 1, height: 2,
-                background: s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active")
-                ? "rgba(255,255,255,0.15)" : "var(--cm-border)",
-              }} />
-            )}
-            <div style={{ position: "relative", flexShrink: 0 }}>
-              <div style={{
-                width: s.state === "active" ? 20 : 14,
-                height: s.state === "active" ? 20 : 14,
-                borderRadius: "50%",
-                background: s.state === "future" ? "var(--cm-surface)" : s.color,
-                border: s.state === "future" ? "2px solid var(--cm-border)" : `2px solid ${s.color}`,
-                boxShadow: s.state === "active" ? `0 0 14px ${s.color}88` : "none",
-              }} />
-              {s.state === "active" && (
-                <div style={{
-                  position: "absolute", inset: -4, borderRadius: "50%",
-                  border: `2px solid ${s.color}`,
-                  animation: "heroPulse 2s ease-out infinite", pointerEvents: "none",
-                }} />
-              )}
-            </div>
-          </React.Fragment>
-        ))}
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-        {stages.map(s => (
-          <span key={s.key} style={{
-            flex: 1, textAlign: "center", fontSize: 10, fontWeight: s.state === "active" ? 800 : 600,
-            color: s.state === "active" ? "#5eead4" : "var(--cm-text-3)",
-          }}>
-            {s.key === "in_conversation" ? "Talking" : s.key === "campus_visit" ? "Visit" : s.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════ */
-/* ── Hero Card (Journey-style)  ──           */
+/* ── Helpers (unchanged)                     */
 /* ═══════════════════════════════════════════ */
 const FIT_COLORS = {
   "Strong Fit": { bg: "rgba(22,163,74,0.15)", text: "#4ade80", border: "rgba(22,163,74,0.2)" },
@@ -223,116 +24,304 @@ const FIT_COLORS = {
   "Not Enough Data": { bg: "var(--cm-surface-2)", text: "var(--cm-text-3)", border: "var(--cm-border)" },
 };
 
-const CONFIDENCE_LABELS = {
-  high: "High Confidence",
-  medium: "Medium Confidence",
-  low: "Low Confidence",
-  estimated: "Estimated",
-};
+function computeRail(journeyStage) {
+  const activeIdx = journeyStage ? RAIL_STAGES.findIndex(st => st.key === journeyStage) : 0;
+  const idx = activeIdx >= 0 ? activeIdx : 0;
+  return RAIL_STAGES.map((st, i) => ({
+    ...st,
+    state: i < idx ? "past" : i === idx ? "active" : "future",
+  }));
+}
 
-function PipelineHeroCard({ program: p, matchScore, navigate }) {
-  if (!p) return null;
-  const ms = matchScore?.match_score;
+function getDueInfo(p) {
+  if (p.next_action_due) {
+    const today = new Date().toISOString().split("T")[0];
+    const diff = Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date(today + "T00:00:00")) / 86400000);
+    if (diff < 0) return { text: `Overdue ${Math.abs(diff)}d`, color: "#dc2626", urgent: true };
+    if (diff === 0) return { text: "Due today", color: "#d97706", urgent: true };
+    if (diff <= 3) return { text: `Due in ${diff}d`, color: "#d97706", urgent: false };
+  }
   const sig = p.signals || {};
-  const riskBadges = matchScore?.risk_badges || [];
-  const fundingBadge = riskBadges.find(b => b.key === "funding_dependent");
-  const socialLinks = matchScore?.social_links || p.social_links;
-  const meta = [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ");
-  const fitLabel = matchScore?.measurables_fit?.label;
-  const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
-  const confidence = matchScore?.confidence;
-  const confLabel = CONFIDENCE_LABELS[confidence] || "";
-  const explanation = matchScore?.explanation;
+  if (sig.days_since_activity != null && sig.days_since_activity > 0) {
+    return { text: `${sig.days_since_activity}d since last activity`, color: "#94a3b8", urgent: false };
+  }
+  return null;
+}
+
+function getCTA(p) {
+  if (p.board_group === "needs_outreach") return { label: "Start Outreach", style: "primary" };
+  if (p.board_group === "waiting_on_reply" || p.board_group === "overdue") return { label: "Follow Up", style: "warn" };
+  return { label: "View Journey", style: "outline" };
+}
+
+function getActionContext(p) {
+  const g = p.board_group;
+  const s = p.signals || {};
+  if (g === "overdue") {
+    const days = p.next_action_due
+      ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000))
+      : "several";
+    return `It's been ${days} days since your last contact. A short follow-up would help keep momentum going.`;
+  }
+  if (g === "needs_outreach") return "This school matches your profile well. Send an introductory email with your highlight reel.";
+  if (g === "waiting_on_reply") {
+    return s.days_since_outreach > 5
+      ? "It's been a while since your outreach. A brief follow-up would help."
+      : "Give the coach a bit more time, then follow up with a quick check-in.";
+  }
+  if (g === "in_conversation") return "You've got momentum here — keep the conversation going and ask about next steps.";
+  return "Review this school's program and plan your next outreach.";
+}
+
+/* ── Journey stage → kanban column mapping ── */
+const KANBAN_COLS = [
+  { key: "added", label: "Added", dot: "#94a3b8" },
+  { key: "outreach", label: "Outreach", dot: "#0d9488" },
+  { key: "in_conversation", label: "Talking", dot: "#22c55e" },
+  { key: "campus_visit", label: "Visit", dot: "#3b82f6" },
+  { key: "offer", label: "Offer", dot: "#a855f7" },
+  { key: "committed", label: "Committed", dot: "#fbbf24" },
+];
+
+function programToKanbanCol(p) {
+  if (p.recruiting_status === "Committed" || p.journey_stage === "committed") return "committed";
+  if (p.journey_stage === "campus_visit") return "campus_visit";
+  if (p.journey_stage === "offer") return "offer";
+  if (p.journey_stage === "in_conversation" || p.board_group === "in_conversation") return "in_conversation";
+  if (p.journey_stage === "outreach" || p.board_group === "waiting_on_reply" || p.board_group === "overdue") return "outreach";
+  return "added";
+}
+
+/* ── Generate action items from programs ── */
+function generateActions(programs, matchScores) {
+  const actions = [];
+  const priorityOrder = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
+
+  // Sort programs by urgency
+  const sorted = [...programs]
+    .filter(p => p.board_group !== "archived" && p.recruiting_status !== "Committed" && p.journey_stage !== "committed")
+    .sort((a, b) => {
+      const ai = priorityOrder.indexOf(a.board_group);
+      const bi = priorityOrder.indexOf(b.board_group);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+
+  for (const p of sorted.slice(0, 6)) {
+    const ms = matchScores[p.program_id];
+    const cta = getCTA(p);
+    const due = getDueInfo(p);
+    actions.push({
+      id: p.program_id,
+      type: "school",
+      program: p,
+      title: cta.label === "Start Outreach" ? `Start outreach to ${p.university_name}` : `Follow up with ${p.university_name}`,
+      context: getActionContext(p),
+      match_score: ms?.match_score,
+      stage: p.journey_stage || "added",
+      division: p.division,
+      due,
+      cta,
+      matchScore: ms,
+    });
+  }
+
+  // Add "add more schools" if pipeline is small
+  const activeCount = programs.filter(p => p.board_group !== "archived").length;
+  if (activeCount < 8) {
+    const needed = Math.max(3, 8 - activeCount);
+    actions.push({
+      id: "add-schools",
+      type: "growth",
+      title: "Grow Your Target List",
+      context: `You need ${needed} more target schools to keep your pipeline healthy. A wider net gives you better options.`,
+      cta: { label: "Browse Schools", style: "primary" },
+    });
+  }
+
+  return actions;
+}
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Hero Progress Rail                     ── */
+/* ═══════════════════════════════════════════ */
+function HeroRail({ journeyStage }) {
+  const stages = computeRail(journeyStage || "added");
+  const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Commit" };
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", height: 22 }}>
+        {stages.map((s, i) => (
+          <React.Fragment key={s.key}>
+            {i > 0 && <div style={{ flex: 1, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
+            <div style={{
+              width: s.state === "active" ? 12 : 10, height: s.state === "active" ? 12 : 10,
+              borderRadius: "50%",
+              background: s.state === "future" ? "rgba(255,255,255,0.12)" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
+              boxShadow: s.state === "active" ? "0 0 10px rgba(13,148,136,0.4)" : "none",
+            }} />
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
+        {stages.map(s => (
+          <span key={s.key} style={{
+            flex: 1, textAlign: "center", fontSize: 9, fontWeight: s.state === "active" ? 700 : 600,
+            color: s.state === "active" ? "#0d9488" : "rgba(255,255,255,0.25)",
+          }}>
+            {stageLabels[s.key] || s.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Actions Hero Carousel                  ── */
+/* ═══════════════════════════════════════════ */
+function ActionsHeroCarousel({ actions, matchScores, navigate }) {
+  const [idx, setIdx] = useState(0);
+  const total = actions.length;
+  if (total === 0) return null;
+
+  const prev = () => setIdx(i => (i - 1 + total) % total);
+  const next = () => setIdx(i => (i + 1) % total);
+  const action = actions[idx];
+  const isSchool = action.type === "school";
+  const p = action.program;
+  const ms = action.matchScore;
+  const socialLinks = ms?.social_links || p?.social_links;
+
+  const ctaStyles = {
+    primary: { background: "#0d9488", color: "white" },
+    warn: { background: "#f59e0b", color: "white" },
+    outline: { background: "transparent", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)" },
+  };
+
+  const handleCTA = () => {
+    if (action.type === "growth") navigate("/schools");
+    else if (p) navigate(`/pipeline/${p.program_id}`);
+  };
 
   return (
-    <div style={{ background: "var(--cm-surface)", borderRadius: 14, overflow: "hidden", position: "relative" }} data-testid="pipeline-hero-card">
-      <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
-      <div style={{ padding: "22px 26px 22px" }}>
-        {/* Top row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-          <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={matchScore?.logo_url} size={48} className="rounded-[14px] border-2 border-white/10" />
-          <span className="text-lg sm:text-2xl" style={{ fontWeight: 800, color: "var(--cm-text)", letterSpacing: -0.3 }}>{p.university_name}</span>
-          <div style={{ marginLeft: "auto", flexShrink: 0, width: 420 }} className="hidden md:block">
-            <HeroRail journeyStage={p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")} />
-          </div>
-        </div>
+    <div style={{
+      background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)",
+      borderRadius: 20, marginBottom: 16, position: "relative", overflow: "hidden",
+      border: "1px solid rgba(255,255,255,0.04)",
+    }} data-testid="actions-hero-carousel">
+      {/* Subtle glow */}
+      <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-        {/* Badges */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--cm-text-3)" }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#94a3b8" }} />
-            {sig.has_coach_reply ? "Interested" : "Neutral"}
-          </span>
-          {p.division && (
-            <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>
-          )}
-          {ms != null && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>
-              {ms}% Match
-            </span>
-          )}
-          {fitLabel && (
-            <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>
-              {fitLabel}
-            </span>
-          )}
-          {confLabel && confidence !== "high" && (
-            <span style={{ fontSize: 10, fontWeight: 600, color: "var(--cm-text-3)", fontStyle: "italic" }}>{confLabel}</span>
-          )}
-          {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{meta}</span>}
-          {/* Social icons */}
-          {socialLinks && (
-            <div style={{ display: "flex", gap: 8, marginLeft: 4 }}>
-              {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ color: "var(--cm-text-3)" }}><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>}
-              {socialLinks.instagram && <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ color: "var(--cm-text-3)" }}><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>}
-              {socialLinks.facebook && <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ color: "var(--cm-text-3)" }}><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>}
+      {/* Header */}
+      <div style={{ padding: "22px 28px 0", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>
+          Actions Needed Today
+        </span>
+      </div>
+
+      {/* Slide */}
+      <div style={{ padding: "18px 28px 0", display: "flex", alignItems: "flex-start", gap: 28, position: "relative", zIndex: 1 }}>
+        {/* Left: content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {isSchool && p && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={44} className="rounded-[12px]" />
+              <span style={{ fontSize: 21, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{p.university_name}</span>
             </div>
           )}
-        </div>
+          {!isSchool && (
+            <div style={{ fontSize: 21, fontWeight: 800, color: "#fff", letterSpacing: -0.3, marginBottom: 10 }}>{action.title}</div>
+          )}
 
-        {/* Funding tag */}
-        {fundingBadge && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 14px", borderRadius: 8, background: "rgba(22,163,74,0.15)", color: "#4ade80", fontSize: 12, fontWeight: 700, marginBottom: 18, border: "1px solid rgba(22,163,74,0.2)" }}>
-            $ {fundingBadge.label}
+          {/* Badges */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+            {isSchool && p?.journey_stage && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>
+                {KANBAN_COLS.find(c => c.key === programToKanbanCol(p))?.label || p.journey_stage}
+              </span>
+            )}
+            {action.match_score != null && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>
+                {action.match_score}% Match
+              </span>
+            )}
+            {action.division && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: "rgba(99,102,241,0.15)", color: "#a5b4fc" }}>
+                {action.division}
+              </span>
+            )}
+            {action.due && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: action.due.urgent ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.06)", color: action.due.urgent ? "#fcd34d" : "rgba(255,255,255,0.4)" }}>
+                {action.due.text}
+              </span>
+            )}
           </div>
-        )}
 
-        {/* Explanation */}
-        {explanation && (
-          <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 8, background: "var(--cm-surface-2)", fontSize: 12, lineHeight: 1.6, color: "var(--cm-text-2)" }} data-testid="hero-explanation">
-            {explanation}
-          </div>
-        )}
+          <p style={{ fontSize: 13, lineHeight: 1.65, color: "rgba(255,255,255,0.45)", marginBottom: 20, maxWidth: 520 }}>
+            {action.context}
+          </p>
 
-        {/* Advice + CTA */}
-        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-          {(() => {
-            const advice = getHeroAdvice(p);
-            return advice ? (
-              <div style={{
-                flex: 1, minWidth: 0, background: "var(--cm-surface-2)", border: "1px solid rgba(13,148,136,0.2)",
-                borderLeft: "3px solid #0d9488", borderRadius: 10, padding: "14px 18px",
-                display: "flex", gap: 12, alignItems: "flex-start",
-              }} data-testid="hero-advice-card">
-                <Lightbulb style={{ width: 16, height: 16, color: "#5eead4", flexShrink: 0, marginTop: 1 }} />
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: "var(--cm-text-3)", marginBottom: 4, letterSpacing: 0.3 }}>What to do next</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--cm-text-2)", lineHeight: 1.5 }}>{advice}</div>
-                </div>
-              </div>
-            ) : <div style={{ flex: 1 }} />;
-          })()}
           <button
-            onClick={() => navigate(`/pipeline/${p.program_id}`)}
+            onClick={handleCTA}
             style={{
-              padding: "12px 26px", borderRadius: 10, border: "none", background: "#0d9488",
-              color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex",
-              alignItems: "center", justifyContent: "center", gap: 7, fontFamily: "inherit", flexShrink: 0,
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "12px 24px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+              border: "none", cursor: "pointer", letterSpacing: -0.2, fontFamily: "inherit",
+              transition: "all 0.2s",
+              ...(ctaStyles[action.cta.style] || ctaStyles.primary),
             }}
-            data-testid="hero-follow-up-btn"
+            data-testid="hero-action-cta"
           >
             <Send style={{ width: 15, height: 15 }} />
-            {p.board_group === "needs_outreach" ? "Start Outreach" : "Follow Up"}
+            {action.cta.label}
+          </button>
+        </div>
+
+        {/* Right: rail + social */}
+        {isSchool && p && (
+          <div style={{ flexShrink: 0, paddingTop: 8, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 14, width: 260 }} className="hidden md:flex">
+            <HeroRail journeyStage={p.journey_stage || "added"} />
+            {socialLinks && (
+              <div style={{ display: "flex", gap: 8 }}>
+                {socialLinks.twitter && (
+                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 9, fontWeight: 700 }}>X</a>
+                )}
+                {socialLinks.instagram && (
+                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 9, fontWeight: 700 }}>IG</a>
+                )}
+                {socialLinks.facebook && (
+                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 24, height: 24, borderRadius: 7, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 9, fontWeight: 700 }}>FB</a>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer: Next preview + carousel controls */}
+      <div style={{ padding: "14px 28px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.22)", display: "flex", alignItems: "center", gap: 6 }}>
+          {idx + 1 < total && (
+            <>Next: <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>{actions[(idx + 1) % total]?.title}</span></>
+          )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev">
+            <ChevronLeft style={{ width: 14, height: 14 }} />
+          </button>
+          <div style={{ display: "flex", gap: 6 }}>
+            {actions.map((_, i) => (
+              <div key={i} onClick={() => setIdx(i)} style={{
+                width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%",
+                background: i === idx ? "#0d9488" : "rgba(255,255,255,0.15)",
+                cursor: "pointer", transition: "all 0.2s",
+              }} data-testid={`carousel-dot-${i}`} />
+            ))}
+          </div>
+          <button onClick={next} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next">
+            <ChevronRight style={{ width: 14, height: 14 }} />
           </button>
         </div>
       </div>
@@ -340,34 +329,61 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
   );
 }
 
+
 /* ═══════════════════════════════════════════ */
-/* ── School Card (compact row) ──            */
+/* ── Upcoming Events Section                ── */
 /* ═══════════════════════════════════════════ */
-function PipelineSchoolCard({ program: p, matchScore, gmailSignal, navigate }) {
-  const temp = getTemperature(p);
-  const due = getDueInfo(p);
-  const next = getNextAction(p);
-  const cta = getCTA(p);
-  const sig = p.signals || {};
-  const meta = [p.conference, p.state].filter(Boolean).join(" · ");
-  const fitLabel = matchScore?.measurables_fit?.label;
-  const fitColor = FIT_COLORS[fitLabel] || null;
-  const confidence = matchScore?.confidence;
-  const confLabel = CONFIDENCE_LABELS[confidence] || "";
+function UpcomingEventsSection({ events, navigate }) {
+  if (!events || events.length === 0) return null;
+  const upcoming = events
+    .filter(e => new Date(e.date || e.start_date || e.event_date) >= new Date(new Date().toDateString()))
+    .sort((a, b) => new Date(a.date || a.start_date || a.event_date) - new Date(b.date || b.start_date || b.event_date))
+    .slice(0, 3);
+
+  if (upcoming.length === 0) return null;
+
+  const dotColors = ["#0d9488", "#f59e0b", "#3b82f6"];
+
+  return (
+    <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }} data-testid="upcoming-events">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
+          <Calendar style={{ width: 15, height: 15, color: "#0d9488" }} />
+          Upcoming Events
+        </div>
+        <button onClick={() => navigate("/calendar")} style={{ fontSize: 11, fontWeight: 600, color: "#0d9488", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 3 }}>
+          View Calendar <ChevronRight style={{ width: 12, height: 12 }} />
+        </button>
+      </div>
+      {upcoming.map((ev, i) => {
+        const d = new Date(ev.date || ev.start_date || ev.event_date);
+        const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        return (
+          <div key={ev.event_id || i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: "1px solid var(--cm-border)" }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: dotColors[i % 3], flexShrink: 0 }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", flex: 1 }}>{ev.title || ev.name || "Event"}</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: "var(--cm-text-3)" }}>{dateStr}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Kanban School Card                     ── */
+/* ═══════════════════════════════════════════ */
+function KanbanCard({ program: p, matchScore, navigate }) {
   const ms = matchScore?.match_score;
+  const due = getDueInfo(p);
+  const cta = getCTA(p);
+  const meta = [p.division, p.conference, p.state].filter(Boolean);
 
-  const SIGNAL_DOT_COLORS = { critical: "#dc2626", high: "#f59e0b", medium: "#3b82f6", low: "#9ca3af" };
-
-  const tempStyles = {
-    hot: { background: "#fef2f2", color: "#dc2626" },
-    warm: { background: "#fffbeb", color: "#d97706" },
-    "new-tag": { background: "#e6f7f5", color: "#0d9488" },
-    "active-tag": { background: "#eff6ff", color: "#2563eb" },
-  };
-  const ctaStyles = {
+  const ctaClass = {
     primary: { background: "#0d9488", color: "white", border: "none" },
-    warn: { background: "#d97706", color: "white", border: "none" },
-    outline: { background: "var(--cm-surface)", color: "var(--cm-text-2)", border: "1px solid var(--cm-border)" },
+    warn: { background: "#f59e0b", color: "white", border: "none" },
+    outline: { background: "transparent", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" },
   };
 
   return (
@@ -375,219 +391,100 @@ function PipelineSchoolCard({ program: p, matchScore, gmailSignal, navigate }) {
       onClick={() => navigate(`/pipeline/${p.program_id}`)}
       style={{
         background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12,
-        padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center",
-        gap: 12, cursor: "pointer", transition: "all 0.15s", overflow: "hidden",
+        padding: 14, marginBottom: 8, cursor: "pointer", transition: "all 0.15s",
       }}
       className="hover:shadow-sm"
-      data-testid={`pipeline-card-${p.program_id}`}
+      data-testid={`kanban-card-${p.program_id}`}
     >
-      {/* Col 1: School identity */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 0%", marginRight: "auto" }}>
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          <UniversityLogo domain={p.domain} name={p.university_name} size={38} className="rounded-[10px]" />
-          {gmailSignal && (
-            <div
-              data-testid={`signal-dot-${p.program_id}`}
-              title={gmailSignal.signal_label}
-              style={{
-                position: "absolute", top: -2, right: -2, width: 8, height: 8,
-                borderRadius: "50%", border: "2px solid var(--cm-surface)",
-                backgroundColor: SIGNAL_DOT_COLORS[gmailSignal.urgency] || SIGNAL_DOT_COLORS.low,
-              }}
-            />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+        <UniversityLogo domain={p.domain} name={p.university_name} size={34} className="rounded-[9px] flex-shrink-0" />
+        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</span>
+        {ms != null && <span style={{ fontSize: 10, fontWeight: 700, color: "#0d9488", marginLeft: "auto", flexShrink: 0 }}>{ms}%</span>}
+      </div>
+      <div style={{ display: "flex", gap: 5, marginBottom: 10, flexWrap: "wrap" }}>
+        {meta.slice(0, 3).map(m => (
+          <span key={m} style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{m}</span>
+        ))}
+      </div>
+      {due && (
+        <div style={{ fontSize: 10, color: due.urgent ? due.color : "var(--cm-text-3)", fontWeight: due.urgent ? 700 : 500, marginBottom: 10 }}>
+          {due.text}
+        </div>
+      )}
+      <button
+        onClick={e => { e.stopPropagation(); navigate(`/pipeline/${p.program_id}`); }}
+        style={{
+          display: "block", width: "100%", padding: "8px 0", borderRadius: 8,
+          fontSize: 11, fontWeight: 700, textAlign: "center", cursor: "pointer",
+          fontFamily: "inherit", transition: "all 0.15s",
+          ...(ctaClass[cta.style] || ctaClass.outline),
+        }}
+        data-testid={`kanban-cta-${p.program_id}`}
+      >
+        {cta.label}
+      </button>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Kanban Board                           ── */
+/* ═══════════════════════════════════════════ */
+function KanbanBoard({ programs, matchScores, navigate }) {
+  const columns = {};
+  KANBAN_COLS.forEach(c => { columns[c.key] = []; });
+
+  for (const p of programs) {
+    if (p.board_group === "archived") continue;
+    const col = programToKanbanCol(p);
+    if (columns[col]) columns[col].push(p);
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, minHeight: 200 }} className="kanban-grid" data-testid="kanban-board">
+      {KANBAN_COLS.map(col => (
+        <div key={col.key} style={{ minWidth: 0 }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 12px", borderRadius: 10, marginBottom: 8,
+            background: "var(--cm-surface)", border: "1px solid var(--cm-border)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: col.dot }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)" }}>{col.label}</span>
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 5, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
+              {columns[col.key].length}
+            </span>
+          </div>
+          {columns[col.key].length > 0 ? (
+            columns[col.key].map(p => (
+              <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} />
+            ))
+          ) : (
+            <div style={{ textAlign: "center", padding: "30px 10px", color: "var(--cm-text-3)", fontSize: 11 }}>
+              {col.key === "offer" ? "No offers yet" : col.key === "committed" ? "—" : ""}
+            </div>
           )}
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
-          <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-            {p.division && <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 3, background: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{p.division}</span>}
-            {ms != null && <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: "rgba(13,148,136,0.12)", color: "#0d9488" }}>{ms}%</span>}
-            {fitLabel && fitColor && (
-              <span data-testid={`card-fit-${p.program_id}`} style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>{fitLabel}</span>
-            )}
-            {confLabel && confidence !== "high" && (
-              <span data-testid={`card-conf-${p.program_id}`} style={{ fontSize: 8, fontWeight: 600, color: "var(--cm-text-3)", fontStyle: "italic" }}>{confLabel}</span>
-            )}
-            <span>{meta}</span>
-            {due && <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: due.bg, color: due.color }}>{due.text}</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* Col 2: Progress rail */}
-      <div style={{ width: 160, flexShrink: 0 }} className="hidden md:block">
-        <SchoolRail journeyStage={p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")} />
-      </div>
-
-      {/* Col 3: Temp tag */}
-      <div style={{ width: 50, flexShrink: 0, textAlign: "center" }} className="hidden md:block">
-        <span style={{
-          fontSize: 10, fontWeight: 800, padding: "3px 0", borderRadius: 6,
-          display: "inline-block", width: "100%", textAlign: "center",
-          ...(tempStyles[temp.cls] || tempStyles["new-tag"]),
-        }}>{temp.label}</span>
-      </div>
-
-      {/* Col 4: Engagement metrics */}
-      <div style={{ width: 90, flexShrink: 0, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }} className="hidden lg:flex">
-        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
-          <Eye style={{ width: 13, height: 13, color: "var(--cm-text-3)" }} />0
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
-          <Link2 style={{ width: 13, height: 13, color: "var(--cm-text-3)" }} />0
-        </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
-          <Users style={{ width: 13, height: 13, color: "var(--cm-text-3)" }} />{sig.total_interactions || 0}
-        </span>
-      </div>
-
-      {/* Col 5: Next action */}
-      <div style={{ width: 100, flexShrink: 0, textAlign: "right" }} className="hidden xl:block">
-        <div style={{ fontSize: 10, color: "var(--cm-text-3)" }}>
-          <strong style={{ color: "var(--cm-text)", fontWeight: 700 }}>Status:</strong> {next.label}
-        </div>
-      </div>
-
-      {/* Col 6: CTA */}
-      <div style={{ width: 100, flexShrink: 0 }} className="hidden xl:block">
-        <button
-          onClick={e => { e.stopPropagation(); navigate(`/pipeline/${p.program_id}`); }}
-          style={{
-            padding: "8px 0", borderRadius: 8, fontSize: 11, fontWeight: 700,
-            cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "center",
-            ...(ctaStyles[cta.cls] || ctaStyles.outline),
-          }}
-          data-testid={`card-cta-${p.program_id}`}
-        >{cta.label}</button>
-      </div>
-
-      {/* Col 7: Arrow */}
-      <div style={{ width: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--cm-text-4)" }}>
-        <ChevronRight style={{ width: 16, height: 16 }} />
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════ */
-/* ── Committed Card ──                       */
-/* ═══════════════════════════════════════════ */
-function CommittedSchoolCard({ program: p, navigate }) {
-  const meta = [p.division, p.conference, p.state].filter(Boolean).join(" · ");
-  return (
-    <div
-      onClick={() => navigate(`/pipeline/${p.program_id}`)}
-      style={{
-        background: "#f0fdf4", border: "1px solid rgba(22,163,74,0.12)", borderRadius: 12,
-        padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, marginBottom: 8, cursor: "pointer",
-      }}
-      data-testid={`committed-card-${p.program_id}`}
-    >
-      <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <CheckCircle2 style={{ width: 18, height: 18, color: "white" }} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--cm-text)" }}>{p.university_name}</div>
-        <div style={{ fontSize: 11, color: "var(--cm-text-2)", marginTop: 2 }}>{meta}</div>
-      </div>
-      <span style={{ padding: "5px 14px", borderRadius: 8, background: "var(--cm-surface)", color: "#16a34a", fontSize: 11, fontWeight: 700, border: "1px solid rgba(22,163,74,0.12)" }}>Verbal Commit</span>
-      <ChevronRight style={{ width: 16, height: 16, color: "var(--cm-text-4)" }} />
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════ */
-/* ── Section Header ──                       */
-/* ═══════════════════════════════════════════ */
-function SectionHeader({ section, count, collapsed, onToggle }) {
-  return (
-    <div
-      onClick={onToggle}
-      style={{ display: "flex", alignItems: "center", gap: 8, padding: "18px 0 10px", cursor: "pointer" }}
-      data-testid={`section-header-${section.key}`}
-    >
-      <ChevronDown style={{
-        width: 14, height: 14, color: "#999", transition: "transform 0.2s",
-        transform: collapsed ? "rotate(-90deg)" : "none",
-      }} />
-      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: section.color }}>{section.label}</span>
-      <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: section.bg, color: section.color }}>{count}</span>
-      <div style={{ flex: 1, height: 1, background: "var(--cm-border)", marginLeft: 6 }} />
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════ */
-/* ── Filter Chips ──                         */
-/* ═══════════════════════════════════════════ */
-function FilterChips({ sectionCounts, total, active, onFilter }) {
-  const chips = [
-    { key: null, label: `All ${total}` },
-    ...SECTIONS.filter(s => (sectionCounts[s.key] || 0) > 0).map(s => ({
-      key: s.key,
-      label: `${s.key === "outreach" ? "Outreach" : s.key === "waiting" ? "Upcoming" : s.key === "convo" ? "In Convo" : "Committed"} ${sectionCounts[s.key]}`,
-    })),
-  ];
-  return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22 }} data-testid="pipeline-filters">
-      {chips.map(c => (
-        <button
-          key={c.key || "all"}
-          onClick={() => onFilter(active === c.key && c.key !== null ? null : c.key)}
-          style={{
-            padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-            fontFamily: "inherit", cursor: "pointer",
-            background: active === c.key ? "var(--cm-text)" : "var(--cm-surface)",
-            color: active === c.key ? "var(--cm-bg)" : "var(--cm-text-2)",
-            border: active === c.key ? "1px solid var(--cm-text)" : "1px solid var(--cm-border)",
-          }}
-          data-testid={`filter-${c.key || "all"}`}
-        >{c.label}</button>
       ))}
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════ */
-/* ── CSS Keyframes ──                        */
-/* ═══════════════════════════════════════════ */
-function PipelineStyles() {
-  return (
-    <style>{`
-      @keyframes heroPulse { 0%{box-shadow:0 0 0 0 currentColor;} 100%{box-shadow:0 0 0 8px transparent;} }
-      @keyframes scPulse { 0%{transform:scale(1);opacity:.4} 100%{transform:scale(1.8);opacity:0} }
-      .rail-dot-tip {
-        position:absolute; bottom:100%; left:50%; transform:translateX(-50%) translateY(2px);
-        background:#1e1e2e; color:#e2e8f0; font-size:10px; font-weight:700;
-        padding:3px 8px; border-radius:6px; white-space:nowrap; pointer-events:none;
-        opacity:0; transition:opacity 0.15s, transform 0.15s; z-index:10;
-        box-shadow:0 2px 8px rgba(0,0,0,0.18);
-      }
-      .rail-dot-tip::after {
-        content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
-        border:4px solid transparent; border-top-color:#1e1e2e;
-      }
-      .rail-dot-wrap:hover .rail-dot-tip {
-        opacity:1; transform:translateX(-50%) translateY(-4px);
-      }
-    `}</style>
-  );
-}
 
 /* ═══════════════════════════════════════════ */
-/* ── Measurables Guidance Banner ──          */
+/* ── Guidance Banner                        ── */
 /* ═══════════════════════════════════════════ */
 function MeasurablesGuidanceBanner({ guidance, navigate }) {
   if (!guidance) return null;
   return (
-    <div
-      style={{
-        background: "var(--cm-surface)", border: "1px solid rgba(245,158,11,0.2)",
-        borderLeft: "3px solid #f59e0b", borderRadius: 12, padding: "14px 18px",
-        display: "flex", alignItems: "center", gap: 14, marginBottom: 18,
-      }}
-      data-testid="measurables-guidance-banner"
-    >
+    <div style={{
+      background: "var(--cm-surface)", border: "1px solid rgba(245,158,11,0.2)",
+      borderLeft: "3px solid #f59e0b", borderRadius: 12, padding: "14px 18px",
+      display: "flex", alignItems: "center", gap: 14, marginBottom: 16,
+    }} data-testid="measurables-guidance-banner">
       <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         <AlertTriangle style={{ width: 16, height: 16, color: "#f59e0b" }} />
       </div>
@@ -595,23 +492,18 @@ function MeasurablesGuidanceBanner({ guidance, navigate }) {
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", marginBottom: 2 }}>Improve your match accuracy</div>
         <div style={{ fontSize: 11, color: "var(--cm-text-3)", lineHeight: 1.5 }}>{guidance}</div>
       </div>
-      <button
-        onClick={() => navigate("/profile")}
-        style={{
-          padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700,
-          background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)",
-          cursor: "pointer", fontFamily: "inherit", flexShrink: 0, whiteSpace: "nowrap",
-        }}
-        data-testid="update-profile-btn"
-      >
-        Update Profile
-      </button>
+      <button onClick={() => navigate("/profile")} style={{
+        padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+        background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)",
+        cursor: "pointer", fontFamily: "inherit", flexShrink: 0, whiteSpace: "nowrap",
+      }} data-testid="update-profile-btn">Update Profile</button>
     </div>
   );
 }
 
+
 /* ═══════════════════════════════════════════ */
-/* ── Empty State ──                          */
+/* ── Empty State                            ── */
 /* ═══════════════════════════════════════════ */
 function EmptyBoardState({ navigate }) {
   return (
@@ -619,27 +511,41 @@ function EmptyBoardState({ navigate }) {
       <GraduationCap className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--cm-text-4)" }} />
       <p className="text-sm font-medium mb-1" style={{ color: "var(--cm-text-2)" }}>No schools in your pipeline yet</p>
       <p className="text-xs mb-6" style={{ color: "var(--cm-text-3)" }}>Browse the Knowledge Base to find volleyball programs that match your profile</p>
-      <Button
-        onClick={() => navigate("/schools")}
-        style={{ background: "#0d9488", color: "white", padding: "10px 24px", height: "auto", borderRadius: 10, fontSize: 14, fontWeight: 700 }}
-        data-testid="find-schools-btn"
-      >
+      <Button onClick={() => navigate("/schools")} style={{ background: "#0d9488", color: "white", padding: "10px 24px", height: "auto", borderRadius: 10, fontSize: 14, fontWeight: 700 }} data-testid="find-schools-btn">
         <Plus className="w-4 h-4 mr-1.5" /> Find Schools
       </Button>
     </div>
   );
 }
 
+
 /* ═══════════════════════════════════════════ */
-/* ── Main Board ──                           */
+/* ── Responsive styles                      ── */
+/* ═══════════════════════════════════════════ */
+function PipelineStyles() {
+  return (
+    <style>{`
+      @keyframes heroPulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
+      @media (max-width: 1024px) {
+        .kanban-grid { grid-template-columns: repeat(3, 1fr) !important; }
+      }
+      @media (max-width: 640px) {
+        .kanban-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      }
+    `}</style>
+  );
+}
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Main Page                              ── */
 /* ═══════════════════════════════════════════ */
 export default function PipelinePage() {
   const [allPrograms, setAllPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState(null);
-  const [collapsedSections, setCollapsedSections] = useState({ archived: true });
   const [matchScores, setMatchScores] = useState({});
-  const [gmailSignals, setGmailSignals] = useState({});
+  const [events, setEvents] = useState([]);
+  const [collapsedArchived, setCollapsedArchived] = useState(true);
   const navigate = useNavigate();
 
   const fetchPrograms = useCallback(async () => {
@@ -655,7 +561,6 @@ export default function PipelinePage() {
 
   useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
 
-  // Fetch match scores
   useEffect(() => {
     axios.get(`${API}/match-scores`).then(res => {
       const byId = {};
@@ -664,12 +569,11 @@ export default function PipelinePage() {
     }).catch(() => {});
   }, [allPrograms.length]);
 
-  // Fetch gmail intelligence signals
   useEffect(() => {
-    axios.get(`${API}/athlete/gmail/intelligence/signals`).then(res => {
-      setGmailSignals(res.data?.signals || {});
+    axios.get(`${API}/athlete/events`).then(res => {
+      setEvents(Array.isArray(res.data) ? res.data : []);
     }).catch(() => {});
-  }, [allPrograms.length]);
+  }, []);
 
   if (loading) {
     return (
@@ -684,113 +588,66 @@ export default function PipelinePage() {
 
   const activePrograms = allPrograms.filter(p => p.board_group !== "archived");
   const archivedPrograms = allPrograms.filter(p => p.board_group === "archived");
-  const total = activePrograms.length;
-  const sectionGroups = groupIntoSections(activePrograms);
-  const sectionCounts = {};
-  SECTIONS.forEach(s => { sectionCounts[s.key] = sectionGroups[s.key].length; });
 
-  if (total === 0 && archivedPrograms.length === 0) {
+  if (activePrograms.length === 0 && archivedPrograms.length === 0) {
     return (
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <PipelineStyles />
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-          <span style={{ flex: 1 }} />
-        </div>
         <EmptyBoardState navigate={navigate} />
       </div>
     );
   }
 
-  // Focus program: most urgent for hero card
-  const focusPriority = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
-  const focusProgram = focusPriority.reduce((found, stage) => {
-    if (found) return found;
-    const candidates = activePrograms.filter(p => p.board_group === stage && p.recruiting_status !== "Committed" && p.journey_stage !== "committed");
-    if (candidates.length === 0) return null;
-    candidates.sort((a, b) => (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
-    return candidates[0];
-  }, null);
-
-  const toggleSection = (key) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  const actions = generateActions(allPrograms, matchScores);
+  const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
 
   return (
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-        <span style={{ flex: 1 }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, marginBottom: 20 }}>
         <button
           onClick={() => navigate("/schools")}
-          style={{ background: "var(--cm-text)", color: "var(--cm-bg)", padding: "9px 18px", height: "auto", borderRadius: 8, fontSize: 13, fontWeight: 700 }}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "10px 20px", borderRadius: 10, border: "1px solid var(--cm-border)",
+            background: "var(--cm-surface)", fontSize: 13, fontWeight: 700,
+            color: "var(--cm-text)", cursor: "pointer", fontFamily: "inherit",
+          }}
           data-testid="add-school-btn"
         >
-          <Plus className="w-3.5 h-3.5 mr-1.5" />Add School
+          <Plus style={{ width: 14, height: 14 }} /> Add School
         </button>
       </div>
 
-      {/* Hero Card */}
-      {focusProgram && (
-        <div style={{ marginBottom: 18 }}>
-          <PipelineHeroCard program={focusProgram} matchScore={matchScores[focusProgram.program_id]} navigate={navigate} />
-        </div>
-      )}
+      {/* 1. Hero = Actions Needed Today carousel */}
+      <ActionsHeroCarousel actions={actions} matchScores={matchScores} navigate={navigate} />
 
       {/* Guidance Banner */}
-      {(() => {
-        const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
-        return guidance ? <MeasurablesGuidanceBanner guidance={guidance} navigate={navigate} /> : null;
-      })()}
+      {guidance && <MeasurablesGuidanceBanner guidance={guidance} navigate={navigate} />}
 
-      {/* Filter Chips */}
-      <FilterChips sectionCounts={sectionCounts} total={total} active={activeSection} onFilter={setActiveSection} />
+      {/* 2. Upcoming Events */}
+      <UpcomingEventsSection events={events} navigate={navigate} />
 
-      {/* Sections */}
-      {SECTIONS.filter(s => activeSection === null || activeSection === s.key).map(s => {
-        const programs = sectionGroups[s.key];
-        if (programs.length === 0) return null;
-        const isCollapsed = collapsedSections[s.key];
-        const isCommittedSection = s.key === "committed";
+      {/* 3. Kanban Board */}
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} />
 
-        return (
-          <div key={s.key} data-testid={`section-${s.key}`}>
-            <SectionHeader section={s} count={programs.length} collapsed={isCollapsed} onToggle={() => toggleSection(s.key)} />
-            {!isCollapsed && (
-              <>
-                {programs.map(p =>
-                  isCommittedSection ? (
-                    <CommittedSchoolCard key={p.program_id} program={p} navigate={navigate} />
-                  ) : (
-                    <PipelineSchoolCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} gmailSignal={gmailSignals[p.program_id]} navigate={navigate} />
-                  )
-                )}
-              </>
-            )}
-          </div>
-        );
-      })}
-
-      {activeSection && (sectionGroups[activeSection]?.length || 0) === 0 && (
-        <div className="text-center py-12 text-sm" style={{ color: "#999" }} data-testid="filtered-empty">
-          No schools in {SECTIONS.find(s => s.key === activeSection)?.label || activeSection}
-        </div>
-      )}
-
-      {/* Archived Section */}
-      {archivedPrograms.length > 0 && activeSection === null && (
-        <div data-testid="section-archived">
+      {/* Archived */}
+      {archivedPrograms.length > 0 && (
+        <div data-testid="section-archived" style={{ marginTop: 24 }}>
           <div
-            onClick={() => toggleSection("archived")}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "24px 0 10px", cursor: "pointer" }}
+            onClick={() => setCollapsedArchived(!collapsedArchived)}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 0 10px", cursor: "pointer" }}
             data-testid="section-header-archived"
           >
-            <ChevronDown style={{ width: 14, height: 14, color: "#999", transition: "transform 0.2s", transform: collapsedSections.archived ? "rotate(-90deg)" : "none" }} />
+            <ChevronRight style={{ width: 14, height: 14, color: "#94a3b8", transition: "transform 0.2s", transform: collapsedArchived ? "none" : "rotate(90deg)" }} />
             <Archive style={{ width: 13, height: 13, color: "#94a3b8" }} />
             <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>Archived</span>
             <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: "var(--cm-surface-2)", color: "#94a3b8" }}>{archivedPrograms.length}</span>
             <div style={{ flex: 1, height: 1, background: "var(--cm-border)", marginLeft: 6 }} />
           </div>
-          {!collapsedSections.archived && archivedPrograms.map(p => (
+          {!collapsedArchived && archivedPrograms.map(p => (
             <div key={p.program_id}
               style={{
                 background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12,
@@ -821,13 +678,7 @@ export default function PipelinePage() {
                 }}
                 data-testid={`reactivate-btn-${p.program_id}`}
               >
-                <RotateCcw style={{ width: 12, height: 12 }} />Reactivate
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/pipeline/${p.program_id}`); }}
-                style={{ width: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc", background: "none", border: "none", cursor: "pointer" }}
-              >
-                <ChevronRight style={{ width: 16, height: 16 }} />
+                <RotateCcw style={{ width: 12, height: 12 }} /> Reactivate
               </button>
             </div>
           ))}
