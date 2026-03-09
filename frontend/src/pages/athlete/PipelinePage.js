@@ -84,12 +84,11 @@ const KANBAN_COLS = [
   { key: "outreach", label: "Outreach", color: "#0d9488" },
   { key: "in_conversation", label: "Talking", color: "#22c55e" },
   { key: "campus_visit", label: "Visit", color: "#3b82f6" },
-  { key: "offer", label: "Offer", color: "#a855f7" },
-  { key: "committed", label: "Committed", color: "#fbbf24" },
+  { key: "offer", label: "Offered", color: "#a855f7" },
 ];
 
 function programToKanbanCol(p) {
-  if (p.recruiting_status === "Committed" || p.journey_stage === "committed") return "committed";
+  if (p.recruiting_status === "Committed" || p.journey_stage === "committed") return null; // shown in banner
   if (p.journey_stage === "campus_visit") return "campus_visit";
   if (p.journey_stage === "offer") return "offer";
   if (p.journey_stage === "in_conversation" || p.board_group === "in_conversation") return "in_conversation";
@@ -334,7 +333,6 @@ const COL_TO_STAGE = {
   in_conversation: { journey_stage: "in_conversation", recruiting_status: "In Conversation" },
   campus_visit: { journey_stage: "campus_visit", recruiting_status: "Campus Visit" },
   offer: { journey_stage: "offer", recruiting_status: "Offer" },
-  committed: { journey_stage: "committed", recruiting_status: "Committed" },
 };
 
 function KanbanCard({ program: p, matchScore, navigate, index }) {
@@ -387,12 +385,12 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
   for (const p of programs) {
     if (p.board_group === "archived") continue;
     const col = programToKanbanCol(p);
-    if (columns[col]) columns[col].push(p);
+    if (col && columns[col]) columns[col].push(p);
   }
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }} className="kanban-grid" data-testid="kanban-board">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }} className="kanban-grid" data-testid="kanban-board">
         {KANBAN_COLS.map(col => (
           <Droppable droppableId={col.key} key={col.key}>
             {(provided, snapshot) => (
@@ -444,6 +442,37 @@ function MeasurablesGuidanceBanner({ guidance, navigate }) {
         <div style={{ fontSize: 11, color: "var(--cm-text-3)", lineHeight: 1.5 }}>{guidance}</div>
       </div>
       <button onClick={() => navigate("/profile")} style={{ padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }} data-testid="update-profile-btn">Update Profile</button>
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Committed Banner                       ── */
+/* ═══════════════════════════════════════════ */
+function CommittedBanner({ programs, navigate }) {
+  if (programs.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 16 }} data-testid="committed-banner">
+      {programs.map(p => (
+        <div key={p.program_id} onClick={() => navigate(`/pipeline/${p.program_id}`)} style={{
+          background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+          borderRadius: 14, padding: "18px 24px", cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 16, marginBottom: 8,
+        }} data-testid={`committed-card-${p.program_id}`}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <UniversityLogo domain={p.domain} name={p.university_name} size={32} className="rounded-[8px]" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.7)", marginBottom: 2 }}>Committed</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{p.university_name}</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {p.division && <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: "rgba(255,255,255,0.2)", color: "#fff" }}>{p.division}</span>}
+            <ChevronRight style={{ width: 18, height: 18, color: "rgba(255,255,255,0.6)" }} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -555,6 +584,7 @@ export default function PipelinePage() {
 
   const activePrograms = allPrograms.filter(p => p.board_group !== "archived");
   const archivedPrograms = allPrograms.filter(p => p.board_group === "archived");
+  const committedPrograms = allPrograms.filter(p => p.recruiting_status === "Committed" || p.journey_stage === "committed");
 
   if (activePrograms.length === 0 && archivedPrograms.length === 0) {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><EmptyBoardState navigate={navigate} /></div>;
@@ -594,6 +624,9 @@ export default function PipelinePage() {
 
       {/* 3. Upcoming Events */}
       <UpcomingEventsSection events={events} navigate={navigate} />
+
+      {/* Committed Banner */}
+      <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
       <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} />
