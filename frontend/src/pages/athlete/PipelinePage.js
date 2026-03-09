@@ -336,11 +336,8 @@ const COL_TO_STAGE = {
 };
 
 function KanbanCard({ program: p, matchScore, navigate, index }) {
-  const ms = matchScore?.match_score;
-  const dotColor = getStatusDot(p);
   const due = getDueInfo(p);
-  const divStyle = DIV_TAG_STYLES[p.division] || {};
-  const matchColor = ms >= 65 ? "#16a34a" : ms >= 40 ? "#d97706" : ms != null ? "#ef4444" : "var(--cm-text-3)";
+  const hasUrgent = due?.urgent && due?.color === "#dc2626";
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -353,26 +350,18 @@ function KanbanCard({ program: p, matchScore, navigate, index }) {
           className="kanban-card"
           style={{
             background: "var(--cm-surface)", borderRadius: 2,
-            padding: "16px 16px 14px", cursor: "grab", transition: "box-shadow 0.15s ease",
+            padding: "14px 14px 12px", cursor: "grab", transition: "box-shadow 0.15s ease",
             boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.12)" : undefined,
             opacity: snapshot.isDragging ? 0.95 : 1,
             ...provided.draggableProps.style,
           }}
           data-testid={`kanban-card-${p.program_id}`}
         >
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35, marginBottom: 10 }}>{p.university_name}</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
-            {p.division && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: divStyle.bg || "var(--cm-surface-2)", color: divStyle.color || "var(--cm-text-3)" }}>{p.division}</span>}
-            {p.conference && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{p.conference}</span>}
-            {due?.urgent && <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 7px", borderRadius: 4, background: due.color === "#dc2626" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)", color: due.color === "#dc2626" ? "#dc2626" : "#d97706" }}>{due.text}</span>}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
+            {hasUrgent && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", flexShrink: 0, marginTop: 5 }} />}
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <UniversityLogo domain={p.domain} name={p.university_name} size={18} className="rounded-[5px]" />
-              {ms != null && <span style={{ fontSize: 12, fontWeight: 700, color: matchColor }}>{ms}%</span>}
-            </div>
-            <div style={{ width: 9, height: 9, borderRadius: "50%", background: dotColor }} />
-          </div>
+          <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 4 }}>{[p.division, p.conference].filter(Boolean).join(" · ")}</div>
         </div>
       )}
     </Draggable>
