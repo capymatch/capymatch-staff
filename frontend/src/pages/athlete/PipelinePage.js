@@ -131,21 +131,35 @@ function generateActions(programs, matchScores) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Hero Card (original dark style)        ── */
+/* ── Hero Card = Actions Carousel           ── */
 /* ═══════════════════════════════════════════ */
-function PipelineHeroCard({ program: p, matchScore, navigate }) {
-  if (!p) return null;
-  const ms = matchScore?.match_score;
-  const sig = p.signals || {};
-  const socialLinks = matchScore?.social_links || p.social_links;
-  const meta = [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ");
-  const fitLabel = matchScore?.measurables_fit?.label;
+function HeroActionsCarousel({ actions, matchScores, navigate }) {
+  const [idx, setIdx] = useState(0);
+  const total = actions.length;
+  if (total === 0) return null;
+
+  const prev = () => setIdx(i => (i - 1 + total) % total);
+  const next = () => setIdx(i => (i + 1) % total);
+  const action = actions[idx];
+  const isSchool = action.type === "school";
+  const p = action.program;
+  const ms = isSchool ? (action.matchScore || matchScores[p?.program_id]) : null;
+  const matchPct = ms?.match_score ?? action.match_score;
+  const socialLinks = ms?.social_links || p?.social_links;
+  const sig = p?.signals || {};
+  const meta = p ? [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ") : "";
+  const fitLabel = ms?.measurables_fit?.label;
   const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
-  const confidence = matchScore?.confidence;
+  const confidence = ms?.confidence;
   const confLabel = CONFIDENCE_LABELS[confidence] || "";
-  const advice = getHeroAdvice(p);
-  const stages = computeRail(p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach"));
+  const advice = isSchool ? getHeroAdvice(p) : action.context;
+  const stages = isSchool ? computeRail(p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")) : null;
   const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Committed" };
+
+  const handleCTA = () => {
+    if (action.type === "growth") navigate("/schools");
+    else if (p) navigate(`/pipeline/${p.program_id}`);
+  };
 
   return (
     <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
@@ -154,61 +168,87 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
       {/* Subtle glow */}
       <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-      <div style={{ padding: "24px 28px 22px", position: "relative", zIndex: 1 }}>
-        {/* Top row: logo + name on left, progress rail on right */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={matchScore?.logo_url} size={48} className="rounded-[14px]" />
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{p.university_name}</span>
-          </div>
-          {/* Progress Rail */}
-          <div style={{ width: 320, flexShrink: 0 }} className="hidden md:block">
-            <div style={{ display: "flex", alignItems: "center", height: 24 }}>
-              {stages.map((s, i) => (
-                <React.Fragment key={s.key}>
-                  {i > 0 && <div style={{ flex: 1, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
-                  <div style={{ position: "relative" }}>
-                    <div style={{
-                      width: s.state === "active" ? 16 : 10, height: s.state === "active" ? 16 : 10,
-                      borderRadius: "50%",
-                      background: s.state === "future" ? "transparent" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
-                      border: s.state === "future" ? "2px solid rgba(255,255,255,0.15)" : s.state === "active" ? "none" : "none",
-                      boxShadow: s.state === "active" ? "0 0 12px rgba(13,148,136,0.5)" : "none",
-                    }} />
-                    {s.state === "active" && <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2px solid rgba(13,148,136,0.4)", animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-              {stages.map(s => (
-                <span key={s.key} style={{ flex: 1, textAlign: "center", fontSize: 9, fontWeight: s.state === "active" ? 800 : 600, color: s.state === "active" ? "#5eead4" : "rgba(255,255,255,0.25)" }}>
-                  {stageLabels[s.key] || s.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Badges row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#94a3b8" }} />
-            {sig.has_coach_reply ? "Interested" : "Neutral"}
-          </span>
-          {p.division && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>}
-          {ms != null && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>{ms}% Match</span>}
-          {fitLabel && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>{fitLabel}</span>}
-          {confLabel && confidence !== "high" && <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>{confLabel}</span>}
-          {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.3)" }}>{meta}</span>}
-          {socialLinks && (
-            <div style={{ display: "flex", gap: 8, marginLeft: 4 }}>
-              {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>X</a>}
-              {socialLinks.instagram && <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>IG</a>}
-              {socialLinks.facebook && <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>FB</a>}
+      <div style={{ padding: "24px 28px 0", position: "relative", zIndex: 1 }}>
+        {/* Header: label + carousel nav */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Actions Needed Today</span>
+          {total > 1 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 14, height: 14 }} /></button>
+              <div style={{ display: "flex", gap: 6 }}>
+                {actions.map((_, i) => (
+                  <div key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%", background: i === idx ? "#0d9488" : "rgba(255,255,255,0.15)", cursor: "pointer", transition: "all 0.2s" }} data-testid={`carousel-dot-${i}`} />
+                ))}
+              </div>
+              <button onClick={next} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 14, height: 14 }} /></button>
             </div>
           )}
         </div>
+
+        {/* Top row: logo + name on left, progress rail on right */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {isSchool && p ? (
+              <>
+                <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={48} className="rounded-[14px]" />
+                <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{p.university_name}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{action.title}</span>
+            )}
+          </div>
+          {/* Progress Rail */}
+          {isSchool && stages && (
+            <div style={{ width: 320, flexShrink: 0 }} className="hidden md:block">
+              <div style={{ display: "flex", alignItems: "center", height: 24 }}>
+                {stages.map((s, i) => (
+                  <React.Fragment key={s.key}>
+                    {i > 0 && <div style={{ flex: 1, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
+                    <div style={{ position: "relative" }}>
+                      <div style={{
+                        width: s.state === "active" ? 16 : 10, height: s.state === "active" ? 16 : 10,
+                        borderRadius: "50%",
+                        background: s.state === "future" ? "transparent" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
+                        border: s.state === "future" ? "2px solid rgba(255,255,255,0.15)" : "none",
+                        boxShadow: s.state === "active" ? "0 0 12px rgba(13,148,136,0.5)" : "none",
+                      }} />
+                      {s.state === "active" && <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2px solid rgba(13,148,136,0.4)", animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                {stages.map(s => (
+                  <span key={s.key} style={{ flex: 1, textAlign: "center", fontSize: 9, fontWeight: s.state === "active" ? 800 : 600, color: s.state === "active" ? "#5eead4" : "rgba(255,255,255,0.25)" }}>
+                    {stageLabels[s.key] || s.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Badges row */}
+        {isSchool && p && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#94a3b8" }} />
+              {sig.has_coach_reply ? "Interested" : "Neutral"}
+            </span>
+            {p.division && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>}
+            {matchPct != null && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>{matchPct}% Match</span>}
+            {fitLabel && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>{fitLabel}</span>}
+            {confLabel && confidence !== "high" && <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>{confLabel}</span>}
+            {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.3)" }}>{meta}</span>}
+            {socialLinks && (
+              <div style={{ display: "flex", gap: 8, marginLeft: 4 }}>
+                {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>X</a>}
+                {socialLinks.instagram && <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>IG</a>}
+                {socialLinks.facebook && <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>FB</a>}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Bottom: Advice box + CTA button */}
         <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
@@ -221,75 +261,28 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
               </div>
             </div>
           )}
-          <button onClick={() => navigate(`/pipeline/${p.program_id}`)} style={{
-            padding: "16px 28px", borderRadius: 12, border: "none", background: "#0d9488",
+          <button onClick={handleCTA} style={{
+            padding: "16px 28px", borderRadius: 12, border: "none",
+            background: action.cta.style === "warn" ? "#f59e0b" : "#0d9488",
             color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex",
             alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit", flexShrink: 0,
             minWidth: 140, transition: "all 0.2s",
           }} data-testid="hero-cta-btn">
             <Send style={{ width: 15, height: 15 }} />
-            {p.board_group === "needs_outreach" ? "Start Outreach" : "Follow Up"}
+            {action.cta.label}
           </button>
         </div>
       </div>
-    </div>
-  );
-}
 
-
-/* ═══════════════════════════════════════════ */
-/* ── Actions Carousel (below hero)          ── */
-/* ═══════════════════════════════════════════ */
-function ActionsCarousel({ actions, navigate }) {
-  const [idx, setIdx] = useState(0);
-  const total = actions.length;
-  if (total === 0) return null;
-
-  const prev = () => setIdx(i => (i - 1 + total) % total);
-  const next = () => setIdx(i => (i + 1) % total);
-  const action = actions[idx];
-  const p = action.program;
-
-  const ctaStyles = {
-    primary: { background: "#0d9488", color: "white" },
-    warn: { background: "#f59e0b", color: "white" },
-    outline: { background: "transparent", color: "#0d9488", border: "1px solid rgba(13,148,136,0.25)" },
-  };
-
-  const handleCTA = () => {
-    if (action.type === "growth") navigate("/schools");
-    else if (p) navigate(`/pipeline/${p.program_id}`);
-  };
-
-  return (
-    <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }} data-testid="actions-carousel">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid var(--cm-border)" }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--cm-text-3)" }}>Actions Needed Today</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--cm-text-3)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
-          <div style={{ display: "flex", gap: 5 }}>
-            {actions.map((_, i) => (
-              <div key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%", background: i === idx ? "#0d9488" : "var(--cm-border)", cursor: "pointer", transition: "all 0.2s" }} data-testid={`carousel-dot-${i}`} />
-            ))}
-          </div>
-          <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--cm-text-3)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
-        </div>
-      </div>
-
-      <div style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--cm-text)", marginBottom: 3 }}>{action.title}</div>
-          <div style={{ fontSize: 12, color: "var(--cm-text-2)", lineHeight: 1.5, marginBottom: 6 }}>{action.context}</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {action.stage && action.type === "school" && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: "rgba(13,148,136,0.1)", color: "#0d9488" }}>{KANBAN_COLS.find(c => c.key === (action.stage === "added" ? "added" : programToKanbanCol(p)))?.label || action.stage}</span>}
-            {action.match_score != null && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{action.match_score}% Match</span>}
-            {action.due && <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 5, background: "rgba(245,158,11,0.1)", color: "#d97706" }}>{action.due.text}</span>}
+      {/* Footer: Next preview */}
+      {total > 1 && idx + 1 < total && (
+        <div style={{ padding: "12px 28px 18px", position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>
+            Next: <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>{actions[(idx + 1) % total]?.title}</span>
           </div>
         </div>
-        <button onClick={handleCTA} style={{ padding: "10px 20px", borderRadius: 9, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "inherit", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, transition: "all 0.15s", ...(ctaStyles[action.cta.style] || ctaStyles.primary) }} data-testid="carousel-cta">
-          <Send style={{ width: 13, height: 13 }} /> {action.cta.label}
-        </button>
-      </div>
+      )}
+      {(!total || total <= 1 || idx + 1 >= total) && <div style={{ height: 18 }} />}
     </div>
   );
 }
