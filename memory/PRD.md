@@ -59,6 +59,13 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - **Pages refactored:** Dashboard, Pipeline, Schools, Calendar, Settings, Profile, Journey, Inbox, Highlights, Analytics, SchoolDetail, AI Assistant Drawer
 - **Testing:** 100% pass rate across all 11 pages in both light and dark modes (iteration_61)
 
+### Phase 10 — My Schools Page Redesign (DONE - March 9, 2026)
+- **Hero = Actions Needed Today carousel** — Dark premium card showing one action per slide with school logo, name, stage/match/division/due badges, context text, CTA, progress rail, social links, "Next:" preview, and carousel navigation (dots + arrows) at bottom
+- **Upcoming Events section** — Clean minimal section showing 3 upcoming events with "View Calendar" link
+- **Kanban Board** — 6 columns (Added, Outreach, Talking, Visit, Offer, Committed) replacing old list view, each card with school logo, match %, division/conference tags, due dates, and contextual CTAs
+- Removed old filter chips, section headers, and list view. Page feels like "a calm recruiting command center for families"
+- **Testing:** 100% pass rate (12/12 features, iteration_64), both themes verified
+
 ### Phase 9 — AI Gmail Intelligence V1 (DONE - March 9, 2026)
 **Backend:**
 - New `services/gmail_intelligence.py` — AI analysis engine with LLM-powered email thread analysis
