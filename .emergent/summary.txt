@@ -1,74 +1,57 @@
 <analysis>**original_problem_statement:**
-The user wants to build CapyMatch, a recruiting operating system. This has involved a major UI/UX redesign of the Mission Control page for Directors and Coaches, and several iterative, detailed enhancements to the Director dashboard and the Roster page. The core goal is to transform static lists into dynamic, actionable intelligence surfaces and operations hubs that are also fully mobile-responsive. The most recent request was to implement and wire up bulk actions on the Roster page.
+The user wants to unify two separate applications:  (a coach/director app) and  (an athlete/parent app). The end goal is a single, unified platform with a shared backend, data model, and authentication system, but which provides distinct, role-based user experiences for Directors, Coaches, Athletes, and Parents. The project is following a detailed, multi-phase unification plan documented in .
 
 **PRODUCT REQUIREMENTS:**
-- Create role-based views for Directors and Coaches.
-- Implement a global, mobile-responsive layout with a collapsible sidebar.
-- Build a Director's Mission Control dashboard with KPIs, an AI Brief, and actionable sections for Needs Attention, Coach Health, and more.
-- Design an advanced Roster page with multiple views (Team, Coach, Age Group), per-athlete intelligence (Momentum, Stage, Risks), and bulk action capabilities.
-- Ensure all UIs are polished, easy to scan, and follow a calm leadership design principle.
+- Create a single, canonical data model for shared entities like users and athletes.
+- Implement a unified authentication system that supports JWTs and multiple user roles (, , , ).
+- Build role-based routing on the frontend to direct users to the correct experience after login.
+- Incrementally migrate features from the original athlete/parent application into the new unified platform.
+- Ensure the final platform has distinct, purpose-built UIs for each user role, all powered by a single source of truth.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application (FastAPI, React, MongoDB) with a sophisticated and mobile-responsive UI. It features a global layout with a collapsible sidebar, a data-rich Director Mission Control dashboard, and an advanced Roster page. The Roster page includes multiple views, per-athlete intelligence indicators, and the UI for bulk actions (checkboxes, an action bar, and modals). Backend endpoints for these bulk actions have been created.
+A full-stack application (FastAPI, React, MongoDB) that has been significantly refactored to serve as the foundation for the unified platform. The backend now uses a central  to manage a MongoDB  collection as the single source of truth, eliminating the previous reliance on in-memory mock data. The data model has been extended with an  collection and  has been added to user and athlete records. The auth system now supports  and  roles, includes a public registration endpoint, and features an automatic athlete claim flow that links new athlete users to staff-created profiles via email matching. The frontend has been updated with preliminary role-based routing and navigation.
 
 **Last working item**:
-    - Last item agent was working: Wiring up the bulk actions feature on the Roster page. The agent had successfully created the three necessary backend endpoints () and added the corresponding modals (, , ) to the frontend. The final step was to test the complete end-to-end flow.
+    - Last item agent was working: Implementing **Step 1.5: Role-Based Routing** from the unification plan. This involved modifying the frontend to handle different user roles by adding a role selector to the registration form, redirecting users based on their role after login, and displaying different navigation items in the sidebar for staff vs. athletes/parents.
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? both
+    - Which testing method agent to use? Frontend testing agent
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: (P0) Bulk actions on the Roster page are not fully functional.
-  
-  Issues Detail:
-  - Issue 1: 
-     - **Attempted fixes**: The agent created the backend API endpoints in  and added the modal components (, , ) with their trigger logic in .
-     - **Next debug checklist**: 
-        1.  Manually test the end-to-end flow for one action (e.g., Assign Coach): select athletes, click the button, submit the modal.
-        2.  Verify the API call is made correctly to the corresponding bulk endpoint.
-        3.  Confirm the database is updated for all selected athletes.
-        4.  Ensure the frontend UI refreshes to show the new state (e.g., the new coach is assigned).
-        5.  Repeat testing for Move Team and Send Reminder actions.
-     - **Why fix this issue and what will be achieved with the fix?**: This is a critical operational feature for directors, enabling them to manage the roster efficiently and fulfilling the goal of making the roster an operations hub.
-     - **Status**:  IN PROGRESS
-     - **Is recurring issue?**: N
-     - **Should Test frontend/backend/both after fix?**: both
-     - **Blocked on other issue**: None
+  - No outstanding bugs. Current work is focused on completing the planned foundational tasks.
 
 **In progress Task List**:
-  - Task 1: (P0) Complete and test the bulk actions feature.
+  - Task 1: (P0) Complete and test Step 1.5: Role-Based Routing.
  
  Task Detail:
   - Task 1: 
-     - **Where to resume**: . The modal components and backend endpoints are in place. The next step is to perform a full end-to-end test of the feature, starting with selecting athletes and triggering an action.
-     - **What will be achieved with this?**: A fully functional bulk action system on the Roster page, allowing directors to assign coaches, move teams, and send reminders to multiple athletes at once.
+     - **Where to resume**: The necessary code changes in , , , and  have been made. The next action is to run the  to perform a full end-to-end verification of the new frontend routing logic.
+     - **What will be achieved with this?**: A fully functional, role-aware frontend navigation and routing system, which is a critical piece of the unification foundation.
      - **Status**:  IN PROGRESS
-     - **Should Test frontend/backend/both after fix?**: both
+     - **Should Test frontend/backend/both after fix?**: frontend
      - **Blocked on something**: None
 
 **Upcoming and Future Tasks**
 
 **Upcoming Tasks:**
-- (P1) **Platform Integrations:** Integrate with external tools like calendars or messaging platforms.
+- (P0) **Step 1.6: Athlete Placeholder Dashboard:** Build a minimal welcome page at the  route. This is the final step of Phase 1 and will serve as a placeholder to confirm the end-to-end login, claim, and routing flow works for athlete users before full feature migration begins.
 
 **Future Tasks:**
-- (P2) **Smart Match (Build Phase):** Build the AI feature for suggesting school-athlete pairings, based on the concept note at .
-- (P2) **Unified Platform Merge:** Execute the long-term strategy of merging this prototype with the main CapyMatch application, using the plan in .
+- **Phase 2: Athlete Dashboard Migration:** Build out the full athlete dashboard, self-managed profile pages (private and public), and port the school knowledge base.
+- **Phase 3: Pipeline & Communication Migration:** Re-implement the recruiting pipeline/board (Kanban), and port the Gmail integration and AI-powered email drafting features.
+- **Phase 4: Connected Experiences:** Implement features that bridge the different roles, such as allowing directors to see athlete pipeline progress and creating shared event calendars.
+- **Phase 5: Advanced Features & Parent Experience:** Port Stripe subscriptions, engagement analytics, the Smart Match AI, and build out the dedicated parent/family experience.
 
 **Completed work in this session**
-- **Data Integrity and AI Brief Fix:** Resolved inconsistencies between the AI-generated brief and dashboard data by cleaning test data and aligning data sources.
-- **Director Intervention Console:** Redesigned the Needs Attention section into an actionable console with grouped alerts and contextual quick actions.
-- **Coach Health Control Panel:** Overhauled the Coach Health section with improved status indicators, workload signals, and quick actions.
-- **Mission Control UX Refinements:** Implemented numerous small but high-impact UX improvements to the Director dashboard, including trend indicators, bulleted AI briefs, and improved visual hierarchy.
-- **Roster Page Overhaul (Multi-phase):**
-  - Transformed the Roster page from a simple list into a multi-view intelligence surface.
-  - Added per-athlete indicators for recruiting momentum, recruiting stage, and risk factors.
-  - Implemented the UI for bulk actions (checkboxes, action bar) and an AI-powered Roster Insights panel.
-- **Full Mobile Responsiveness:** Made the entire application, including the main layout, Mission Control dashboard, and the advanced Roster page, fully responsive and usable on mobile devices.
-- **Bulk Action Backend:** Created new FastAPI endpoints to handle bulk operations for assigning coaches, moving teams, and sending reminders.
+- **Bulk Actions E2E Testing:** Successfully tested and verified the Roster page's bulk actions (Assign Coach, Move Team, Send Reminder), completing the final task from the previous job.
+- **Unification Architecture Plan:** Authored and iteratively refined a comprehensive  document, which now serves as the master blueprint for the entire project.
+- **Phase 1.1: Canonical Athlete Record:** Overhauled the backend by creating a central  service. Refactored 13+ files to make the MongoDB  collection the single source of truth, completely removing the runtime dependency on in-memory mock data.
+- **Phase 1.2: Organization Scoping:** Introduced an  collection and backfilled an  onto all existing  and  records, establishing the foundation for club-level data isolation.
+- **Phase 1.3: Extended Auth System:** Modified the backend auth model to support  and  roles and implemented a public registration endpoint.
+- **Phase 1.4: Athlete Claim Flow:** Implemented logic within the registration process to automatically link new athlete users to staff-created profiles via email matching, setting the  on the athlete record and  on the user record.
 
 **Earlier issues found/mentioned but not fixed**
 - None.
@@ -80,65 +63,58 @@ A full-stack application (FastAPI, React, MongoDB) with a sophisticated and mobi
 
 
 **Key Technical Concepts**
-- **Mobile-First Responsive Design:** Using Tailwind CSS (, , ) to create adaptive layouts.
-- **Bulk Action State Management:** Using React's  for  and modal visibility in .
-- **Backend Bulk Operations:** Designing FastAPI endpoints that accept a list of IDs to perform batch updates in MongoDB.
-- **Component-Driven UI:** Building complex features by composing smaller, single-responsibility components.
+- **Phased Monolith Unification:** An incremental strategy to merge two applications by first building shared foundational layers (auth, data models) in one codebase before migrating UI features.
+- **Centralized Data Access Layer:** The  service acts as a single, authoritative source for athlete data, ensuring consistency and abstracting database logic.
+- **Role-Based Access Control (RBAC):** Using a  field in the user's JWT to control API access on the backend and render different UI layouts on the frontend.
+- **Database Migration & Backfilling:** Using one-time scripts that run on application startup to update the database schema and populate new fields (like ) on existing records.
+- **Account Claiming Flow:** A mechanism that allows a user to take ownership of a pre-existing data entity (an athlete profile) by registering with a matching identifier (email).
 
 **key DB schema**
-  - **program_snapshots**: {Sun Mar  8 11:24:10 UTC 2026, } - Used to calculate weekly trends.
-  No new collections were added. Existing schemas were leveraged to create more complex, computed data for the UI.
+- **organizations**:  (New)
+- **users**:  (Modified for roles and linking)
+- **athletes**:  (Modified to be the canonical source of truth)
 
 **changes in tech stack**
 - None.
 
 **All files of reference**
-- **Bulk Actions:**
-  -  (New endpoints: , , )
-  -  (State management and modal components)
-  - 
-- **Mobile Responsiveness:**
-  - 
-  - 
-  - 
-  - 
-  - All components in 
+- : The primary source of truth for the project's architecture and phased rollout.
+- : The new data access layer for all athlete information.
+- : Contains the unified registration, login, and athlete claim logic.
+-  & : Key files for the role-based frontend navigation.
 
 **Areas that need refactoring**:
-- The modal components (, , ) are currently defined inside . They should be extracted to a new  directory to clean up the  component.
+- The modal components in  should be extracted into their own files under a  directory.
+- A technical debt item was noted to normalize  fields from the old mock data to  in the database, planned for Phase 2.
 
 **key api endpoints**
-- 
-- 
-- 
-- 
-- 
+- : (Heavily Modified) Now a public endpoint supporting self-registration for , , and  roles, and includes the athlete claim flow.
+- : (Modified) The response payload now includes  and  to inform the frontend.
 
 **Critical Info for New Agent**
-- Your immediate and only priority is to complete the **Wire bulk actions** feature on the Roster page. The backend and UI shells are complete. You need to test and ensure the end-to-end flow works for all three actions (Assign Coach, Move Team, Send Reminder).
-- The user values rapid iteration on UI/UX. Be prepared for specific feedback once the feature is functional.
-- All new work must be mobile-responsive, following the patterns established in the Mission Control and Roster pages.
+- Your work is guided by the  document. You must adhere to its phased approach.
+- Your immediate priority is to **complete and verify Step 1.5**. This involves testing the new role-based frontend routing. The code is already written.
+- Your first action should be to call the  to run a comprehensive frontend test suite.
+- Once Step 1.5 is verified, you will proceed to the final step of Phase 1, **Step 1.6: Athlete Placeholder Dashboard**. Do not begin migrating any major UI features from the old athlete app (Phase 2) until all of Phase 1 is complete.
 
 **documents and test reports created in this job**
--  (updated multiple times)
-- Multiple test reports from  are available in .
+- 
+-  (Continuously updated with progress)
+- Multiple test reports from the testing agent are located in .
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- **User:** Wire bulk actions. (PENDING)
-- **Agent:** Started implementation, creating backend endpoints and adding frontend modals, but has not yet completed the end-to-end wiring and testing.
-- **User:** Do the same for the roster area (request to make it mobile responsive). (Completed)
-- **Agent:** Successfully made the Roster page mobile responsive.
-- **User:** Mission control is not mobile friendly. (Completed)
-- **Agent:** Successfully made the main layout and Mission Control dashboard mobile responsive.
+- User confirmed the approach to use the athlete app's navigation structure for the new placeholder sidebar.
+- User has been approving each step of the Phase 1 implementation sequentially (1.1 through 1.5).
+- User approved the final version of the , calling it implementation-ready and giving the green light to begin Phase 1.
+- User asked to make the original athlete app repository private again, as it's no longer needed for active review.
 
 **Project Health Check:**
-- **Broken:** The bulk actions feature on the Roster page is incomplete and not functional.
-- **Mocked:** None
+- **Broken:** The athlete/parent experience is intentionally non-functional, leading to a placeholder page. This is the expected state during the foundational phase.
+- **Mocked:**  and  data is still sourced from mock files, as per the unification plan (to be addressed in a later phase).
 
 **3rd Party Integrations**
-- **MongoDB:** Primary database.
-- **Resend:** (Requires User API Key) Used for sending emails.
-- **OpenAI GPT 5.2:** (Uses Emergent LLM Key via ) Used for the AI Program Brief and Roster Insights.
+- **Active:** MongoDB, Resend (for staff emails), OpenAI GPT 5.2 (for staff AI features).
+- **Planned (for future phases):** Claude Sonnet 4.5, Stripe, Gmail API (from original athlete app).
 
 **Testing status**
   - Testing agent used after significant changes: YES
@@ -149,6 +125,7 @@ A full-stack application (FastAPI, React, MongoDB) with a sophisticated and mobi
 **Credentials to test flow:**
 - **Director:**  / 
 - **Coach:**  / 
+- **Athlete (for testing registration/claim):** Use an email from the seeded data, such as , with any password (e.g., ).
 
 **What agent forgot to execute**
-- The agent was in the middle of completing the user's last request (Wire bulk actions) and had not finished the implementation or testing.</analysis>
+- The agent was in the final stage of implementing Step 1.5 (Role-Based Routing) and was about to initiate testing. The next logical step is to execute that test to verify the changes.</analysis>
