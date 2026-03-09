@@ -6,7 +6,7 @@ import uuid
 from db_client import db
 from auth_middleware import get_current_user_dep
 from services.ownership import get_visible_athlete_ids, can_access_athlete
-from mock_data import ATHLETES
+from services.athlete_store import get_all as get_athletes, get_by_id as get_athlete_by_id
 from models import NoteCreate, AssignCreate, MessageCreate
 
 router = APIRouter()
@@ -15,14 +15,14 @@ router = APIRouter()
 @router.get("/athletes")
 async def get_all_athletes(current_user: dict = get_current_user_dep()):
     visible = get_visible_athlete_ids(current_user)
-    return [a for a in ATHLETES if a["id"] in visible]
+    return [a for a in get_athletes() if a["id"] in visible]
 
 
 @router.get("/athletes/{athlete_id}")
 async def get_athlete(athlete_id: str, current_user: dict = get_current_user_dep()):
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
-    athlete = next((a for a in ATHLETES if a["id"] == athlete_id), None)
+    athlete = get_athlete_by_id(athlete_id)
     if not athlete:
         return {"error": "Athlete not found"}
     return athlete

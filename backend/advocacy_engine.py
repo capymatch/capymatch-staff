@@ -7,7 +7,8 @@ and event context lookups for the Recommendation Builder.
 
 from datetime import datetime, timezone, timedelta
 import uuid
-from mock_data import ATHLETES, UPCOMING_EVENTS, SCHOOLS
+from services.athlete_store import get_all as get_athletes
+from mock_data import UPCOMING_EVENTS, SCHOOLS
 
 
 # ============================================================================
@@ -182,7 +183,7 @@ def list_recommendations(status_filter=None, athlete_filter=None, school_filter=
 
     if grad_year_filter:
         for r in recs:
-            athlete = next((a for a in ATHLETES if a["id"] == r["athlete_id"]), None)
+            athlete = next((a for a in get_athletes() if a["id"] == r["athlete_id"]), None)
             if athlete:
                 r["_grad_year"] = athlete.get("gradYear")
         recs = [r for r in recs if r.get("_grad_year") == int(grad_year_filter)]
@@ -232,7 +233,7 @@ def list_recommendations(status_filter=None, athlete_filter=None, school_filter=
 
 def create_recommendation(data):
     """Create a new recommendation (draft)"""
-    athlete = next((a for a in ATHLETES if a["id"] == data["athlete_id"]), None)
+    athlete = next((a for a in get_athletes() if a["id"] == data["athlete_id"]), None)
     school = next((s for s in SCHOOLS if s["id"] == data.get("school_id")), None)
 
     rec = {
@@ -290,7 +291,7 @@ def update_recommendation(rec_id, updates):
         rec["fit_summary"] = ", ".join(reasons_map.get(r, r) for r in updates["fit_reasons"])[:80]
 
     if "athlete_id" in updates:
-        athlete = next((a for a in ATHLETES if a["id"] == updates["athlete_id"]), None)
+        athlete = next((a for a in get_athletes() if a["id"] == updates["athlete_id"]), None)
         if athlete:
             rec["athlete_name"] = athlete["fullName"]
 
@@ -520,7 +521,7 @@ def get_event_context(athlete_id, school_id=None):
             })
 
     # Also build athlete snapshot
-    athlete = next((a for a in ATHLETES if a["id"] == athlete_id), None)
+    athlete = next((a for a in get_athletes() if a["id"] == athlete_id), None)
     athlete_snapshot = None
     if athlete:
         athlete_snapshot = {

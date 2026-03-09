@@ -102,20 +102,17 @@ async def run_startup(db):
     # ── Step 0: Seed users if empty ──
     await seed_users(db)
 
-    # ── Step 0.5: Assign coaches to athletes if not yet assigned ──
-    await assign_coaches_if_needed(db)
-
     # ── Step 1: Seed all collections if empty ──
     await seed_athletes(db, mock_data.ATHLETES)
     await seed_events(db, mock_data.UPCOMING_EVENTS)
     await seed_event_notes(db, mock_data.UPCOMING_EVENTS)
     await seed_recommendations(db, advocacy_engine.RECOMMENDATIONS)
 
-    # ── Step 2: Load athletes from DB ──
-    loaded_athletes = await load_athletes_to_memory(db)
-    if loaded_athletes:
-        mock_data.ATHLETES.clear()
-        mock_data.ATHLETES.extend(loaded_athletes)
+    # ── Step 1.5: Assign coaches to athletes if not yet assigned ──
+    await assign_coaches_if_needed(db)
+
+    # ── Step 2: Load athletes from DB into athlete_store (canonical source) ──
+    from services.athlete_store import recompute_derived_data as recompute_athlete_data
 
     # ── Step 3: Load events from DB (capturedNotes initialized empty) ──
     loaded_events = await load_events_to_memory(db)
@@ -132,30 +129,8 @@ async def run_startup(db):
         advocacy_engine.RECOMMENDATIONS.clear()
         advocacy_engine.RECOMMENDATIONS.extend(loaded_recs)
 
-    # ── Step 6: Recompute all derived data from loaded state ──
-    mock_data.ALL_INTERVENTIONS.clear()
-    for athlete in mock_data.ATHLETES:
-        interventions = detect_all_interventions(athlete, mock_data.UPCOMING_EVENTS)
-        mock_data.ALL_INTERVENTIONS.extend(interventions)
-    mock_data.ALL_INTERVENTIONS[:] = rank_interventions(mock_data.ALL_INTERVENTIONS)
-
-    mock_data.PRIORITY_ALERTS.clear()
-    mock_data.PRIORITY_ALERTS.extend(get_priority_alerts(mock_data.ALL_INTERVENTIONS))
-
-    mock_data.ATHLETES_NEEDING_ATTENTION.clear()
-    mock_data.ATHLETES_NEEDING_ATTENTION.extend(
-        get_athletes_needing_attention(mock_data.ALL_INTERVENTIONS)
-    )
-
-    mock_data.MOMENTUM_SIGNALS.clear()
-    mock_data.MOMENTUM_SIGNALS.extend(
-        mock_data.generate_momentum_signals(mock_data.ATHLETES)
-    )
-
-    mock_data.PROGRAM_SNAPSHOT.clear()
-    mock_data.PROGRAM_SNAPSHOT.update(
-        mock_data.get_program_snapshot(mock_data.ATHLETES)
-    )
+    # ── Step 6: Load athletes from DB + recompute all derived data via athlete_store ──
+    await recompute_athlete_data()
 
     # ── Step 7: Seed historical program snapshots for trending ──
     from program_engine import compute_all as compute_program_intelligence
@@ -169,9 +144,10 @@ async def run_startup(db):
     from services.ownership import refresh_ownership_cache
     await refresh_ownership_cache()
 
+    from services.athlete_store import get_all, get_interventions
     log.info(
         f"Persistence startup complete: "
-        f"{len(mock_data.ATHLETES)} athletes, "
+        f"{len(get_all())} athletes, "
         f"{len(mock_data.UPCOMING_EVENTS)} events, "
-        f"{len(mock_data.ALL_INTERVENTIONS)} interventions recomputed"
+        f"{len(get_interventions())} interventions recomputed"
     )

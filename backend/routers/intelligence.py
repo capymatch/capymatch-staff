@@ -16,12 +16,14 @@ from services.ai import (
     generate_program_insights,
     generate_event_followups,
 )
+from services.athlete_store import (
+    get_all as get_athletes,
+    get_alerts,
+    get_needing_attention,
+    get_snapshot,
+)
 from mock_data import (
-    ATHLETES,
-    PRIORITY_ALERTS,
     UPCOMING_EVENTS,
-    ATHLETES_NEEDING_ATTENTION,
-    PROGRAM_SNAPSHOT,
     get_program_snapshot,
 )
 from services.ownership import filter_by_athlete_id, filter_events_by_ownership
@@ -80,7 +82,7 @@ async def event_recap(event_id: str, current_user: dict = get_current_user_dep()
 
     # Enrich notes with athlete names
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in ATHLETES}
+    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes()}
     enriched_notes = []
     for n in notes:
         if current_user["role"] != "director" and n.get("athlete_id") not in visible:
@@ -144,7 +146,7 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
     Uses the SAME data filters as the director's dashboard to ensure
     the AI brief is consistent with what the user sees on screen.
     """
-    attention = filter_by_athlete_id(ATHLETES_NEEDING_ATTENTION, current_user)
+    attention = filter_by_athlete_id(get_needing_attention(), current_user)
     events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
 
     # Filter to future events only — same as dashboard
@@ -154,14 +156,14 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
     )[:5]
 
     if current_user["role"] == "director":
-        snapshot = PROGRAM_SNAPSHOT
+        snapshot = get_snapshot()
     else:
         visible = get_visible_athlete_ids(current_user)
-        my_athletes = [a for a in ATHLETES if a["id"] in visible]
+        my_athletes = [a for a in get_athletes() if a["id"] in visible]
         snapshot = get_program_snapshot(my_athletes)
 
     # Enrich attention items with athlete names
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in ATHLETES}
+    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes()}
     for a in attention:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
@@ -288,18 +290,18 @@ def _parse_program_insights(raw: str) -> dict:
 async def suggested_actions(current_user: dict = get_current_user_dep()):
     """V2: Generate structured next-action suggestions for Mission Control."""
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in ATHLETES if a["id"] in visible}
+    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes() if a["id"] in visible}
 
-    alerts = [a for a in PRIORITY_ALERTS if a.get("athlete_id") in visible]
+    alerts = [a for a in get_alerts() if a.get("athlete_id") in visible]
     for a in alerts:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
     events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
-    attention = [a for a in ATHLETES_NEEDING_ATTENTION if a.get("athlete_id") in visible]
+    attention = [a for a in get_needing_attention() if a.get("athlete_id") in visible]
     for a in attention:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
-    snapshot = PROGRAM_SNAPSHOT if current_user["role"] == "director" else get_program_snapshot([a for a in ATHLETES if a["id"] in visible])
+    snapshot = get_snapshot() if current_user["role"] == "director" else get_program_snapshot([a for a in get_athletes() if a["id"] in visible])
 
     # Aging recommendations
     aging_recs = await db.recommendations.find(
@@ -464,7 +466,7 @@ async def program_insights_ai(current_user: dict = get_current_user_dep()):
     parsed = _parse_program_insights(raw)
 
     # Confidence indicator
-    n_athletes = len(ATHLETES)
+    n_athletes = len(get_athletes())
     n_events = len(UPCOMING_EVENTS)
     n_recs = await db.recommendations.count_documents({})
     n_notes = await db.event_notes.count_documents({})
@@ -507,7 +509,7 @@ async def event_followups_ai(event_id: str, current_user: dict = get_current_use
 
     # Filter notes by ownership
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in ATHLETES}
+    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes()}
     notes = []
     for n in all_notes:
         if current_user["role"] != "director" and n.get("athlete_id") not in visible:

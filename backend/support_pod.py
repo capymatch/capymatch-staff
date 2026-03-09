@@ -6,15 +6,16 @@ calculates pod health, and provides helpers for the support pod endpoints.
 """
 
 from datetime import datetime, timezone, timedelta
-from mock_data import ATHLETES, ALL_INTERVENTIONS, UPCOMING_EVENTS
+from services.athlete_store import get_all as get_athletes, get_interventions
+from mock_data import UPCOMING_EVENTS
 
 
 def get_athlete(athlete_id):
-    return next((a for a in ATHLETES if a["id"] == athlete_id), None)
+    return next((a for a in get_athletes() if a["id"] == athlete_id), None)
 
 
 def get_athlete_interventions(athlete_id):
-    return [i for i in ALL_INTERVENTIONS if i["athlete_id"] == athlete_id]
+    return [i for i in get_interventions() if i["athlete_id"] == athlete_id]
 
 
 def generate_pod_members(athlete):

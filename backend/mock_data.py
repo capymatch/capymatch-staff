@@ -1,11 +1,5 @@
 from datetime import datetime, timezone, timedelta
 import random
-from decision_engine import (
-    detect_all_interventions,
-    rank_interventions,
-    get_priority_alerts,
-    get_athletes_needing_attention
-)
 
 # Seed for consistent, reproducible results
 random.seed(42)
@@ -396,20 +390,11 @@ def get_program_snapshot(athletes):
 
 
 # ============================================================================
-# GENERATE DATA ON MODULE LOAD
+# GENERATE SEED DATA ON MODULE LOAD
+# Runtime reads go through services/athlete_store.py — not these variables.
+# ATHLETES is used ONLY for initial DB seeding (seed_athletes in startup.py).
+# UPCOMING_EVENTS and SCHOOLS are still runtime data (events not migrated yet).
 # ============================================================================
 
 ATHLETES = generate_athletes()
 UPCOMING_EVENTS, SCHOOLS = generate_upcoming_events()
-PROGRAM_SNAPSHOT = get_program_snapshot(ATHLETES)
-
-# Run Decision Engine across all athletes
-ALL_INTERVENTIONS = []
-for athlete in ATHLETES:
-    interventions = detect_all_interventions(athlete, UPCOMING_EVENTS)
-    ALL_INTERVENTIONS.extend(interventions)
-
-ALL_INTERVENTIONS = rank_interventions(ALL_INTERVENTIONS)
-PRIORITY_ALERTS = get_priority_alerts(ALL_INTERVENTIONS)
-ATHLETES_NEEDING_ATTENTION = get_athletes_needing_attention(ALL_INTERVENTIONS)
-MOMENTUM_SIGNALS = generate_momentum_signals(ATHLETES)

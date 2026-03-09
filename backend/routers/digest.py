@@ -15,7 +15,8 @@ from services.ownership import (
     get_coach_athlete_map,
     get_unassigned_athlete_ids,
 )
-from mock_data import ATHLETES, ATHLETES_NEEDING_ATTENTION, UPCOMING_EVENTS
+from services.athlete_store import get_all as get_athletes, get_needing_attention
+from mock_data import UPCOMING_EVENTS
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
 
     # 3. Athletes needing attention (snapshot top 8)
     athletes_attention = []
-    for a in ATHLETES_NEEDING_ATTENTION[:8]:
+    for a in get_needing_attention()[:8]:
         athletes_attention.append({
             "name": a.get("athlete_name", ""),
             "category": a.get("category", ""),
@@ -108,7 +109,7 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
     # 4. Unassigned athletes
     unassigned_ids = get_unassigned_athlete_ids()
     unassigned_athletes = []
-    for a in ATHLETES:
+    for a in get_athletes():
         if a["id"] in unassigned_ids:
             unassigned_athletes.append({"name": a["fullName"], "team": a["team"]})
 

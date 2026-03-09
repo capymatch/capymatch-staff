@@ -15,7 +15,12 @@ from services.ownership import (
     get_coach_athlete_map,
     get_unassigned_athlete_ids,
 )
-from mock_data import ATHLETES, ATHLETES_NEEDING_ATTENTION
+from services.athlete_store import (
+    get_all as get_athletes,
+    get_by_id as get_athlete_by_id,
+    get_needing_attention,
+    recompute_derived_data,
+)
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -27,7 +32,7 @@ def _require_director(user: dict):
 
 
 def _athlete_by_id(athlete_id: str) -> dict | None:
-    return next((a for a in ATHLETES if a["id"] == athlete_id), None)
+    return get_athlete_by_id(athlete_id)
 
 
 async def _get_open_actions_warning(athlete_id: str, from_coach_id: str) -> list:
@@ -84,7 +89,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
 
     # Build enriched athlete list
     enriched_athletes = []
-    for a in ATHLETES:
+    for a in get_athletes():
         cid = athlete_to_coach.get(a["id"])
         coach = coach_by_id.get(cid) if cid else None
 
@@ -139,9 +144,9 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         })
 
     # Needs attention — build per-athlete risk alerts
-    attention_ids = {item["athlete_id"] for item in ATHLETES_NEEDING_ATTENTION}
+    attention_ids = {item["athlete_id"] for item in get_needing_attention()}
     attention_lookup = {}
-    for item in ATHLETES_NEEDING_ATTENTION:
+    for item in get_needing_attention():
         aid = item["athlete_id"]
         if aid not in attention_lookup:
             attention_lookup[aid] = []
@@ -199,7 +204,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         age_map[label].append(a)
     age_groups = [{"label": l, "athletes": ats, "count": len(ats)} for l, ats in sorted(age_map.items())]
 
-    total = len(ATHLETES)
+    total = len(get_athletes())
     return {
         "athletes": enriched_athletes,
         "groups": groups,
@@ -271,13 +276,6 @@ async def reassign_athlete(
         {"$set": {"primary_coach_id": body.new_coach_id, "unassigned_reason": None}}
     )
 
-    # Update in-memory ATHLETES list
-    for a in ATHLETES:
-        if a["id"] == athlete_id:
-            a["primary_coach_id"] = body.new_coach_id
-            a.pop("unassigned_reason", None)
-            break
-
     # Write reassignment log (structured for timeline display)
     log_entry = {
         "id": str(uuid.uuid4()),
@@ -297,7 +295,8 @@ async def reassign_athlete(
     await db.reassignment_log.insert_one(log_entry)
     log_entry.pop("_id", None)
 
-    # Refresh cache
+    # Refresh caches from DB
+    await recompute_derived_data()
     await refresh_ownership_cache()
 
     return {
@@ -340,12 +339,6 @@ async def unassign_athlete(
         {"$set": {"primary_coach_id": None, "unassigned_reason": body.reason or "manually_unassigned"}}
     )
 
-    for a in ATHLETES:
-        if a["id"] == athlete_id:
-            a["primary_coach_id"] = None
-            a["unassigned_reason"] = body.reason or "manually_unassigned"
-            break
-
     # Write log
     log_entry = {
         "id": str(uuid.uuid4()),
@@ -365,6 +358,7 @@ async def unassign_athlete(
     await db.reassignment_log.insert_one(log_entry)
     log_entry.pop("_id", None)
 
+    await recompute_derived_data()
     await refresh_ownership_cache()
 
     return {
@@ -732,13 +726,9 @@ async def bulk_assign(body: dict, current_user: dict = get_current_user_dep()):
             {"id": aid},
             {"$set": {"primary_coach_id": coach_id, "unassigned_reason": None}},
         )
-        for a in ATHLETES:
-            if a["id"] == aid:
-                a["primary_coach_id"] = coach_id
-                a.pop("unassigned_reason", None)
-                break
         updated += 1
 
+    await recompute_derived_data()
     await refresh_ownership_cache()
     return {"updated": updated, "coach_name": coach["name"]}
 

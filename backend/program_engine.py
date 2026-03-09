@@ -14,7 +14,8 @@ Supports two modes:
 """
 
 from datetime import datetime, timezone
-from mock_data import ATHLETES, ALL_INTERVENTIONS, UPCOMING_EVENTS
+from services.athlete_store import get_all as get_athletes, get_interventions
+from mock_data import UPCOMING_EVENTS
 from support_pod import (
     generate_pod_members,
     generate_suggested_actions,
@@ -26,14 +27,14 @@ from advocacy_engine import RECOMMENDATIONS, get_all_relationships
 
 def _filter_athletes(athlete_ids=None):
     if athlete_ids is None:
-        return ATHLETES
-    return [a for a in ATHLETES if a["id"] in athlete_ids]
+        return get_athletes()
+    return [a for a in get_athletes() if a["id"] in athlete_ids]
 
 
 def _filter_interventions(athlete_ids=None):
     if athlete_ids is None:
-        return ALL_INTERVENTIONS
-    return [i for i in ALL_INTERVENTIONS if i["athlete_id"] in athlete_ids]
+        return get_interventions()
+    return [i for i in get_interventions() if i["athlete_id"] in athlete_ids]
 
 
 def _filter_recommendations(athlete_ids=None):
@@ -366,7 +367,7 @@ def compute_support_load(coach_id=None, athlete_ids=None):
 def get_coaches():
     """Return list of named coaches from intervention ownership data."""
     coaches = {}
-    for i in ALL_INTERVENTIONS:
+    for i in get_interventions():
         owner = i.get("owner", "")
         if owner and owner not in ("Needs assignment", "Parent + Coach", "Coach + Athlete", "Unassigned", "Parent/Guardian"):
             coaches.setdefault(owner, set()).add(i.get("athlete_id"))
@@ -385,7 +386,7 @@ def compute_all(coach_id=None):
     if coach_id:
         # Determine which athletes this coach owns (from interventions)
         athlete_ids = set()
-        for i in ALL_INTERVENTIONS:
+        for i in get_interventions():
             if i.get("owner") == coach_id:
                 athlete_ids.add(i["athlete_id"])
         view_mode = "coach"

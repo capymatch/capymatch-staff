@@ -11,7 +11,7 @@ from models import InviteCreate, InviteAccept
 from auth_middleware import get_current_user_dep, create_token
 from services.email import send_invite_email
 from services.ownership import refresh_ownership_cache
-from mock_data import ATHLETES
+from services.athlete_store import get_all as get_athletes, recompute_derived_data
 
 router = APIRouter()
 
@@ -313,13 +313,13 @@ async def get_pending_assignments(current_user: dict = get_current_user_dep()):
                 "grad_year": a.get("gradYear"),
                 "team": a.get("team"),
             }
-            for a in ATHLETES
+            for a in get_athletes()
             if a.get("team") == team and not a.get("primary_coach_id")
         ]
 
         # Also count assigned athletes on the team (for context, not suggestion)
         assigned_on_team = sum(
-            1 for a in ATHLETES
+            1 for a in get_athletes()
             if a.get("team") == team and a.get("primary_coach_id")
         )
 
@@ -365,7 +365,7 @@ async def assign_athletes_from_invite(
     # Validate all athletes exist and are unassigned
     assigned = []
     for aid in athlete_ids:
-        athlete = next((a for a in ATHLETES if a["id"] == aid), None)
+        athlete = next((a for a in get_athletes() if a["id"] == aid), None)
         if not athlete:
             continue
         if athlete.get("primary_coach_id"):
@@ -375,12 +375,6 @@ async def assign_athletes_from_invite(
             {"id": aid},
             {"$set": {"primary_coach_id": coach_id, "unassigned_reason": None}},
         )
-        # Update in-memory
-        for a in ATHLETES:
-            if a["id"] == aid:
-                a["primary_coach_id"] = coach_id
-                a.pop("unassigned_reason", None)
-                break
 
         # Log the assignment
         await db.reassignment_log.insert_one({
@@ -406,6 +400,7 @@ async def assign_athletes_from_invite(
         {"$set": {"assignment_reviewed": True}},
     )
 
+    await recompute_derived_data()
     await refresh_ownership_cache()
 
     return {

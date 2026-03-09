@@ -7,7 +7,8 @@ and routing of event signals to Support Pod and Mission Control.
 
 from datetime import datetime, timezone, timedelta
 import uuid
-from mock_data import ATHLETES, UPCOMING_EVENTS, SCHOOLS, ALL_INTERVENTIONS
+from services.athlete_store import get_all as get_athletes, get_interventions
+from mock_data import UPCOMING_EVENTS, SCHOOLS
 
 
 def get_event(event_id):
@@ -40,7 +41,7 @@ def get_all_events(team_filter=None, type_filter=None):
 
         # Apply filters
         if team_filter:
-            roster_athletes = [a for a in ATHLETES if a["id"] in event.get("athlete_ids", [])]
+            roster_athletes = [a for a in get_athletes() if a["id"] in event.get("athlete_ids", [])]
             teams = {a["team"] for a in roster_athletes}
             if team_filter not in teams:
                 continue
@@ -73,12 +74,12 @@ def get_event_prep(event_id):
     blockers = []
 
     for aid in athlete_ids:
-        athlete = next((a for a in ATHLETES if a["id"] == aid), None)
+        athlete = next((a for a in get_athletes() if a["id"] == aid), None)
         if not athlete:
             continue
 
         # Get interventions for this athlete
-        athlete_interventions = [i for i in ALL_INTERVENTIONS if i["athlete_id"] == aid]
+        athlete_interventions = [i for i in get_interventions() if i["athlete_id"] == aid]
         blocker_interventions = [i for i in athlete_interventions if i["category"] == "blocker"]
 
         # Determine prep status
@@ -173,7 +174,7 @@ def capture_note(event_id, data):
     if not event:
         return None
 
-    athlete = next((a for a in ATHLETES if a["id"] == data["athlete_id"]), None)
+    athlete = next((a for a in get_athletes() if a["id"] == data["athlete_id"]), None)
     interest = data.get("interest_level", "none")
 
     note = {

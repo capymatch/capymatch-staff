@@ -3,7 +3,8 @@
 from fastapi import APIRouter, HTTPException
 from db_client import db
 from auth_middleware import get_current_user_dep
-from mock_data import SCHOOLS, ALL_INTERVENTIONS
+from services.athlete_store import get_interventions
+from mock_data import SCHOOLS
 
 router = APIRouter()
 
@@ -43,7 +44,7 @@ async def admin_status(current_user: dict = get_current_user_dep()):
             ],
             "in_memory_only": [
                 {"name": "schools", "count": len(SCHOOLS), "source": "mock_data.py", "description": "10 static school entries — low priority for persistence"},
-                {"name": "interventions", "count": len(ALL_INTERVENTIONS), "source": "decision_engine.py", "description": "Recomputed on startup from persisted data — stateless, no persistence needed"},
+                {"name": "interventions", "count": len(get_interventions()), "source": "decision_engine.py", "description": "Recomputed on startup from persisted data — stateless, no persistence needed"},
             ],
         },
         "seed_strategy": "seed-if-empty — mock data inserted on first run only, user data preserved across restarts",
@@ -54,5 +55,5 @@ async def admin_status(current_user: dict = get_current_user_dep()):
             "Momentum signals are regenerated on startup (not persisted individually)",
             "daysSinceActivity (athletes) and daysAway (events) are recomputed from stored timestamps on each load",
         ],
-        "architecture": "Dual-write: mutations update MongoDB AND in-memory. Engines read from synced in-memory. Derived data recomputed after load.",
+        "architecture": "DB-first: all reads from MongoDB via athlete_store. Derived data (interventions, signals) recomputed from DB on startup and after writes.",
     }
