@@ -3,419 +3,463 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Mail, MailOpen, Phone, Send, Users, MapPin,
-  Calendar, Clock, Plus, X, Loader2, CheckCircle,
-  MessageSquare, Eye, Video, Tent, Building, ChevronDown,
-  AlertTriangle, Edit3, Trash2, ExternalLink,
+  ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
+  Edit2, Trash2, Plus, AlertTriangle, Clock, BookOpen, ExternalLink
 } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import {
+  ProgressRail, PulseIndicator, GettingStartedChecklist,
+  CommittedHero, CelebrationHero, NextStepCard, ConversationBubble,
+  FloatingActionBar, StageLogModal, LogInteractionForm,
+  EmailComposer, FollowUpScheduler, MarkAsRepliedModal, CoachForm,
+} from "../../components/journey";
+import { RAIL_STAGES, STAGE_LABELS } from "../../components/journey/constants";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
-const INTERACTION_TYPES = [
-  "Email Sent", "Phone Call", "Video Call", "Camp",
-  "Campus Visit", "Showcase", "Text Message",
-];
-
-const INTERACTION_ICONS = {
-  email_sent: Send,
-  coach_reply: MailOpen,
-  email_received: MailOpen,
-  phone_call: Phone,
-  video_call: Video,
-  camp: Tent,
-  campus_visit: Building,
-  showcase: Eye,
-  text_message: MessageSquare,
-  "follow up": Send,
-};
-
-const INTERACTION_COLORS = {
-  email_sent:     "bg-blue-100 text-blue-700",
-  coach_reply:    "bg-emerald-100 text-emerald-700",
-  email_received: "bg-emerald-100 text-emerald-700",
-  phone_call:     "bg-amber-100 text-amber-700",
-  video_call:     "bg-purple-100 text-purple-700",
-  camp:           "bg-teal-100 text-teal-700",
-  campus_visit:   "bg-slate-100 text-slate-700",
-  showcase:       "bg-rose-100 text-rose-700",
-  text_message:   "bg-cyan-100 text-cyan-700",
-  "follow up":    "bg-indigo-100 text-indigo-700",
-};
-
-function fmtDate(iso) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  } catch {
-    return iso;
-  }
-}
-
-function fmtTime(iso) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  } catch {
-    return "";
-  }
-}
-
-function timeAgo(iso) {
-  if (!iso) return "";
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
-
-
-/* ── Log Interaction Inline ── */
-function LogInteractionForm({ programId, onLogged }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ type: "Email Sent", notes: "" });
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await axios.post(`${API}/athlete/interactions`, {
-        program_id: programId,
-        type: form.type,
-        notes: form.notes,
-      });
-      toast.success("Interaction logged");
-      setForm({ type: "Email Sent", notes: "" });
-      setOpen(false);
-      onLogged();
-    } catch (err) {
-      toast.error("Failed to log interaction");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!open) {
-    return (
-      <button
-        data-testid="open-log-form"
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
-      >
-        <Plus className="w-3.5 h-3.5" /> Log Interaction
-      </button>
-    );
-  }
-
+const UniversityLogo = ({ name, size = 40 }) => {
+  const skip = new Set(["of", "the", "and", "at", "in"]);
+  const initials = (name || "").split(" ").filter(w => !skip.has(w.toLowerCase())).map(w => w[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3" data-testid="log-interaction-form">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-bold tracking-widest uppercase text-slate-400">Log Interaction</h3>
-        <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="flex gap-3">
-        <select
-          data-testid="journey-log-type"
-          value={form.type}
-          onChange={(e) => setForm({ ...form, type: e.target.value })}
-          className="flex-shrink-0 px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-        >
-          {INTERACTION_TYPES.map((t) => <option key={t}>{t}</option>)}
-        </select>
-        <input
-          data-testid="journey-log-notes"
-          value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          placeholder="What happened?"
-          className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-        />
-        <button
-          data-testid="journey-log-submit"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 shrink-0"
-        >
-          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-          Log
-        </button>
-      </div>
+    <div style={{ width: size, height: size, borderRadius: 12, background: "rgba(26,138,128,0.15)", border: "1px solid rgba(26,138,128,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <span style={{ color: "#1a8a80", fontWeight: 700, fontSize: size * 0.35 }}>{initials}</span>
     </div>
   );
-}
+};
 
-
-/* ── Timeline Item ── */
-function TimelineItem({ interaction, isLast }) {
-  const typeKey = (interaction.type || "").toLowerCase().replace(/\s+/g, "_");
-  const Icon = INTERACTION_ICONS[typeKey] || MessageSquare;
-  const colorClass = INTERACTION_COLORS[typeKey] || "bg-slate-100 text-slate-700";
-
-  return (
-    <div className="flex gap-3" data-testid={`timeline-item-${interaction.interaction_id}`}>
-      {/* Dot + Line */}
-      <div className="flex flex-col items-center">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
-          <Icon className="w-3.5 h-3.5" />
-        </div>
-        {!isLast && <div className="w-px flex-1 bg-slate-200 mt-1" />}
-      </div>
-
-      {/* Content */}
-      <div className={`flex-1 pb-5 ${isLast ? "" : ""}`}>
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-900">{interaction.type}</p>
-            {interaction.notes && (
-              <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{interaction.notes}</p>
-            )}
-          </div>
-          <div className="text-right shrink-0 ml-3">
-            <p className="text-[10px] text-slate-400">{fmtDate(interaction.date_time)}</p>
-            <p className="text-[10px] text-slate-400">{fmtTime(interaction.date_time)}</p>
-          </div>
-        </div>
-        {interaction.outcome && interaction.outcome !== "No Response" && (
-          <span className="inline-block mt-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-            {interaction.outcome}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-
-/* ── Main Journey Page ── */
 export default function JourneyPage() {
   const { programId } = useParams();
-  const nav = useNavigate();
+  const navigate = useNavigate();
   const [program, setProgram] = useState(null);
+  const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showStageLog, setShowStageLog] = useState(null);
+  const [showEmail, setShowEmail] = useState(false);
+  const [showLog, setShowLog] = useState(false);
+  const [showReplied, setShowReplied] = useState(false);
+  const [showCoachForm, setShowCoachForm] = useState(null);
+  const [showFollowup, setShowFollowup] = useState(false);
+  const [nextStepDismissed, setNextStepDismissed] = useState(false);
+  const [activeAction, setActiveAction] = useState(null);
 
-  const fetchProgram = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const { data } = await axios.get(`${API}/athlete/programs/${programId}`);
-      setProgram(data);
-    } catch (err) {
-      if (err.response?.status === 404) {
-        toast.error("Program not found");
-        nav("/pipeline");
-      } else {
-        toast.error("Failed to load program");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [programId, nav]);
+      const [pRes, jRes] = await Promise.all([
+        axios.get(`${API}/athlete/programs/${programId}`),
+        axios.get(`${API}/athlete/programs/${programId}/journey`),
+      ]);
+      setProgram(pRes.data);
+      setTimeline(jRes.data.timeline || []);
+    } catch (e) {
+      toast.error("Failed to load program");
+    } finally { setLoading(false); }
+  }, [programId]);
 
-  useEffect(() => { fetchProgram(); }, [fetchProgram]);
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const refresh = () => { setLoading(false); fetchData(); };
+  const closeAll = () => { setShowEmail(false); setShowLog(false); setShowReplied(false); setShowCoachForm(null); setShowFollowup(false); setActiveAction(null); };
+
+  const handleStageClick = (stageKey) => {
+    if (!program) return;
+    const rail = program.journey_rail || {};
+    const currentActive = rail.active || "added";
+    const currentIdx = RAIL_STAGES.findIndex(s => s.key === currentActive);
+    const clickIdx = RAIL_STAGES.findIndex(s => s.key === stageKey);
+    if (clickIdx <= currentIdx) return;
+    setShowStageLog(stageKey);
+  };
+
+  const confirmStageAdvance = async (note) => {
+    try {
+      await axios.put(`${API}/athlete/programs/${programId}`, { journey_stage: showStageLog });
+      if (note) {
+        await axios.post(`${API}/athlete/interactions`, {
+          program_id: programId,
+          university_name: program.university_name,
+          type: "Stage Update",
+          notes: `Advanced to ${STAGE_LABELS[showStageLog] || showStageLog}: ${note}`,
+          outcome: "Positive",
+        });
+      }
+      setShowStageLog(null);
+      refresh();
+    } catch { toast.error("Failed to update stage"); }
+  };
+
+  const handleArchiveToggle = async () => {
+    const isArchived = program.recruiting_status === "archived";
+    try {
+      await axios.put(`${API}/athlete/programs/${programId}`, {
+        recruiting_status: isArchived ? "active" : "archived",
+      });
+      toast.success(isArchived ? "Reactivated" : "Archived");
+      refresh();
+    } catch { toast.error("Failed to update"); }
+  };
+
+  const handleSaveCoach = async (data) => {
+    try {
+      if (data.coach_id) {
+        await axios.put(`${API}/athlete/college-coaches/${data.coach_id}`, data);
+      } else {
+        await axios.post(`${API}/athlete/college-coaches`, data);
+      }
+      toast.success("Coach saved");
+      closeAll();
+      refresh();
+    } catch { toast.error("Failed to save coach"); }
+  };
+
+  const handleDeleteCoach = async (coachId) => {
+    try {
+      await axios.delete(`${API}/athlete/college-coaches/${coachId}`);
+      toast.success("Coach removed");
+      refresh();
+    } catch { toast.error("Failed to delete coach"); }
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
-        <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1219" }}>
+        <div className="w-8 h-8 border-2 border-teal-700 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!program) return null;
+  if (!program) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1219" }}>
+        <p className="text-slate-400">Program not found</p>
+      </div>
+    );
+  }
 
-  const signals = program.signals || {};
   const coaches = program.college_coaches || [];
-  const interactions = program.interactions || [];
+  const signals = program.signals || {};
+  const rail = program.journey_rail || {};
+  const isArchived = program.recruiting_status === "archived";
+  const isCommitted = rail.active === "committed";
+  const hasCoachReply = signals.has_coach_reply;
+  const isNewSchool = !isCommitted && !hasCoachReply && timeline.length < 2;
+  const latestEvent = timeline[0];
 
-  const BOARD_LABELS = {
-    overdue: { label: "Overdue", color: "text-rose-700 bg-rose-50" },
-    needs_outreach: { label: "Needs Outreach", color: "text-amber-700 bg-amber-50" },
-    waiting_on_reply: { label: "Waiting on Reply", color: "text-blue-700 bg-blue-50" },
-    in_conversation: { label: "In Conversation", color: "text-emerald-700 bg-emerald-50" },
-    archived: { label: "Archived", color: "text-slate-600 bg-slate-100" },
-  };
-  const boardInfo = BOARD_LABELS[program.board_group] || BOARD_LABELS.needs_outreach;
+  // Follow-up due computation
+  const followUpDue = program.next_action_due;
+  let followUpOverdue = false;
+  let followUpUpcoming = false;
+  if (followUpDue) {
+    const dueDate = new Date(followUpDue);
+    const now = new Date();
+    const diffDays = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) followUpOverdue = true;
+    else if (diffDays <= 3) followUpUpcoming = true;
+  }
+
+  const profileComplete = !!(program.athlete_name || program.athlete_video);
 
   return (
-    <div className="space-y-6" data-testid="journey-page">
-      {/* Back */}
-      <button
-        data-testid="back-to-pipeline"
-        onClick={() => nav("/pipeline")}
-        className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to Pipeline
-      </button>
-
-      {/* School header */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5" data-testid="journey-header">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900" data-testid="journey-school-name">
-              {program.university_name}
-            </h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {program.division && (
-                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                  {program.division}
-                </span>
+    <div className="min-h-screen pb-28" style={{ background: "#0f1219" }} data-testid="journey-page">
+      {/* ─── HEADER ─── */}
+      <div style={{ background: "linear-gradient(180deg, #131720 0%, #0f1219 100%)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-5">
+          {/* Back & Actions */}
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => navigate("/pipeline")} className="flex items-center gap-1.5 text-xs font-medium hover:text-white transition-colors text-slate-400" data-testid="back-to-pipeline">
+              <ArrowLeft className="w-3.5 h-3.5" />Pipeline
+            </button>
+            <div className="flex items-center gap-2">
+              {program.questionnaire_url && (
+                <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-teal-700/10 text-teal-600 border-teal-700/20"
+                  data-testid="questionnaire-link">
+                  <ExternalLink className="w-3 h-3" />Questionnaire
+                </a>
               )}
-              {program.conference && (
-                <span className="text-xs text-slate-400">{program.conference}</span>
-              )}
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${boardInfo.color}`}>
-                {boardInfo.label}
-              </span>
+              <Button variant="outline" size="sm" onClick={handleArchiveToggle}
+                className={`text-xs h-7 px-3 ${isArchived ? "text-teal-600 border-teal-700/30" : "text-slate-400 border-slate-700"}`}
+                data-testid="archive-toggle-btn">
+                {isArchived ? <RotateCcw className="w-3 h-3 mr-1" /> : <Archive className="w-3 h-3 mr-1" />}
+                {isArchived ? "Reactivate" : "Archive"}
+              </Button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {program.website && (
-              <a
-                href={program.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 px-3 py-1.5 text-xs text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-50"
-              >
-                <ExternalLink className="w-3 h-3" /> Website
-              </a>
-            )}
-          </div>
-        </div>
-
-        {/* Signals bar */}
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100 flex-wrap">
-          <div className="text-center">
-            <div className="text-lg font-bold text-slate-900">{signals.total_interactions || 0}</div>
-            <div className="text-[10px] text-slate-400">Interactions</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-slate-900">{signals.outreach_count || 0}</div>
-            <div className="text-[10px] text-slate-400">Outreach</div>
-          </div>
-          <div className="text-center">
-            <div className={`text-lg font-bold ${signals.has_coach_reply ? "text-emerald-600" : "text-slate-300"}`}>
-              {signals.has_coach_reply ? "Yes" : "No"}
-            </div>
-            <div className="text-[10px] text-slate-400">Coach Reply</div>
-          </div>
-          {signals.days_since_activity != null && (
-            <div className="text-center">
-              <div className="text-lg font-bold text-slate-900">{signals.days_since_activity}d</div>
-              <div className="text-[10px] text-slate-400">Since Last</div>
-            </div>
-          )}
-          {program.next_action_due && (
-            <div className="text-center ml-auto">
-              <div className={`text-sm font-bold ${program.board_group === "overdue" ? "text-rose-600" : "text-slate-700"}`}>
-                {program.next_action_due}
+          {/* School Info + Pulse */}
+          <div className="flex items-start gap-4 mb-5">
+            <UniversityLogo name={program.university_name} size={48} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight" data-testid="journey-school-name">
+                  {program.university_name}
+                </h1>
+                <PulseIndicator pulse={rail.pulse} />
               </div>
-              <div className={`text-[10px] ${program.board_group === "overdue" ? "text-rose-500" : "text-slate-400"}`}>
-                {program.board_group === "overdue" ? "Overdue!" : "Next Follow-up"}
+              <div className="flex items-center gap-3 flex-wrap">
+                {program.division && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-700/20 text-teal-500">{program.division}</span>
+                )}
+                {program.conference && (
+                  <span className="text-[11px] text-slate-400">{program.conference}</span>
+                )}
+                {program.location && (
+                  <span className="text-[11px] text-slate-500">{program.location}</span>
+                )}
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Progress Rail */}
+          <ProgressRail rail={rail} onStageClick={handleStageClick} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Timeline (2/3 width) */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Log interaction */}
-          <LogInteractionForm programId={programId} onLogged={fetchProgram} />
+      {/* ─── MAIN CONTENT ─── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
+        {/* Follow-up Alerts */}
+        {followUpOverdue && (
+          <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border bg-red-600/5 border-red-500/30" data-testid="followup-overdue-alert">
+            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs font-bold text-red-300">Follow-up overdue</p>
+              <p className="text-[11px] text-red-400/70">{program.next_action || "Follow-up"} was due {followUpDue}</p>
+            </div>
+            <Button size="sm" className="bg-red-600/10 hover:bg-red-600/20 text-red-300 border-red-500/30 text-xs h-7 px-3" variant="outline" onClick={() => { setShowFollowup(true); setActiveAction("followup"); }} data-testid="reschedule-btn">Reschedule</Button>
+          </div>
+        )}
+        {followUpUpcoming && !followUpOverdue && (
+          <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border bg-amber-600/5 border-amber-500/30" data-testid="followup-upcoming-alert">
+            <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs font-bold text-amber-300">Follow-up coming up</p>
+              <p className="text-[11px] text-amber-400/70">{program.next_action || "Follow-up"} on {followUpDue}</p>
+            </div>
+          </div>
+        )}
 
-          {/* Timeline */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5" data-testid="journey-timeline">
-            <h2 className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-4">
-              Timeline ({interactions.length})
-            </h2>
-            {interactions.length === 0 ? (
-              <div className="text-center py-10">
-                <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs text-slate-500">No interactions yet</p>
-                <p className="text-[10px] text-slate-400 mt-1">Log your first outreach above</p>
+        {/* Contextual Hero Section */}
+        {isCommitted ? (
+          <div className="mb-6"><CommittedHero program={program} /></div>
+        ) : isNewSchool ? (
+          <div className="mb-6">
+            <GettingStartedChecklist
+              program={program} coaches={coaches} timeline={timeline}
+              profileComplete={profileComplete}
+              onAddCoach={() => { setShowCoachForm({}); }}
+              onSendEmail={() => { setShowEmail(true); setActiveAction("email"); }}
+            />
+          </div>
+        ) : hasCoachReply ? (
+          <div className="mb-6">
+            <CelebrationHero program={program} coaches={coaches}
+              onEmail={() => { setShowEmail(true); setActiveAction("email"); }}
+              onLog={() => { setShowLog(true); setActiveAction("log"); }}
+              onCall={() => { setShowLog(true); setActiveAction("log"); }}
+            />
+          </div>
+        ) : null}
+
+        {/* Next Step Automation Card */}
+        {latestEvent && !isCommitted && !nextStepDismissed && (
+          <div className="mb-6">
+            <NextStepCard
+              latestEvent={latestEvent}
+              universityName={program.university_name}
+              onEmail={() => { setShowEmail(true); setActiveAction("email"); }}
+              onLog={() => { setShowLog(true); setActiveAction("log"); }}
+              onFollowup={() => { setShowFollowup(true); setActiveAction("followup"); }}
+              onDismiss={() => setNextStepDismissed(true)}
+            />
+          </div>
+        )}
+
+        {/* Knowledge Base link */}
+        {program.school_id && (
+          <div className="mb-6">
+            <button onClick={() => navigate(`/schools/${program.school_id}`)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors hover:border-teal-700/40 bg-slate-900/50 border-slate-700/50"
+              data-testid="school-intel-link">
+              <BookOpen className="w-4 h-4 text-teal-700 flex-shrink-0" />
+              <div className="text-left">
+                <p className="text-xs font-bold text-white">School Intelligence</p>
+                <p className="text-[10px] text-slate-400">View recruiting requirements, roster info, and more</p>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* ─── GRID: Timeline + Sidebar ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* LEFT: Timeline */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-white">Timeline</h2>
+              <span className="text-[10px] font-semibold text-teal-600" data-testid="timeline-count">{timeline.length} interactions</span>
+            </div>
+            {timeline.length === 0 ? (
+              <div className="text-center py-16 rounded-2xl border border-dashed bg-slate-900/30 border-slate-700/50" data-testid="empty-timeline">
+                <p className="text-sm font-semibold text-slate-400 mb-1">No interactions yet</p>
+                <p className="text-xs text-slate-500 mb-4">Start your journey by reaching out to a coach</p>
+                <Button size="sm" onClick={() => { setShowEmail(true); setActiveAction("email"); }}
+                  className="bg-teal-700 hover:bg-teal-800 text-white text-xs h-8 px-4"
+                  data-testid="empty-timeline-email-btn">
+                  <Mail className="w-3.5 h-3.5 mr-1.5" />Send First Email
+                </Button>
               </div>
             ) : (
-              <div>
-                {interactions.map((ix, i) => (
-                  <TimelineItem
-                    key={ix.interaction_id}
-                    interaction={ix}
-                    isLast={i === interactions.length - 1}
-                  />
+              <div className="space-y-1" data-testid="timeline-list">
+                {timeline.map((ev, idx) => (
+                  <ConversationBubble key={ev.id || idx} event={ev} />
                 ))}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Sidebar (1/3 width) */}
-        <div className="space-y-4">
-          {/* Coaching Staff */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5" data-testid="journey-coaches">
-            <h2 className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-3">
-              Coaching Staff ({coaches.length})
-            </h2>
-            {coaches.length === 0 ? (
-              <p className="text-xs text-slate-500">No coaches added yet</p>
-            ) : (
-              <div className="space-y-3">
-                {coaches.map((c) => (
-                  <div key={c.coach_id} className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{c.coach_name}</p>
-                      <p className="text-[10px] text-slate-500">{c.role}</p>
+          {/* RIGHT: Sidebar */}
+          <div className="space-y-5">
+            {/* Coaches */}
+            <div className="rounded-2xl border p-4 bg-slate-900/50 border-slate-700/50" data-testid="coaches-sidebar">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Coaching Staff</h3>
+                <button onClick={() => setShowCoachForm({})} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-500 transition-colors" data-testid="add-coach-btn">
+                  <Plus className="w-3 h-3" />Add
+                </button>
+              </div>
+              {coaches.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-4">No coaches added yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {coaches.map(c => (
+                    <div key={c.coach_id} className="flex items-start gap-3 p-3 rounded-xl border transition-colors hover:border-slate-600 bg-slate-800/30 border-slate-700/30" data-testid={`coach-card-${c.coach_id}`}>
+                      <div className="w-8 h-8 rounded-full bg-teal-700/15 flex items-center justify-center flex-shrink-0">
+                        <User className="w-3.5 h-3.5 text-teal-700" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">{c.coach_name}</p>
+                        <p className="text-[10px] text-slate-400">{c.role || "Coach"}</p>
+                        {c.email && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Mail className="w-2.5 h-2.5 text-slate-500" />
+                            <a href={`mailto:${c.email}`} className="text-[10px] text-teal-600 truncate hover:underline">{c.email}</a>
+                          </div>
+                        )}
+                        {c.phone && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <Phone className="w-2.5 h-2.5 text-slate-500" />
+                            <span className="text-[10px] text-slate-400">{c.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button onClick={() => setShowCoachForm(c)} className="p-1 rounded hover:bg-white/5" data-testid={`edit-coach-${c.coach_id}`}>
+                          <Edit2 className="w-3 h-3 text-slate-500" />
+                        </button>
+                        <button onClick={() => handleDeleteCoach(c.coach_id)} className="p-1 rounded hover:bg-white/5" data-testid={`delete-coach-${c.coach_id}`}>
+                          <Trash2 className="w-3 h-3 text-slate-500" />
+                        </button>
+                      </div>
                     </div>
-                    {c.email && (
-                      <a
-                        href={`mailto:${c.email}`}
-                        className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-700 shrink-0"
-                        data-testid={`journey-coach-email-${c.coach_id}`}
-                      >
-                        <Mail className="w-3 h-3" /> Email
-                      </a>
-                    )}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Engagement Stats */}
+            <div className="rounded-2xl border p-4 bg-slate-900/50 border-slate-700/50" data-testid="engagement-stats">
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-3 text-slate-400">Engagement</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Total Outreach", value: signals.outreach_count || 0 },
+                  { label: "Coach Replies", value: signals.reply_count || 0 },
+                  { label: "Days Since Activity", value: signals.days_since_activity != null ? signals.days_since_activity : "\u2014" },
+                  { label: "Interactions", value: timeline.length },
+                ].map(stat => (
+                  <div key={stat.label} className="p-3 rounded-xl bg-slate-800/40" data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}>
+                    <p className="text-[10px] font-medium text-slate-500 mb-0.5">{stat.label}</p>
+                    <p className="text-lg font-extrabold text-white">{stat.value}</p>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Program Notes */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5" data-testid="journey-notes">
-            <h2 className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-3">
-              Notes
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {program.notes || "No notes yet. Add notes when editing this program."}
-            </p>
-          </div>
-
-          {/* Quick Info */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5" data-testid="journey-info">
-            <h2 className="text-xs font-bold tracking-widest uppercase text-slate-400 mb-3">
-              Details
-            </h2>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Priority</span>
-                <span className="font-medium text-slate-900">{program.priority || "Medium"}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Status</span>
-                <span className="font-medium text-slate-900">{program.recruiting_status || "—"}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Follow-up Interval</span>
-                <span className="font-medium text-slate-900">{program.follow_up_days || 14} days</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Added</span>
-                <span className="font-medium text-slate-900">{fmtDate(program.created_at)}</span>
-              </div>
             </div>
+
+            {/* Next Follow-up */}
+            {program.next_action_due && (
+              <div className="rounded-2xl border p-4 bg-slate-900/50 border-slate-700/50" data-testid="next-followup-sidebar">
+                <h3 className="text-xs font-bold uppercase tracking-wider mb-3 text-slate-400">Next Follow-up</h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-teal-700/10">
+                    <Clock className="w-4 h-4 text-teal-700" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-white">{program.next_action || "Follow-up"}</p>
+                    <p className="text-[10px] text-slate-400">{program.next_action_due}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* ─── FLOATING ACTION BAR ─── */}
+      {!isCommitted && !isArchived && (
+        <FloatingActionBar
+          activeAction={activeAction}
+          onEmail={() => { closeAll(); setShowEmail(true); setActiveAction("email"); }}
+          onLog={() => { closeAll(); setShowLog(true); setActiveAction("log"); }}
+          onReplied={() => { closeAll(); setShowReplied(true); setActiveAction("replied"); }}
+          onFollowup={() => { closeAll(); setShowFollowup(true); setActiveAction("followup"); }}
+        />
+      )}
+
+      {/* ─── MODALS ─── */}
+      {showStageLog && (
+        <StageLogModal
+          stageKey={showStageLog}
+          currentStage={rail.active}
+          universityName={program.university_name}
+          onConfirm={confirmStageAdvance}
+          onCancel={() => setShowStageLog(null)}
+        />
+      )}
+      {showEmail && (
+        <EmailComposer
+          coaches={coaches}
+          programId={programId}
+          universityName={program.university_name}
+          onSent={() => { closeAll(); refresh(); }}
+          onCancel={closeAll}
+        />
+      )}
+      {showLog && (
+        <LogInteractionForm
+          programId={programId}
+          universityName={program.university_name}
+          onSaved={() => { closeAll(); refresh(); }}
+          onCancel={closeAll}
+        />
+      )}
+      {showReplied && (
+        <MarkAsRepliedModal
+          programId={programId}
+          onSaved={() => { closeAll(); refresh(); }}
+          onCancel={closeAll}
+        />
+      )}
+      {showCoachForm !== null && (
+        <CoachForm
+          initial={showCoachForm.coach_id ? showCoachForm : null}
+          programId={programId}
+          onSave={handleSaveCoach}
+          onCancel={closeAll}
+        />
+      )}
+      {showFollowup && (
+        <FollowUpScheduler
+          program={program}
+          onSaved={() => { closeAll(); refresh(); }}
+          onCancel={closeAll}
+        />
+      )}
     </div>
   );
 }

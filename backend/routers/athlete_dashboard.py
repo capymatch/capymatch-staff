@@ -39,6 +39,7 @@ def _compute_signals_from_interactions(interactions: list) -> dict:
     """Pure computation of signals from a list of interactions."""
     now = datetime.now(timezone.utc)
     outreach_count = 0
+    reply_count = 0
     has_coach_reply = False
     last_outreach_date = None
     last_reply_date = None
@@ -65,6 +66,7 @@ def _compute_signals_from_interactions(interactions: list) -> dict:
 
         if ix_type in ("coach_reply", "email_received"):
             has_coach_reply = True
+            reply_count += 1
             if dt and (last_reply_date is None or dt > last_reply_date):
                 last_reply_date = dt
 
@@ -74,6 +76,7 @@ def _compute_signals_from_interactions(interactions: list) -> dict:
 
     return {
         "outreach_count": outreach_count,
+        "reply_count": reply_count,
         "has_coach_reply": has_coach_reply,
         "last_outreach_date": last_outreach_date.isoformat() if last_outreach_date else None,
         "last_reply_date": last_reply_date.isoformat() if last_reply_date else None,
@@ -105,6 +108,66 @@ async def _batch_signals(tenant_id: str, program_ids: list) -> dict:
 # ─────────────────────────────────────────────────────────────────────────
 # Board grouping (ported from athlete app programs.py)
 # ─────────────────────────────────────────────────────────────────────────
+
+def compute_journey_rail(program: dict) -> dict:
+    """
+    Compute the 6-stage journey rail for a program.
+    Stages: added, outreach, in_conversation, campus_visit, offer, committed
+    Auto-detects stages from signals/interactions. Manual override cascades.
+    """
+    signals = program.get("signals", {})
+    manual_stage = program.get("journey_stage", "")
+
+    LEGACY_MAP = {"outreach_sent": "outreach", "coach_replied": "in_conversation"}
+    if manual_stage in LEGACY_MAP:
+        manual_stage = LEGACY_MAP[manual_stage]
+
+    RAIL_ORDER = ["added", "outreach", "in_conversation", "campus_visit", "offer", "committed"]
+
+    # Auto-detect stages from data
+    stages = {
+        "added": True,
+        "outreach": signals.get("outreach_count", 0) > 0,
+        "in_conversation": signals.get("has_coach_reply", False),
+        "campus_visit": False,
+        "offer": False,
+        "committed": False,
+    }
+
+    # Manual override: cascade fill all stages up to and including the manual stage
+    if manual_stage and manual_stage in RAIL_ORDER:
+        manual_idx = RAIL_ORDER.index(manual_stage)
+        for i in range(manual_idx + 1):
+            stages[RAIL_ORDER[i]] = True
+
+    # Active = last consecutively completed stage
+    active = "added"
+    for s in RAIL_ORDER:
+        if stages[s]:
+            active = s
+        else:
+            break
+
+    line_fill = active
+
+    # Compute pulse — relationship health
+    days = signals.get("days_since_activity")
+    if days is None:
+        pulse = "neutral"
+    elif days <= 7:
+        pulse = "hot"
+    elif days <= 14:
+        pulse = "warm"
+    else:
+        pulse = "cold"
+
+    return {
+        "stages": stages,
+        "active": active,
+        "line_fill": line_fill,
+        "pulse": pulse,
+    }
+
 
 def categorize_program(program: dict) -> str:
     """
@@ -189,6 +252,7 @@ async def list_programs(
         p["college_coach_email"] = primary.get("email", "") if primary else ""
         p["signals"] = signals_map.get(pid, {})
         p["board_group"] = categorize_program(p)
+        p["journey_rail"] = compute_journey_rail(p)
 
     if grouped:
         groups = {
@@ -232,7 +296,91 @@ async def get_program(program_id: str, current_user: dict = get_current_user_dep
     prog["interactions"] = interactions
     prog["signals"] = _compute_signals_from_interactions(interactions)
     prog["board_group"] = categorize_program(prog)
+    prog["journey_rail"] = compute_journey_rail(prog)
     return prog
+
+
+@router.get("/athlete/programs/{program_id}/journey")
+async def get_program_journey(program_id: str, current_user: dict = get_current_user_dep()):
+    """Get timeline of all interactions with a program, formatted for conversation view."""
+    tenant_id = await get_athlete_tenant(current_user)
+    program = await db.programs.find_one(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    )
+    if not program:
+        raise HTTPException(404, "Program not found")
+
+    interactions = await db.interactions.find(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    ).sort("date_time", -1).to_list(200)
+
+    timeline = []
+    for ix in interactions:
+        itype = (ix.get("type") or "").strip()
+        itype_lower = itype.lower().replace(" ", "_")
+
+        type_map = {
+            "email": "email_sent", "email_sent": "email_sent",
+            "email_received": "email_received", "phone_call": "phone_call",
+            "video_call": "video_call", "text_message": "text_message",
+            "coach_reply": "email_received", "camp": "camp",
+            "camp_meeting": "camp", "campus_visit": "campus_visit",
+            "showcase": "showcase", "stage_update": "stage_update",
+            "follow_up": "email_sent",
+        }
+        event_type = type_map.get(itype_lower, "interaction")
+
+        uni_name = ix.get("university_name") or ""
+        is_coach_msg = itype_lower in ("coach_reply", "email_received")
+        if is_coach_msg:
+            title = "Coach replied"
+        elif itype_lower in ("camp", "camp_meeting", "campus_visit", "showcase"):
+            title = f"{uni_name} {itype}".strip() if uni_name else itype
+        elif itype_lower == "stage_update":
+            title = "Stage updated"
+        else:
+            title = f"{itype} logged" if itype else "Interaction"
+
+        timeline.append({
+            "id": ix.get("interaction_id"),
+            "event_type": event_type,
+            "type": itype,
+            "title": title,
+            "date": ix.get("date_time") or ix.get("created_at"),
+            "date_time": ix.get("date_time") or ix.get("created_at"),
+            "content": ix.get("notes") or "",
+            "notes": ix.get("notes") or "",
+            "outcome": ix.get("outcome") or "",
+            "coach_name": ix.get("coach_name", "Coach") if is_coach_msg else "",
+        })
+
+    # Also include linked events
+    events = await db.athlete_events.find(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    ).to_list(100)
+    for e in events:
+        etype = e.get("event_type", "").lower()
+        event_type = "camp"
+        if etype == "visit":
+            event_type = "campus_visit"
+        elif etype == "showcase":
+            event_type = "showcase"
+        timeline.append({
+            "id": e.get("event_id"),
+            "event_type": event_type,
+            "type": e.get("event_type", "Event"),
+            "title": e.get("title", ""),
+            "date": e.get("start_date"),
+            "date_time": e.get("start_date"),
+            "content": e.get("description") or "",
+            "notes": e.get("description") or "",
+            "outcome": "",
+            "coach_name": "",
+        })
+
+    # Sort by date descending
+    timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
+    return {"timeline": timeline}
 
 
 @router.post("/athlete/programs")
