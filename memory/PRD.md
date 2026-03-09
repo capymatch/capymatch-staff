@@ -16,134 +16,122 @@ Unify `capymatch-staff` (director/coach) and `capymatch` (athlete/parent) into a
 ### Phase 1: Unified Foundation — COMPLETE
 Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, role-based routing
 
-### Phase A: Core Pipeline + Real Dashboard — COMPLETE (2026-03-09)
+### Phase A: Core Pipeline + Real Dashboard — COMPLETE
 - Programs CRUD with 5-stage board grouping, interaction signals, auto-follow-ups
 - College Coaches CRUD, Interactions CRUD, Events CRUD
 - Real Athlete Dashboard (Greeting, Pulse, Today's Actions, Spotlight, Activity, Events)
-- **Tested: 27/27 pass (iteration_50)**
 
-### Phase B: Profile & Calendar — COMPLETE (2026-03-09)
+### Phase B: Profile & Calendar — COMPLETE
+- Athlete Profile Editor, Public Profile Page, Calendar
 
-#### B.1 — Athlete Profile Editor
-- **Backend**: `routers/athlete_profile.py`
-- **Frontend**: `pages/athlete/ProfilePage.js`
-  - Completeness ring, 5 collapsible sections, auto-save, photo upload, share card
+### Phase C: School Knowledge Base — COMPLETE
+- Backend (`/api/athlete/knowledge_base`) + seeder, Frontend search/detail pages
 
-#### B.2 — Public Profile Page
-- **Backend**: `GET /api/public/athlete/{tenant_id}` — no auth
-- **Frontend**: `pages/public/AthletePublicProfile.js`
-  - Route: `/s/:shortId`
-
-#### B.3 — Calendar
-- **Frontend**: `pages/athlete/CalendarPage.js`
-  - Route: `/calendar`
-
-**Phase B Tested: 10/10 backend, 9/9 frontend — 100% pass (iteration_51)**
-
-### Phase C: School Knowledge Base — COMPLETE (2026-03-09)
-- **Backend**: `routers/athlete_knowledge.py` + `seeders/seed_kb.py`
-- **Frontend**: `pages/athlete/SchoolsPage.js`, `pages/athlete/SchoolDetailPage.js`
-- Routes: `/schools`, `/schools/:domain`
-
-**Phase C Tested: 20/20 backend, 8/8 frontend — 100% pass (iteration_52)**
-
-### Pipeline Page — REBUILT (2026-03-09)
-- **Frontend**: `pages/athlete/PipelinePage.js` — list-based pipeline matching original capymatch design
-- Route: `/pipeline`
-- Hero Card, Filter Chips, Collapsible Sections, School Row Cards, Committed/Archived sections
-
-**Pipeline Rebuild Tested: 14/14 frontend — 100% pass (iteration_55)**
+### Pipeline Page — REBUILT
+- List-based pipeline matching original capymatch design
 
 ### Journey Page — REBUILT (2026-03-09)
-- **Frontend**: `pages/athlete/JourneyPage.js` — completely rebuilt to faithfully replicate original capymatch
-- Route: `/pipeline/:programId`
-- **14 journey components** in `/components/journey/`:
-  - `ProgressRail.js` — Interactive 6-stage rail (Added, Outreach, Talking, Visit, Offer, Committed) with animated fill, pulse ring, clickable stage advancement
-  - `PulseIndicator.js` — Animated dot showing Hot/Warm/Neutral/Cold relationship health
-  - `GettingStartedChecklist.js` — 4-step onboarding checklist for new schools (add school, profile, add coach, send email)
-  - `CommittedHero.js` — Celebration animation with confetti for committed schools
-  - `CelebrationHero.js` — "Coach is interested!" hero when coach replied, with action buttons
-  - `NextStepCard.js` — Rule-based "What's Next" automation card based on latest interaction type (camp, visit, call, email, etc.)
-  - `ConversationBubble.js` — Chat-style timeline (right=You, left=Coach, center=milestones)
-  - `FloatingActionBar.js` — Sticky bottom bar with Email/Log/Replied/Follow-up buttons
-  - `StageLogModal.js` — Modal for logging notes when advancing a stage
-  - `LogInteractionForm.js` — Full interaction logging form (type, outcome, date, notes)
-  - `MarkAsRepliedModal.js` — Log coach reply with description
-  - `CoachForm.js` — Add/edit coaching staff (name, role, email, phone)
-  - `FollowUpScheduler.js` — Schedule follow-up date and action
-  - `EmailComposer.js` — Email composition (MOCKED: logs to timeline, Gmail integration coming)
-  - `constants.js` — RAIL_STAGES, PULSE_CONFIG, CONV_CONFIG, NEXT_STEP_RULES, ACTION_BUTTONS
-  - `index.js` — Barrel exports
-- **Backend additions**:
-  - `compute_journey_rail()` — Computes 6-stage rail from signals + manual overrides with cascade fill
-  - `GET /api/athlete/programs/:id/journey` — Returns formatted timeline with conversation events
-  - `reply_count` added to signals computation
-- **Features**:
-  - Follow-up overdue/upcoming alerts at top
-  - Contextual heroes: Getting Started (new school), Celebration (coach replied), Committed (final)
-  - Coaching staff sidebar with full CRUD
-  - Engagement stats sidebar (outreach, replies, days since activity, total interactions)
-  - Archive/Reactivate toggle
-  - School Intelligence link to KB
+- 14 new journey components in `/components/journey/`
+- Interactive 6-stage progress rail, pulse indicator, contextual heroes, automation cards
+- Conversation timeline, floating action bar, modals for all actions
+- **Tested: 25/25 backend, 20/20 frontend — 100% pass (iteration_56)**
 
-**Journey Rebuild Tested: 25/25 backend, 20/20 frontend — 100% pass (iteration_56)**
+### Athlete Onboarding Quiz — COMPLETE
+- 6-step quiz with matching algorithm, forced redirect for new athletes
 
-### Athlete Onboarding Quiz — COMPLETE (2026-03-09)
-- **Backend**: `routers/athlete_onboarding.py`
-- **Frontend**: `pages/athlete/OnboardingQuiz.js`
-- Route: `/onboarding` (full-screen, forced for new athletes)
-
-**Onboarding Tested: 13/13 backend, all frontend — 100% pass (iteration_54)**
+### Settings Page + Gmail Integration — COMPLETE (2026-03-09)
+- **Frontend**: `pages/athlete/SettingsPage.js` — full settings with 6 sections:
+  - Personal Information (name/email editing)
+  - Gmail Integration (Connect/Disconnect, Import from Gmail)
+  - Notifications (Follow-up Reminders, Email Notifications toggles)
+  - Appearance (Dark/Light/System theme)
+  - Change Password (bcrypt verification)
+  - Data & Privacy (Inbound Scan, Export Data, Delete Account)
+- **Frontend**: `components/GmailConsentModal.js` — Privacy disclosure before Gmail connect
+- **Frontend**: `components/GmailImportModal.js` — 4-stage import flow:
+  1. Consent → 2. Scanning (polls progress) → 3. Preview/Select Schools → 4. Done
+- **Backend**: `routers/athlete_settings.py` — Settings CRUD, password change, data export, account deletion
+- **Backend**: `routers/athlete_gmail.py` — Full Gmail OAuth flow:
+  - `GET /athlete/gmail/connect` → Returns Google OAuth auth_url
+  - `GET /gmail/callback` → Handles OAuth callback, stores encrypted tokens
+  - `GET /athlete/gmail/status` → Check connection status
+  - `POST /athlete/gmail/disconnect` → Revoke and remove tokens
+  - `POST /athlete/gmail/send` → Send email via Gmail (fallback: log to timeline)
+  - `POST /athlete/gmail/import-history` → Start background inbox scan
+  - `GET /athlete/gmail/import-history/{run_id}/status` → Poll scan progress
+  - `POST /athlete/gmail/import-history/{run_id}/confirm` → Create programs from selected schools
+- **Backend**: `services/gmail_import.py` — Background Gmail scanning service:
+  - Scans 6 months of email headers (subject + sender only, never body)
+  - Classifies messages by .edu domain mapping
+  - Aggregates per-school: outbound/inbound counts, threads, subjects
+  - Assigns stages (added/outreach/in_conversation) and follow-up dates
+  - Filters out admissions/newsletter noise with negative keyword detection
+- **Backend**: `services/domain_mapper.py` — Maps email domains to schools via KB + aliases
+- **Backend**: `encryption.py` — Fernet encryption for Gmail tokens
+- **Updated**: `components/journey/EmailComposer.js` — Now uses Gmail send when connected
+- **Tested: 28/28 backend, all frontend sections — 100% pass (iteration_57)**
 
 ---
 
 ## Routes (cumulative)
 
 ### Athlete Backend Routes
-| Method | Path | Purpose | Phase |
-|---|---|---|---|
-| GET | /api/athlete/dashboard | Aggregated dashboard | A |
-| GET/POST/PUT/DELETE | /api/athlete/programs | Programs CRUD | A |
-| GET | /api/athlete/programs/:id | Program detail + journey_rail | A |
-| GET | /api/athlete/programs/:id/journey | Journey timeline | Journey |
-| GET/POST/PUT/DELETE | /api/athlete/college-coaches | College coaches | A |
-| GET/POST | /api/athlete/interactions | Interactions | A |
-| POST | /api/athlete/programs/:id/mark-replied | Log reply | A |
-| GET | /api/athlete/follow-ups | Overdue follow-ups | A |
-| POST | /api/athlete/follow-ups/:id/mark-sent | Reschedule | A |
-| GET/POST/PUT/DELETE | /api/athlete/events | Events CRUD | A |
-| GET/PUT | /api/athlete/profile | Profile read/write | B |
-| POST | /api/athlete/profile/photo | Photo upload | B |
-| GET | /api/athlete/share-link | Public link | B |
-| GET | /api/public/athlete/:tenantId | Public profile | B |
-| GET | /api/athlete/me | Self profile | 1 |
-| GET | /api/athlete/knowledge/search | KB search with filters | C |
-| GET | /api/athlete/knowledge/:domain | School detail | C |
-| POST | /api/athlete/knowledge/:domain/add-to-pipeline | Add school to pipeline | C |
-| GET | /api/athlete/onboarding-status | Check quiz completion | Onboarding |
-| POST | /api/athlete/recruiting-profile | Save quiz answers | Onboarding |
-| GET | /api/athlete/suggested-schools | Matched school suggestions | Onboarding |
+| Method | Path | Purpose |
+|---|---|---|
+| GET | /api/athlete/dashboard | Dashboard |
+| GET/POST/PUT/DELETE | /api/athlete/programs | Programs CRUD |
+| GET | /api/athlete/programs/:id | Program detail + journey_rail |
+| GET | /api/athlete/programs/:id/journey | Journey timeline |
+| GET/POST/PUT/DELETE | /api/athlete/college-coaches | College coaches |
+| GET/POST | /api/athlete/interactions | Interactions |
+| POST | /api/athlete/programs/:id/mark-replied | Log reply |
+| GET | /api/athlete/follow-ups | Overdue follow-ups |
+| POST | /api/athlete/follow-ups/:id/mark-sent | Reschedule |
+| GET/POST/PUT/DELETE | /api/athlete/events | Events CRUD |
+| GET/PUT | /api/athlete/profile | Profile read/write |
+| POST | /api/athlete/profile/photo | Photo upload |
+| GET | /api/athlete/share-link | Public link |
+| GET | /api/public/athlete/:tenantId | Public profile |
+| GET | /api/athlete/knowledge/search | KB search |
+| GET | /api/athlete/knowledge/:domain | School detail |
+| POST | /api/athlete/knowledge/:domain/add-to-pipeline | Add school |
+| GET | /api/athlete/onboarding-status | Quiz status |
+| POST | /api/athlete/recruiting-profile | Save quiz |
+| GET | /api/athlete/suggested-schools | Matched schools |
+| GET/PUT | /api/athlete/settings | Settings CRUD |
+| POST | /api/athlete/settings/change-password | Password change |
+| GET | /api/athlete/settings/export-data | Data export |
+| DELETE | /api/athlete/settings/delete-account | Account deletion |
+| GET | /api/athlete/gmail/connect | Gmail OAuth start |
+| GET | /api/gmail/callback | OAuth callback |
+| GET | /api/athlete/gmail/status | Gmail status |
+| POST | /api/athlete/gmail/disconnect | Disconnect Gmail |
+| POST | /api/athlete/gmail/send | Send via Gmail |
+| POST | /api/athlete/gmail/import-history | Start import |
+| GET | /api/athlete/gmail/import-history/:id/status | Import progress |
+| POST | /api/athlete/gmail/import-history/:id/confirm | Confirm import |
 
 ### Frontend Routes (Athlete)
-| Route | Page | Phase |
-|---|---|---|
-| /onboarding | OnboardingQuiz (full-screen) | Onboarding |
-| /board | AthleteDashboard | A |
-| /pipeline | PipelinePage (list-based) | A |
-| /pipeline/:programId | JourneyPage (rebuilt) | Journey |
-| /schools | SchoolsPage (KB browse) | C |
-| /schools/:domain | SchoolDetailPage | C |
-| /calendar | CalendarPage | B |
-| /athlete-profile | ProfilePage | B |
-| /s/:shortId | PublicProfilePage | B |
+| Route | Page |
+|---|---|
+| /onboarding | OnboardingQuiz |
+| /board | AthleteDashboard |
+| /pipeline | PipelinePage |
+| /pipeline/:programId | JourneyPage |
+| /schools | SchoolsPage |
+| /schools/:domain | SchoolDetailPage |
+| /calendar | CalendarPage |
+| /athlete-profile | ProfilePage |
+| /athlete-settings | SettingsPage |
+| /s/:shortId | PublicProfilePage |
 
 ---
 
 ## Upcoming Tasks
 
-### P1 — Pipeline & Communication
-- Gmail integration for real email sending
-- AI-powered email drafting
+### P1 — Remaining Migration Items
+- AI-powered email drafting from Journey page (requires LLM integration)
+- Inbox page (email threads view when Gmail connected)
 
 ### P2 — Technical Debt
 - Normalize camelCase to snake_case in DB fields
@@ -155,12 +143,10 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 
 ## Key Credentials
 - Director: director@capymatch.com / director123
-- Coach: coach.williams@capymatch.com / coach123
 - Athlete: emma.chen@athlete.capymatch.com / password123
-- Public profile: /s/9ec4167f-0874-4502-803f-6647b8f4cc26
+- Gmail OAuth: Stored in app_config collection (key: gmail_oauth)
 
 ## Key Documents
 - `/app/UNIFICATION_PLAN.md`
-- `/app/ATHLETE_APP_AUDIT.md`
 - `/app/ATHLETE_MIGRATION_PLAN.md`
 - `/app/memory/PRD.md`
