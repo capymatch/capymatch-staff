@@ -35,15 +35,18 @@ export function ConversationBubble({ event }) {
   }
 
   const isRight = cfg.side === "right";
+  const isAiInsight = evtType === "ai_gmail_insight";
   return (
     <div className={`flex ${isRight ? "justify-end" : "justify-start"} my-1`} data-testid={`conv-bubble-${isRight ? "right" : "left"}`}>
       <div className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 border relative ${
-        isRight
-          ? "rounded-br-md bg-teal-800/[0.10] border-teal-700/25"
-          : "rounded-bl-md bg-teal-700/[0.08] border-slate-500/20"
-      }`}>
-        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isRight ? "text-teal-700" : "text-slate-500"}`}>
-          {isRight ? "You" : (event.coach_name || "Coach")}
+        isAiInsight
+          ? "rounded-bl-md border-violet-500/25"
+          : isRight
+            ? "rounded-br-md bg-teal-800/[0.10] border-teal-700/25"
+            : "rounded-bl-md bg-teal-700/[0.08] border-slate-500/20"
+      }`} style={isAiInsight ? { background: "rgba(139,92,246,0.08)" } : undefined}>
+        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isAiInsight ? "text-violet-500" : isRight ? "text-teal-700" : "text-slate-500"}`}>
+          {isAiInsight ? "AI Intelligence" : isRight ? "You" : (event.coach_name || "Coach")}
         </p>
         {displayText && (
           <div className="text-[13px] leading-relaxed text-slate-300">

@@ -343,7 +343,7 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
 /* ═══════════════════════════════════════════ */
 /* ── School Card (compact row) ──            */
 /* ═══════════════════════════════════════════ */
-function PipelineSchoolCard({ program: p, matchScore, navigate }) {
+function PipelineSchoolCard({ program: p, matchScore, gmailSignal, navigate }) {
   const temp = getTemperature(p);
   const due = getDueInfo(p);
   const next = getNextAction(p);
@@ -355,6 +355,8 @@ function PipelineSchoolCard({ program: p, matchScore, navigate }) {
   const confidence = matchScore?.confidence;
   const confLabel = CONFIDENCE_LABELS[confidence] || "";
   const ms = matchScore?.match_score;
+
+  const SIGNAL_DOT_COLORS = { critical: "#dc2626", high: "#f59e0b", medium: "#3b82f6", low: "#9ca3af" };
 
   const tempStyles = {
     hot: { background: "#fef2f2", color: "#dc2626" },
@@ -381,7 +383,20 @@ function PipelineSchoolCard({ program: p, matchScore, navigate }) {
     >
       {/* Col 1: School identity */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 0%", marginRight: "auto" }}>
-        <UniversityLogo domain={p.domain} name={p.university_name} size={38} className="rounded-[10px] flex-shrink-0" />
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <UniversityLogo domain={p.domain} name={p.university_name} size={38} className="rounded-[10px]" />
+          {gmailSignal && (
+            <div
+              data-testid={`signal-dot-${p.program_id}`}
+              title={gmailSignal.signal_label}
+              style={{
+                position: "absolute", top: -2, right: -2, width: 8, height: 8,
+                borderRadius: "50%", border: "2px solid var(--cm-surface)",
+                backgroundColor: SIGNAL_DOT_COLORS[gmailSignal.urgency] || SIGNAL_DOT_COLORS.low,
+              }}
+            />
+          )}
+        </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
           <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
@@ -624,6 +639,7 @@ export default function PipelinePage() {
   const [activeSection, setActiveSection] = useState(null);
   const [collapsedSections, setCollapsedSections] = useState({ archived: true });
   const [matchScores, setMatchScores] = useState({});
+  const [gmailSignals, setGmailSignals] = useState({});
   const navigate = useNavigate();
 
   const fetchPrograms = useCallback(async () => {
@@ -645,6 +661,13 @@ export default function PipelinePage() {
       const byId = {};
       (res.data?.scores || []).forEach(s => { byId[s.program_id] = s; });
       setMatchScores(byId);
+    }).catch(() => {});
+  }, [allPrograms.length]);
+
+  // Fetch gmail intelligence signals
+  useEffect(() => {
+    axios.get(`${API}/athlete/gmail/intelligence/signals`).then(res => {
+      setGmailSignals(res.data?.signals || {});
     }).catch(() => {});
   }, [allPrograms.length]);
 
@@ -738,7 +761,7 @@ export default function PipelinePage() {
                   isCommittedSection ? (
                     <CommittedSchoolCard key={p.program_id} program={p} navigate={navigate} />
                   ) : (
-                    <PipelineSchoolCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} />
+                    <PipelineSchoolCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} gmailSignal={gmailSignals[p.program_id]} navigate={navigate} />
                   )
                 )}
               </>

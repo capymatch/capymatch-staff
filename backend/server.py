@@ -38,6 +38,7 @@ from routers.athlete_profile import router as athlete_profile_router
 from routers.athlete_knowledge import router as athlete_knowledge_router
 from routers.athlete_onboarding import router as athlete_onboarding_router
 from routers.athlete_gmail import router as athlete_gmail_router
+from routers.athlete_gmail_intelligence import router as athlete_gmail_intel_router
 from routers.athlete_settings import router as athlete_settings_router
 from routers.admin_kb_jobs import router as admin_kb_jobs_router
 from routers.ai_features import router as ai_features_router
@@ -110,6 +111,7 @@ api_router.include_router(athlete_profile_router)
 api_router.include_router(athlete_knowledge_router)
 api_router.include_router(athlete_onboarding_router)
 api_router.include_router(athlete_gmail_router)
+api_router.include_router(athlete_gmail_intel_router)
 api_router.include_router(athlete_settings_router)
 api_router.include_router(admin_kb_jobs_router)
 api_router.include_router(ai_features_router)

@@ -7,7 +7,7 @@ import {
   ChevronRight, Target, MessageCircle, Mail, Clock,
   Zap, Send, Sparkles, CheckCircle,
   ArrowRight, Calendar, Activity, ChevronDown, ChevronUp,
-  Eye, Flame
+  Eye, Flame, Brain, AlertCircle, CheckCircle2, X, ArrowUpRight
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -177,6 +177,200 @@ function EventCard({ event, onClick }) {
   );
 }
 
+/* ── Inbox Intelligence Widget ── */
+const URGENCY_STYLES = {
+  critical: { bg: "rgba(239,68,68,0.12)", color: "#dc2626", dot: "#dc2626", label: "Urgent" },
+  high: { bg: "rgba(245,158,11,0.12)", color: "#d97706", dot: "#f59e0b", label: "Important" },
+  medium: { bg: "rgba(59,130,246,0.12)", color: "#2563eb", dot: "#3b82f6", label: "Review" },
+  low: { bg: "var(--cm-surface-2)", color: "var(--cm-text-3)", dot: "var(--cm-text-4)", label: "Info" },
+};
+
+const SIGNAL_ICON_COLORS = {
+  "Coach Interest": "#10b981",
+  "Info Requested": "#f59e0b",
+  "Camp Invite": "#06b6d4",
+  "Visit Invite": "#8b5cf6",
+  "Scholarship Talk": "#d97706",
+  "Offer": "#dc2626",
+  "Reply Needed": "#ef4444",
+  "Going Cold": "#6b7280",
+  "Not a Fit": "#9ca3af",
+  "Info Only": "#a1a1aa",
+};
+
+const CONFIDENCE_BADGE = {
+  high: null,
+  medium: { label: "Medium confidence", color: "var(--cm-text-3)" },
+  low: { label: "Low confidence", color: "#d97706" },
+};
+
+function InsightCard({ insight, onConfirm, onDismiss, confirming }) {
+  const urg = URGENCY_STYLES[insight.urgency] || URGENCY_STYLES.low;
+  const sigColor = SIGNAL_ICON_COLORS[insight.signal_label] || "#6b7280";
+  const conf = CONFIDENCE_BADGE[insight.confidence];
+  const isNoAction = insight.suggested_action?.type === "no_action";
+
+  return (
+    <div
+      className="px-5 py-4 border-b last:border-b-0 transition-colors"
+      style={{ borderColor: "var(--cm-border)" }}
+      onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
+      onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+      data-testid={`insight-${insight.insight_id}`}
+    >
+      <div className="flex items-start gap-3">
+        {/* Urgency dot */}
+        <div className="flex flex-col items-center pt-1.5 flex-shrink-0">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: urg.dot }} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-[13px] font-bold" style={{ color: "var(--cm-text)" }}>
+              {insight.university_name}
+            </span>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: `${sigColor}18`, color: sigColor }}>
+              {insight.signal_label}
+            </span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: urg.bg, color: urg.color }}>
+              {urg.label}
+            </span>
+            {conf && (
+              <span className="text-[8px] font-semibold italic" style={{ color: conf.color }}>
+                {conf.label}
+              </span>
+            )}
+          </div>
+
+          {insight.coach_name && (
+            <div className="text-[10px] font-medium mb-1" style={{ color: "var(--cm-text-3)" }}>
+              From: {insight.coach_name} {insight.coach_email ? `(${insight.coach_email})` : ""}
+            </div>
+          )}
+
+          <p className="text-[11px] leading-relaxed mb-2" style={{ color: "var(--cm-text-2)" }}>
+            {insight.explanation}
+          </p>
+
+          {/* Suggested action */}
+          {insight.suggested_action && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <ArrowUpRight className="w-3 h-3" style={{ color: isNoAction ? "var(--cm-text-3)" : "#1a8a80" }} />
+              <span className="text-[11px] font-semibold" style={{ color: isNoAction ? "var(--cm-text-3)" : "#1a8a80" }}>
+                {insight.suggested_action.label}
+              </span>
+              {insight.suggested_action.detail && (
+                <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+                  — {insight.suggested_action.detail}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onConfirm(insight.insight_id)}
+              disabled={confirming === insight.insight_id}
+              className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all inline-flex items-center gap-1"
+              style={{ background: "rgba(26,138,128,0.12)", color: "#1a8a80", border: "1px solid rgba(26,138,128,0.2)" }}
+              data-testid={`confirm-insight-${insight.insight_id}`}
+            >
+              {confirming === insight.insight_id ? (
+                <span className="w-3 h-3 border border-[#1a8a80] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-3 h-3" />
+              )}
+              {isNoAction ? "Acknowledge" : "Confirm"}
+            </button>
+            <button
+              onClick={() => onDismiss(insight.insight_id)}
+              className="text-[10px] font-semibold px-3 py-1.5 rounded-lg transition-all inline-flex items-center gap-1"
+              style={{ color: "var(--cm-text-3)", border: "1px solid var(--cm-border)" }}
+              data-testid={`dismiss-insight-${insight.insight_id}`}
+            >
+              <X className="w-3 h-3" /> Dismiss
+            </button>
+            {insight.suggested_stage && !isNoAction && (
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded" style={{ background: "rgba(139,92,246,0.1)", color: "#7c3aed" }}>
+                Suggests: {insight.suggested_stage.replace(/_/g, " ")}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InboxIntelligenceWidget({ insights, onConfirm, onDismiss, confirming, scanStatus, onViewAll, navigate }) {
+  const [expanded, setExpanded] = useState(false);
+  const displayed = expanded ? insights : insights.slice(0, 3);
+  const hasPending = insights.length > 0;
+  const isScanning = scanStatus?.status === "scanning";
+
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="inbox-intelligence">
+      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(139,92,246,0.12)" }}>
+            <Brain className="w-4 h-4" style={{ color: "#8b5cf6" }} strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Inbox Intelligence</h3>
+            <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+              {isScanning ? "Scanning emails..." : hasPending ? `${insights.length} signal${insights.length !== 1 ? "s" : ""} detected` : "No new signals"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isScanning && <span className="w-4 h-4 border-2 border-[#8b5cf6] border-t-transparent rounded-full animate-spin" />}
+          {hasPending && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: "rgba(139,92,246,0.15)", color: "#8b5cf6" }}>
+              {insights.length}
+            </span>
+          )}
+          <button onClick={() => navigate("/inbox")} className="text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ color: "#1a8a80" }}>
+            Inbox <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
+      {hasPending ? (
+        <>
+          {displayed.map(i => (
+            <InsightCard key={i.insight_id} insight={i} onConfirm={onConfirm} onDismiss={onDismiss} confirming={confirming} />
+          ))}
+          {insights.length > 3 && (
+            <div className="px-5 py-3 border-t text-center" style={{ borderColor: "var(--cm-border)" }}>
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="text-[11px] font-semibold inline-flex items-center gap-1 transition-opacity hover:opacity-80"
+                style={{ color: "#8b5cf6" }}
+                data-testid="intel-view-more"
+              >
+                {expanded ? "Show less" : `View all ${insights.length} signals`}
+                {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="text-center py-8 px-5">
+          <Brain className="w-7 h-7 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+          <p className="text-xs" style={{ color: "var(--cm-text-2)" }}>
+            {isScanning ? "Analyzing your emails for recruiting signals..." : "No recruiting signals detected yet"}
+          </p>
+          <p className="text-[11px] mt-1" style={{ color: "var(--cm-text-3)" }}>
+            {isScanning ? "This may take a moment" : "Connect Gmail and email coaches to get started"}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── WhosWatching (empty state for now) ── */
 function WhosWatching() {
   return (
@@ -226,6 +420,16 @@ export default function AthleteDashboard() {
   const [loading, setLoading] = useState(true);
   const [gmailConnected, setGmailConnected] = useState(false);
   const [spotlightExpanded, setSpotlightExpanded] = useState(false);
+  const [insights, setInsights] = useState([]);
+  const [scanStatus, setScanStatus] = useState(null);
+  const [confirming, setConfirming] = useState(null);
+
+  const fetchInsights = async () => {
+    try {
+      const res = await axios.get(`${API}/athlete/gmail/intelligence/insights?status=pending`);
+      setInsights(res.data?.insights || []);
+    } catch {}
+  };
 
   useEffect(() => {
     Promise.all([
@@ -234,17 +438,67 @@ export default function AthleteDashboard() {
       axios.get(`${API}/athlete/interactions`).catch(() => ({ data: [] })),
       axios.get(`${API}/athlete/profile`).catch(() => ({ data: {} })),
       axios.get(`${API}/athlete/gmail/status`).catch(() => ({ data: { connected: false } })),
+      axios.get(`${API}/athlete/gmail/intelligence/insights?status=pending`).catch(() => ({ data: { insights: [] } })),
+      axios.get(`${API}/athlete/gmail/intelligence/status`).catch(() => ({ data: {} })),
     ])
-      .then(([progRes, evtRes, intRes, profRes, gmailRes]) => {
+      .then(([progRes, evtRes, intRes, profRes, gmailRes, insightRes, scanRes]) => {
         setPrograms(progRes.data || []);
         setEvents(Array.isArray(evtRes.data) ? evtRes.data : []);
         setInteractions(Array.isArray(intRes.data) ? intRes.data : []);
         setProfile(profRes.data);
         setGmailConnected(gmailRes.data?.connected || false);
+        setInsights(insightRes.data?.insights || []);
+        setScanStatus(scanRes.data || null);
       })
       .catch(() => toast.error("Failed to load dashboard"))
       .finally(() => setLoading(false));
   }, []);
+
+  // Trigger background scan on dashboard load
+  useEffect(() => {
+    if (gmailConnected) {
+      axios.post(`${API}/athlete/gmail/intelligence/scan`)
+        .then(res => {
+          if (res.data?.triggered) {
+            setScanStatus({ status: "scanning" });
+            // Poll for completion
+            const poll = setInterval(async () => {
+              try {
+                const statusRes = await axios.get(`${API}/athlete/gmail/intelligence/status`);
+                if (statusRes.data?.status !== "scanning") {
+                  clearInterval(poll);
+                  setScanStatus(statusRes.data);
+                  fetchInsights();
+                }
+              } catch { clearInterval(poll); }
+            }, 5000);
+            // Stop polling after 2 min
+            setTimeout(() => clearInterval(poll), 120000);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [gmailConnected]);
+
+  const handleConfirmInsight = async (insightId) => {
+    setConfirming(insightId);
+    try {
+      await axios.post(`${API}/athlete/gmail/intelligence/insights/${insightId}/confirm`, { apply_stage: false, apply_interaction: true });
+      setInsights(prev => prev.filter(i => i.insight_id !== insightId));
+      toast.success("Insight confirmed");
+    } catch (err) {
+      toast.error("Failed to confirm");
+    } finally { setConfirming(null); }
+  };
+
+  const handleDismissInsight = async (insightId) => {
+    try {
+      await axios.post(`${API}/athlete/gmail/intelligence/insights/${insightId}/dismiss`);
+      setInsights(prev => prev.filter(i => i.insight_id !== insightId));
+    } catch {
+      toast.error("Failed to dismiss");
+    }
+  };
 
   if (loading) {
     return (
@@ -387,6 +641,16 @@ export default function AthleteDashboard() {
           <PulseStat icon={Clock} iconBg="rgba(245,158,11,0.15)" iconColor="#fbbf24" value={awaitingReply.length} label="Awaiting Reply" sub={awaitingReply.length > 0 ? `Oldest: ${getDaysAgo(awaitingReply[0]?.created_at?.split("T")[0] || "")}` : "\u2014"} />
         </div>
       </div>
+
+      {/* ═══ Inbox Intelligence (above Today's Actions) ═══ */}
+      <InboxIntelligenceWidget
+        insights={insights}
+        onConfirm={handleConfirmInsight}
+        onDismiss={handleDismissInsight}
+        confirming={confirming}
+        scanStatus={scanStatus}
+        navigate={navigate}
+      />
 
       {/* ═══ Section 2: Today's Actions ═══ */}
       <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="todays-actions">

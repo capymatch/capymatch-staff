@@ -175,6 +175,7 @@ export default function InboxPage() {
   const [showCompose, setShowCompose] = useState(false);
   const [replyContext, setReplyContext] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [threadInsights, setThreadInsights] = useState({});
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -207,6 +208,19 @@ export default function InboxPage() {
   useEffect(() => {
     checkGmail().then(connected => { if (connected) fetchEmails(); else setLoading(false); });
   }, []);
+
+  // Fetch gmail intelligence insights indexed by thread_id
+  useEffect(() => {
+    axios.get(`${API}/athlete/gmail/intelligence/insights`, { headers })
+      .then(res => {
+        const byThread = {};
+        (res.data?.insights || []).forEach(i => {
+          if (i.thread_id && !byThread[i.thread_id]) byThread[i.thread_id] = i;
+        });
+        setThreadInsights(byThread);
+      })
+      .catch(() => {});
+  }, [emails.length]);
 
   const openThread = async (threadId) => {
     setLoadingThread(true);
@@ -354,6 +368,20 @@ export default function InboxPage() {
                   {em.is_known_coach && (
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#1a8a80]/15 text-[#1a8a80]">Coach</span>
                   )}
+                  {threadInsights[em.thread_id] && (() => {
+                    const ti = threadInsights[em.thread_id];
+                    const SIGNAL_COLORS = {
+                      "Coach Interest": "#10b981", "Info Requested": "#f59e0b", "Camp Invite": "#06b6d4",
+                      "Visit Invite": "#8b5cf6", "Scholarship Talk": "#d97706", "Offer": "#dc2626",
+                      "Reply Needed": "#ef4444", "Going Cold": "#6b7280", "Not a Fit": "#9ca3af", "Info Only": "#a1a1aa",
+                    };
+                    const c = SIGNAL_COLORS[ti.signal_label] || "#6b7280";
+                    return (
+                      <span data-testid={`inbox-signal-${em.thread_id}`} className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: `${c}18`, color: c }}>
+                        {ti.signal_label}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <div className={`text-[12px] truncate ${em.is_unread ? "font-semibold text-[var(--cm-text)]/80" : "text-[var(--cm-text)]/50"}`}>
                   {em.subject}

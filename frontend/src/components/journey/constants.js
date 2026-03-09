@@ -32,6 +32,7 @@ export const CONV_CONFIG = {
   camp_meeting:   { label: "Camp/Clinic", color: "orange", side: "center" },
   showcase:       { label: "Showcase", color: "amber", side: "center" },
   stage_update:   { label: "Stage Update", color: "slate", side: "center" },
+  ai_gmail_insight: { label: "AI Detected", color: "violet", side: "left" },
   interaction:    { label: "Interaction", color: "slate", side: "right" },
 };
 
