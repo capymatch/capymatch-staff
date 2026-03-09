@@ -23,6 +23,9 @@ import RosterPage from "./pages/RosterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
 import AthleteDashboard from "./pages/AthleteDashboard";
+import AthleteProfilePage from "./pages/athlete/ProfilePage";
+import AthleteCalendarPage from "./pages/athlete/CalendarPage";
+import AthletePublicProfile from "./pages/public/AthletePublicProfile";
 
 function getHomeRoute(role) {
   if (role === "director" || role === "coach") return "/mission-control";
@@ -87,11 +90,14 @@ function AppRoutes() {
       <Route path="/board" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteDashboard /></ProtectedRoute>} />
       <Route path="/pipeline" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
       <Route path="/schools" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
-      <Route path="/calendar" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
+      <Route path="/calendar" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteCalendarPage /></ProtectedRoute>} />
       <Route path="/inbox" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
-      <Route path="/athlete-profile" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
+      <Route path="/athlete-profile" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteProfilePage /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
       <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
+
+      {/* ── Public routes (no auth) ── */}
+      <Route path="/s/:shortId" element={<AthletePublicProfile />} />
 
       <Route path="*" element={<Navigate to={home} replace />} />
     </Routes>
