@@ -262,10 +262,10 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
             </div>
           )}
           <button onClick={handleCTA} style={{
-            padding: "16px 28px", borderRadius: 12, border: "none",
+            padding: "10px 28px", borderRadius: 10, border: "none",
             background: action.cta.style === "warn" ? "#f59e0b" : "#0d9488",
-            color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex",
-            alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit", flexShrink: 0,
+            color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "inherit", flexShrink: 0,
             minWidth: 140, transition: "all 0.2s",
           }} data-testid="hero-cta-btn">
             <Send style={{ width: 15, height: 15 }} />
@@ -274,15 +274,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
         </div>
       </div>
 
-      {/* Footer: Next preview */}
-      {total > 1 && idx + 1 < total && (
-        <div style={{ padding: "12px 28px 18px", position: "relative", zIndex: 1 }}>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.22)" }}>
-            Next: <span style={{ color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>{actions[(idx + 1) % total]?.title}</span>
-          </div>
-        </div>
-      )}
-      {(!total || total <= 1 || idx + 1 >= total) && <div style={{ height: 18 }} />}
+      <div style={{ height: 18 }} />
     </div>
   );
 }
