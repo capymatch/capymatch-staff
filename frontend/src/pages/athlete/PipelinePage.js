@@ -317,30 +317,38 @@ function UpcomingEventsSection({ events, navigate }) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── CRM-style Kanban Board                 ── */
+/* ── Pro Kanban Board                       ── */
 /* ═══════════════════════════════════════════ */
+const DIV_TAG_STYLES = {
+  D1: { bg: "#e0f2fe", color: "#0369a1", darkBg: "rgba(14,165,233,0.15)", darkColor: "#38bdf8" },
+  D2: { bg: "#dcfce7", color: "#15803d", darkBg: "rgba(34,197,94,0.15)", darkColor: "#4ade80" },
+  D3: { bg: "#fef3c7", color: "#92400e", darkBg: "rgba(251,191,36,0.15)", darkColor: "#fbbf24" },
+};
+
 function KanbanCard({ program: p, matchScore, navigate }) {
   const ms = matchScore?.match_score;
   const dotColor = getStatusDot(p);
-  const meta = [p.division, p.conference].filter(Boolean).join(" · ");
+  const due = getDueInfo(p);
+  const divStyle = DIV_TAG_STYLES[p.division] || {};
+  const matchColor = ms >= 65 ? "#16a34a" : ms >= 40 ? "#d97706" : ms != null ? "#ef4444" : "var(--cm-text-3)";
 
   return (
-    <div onClick={() => navigate(`/pipeline/${p.program_id}`)} style={{
-      background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 10,
-      padding: "14px 16px", marginBottom: 6, cursor: "pointer", transition: "all 0.15s",
-    }} className="hover:shadow-sm" data-testid={`kanban-card-${p.program_id}`}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", marginBottom: 3, lineHeight: 1.3 }}>{p.university_name}</div>
-          {meta && <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginBottom: 6 }}>{meta}</div>}
-          {ms != null && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
-              <UniversityLogo domain={p.domain} name={p.university_name} size={18} className="rounded-[5px]" />
-              {ms}%
-            </div>
-          )}
+    <div onClick={() => navigate(`/pipeline/${p.program_id}`)} className="kanban-card" style={{
+      background: "var(--cm-surface)", borderRadius: 10,
+      padding: "16px 16px 14px", cursor: "pointer", transition: "box-shadow 0.15s ease",
+    }} data-testid={`kanban-card-${p.program_id}`}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35, marginBottom: 10 }}>{p.university_name}</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
+        {p.division && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: divStyle.bg || "var(--cm-surface-2)", color: divStyle.color || "var(--cm-text-3)" }} className="kanban-div-tag">{p.division}</span>}
+        {p.conference && <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", padding: "3px 8px", borderRadius: 4, background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{p.conference}</span>}
+        {due?.urgent && <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 7px", borderRadius: 4, background: due.color === "#dc2626" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)", color: due.color === "#dc2626" ? "#dc2626" : "#d97706" }}>{due.text}</span>}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <UniversityLogo domain={p.domain} name={p.university_name} size={18} className="rounded-[5px]" />
+          {ms != null && <span style={{ fontSize: 12, fontWeight: 700, color: matchColor }}>{ms}%</span>}
         </div>
-        <div style={{ width: 10, height: 10, borderRadius: "50%", background: dotColor, flexShrink: 0, marginTop: 4 }} />
+        <div style={{ width: 9, height: 9, borderRadius: "50%", background: dotColor }} />
       </div>
     </div>
   );
@@ -356,22 +364,19 @@ function KanbanBoard({ programs, matchScores, navigate }) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 0, minHeight: 200, border: "1px solid var(--cm-border)", borderRadius: 14, overflow: "hidden", background: "var(--cm-surface)" }} className="kanban-grid" data-testid="kanban-board">
-      {KANBAN_COLS.map((col, ci) => (
-        <div key={col.key} style={{ borderRight: ci < 5 ? "1px solid var(--cm-border)" : "none", minWidth: 0 }}>
-          {/* Thin colored bar */}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }} className="kanban-grid" data-testid="kanban-board">
+      {KANBAN_COLS.map(col => (
+        <div key={col.key} style={{ background: "var(--cm-surface-2)", borderRadius: 12, minHeight: 200, overflow: "hidden" }}>
           <div style={{ height: 3, background: col.color }} />
-          {/* Header */}
-          <div style={{ padding: "14px 14px 10px" }}>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--cm-text)", marginBottom: 2 }}>{col.label}</div>
-            <div style={{ fontSize: 11, color: "var(--cm-text-3)" }}>{columns[col.key].length} school{columns[col.key].length !== 1 ? "s" : ""}</div>
+          <div style={{ padding: "14px 14px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--cm-text-2)" }}>{col.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-4)" }}>{columns[col.key].length}</span>
           </div>
-          {/* Cards */}
-          <div style={{ padding: "0 8px 8px" }}>
+          <div style={{ padding: "0 8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
             {columns[col.key].length > 0 ? (
               columns[col.key].map(p => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} />)
             ) : (
-              <div style={{ padding: "20px 8px", textAlign: "center", fontSize: 11, color: "var(--cm-text-4)" }}>—</div>
+              <div style={{ padding: "30px 14px", textAlign: "center", fontSize: 12, color: "var(--cm-text-4)", fontWeight: 500 }}>No schools yet</div>
             )}
           </div>
         </div>
@@ -408,6 +413,7 @@ function PipelineStyles() {
   return (
     <style>{`
       @keyframes heroPulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
+      .kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
       @media (max-width: 1024px) { .kanban-grid { grid-template-columns: repeat(3, 1fr) !important; } }
       @media (max-width: 640px) { .kanban-grid { grid-template-columns: repeat(2, 1fr) !important; } }
     `}</style>
