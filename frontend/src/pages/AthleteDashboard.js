@@ -16,7 +16,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 function PulseStat({ icon: Icon, iconBg, iconColor, value, label, sub, onClick }) {
   return (
     <div className={`px-5 py-4 lg:px-6 lg:py-5 border-r last:border-r-0${onClick ? " cursor-pointer transition-opacity hover:opacity-80" : ""}`}
-      style={{ borderColor: "rgba(255,255,255,0.06)" }} onClick={onClick}
+      style={{ borderColor: "var(--cm-border)" }} onClick={onClick}
       data-testid={`pulse-${label.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="flex items-center justify-between mb-1">
         <p className="text-2xl lg:text-3xl font-extrabold tracking-tight" style={{ color: iconColor }}>{value}</p>
@@ -24,8 +24,8 @@ function PulseStat({ icon: Icon, iconBg, iconColor, value, label, sub, onClick }
           <Icon className="w-4 h-4" style={{ color: iconColor }} strokeWidth={2} />
         </div>
       </div>
-      <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.4)" }}>{label}</p>
-      {sub && <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>{sub}</p>}
+      <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>{label}</p>
+      {sub && <p className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-4)" }}>{sub}</p>}
     </div>
   );
 }
@@ -34,16 +34,16 @@ function PulseStat({ icon: Icon, iconBg, iconColor, value, label, sub, onClick }
 function ActionRow({ school, detail, badge, badgeBg, badgeColor, onClick }) {
   return (
     <div className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors border-b last:border-b-0"
-      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+      style={{ borderColor: "var(--cm-border)" }}
       onClick={onClick}
-      onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.03)"}
+      onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
       onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate text-white">{school}</p>
-        <p className="text-[11px] truncate text-slate-400">{detail}</p>
+        <p className="text-sm font-semibold truncate" style={{ color: "var(--cm-text)" }}>{school}</p>
+        <p className="text-[11px] truncate" style={{ color: "var(--cm-text-2)" }}>{detail}</p>
       </div>
       <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg flex-shrink-0" style={{ backgroundColor: badgeBg, color: badgeColor }}>{badge}</span>
-      <ChevronRight className="w-3.5 h-3.5 flex-shrink-0 text-slate-600" />
+      <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--cm-text-3)" }} />
     </div>
   );
 }
@@ -81,16 +81,16 @@ function SpotlightCard({ program, onClick }) {
   return (
     <div className="min-w-[250px] max-w-[250px] rounded-xl border p-5 flex-shrink-0 cursor-pointer transition-all hover:-translate-y-0.5"
       style={{
-        backgroundColor: isCommitted ? "rgba(251,191,36,0.04)" : "#1a1f2e",
-        borderColor: isCommitted ? "rgba(251,191,36,0.45)" : "rgba(255,255,255,0.06)",
+        backgroundColor: isCommitted ? "rgba(251,191,36,0.04)" : "var(--cm-surface)",
+        borderColor: isCommitted ? "rgba(251,191,36,0.45)" : "var(--cm-border)",
         boxShadow: isCommitted ? "0 0 16px rgba(251,191,36,0.10)" : undefined,
       }}
       onClick={onClick}
       data-testid={`spotlight-${program.program_id}`}>
       <div className="flex items-center gap-3 mb-3">
         <div className="min-w-0">
-          <p className="text-sm font-bold truncate text-white">{program.university_name}</p>
-          <p className="text-[11px] text-slate-400">{program.division || "\u2014"}{program.conference ? ` \u00B7 ${program.conference}` : ""}</p>
+          <p className="text-sm font-bold truncate" style={{ color: "var(--cm-text)" }}>{program.university_name}</p>
+          <p className="text-[11px]" style={{ color: "var(--cm-text-2)" }}>{program.division || "\u2014"}{program.conference ? ` \u00B7 ${program.conference}` : ""}</p>
         </div>
       </div>
       <div className="flex gap-1.5 flex-wrap mb-3">
@@ -103,8 +103,8 @@ function SpotlightCard({ program, onClick }) {
           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ backgroundColor: "rgba(239,68,68,0.12)", color: "#ef4444" }}>Overdue</span>
         )}
       </div>
-      <div className="pt-3 border-t" style={{ borderColor: isCommitted ? "rgba(251,191,36,0.25)" : "rgba(255,255,255,0.06)" }}>
-        <p className="text-[11px] leading-relaxed text-slate-400">
+      <div className="pt-3 border-t" style={{ borderColor: isCommitted ? "rgba(251,191,36,0.25)" : "var(--cm-border)" }}>
+        <p className="text-[11px] leading-relaxed" style={{ color: "var(--cm-text-2)" }}>
           <span className="font-semibold" style={{ color: isCommitted ? "#d97706" : "#1a8a80" }}>
             {isCommitted ? "Congratulations! " : "Next step: "}
           </span>
@@ -119,23 +119,23 @@ function SpotlightCard({ program, onClick }) {
 function FeedItem({ dotColor, title, titleHighlight, detail, time, showLine = true, onClick }) {
   return (
     <div className="flex gap-3.5 px-5 py-3.5 transition-colors border-b last:border-b-0"
-      style={{ borderColor: "rgba(255,255,255,0.06)", cursor: onClick ? "pointer" : undefined }}
+      style={{ borderColor: "var(--cm-border)", cursor: onClick ? "pointer" : undefined }}
       onClick={onClick}
-      onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.03)"}
+      onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
       onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
       <div className="flex flex-col items-center pt-1.5">
         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
-        {showLine && <div className="w-px flex-1 mt-1.5" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />}
+        {showLine && <div className="w-px flex-1 mt-1.5" style={{ backgroundColor: "var(--cm-border)" }} />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white">
+        <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>
           {title}{titleHighlight && <span style={{ color: "#1a8a80" }}>{titleHighlight}</span>}
         </p>
-        {detail && <p className="text-[11px] mt-1 leading-relaxed text-slate-400 line-clamp-1">{detail}</p>}
+        {detail && <p className="text-[11px] mt-1 leading-relaxed line-clamp-1" style={{ color: "var(--cm-text-2)" }}>{detail}</p>}
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-[10px] pt-0.5 text-slate-500">{time}</span>
-        {onClick && <ChevronRight className="w-3.5 h-3.5 text-slate-600" />}
+        <span className="text-[10px] pt-0.5" style={{ color: "var(--cm-text-3)" }}>{time}</span>
+        {onClick && <ChevronRight className="w-3.5 h-3.5" style={{ color: "var(--cm-text-3)" }} />}
       </div>
     </div>
   );
@@ -159,16 +159,16 @@ function EventCard({ event, onClick }) {
 
   return (
     <div className="flex-1 px-5 py-4 border-r last:border-r-0 cursor-pointer transition-colors"
-      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+      style={{ borderColor: "var(--cm-border)" }}
       onClick={onClick}
-      onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.03)"}
+      onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
       onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}>
       <div className="w-11 h-12 rounded-lg flex flex-col items-center justify-center mb-3" style={{ backgroundColor: style.bg, color: style.color }}>
         <span className="text-[9px] font-bold tracking-wider">{month}</span>
         <span className="text-lg font-extrabold leading-none">{day}</span>
       </div>
-      <p className="text-sm font-semibold mb-0.5 text-white">{event.title}</p>
-      <p className="text-[11px] text-slate-400">
+      <p className="text-sm font-semibold mb-0.5" style={{ color: "var(--cm-text)" }}>{event.title}</p>
+      <p className="text-[11px]" style={{ color: "var(--cm-text-2)" }}>
         {event.location || ""}
         {event.end_date && event.end_date !== event.start_date ? ` \u00B7 ${Math.ceil((new Date(event.end_date) - new Date(event.start_date)) / 86400000) + 1} days` : ""}
       </p>
@@ -180,34 +180,34 @@ function EventCard({ event, onClick }) {
 /* ── WhosWatching (empty state for now) ── */
 function WhosWatching() {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "#1a1f2e", borderColor: "rgba(255,255,255,0.06)" }} data-testid="whos-watching">
-      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="whos-watching">
+      <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(16,185,129,0.12)" }}>
             <Eye className="w-4 h-4" style={{ color: "#10b981" }} strokeWidth={2} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white">Who's Watching</h3>
-            <p className="text-[10px] text-slate-400">Coach engagement with your profile & emails</p>
+            <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Who's Watching</h3>
+            <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>Coach engagement with your profile & emails</p>
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+      <div className="grid grid-cols-3 border-b" style={{ borderColor: "var(--cm-border)" }}>
         {[
           { label: "Email Opens", color: "#10b981", value: 0 },
           { label: "Link Clicks", color: "#3b82f6", value: 0 },
           { label: "Profile Views", color: "#a855f7", value: 0 },
         ].map((s, i) => (
-          <div key={s.label} className={`px-4 py-3 text-center${i < 2 ? " border-r" : ""}`} style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <div key={s.label} className={`px-4 py-3 text-center${i < 2 ? " border-r" : ""}`} style={{ borderColor: "var(--cm-border)" }}>
             <div className="text-lg font-extrabold" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-[10px] font-medium text-slate-400">{s.label}</div>
+            <div className="text-[10px] font-medium" style={{ color: "var(--cm-text-2)" }}>{s.label}</div>
           </div>
         ))}
       </div>
       <div className="text-center py-10 px-5">
-        <Eye className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-        <p className="text-sm text-slate-400">No engagement yet</p>
-        <p className="text-xs mt-1 text-slate-500">Send emails to coaches to start tracking</p>
+        <Eye className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+        <p className="text-sm" style={{ color: "var(--cm-text-2)" }}>No engagement yet</p>
+        <p className="text-xs mt-1" style={{ color: "var(--cm-text-3)" }}>Send emails to coaches to start tracking</p>
       </div>
     </div>
   );
@@ -365,22 +365,22 @@ export default function AthleteDashboard() {
   return (
     <div className="space-y-5" data-testid="athlete-dashboard">
       {/* ═══ Section 1: Greeting + Quick Pulse ═══ */}
-      <div className="rounded-xl overflow-hidden" style={{ background: "#1e1e2e" }} data-testid="greeting-pulse">
+      <div className="rounded-xl overflow-hidden cm-surface cm-shadow" style={{ background: "var(--cm-surface)" }} data-testid="greeting-pulse">
         <div style={{ height: 2, background: "linear-gradient(90deg, #1a8a80 0%, rgba(26,138,128,0.2) 100%)" }} />
         <div className="flex items-start justify-between px-6 py-5 lg:px-7 lg:py-6">
           <div>
-            <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight text-white" data-testid="dashboard-greeting">
+            <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }} data-testid="dashboard-greeting">
               {greeting}, <span style={{ color: "#1a8a80" }}>{firstName}</span>
             </h2>
-            <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <p className="text-sm mt-1" style={{ color: "var(--cm-text-3)" }}>
               Here's what's happening with {firstName}'s recruiting today
             </p>
           </div>
-          <div className="text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>
+          <div className="text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
             {dateStr}
           </div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 border-t" style={{ borderColor: "var(--cm-border)" }}>
           <PulseStat icon={Target} iconBg="rgba(26,138,128,0.15)" iconColor="#1a8a80" value={totalSchools} label="Schools Tracked" sub={needsOutreach.length > 0 ? `${needsOutreach.length} need outreach` : "All contacted"} onClick={() => navigate("/pipeline")} />
           <PulseStat icon={MessageCircle} iconBg="rgba(59,130,246,0.15)" iconColor="#60a5fa" value={`${responseRate}%`} label="Response Rate" sub={`${replied.length} of ${contacted.length} contacted`} />
           <PulseStat icon={Mail} iconBg="rgba(16,185,129,0.15)" iconColor="#34d399" value={repliesThisWeek.length} label="Replies This Week" sub={lastReply ? `Last: ${lastReply.university_name || ""}` : "\u2014"} />
@@ -389,13 +389,13 @@ export default function AthleteDashboard() {
       </div>
 
       {/* ═══ Section 2: Today's Actions ═══ */}
-      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "#1a1f2e", borderColor: "rgba(255,255,255,0.06)" }} data-testid="todays-actions">
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="todays-actions">
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(239,68,68,0.12)" }}>
               <Zap className="w-4 h-4" style={{ color: "#ef4444" }} strokeWidth={2} />
             </div>
-            <h3 className="text-sm font-bold text-white">Today's Actions</h3>
+            <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Today's Actions</h3>
           </div>
           <button onClick={() => navigate("/pipeline")} className="text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ color: "#1a8a80" }} data-testid="view-all-schools-btn">
             View all schools <ChevronRight className="w-3 h-3" />
@@ -403,11 +403,11 @@ export default function AthleteDashboard() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* Left: Follow-ups Due */}
-          <div className="border-r-0 lg:border-r" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-            <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <div className="border-r-0 lg:border-r" style={{ borderColor: "var(--cm-border)" }}>
+            <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "var(--cm-border)" }}>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#ef4444" }} />
-                <span className="text-xs font-bold text-white">Follow-ups Due</span>
+                <span className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>Follow-ups Due</span>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: "rgba(239,68,68,0.12)", color: "#ef4444" }}>{followUpsDue.length}</span>
             </div>
@@ -422,17 +422,17 @@ export default function AthleteDashboard() {
               />
             )) : (
               <div className="text-center py-8 px-5">
-                <CheckCircle className="w-7 h-7 mx-auto mb-2 text-slate-600" />
-                <p className="text-xs text-slate-400">All caught up! No follow-ups due.</p>
+                <CheckCircle className="w-7 h-7 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+                <p className="text-xs" style={{ color: "var(--cm-text-2)" }}>All caught up! No follow-ups due.</p>
               </div>
             )}
           </div>
           {/* Right: Needs First Outreach */}
           <div>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-t lg:border-t-0" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-t lg:border-t-0" style={{ borderColor: "var(--cm-border)" }}>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#3b82f6" }} />
-                <span className="text-xs font-bold text-white">Needs First Outreach</span>
+                <span className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>Needs First Outreach</span>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: "rgba(59,130,246,0.12)", color: "#3b82f6" }}>{needsOutreach.length}</span>
             </div>
@@ -447,8 +447,8 @@ export default function AthleteDashboard() {
               />
             )) : (
               <div className="text-center py-8 px-5">
-                <Send className="w-7 h-7 mx-auto mb-2 text-slate-600" />
-                <p className="text-xs text-slate-400">All schools contacted!</p>
+                <Send className="w-7 h-7 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+                <p className="text-xs" style={{ color: "var(--cm-text-2)" }}>All schools contacted!</p>
               </div>
             )}
           </div>
@@ -463,7 +463,7 @@ export default function AthleteDashboard() {
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(168,85,247,0.12)" }}>
                 <Sparkles className="w-4 h-4" style={{ color: "#a855f7" }} strokeWidth={2} />
               </div>
-              <h3 className="text-sm font-bold text-white">School Spotlight</h3>
+              <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>School Spotlight</h3>
             </div>
             {spotlightSchools.length > 4 && (
               <button onClick={() => setSpotlightExpanded(!spotlightExpanded)}
@@ -479,14 +479,14 @@ export default function AthleteDashboard() {
               <SpotlightCard key={p.program_id} program={p} onClick={() => navigate(`/pipeline/${p.program_id}`)} />
             ))}
             <div className="min-w-[250px] max-w-[250px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors flex-shrink-0 py-8"
-              style={{ borderColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}
+              style={{ borderColor: "var(--cm-border)", color: "var(--cm-text-3)" }}
               onClick={() => navigate("/schools")}
-              onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"}
-              onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"}
+              onMouseEnter={e => e.currentTarget.style.borderColor = "var(--cm-text-3)"}
+              onMouseLeave={e => e.currentTarget.style.borderColor = "var(--cm-border)"}
               data-testid="add-school-spotlight">
-              <span className="text-2xl mb-1 text-slate-500">+</span>
-              <span className="text-xs font-semibold">Browse Schools</span>
-              <span className="text-[11px] mt-0.5 text-slate-500">Find more programs</span>
+              <span className="text-2xl mb-1" style={{ color: "var(--cm-text-3)" }}>+</span>
+              <span className="text-xs font-semibold" style={{ color: "var(--cm-text-2)" }}>Browse Schools</span>
+              <span className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-3)" }}>Find more programs</span>
             </div>
           </div>
         </div>
@@ -496,13 +496,13 @@ export default function AthleteDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <WhosWatching />
         {/* Recent Activity Feed */}
-        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "#1a1f2e", borderColor: "rgba(255,255,255,0.06)" }} data-testid="recent-activity">
-          <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="recent-activity">
+          <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(59,130,246,0.12)" }}>
                 <Activity className="w-4 h-4" style={{ color: "#3b82f6" }} strokeWidth={2} />
               </div>
-              <h3 className="text-sm font-bold text-white">Recent Activity</h3>
+              <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Recent Activity</h3>
             </div>
           </div>
           {recentActivity.length > 0 ? (
@@ -523,22 +523,22 @@ export default function AthleteDashboard() {
             </div>
           ) : (
             <div className="text-center py-12 px-5">
-              <Activity className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-              <p className="text-sm text-slate-400">No activity yet</p>
-              <p className="text-xs mt-1 text-slate-500">Start by contacting a school</p>
+              <Activity className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+              <p className="text-sm" style={{ color: "var(--cm-text-2)" }}>No activity yet</p>
+              <p className="text-xs mt-1" style={{ color: "var(--cm-text-3)" }}>Start by contacting a school</p>
             </div>
           )}
         </div>
       </div>
 
       {/* ═══ Section 6: Upcoming Events ═══ */}
-      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "#1a1f2e", borderColor: "rgba(255,255,255,0.06)" }} data-testid="upcoming-events">
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="upcoming-events">
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(245,158,11,0.12)" }}>
               <Calendar className="w-4 h-4" style={{ color: "#f59e0b" }} strokeWidth={2} />
             </div>
-            <h3 className="text-sm font-bold text-white">Coming Up</h3>
+            <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Coming Up</h3>
           </div>
           <button onClick={() => navigate("/calendar")} className="text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ color: "#1a8a80" }} data-testid="open-calendar-btn">
             Open calendar <ChevronRight className="w-3 h-3" />
@@ -552,8 +552,8 @@ export default function AthleteDashboard() {
           </div>
         ) : (
           <div className="text-center py-10 px-5">
-            <Calendar className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-            <p className="text-sm text-slate-400">No upcoming events</p>
+            <Calendar className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+            <p className="text-sm" style={{ color: "var(--cm-text-2)" }}>No upcoming events</p>
             <button onClick={() => navigate("/calendar")} className="mt-2 text-sm font-semibold transition-opacity hover:opacity-80" style={{ color: "#1a8a80" }}>+ Add event</button>
           </div>
         )}
@@ -563,8 +563,8 @@ export default function AthleteDashboard() {
       {totalSchools === 0 && (
         <div className="rounded-xl border-2 border-dashed p-8 text-center" style={{ borderColor: "rgba(26,138,128,0.2)" }} data-testid="dashboard-empty">
           <Target className="w-10 h-10 mx-auto mb-3" style={{ color: "#1a8a80" }} />
-          <h3 className="text-base font-bold text-white mb-1">Start your recruiting journey</h3>
-          <p className="text-sm text-slate-400 max-w-sm mx-auto mb-4">
+          <h3 className="text-base font-bold mb-1" style={{ color: "var(--cm-text)" }}>Start your recruiting journey</h3>
+          <p className="text-sm max-w-sm mx-auto mb-4" style={{ color: "var(--cm-text-2)" }}>
             Add schools to your board to track outreach, follow-ups, and conversations with college coaches.
           </p>
           <button onClick={() => navigate("/schools")}

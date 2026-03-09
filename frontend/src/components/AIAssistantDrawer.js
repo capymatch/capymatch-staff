@@ -86,11 +86,11 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-[90] flex justify-end" data-testid="ai-assistant-drawer">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md h-full flex flex-col border-l animate-in slide-in-from-right duration-300 bg-[#0f1219] border-white/10">
+      <div className="relative w-full max-w-md h-full flex flex-col border-l animate-in slide-in-from-right duration-300" style={{ backgroundColor: "var(--cm-bg)", borderColor: "var(--cm-border)" }}>
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+        <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: "var(--cm-border)" }}>
           {showSessions && (
-            <button onClick={() => setShowSessions(false)} className="p-1.5 rounded-lg hover:bg-white/5" data-testid="ai-back-btn">
+            <button onClick={() => setShowSessions(false)} className="p-1.5 rounded-lg" style={{ color: "var(--cm-text-3)" }} data-testid="ai-back-btn">
               <ChevronLeft className="w-4 h-4 text-white/40" />
             </button>
           )}
@@ -104,15 +104,15 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
           <div className="flex items-center gap-1">
             {!showSessions && (
               <>
-                <button onClick={() => setShowSessions(true)} className="p-2 rounded-lg hover:bg-white/5" title="History" data-testid="ai-history-btn">
-                  <MessageCircle className="w-4 h-4 text-white/40" />
+                <button onClick={() => setShowSessions(true)} className="p-2 rounded-lg" style={{ color: "var(--cm-text-3)" }} title="History" data-testid="ai-history-btn">
+                  <MessageCircle className="w-4 h-4" />
                 </button>
-                <button onClick={startNewChat} className="p-2 rounded-lg hover:bg-white/5" title="New chat" data-testid="ai-new-chat-btn">
-                  <Plus className="w-4 h-4 text-white/40" />
+                <button onClick={startNewChat} className="p-2 rounded-lg" style={{ color: "var(--cm-text-3)" }} title="New chat" data-testid="ai-new-chat-btn">
+                  <Plus className="w-4 h-4" />
                 </button>
               </>
             )}
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/5" data-testid="ai-close-btn">
+            <button onClick={onClose} className="p-2 rounded-lg" style={{ color: "var(--cm-text-3)" }} data-testid="ai-close-btn">
               <X className="w-4 h-4 text-white/40" />
             </button>
           </div>
@@ -125,7 +125,11 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
               <p className="text-center text-xs py-8 text-white/30">No conversations yet</p>
             ) : sessions.map(s => (
               <button key={s.session_id} onClick={() => loadSession(s.session_id)}
-                className="w-full text-left rounded-lg p-3 hover:bg-white/5 transition-colors" data-testid={`session-${s.session_id}`}>
+                className="w-full text-left rounded-lg p-3 transition-colors"
+                style={{ backgroundColor: "transparent" }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                data-testid={`session-${s.session_id}`}>
                 <p className="text-xs font-medium truncate text-white">{s.preview}</p>
                 <p className="text-[10px] mt-0.5 text-white/30">{s.messages} messages</p>
               </button>
@@ -145,14 +149,18 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
                   <div className="w-full space-y-2">
                     {suggestions.map((s, i) => (
                       <button key={i} onClick={() => { setInput(s); inputRef.current?.focus(); }}
-                        className="w-full text-left px-3 py-2.5 rounded-lg text-xs border border-white/10 text-white/50 transition-colors hover:bg-white/5"
+                        className="w-full text-left px-3 py-2.5 rounded-lg text-xs border transition-colors"
+                        style={{ borderColor: "var(--cm-border)", color: "var(--cm-text-3)" }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
                         data-testid={`suggestion-${i}`}>{s}</button>
                     ))}
                   </div>
                 </div>
               ) : messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${msg.role === "user" ? "bg-[#1a8a80] text-white rounded-br-md" : "bg-[#1a1f2e] text-white rounded-bl-md"}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${msg.role === "user" ? "bg-[#1a8a80] text-white rounded-br-md" : "rounded-bl-md"}`}
+                    style={msg.role !== "user" ? { backgroundColor: "var(--cm-surface)", color: "var(--cm-text)" } : {}}>
                     <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                     <p className={`text-[9px] mt-1 ${msg.role === "user" ? "text-white/60" : "text-white/30"}`}>{formatTime(msg.time)}</p>
                   </div>
@@ -160,7 +168,7 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
               ))}
               {sending && (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl rounded-bl-md px-4 py-3 bg-[#1a1f2e]">
+                  <div className="rounded-2xl rounded-bl-md px-4 py-3" style={{ backgroundColor: "var(--cm-surface)" }}>
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" />
                       <span className="text-xs text-white/40">Thinking...</span>
@@ -172,18 +180,18 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
             </div>
 
             {/* Input */}
-            <div className="border-t border-white/10 p-3">
+            <div className="border-t p-3" style={{ borderColor: "var(--cm-border)" }}>
               <div className="flex items-end gap-2">
                 <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                   placeholder="Ask about recruiting..." rows={1}
-                  className="flex-1 resize-none rounded-xl border border-white/10 px-3 py-2.5 text-sm outline-none bg-[#1a1f2e] text-white placeholder:text-white/25"
-                  style={{ maxHeight: "120px" }} data-testid="ai-input" />
+                  className="flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm outline-none"
+                  style={{ borderColor: "var(--cm-border)", backgroundColor: "var(--cm-input-bg)", color: "var(--cm-text)", maxHeight: "120px" }} data-testid="ai-input" />
                 <button onClick={sendMessage} disabled={!input.trim() || sending}
                   className="p-2.5 rounded-xl bg-[#1a8a80] text-white hover:bg-[#25a99e] disabled:opacity-40 transition-colors" data-testid="ai-send-btn">
                   <Send className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-[9px] text-center mt-2 text-white/20">AI-powered by Claude</p>
+              <p className="text-[9px] text-center mt-2" style={{ color: "var(--cm-text-4)" }}>AI-powered by Claude</p>
             </div>
           </>
         )}

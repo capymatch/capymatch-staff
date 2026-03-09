@@ -1,127 +1,103 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Moon, LogOut, User, Menu, Settings } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bell, Moon, Sun, LogOut, User, Menu, Settings } from "lucide-react";
 import { useAuth } from "@/AuthContext";
+import { useTheme } from "@/ThemeContext";
 
 export default function TopBar({ title, icon: Icon, onMenuToggle }) {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
-    };
-    if (menuOpen) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [menuOpen]);
-
-  const initials = user?.name
-    ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
-    : "CM";
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
+  const handleLogout = () => { logout(); navigate("/login"); };
   const isAthlete = user?.role === "athlete" || user?.role === "parent";
 
+  useEffect(() => {
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
-    <header
-      className="h-14 sm:h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6"
-      data-testid="topbar"
-    >
-      {/* Left: Hamburger + title */}
-      <div className="flex items-center gap-2.5">
-        <button
-          onClick={onMenuToggle}
-          className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors lg:hidden"
-          data-testid="mobile-menu-toggle"
-        >
-          <Menu className="w-5 h-5 text-slate-500" />
+    <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 sm:px-6 border-b"
+      style={{ backgroundColor: "var(--cm-topbar)", borderColor: "var(--cm-border)" }}
+      data-testid="topbar">
+      <div className="flex items-center gap-3">
+        <button onClick={onMenuToggle} className="lg:hidden p-1.5 rounded-lg" style={{ color: "var(--cm-text-3)" }} data-testid="mobile-menu-toggle">
+          <Menu className="w-5 h-5" />
         </button>
-        {Icon && <Icon className="w-5 h-5 text-slate-400 hidden sm:block" />}
-        <h1 className="text-base sm:text-lg font-semibold text-slate-800 tracking-tight">{title || "Dashboard"}</h1>
+        <div className="flex items-center gap-2">
+          {Icon && <Icon className="w-5 h-5" style={{ color: "var(--cm-accent)" }} />}
+          <h1 className="text-[15px] font-bold" style={{ color: "var(--cm-text)" }} data-testid="topbar-title">{title}</h1>
+        </div>
       </div>
 
-      {/* Right: Actions + Profile */}
-      <div className="flex items-center gap-2 sm:gap-4">
-        <button
-          className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors"
-          data-testid="notifications-button"
-        >
-          <Bell className="w-[18px] h-[18px] text-slate-400" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
+      <div className="flex items-center gap-1">
+        {/* Theme toggle */}
+        <button onClick={toggleTheme}
+          className="p-2 rounded-lg transition-colors hover:opacity-80"
+          style={{ color: "var(--cm-text-3)" }}
+          data-testid="theme-toggle-btn"
+          title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}>
+          {theme === "light" ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px]" />}
         </button>
 
-        <button className="p-2 rounded-lg hover:bg-gray-50 transition-colors hidden sm:block" data-testid="theme-toggle">
-          <Moon className="w-[18px] h-[18px] text-slate-400" />
+        {/* Notifications */}
+        <button className="p-2 rounded-lg transition-colors" style={{ color: "var(--cm-text-3)" }} data-testid="notification-btn">
+          <Bell className="w-[18px] h-[18px]" />
         </button>
 
-        <div className="relative" data-testid="user-profile-area">
-          <button
-            onClick={() => setMenuOpen((p) => !p)}
-            className="flex items-center gap-2 pl-1 pr-1 py-1 rounded-lg hover:bg-gray-50 transition-colors"
-            data-testid="user-menu-trigger"
-          >
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="text-[11px] bg-slate-800 text-white font-semibold">{initials}</AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-slate-700 hidden sm:inline" data-testid="user-display-name">
-              {user?.name?.split(" ")[0] || "User"}
-            </span>
+        {/* User menu */}
+        <div className="relative" ref={menuRef}>
+          <button onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center gap-2 p-1.5 rounded-lg transition-colors"
+            data-testid="user-menu-trigger">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-sm">
+              <span className="text-white text-xs font-bold">
+                {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+              </span>
+            </div>
           </button>
 
           {menuOpen && (
-            <div
-              ref={menuRef}
-              className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
-              data-testid="user-menu-dropdown"
-            >
+            <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl py-1 z-50 border"
+              style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "var(--cm-shadow-md)" }}
+              data-testid="user-menu-dropdown">
               {isAthlete && (
                 <>
-                  <button
-                    onClick={() => { setMenuOpen(false); navigate("/athlete-profile"); }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
-                    data-testid="menu-athlete-profile-link"
-                  >
-                    <User className="w-4 h-4 text-slate-400" />
-                    Profile
+                  <button onClick={() => { setMenuOpen(false); navigate("/athlete-profile"); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors"
+                    style={{ color: "var(--cm-text-2)" }}
+                    data-testid="menu-athlete-profile-link">
+                    <User className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} /> Profile
                   </button>
-                  <button
-                    onClick={() => { setMenuOpen(false); navigate("/athlete-settings"); }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
-                    data-testid="menu-athlete-settings-link"
-                  >
-                    <Settings className="w-4 h-4 text-slate-400" />
-                    Settings
+                  <button onClick={() => { setMenuOpen(false); navigate("/athlete-settings"); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors"
+                    style={{ color: "var(--cm-text-2)" }}
+                    data-testid="menu-athlete-settings-link">
+                    <Settings className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} /> Settings
                   </button>
-                  <div className="border-t border-gray-50 my-0.5" />
+                  <div className="my-0.5" style={{ borderTop: "1px solid var(--cm-border)" }} />
                 </>
               )}
               {!isAthlete && (
                 <>
-                  <button
-                    onClick={() => { setMenuOpen(false); navigate("/profile"); }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
-                    data-testid="menu-profile-link"
-                  >
-                    <User className="w-4 h-4 text-slate-400" />
-                    Profile
+                  <button onClick={() => { setMenuOpen(false); navigate("/profile"); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors"
+                    style={{ color: "var(--cm-text-2)" }}
+                    data-testid="menu-profile-link">
+                    <User className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} /> Profile
                   </button>
-                  <div className="border-t border-gray-50 my-0.5" />
+                  <div className="my-0.5" style={{ borderTop: "1px solid var(--cm-border)" }} />
                 </>
               )}
-              <button
-                onClick={() => { setMenuOpen(false); handleLogout(); }}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
-                data-testid="menu-logout-link"
-              >
-                <LogOut className="w-4 h-4 text-slate-400" />
-                Sign out
+              <button onClick={() => { setMenuOpen(false); handleLogout(); }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors"
+                style={{ color: "var(--cm-text-2)" }}
+                data-testid="menu-logout-link">
+                <LogOut className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} /> Sign out
               </button>
             </div>
           )}

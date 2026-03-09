@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./AuthContext";
+import { ThemeProvider } from "./ThemeContext";
 import AppLayout from "./components/layout/AppLayout";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -46,7 +47,7 @@ function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
   const { user, loading, onboardingDone } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
       </div>
     );
@@ -59,7 +60,7 @@ function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
   const isAthlete = user.role === "athlete" || user.role === "parent";
   if (isAthlete && onboardingDone === null) {
     return (
-      <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
       </div>
     );
@@ -76,7 +77,7 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F7FAFC] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
       </div>
     );
@@ -134,11 +135,13 @@ function App() {
   return (
     <div className="App">
       <Toaster position="bottom-right" richColors />
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </div>
   );
 }

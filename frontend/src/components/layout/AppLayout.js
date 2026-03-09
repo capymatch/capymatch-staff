@@ -7,20 +7,30 @@ import { useAuth } from "@/AuthContext";
 import AIAssistantDrawer from "../AIAssistantDrawer";
 
 const ROUTE_META = {
-  "/mission-control": { title: "Dashboard", icon: LayoutDashboard },
+  "/mission-control": { title: "Mission Control", icon: LayoutDashboard },
   "/events": { title: "Events", icon: Calendar },
   "/advocacy": { title: "Advocacy", icon: Megaphone },
-  "/program": { title: "Program Intelligence", icon: BarChart3 },
+  "/program": { title: "Program", icon: BarChart3 },
   "/roster": { title: "Roster", icon: Users },
-  "/invites": { title: "Invite Coaches", icon: UserPlus },
   "/profile": { title: "Profile", icon: User },
-  "/support-pods": { title: "Support Pod", icon: Shield },
-  "/admin": { title: "Admin", icon: BarChart3 },
+  "/invite": { title: "Invite", icon: UserPlus },
+  "/admin": { title: "Admin", icon: Shield },
+  "/board": { title: "Dashboard", icon: LayoutDashboard },
+  "/pipeline": { title: "Pipeline", icon: LayoutDashboard },
+  "/schools": { title: "Find Schools", icon: LayoutDashboard },
+  "/calendar": { title: "Calendar", icon: Calendar },
+  "/inbox": { title: "Inbox", icon: LayoutDashboard },
+  "/highlights": { title: "Highlights", icon: LayoutDashboard },
+  "/analytics": { title: "Analytics", icon: BarChart3 },
+  "/athlete-profile": { title: "Profile", icon: User },
+  "/athlete-settings": { title: "Settings", icon: Shield },
 };
 
 function getRouteMeta(pathname) {
-  for (const [prefix, meta] of Object.entries(ROUTE_META)) {
-    if (pathname.startsWith(prefix)) return meta;
+  const exact = ROUTE_META[pathname];
+  if (exact) return exact;
+  for (const [path, meta] of Object.entries(ROUTE_META)) {
+    if (pathname.startsWith(path)) return meta;
   }
   return { title: "CapyMatch", icon: LayoutDashboard };
 }
@@ -34,10 +44,9 @@ export default function AppLayout({ children, title, icon }) {
   const isAthlete = user?.role === "athlete" || user?.role === "parent";
 
   return (
-    <div className="min-h-screen bg-[#F7FAFC]">
-      {/* Mobile overlay */}
+    <div className="min-h-screen" style={{ backgroundColor: "var(--cm-bg)" }}>
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 lg:hidden" style={{ backgroundColor: "var(--cm-overlay)" }} onClick={() => setSidebarOpen(false)} />
       )}
 
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />

@@ -26,12 +26,12 @@ function Toggle({ checked, onChange, testId }) {
 
 function SectionCard({ icon: Icon, title, children, testId }) {
   return (
-    <div className="rounded-2xl border p-5 sm:p-6 bg-slate-900/60 border-slate-700/50" data-testid={testId}>
+    <div className="rounded-2xl border p-5 sm:p-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid={testId}>
       <div className="flex items-center gap-2.5 mb-4">
         <div className="w-8 h-8 rounded-lg bg-teal-700/15 flex items-center justify-center">
           <Icon className="w-4 h-4 text-teal-600" />
         </div>
-        <h3 className="text-sm font-bold text-white">{title}</h3>
+        <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>{title}</h3>
       </div>
       {children}
     </div>
@@ -177,7 +177,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f1219" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
         <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
       </div>
     );
@@ -186,7 +186,7 @@ export default function SettingsPage() {
   const prefs = settings?.preferences || {};
 
   return (
-    <div className="min-h-screen pb-16" style={{ background: "#0f1219" }} data-testid="settings-page">
+    <div className="min-h-screen pb-16" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="settings-page">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -194,8 +194,8 @@ export default function SettingsPage() {
             <Settings className="w-5 h-5 text-teal-600" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold text-white tracking-tight" data-testid="settings-title">Settings</h1>
-            <p className="text-xs text-slate-400">Manage your account, integrations, and preferences</p>
+            <h1 className="text-xl font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }} data-testid="settings-title">Settings</h1>
+            <p className="text-xs" style={{ color: "var(--cm-text-2)" }}>Manage your account, integrations, and preferences</p>
           </div>
         </div>
 
@@ -204,15 +204,17 @@ export default function SettingsPage() {
           <SectionCard icon={User} title="Personal Information" testId="section-personal">
             <div className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-slate-400">Name</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Name</label>
                 <input value={name} onChange={e => setName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 bg-slate-800/50 border-slate-700 text-white"
+                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600"
+                  style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
                   data-testid="settings-name-input" />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-slate-400">Email</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Email</label>
                 <input value={emailVal} onChange={e => setEmailVal(e.target.value)} type="email"
-                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 bg-slate-800/50 border-slate-700 text-white"
+                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600"
+                  style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
                   data-testid="settings-email-input" />
               </div>
               <Button onClick={saveProfile} disabled={savingProfile}
@@ -229,8 +231,8 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-teal-700/10 border border-teal-700/20">
                   <CheckCircle2 className="w-5 h-5 text-teal-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white">Connected</p>
-                    <p className="text-[11px] text-slate-400 truncate">{gmailStatus.gmail_email}</p>
+                    <p className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>Connected</p>
+                    <p className="text-[11px] truncate" style={{ color: "var(--cm-text-2)" }}>{gmailStatus.gmail_email}</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={handleGmailDisconnect} disabled={disconnecting}
                     className="text-xs h-7 px-3 text-red-400 border-red-500/30 hover:bg-red-500/10" data-testid="gmail-disconnect-btn">
@@ -239,21 +241,22 @@ export default function SettingsPage() {
                   </Button>
                 </div>
                 <button onClick={() => setShowImport(true)}
-                  className="w-full flex items-center gap-3 p-3.5 rounded-xl border transition-colors hover:border-teal-700/40 bg-slate-800/30 border-slate-700/50"
+                  className="w-full flex items-center gap-3 p-3.5 rounded-xl border transition-colors"
+                  style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                   data-testid="gmail-import-btn">
                   <div className="w-9 h-9 rounded-lg bg-teal-700/15 flex items-center justify-center">
                     <Mail className="w-4 h-4 text-teal-600" />
                   </div>
                   <div className="text-left flex-1">
-                    <p className="text-xs font-bold text-white">Import from Gmail</p>
-                    <p className="text-[10px] text-slate-400">Scan your inbox to auto-discover schools and add them to your pipeline</p>
+                    <p className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>Import from Gmail</p>
+                    <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>Scan your inbox to auto-discover schools and add them to your pipeline</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-500" />
+                  <ChevronRight className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} />
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs leading-relaxed" style={{ color: "var(--cm-text-2)" }}>
                   Connect your Gmail to send emails directly from CapyMatch, and scan your inbox to
                   automatically discover schools you've been talking to.
                 </p>
@@ -268,17 +271,17 @@ export default function SettingsPage() {
           {/* ── Notifications ── */}
           <SectionCard icon={Settings} title="Notifications" testId="section-notifications">
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30">
+              <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                 <div>
-                  <p className="text-xs font-semibold text-white">Follow-up Reminders</p>
-                  <p className="text-[10px] text-slate-400">Get reminded when follow-ups are due</p>
+                  <p className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>Follow-up Reminders</p>
+                  <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>Get reminded when follow-ups are due</p>
                 </div>
                 <Toggle checked={prefs.followup_reminders} onChange={v => togglePref("followup_reminders", v)} testId="toggle-followup-reminders" />
               </div>
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30">
+              <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                 <div>
-                  <p className="text-xs font-semibold text-white">Email Notifications</p>
-                  <p className="text-[10px] text-slate-400">Receive weekly digest and important alerts</p>
+                  <p className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>Email Notifications</p>
+                  <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>Receive weekly digest and important alerts</p>
                 </div>
                 <Toggle checked={prefs.email_notifications} onChange={v => togglePref("email_notifications", v)} testId="toggle-email-notifications" />
               </div>
@@ -297,8 +300,9 @@ export default function SettingsPage() {
                   className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all border ${
                     prefs.theme === opt.key
                       ? "bg-teal-700/20 border-teal-700/40 text-teal-400"
-                      : "bg-slate-800/30 border-slate-700/50 text-slate-400 hover:border-slate-600"
+                      : "border-transparent"
                   }`}
+                  style={prefs.theme !== opt.key ? { backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" } : {}}
                   data-testid={`theme-${opt.key}`}>
                   {opt.label}
                 </button>
@@ -310,31 +314,34 @@ export default function SettingsPage() {
           <SectionCard icon={Key} title="Change Password" testId="section-password">
             <div className="space-y-3">
               <div className="relative">
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-slate-400">Current Password</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Current Password</label>
                 <div className="relative">
                   <input type={showCurrentPwd ? "text" : "password"} value={currentPwd} onChange={e => setCurrentPwd(e.target.value)}
-                    className="w-full px-3 py-2 pr-10 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 bg-slate-800/50 border-slate-700 text-white"
+                    className="w-full px-3 py-2 pr-10 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600"
+                    style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
                     data-testid="current-password-input" />
-                  <button onClick={() => setShowCurrentPwd(!showCurrentPwd)} className="absolute right-3 top-2.5 text-slate-500">
+                  <button onClick={() => setShowCurrentPwd(!showCurrentPwd)} className="absolute right-3 top-2.5" style={{ color: "var(--cm-text-3)" }}>
                     {showCurrentPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div className="relative">
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-slate-400">New Password</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>New Password</label>
                 <div className="relative">
                   <input type={showNewPwd ? "text" : "password"} value={newPwd} onChange={e => setNewPwd(e.target.value)}
-                    className="w-full px-3 py-2 pr-10 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 bg-slate-800/50 border-slate-700 text-white"
+                    className="w-full px-3 py-2 pr-10 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600"
+                    style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
                     data-testid="new-password-input" />
-                  <button onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-3 top-2.5 text-slate-500">
+                  <button onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-3 top-2.5" style={{ color: "var(--cm-text-3)" }}>
                     {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5 text-slate-400">Confirm New Password</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Confirm New Password</label>
                 <input type="password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 bg-slate-800/50 border-slate-700 text-white"
+                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600"
+                  style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
                   data-testid="confirm-password-input" />
               </div>
               <Button onClick={changePassword} disabled={changingPwd || !currentPwd || !newPwd}
@@ -347,20 +354,21 @@ export default function SettingsPage() {
           {/* ── Data & Privacy ── */}
           <SectionCard icon={Shield} title="Data & Privacy" testId="section-privacy">
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30">
+              <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                 <div>
-                  <p className="text-xs font-semibold text-white">Inbound Email Scanning</p>
-                  <p className="text-[10px] text-slate-400">Auto-detect school emails in your inbox</p>
+                  <p className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>Inbound Email Scanning</p>
+                  <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>Auto-detect school emails in your inbox</p>
                 </div>
                 <Toggle checked={prefs.inbound_scan} onChange={v => togglePref("inbound_scan", v)} testId="toggle-inbound-scan" />
               </div>
               <button onClick={exportData}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border transition-colors hover:border-slate-600 bg-slate-800/30 border-slate-700/50"
+                className="w-full flex items-center gap-3 p-3 rounded-xl border transition-colors"
+                style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                 data-testid="export-data-btn">
-                <Download className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-medium text-white">Export My Data</span>
+                <Download className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} />
+                <span className="text-xs font-medium" style={{ color: "var(--cm-text)" }}>Export My Data</span>
               </button>
-              <div className="mt-4 pt-4 border-t border-slate-700/50">
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--cm-border)" }}>
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-red-600/5 border border-red-500/15">
                   <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
@@ -371,7 +379,8 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-2">
                       <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)}
                         placeholder='Type "DELETE" to confirm'
-                        className="flex-1 px-3 py-1.5 rounded-lg border text-xs outline-none bg-slate-800/50 border-red-500/20 text-white"
+                        className="flex-1 px-3 py-1.5 rounded-lg border text-xs outline-none"
+                        style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "rgba(239,68,68,0.2)", color: "var(--cm-text)" }}
                         data-testid="delete-confirm-input" />
                       <Button variant="destructive" size="sm" onClick={deleteAccount} disabled={deleting || deleteConfirm !== "DELETE"}
                         className="text-xs h-7 px-3 bg-red-600/80 hover:bg-red-600" data-testid="delete-account-btn">

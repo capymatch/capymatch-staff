@@ -132,7 +132,7 @@ function SchoolRail({ journeyStage }) {
             {i > 0 && (
               <div style={{
                 flex: 1, height: 3,
-                background: s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active") ? "#0d9488" : "#eee",
+                background: s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active") ? "#0d9488" : "var(--cm-border)",
               }} />
             )}
             <div className="rail-dot-wrap" style={{ position: "relative", flexShrink: 0 }}>
@@ -140,8 +140,8 @@ function SchoolRail({ journeyStage }) {
                 width: s.state === "active" ? 18 : 12,
                 height: s.state === "active" ? 18 : 12,
                 borderRadius: "50%",
-                background: s.state === "future" ? "white" : s.color,
-                border: s.state === "future" ? "2px solid #e5e7eb" : `2px solid ${s.color}`,
+                background: s.state === "future" ? "var(--cm-surface)" : s.color,
+                border: s.state === "future" ? "2px solid var(--cm-border)" : `2px solid ${s.color}`,
                 boxShadow: s.state === "active" ? `0 0 10px ${s.color}66` : "none",
                 cursor: "default",
               }} />
@@ -175,7 +175,7 @@ function HeroRail({ journeyStage }) {
               <div style={{
                 flex: 1, height: 2,
                 background: s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active")
-                  ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+                ? "rgba(255,255,255,0.15)" : "var(--cm-border)",
               }} />
             )}
             <div style={{ position: "relative", flexShrink: 0 }}>
@@ -183,8 +183,8 @@ function HeroRail({ journeyStage }) {
                 width: s.state === "active" ? 20 : 14,
                 height: s.state === "active" ? 20 : 14,
                 borderRadius: "50%",
-                background: s.state === "future" ? "#141422" : s.color,
-                border: s.state === "future" ? "2px solid rgba(255,255,255,0.1)" : `2px solid ${s.color}`,
+                background: s.state === "future" ? "var(--cm-surface)" : s.color,
+                border: s.state === "future" ? "2px solid var(--cm-border)" : `2px solid ${s.color}`,
                 boxShadow: s.state === "active" ? `0 0 14px ${s.color}88` : "none",
               }} />
               {s.state === "active" && (
@@ -202,7 +202,7 @@ function HeroRail({ journeyStage }) {
         {stages.map(s => (
           <span key={s.key} style={{
             flex: 1, textAlign: "center", fontSize: 10, fontWeight: s.state === "active" ? 800 : 600,
-            color: s.state === "active" ? "#5eead4" : "rgba(255,255,255,0.2)",
+            color: s.state === "active" ? "#5eead4" : "var(--cm-text-3)",
           }}>
             {s.key === "in_conversation" ? "Talking" : s.key === "campus_visit" ? "Visit" : s.label}
           </span>
@@ -221,13 +221,13 @@ function PipelineHeroCard({ program: p, navigate }) {
   const meta = [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ");
 
   return (
-    <div style={{ background: "#141422", borderRadius: 14, overflow: "hidden", position: "relative" }} data-testid="pipeline-hero-card">
+    <div style={{ background: "var(--cm-surface)", borderRadius: 14, overflow: "hidden", position: "relative" }} data-testid="pipeline-hero-card">
       <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
       <div style={{ padding: "22px 26px 22px" }}>
         {/* Top row */}
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
           <UniversityLogo domain={p.domain} name={p.university_name} size={48} className="rounded-[14px] border-2 border-white/10" />
-          <span className="text-lg sm:text-2xl" style={{ fontWeight: 800, color: "white", letterSpacing: -0.3 }}>{p.university_name}</span>
+          <span className="text-lg sm:text-2xl" style={{ fontWeight: 800, color: "var(--cm-text)", letterSpacing: -0.3 }}>{p.university_name}</span>
           <div style={{ marginLeft: "auto", flexShrink: 0, width: 420 }} className="hidden md:block">
             <HeroRail journeyStage={p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")} />
           </div>
@@ -235,14 +235,14 @@ function PipelineHeroCard({ program: p, navigate }) {
 
         {/* Badges */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--cm-text-3)" }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#94a3b8" }} />
             {sig.has_coach_reply ? "Interested" : "Neutral"}
           </span>
           {p.division && (
             <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>
           )}
-          {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)" }}>{meta}</span>}
+          {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{meta}</span>}
         </div>
 
         {/* Advice + CTA */}
@@ -251,14 +251,14 @@ function PipelineHeroCard({ program: p, navigate }) {
             const advice = getHeroAdvice(p);
             return advice ? (
               <div style={{
-                flex: 1, minWidth: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(13,148,136,0.2)",
+                flex: 1, minWidth: 0, background: "var(--cm-surface-2)", border: "1px solid rgba(13,148,136,0.2)",
                 borderLeft: "3px solid #0d9488", borderRadius: 10, padding: "14px 18px",
                 display: "flex", gap: 12, alignItems: "flex-start",
               }} data-testid="hero-advice-card">
                 <Lightbulb style={{ width: 16, height: 16, color: "#5eead4", flexShrink: 0, marginTop: 1 }} />
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.45)", marginBottom: 4, letterSpacing: 0.3 }}>What to do next</div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{advice}</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "var(--cm-text-3)", marginBottom: 4, letterSpacing: 0.3 }}>What to do next</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--cm-text-2)", lineHeight: 1.5 }}>{advice}</div>
                 </div>
               </div>
             ) : <div style={{ flex: 1 }} />;
@@ -301,14 +301,14 @@ function PipelineSchoolCard({ program: p, navigate }) {
   const ctaStyles = {
     primary: { background: "#0d9488", color: "white", border: "none" },
     warn: { background: "#d97706", color: "white", border: "none" },
-    outline: { background: "white", color: "#555", border: "1px solid #e5e7eb" },
+    outline: { background: "var(--cm-surface)", color: "var(--cm-text-2)", border: "1px solid var(--cm-border)" },
   };
 
   return (
     <div
       onClick={() => navigate(`/pipeline/${p.program_id}`)}
       style={{
-        background: "white", border: "1px solid #e5e7eb", borderRadius: 12,
+        background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12,
         padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center",
         gap: 12, cursor: "pointer", transition: "all 0.15s", overflow: "hidden",
       }}
@@ -319,9 +319,9 @@ function PipelineSchoolCard({ program: p, navigate }) {
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 0%", marginRight: "auto" }}>
         <UniversityLogo domain={p.domain} name={p.university_name} size={38} className="rounded-[10px] flex-shrink-0" />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2, color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
-          <div style={{ fontSize: 10, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-            {p.division && <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 3, background: "#f0f0f0", color: "#555" }}>{p.division}</span>}
+          <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
+          <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+            {p.division && <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 3, background: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{p.division}</span>}
             <span>{meta}</span>
             {due && <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: due.bg, color: due.color }}>{due.text}</span>}
           </div>
@@ -344,21 +344,21 @@ function PipelineSchoolCard({ program: p, navigate }) {
 
       {/* Col 4: Engagement metrics */}
       <div style={{ width: 90, flexShrink: 0, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }} className="hidden lg:flex">
-        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "#555" }}>
-          <Eye style={{ width: 13, height: 13, color: "#999" }} />0
+        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
+          <Eye style={{ width: 13, height: 13, color: "var(--cm-text-3)" }} />0
         </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "#555" }}>
-          <Link2 style={{ width: 13, height: 13, color: "#999" }} />0
+        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
+          <Link2 style={{ width: 13, height: 13, color: "var(--cm-text-3)" }} />0
         </span>
-        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "#555" }}>
-          <Users style={{ width: 13, height: 13, color: "#999" }} />{sig.total_interactions || 0}
+        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "var(--cm-text-2)" }}>
+          <Users style={{ width: 13, height: 13, color: "var(--cm-text-3)" }} />{sig.total_interactions || 0}
         </span>
       </div>
 
       {/* Col 5: Next action */}
       <div style={{ width: 100, flexShrink: 0, textAlign: "right" }} className="hidden xl:block">
-        <div style={{ fontSize: 10, color: "#999" }}>
-          <strong style={{ color: "#1a1a1a", fontWeight: 700 }}>Status:</strong> {next.label}
+        <div style={{ fontSize: 10, color: "var(--cm-text-3)" }}>
+          <strong style={{ color: "var(--cm-text)", fontWeight: 700 }}>Status:</strong> {next.label}
         </div>
       </div>
 
@@ -376,7 +376,7 @@ function PipelineSchoolCard({ program: p, navigate }) {
       </div>
 
       {/* Col 7: Arrow */}
-      <div style={{ width: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc" }}>
+      <div style={{ width: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--cm-text-4)" }}>
         <ChevronRight style={{ width: 16, height: 16 }} />
       </div>
     </div>
@@ -401,11 +401,11 @@ function CommittedSchoolCard({ program: p, navigate }) {
         <CheckCircle2 style={{ width: 18, height: 18, color: "white" }} />
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: "#1a1a1a" }}>{p.university_name}</div>
-        <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{meta}</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--cm-text)" }}>{p.university_name}</div>
+        <div style={{ fontSize: 11, color: "var(--cm-text-2)", marginTop: 2 }}>{meta}</div>
       </div>
-      <span style={{ padding: "5px 14px", borderRadius: 8, background: "white", color: "#16a34a", fontSize: 11, fontWeight: 700, border: "1px solid rgba(22,163,74,0.12)" }}>Verbal Commit</span>
-      <ChevronRight style={{ width: 16, height: 16, color: "#ccc" }} />
+      <span style={{ padding: "5px 14px", borderRadius: 8, background: "var(--cm-surface)", color: "#16a34a", fontSize: 11, fontWeight: 700, border: "1px solid rgba(22,163,74,0.12)" }}>Verbal Commit</span>
+      <ChevronRight style={{ width: 16, height: 16, color: "var(--cm-text-4)" }} />
     </div>
   );
 }
@@ -426,7 +426,7 @@ function SectionHeader({ section, count, collapsed, onToggle }) {
       }} />
       <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: section.color }}>{section.label}</span>
       <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: section.bg, color: section.color }}>{count}</span>
-      <div style={{ flex: 1, height: 1, background: "#f0f0f0", marginLeft: 6 }} />
+      <div style={{ flex: 1, height: 1, background: "var(--cm-border)", marginLeft: 6 }} />
     </div>
   );
 }
@@ -451,9 +451,9 @@ function FilterChips({ sectionCounts, total, active, onFilter }) {
           style={{
             padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
             fontFamily: "inherit", cursor: "pointer",
-            background: active === c.key ? "#1a1a1a" : "white",
-            color: active === c.key ? "white" : "#555",
-            border: active === c.key ? "1px solid #1a1a1a" : "1px solid #e5e7eb",
+            background: active === c.key ? "var(--cm-text)" : "var(--cm-surface)",
+            color: active === c.key ? "var(--cm-bg)" : "var(--cm-text-2)",
+            border: active === c.key ? "1px solid var(--cm-text)" : "1px solid var(--cm-border)",
           }}
           data-testid={`filter-${c.key || "all"}`}
         >{c.label}</button>
@@ -494,9 +494,9 @@ function PipelineStyles() {
 function EmptyBoardState({ navigate }) {
   return (
     <div className="text-center py-20" data-testid="empty-pipeline">
-      <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-      <p className="text-sm font-medium text-slate-700 mb-1">No schools in your pipeline yet</p>
-      <p className="text-xs text-slate-500 mb-6">Browse the Knowledge Base to find volleyball programs that match your profile</p>
+      <GraduationCap className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--cm-text-4)" }} />
+      <p className="text-sm font-medium mb-1" style={{ color: "var(--cm-text-2)" }}>No schools in your pipeline yet</p>
+      <p className="text-xs mb-6" style={{ color: "var(--cm-text-3)" }}>Browse the Knowledge Base to find volleyball programs that match your profile</p>
       <Button
         onClick={() => navigate("/schools")}
         style={{ background: "#0d9488", color: "white", padding: "10px 24px", height: "auto", borderRadius: 10, fontSize: 14, fontWeight: 700 }}
@@ -554,7 +554,7 @@ export default function PipelinePage() {
       <div style={{ maxWidth: 1120, margin: "0 auto" }}>
         <PipelineStyles />
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "#1a1a1a" }} data-testid="pipeline-title">My Schools</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "var(--cm-text)" }} data-testid="pipeline-title">My Schools</h1>
         </div>
         <EmptyBoardState navigate={navigate} />
       </div>
@@ -579,15 +579,15 @@ export default function PipelinePage() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "#1a1a1a" }} data-testid="pipeline-title">My Schools</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "var(--cm-text)" }} data-testid="pipeline-title">My Schools</h1>
         <span style={{ flex: 1 }} />
-        <Button
+        <button
           onClick={() => navigate("/schools")}
-          style={{ background: "#1a1a1a", color: "white", padding: "9px 18px", height: "auto", borderRadius: 8, fontSize: 13, fontWeight: 700 }}
+          style={{ background: "var(--cm-text)", color: "var(--cm-bg)", padding: "9px 18px", height: "auto", borderRadius: 8, fontSize: 13, fontWeight: 700 }}
           data-testid="add-school-btn"
         >
           <Plus className="w-3.5 h-3.5 mr-1.5" />Add School
-        </Button>
+        </button>
       </div>
 
       {/* Hero Card */}
@@ -642,21 +642,21 @@ export default function PipelinePage() {
             <ChevronDown style={{ width: 14, height: 14, color: "#999", transition: "transform 0.2s", transform: collapsedSections.archived ? "rotate(-90deg)" : "none" }} />
             <Archive style={{ width: 13, height: 13, color: "#94a3b8" }} />
             <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>Archived</span>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: "#f1f5f9", color: "#94a3b8" }}>{archivedPrograms.length}</span>
-            <div style={{ flex: 1, height: 1, background: "#f0f0f0", marginLeft: 6 }} />
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: "var(--cm-surface-2)", color: "#94a3b8" }}>{archivedPrograms.length}</span>
+            <div style={{ flex: 1, height: 1, background: "var(--cm-border)", marginLeft: 6 }} />
           </div>
           {!collapsedSections.archived && archivedPrograms.map(p => (
             <div key={p.program_id}
               style={{
-                background: "white", border: "1px solid #e5e7eb", borderRadius: 12,
+                background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12,
                 padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, opacity: 0.7,
               }}
               data-testid={`archived-card-${p.program_id}`}
             >
               <UniversityLogo domain={p.domain} name={p.university_name} size={34} className="rounded-[10px] grayscale" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
-                <div style={{ fontSize: 10, color: "#999", marginTop: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
+                <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 1 }}>
                   {[p.division, p.conference, p.state].filter(Boolean).join(" · ")}
                 </div>
               </div>

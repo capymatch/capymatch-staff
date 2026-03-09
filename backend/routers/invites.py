@@ -49,7 +49,7 @@ def _build_invite_url(request: Request, token: str) -> str:
             parsed = urlparse(referer)
             origin = f"{parsed.scheme}://{parsed.netloc}"
     if not origin:
-        origin = "https://kb-scraper-unify.preview.emergentagent.com"
+        origin = "https://role-based-hub-2.preview.emergentagent.com"
     return f"{origin}/invite/{token}"
 
 

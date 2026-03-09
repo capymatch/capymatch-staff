@@ -9,7 +9,6 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #F9FAFB;
 }
 
 code {
@@ -20,8 +19,13 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Manrope', sans-serif;
 }
 
+/* ══════════════════════════════════════════════════
+   THEME: CSS Custom Properties
+   ══════════════════════════════════════════════════ */
+
 @layer base {
     :root {
+        /* Shadcn defaults */
         --background: 0 0% 100%;
         --foreground: 222 47% 11%;
         --card: 0 0% 100%;
@@ -42,6 +46,84 @@ h1, h2, h3, h4, h5, h6 {
         --input: 220 13% 91%;
         --ring: 221 83% 40%;
         --radius: 0.75rem;
+
+        /* CapyMatch Light Theme */
+        --cm-bg: #F7FAFC;
+        --cm-surface: #FFFFFF;
+        --cm-surface-2: #f1f5f9;
+        --cm-surface-hover: #f8fafc;
+        --cm-border: #e2e8f0;
+        --cm-border-subtle: #f1f5f9;
+        --cm-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        --cm-shadow-md: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03);
+        --cm-text: #1e293b;
+        --cm-text-2: #475569;
+        --cm-text-3: #94a3b8;
+        --cm-text-4: #cbd5e1;
+        --cm-accent: #1a8a80;
+        --cm-accent-light: rgba(26,138,128,0.08);
+        --cm-accent-text: #0d6e66;
+        --cm-hero-from: #e8eff5;
+        --cm-hero-to: #dce7f0;
+        --cm-sidebar: #FFFFFF;
+        --cm-sidebar-active: #ecfdf5;
+        --cm-sidebar-active-text: #059669;
+        --cm-topbar: #FFFFFF;
+        --cm-badge-bg: #f0fdf4;
+        --cm-badge-text: #16a34a;
+        --cm-card-stat: #f8fafc;
+        --cm-input-bg: #f8fafc;
+        --cm-overlay: rgba(0,0,0,0.3);
+    }
+
+    .dark {
+        --background: 222 47% 7%;
+        --foreground: 210 40% 90%;
+        --card: 222 47% 11%;
+        --card-foreground: 210 40% 90%;
+        --popover: 222 47% 11%;
+        --popover-foreground: 210 40% 90%;
+        --primary: 171 66% 32%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 222 30% 14%;
+        --secondary-foreground: 210 40% 90%;
+        --muted: 222 30% 14%;
+        --muted-foreground: 215 20% 55%;
+        --accent: 171 66% 32%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 222 30% 18%;
+        --input: 222 30% 18%;
+        --ring: 171 66% 32%;
+
+        /* CapyMatch Dark Theme */
+        --cm-bg: #0f1219;
+        --cm-surface: #1a1f2e;
+        --cm-surface-2: #222838;
+        --cm-surface-hover: #252b3b;
+        --cm-border: rgba(255,255,255,0.06);
+        --cm-border-subtle: rgba(255,255,255,0.03);
+        --cm-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        --cm-shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+        --cm-text: #e2e8f0;
+        --cm-text-2: #94a3b8;
+        --cm-text-3: #64748b;
+        --cm-text-4: #475569;
+        --cm-accent: #1a8a80;
+        --cm-accent-light: rgba(26,138,128,0.12);
+        --cm-accent-text: #25d4c4;
+        --cm-hero-from: #0f1219;
+        --cm-hero-to: #1e2640;
+        --cm-sidebar: #111827;
+        --cm-sidebar-active: rgba(16,185,129,0.08);
+        --cm-sidebar-active-text: #34d399;
+        --cm-topbar: #111827;
+        --cm-badge-bg: rgba(16,185,129,0.1);
+        --cm-badge-text: #34d399;
+        --cm-card-stat: rgba(255,255,255,0.03);
+        --cm-input-bg: rgba(255,255,255,0.05);
+        --cm-overlay: rgba(0,0,0,0.6);
     }
 }
 
@@ -51,75 +133,57 @@ h1, h2, h3, h4, h5, h6 {
     }
     body {
         @apply bg-background text-foreground;
+        background-color: var(--cm-bg);
+        color: var(--cm-text);
     }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
+/* Custom scrollbar — light */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #F3F4F6; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
-::-webkit-scrollbar-track {
-    background: #F3F4F6;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #D1D5DB;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #9CA3AF;
-}
+/* Custom scrollbar — dark */
+.dark ::-webkit-scrollbar-track { background: #1a1f2e; }
+.dark ::-webkit-scrollbar-thumb { background: #374151; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 
 /* Smooth transitions */
-.transition-smooth {
-    transition: all 200ms ease-in-out;
-}
+.transition-smooth { transition: all 200ms ease-in-out; }
 
 /* Pulse animation for alerts */
-@keyframes pulse-dot {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.animate-pulse-dot { animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
-.animate-pulse-dot {
-    animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* ══════════════════════════════════════════════════
+   THEME-AWARE UTILITY CLASSES for athlete pages
+   ══════════════════════════════════════════════════ */
+@layer utilities {
+    .cm-bg { background-color: var(--cm-bg); }
+    .cm-surface { background-color: var(--cm-surface); }
+    .cm-surface-2 { background-color: var(--cm-surface-2); }
+    .cm-border { border-color: var(--cm-border); }
+    .cm-text { color: var(--cm-text); }
+    .cm-text-2 { color: var(--cm-text-2); }
+    .cm-text-3 { color: var(--cm-text-3); }
+    .cm-shadow { box-shadow: var(--cm-shadow); }
+    .cm-shadow-md { box-shadow: var(--cm-shadow-md); }
 }
 
 @layer base {
-    [data-debug-wrapper="true"] {
-        display: contents !important;
-    }
-
+    [data-debug-wrapper="true"] { display: contents !important; }
     [data-debug-wrapper="true"] > * {
-        margin-left: inherit;
-        margin-right: inherit;
-        margin-top: inherit;
-        margin-bottom: inherit;
-        padding-left: inherit;
-        padding-right: inherit;
-        padding-top: inherit;
-        padding-bottom: inherit;
-        column-gap: inherit;
-        row-gap: inherit;
-        gap: inherit;
-        border-left-width: inherit;
-        border-right-width: inherit;
-        border-top-width: inherit;
-        border-bottom-width: inherit;
-        border-left-style: inherit;
-        border-right-style: inherit;
-        border-top-style: inherit;
-        border-bottom-style: inherit;
-        border-left-color: inherit;
-        border-right-color: inherit;
-        border-top-color: inherit;
-        border-bottom-color: inherit;
+        margin-left: inherit; margin-right: inherit;
+        margin-top: inherit; margin-bottom: inherit;
+        padding-left: inherit; padding-right: inherit;
+        padding-top: inherit; padding-bottom: inherit;
+        column-gap: inherit; row-gap: inherit; gap: inherit;
+        border-left-width: inherit; border-right-width: inherit;
+        border-top-width: inherit; border-bottom-width: inherit;
+        border-left-style: inherit; border-right-style: inherit;
+        border-top-style: inherit; border-bottom-style: inherit;
+        border-left-color: inherit; border-right-color: inherit;
+        border-top-color: inherit; border-bottom-color: inherit;
     }
 }

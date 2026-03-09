@@ -24,7 +24,7 @@ function MatchRing({ score }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[22px] font-extrabold text-[#1a8a80] leading-none">{pct}%</span>
-        <span className="text-[9px] font-semibold text-white/35 uppercase tracking-[1px] mt-0.5">Match</span>
+        <span className="text-[9px] font-semibold text-[var(--cm-text)]/35 uppercase tracking-[1px] mt-0.5">Match</span>
       </div>
     </div>
   );
@@ -34,14 +34,14 @@ function MatchRing({ score }) {
 function StatCard({ value, label, subtitle, accent }) {
   const isEmpty = !value && value !== 0;
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5 flex flex-col items-center text-center" data-testid={`stat-card-${label?.replace(/\s+/g, '-').toLowerCase()}`}>
+    <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 flex flex-col items-center text-center" data-testid={`stat-card-${label?.replace(/\s+/g, '-').toLowerCase()}`}>
       <div className={`text-[26px] sm:text-[30px] font-black tracking-tight leading-none mb-2 ${
-        isEmpty ? "text-white/20" : accent ? "text-[#1a8a80]" : "text-white"
+        isEmpty ? "text-[var(--cm-text)]/20" : accent ? "text-[#1a8a80]" : "text-[var(--cm-text)]"
       }`}>
         {isEmpty ? "N/A" : value}
       </div>
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/30 mb-0.5">{label}</div>
-      {subtitle && <div className="text-[11px] text-white/20">{subtitle}</div>}
+      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--cm-text)]/30 mb-0.5">{label}</div>
+      {subtitle && <div className="text-[11px] text-[var(--cm-text)]/20">{subtitle}</div>}
     </div>
   );
 }
@@ -51,7 +51,7 @@ function SectionHeader({ icon: Icon, title, testId }) {
   return (
     <div className="flex items-center gap-2 mb-4" data-testid={testId}>
       {Icon && <Icon className="w-4 h-4 text-[#1a8a80]" />}
-      <h3 className="text-[13px] font-bold uppercase tracking-[0.1em] text-white/40">{title}</h3>
+      <h3 className="text-[13px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/40">{title}</h3>
     </div>
   );
 }
@@ -61,14 +61,14 @@ function OverviewField({ label, value, isLink }) {
   const linkText = label === "Recruiting Questionnaire" ? "Fill out questionnaire" : "Visit website";
   return (
     <div>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/30 mb-1.5">{label}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--cm-text)]/30 mb-1.5">{label}</div>
       {isLink && value ? (
         <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noreferrer"
           className="text-[13px] text-[#1a8a80] font-semibold hover:underline inline-flex items-center gap-1">
           {linkText} <ExternalLink className="w-3 h-3" />
         </a>
       ) : (
-        <div className="text-[13px] font-semibold text-white/70">{value || "\u2014"}</div>
+        <div className="text-[13px] font-semibold text-[var(--cm-text)]/70">{value || "\u2014"}</div>
       )}
     </div>
   );
@@ -162,13 +162,13 @@ export default function SchoolDetailPage() {
     <div className="max-w-[960px] mx-auto px-4 sm:px-6 pb-16" data-testid="school-info-page">
       {/* Back link */}
       <button onClick={() => navigate(-1)} data-testid="back-button"
-        className="inline-flex items-center gap-1.5 text-[12px] text-white/30 font-semibold mb-5 hover:text-[#1a8a80] transition-colors">
+        className="inline-flex items-center gap-1.5 text-[12px] text-[var(--cm-text)]/30 font-semibold mb-5 hover:text-[#1a8a80] transition-colors">
         <ChevronLeft className="w-3.5 h-3.5" /> Back to Find Schools
       </button>
 
       {/* Dark Hero Card */}
       <div className="rounded-[20px] overflow-hidden mb-6 border border-white/[0.06]"
-        style={{ background: "linear-gradient(135deg, #1a1f2e 0%, #1e2640 60%, #2a1a2e 100%)" }}
+        style={{ background: "linear-gradient(135deg, var(--cm-hero-from) 0%, var(--cm-surface) 60%, var(--cm-surface-2) 100%)" }}
         data-testid="school-hero">
         <div className="p-5 sm:p-9 flex flex-col sm:flex-row gap-4 sm:gap-7 items-center sm:items-start">
           {school.match_score != null && school.match_score > 0 && (
@@ -188,7 +188,7 @@ export default function SchoolDetailPage() {
             {school.logo_url && (
               <img src={school.logo_url} alt="" className="w-12 h-12 rounded-lg object-contain mb-3 mx-auto sm:mx-0" onError={e => e.target.style.display = 'none'} />
             )}
-            <h1 className="text-xl sm:text-[28px] font-extrabold text-white tracking-tight mb-1.5 leading-tight" data-testid="school-name">
+            <h1 className="text-xl sm:text-[28px] font-extrabold text-[var(--cm-text)] tracking-tight mb-1.5 leading-tight" data-testid="school-name">
               {school.university_name}
             </h1>
             <div className="flex flex-wrap items-center gap-1.5 mb-3 justify-center sm:justify-start">
@@ -197,15 +197,15 @@ export default function SchoolDetailPage() {
                   style={{ backgroundColor: "rgba(26,138,128,0.2)", color: "#1a8a80" }}>{school.division}</span>
               )}
               {school.conference && (
-                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-white/[0.06] text-white/50">{school.conference}</span>
+                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{school.conference}</span>
               )}
               {school.region && (
-                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-white/[0.06] text-white/50">{school.region}</span>
+                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{school.region}</span>
               )}
             </div>
             <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
               <button onClick={addToBoard} disabled={adding || school.on_board} data-testid="add-to-board-btn"
-                className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 text-white transition-all border-none"
+                className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 text-[var(--cm-text)] transition-all border-none"
                 style={school.on_board
                   ? { background: "rgba(16,185,129,0.2)", color: "#10b981" }
                   : { background: "linear-gradient(135deg, #1a8a80, #25a99e)" }}>
@@ -213,7 +213,8 @@ export default function SchoolDetailPage() {
               </button>
               {school.website && (
                 <a href={school.website} target="_blank" rel="noreferrer" data-testid="visit-website-btn"
-                  className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 bg-white/[0.06] text-white/60 border border-white/[0.08]">
+                  className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 border"
+                  style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-2)", borderColor: "var(--cm-border)" }}>
                   <ExternalLink className="w-4 h-4" /> Visit Website
                 </a>
               )}
@@ -235,7 +236,7 @@ export default function SchoolDetailPage() {
 
       <div className="flex flex-col gap-5">
         {/* Program Overview */}
-        <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5 sm:p-6" data-testid="program-overview-section">
+        <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 sm:p-6" data-testid="program-overview-section">
           <SectionHeader icon={BookOpen} title="Program Overview" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 pb-4 border-b border-white/[0.06]">
             <OverviewField label="Division" value={
@@ -259,19 +260,19 @@ export default function SchoolDetailPage() {
           {coaches.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               {coaches.map((c, i) => (
-                <div key={i} className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5" data-testid={`coach-card-${i}`}>
+                <div key={i} className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5" data-testid={`coach-card-${i}`}>
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#1a8a80]/10">
                       <User className="w-5 h-5 text-[#1a8a80]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[15px] font-bold text-white">{c.name}</div>
-                      <div className="text-[12px] text-white/30 mt-0.5">{c.title || c.role || "Coach"}</div>
+                      <div className="text-[15px] font-bold text-[var(--cm-text)]">{c.name}</div>
+                      <div className="text-[12px] text-[var(--cm-text)]/30 mt-0.5">{c.title || c.role || "Coach"}</div>
                     </div>
                   </div>
                   {c.email && (
                     <div className="flex items-center gap-2.5 mt-4">
-                      <Mail className="w-3.5 h-3.5 text-white/30" />
+                      <Mail className="w-3.5 h-3.5 text-[var(--cm-text)]/30" />
                       <a href={`mailto:${c.email}`} className="text-[13px] text-[#1a8a80] font-medium hover:underline">{c.email}</a>
                     </div>
                   )}
@@ -279,7 +280,7 @@ export default function SchoolDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-[13px] text-white/30 mb-4">No coaching staff data available.</p>
+            <p className="text-[13px] text-[var(--cm-text)]/30 mb-4">No coaching staff data available.</p>
           )}
         </div>
 
@@ -325,24 +326,24 @@ export default function SchoolDetailPage() {
               {Object.entries(school.campus_diversity)
                 .sort((a, b) => b[1].students - a[1].students)
                 .map(([category, data]) => (
-                  <div key={category} className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4" data-testid={`diversity-${category.replace(/[\s/]+/g, '-').toLowerCase()}`}>
-                    <div className="text-[13px] font-semibold mb-3 text-white">{category}</div>
+                  <div key={category} className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4" data-testid={`diversity-${category.replace(/[\s/]+/g, '-').toLowerCase()}`}>
+                    <div className="text-[13px] font-semibold mb-3 text-[var(--cm-text)]">{category}</div>
                     <div className="space-y-2.5">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30">Students</span>
-                          <span className="text-[12px] font-bold text-white">{data.students}%</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--cm-text)]/30">Students</span>
+                          <span className="text-[12px] font-bold text-[var(--cm-text)]">{data.students}%</span>
                         </div>
-                        <div className="h-1.5 rounded-full overflow-hidden bg-white/[0.06]">
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.students, 100)}%`, background: "#1a8a80" }} />
                         </div>
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-white/30">Faculty</span>
-                          <span className="text-[12px] font-bold text-white">{data.faculty}%</span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--cm-text)]/30">Faculty</span>
+                          <span className="text-[12px] font-bold text-[var(--cm-text)]">{data.faculty}%</span>
                         </div>
-                        <div className="h-1.5 rounded-full overflow-hidden bg-white/[0.06]">
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.faculty, 100)}%`, background: "#6366f1" }} />
                         </div>
                       </div>
@@ -359,21 +360,21 @@ export default function SchoolDetailPage() {
             <SectionHeader title="Additional Details" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {school.region && (
-                <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/30 mb-1">Location</div>
-                  <div className="text-[15px] font-bold text-white">{school.region}{sc.city ? ` \u00B7 ${sc.city}, ${sc.state}` : ""}</div>
+                <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/30 mb-1">Location</div>
+                  <div className="text-[15px] font-bold text-[var(--cm-text)]">{school.region}{sc.city ? ` \u00B7 ${sc.city}, ${sc.state}` : ""}</div>
                 </div>
               )}
               {school.mascot && (
-                <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/30 mb-1">Mascot</div>
-                  <div className="text-[15px] font-bold text-white">{school.mascot}</div>
+                <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/30 mb-1">Mascot</div>
+                  <div className="text-[15px] font-bold text-[var(--cm-text)]">{school.mascot}</div>
                 </div>
               )}
               {school.scholarship_type && (
-                <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-4">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/30 mb-1">Scholarship</div>
-                  <div className="text-[15px] font-bold text-white">{school.scholarship_type}</div>
+                <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/30 mb-1">Scholarship</div>
+                  <div className="text-[15px] font-bold text-[var(--cm-text)]">{school.scholarship_type}</div>
                 </div>
               )}
             </div>

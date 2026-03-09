@@ -62,18 +62,18 @@ function SectionCard({ title, summary, status, icon, children, defaultOpen = fal
   };
   const sc = statusColors[status] || statusColors.complete;
   return (
-    <div data-testid={testId} className="rounded-xl border border-gray-100 overflow-hidden mb-3 bg-white hover:shadow-sm transition-shadow">
+    <div data-testid={testId} className="rounded-xl border overflow-hidden mb-3 transition-shadow" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 text-left" data-testid={`${testId}-toggle`}>
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">{icon}</div>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--cm-surface-2)" }}>{icon}</div>
           <div>
-            <p className="text-[13px] font-semibold text-slate-800">{title}</p>
-            <p className={`text-[11px] mt-0.5 truncate max-w-[260px] ${status === "complete" ? "text-gray-400" : "text-amber-600"}`}>{summary}</p>
+            <p className="text-[13px] font-semibold" style={{ color: "var(--cm-text)" }}>{title}</p>
+            <p className={`text-[11px] mt-0.5 truncate max-w-[260px] ${status === "complete" ? "" : "text-amber-600"}`} style={status === "complete" ? { color: "var(--cm-text-3)" } : {}}>{summary}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md hidden sm:inline ${sc.bg} ${sc.text}`}>{sc.label}</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
+          <ChevronDown className="w-4 h-4 transition-transform" style={{ color: "var(--cm-text-3)" }} />
         </div>
       </button>
       {open && <div className="px-4 pb-4 pt-1" onClick={(e) => e.stopPropagation()}>{children}</div>}
@@ -86,20 +86,23 @@ function Field({ label, value, onChange, placeholder, type = "text", coachVisibl
   return (
     <div>
       <div className="flex items-center gap-1 mb-1">
-        <label className="text-[11px] font-medium text-gray-500">{label}</label>
+        <label className="text-[11px] font-medium" style={{ color: "var(--cm-text-3)" }}>{label}</label>
         {coachVisible && <Eye className="w-3 h-3 text-indigo-400" title="Visible on public profile" />}
         {privateField && <EyeOff className="w-3 h-3 text-red-400" title="Private — not shared" />}
       </div>
       {type === "textarea" ? (
-        <textarea data-testid={testId} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-none transition-all resize-none min-h-[70px] bg-white text-slate-800 focus:border-emerald-400"
+        <textarea data-testid={testId} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none transition-all resize-none min-h-[70px] focus:border-emerald-400"
+          style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
           value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
       ) : type === "select" ? (
-        <select data-testid={testId} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-none bg-white text-slate-800"
+        <select data-testid={testId} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none"
+          style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
           value={value || ""} onChange={(e) => onChange(e.target.value)}>
           <option value="">Select...</option><option value="Right">Right</option><option value="Left">Left</option>
         </select>
       ) : (
-        <input data-testid={testId} type={type} className="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-none transition-all bg-white text-slate-800 focus:border-emerald-400"
+        <input data-testid={testId} type={type} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none transition-all focus:border-emerald-400"
+          style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
           value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
       )}
     </div>
@@ -177,7 +180,7 @@ export default function ProfilePage() {
   );
   if (!profile) return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <p className="text-sm text-gray-500">Unable to load profile</p>
+      <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>Unable to load profile</p>
     </div>
   );
 
@@ -198,7 +201,7 @@ export default function ProfilePage() {
     <div data-testid="profile-page" className="max-w-2xl">
       {/* Top Bar */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-slate-800">Athlete Profile</h2>
+        <h2 className="text-lg font-bold" style={{ color: "var(--cm-text)" }}>Athlete Profile</h2>
         {autoSaved && (
           <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-500 animate-pulse">
             <Check className="w-3.5 h-3.5" /> Auto-saved
@@ -207,22 +210,22 @@ export default function ProfilePage() {
       </div>
 
       {/* Completeness */}
-      <div data-testid="profile-completeness" className="rounded-xl border border-gray-100 bg-white p-4 mb-3 flex items-center gap-4">
+      <div data-testid="profile-completeness" className="rounded-xl border p-4 mb-3 flex items-center gap-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
         <CompletenessRing pct={comp.pct} />
         <div>
-          <h3 className="text-sm font-semibold text-slate-800">Profile Strength</h3>
-          <p className="text-xs text-gray-400 mt-0.5">{comp.filled} of {comp.total} fields</p>
+          <h3 className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>Profile Strength</h3>
+          <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3)" }}>{comp.filled} of {comp.total} fields</p>
           {comp.next && <p className="text-xs mt-1 font-medium text-emerald-600">Add {comp.next.label.toLowerCase()}</p>}
         </div>
       </div>
 
       {/* Photo */}
-      <div data-testid="profile-photo-hero" className="rounded-xl border border-gray-100 bg-gradient-to-r from-emerald-50/30 to-indigo-50/30 p-4 mb-3 flex items-center gap-4">
+      <div data-testid="profile-photo-hero" className="rounded-xl border p-4 mb-3 flex items-center gap-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
         <div className="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0 cursor-pointer group border-2 border-white shadow-lg" onClick={() => photoRef.current?.click()}>
           {profile.photo_url ? (
             <img src={profile.photo_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100"><User className="w-6 h-6 text-gray-400" /></div>
+            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "var(--cm-surface-2)" }}><User className="w-6 h-6" style={{ color: "var(--cm-text-3)" }} /></div>
           )}
           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <Camera className="w-4 h-4 text-white" />
@@ -230,15 +233,15 @@ export default function ProfilePage() {
           <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} data-testid="photo-upload-input" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-slate-800">Profile Photo</h3>
-          <p className="text-[11px] text-gray-400 mt-1">First thing college coaches see</p>
+          <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Profile Photo</h3>
+          <p className="text-[11px] mt-1" style={{ color: "var(--cm-text-3)" }}>First thing college coaches see</p>
         </div>
       </div>
 
       {/* Share */}
       {shareLink && (
-        <div data-testid="profile-share-card" className="rounded-xl p-4 mb-3 bg-slate-800">
-          <h3 className="text-xs font-semibold text-white mb-2.5 flex items-center gap-1.5"><Share2 className="w-3.5 h-3.5" /> Share Your Profile</h3>
+        <div data-testid="profile-share-card" className="rounded-xl p-4 mb-3" style={{ backgroundColor: "var(--cm-surface)", border: "1px solid var(--cm-border)" }}>
+          <h3 className="text-xs font-semibold mb-2.5 flex items-center gap-1.5" style={{ color: "var(--cm-text)" }}><Share2 className="w-3.5 h-3.5" /> Share Your Profile</h3>
           <div className="flex flex-wrap gap-2">
             <button data-testid="share-copy-link" onClick={copyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white">
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {copied ? "Copied!" : "Copy Link"}
@@ -284,7 +287,7 @@ export default function ProfilePage() {
           <Field testId="field-wingspan" label="Wingspan" value={profile.wingspan} onChange={(v) => updateField("wingspan", v)} />
           <Field testId="field-gpa" label="GPA" value={profile.gpa} onChange={(v) => updateField("gpa", v)} coachVisible />
         </div>
-        <div className="mt-3 pt-3 border-t border-gray-100">
+        <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cm-border)" }}>
           <div className="flex items-center gap-1.5 mb-2">
             <EyeOff className="w-3 h-3 text-red-400" />
             <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500">Private — not shared publicly</span>
@@ -328,13 +331,13 @@ export default function ProfilePage() {
         icon={<svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>}
         title="Contact Info" summary={contactSummary}
         status={sectionStatus(["contact_email", "parent_name"])}>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Athlete</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--cm-text-3)" }}>Athlete</p>
         <div className="grid grid-cols-2 gap-2.5 mb-3">
           <Field testId="field-contact-email" label="Email" value={profile.contact_email} onChange={(v) => updateField("contact_email", v)} coachVisible />
           <Field testId="field-contact-phone" label="Phone" value={profile.contact_phone} onChange={(v) => updateField("contact_phone", v)} />
         </div>
-        <div className="mb-3 h-px bg-gray-100" />
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Club Coach</p>
+        <div className="mb-3 h-px" style={{ backgroundColor: "var(--cm-border)" }} />
+        <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--cm-text-3)" }}>Club Coach</p>
         <div className="grid gap-2.5 mb-2.5">
           <Field testId="field-coach-name" label="Name" value={profile.parent_name} onChange={(v) => updateField("parent_name", v)} />
         </div>
