@@ -59,12 +59,12 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - **Pages refactored:** Dashboard, Pipeline, Schools, Calendar, Settings, Profile, Journey, Inbox, Highlights, Analytics, SchoolDetail, AI Assistant Drawer
 - **Testing:** 100% pass rate across all 11 pages in both light and dark modes (iteration_61)
 
-### Phase 10 — My Schools Page Redesign (DONE - March 9, 2026)
-- **Hero = Actions Needed Today carousel** — Dark premium card showing one action per slide with school logo, name, stage/match/division/due badges, context text, CTA, progress rail, social links, "Next:" preview, and carousel navigation (dots + arrows) at bottom
-- **Upcoming Events section** — Clean minimal section showing 3 upcoming events with "View Calendar" link
-- **Kanban Board** — 6 columns (Added, Outreach, Talking, Visit, Offer, Committed) replacing old list view, each card with school logo, match %, division/conference tags, due dates, and contextual CTAs
-- Removed old filter chips, section headers, and list view. Page feels like "a calm recruiting command center for families"
-- **Testing:** 100% pass rate (12/12 features, iteration_64), both themes verified
+### Phase 10 — My Schools Page Redesign V3 (DONE - March 9, 2026)
+- **Hero Card** = Original dark school-focus card: teal accent bar, logo + name, 6-stage progress rail, badges (Neutral/D1/Match%/Fit Label/Confidence), social links (X/IG/FB), "What to do next" advice box with lightbulb icon, Follow Up CTA
+- **Actions Carousel** = Below hero, "ACTIONS NEEDED TODAY" label, carousel dots + arrows, one action per slide with context + CTA
+- **Upcoming Events** = 3 events with dates and "View Calendar" link
+- **Kanban Board** = CRM-style: thin colored bar per column (6 columns), bold header + school count, minimal cards with school name, division/conference, logo + match %, status dot (green/red/amber)
+- **Testing:** 100% pass rate (12/12 features, iteration_65), both themes verified
 
 ### Phase 9 — AI Gmail Intelligence V1 (DONE - March 9, 2026)
 **Backend:**
