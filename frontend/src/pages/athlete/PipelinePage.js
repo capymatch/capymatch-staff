@@ -357,11 +357,16 @@ function KanbanCard({ program: p, matchScore, navigate, index }) {
           }}
           data-testid={`kanban-card-${p.program_id}`}
         >
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
-            {hasUrgent && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", flexShrink: 0, marginTop: 5 }} />}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <UniversityLogo domain={p.domain} name={p.university_name} size={28} className="rounded-[6px] mt-[2px] flex-shrink-0" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
+                {hasUrgent && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", flexShrink: 0, marginTop: 5 }} />}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 2 }}>{[p.division, p.conference].filter(Boolean).join(" · ")}</div>
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 4 }}>{[p.division, p.conference].filter(Boolean).join(" · ")}</div>
         </div>
       )}
     </Draggable>
