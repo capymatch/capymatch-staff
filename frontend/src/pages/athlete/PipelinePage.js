@@ -352,7 +352,7 @@ function KanbanCard({ program: p, matchScore, navigate, index }) {
           onClick={() => navigate(`/pipeline/${p.program_id}`)}
           className="kanban-card"
           style={{
-            background: "var(--cm-surface)", borderRadius: 10,
+            background: "var(--cm-surface)", borderRadius: 2,
             padding: "16px 16px 14px", cursor: "grab", transition: "box-shadow 0.15s ease",
             boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.12)" : undefined,
             opacity: snapshot.isDragging ? 0.95 : 1,
@@ -399,7 +399,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
                 {...provided.droppableProps}
                 style={{
                   background: snapshot.isDraggingOver ? "var(--cm-surface-3, var(--cm-surface-2))" : "var(--cm-surface-2)",
-                  borderRadius: 12, minHeight: 200, overflow: "hidden",
+                  borderRadius: 4, minHeight: 200, overflow: "hidden",
                   transition: "background 0.2s ease",
                   outline: snapshot.isDraggingOver ? "2px dashed rgba(13,148,136,0.3)" : "none",
                 }}
