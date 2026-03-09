@@ -115,6 +115,35 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 
 **Pipeline & Journey Tested: 19/19 frontend features — 100% pass (iteration_53)**
 
+### Athlete Onboarding Quiz — COMPLETE (2026-03-09)
+
+#### Backend
+- **Router**: `routers/athlete_onboarding.py`
+  - `GET /api/athlete/onboarding-status` — Check if athlete completed quiz
+  - `POST /api/athlete/recruiting-profile` — Save quiz answers (positions, divisions, priorities, regions, GPA, test scores, academic interests)
+  - `GET /api/athlete/suggested-schools` — Match athlete preferences against KB schools with scoring algorithm
+
+#### Frontend
+- **Component**: `pages/athlete/OnboardingQuiz.js`
+  - Route: `/onboarding` (full-screen, no sidebar)
+  - Intro screen with 3 benefit cards and "Get Started" CTA
+  - 6-step quiz:
+    1. Position (multi-select, max 6 — Setter, OH, MB, Opposite, Libero, DS)
+    2. Division (multi-select — D1/D2/D3/NAIA)
+    3. Priorities (multi-select, max 3 — Academics, Athletics, Location, Scholarships, etc.)
+    4. Regions (multi-select with "I'm open to anywhere" — 6 US regions)
+    5. Academics (input group — GPA, ACT, SAT)
+    6. Academic Interests (single-select — 8 study areas)
+  - Progress bar + step dots
+  - Completion screen with profile summary + top 3 suggested school matches with scores
+  - Auto-redirect: new athletes → `/onboarding` on login; after completing → full app access
+
+#### Auth Integration
+- `AuthContext.js` — `onboardingDone` state, checked on login/register
+- `App.js ProtectedRoute` — redirects athletes with `onboardingDone=false` to `/onboarding`
+
+**Onboarding Tested: 13/13 backend, all frontend features — 100% pass (iteration_54)**
+
 ---
 
 ## Routes Added (cumulative)
@@ -140,9 +169,14 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 | GET | /api/athlete/knowledge/:domain | School detail | C |
 | POST | /api/athlete/knowledge/:domain/add-to-pipeline | Add school to pipeline | C |
 
+| GET | /api/athlete/onboarding-status | Check quiz completion | Onboarding |
+| POST | /api/athlete/recruiting-profile | Save quiz answers | Onboarding |
+| GET | /api/athlete/suggested-schools | Matched school suggestions | Onboarding |
+
 ### Frontend Routes (Athlete)
 | Route | Page | Phase |
 |---|---|---|
+| /onboarding | OnboardingQuiz (full-screen) | Onboarding |
 | /board | AthleteDashboard | A |
 | /pipeline | PipelinePage (Kanban board) | A (frontend now) |
 | /pipeline/:programId | JourneyPage (timeline) | A (frontend now) |
