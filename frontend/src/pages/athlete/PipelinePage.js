@@ -251,7 +251,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
         )}
 
         {/* Bottom: Advice box + CTA button */}
-        <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
           {advice && (
             <div style={{ flex: 1, minWidth: 0, background: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.15)", borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }} data-testid="hero-advice-card">
               <Lightbulb style={{ width: 16, height: 16, color: "rgba(255,255,255,0.3)", flexShrink: 0, marginTop: 2 }} />
