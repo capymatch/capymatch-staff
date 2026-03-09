@@ -1,93 +1,78 @@
 # CapyMatch — Product Requirements Document
 
 ## Original Problem Statement
-Unify `capymatch-staff` (director/coach) and `capymatch` (athlete/parent) into a single platform with shared auth, data model, and role-based experiences.
+Unify two separate applications (`capymatch-staff` for coaches/directors and `capymatch` for athletes/parents) into a single platform with shared backend, data model, and authentication. Provides role-based experiences for Directors, Coaches, Athletes, and Parents.
 
-## Core Architecture
-- **Backend:** FastAPI, Motor (async MongoDB)
+## Architecture
+- **Backend:** FastAPI (Python), MongoDB (Motor async driver)
 - **Frontend:** React, Tailwind CSS, Shadcn/UI
-- **Database:** MongoDB
-- **Auth:** JWT (director, coach, athlete, parent roles)
+- **Auth:** JWT-based, role-based routing
+- **Theme:** Dark theme (`#0f1219` bg, `#1a8a80` accent)
 
----
+## What's Been Implemented
 
-## Completed Work
+### Phase 1 — Core Platform (DONE)
+- Unified auth (JWT, multi-role: director, coach, athlete, parent)
+- Role-based routing & navigation
+- Director/Coach mission control dashboard
+- Athlete onboarding quiz
 
-### Phase 1: Unified Foundation — COMPLETE
-Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, role-based routing
+### Phase 2 — Athlete Pipeline (DONE)
+- Pipeline page (list-based view of recruiting programs)
+- Journey page (detailed program view with timeline, automations, signals)
 
-### Phase A: Core Pipeline + Real Dashboard — COMPLETE
-- Programs CRUD, Interaction signals, College Coaches, Events
+### Phase 3 — Settings & Gmail Integration (DONE)
+- Settings page (profile, privacy, password, data management)
+- Google OAuth flow for Gmail
+- 4-stage Gmail import (scan, match, review, add schools)
 
-### Phase B: Profile & Calendar — COMPLETE
-- Athlete Profile Editor, Public Profile Page, Calendar
+### Phase 4 — Dashboard (DONE)
+- Complete athlete dashboard with dynamic widgets
+- Today's Actions, School Spotlight, Recent Activity
+- Stats overview (schools tracked, replies, etc.)
 
-### Phase C: School Knowledge Base — COMPLETE
-- Backend KB search + seeder, Frontend search/detail pages
+### Phase 5 — Knowledge Base Upgrade (DONE - March 2026)
+- Imported 953 universities from BSON dump (replacing 21 static schools)
+- Rich data: scorecard (939), logos (852), coaches (891), social links (862)
+- Match scoring algorithm (division, region, priorities, academic fit)
+- Smart bucket filters (Dream Schools D1, Strong Match 80%+, etc.)
+- Slide-in filter panel (division, region, conference)
+- Top #1 Match banner with match score + reasons
+- School detail page with match ring, key stats, coaching staff, financials, diversity
+- Add-to-board flow (seeds coaches into pipeline)
+- Admin scraper job management (scrape_school_data, enrich_scorecard, scrape_social, scrape_diversity)
+- Domain alias collection (2,534 aliases)
+- Legacy backward-compatible routes maintained
 
-### Pipeline Page — REBUILT
-- List-based pipeline matching original capymatch design
+## Key Collections
+- `university_knowledge_base` — 953 schools with full data
+- `school_domain_aliases` — 2,534 domain aliases
+- `programs` — Athlete pipeline programs
+- `athletes`, `athlete_profiles` — Athlete data & preferences
+- `college_coaches` — Seeded when adding school to board
+- `integrations` — OAuth credentials (Gmail)
 
-### Journey Page — REBUILT (2026-03-09)
-- 14 journey components: ProgressRail, PulseIndicator, GettingStartedChecklist, CommittedHero, CelebrationHero, NextStepCard, ConversationBubble, FloatingActionBar, StageLogModal, LogInteractionForm, MarkAsRepliedModal, CoachForm, FollowUpScheduler, EmailComposer
-- **Tested: 25/25 backend, 20/20 frontend — 100% pass (iteration_56)**
+## Key API Endpoints
+- `GET /api/knowledge-base` — Paginated school list with filters
+- `GET /api/knowledge-base/school/{domain}` — School detail + match score
+- `POST /api/knowledge-base/add-to-board` — Add to pipeline
+- `GET /api/suggested-schools` — Match-ranked suggestions (top 20)
+- `GET /api/admin/kb-jobs` — Scraper job status
+- `POST /api/admin/kb-jobs/{job_name}/run` — Trigger scraper
 
-### Athlete Onboarding Quiz — COMPLETE
-- 6-step quiz with matching algorithm, forced redirect for new athletes
+## Credentials
+- Director: `director@capymatch.com` / `director123`
+- Athlete: `emma.chen@athlete.capymatch.com` / `password123`
 
-### Settings Page + Gmail Integration — COMPLETE (2026-03-09)
-- Full settings: Personal Info, Gmail Integration, Notifications, Appearance, Change Password, Data & Privacy
-- Gmail OAuth flow, encrypted token storage, real email sending, inbox import with 4-stage modal
-- **Tested: 28/28 backend, all frontend — 100% pass (iteration_57)**
+## Backlog
 
-### Dashboard — REBUILT (2026-03-09)
-- **Completely rewritten** `pages/AthleteDashboard.js` to match original capymatch design
-- Dark theme throughout (no white backgrounds)
-- **Section 1: Greeting + Pulse** — Dark card with teal accent line, time-based greeting with name, 4 PulseStat components (Schools Tracked, Response Rate, Replies This Week, Awaiting Reply)
-- **Section 2: Today's Actions** — Split left/right: Follow-ups Due (with red badges) | Needs First Outreach (with purple badges). ActionRow components navigate to `/pipeline/:programId`
-- **Section 3: School Spotlight** — Horizontal scrollable SpotlightCards with status badges (Active Conversation/Contacted/Awaiting Reply/Committed gold glow), Overdue badges, "Next step:" text, + "Browse Schools" add card → `/schools`
-- **Section 4: Who's Watching** — Engagement metrics (Email Opens, Link Clicks, Profile Views) with empty state (engagement tracking not yet implemented)
-- **Section 5: Recent Activity** — FeedItem timeline with colored dots, teal-highlighted school names, clickable navigation
-- **Section 6: Coming Up** — EventCard with date blocks (MAR/15 format), type badges, duration info
-- **Architecture change**: Dashboard now fetches from 5 parallel API calls (programs, events, interactions, profile, gmail/status) and computes all stats client-side, matching the original app
-- **All navigation working**: Pipeline, Calendar, Schools, Journey pages
-- **Tested: 15/15 frontend features verified — 100% pass (iteration_58)**
+### P1 — Upcoming
+- AI-powered email drafting from Journey page
+- Inbox page (email threads when Gmail connected)
 
----
-
-## Routes (cumulative)
-
-### Frontend Routes (Athlete)
-| Route | Page |
-|---|---|
-| /onboarding | OnboardingQuiz |
-| /board | AthleteDashboard (rebuilt) |
-| /pipeline | PipelinePage |
-| /pipeline/:programId | JourneyPage |
-| /schools | SchoolsPage |
-| /schools/:domain | SchoolDetailPage |
-| /calendar | CalendarPage |
-| /athlete-profile | ProfilePage |
-| /athlete-settings | SettingsPage |
-| /s/:shortId | PublicProfilePage |
-
----
-
-## Upcoming Tasks
-
-### P1 — Remaining Migration Items
-- AI-powered email drafting from Journey page (requires LLM integration)
-- Inbox page (email threads view when Gmail connected)
-
-### P2 — Technical Debt
-- Normalize camelCase to snake_case in DB fields
-
-### Future
-- Connected Experiences: Director ↔ Athlete visibility
-- Advanced Features: Stripe subscriptions, engagement analytics (Who's Watching), Smart Match AI
+### P2 — Future
+- Normalize camelCase → snake_case in DB fields
+- Connected Experiences (Director ↔ Athlete visibility)
+- Stripe subscriptions & engagement analytics
+- Smart Match AI
 - Parent/Family experience
-
-## Key Credentials
-- Director: director@capymatch.com / director123
-- Athlete: emma.chen@athlete.capymatch.com / password123
-- Gmail OAuth: Stored in app_config collection (key: gmail_oauth)
