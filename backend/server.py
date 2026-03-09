@@ -32,6 +32,7 @@ from routers.roster import router as roster_router
 from routers.onboarding import router as onboarding_router
 from routers.profile import router as profile_router
 from routers.digest import router as digest_router
+from routers.athlete_self import router as athlete_self_router
 
 # Create the main app
 app = FastAPI()
@@ -95,6 +96,7 @@ api_router.include_router(roster_router)
 api_router.include_router(onboarding_router)
 api_router.include_router(profile_router)
 api_router.include_router(digest_router)
+api_router.include_router(athlete_self_router)
 
 app.include_router(api_router)
 
