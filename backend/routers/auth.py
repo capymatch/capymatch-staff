@@ -14,6 +14,10 @@ from auth_middleware import create_token, get_current_user_dep
 router = APIRouter()
 
 
+ALLOWED_ROLES = {"director", "coach", "athlete", "parent"}
+SELF_REGISTER_ROLES = {"coach", "athlete", "parent"}
+
+
 def _safe_user(doc):
     """Return user dict without password or _id."""
     return {
@@ -21,27 +25,30 @@ def _safe_user(doc):
         "email": doc["email"],
         "name": doc["name"],
         "role": doc["role"],
+        "org_id": doc.get("org_id"),
         "created_at": doc.get("created_at", ""),
     }
 
 
 @router.post("/auth/register", response_model=TokenResponse)
 async def register(body: UserCreate):
-    # Self-registration is coach-only; directors are seeded or promoted
-    if body.role == "director":
-        raise HTTPException(status_code=403, detail="Director accounts cannot be self-registered")
+    if body.role not in SELF_REGISTER_ROLES:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Role '{body.role}' cannot be self-registered",
+        )
 
     existing = await db.users.find_one({"email": body.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    import uuid
     user_doc = {
         "id": str(uuid.uuid4()),
         "email": body.email,
         "password_hash": bcrypt.hash(body.password),
         "name": body.name,
-        "role": "coach",
+        "role": body.role,
+        "org_id": None,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.users.insert_one(user_doc)

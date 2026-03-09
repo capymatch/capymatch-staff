@@ -23,6 +23,7 @@ def create_token(user: dict) -> str:
         "email": user["email"],
         "name": user["name"],
         "role": user["role"],
+        "org_id": user.get("org_id"),
         "exp": datetime.now(timezone.utc) + timedelta(hours=EXPIRY_HOURS),
     }
     return jwt.encode(payload, SECRET, algorithm=ALGORITHM)
@@ -48,6 +49,7 @@ async def _get_current_user(
         "email": payload["email"],
         "name": payload["name"],
         "role": payload["role"],
+        "org_id": payload.get("org_id"),
     }
 
 

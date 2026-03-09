@@ -77,6 +77,13 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Backup branches created for both repos before unification work begins
 - Target: One platform, role-based experiences (Director, Coach, Athlete, Parent)
 
+### Step 1.3 — Auth Model Expansion (2026-02-13) ✅
+- Extended auth to support 4 roles: `director`, `coach`, `athlete`, `parent`
+- Registration rules: coach/athlete/parent can self-register; director cannot
+- JWT now carries `org_id` (set for existing staff, null for new athlete/parent)
+- Auth response includes `org_id` for all roles
+- `/auth/me` returns `org_id` from JWT payload
+
 ### Step 1.2 — Organizations & org_id Foundation (2026-02-13) ✅
 - Created `organizations` collection with default org (`org-capymatch-default`)
 - Backfilled `org_id` on all 25 athletes and 8 users
