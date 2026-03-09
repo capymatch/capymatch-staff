@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   Plus, ChevronRight, ChevronDown, Loader2,
   Send, Eye, Link2, Users, Lightbulb,
-  Archive, RotateCcw, CheckCircle2, GraduationCap,
+  Archive, RotateCcw, CheckCircle2, GraduationCap, AlertTriangle,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
@@ -343,13 +343,18 @@ function PipelineHeroCard({ program: p, matchScore, navigate }) {
 /* ═══════════════════════════════════════════ */
 /* ── School Card (compact row) ──            */
 /* ═══════════════════════════════════════════ */
-function PipelineSchoolCard({ program: p, navigate }) {
+function PipelineSchoolCard({ program: p, matchScore, navigate }) {
   const temp = getTemperature(p);
   const due = getDueInfo(p);
   const next = getNextAction(p);
   const cta = getCTA(p);
   const sig = p.signals || {};
   const meta = [p.conference, p.state].filter(Boolean).join(" · ");
+  const fitLabel = matchScore?.measurables_fit?.label;
+  const fitColor = FIT_COLORS[fitLabel] || null;
+  const confidence = matchScore?.confidence;
+  const confLabel = CONFIDENCE_LABELS[confidence] || "";
+  const ms = matchScore?.match_score;
 
   const tempStyles = {
     hot: { background: "#fef2f2", color: "#dc2626" },
@@ -381,6 +386,13 @@ function PipelineSchoolCard({ program: p, navigate }) {
           <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2, color: "var(--cm-text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
           <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
             {p.division && <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 3, background: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{p.division}</span>}
+            {ms != null && <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: "rgba(13,148,136,0.12)", color: "#0d9488" }}>{ms}%</span>}
+            {fitLabel && fitColor && (
+              <span data-testid={`card-fit-${p.program_id}`} style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>{fitLabel}</span>
+            )}
+            {confLabel && confidence !== "high" && (
+              <span data-testid={`card-conf-${p.program_id}`} style={{ fontSize: 8, fontWeight: 600, color: "var(--cm-text-3)", fontStyle: "italic" }}>{confLabel}</span>
+            )}
             <span>{meta}</span>
             {due && <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: due.bg, color: due.color }}>{due.text}</span>}
           </div>
@@ -548,6 +560,42 @@ function PipelineStyles() {
 }
 
 /* ═══════════════════════════════════════════ */
+/* ── Measurables Guidance Banner ──          */
+/* ═══════════════════════════════════════════ */
+function MeasurablesGuidanceBanner({ guidance, navigate }) {
+  if (!guidance) return null;
+  return (
+    <div
+      style={{
+        background: "var(--cm-surface)", border: "1px solid rgba(245,158,11,0.2)",
+        borderLeft: "3px solid #f59e0b", borderRadius: 12, padding: "14px 18px",
+        display: "flex", alignItems: "center", gap: 14, marginBottom: 18,
+      }}
+      data-testid="measurables-guidance-banner"
+    >
+      <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <AlertTriangle style={{ width: 16, height: 16, color: "#f59e0b" }} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", marginBottom: 2 }}>Improve your match accuracy</div>
+        <div style={{ fontSize: 11, color: "var(--cm-text-3)", lineHeight: 1.5 }}>{guidance}</div>
+      </div>
+      <button
+        onClick={() => navigate("/profile")}
+        style={{
+          padding: "8px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+          background: "rgba(245,158,11,0.1)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)",
+          cursor: "pointer", fontFamily: "inherit", flexShrink: 0, whiteSpace: "nowrap",
+        }}
+        data-testid="update-profile-btn"
+      >
+        Update Profile
+      </button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════ */
 /* ── Empty State ──                          */
 /* ═══════════════════════════════════════════ */
 function EmptyBoardState({ navigate }) {
@@ -665,6 +713,12 @@ export default function PipelinePage() {
         </div>
       )}
 
+      {/* Guidance Banner */}
+      {(() => {
+        const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
+        return guidance ? <MeasurablesGuidanceBanner guidance={guidance} navigate={navigate} /> : null;
+      })()}
+
       {/* Filter Chips */}
       <FilterChips sectionCounts={sectionCounts} total={total} active={activeSection} onFilter={setActiveSection} />
 
@@ -684,7 +738,7 @@ export default function PipelinePage() {
                   isCommittedSection ? (
                     <CommittedSchoolCard key={p.program_id} program={p} navigate={navigate} />
                   ) : (
-                    <PipelineSchoolCard key={p.program_id} program={p} navigate={navigate} />
+                    <PipelineSchoolCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} />
                   )
                 )}
               </>

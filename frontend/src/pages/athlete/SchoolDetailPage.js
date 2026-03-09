@@ -4,10 +4,34 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ChevronLeft, Plus, Mail, ExternalLink, Users, User,
-  Check, Loader2, Activity, GraduationCap, DollarSign, BookOpen, Sparkles, PieChart
+  Check, Loader2, Activity, GraduationCap, DollarSign, BookOpen, Sparkles, PieChart, Target
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+/* ── Fit label colors ── */
+const FIT_COLORS = {
+  "Strong Fit": { bg: "rgba(22,163,74,0.15)", text: "#16a34a", border: "rgba(22,163,74,0.2)" },
+  "Possible Fit": { bg: "rgba(13,148,136,0.15)", text: "#0d9488", border: "rgba(13,148,136,0.2)" },
+  "Stretch": { bg: "rgba(245,158,11,0.12)", text: "#d97706", border: "rgba(245,158,11,0.2)" },
+  "Less Likely Fit": { bg: "rgba(239,68,68,0.1)", text: "#dc2626", border: "rgba(239,68,68,0.15)" },
+  "Not Enough Data": { bg: "var(--cm-surface-2)", text: "var(--cm-text-3)", border: "var(--cm-border)" },
+};
+
+const CONFIDENCE_LABELS = {
+  high: "High Confidence",
+  medium: "Medium Confidence",
+  low: "Low Confidence",
+  estimated: "Estimated",
+};
+
+const SUB_SCORE_COLORS = {
+  division: "#0d9488",
+  region: "#6366f1",
+  priorities: "#8b5cf6",
+  academics: "#2563eb",
+  measurables: "#d97706",
+};
 
 /* ── Match Ring ── */
 function MatchRing({ score }) {
@@ -97,12 +121,109 @@ function gradLabel(rate) {
   return "Fair";
 }
 
+/* ── Match Breakdown Section ── */
+function MatchBreakdown({ matchData }) {
+  if (!matchData) return null;
+  const { sub_scores, measurables_fit, confidence, explanation, full_explanation, risk_badges } = matchData;
+  const fitLabel = measurables_fit?.label;
+  const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
+  const confLabel = CONFIDENCE_LABELS[confidence] || "";
+
+  return (
+    <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 sm:p-6" data-testid="match-breakdown-section">
+      <SectionHeader icon={Target} title="Match Breakdown" testId="match-breakdown-header" />
+
+      {/* Top badges row */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <span className="text-[22px] font-black text-[#1a8a80]" data-testid="breakdown-match-pct">{matchData.match_score}%</span>
+        <span className="text-[11px] font-semibold text-[var(--cm-text-3)]">Overall Match</span>
+        {fitLabel && (
+          <span data-testid="breakdown-fit-label" className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg" style={{ background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>
+            {fitLabel}
+          </span>
+        )}
+        {confLabel && (
+          <span data-testid="breakdown-confidence" className="text-[10px] font-semibold italic text-[var(--cm-text-3)]">{confLabel}</span>
+        )}
+      </div>
+
+      {/* Sub-score bars */}
+      {sub_scores && (
+        <div className="space-y-3 mb-5" data-testid="sub-scores-bars">
+          {Object.entries(sub_scores).map(([key, ss]) => {
+            const pct = ss.max > 0 ? Math.round((ss.score / ss.max) * 100) : 0;
+            const barColor = SUB_SCORE_COLORS[key] || "#0d9488";
+            return (
+              <div key={key} data-testid={`sub-score-${key}`}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-semibold text-[var(--cm-text-2)]">{ss.label}</span>
+                  <span className="text-[11px] font-bold text-[var(--cm-text)]">{ss.score}/{ss.max}</span>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
+                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Measurables detail */}
+      {measurables_fit?.details && Object.keys(measurables_fit.details).length > 0 && (
+        <div className="rounded-lg p-3 mb-4" style={{ background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)" }} data-testid="measurables-detail">
+          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--cm-text-3)] mb-2">Athletic Measurables</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {Object.entries(measurables_fit.details).map(([key, d]) => (
+              <div key={key} className="flex items-center justify-between text-[11px]">
+                <span className="font-semibold text-[var(--cm-text-2)] capitalize">{key.replace(/_/g, ' ')}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-[var(--cm-text)]">{d.value}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold" style={{
+                    background: d.status === "match" ? "rgba(22,163,74,0.15)" : d.status === "close" ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.1)",
+                    color: d.status === "match" ? "#16a34a" : d.status === "close" ? "#d97706" : "#dc2626",
+                  }}>
+                    {d.status === "match" ? "In Range" : d.status === "close" ? "Close" : "Below"}
+                  </span>
+                  <span className="text-[9px] text-[var(--cm-text-3)]">{d.benchmark}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Risk badges */}
+      {risk_badges?.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4" data-testid="risk-badges">
+          {risk_badges.map(b => (
+            <span key={b.key} className="text-[10px] font-bold px-2 py-1 rounded-lg" style={{
+              background: b.severity === "warning" ? "rgba(239,68,68,0.1)" : b.severity === "time" ? "rgba(245,158,11,0.1)" : "var(--cm-surface-2)",
+              color: b.severity === "warning" ? "#dc2626" : b.severity === "time" ? "#d97706" : "var(--cm-text-3)",
+              border: `1px solid ${b.severity === "warning" ? "rgba(239,68,68,0.15)" : b.severity === "time" ? "rgba(245,158,11,0.15)" : "var(--cm-border)"}`,
+            }}>
+              {b.label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Explanation */}
+      {(full_explanation || explanation) && (
+        <div className="rounded-lg p-3" style={{ background: "var(--cm-surface-2)" }} data-testid="breakdown-explanation">
+          <div className="text-[12px] leading-relaxed text-[var(--cm-text-2)]">{full_explanation || explanation}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SchoolDetailPage() {
   const { domain } = useParams();
   const navigate = useNavigate();
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [matchData, setMatchData] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -113,6 +234,18 @@ export default function SchoolDetailPage() {
       .catch(() => { toast.error("School not found"); navigate("/schools"); })
       .finally(() => setLoading(false));
   }, [domain, navigate]);
+
+  // Fetch V2 match data for this school (if on board)
+  useEffect(() => {
+    if (!school?.university_name) return;
+    axios.get(`${API}/match-scores`, { headers })
+      .then(res => {
+        const scores = res.data?.scores || [];
+        const found = scores.find(s => s.university_name === school.university_name);
+        if (found) setMatchData(found);
+      })
+      .catch(() => {});
+  }, [school?.university_name]);
 
   const addToBoard = async () => {
     if (!school) return;
@@ -222,6 +355,13 @@ export default function SchoolDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Match Breakdown (V2) */}
+      {matchData && (
+        <div className="mb-6">
+          <MatchBreakdown matchData={matchData} />
+        </div>
+      )}
 
       {/* Key Statistics */}
       <div className="mb-6" data-testid="key-statistics-section">
