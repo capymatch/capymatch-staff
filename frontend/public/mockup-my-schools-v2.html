@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Schools — Mockup V2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface-2: #f0f1f4;
+    --border: #e5e7ec;
+    --text: #111827;
+    --text-2: #4b5563;
+    --text-3: #9ca3af;
+    --teal: #0d9488;
+    --teal-soft: rgba(13,148,136,0.1);
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .add-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+  /* ═══════════════════════════════════════ */
+  /* ── HERO CARD: School Focus            ── */
+  /* ═══════════════════════════════════════ */
+  .hero-card {
+    background: linear-gradient(145deg, #1a2332 0%, #0f1a26 100%);
+    border-radius: 20px;
+    padding: 0;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  
+  .hero-top {
+    padding: 28px 32px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .hero-school-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .hero-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(218,165,32,0.15);
+    border: 1px solid rgba(218,165,32,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #daa520;
+    flex-shrink: 0;
+  }
+  .hero-school-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+  }
+  
+  /* Progress rail (right side of hero) */
+  .mini-rail-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    padding-top: 4px;
+  }
+  .mini-rail {
+    display: flex;
+    align-items: center;
+  }
+  .rail-node {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    position: relative;
+    z-index: 1;
+  }
+  .rail-node.active {
+    width: 12px;
+    height: 12px;
+    background: var(--teal);
+    box-shadow: 0 0 10px rgba(13,148,136,0.4);
+  }
+  .rail-node.done { background: rgba(13,148,136,0.5); }
+  .rail-seg {
+    width: 28px;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+  }
+  .rail-seg.done { background: rgba(13,148,136,0.35); }
+  .rail-labels {
+    display: flex;
+    gap: 10px;
+  }
+  .rail-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.25);
+    width: 38px;
+    text-align: center;
+  }
+  .rail-label.active { color: var(--teal); }
+
+  /* Hero badges row */
+  .hero-badges {
+    padding: 12px 32px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+  }
+  .hb-temp {
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .hb-temp::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+  .hb-div {
+    background: rgba(13,148,136,0.15);
+    color: #5eead4;
+  }
+  .hb-match {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.6);
+  }
+  .hb-conf {
+    font-weight: 500;
+    color: rgba(255,255,255,0.3);
+    background: none;
+    padding: 0;
+    font-size: 11px;
+  }
+  .hero-social {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .social-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .social-icon:hover { background: rgba(255,255,255,0.12); color: white; }
+
+  /* Hero action prompt (bottom part) */
+  .hero-action {
+    padding: 18px 32px 22px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-action-text {
+    flex: 1;
+  }
+  .hero-action-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  .hero-action-title span { color: rgba(255,255,255,0.5); font-weight: 500; font-size: 13px; }
+  .hero-action-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    background: var(--teal);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    letter-spacing: -0.01em;
+  }
+  .hero-cta:hover { background: #0f766e; transform: translateY(-1px); }
+  .hero-cta svg { width: 14px; height: 14px; }
+
+  /* ═══════════════════════════════════════ */
+  /* ── ACTIONS CAROUSEL                   ── */
+  /* ═══════════════════════════════════════ */
+  .actions-carousel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .carousel-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .carousel-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .carousel-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .c-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.2s;
+  }
+  .c-dot.active {
+    width: 18px;
+    border-radius: 4px;
+    background: var(--teal);
+  }
+  .c-arrow {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-3);
+  }
+  .c-arrow:hover { background: var(--border); color: var(--text); }
+  .c-arrow svg { width: 13px; height: 13px; }
+  
+  /* Single action slide */
+  .action-slide {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .action-indicator {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .action-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .action-school {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .action-detail {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.5;
+    margin-bottom: 2px;
+  }
+  .action-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .action-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+  .ab-stage { background: var(--teal-soft); color: var(--teal); }
+  .ab-match { background: var(--surface-2); color: var(--text-3); }
+  .ab-due { background: rgba(245,158,11,0.1); color: #d97706; }
+  
+  .action-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+  .action-cta.primary { background: var(--teal); color: white; }
+  .action-cta.primary:hover { background: #0f766e; }
+  .action-cta.warn { background: #f59e0b; color: white; }
+  .action-cta.warn:hover { background: #d97706; }
+  .action-cta.outline { background: transparent; color: var(--teal); border: 1px solid rgba(13,148,136,0.25); }
+  .action-cta.outline:hover { background: var(--teal-soft); }
+  .action-cta svg { width: 13px; height: 13px; }
+
+  /* ═══════════════════════════════════════ */
+  /* ── Upcoming Events ──                  */
+  /* ═══════════════════════════════════════ */
+  .events-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  .events-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .events-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .events-title svg { width: 15px; height: 15px; color: var(--teal); }
+  .events-link {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--teal);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .event-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+  .event-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .event-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .event-date {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+  }
+
+  /* ═══════════════════════════════════════ */
+  /* ── Kanban Board ──                     */
+  /* ═══════════════════════════════════════ */
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    min-height: 300px;
+  }
+  .kanban-col { min-width: 0; }
+  .col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .col-header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .col-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+  .col-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .col-count {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: var(--surface-2);
+    color: var(--text-3);
+  }
+  .school-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 8px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .school-card:hover {
+    border-color: rgba(13,148,136,0.3);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .card-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--teal-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--teal);
+    flex-shrink: 0;
+  }
+  .card-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-match {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .card-tag {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--text-3);
+  }
+  .card-due {
+    font-size: 10px;
+    color: var(--text-3);
+    margin-bottom: 10px;
+  }
+  .card-due strong { color: #d97706; font-weight: 700; }
+  .card-cta {
+    display: block;
+    width: 100%;
+    padding: 8px 0;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    font-family: inherit;
+  }
+  .cta-primary { background: var(--teal); color: white; }
+  .cta-primary:hover { background: #0f766e; }
+  .cta-outline { background: transparent; color: var(--teal); border: 1px solid rgba(13,148,136,0.2); }
+  .cta-outline:hover { background: var(--teal-soft); }
+  .cta-warn { background: #f59e0b; color: white; }
+  .cta-warn:hover { background: #d97706; }
+  .empty-col {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--text-3);
+    font-size: 11px;
+  }
+
+  @media (max-width: 900px) {
+    .kanban { grid-template-columns: repeat(3, 1fr); }
+    .hero-top { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ Page Header ═══ -->
+<div class="page-header">
+  <div class="page-title">My Schools</div>
+  <button class="add-btn">+ Add School</button>
+</div>
+
+<!-- ═══ 1. HERO CARD: School Focus (kept from original) ═══ -->
+<div class="hero-card">
+  <div class="hero-top">
+    <div class="hero-school-info">
+      <div class="hero-logo">GT</div>
+      <div class="hero-school-name">Georgia Tech</div>
+    </div>
+    <div class="mini-rail-wrap">
+      <div class="mini-rail">
+        <div class="rail-node done"></div>
+        <div class="rail-seg done"></div>
+        <div class="rail-node active"></div>
+        <div class="rail-seg"></div>
+        <div class="rail-node"></div>
+        <div class="rail-seg"></div>
+        <div class="rail-node"></div>
+        <div class="rail-seg"></div>
+        <div class="rail-node"></div>
+        <div class="rail-seg"></div>
+        <div class="rail-node"></div>
+      </div>
+      <div class="rail-labels">
+        <span class="rail-label">Added</span>
+        <span class="rail-label active">Outreach</span>
+        <span class="rail-label">Talking</span>
+        <span class="rail-label">Visit</span>
+        <span class="rail-label">Offer</span>
+        <span class="rail-label">Commit</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="hero-badges">
+    <span class="hero-badge hb-temp">Neutral</span>
+    <span class="hero-badge hb-div">D1</span>
+    <span class="hero-badge hb-match">81% Match</span>
+    <span class="hero-badge hb-conf">ACC &middot; 2 events</span>
+    <div class="hero-social">
+      <div class="social-icon">X</div>
+      <div class="social-icon">IG</div>
+      <div class="social-icon">FB</div>
+    </div>
+  </div>
+
+  <div class="hero-action">
+    <div class="hero-action-text">
+      <div class="hero-action-title">
+        Start outreach to Johns Hopkins
+        <span>&middot; Next action due today</span>
+      </div>
+      <div class="hero-action-sub">
+        ... Follow up with Florida &middot; Add 3 more target schools to your list
+      </div>
+    </div>
+    <button class="hero-cta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Start Outreach
+    </button>
+  </div>
+</div>
+
+<!-- ═══ 2. ACTIONS NEEDED TODAY: Carousel ═══ -->
+<div class="actions-carousel">
+  <div class="carousel-header">
+    <div class="carousel-title">Actions Needed Today</div>
+    <div class="carousel-nav">
+      <button class="c-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="carousel-dots">
+        <div class="c-dot active"></div>
+        <div class="c-dot"></div>
+        <div class="c-dot"></div>
+        <div class="c-dot"></div>
+      </div>
+      <button class="c-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+  
+  <div class="action-slide">
+    <div class="action-indicator" style="background: rgba(245,158,11,0.1); color: #d97706;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </div>
+    <div class="action-content">
+      <div class="action-school">Follow up with Georgia Tech</div>
+      <div class="action-detail">It's been a while since your last outreach. A short follow-up would help keep momentum going.</div>
+      <div class="action-meta">
+        <span class="action-badge ab-stage">Outreach</span>
+        <span class="action-badge ab-match">81% Match</span>
+        <span class="action-badge ab-due">Due in 2 days</span>
+      </div>
+    </div>
+    <button class="action-cta warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Send Follow Up
+    </button>
+  </div>
+</div>
+
+<!-- ═══ 3. Upcoming Events This Week ═══ -->
+<div class="events-section">
+  <div class="events-header">
+    <div class="events-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Upcoming Events
+    </div>
+    <a href="#" class="events-link">
+      View Calendar
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+  </div>
+  <div class="event-row">
+    <div class="event-dot" style="background: #0d9488;"></div>
+    <div class="event-name">Winter Soccer Showcase</div>
+    <div class="event-date">Sat, Jan 12</div>
+  </div>
+  <div class="event-row">
+    <div class="event-dot" style="background: #f59e0b;"></div>
+    <div class="event-name">Sunshine Camp</div>
+    <div class="event-date">Sun, Feb 4</div>
+  </div>
+  <div class="event-row">
+    <div class="event-dot" style="background: #3b82f6;"></div>
+    <div class="event-name">Georgia Tech Campus Visit</div>
+    <div class="event-date">Fri, Feb 14</div>
+  </div>
+</div>
+
+<!-- ═══ 4. Kanban Board ═══ -->
+<div class="kanban">
+  <!-- Added -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <div class="col-header-left">
+        <div class="col-dot" style="background: #94a3b8;"></div>
+        <div class="col-name">Added</div>
+      </div>
+      <div class="col-count">2</div>
+    </div>
+    <div class="school-card">
+      <div class="card-top">
+        <div class="card-logo">JH</div>
+        <div class="card-name">Johns Hopkins</div>
+      </div>
+      <div class="card-meta">
+        <span class="card-tag">D3</span>
+        <span class="card-tag">MD</span>
+      </div>
+      <button class="card-cta cta-primary">Start Outreach</button>
+    </div>
+    <div class="school-card">
+      <div class="card-top">
+        <div class="card-logo">UT</div>
+        <div class="card-name">U of Tampa</div>
+      </div>
+      <div class="card-meta">
+        <span class="card-tag">D2</span>
+        <span class="card-tag">SSC</span>
+        <span class="card-tag">FL</span>
+      </div>
+      <button class="card-cta cta-primary">Start Outreach</button>
+    </div>
+  </div>
+
+  <!-- Outreach -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <div class="col-header-left">
+        <div class="col-dot" style="background: #0d9488;"></div>
+        <div class="col-name">Outreach</div>
+      </div>
+      <div class="col-count">2</div>
+    </div>
+    <div class="school-card">
+      <div class="card-top">
+        <div class="card-logo">UF</div>
+        <div class="card-name">U of Florida</div>
+        <div class="card-match">72%</div>
+      </div>
+      <div class="card-meta">
+        <span class="card-tag">D1</span>
+        <span class="card-tag">SEC</span>
+        <span class="card-tag">FL</span>
+      </div>
+      <div class="card-due"><strong>Due tomorrow</strong></div>
+      <button class="card-cta cta-warn">Follow Up</button>
+    </div>
+    <div class="school-card">
+      <div class="card-top">
+        <div class="card-logo">JH</div>
+        <div class="card-name">Johns Hopkins</div>
+      </div>
+      <div class="card-meta">
+        <span class="card-tag">D2</span>
+        <span class="card-tag">SSC</span>
+      </div>
+      <button class="card-cta cta-primary">Start Outreach</button>
+    </div>
+  </div>
+
+  <!-- Talking -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <div class="col-header-left">
+        <div class="col-dot" style="background: #22c55e;"></div>
+        <div class="col-name">Talking</div>
+      </div>
+      <div class="col-count">2</div>
+    </div>
+    <div class="school-card">
+      <div class="card-top">
+        <div class="card-logo">GT</div>
+        <div class="card-name">Georgia Tech</div>
+        <div class="card-match">81%</div>
+      </div>
+      <div class="card-meta">
+        <span class="card-tag">D1</span>
+        <span class="card-tag">ACC</span>
+      </div>
+      <div class="card-due">Due in 2 days</div>
+      <button class="card-cta cta-outline">View Journey</button>
+    </div>
+    <div class="school-card">
+      <div class="card-top">
+        <div class="card-logo">LU</div>
+        <div class="card-name">Lewis University</div>
+        <div class="card-match">40%</div>
+      </div>
+      <div class="card-meta">
+        <span class="card-tag">D2</span>
+        <span class="card-tag">GLVC</span>
+        <span class="card-tag">IL</span>
+      </div>
+      <div class="card-due">Due in 3 days</div>
+      <button class="card-cta cta-outline">View Journey</button>
+    </div>
+  </div>
+
+  <!-- Visit -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <div class="col-header-left">
+        <div class="col-dot" style="background: #3b82f6;"></div>
+        <div class="col-name">Visit</div>
+      </div>
+      <div class="col-count">1</div>
+    </div>
+    <div class="school-card">
+      <div class="card-top">
+        <div class="card-logo">UC</div>
+        <div class="card-name">UCLA</div>
+        <div class="card-match">67%</div>
+      </div>
+      <div class="card-meta">
+        <span class="card-tag">D1</span>
+        <span class="card-tag">Pac-12</span>
+        <span class="card-tag">CA</span>
+      </div>
+      <button class="card-cta cta-outline">View Journey</button>
+    </div>
+  </div>
+
+  <!-- Offer -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <div class="col-header-left">
+        <div class="col-dot" style="background: #a855f7;"></div>
+        <div class="col-name">Offer</div>
+      </div>
+      <div class="col-count">0</div>
+    </div>
+    <div class="empty-col">No offers yet</div>
+  </div>
+
+  <!-- Committed -->
+  <div class="kanban-col">
+    <div class="col-header">
+      <div class="col-header-left">
+        <div class="col-dot" style="background: #fbbf24;"></div>
+        <div class="col-name">Committed</div>
+      </div>
+      <div class="col-count">0</div>
+    </div>
+    <div class="empty-col">&mdash;</div>
+  </div>
+</div>
+
+</body>
+</html>
