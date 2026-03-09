@@ -1,23 +1,44 @@
+import { useState } from "react";
+
 /**
- * UniversityLogo — shows a school initial badge.
- * Can be extended later to fetch real logos from Clearbit / logo APIs.
+ * UniversityLogo — shows real logo from KB, falls back to domain-based logo, then letter avatar.
  */
 export default function UniversityLogo({ domain, name, logoUrl, size = 38, className = "" }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const [fallbackFailed, setFallbackFailed] = useState(false);
   const initial = (name || domain || "?")[0].toUpperCase();
 
-  if (logoUrl) {
+  // Try KB logo first, then Google high-res favicon, then letter avatar
+  const primarySrc = logoUrl || null;
+  const fallbackSrc = domain ? `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://${domain}&size=128` : null;
+
+  if (primarySrc && !imgFailed) {
     return (
       <img
-        src={logoUrl}
+        src={primarySrc}
         alt={name}
-        style={{ width: size, height: size, objectFit: "cover" }}
+        style={{ width: size, height: size, objectFit: "contain" }}
         className={`flex-shrink-0 ${className}`}
-        onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+        onError={() => setImgFailed(true)}
+        data-testid={`logo-${domain || "unknown"}`}
       />
     );
   }
 
-  // Generate a deterministic color from the domain
+  if (fallbackSrc && !fallbackFailed) {
+    return (
+      <img
+        src={fallbackSrc}
+        alt={name}
+        style={{ width: size, height: size, objectFit: "contain" }}
+        className={`flex-shrink-0 ${className}`}
+        onError={() => setFallbackFailed(true)}
+        data-testid={`logo-${domain || "unknown"}`}
+      />
+    );
+  }
+
+  // Letter avatar fallback
   const colors = [
     "#1a8a80", "#2563eb", "#d97706", "#dc2626", "#7c3aed",
     "#0891b2", "#16a34a", "#be123c", "#4f46e5", "#ca8a04",

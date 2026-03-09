@@ -358,7 +358,7 @@ function KanbanCard({ program: p, matchScore, navigate, index }) {
           data-testid={`kanban-card-${p.program_id}`}
         >
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <UniversityLogo domain={p.domain} name={p.university_name} size={28} className="rounded-[6px] mt-[2px] flex-shrink-0" />
+            <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={p.logo_url} size={28} className="rounded-[6px] mt-[2px] flex-shrink-0" />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>

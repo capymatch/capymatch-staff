@@ -227,15 +227,22 @@ async def list_programs(
 
     programs = await db.programs.find(query, {"_id": 0}).to_list(200)
 
-    # Batch-fetch signals and college coaches
+    # Batch-fetch signals, college coaches, and KB logos
     program_ids = [p["program_id"] for p in programs]
-    signals_map, all_coaches = await asyncio.gather(
+    uni_names = list({p["university_name"] for p in programs if p.get("university_name")})
+    signals_map, all_coaches, kb_entries = await asyncio.gather(
         _batch_signals(tenant_id, program_ids),
         db.college_coaches.find(
             {"tenant_id": tenant_id, "program_id": {"$in": program_ids}},
             {"_id": 0},
         ).to_list(2000),
+        db.university_knowledge_base.find(
+            {"university_name": {"$in": uni_names}},
+            {"_id": 0, "university_name": 1, "logo_url": 1, "domain": 1},
+        ).to_list(500),
     )
+
+    kb_by_name = {e["university_name"]: e for e in kb_entries}
 
     coaches_by_program = {}
     for c in all_coaches:
@@ -253,6 +260,12 @@ async def list_programs(
         p["signals"] = signals_map.get(pid, {})
         p["board_group"] = categorize_program(p)
         p["journey_rail"] = compute_journey_rail(p)
+        # Enrich with KB logo and domain
+        kb = kb_by_name.get(p.get("university_name"), {})
+        if not p.get("logo_url"):
+            p["logo_url"] = kb.get("logo_url", "")
+        if not p.get("domain"):
+            p["domain"] = kb.get("domain", "")
 
     if grouped:
         groups = {
