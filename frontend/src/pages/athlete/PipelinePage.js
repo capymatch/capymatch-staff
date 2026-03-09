@@ -183,18 +183,21 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
       <div style={{ padding: "24px 28px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
         {/* Header: label + carousel nav */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{idx + 1} of {total}</span>
-          {total > 1 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 14, height: 14 }} /></button>
-              <div style={{ display: "flex", gap: 6 }}>
-                {actions.map((_, i) => (
-                  <div key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%", background: i === idx ? "#0d9488" : "rgba(255,255,255,0.15)", cursor: "pointer", transition: "all 0.2s" }} data-testid={`carousel-dot-${i}`} />
-                ))}
-              </div>
-              <button onClick={next} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 14, height: 14 }} /></button>
-            </div>
-          )}
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Actions Needed Today</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.25)" }}>{idx + 1} of {total}</span>
+            {total > 1 && (
+              <>
+                <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 14, height: 14 }} /></button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {actions.map((_, i) => (
+                    <div key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%", background: i === idx ? "#0d9488" : "rgba(255,255,255,0.15)", cursor: "pointer", transition: "all 0.2s" }} data-testid={`carousel-dot-${i}`} />
+                  ))}
+                </div>
+                <button onClick={next} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 14, height: 14 }} /></button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Top row: logo + name on left, progress rail on right */}
@@ -632,12 +635,6 @@ export default function PipelinePage() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, marginBottom: 20 }}>
-        {/* Usage badge */}
-        {subscription && !usage.unlimited && (
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)", display: "flex", alignItems: "center", gap: 4 }} data-testid="school-limit-badge">
-            {usage.used}/{usage.limit} schools
-          </div>
-        )}
         <button onClick={handleAddSchool} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", borderRadius: 10, border: "1px solid var(--cm-border)", background: "var(--cm-surface)", fontSize: 13, fontWeight: 700, color: "var(--cm-text)", cursor: "pointer", fontFamily: "inherit" }} data-testid="add-school-btn">
           <Plus style={{ width: 14, height: 14 }} /> Add School
         </button>
@@ -646,7 +643,6 @@ export default function PipelinePage() {
       {/* Hero Card = Actions Carousel */}
       {actions.length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--cm-text-3)", marginBottom: 8 }}>Actions Needed Today</div>
           <HeroActionsCarousel actions={actions} matchScores={matchScores} navigate={navigate} />
         </div>
       )}
