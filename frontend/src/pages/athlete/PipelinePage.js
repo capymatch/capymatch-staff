@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -15,6 +15,16 @@ import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, [breakpoint]);
+  return isMobile;
+}
 
 /* ═══════════════════════════════════════════ */
 /* ── Helpers                                 */
@@ -170,7 +180,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
       {/* Subtle glow */}
       <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-      <div style={{ padding: "24px 28px 0", position: "relative", zIndex: 1 }}>
+      <div style={{ padding: "24px 28px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
         {/* Header: label + carousel nav */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{idx + 1} of {total}</span>
@@ -188,7 +198,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
         </div>
 
         {/* Top row: logo + name on left, progress rail on right */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, marginBottom: 16, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             {isSchool && p ? (
               <>
@@ -232,7 +242,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
 
         {/* Badges row */}
         {isSchool && p && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }} className="hero-badges-row">
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#94a3b8" }} />
               {sig.has_coach_reply ? "Interested" : "Neutral"}
@@ -253,7 +263,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
         )}
 
         {/* Bottom: Advice box + CTA button */}
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }} className="hero-advice-row">
           {advice && (
             <div style={{ flex: 1, minWidth: 0, background: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.15)", borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }} data-testid="hero-advice-card">
               <Lightbulb style={{ width: 16, height: 16, color: "rgba(255,255,255,0.3)", flexShrink: 0, marginTop: 2 }} />
@@ -374,6 +384,7 @@ function KanbanCard({ program: p, matchScore, navigate, index }) {
 }
 
 function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
+  const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
   for (const p of programs) {
@@ -382,9 +393,15 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
     if (col && columns[col]) columns[col].push(p);
   }
 
+  const gridStyle = isMobile
+    ? { display: "flex", gap: 10, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
+    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 };
+
+  const colStyle = isMobile ? { minWidth: 240, flexShrink: 0, scrollSnapAlign: "start" } : {};
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }} className="kanban-grid" data-testid="kanban-board">
+      <div style={gridStyle} className="kanban-grid" data-testid="kanban-board">
         {KANBAN_COLS.map(col => (
           <Droppable droppableId={col.key} key={col.key}>
             {(provided, snapshot) => (
@@ -396,6 +413,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
                   borderRadius: 4, minHeight: 200, overflow: "hidden",
                   transition: "background 0.2s ease",
                   outline: snapshot.isDraggingOver ? "2px dashed rgba(13,148,136,0.3)" : "none",
+                  ...colStyle,
                 }}
               >
                 <div style={{ height: 3, background: col.color }} />
@@ -480,8 +498,28 @@ function PipelineStyles() {
     <style>{`
       @keyframes heroPulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
       .kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-      @media (max-width: 1024px) { .kanban-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-      @media (max-width: 640px) { .kanban-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+      .kanban-grid::-webkit-scrollbar { height: 4px; }
+      .kanban-grid::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 4px; }
+      @media (max-width: 768px) {
+        .kanban-grid {
+          display: flex !important;
+          grid-template-columns: none !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          scroll-snap-type: x mandatory !important;
+          gap: 10px !important;
+          padding-bottom: 8px !important;
+        }
+        .kanban-grid > div {
+          min-width: 240px !important;
+          flex-shrink: 0 !important;
+          scroll-snap-align: start !important;
+        }
+        .pipeline-hero-card { padding: 16px 16px 0 !important; }
+        .hero-advice-row { flex-direction: column !important; }
+        .hero-advice-row button { width: 100% !important; min-width: unset !important; }
+        .pipeline-events-row { flex-direction: column !important; gap: 8px !important; }
+      }
     `}</style>
   );
 }
