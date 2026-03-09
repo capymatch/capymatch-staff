@@ -4,7 +4,8 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
-  Edit2, Trash2, Plus, AlertTriangle, Clock, BookOpen, ExternalLink
+  Edit2, Trash2, Plus, AlertTriangle, Clock, BookOpen, ExternalLink,
+  Sparkles, Loader2
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
@@ -40,6 +41,12 @@ export default function JourneyPage() {
   const [showFollowup, setShowFollowup] = useState(false);
   const [nextStepDismissed, setNextStepDismissed] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
+  const [aiNextStep, setAiNextStep] = useState(null);
+  const [aiNextStepLoading, setAiNextStepLoading] = useState(false);
+  const [aiSummary, setAiSummary] = useState(null);
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [aiInsight, setAiInsight] = useState(null);
+  const [aiInsightLoading, setAiInsightLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -58,6 +65,33 @@ export default function JourneyPage() {
 
   const refresh = () => { setLoading(false); fetchData(); };
   const closeAll = () => { setShowEmail(false); setShowLog(false); setShowReplied(false); setShowCoachForm(null); setShowFollowup(false); setActiveAction(null); };
+
+  const fetchAiNextStep = async () => {
+    setAiNextStepLoading(true);
+    try {
+      const res = await axios.post(`${API}/ai/next-step`, { program_id: programId });
+      setAiNextStep(res.data);
+    } catch { toast.error("Failed to get AI recommendation"); }
+    finally { setAiNextStepLoading(false); }
+  };
+
+  const fetchAiSummary = async () => {
+    setAiSummaryLoading(true);
+    try {
+      const res = await axios.post(`${API}/ai/journey-summary`, { program_id: programId });
+      setAiSummary(res.data);
+    } catch { toast.error("Failed to generate summary"); }
+    finally { setAiSummaryLoading(false); }
+  };
+
+  const fetchAiInsight = async () => {
+    setAiInsightLoading(true);
+    try {
+      const res = await axios.post(`${API}/ai/school-insight/${programId}`);
+      setAiInsight(res.data);
+    } catch { toast.error("Failed to get school insight"); }
+    finally { setAiInsightLoading(false); }
+  };
 
   const handleStageClick = (stageKey) => {
     if (!program) return;
@@ -396,6 +430,88 @@ export default function JourneyPage() {
                 </div>
               </div>
             )}
+
+            {/* ── AI Section ── */}
+            <div className="rounded-2xl border p-4 bg-gradient-to-br from-slate-900/60 to-[#1a8a80]/5 border-[#1a8a80]/20" data-testid="ai-section">
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5 text-[#1a8a80]">
+                <Sparkles className="w-3.5 h-3.5" /> AI Insights
+              </h3>
+              <div className="space-y-2">
+                {/* AI Next Step */}
+                <button onClick={fetchAiNextStep} disabled={aiNextStepLoading}
+                  className="w-full text-left p-3 rounded-xl border transition-colors hover:border-[#1a8a80]/30 bg-slate-800/30 border-slate-700/30"
+                  data-testid="ai-next-step-btn">
+                  {aiNextStepLoading ? (
+                    <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px] text-slate-400">Analyzing...</span></div>
+                  ) : aiNextStep ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${aiNextStep.urgency === "high" ? "bg-red-400" : aiNextStep.urgency === "medium" ? "bg-amber-400" : "bg-green-400"}`} />
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80]">AI Recommended</span>
+                      </div>
+                      <p className="text-[12px] font-semibold text-white mb-1">{aiNextStep.next_step}</p>
+                      <p className="text-[10px] text-slate-400">{aiNextStep.reasoning}</p>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                      <span className="text-[11px] font-semibold text-white/60">Get AI Next Step</span>
+                    </div>
+                  )}
+                </button>
+
+                {/* AI Journey Summary */}
+                <button onClick={fetchAiSummary} disabled={aiSummaryLoading}
+                  className="w-full text-left p-3 rounded-xl border transition-colors hover:border-[#1a8a80]/30 bg-slate-800/30 border-slate-700/30"
+                  data-testid="ai-journey-summary-btn">
+                  {aiSummaryLoading ? (
+                    <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px] text-slate-400">Summarizing...</span></div>
+                  ) : aiSummary ? (
+                    <>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">Journey Summary</p>
+                      <p className="text-[12px] text-white/70 mb-1">{aiSummary.relationship_summary}</p>
+                      {aiSummary.suggested_action && <p className="text-[11px] text-[#1a8a80] font-semibold mt-2">Next: {aiSummary.suggested_action}</p>}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                      <span className="text-[11px] font-semibold text-white/60">Get Journey Summary</span>
+                    </div>
+                  )}
+                </button>
+
+                {/* AI School Insight */}
+                <button onClick={fetchAiInsight} disabled={aiInsightLoading}
+                  className="w-full text-left p-3 rounded-xl border transition-colors hover:border-[#1a8a80]/30 bg-slate-800/30 border-slate-700/30"
+                  data-testid="ai-school-insight-btn">
+                  {aiInsightLoading ? (
+                    <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px] text-slate-400">Analyzing school...</span></div>
+                  ) : aiInsight?.insight ? (
+                    <>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">School Fit Analysis</p>
+                      <p className="text-[12px] text-white/70 mb-2">{aiInsight.insight.summary}</p>
+                      {aiInsight.insight.strengths?.slice(0, 2).map((s, i) => (
+                        <div key={i} className="flex items-start gap-1.5 mb-1">
+                          <span className="text-[9px] text-emerald-400 mt-0.5">+</span>
+                          <span className="text-[11px] text-emerald-400/70">{s.text}</span>
+                        </div>
+                      ))}
+                      {aiInsight.insight.concerns?.slice(0, 1).map((c, i) => (
+                        <div key={i} className="flex items-start gap-1.5 mt-1">
+                          <span className="text-[9px] text-amber-400 mt-0.5">!</span>
+                          <span className="text-[11px] text-amber-400/70">{c.text}</span>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                      <span className="text-[11px] font-semibold text-white/60">Get School Insight</span>
+                    </div>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -32,6 +32,9 @@ import AthletePipelinePage from "./pages/athlete/PipelinePage";
 import AthleteJourneyPage from "./pages/athlete/JourneyPage";
 import AthleteOnboardingQuiz from "./pages/athlete/OnboardingQuiz";
 import AthletePublicProfile from "./pages/public/AthletePublicProfile";
+import AthleteInboxPage from "./pages/athlete/InboxPage";
+import AthleteOutreachPage from "./pages/athlete/OutreachAnalysisPage";
+import AthleteHighlightPage from "./pages/athlete/HighlightAdvisorPage";
 
 function getHomeRoute(role, onboardingDone) {
   if (role === "director" || role === "coach") return "/mission-control";
@@ -113,9 +116,10 @@ function AppRoutes() {
       <Route path="/schools" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSchoolsPage /></ProtectedRoute>} />
       <Route path="/schools/:domain" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSchoolDetailPage /></ProtectedRoute>} />
       <Route path="/calendar" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteCalendarPage /></ProtectedRoute>} />
-      <Route path="/inbox" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
+      <Route path="/inbox" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteInboxPage /></ProtectedRoute>} />
       <Route path="/athlete-profile" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteProfilePage /></ProtectedRoute>} />
-      <Route path="/analytics" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteOutreachPage /></ProtectedRoute>} />
+      <Route path="/highlights" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteHighlightPage /></ProtectedRoute>} />
       <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSettingsPage /></ProtectedRoute>} />
 
       {/* ── Public routes (no auth) ── */}

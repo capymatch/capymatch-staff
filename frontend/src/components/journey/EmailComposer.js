@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
-import { Send, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Send, X, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+const EMAIL_TYPES = [
+  { id: "intro", label: "Introduction" },
+  { id: "follow_up", label: "Follow-Up" },
+  { id: "thank_you", label: "Thank You" },
+  { id: "interest_update", label: "Interest Update" },
+];
 
 export function EmailComposer({ coaches, programId, universityName, onSent, onCancel }) {
   const [to, setTo] = useState(coaches?.[0]?.email || "");
@@ -12,12 +19,34 @@ export function EmailComposer({ coaches, programId, universityName, onSent, onCa
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [draftType, setDraftType] = useState("intro");
+  const [drafting, setDrafting] = useState(false);
+  const [customInstructions, setCustomInstructions] = useState("");
   const inputCls = "w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 transition-colors";
   const inputStyle = { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" };
 
   useEffect(() => {
     axios.get(`${API}/athlete/gmail/status`).then(r => setGmailConnected(r.data.connected)).catch(() => {});
   }, []);
+
+  const handleAIDraft = async () => {
+    setDrafting(true);
+    try {
+      const res = await axios.post(`${API}/ai/draft-email`, {
+        program_id: programId,
+        email_type: draftType,
+        custom_instructions: customInstructions,
+      });
+      if (res.data.subject) setSubject(res.data.subject);
+      if (res.data.body) setBody(res.data.body);
+      if (res.data.coach_email && !to) setTo(res.data.coach_email);
+      toast.success("AI draft generated!");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to generate AI draft");
+    } finally {
+      setDrafting(false);
+    }
+  };
 
   const send = async () => {
     if (!subject || !body) { toast.error("Fill subject and message"); return; }
@@ -55,12 +84,41 @@ export function EmailComposer({ coaches, programId, universityName, onSent, onCa
           <p className="text-[11px] text-slate-500">
             {gmailConnected
               ? <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-400 inline" /> Sending via Gmail</span>
-              : "Gmail not connected — email will be logged to timeline only"
+              : "Gmail not connected \u2014 email will be logged to timeline only"
             }
           </p>
         </div>
 
         <div className="p-5 space-y-3 overflow-y-auto flex-1" style={{ colorScheme: "dark" }}>
+          {/* AI Draft Section */}
+          <div className="rounded-xl p-3 border border-[#1a8a80]/20 bg-[#1a8a80]/5" data-testid="ai-draft-section">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-[#1a8a80]" />
+              <span className="text-[11px] font-bold text-[#1a8a80]">AI Draft</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex gap-1 flex-wrap">
+                {EMAIL_TYPES.map(t => (
+                  <button key={t.id} onClick={() => setDraftType(t.id)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${draftType === t.id ? "bg-[#1a8a80] text-white" : "bg-white/5 text-white/40 border border-white/10"}`}
+                    data-testid={`draft-type-${t.id}`}>{t.label}</button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <input value={customInstructions} onChange={e => setCustomInstructions(e.target.value)}
+                placeholder="Custom instructions (optional)..."
+                className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] bg-white/5 border border-white/10 text-white outline-none placeholder:text-white/20"
+                data-testid="custom-instructions-input" />
+              <button onClick={handleAIDraft} disabled={drafting}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#1a8a80] text-white disabled:opacity-40 inline-flex items-center gap-1"
+                data-testid="ai-generate-btn">
+                {drafting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                {drafting ? "..." : "Generate"}
+              </button>
+            </div>
+          </div>
+
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>To</label>
             <select value={to} onChange={e => setTo(e.target.value)} className={inputCls} style={{...inputStyle, colorScheme: "dark"}} data-testid="email-to-select">
@@ -70,7 +128,7 @@ export function EmailComposer({ coaches, programId, universityName, onSent, onCa
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>Subject</label>
-            <input placeholder="e.g. Introduction — Class of 2027" value={subject} onChange={e => setSubject(e.target.value)} className={inputCls} style={inputStyle} data-testid="email-subject-input" />
+            <input placeholder="e.g. Introduction \u2014 Class of 2027" value={subject} onChange={e => setSubject(e.target.value)} className={inputCls} style={inputStyle} data-testid="email-subject-input" />
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>Message</label>

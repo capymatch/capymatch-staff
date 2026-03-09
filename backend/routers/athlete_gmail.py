@@ -445,3 +445,355 @@ async def confirm_import(run_id: str, request: Request, current_user: dict = get
         {"$set": {"confirmed_at": datetime.now(timezone.utc).isoformat(), "confirmed_school_ids": created_ids}}
     )
     return {"created_count": created_count, "skipped_count": skipped_count}
+
+
+import re as _re
+import email.mime.base
+import email.encoders
+
+
+def _extract_body(payload):
+    body_html = ""
+    body_text = ""
+    if payload.get("mimeType") == "text/html":
+        data = payload.get("body", {}).get("data", "")
+        if data:
+            body_html = base64.urlsafe_b64decode(data).decode("utf-8", errors="replace")
+    elif payload.get("mimeType") == "text/plain":
+        data = payload.get("body", {}).get("data", "")
+        if data:
+            body_text = base64.urlsafe_b64decode(data).decode("utf-8", errors="replace")
+    elif payload.get("mimeType", "").startswith("multipart"):
+        for part in payload.get("parts", []):
+            h, t = _extract_body(part)
+            if h and not body_html:
+                body_html = h
+            if t and not body_text:
+                body_text = t
+    return body_html, body_text
+
+
+def _extract_attachments(payload):
+    attachments = []
+    if payload.get("filename"):
+        attachments.append({
+            "filename": payload["filename"],
+            "mime_type": payload.get("mimeType", ""),
+            "size": payload.get("body", {}).get("size", 0),
+            "attachment_id": payload.get("body", {}).get("attachmentId", ""),
+        })
+    for part in payload.get("parts", []):
+        attachments.extend(_extract_attachments(part))
+    return attachments
+
+
+def _strip_quoted_reply(text):
+    if not text:
+        return text
+    lines = text.split("\n")
+    result = []
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if _re.match(r'^On .+ wrote:\s*$', stripped):
+            break
+        if "forwarded message" in stripped.lower() and "---" in stripped:
+            break
+        if _re.match(r'^From:\s+.+[@<]', stripped) and len(result) > 2:
+            next_lines = "\n".join(lines[i:i+4])
+            if _re.search(r'Date:|To:|Subject:', next_lines):
+                break
+        if stripped.startswith(">") and len(result) > 0 and (not result[-1].strip() or result[-1].strip().startswith(">")):
+            break
+        line = _re.sub(r'\[cid:[a-f0-9\-]+\]', '', line)
+        result.append(line)
+    while result and not result[-1].strip():
+        result.pop()
+    return "\n".join(result)
+
+
+# ─── Inbox: List Emails ───
+
+@router.get("/athlete/gmail/emails")
+async def list_emails(
+    current_user: dict = get_current_user_dep(),
+    page_token: Optional[str] = None,
+    q: Optional[str] = None,
+    max_results: int = 20,
+):
+    creds = await get_gmail_credentials(current_user["id"])
+    if not creds:
+        raise HTTPException(403, "Gmail not connected")
+
+    tenant_id = await _get_athlete_tenant(current_user)
+    coaches = await db.college_coaches.find({"tenant_id": tenant_id, "email": {"$ne": ""}}, {"_id": 0, "email": 1}).to_list(500)
+    coach_emails = [c["email"].strip().lower() for c in coaches if c.get("email", "").strip()]
+
+    try:
+        service = get_gmail_service(creds)
+        params = {"userId": "me", "maxResults": max_results}
+        if page_token:
+            params["pageToken"] = page_token
+
+        filter_parts = ["from:*.edu OR to:*.edu"]
+        for em in coach_emails[:10]:
+            filter_parts.append(em)
+        recruit_query = "(" + " OR ".join(filter_parts) + ")"
+        params["q"] = f"{recruit_query} {q}" if q else recruit_query
+
+        results = service.users().messages().list(**params).execute()
+        messages = results.get("messages", [])
+        next_page_token = results.get("nextPageToken")
+
+        coach_set = set(coach_emails)
+        email_list = []
+        for msg_ref in messages:
+            msg = service.users().messages().get(
+                userId="me", id=msg_ref["id"], format="metadata",
+                metadataHeaders=["From", "To", "Subject", "Date", "Cc"],
+            ).execute()
+            headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
+            from_addr = headers.get("From", "").lower()
+            to_addr = headers.get("To", "").lower()
+            is_known = any(ce in from_addr or ce in to_addr for ce in coach_set) if coach_set else False
+            email_list.append({
+                "id": msg["id"],
+                "thread_id": msg["threadId"],
+                "snippet": msg.get("snippet", ""),
+                "subject": headers.get("Subject", "(no subject)"),
+                "from": headers.get("From", ""),
+                "to": headers.get("To", ""),
+                "cc": headers.get("Cc", ""),
+                "date": headers.get("Date", ""),
+                "internal_date": msg.get("internalDate", ""),
+                "label_ids": msg.get("labelIds", []),
+                "is_unread": "UNREAD" in msg.get("labelIds", []),
+                "is_known_coach": is_known,
+            })
+
+        return {
+            "emails": email_list,
+            "next_page_token": next_page_token,
+            "result_size_estimate": results.get("resultSizeEstimate", 0),
+        }
+    except Exception as e:
+        logger.error(f"Error listing emails: {e}")
+        if "invalid_grant" in str(e).lower() or "token" in str(e).lower():
+            await db.gmail_tokens.delete_one({"user_id": current_user["id"]})
+            raise HTTPException(403, "Gmail token expired. Please reconnect.")
+        raise HTTPException(500, "Failed to fetch emails")
+
+
+# ─── Inbox: Get Single Email ───
+
+@router.get("/athlete/gmail/emails/{message_id}")
+async def get_email(message_id: str, current_user: dict = get_current_user_dep()):
+    creds = await get_gmail_credentials(current_user["id"])
+    if not creds:
+        raise HTTPException(403, "Gmail not connected")
+
+    try:
+        service = get_gmail_service(creds)
+        msg = service.users().messages().get(userId="me", id=message_id, format="full").execute()
+        headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
+        body_html, body_text = _extract_body(msg.get("payload", {}))
+        attachments = _extract_attachments(msg.get("payload", {}))
+
+        return {
+            "id": msg["id"],
+            "thread_id": msg["threadId"],
+            "subject": headers.get("Subject", "(no subject)"),
+            "from": headers.get("From", ""),
+            "to": headers.get("To", ""),
+            "cc": headers.get("Cc", ""),
+            "date": headers.get("Date", ""),
+            "internal_date": msg.get("internalDate", ""),
+            "label_ids": msg.get("labelIds", []),
+            "body_html": body_html,
+            "body_text": _strip_quoted_reply(body_text),
+            "body_text_full": body_text,
+            "attachments": attachments,
+            "is_unread": False,
+        }
+    except Exception as e:
+        logger.error(f"Error getting email {message_id}: {e}")
+        raise HTTPException(500, "Failed to fetch email")
+
+
+# ─── Inbox: Get Thread ───
+
+@router.get("/athlete/gmail/threads/{thread_id}")
+async def get_thread(thread_id: str, current_user: dict = get_current_user_dep()):
+    creds = await get_gmail_credentials(current_user["id"])
+    if not creds:
+        raise HTTPException(403, "Gmail not connected")
+
+    try:
+        service = get_gmail_service(creds)
+        thread = service.users().threads().get(userId="me", id=thread_id, format="full").execute()
+        messages = []
+        for msg in thread.get("messages", []):
+            headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
+            body_html, body_text = _extract_body(msg.get("payload", {}))
+            attachments = _extract_attachments(msg.get("payload", {}))
+            messages.append({
+                "id": msg["id"],
+                "thread_id": msg["threadId"],
+                "subject": headers.get("Subject", "(no subject)"),
+                "from": headers.get("From", ""),
+                "to": headers.get("To", ""),
+                "cc": headers.get("Cc", ""),
+                "date": headers.get("Date", ""),
+                "internal_date": msg.get("internalDate", ""),
+                "label_ids": msg.get("labelIds", []),
+                "body_html": body_html,
+                "body_text": body_text,
+                "attachments": attachments,
+                "is_unread": "UNREAD" in msg.get("labelIds", []),
+            })
+        return {"thread_id": thread_id, "messages": messages, "subject": messages[0]["subject"] if messages else ""}
+    except Exception as e:
+        logger.error(f"Error getting thread {thread_id}: {e}")
+        raise HTTPException(500, "Failed to fetch thread")
+
+
+# ─── Inbox: Reply ───
+
+@router.post("/athlete/gmail/reply")
+async def reply_email(request: Request, current_user: dict = get_current_user_dep()):
+    creds = await get_gmail_credentials(current_user["id"])
+    if not creds:
+        raise HTTPException(403, "Gmail not connected")
+
+    body = await request.json()
+    message_id = body.get("message_id")
+    thread_id = body.get("thread_id")
+    reply_body = body.get("body", "")
+    reply_all = body.get("reply_all", False)
+
+    if not message_id or not thread_id or not reply_body:
+        raise HTTPException(400, "message_id, thread_id, and body are required")
+
+    try:
+        service = get_gmail_service(creds)
+        original = service.users().messages().get(
+            userId="me", id=message_id, format="metadata",
+            metadataHeaders=["From", "To", "Subject", "Message-ID", "Cc"],
+        ).execute()
+        orig_headers = {h["name"]: h["value"] for h in original.get("payload", {}).get("headers", [])}
+
+        profile = service.users().getProfile(userId="me").execute()
+        sender_email = profile.get("emailAddress", "")
+
+        message = email.mime.multipart.MIMEMultipart()
+        reply_to = orig_headers.get("From", "")
+        message["to"] = reply_to
+        if reply_all:
+            all_to = set()
+            for addr in (orig_headers.get("To", "") + "," + orig_headers.get("Cc", "")).split(","):
+                addr = addr.strip()
+                if addr and sender_email.lower() not in addr.lower():
+                    all_to.add(addr)
+            all_to.discard(reply_to)
+            if all_to:
+                message["cc"] = ", ".join(all_to)
+
+        message["from"] = sender_email
+        subject = orig_headers.get("Subject", "")
+        if not subject.lower().startswith("re:"):
+            subject = f"Re: {subject}"
+        message["subject"] = subject
+
+        msg_id = orig_headers.get("Message-ID", "")
+        if msg_id:
+            message["In-Reply-To"] = msg_id
+            message["References"] = msg_id
+
+        msg_body = email.mime.text.MIMEText(reply_body, "html")
+        message.attach(msg_body)
+
+        raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        sent = service.users().messages().send(userId="me", body={"raw": raw, "threadId": thread_id}).execute()
+
+        # Auto-update program status when replying to a coach
+        tenant_id = await _get_athlete_tenant(current_user)
+        recipient_email = reply_to.strip().lower()
+        if "<" in recipient_email and ">" in recipient_email:
+            recipient_email = recipient_email.split("<")[1].split(">")[0].strip()
+
+        coach = await db.college_coaches.find_one(
+            {"tenant_id": tenant_id, "email": {"$regex": f"^{_re.escape(recipient_email)}$", "$options": "i"}},
+            {"_id": 0, "program_id": 1}
+        )
+        if coach:
+            program = await db.programs.find_one(
+                {"program_id": coach["program_id"], "tenant_id": tenant_id},
+                {"_id": 0, "recruiting_status": 1, "reply_status": 1}
+            )
+            if program:
+                updates = {"updated_at": datetime.now(timezone.utc).isoformat()}
+                if program.get("recruiting_status") in ["Not Contacted", "Researching", "", None]:
+                    updates["recruiting_status"] = "Contacted"
+                if program.get("reply_status") in ["No Reply", "", None]:
+                    updates["reply_status"] = "Awaiting Reply"
+                if len(updates) > 1:
+                    await db.programs.update_one({"program_id": coach["program_id"], "tenant_id": tenant_id}, {"$set": updates})
+
+        return {"id": sent["id"], "thread_id": sent.get("threadId", ""), "status": "sent"}
+    except Exception as e:
+        logger.error(f"Error replying to email: {e}")
+        raise HTTPException(500, "Failed to send reply")
+
+
+# ─── Check Coach Replies ───
+
+@router.post("/athlete/gmail/check-replies")
+async def check_replies(current_user: dict = get_current_user_dep()):
+    creds = await get_gmail_credentials(current_user["id"])
+    if not creds:
+        raise HTTPException(403, "Gmail not connected")
+
+    tenant_id = await _get_athlete_tenant(current_user)
+    coaches = await db.college_coaches.find({"tenant_id": tenant_id, "email": {"$ne": ""}}, {"_id": 0, "email": 1, "program_id": 1}).to_list(500)
+    if not coaches:
+        return {"updated_count": 0}
+
+    coach_map = {}
+    for c in coaches:
+        em = c.get("email", "").strip().lower()
+        if em:
+            coach_map[em] = c["program_id"]
+
+    no_reply_progs = await db.programs.find(
+        {"tenant_id": tenant_id, "reply_status": {"$in": ["No Reply", "Awaiting Reply", "", None]}},
+        {"_id": 0, "program_id": 1, "university_name": 1}
+    ).to_list(500)
+    no_reply_ids = {p["program_id"]: p.get("university_name", "") for p in no_reply_progs}
+    if not no_reply_ids:
+        return {"updated_count": 0}
+
+    try:
+        service = get_gmail_service(creds)
+        from_queries = [f"from:{em}" for em in list(coach_map.keys())[:20]]
+        query = f"({' OR '.join(from_queries)})"
+        results = service.users().messages().list(userId="me", q=query, maxResults=100).execute()
+        messages = results.get("messages", [])
+
+        updated = []
+        for msg_ref in messages:
+            msg = service.users().messages().get(userId="me", id=msg_ref["id"], format="metadata", metadataHeaders=["From"]).execute()
+            headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
+            from_addr = headers.get("From", "").lower()
+            for coach_email, program_id in coach_map.items():
+                if coach_email in from_addr and program_id in no_reply_ids:
+                    await db.programs.update_one(
+                        {"program_id": program_id, "tenant_id": tenant_id},
+                        {"$set": {"reply_status": "Reply Received", "priority": "Very High", "updated_at": datetime.now(timezone.utc).isoformat()}}
+                    )
+                    updated.append({"program_id": program_id, "university_name": no_reply_ids[program_id]})
+                    del no_reply_ids[program_id]
+                    break
+
+        return {"updated_count": len(updated), "updated_programs": updated}
+    except Exception as e:
+        logger.error(f"Error checking replies: {e}")
+        raise HTTPException(500, "Failed to check replies")

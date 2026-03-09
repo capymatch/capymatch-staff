@@ -13,6 +13,7 @@ import {
   Mail,
   User,
   Settings,
+  Video,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
@@ -33,6 +34,7 @@ const ATHLETE_NAV = [
   { id: "schools", label: "Schools", icon: GraduationCap, path: "/schools" },
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "inbox", label: "Inbox", icon: Mail, path: "/inbox" },
+  { id: "highlights", label: "Highlights", icon: Video, path: "/highlights" },
   { id: "athlete-profile", label: "Profile", icon: User, path: "/athlete-profile" },
   { id: "analytics", label: "Analytics", icon: BarChart3, path: "/analytics" },
   { id: "athlete-settings", label: "Settings", icon: Settings, path: "/athlete-settings" },

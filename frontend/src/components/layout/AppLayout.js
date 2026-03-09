@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Megaphone, BarChart3, Users, UserPlus, User, Shield } from "lucide-react";
+import { LayoutDashboard, Calendar, Megaphone, BarChart3, Users, UserPlus, User, Shield, Sparkles } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import { useAuth } from "@/AuthContext";
+import AIAssistantDrawer from "../AIAssistantDrawer";
 
 const ROUTE_META = {
   "/mission-control": { title: "Dashboard", icon: LayoutDashboard },
@@ -27,6 +29,9 @@ export default function AppLayout({ children, title, icon }) {
   const location = useLocation();
   const routeMeta = getRouteMeta(location.pathname);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const { user } = useAuth();
+  const isAthlete = user?.role === "athlete" || user?.role === "parent";
 
   return (
     <div className="min-h-screen bg-[#F7FAFC]">
@@ -47,6 +52,17 @@ export default function AppLayout({ children, title, icon }) {
           {children}
         </main>
       </div>
+
+      {/* AI Assistant FAB for athletes */}
+      {isAthlete && (
+        <button onClick={() => setAiOpen(true)}
+          className="fixed bottom-6 right-6 w-12 h-12 rounded-full shadow-lg z-[80] flex items-center justify-center transition-transform hover:scale-110"
+          style={{ background: "linear-gradient(135deg, #1a8a80, #6366f1)" }}
+          data-testid="ai-fab">
+          <Sparkles className="w-5 h-5 text-white" />
+        </button>
+      )}
+      {isAthlete && <AIAssistantDrawer isOpen={aiOpen} onClose={() => setAiOpen(false)} />}
     </div>
   );
 }
