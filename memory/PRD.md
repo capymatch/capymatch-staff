@@ -8,7 +8,7 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - **Frontend:** React, Tailwind CSS, Shadcn/UI
 - **Auth:** JWT-based, role-based routing
 - **AI:** Claude Sonnet 4.5 via Emergent LLM key (emergentintegrations library)
-- **Theme:** Dark theme (`#0f1219` bg, `#1a8a80` accent)
+- **Theme:** Dual light/dark theme system using CSS variables (`--cm-*`) and ThemeContext
 
 ## What's Been Implemented
 
@@ -51,6 +51,14 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - **AI FAB Button** — Floating action button on all athlete pages to open AI Assistant drawer
 - **EmailComposer AI Draft** — Email type selector (4 types) + custom instructions + one-click AI draft in Journey page
 
+### Phase 7 — Light/Dark Theme System (DONE - March 9, 2026)
+- **ThemeContext** — React Context (`/app/frontend/src/ThemeContext.js`) that toggles `.dark` class on `<html>`, persists to localStorage
+- **CSS Variables** — Comprehensive set of `--cm-*` variables in `index.css` for both `:root` (light) and `.dark` (dark) themes
+- **Full Visual Refactoring** — All athlete pages, layout components, and shared components converted from hardcoded colors to CSS theme variables
+- **Theme Toggle** — Sun/Moon button in TopBar for instant theme switching
+- **Pages refactored:** Dashboard, Pipeline, Schools, Calendar, Settings, Profile, Journey, Inbox, Highlights, Analytics, SchoolDetail, AI Assistant Drawer
+- **Testing:** 100% pass rate across all 11 pages in both light and dark modes (iteration_61)
+
 ## Key Collections
 - `university_knowledge_base` — 953 schools
 - `school_domain_aliases` — 2,534 aliases
@@ -91,6 +99,9 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - Athlete: `emma.chen@athlete.capymatch.com` / `password123`
 
 ## Backlog
+
+### P1 — Upcoming
+- AI-Powered Gmail Scanning (background email analysis to auto-suggest schools)
 
 ### P2 — Future
 - Normalize camelCase -> snake_case in DB fields
