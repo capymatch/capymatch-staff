@@ -1,5 +1,5 @@
-import { useState} from "react";
-import { Send, X, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send, X, Loader2, CheckCircle2 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
@@ -11,23 +11,32 @@ export function EmailComposer({ coaches, programId, universityName, onSent, onCa
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [gmailConnected, setGmailConnected] = useState(false);
   const inputCls = "w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 transition-colors";
   const inputStyle = { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" };
+
+  useEffect(() => {
+    axios.get(`${API}/athlete/gmail/status`).then(r => setGmailConnected(r.data.connected)).catch(() => {});
+  }, []);
 
   const send = async () => {
     if (!subject || !body) { toast.error("Fill subject and message"); return; }
     setSending(true);
     try {
-      await axios.post(`${API}/athlete/interactions`, {
-        program_id: programId,
-        university_name: universityName,
-        type: "Email Sent",
-        notes: `Subject: ${subject}\n\n${body}`,
-        outcome: "No Response",
-      });
-      toast.success("Email logged to timeline");
+      if (gmailConnected) {
+        const res = await axios.post(`${API}/athlete/gmail/send`, {
+          to, subject, body, program_id: programId, university_name: universityName,
+        });
+        toast.success(res.data.gmail_sent ? "Email sent via Gmail!" : "Email logged to timeline");
+      } else {
+        await axios.post(`${API}/athlete/interactions`, {
+          program_id: programId, university_name: universityName,
+          type: "Email Sent", notes: `Subject: ${subject}\n\n${body}`, outcome: "No Response",
+        });
+        toast.success("Email logged to timeline");
+      }
       onSent();
-    } catch { toast.error("Failed to log email"); }
+    } catch { toast.error("Failed to send email"); }
     finally { setSending(false); }
   };
 
@@ -43,7 +52,12 @@ export function EmailComposer({ coaches, programId, universityName, onSent, onCa
               <X className="w-4 h-4 text-white/40" />
             </button>
           </div>
-          <p className="text-[11px] text-slate-500">Your email will be logged to the timeline. Gmail integration coming soon!</p>
+          <p className="text-[11px] text-slate-500">
+            {gmailConnected
+              ? <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-400 inline" /> Sending via Gmail</span>
+              : "Gmail not connected — email will be logged to timeline only"
+            }
+          </p>
         </div>
 
         <div className="p-5 space-y-3 overflow-y-auto flex-1" style={{ colorScheme: "dark" }}>

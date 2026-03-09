@@ -1,0 +1,72 @@
+{
+  "summary": "Athlete Settings Page testing completed. Backend: 28/28 tests passed. Frontend: All 6 sections verified (Personal Info, Gmail Integration, Notifications, Appearance, Change Password, Data & Privacy). Gmail OAuth auth_url generation tested. Gmail Consent Modal verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_athlete_settings.py",
+    "/app/test_reports/pytest/pytest_athlete_settings.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Gmail OAuth requires actual Google consent flow - auth_url generation tested but actual connect requires real Google credentials",
+    "Gmail Import endpoints (POST /import-history, GET /status, POST /confirm) require Gmail connected - API structure and error handling verified",
+    "All sections have proper data-testid attributes for testing",
+    "Delete account validation correctly requires exact 'DELETE' confirmation text",
+    "Password change properly validates current password with bcrypt",
+    "Export data returns athlete profile, programs, coaches, interactions, and events"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_athlete_settings.py"
+  ],
+  "success_rate": {
+    "backend": "100% (28/28 tests passed)",
+    "frontend": "100% (all 6 sections verified, 2 modals tested)"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / password123"
+  },
+  "seed_data_creation": "No new seed data created. Used existing athlete account.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Settings page fully verified. All 6 sections working: Personal Info (name/email edit + save), Gmail Integration (Connect button + Consent Modal), Notifications (Follow-up Reminders + Email Notifications toggles), Appearance (Dark/Light/System theme buttons), Change Password (validation + bcrypt check), Data & Privacy (Inbound Scan toggle, Export Data download, Delete Account validation). Gmail OAuth generates valid Google auth_url. Gmail Import endpoints return proper errors when not connected.",
+  "verified_features": {
+    "Backend_APIs": {
+      "GET_athlete_settings": "PASS - returns name, email, preferences",
+      "PUT_athlete_settings": "PASS - updates name, email, theme, notifications",
+      "POST_change_password": "PASS - validates current password, requires 6+ chars",
+      "GET_export_data": "PASS - returns athlete, programs, coaches, interactions, events",
+      "DELETE_delete_account": "PASS - requires exact 'DELETE' confirmation",
+      "GET_gmail_status": "PASS - returns connected boolean",
+      "GET_gmail_connect": "PASS - returns Google OAuth auth_url",
+      "POST_gmail_disconnect": "PASS - returns ok even if not connected",
+      "POST_import_history": "PASS - requires Gmail connection (403)",
+      "GET_import_status": "PASS - returns 404 for invalid run_id",
+      "POST_import_confirm": "PASS - returns 404 for invalid run_id",
+      "POST_gmail_send": "PASS - logs email as fallback when Gmail not connected"
+    },
+    "Frontend_Settings_Page": {
+      "page_loads_at_athlete_settings": "PASS - data-testid='settings-page'",
+      "personal_info_section": "PASS - name/email inputs, Save Changes button",
+      "gmail_integration_section": "PASS - Connect Gmail button visible",
+      "gmail_consent_modal": "PASS - opens on Connect click, Cancel/Accept buttons",
+      "notifications_section": "PASS - Follow-up Reminders and Email Notifications toggles",
+      "appearance_section": "PASS - Dark/Light/System theme buttons",
+      "change_password_section": "PASS - Current/New/Confirm inputs, Update Password button",
+      "data_privacy_section": "PASS - Inbound Scan toggle, Export Data button, Delete Account",
+      "export_data_download": "PASS - downloads JSON file",
+      "delete_account_validation": "PASS - button disabled until 'DELETE' typed",
+      "toggle_interactions": "PASS - toggles update preferences via API"
+    }
+  },
+  "mocked_apis": {
+    "Gmail_OAuth_Callback": "REQUIRES ACTUAL GOOGLE CONSENT - auth_url generated but callback needs real Google OAuth flow",
+    "Gmail_Import": "REQUIRES GMAIL CONNECTION - endpoints return 403 when Gmail not connected"
+  }
+}

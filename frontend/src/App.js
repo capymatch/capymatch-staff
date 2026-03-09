@@ -22,6 +22,7 @@ import AdminStatus from "./pages/AdminStatus";
 import RosterPage from "./pages/RosterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
+import AthleteSettingsPage from "./pages/athlete/SettingsPage";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import AthleteProfilePage from "./pages/athlete/ProfilePage";
 import AthleteCalendarPage from "./pages/athlete/CalendarPage";
@@ -115,7 +116,7 @@ function AppRoutes() {
       <Route path="/inbox" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
       <Route path="/athlete-profile" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteProfilePage /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
-      <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteComingSoonPage /></ProtectedRoute>} />
+      <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSettingsPage /></ProtectedRoute>} />
 
       {/* ── Public routes (no auth) ── */}
       <Route path="/s/:shortId" element={<AthletePublicProfile />} />
