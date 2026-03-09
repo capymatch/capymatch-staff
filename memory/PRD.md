@@ -90,6 +90,31 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 
 **Phase C Tested: 20/20 backend, 8/8 frontend — 100% pass (iteration_52)**
 
+### Pipeline & Journey Pages — COMPLETE (2026-03-09)
+
+#### Pipeline (Recruiting Board)
+- **Frontend**: `pages/athlete/PipelinePage.js`
+  - Route: `/pipeline`
+  - Kanban board with 5 columns: Overdue, Needs Outreach, Waiting on Reply, In Conversation, Archived
+  - Board/List view toggle — list shows table with School, Status, Coach, Activity, Priority
+  - Program cards: school name, division, conference, priority badge, coach, interaction signals
+  - Quick actions: Log Interaction, Mark Replied, View Journey
+  - Add School modal (manual entry with name, division, conference, priority, notes)
+  - Summary chips with counts per column
+  - Empty state with links to KB and manual add
+
+#### Journey (School Timeline)
+- **Frontend**: `pages/athlete/JourneyPage.js`
+  - Route: `/pipeline/:programId`
+  - School header with division, conference, board status badge
+  - Signals bar: Interactions, Outreach count, Coach Reply status, Days Since Last, Follow-up date
+  - Interaction timeline with color-coded icons per type (email, call, camp, visit, etc.)
+  - Inline "Log Interaction" form (type selector + notes)
+  - Sidebar: Coaching Staff with email links, Notes, Details (priority, status, follow-up interval, added date)
+  - Back to Pipeline navigation
+
+**Pipeline & Journey Tested: 19/19 frontend features — 100% pass (iteration_53)**
+
 ---
 
 ## Routes Added (cumulative)
@@ -115,6 +140,18 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 | GET | /api/athlete/knowledge/:domain | School detail | C |
 | POST | /api/athlete/knowledge/:domain/add-to-pipeline | Add school to pipeline | C |
 
+### Frontend Routes (Athlete)
+| Route | Page | Phase |
+|---|---|---|
+| /board | AthleteDashboard | A |
+| /pipeline | PipelinePage (Kanban board) | A (frontend now) |
+| /pipeline/:programId | JourneyPage (timeline) | A (frontend now) |
+| /schools | SchoolsPage (KB browse) | C |
+| /schools/:domain | SchoolDetailPage | C |
+| /calendar | CalendarPage | B |
+| /athlete-profile | ProfilePage | B |
+| /s/:shortId | PublicProfilePage | B |
+
 ### Collections
 | Collection | Scope | Phase |
 |---|---|---|
@@ -129,12 +166,12 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 
 ## Upcoming Tasks
 
-### Phase C.2: School Comparison (optional enhancement)
-- Compare 2-3 schools side-by-side
-
 ### Phase D: AI Features
 - D.1: AI Email Drafts (Claude)
 - D.2: Outreach Analysis + Highlight Advisor
+
+### Phase C.2: School Comparison (optional enhancement)
+- Compare 2-3 schools side-by-side
 
 ### Phase E–H: Gmail, Notifications, Stripe, Layout
 
