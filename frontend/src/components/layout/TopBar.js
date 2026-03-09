@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Moon, LogOut, User, Menu } from "lucide-react";
+import { Bell, Moon, LogOut, User, Menu, Settings } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/AuthContext";
 
@@ -26,6 +26,8 @@ export default function TopBar({ title, icon: Icon, onMenuToggle }) {
     logout();
     navigate("/login");
   };
+
+  const isAthlete = user?.role === "athlete" || user?.role === "parent";
 
   return (
     <header
@@ -79,15 +81,40 @@ export default function TopBar({ title, icon: Icon, onMenuToggle }) {
               className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50"
               data-testid="user-menu-dropdown"
             >
-              <button
-                onClick={() => { setMenuOpen(false); navigate("/profile"); }}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
-                data-testid="menu-profile-link"
-              >
-                <User className="w-4 h-4 text-slate-400" />
-                Profile
-              </button>
-              <div className="border-t border-gray-50 my-0.5" />
+              {isAthlete && (
+                <>
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/athlete-profile"); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
+                    data-testid="menu-athlete-profile-link"
+                  >
+                    <User className="w-4 h-4 text-slate-400" />
+                    Profile
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/athlete-settings"); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
+                    data-testid="menu-athlete-settings-link"
+                  >
+                    <Settings className="w-4 h-4 text-slate-400" />
+                    Settings
+                  </button>
+                  <div className="border-t border-gray-50 my-0.5" />
+                </>
+              )}
+              {!isAthlete && (
+                <>
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate("/profile"); }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
+                    data-testid="menu-profile-link"
+                  >
+                    <User className="w-4 h-4 text-slate-400" />
+                    Profile
+                  </button>
+                  <div className="border-t border-gray-50 my-0.5" />
+                </>
+              )}
               <button
                 onClick={() => { setMenuOpen(false); handleLogout(); }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-600 hover:bg-gray-50 transition-colors"
