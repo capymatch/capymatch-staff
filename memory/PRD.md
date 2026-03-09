@@ -71,10 +71,19 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 - Coach Williams: coach.williams@capymatch.com / coach123
 - Coach Garcia: coach.garcia@capymatch.com / coach123
 
+## Unified Platform Strategy (2026-02-13)
+- Architecture plan created at `/app/UNIFICATION_PLAN.md`
+- Both codebases reviewed: athlete app (`capymatch/capymatch`) and staff app (`capymatch/capymatch-staff`)
+- Backup branches created for both repos before unification work begins
+- Target: One platform, role-based experiences (Director, Coach, Athlete, Parent)
+
 ## Upcoming Tasks
+- P0: Unified Platform — Phase 1 Foundation (add athlete/parent roles, role-based routing, migrate mock data to MongoDB)
+- P1: Unified Platform — Phase 2 Athlete Dashboard
 - P1: Platform Integrations (calendars, messaging)
 - P2: Smart Match Build (concept at /app/SMART_MATCH_CONCEPT.md)
-- P2: Unified Platform Merge (plan at /app/MERGE_ASSESSMENT_PLAN.md)
+- P2: Unified Platform — Phase 3+ (pipeline, Gmail, connected experiences)
 
 ## Refactoring Backlog
 - Extract modal components from RosterPage.js into frontend/src/components/roster/modals/
+- Migrate ATHLETES mock data array to real MongoDB collection
