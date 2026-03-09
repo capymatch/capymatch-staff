@@ -63,6 +63,33 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 
 **Phase B Tested: 10/10 backend, 9/9 frontend — 100% pass (iteration_51)**
 
+### Phase C: School Knowledge Base — COMPLETE (2026-03-09)
+
+#### C.1 — KB Search & Browse
+- **Backend**: `routers/athlete_knowledge.py`
+  - `GET /api/athlete/knowledge/search` — search/filter by name, division, state, conference, region
+  - `GET /api/athlete/knowledge/{domain}` — full school detail with coaching staff, stats, in_pipeline flag
+  - `POST /api/athlete/knowledge/{domain}/add-to-pipeline` — adds school + coaching staff to athlete's pipeline
+- **Seed**: `seeders/seed_kb.py` — 21 volleyball programs (14 D1, 3 D2, 3 D3, 1 NAIA), idempotent upsert
+- **Frontend**: `pages/athlete/SchoolsPage.js`
+  - Route: `/schools`
+  - Search bar with 300ms debounce
+  - Filter dropdowns: Division, State, Conference, Region
+  - School cards with color bar, division badge, stats, mascot initial, add-to-pipeline button
+  - 3-column responsive grid
+
+#### C.2 — School Detail Page
+- **Frontend**: `pages/athlete/SchoolDetailPage.js`
+  - Route: `/schools/:domain`
+  - Hero section with school colors, mascot, location
+  - 8-stat grid (Championships, Record, Roster, Conference Titles, Enrollment, Acceptance, Tuition)
+  - Coaching Staff section with email links
+  - Program Info section (Facilities, Scholarships, NCAA Appearances, RPI, GPA)
+  - "Add to Pipeline" / "In Pipeline" button
+  - Back to Knowledge Base navigation
+
+**Phase C Tested: 20/20 backend, 8/8 frontend — 100% pass (iteration_52)**
+
 ---
 
 ## Routes Added (cumulative)
@@ -84,6 +111,9 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 | GET | /api/athlete/share-link | Public link | B |
 | GET | /api/public/athlete/:tenantId | Public profile | B |
 | GET | /api/athlete/me | Self profile | 1 |
+| GET | /api/athlete/knowledge/search | KB search with filters | C |
+| GET | /api/athlete/knowledge/:domain | School detail | C |
+| POST | /api/athlete/knowledge/:domain/add-to-pipeline | Add school to pipeline | C |
 
 ### Collections
 | Collection | Scope | Phase |
@@ -93,14 +123,14 @@ Steps 1.1–1.6: Canonical athletes, org scoping, auth expansion, claim flow, ro
 | `interactions` | tenant_id | A |
 | `athlete_events` | tenant_id | A |
 | `athletes` | org_id + tenant_id | 1 (extended in B) |
+| `university_knowledge_base` | global | C |
 
 ---
 
 ## Upcoming Tasks
 
-### Phase C: Knowledge Base
-- C.1: University KB search + school detail pages
-- C.2: School comparison tool
+### Phase C.2: School Comparison (optional enhancement)
+- Compare 2-3 schools side-by-side
 
 ### Phase D: AI Features
 - D.1: AI Email Drafts (Claude)
