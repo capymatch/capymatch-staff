@@ -1,14 +1,14 @@
 # CapyMatch — Product Requirements Document
 
 ## Original Problem Statement
-Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, and athletes.
+Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, and athletes. Unify two separate applications (capymatch-staff for directors/coaches and capymatch for athletes/parents) into a single platform with role-based experiences.
 
 ## Core Architecture
 - **Backend:** FastAPI (Python), Motor (async MongoDB)
 - **Frontend:** React, Tailwind CSS, Shadcn/UI
 - **Database:** MongoDB
 - **AI:** emergentintegrations (GPT 5.2)
-- **Auth:** JWT with passlib (director + coach roles)
+- **Auth:** JWT with passlib (director, coach, athlete, parent roles)
 - **Email:** Resend API
 
 ## Completed Features
@@ -32,89 +32,97 @@ Build CapyMatch, a "recruiting operating system" for clubs, coaches, families, a
 ### Director Mission Control — Leadership Command Surface (2026-03-08)
 **Page structure:** Overview > AI Brief > Recruiting Signals > Needs Attention > Coach Health > Events > Activity
 
-**Final UX Refinements (2026-03-08):**
-1. **Program Overview KPIs:** "Need Attention" shows trend indicator from historical snapshot comparison.
-2. **Program Momentum Indicator:** Below KPI row — shows Improving/Stable/Declining state.
-3. **AI Program Brief:** Always renders as bullet points (max 4 lines).
-4. **Recruiting Signals:** Large centered numbers, trend arrows with delta text.
-5. **Needs Attention — Director Intervention Console:** Category card groups with quick actions.
-6. **Coach Health — Management Control Panel:** Status badges, workload bars, quick actions.
-7. **Upcoming Events:** Timeline, athlete/school counts, readiness progress bars.
-8. **Activity Feed:** Typed icons, "Name — description" format.
-
-### AI Brief Data Alignment Fix (2026-03-08)
-- Fixed data inconsistencies between AI brief and dashboard.
-
 ### Coach Mission Control (2026-03-08)
 - Today's Actions (AI hero), My Roster, Upcoming Events, Recent Activity
 
 ### Mobile Responsiveness (2026-03-08)
-- Sidebar, TopBar, AppLayout, Director Hero KPIs, Recruiting Signals, Coach Health, Roster — all mobile responsive.
+- Sidebar, TopBar, AppLayout, Director Hero KPIs, Recruiting Signals, Coach Health, Roster — all mobile responsive
 
 ### Roster Page — Intelligence Surface (2026-03-08)
 - Three view modes: Team View, Coach View, Age Group View
-- 4-line athlete rows: Name, Position/GradYear, Momentum/Pipeline, Coach/Activity
-- Mini pipeline indicator (7-stage dots)
-- Momentum badges (Strong/Stable/Declining)
-- Risk alerts with shortened warning labels
-- Per-athlete quick actions (Open Profile, Assign Coach, Notes)
-- AI Roster Insights panel
-- Search filter across name, position, team
+- Bulk Actions: Assign Coach, Move Team, Send Reminder — 100% tested
 
-### Bulk Actions — COMPLETE (2026-02-13) ✅
-- **Backend:** 3 endpoints: `POST /api/roster/bulk-assign`, `POST /api/roster/bulk-remind`, `POST /api/roster/bulk-note`
-- **Frontend:** Checkbox selection on athlete rows, sticky BulkActionBar with count/clear, BulkAssignModal (coach dropdown), BulkTextModal (reusable for Remind/Note)
-- **E2E tested:** 100% backend (15/15), 100% frontend (12/12) — all passing
+### Bulk Actions — COMPLETE (2026-02-13)
+- Backend: 3 endpoints, Frontend: Checkbox selection + BulkActionBar + modals
+- E2E tested: 100% backend (15/15), 100% frontend (12/12)
+
+---
+
+## Unified Platform — Phase 1 COMPLETE (2026-03-09)
+
+### Step 1.1 — Canonical Athletes Collection (2026-02-13)
+- Created `services/athlete_store.py` — single data access layer
+- Migrated all 13 backend files from mock_data to athlete_store
+- E2E tested: 19/19 backend, frontend verified
+
+### Step 1.2 — Organizations & org_id Foundation (2026-02-13)
+- Created `organizations` collection with default org
+- Backfilled `org_id` on all 25 athletes and 8 users
+
+### Step 1.3 — Auth Model Expansion (2026-02-13)
+- Extended auth to support 4 roles: director, coach, athlete, parent
+- JWT carries org_id, public registration endpoint
+
+### Step 1.4 — Athlete Claim Flow (2026-02-13)
+- Claim by exact email match during athlete registration
+- Generates tenant_id, links user_id, updates org_id
+
+### Step 1.5 — Role-Based Routing (2026-03-09)
+- Director/Coach → /mission-control with staff sidebar
+- Athlete/Parent → /board with athlete sidebar (Dashboard, Pipeline, Schools, Calendar, Inbox, Profile, Analytics, Settings)
+- ProtectedRoute guards with role-based redirects
+- Registration form with role selector (Athlete, Parent, Coach)
+- AI Features section visible only for staff
+- **Tested: 12/12 backend, 9/9 frontend — 100% pass (iteration_48)**
+
+### Step 1.6 — Athlete Placeholder Dashboard (2026-03-09)
+- Built personalized welcome dashboard at /board
+- Backend: GET /api/athlete/me returns athlete's profile + coach info
+- Claimed athletes see: welcome header, recruiting snapshot (momentum, stage, targets, interest), profile info, coach info, quick links
+- Unclaimed athletes see: message to contact coach/director
+- 403 for director/coach roles
+- **Tested: 9/9 backend, 4/4 frontend — 100% pass (iteration_49)**
+
+---
 
 ## Key Credentials
-- Director: director@capymatch.com / director123 (name: Clara Adams)
+- Director: director@capymatch.com / director123
 - Coach Williams: coach.williams@capymatch.com / coach123
 - Coach Garcia: coach.garcia@capymatch.com / coach123
-
-## Unified Platform Strategy (2026-02-13)
-- Architecture plan created at `/app/UNIFICATION_PLAN.md`
-- Both codebases reviewed: athlete app (`capymatch/capymatch`) and staff app (`capymatch/capymatch-staff`)
-- Backup branches created for both repos before unification work begins
-- Target: One platform, role-based experiences (Director, Coach, Athlete, Parent)
-
-### Step 1.4 — Athlete Claim Flow (2026-02-13) ✅
-- Claim by exact email match (case-insensitive) during athlete registration
-- On match: sets `user_id`, generates `tenant_id`, sets `claimed_at`, updates user `org_id`
-- No match: registration succeeds, user left unlinked (org_id=null)
-- Already claimed: skipped (idempotent, race-condition safe via atomic update)
-- Response includes `claimed_athlete_id` when claim succeeds
-- Backfilled `email` on all 25 existing athletes + added claim fields (user_id, tenant_id, claimed_at)
-
-### Step 1.3 — Auth Model Expansion (2026-02-13) ✅
-- Extended auth to support 4 roles: `director`, `coach`, `athlete`, `parent`
-- Registration rules: coach/athlete/parent can self-register; director cannot
-- JWT now carries `org_id` (set for existing staff, null for new athlete/parent)
-- Auth response includes `org_id` for all roles
-- `/auth/me` returns `org_id` from JWT payload
-
-### Step 1.2 — Organizations & org_id Foundation (2026-02-13) ✅
-- Created `organizations` collection with default org (`org-capymatch-default`)
-- Backfilled `org_id` on all 25 athletes and 8 users
-- Updated seed functions to include `org_id` for new data
-- Idempotent migration runs on every startup — safe to re-run
-- No read/write path filtering by `org_id` yet (deferred to later)
-
-### Step 1.1 — Canonical Athletes Collection (2026-02-13) ✅
-- Created `services/athlete_store.py` — single data access layer for all athlete reads
-- Migrated all 13 backend files from `mock_data.ATHLETES` to `athlete_store` sync getters
-- Removed all dual-write patterns (writes go to DB only, cache refreshed from DB)
-- Added `recompute_derived_data()` — single authoritative path for refreshing interventions, signals, snapshot, attention alerts
-- All write operations (reassign, bulk-assign, unassign, invite-assign) trigger `recompute_derived_data()`
-- `mock_data.ATHLETES` retained for DB seeding only — never read at runtime
-- E2E tested: 19/19 backend tests passed, frontend verified for Director + Coach
+- Claimed Athlete: emma.chen@athlete.capymatch.com / password123
+- Unclaimed Athlete: aria.brooks@example.com / password123
 
 ## Upcoming Tasks
-- P0: Unified Platform — Phase 1 Foundation (add athlete/parent roles, role-based routing, migrate mock data to MongoDB)
-- P1: Unified Platform — Phase 2 Athlete Dashboard
-- P1: Platform Integrations (calendars, messaging)
-- P2: Smart Match Build (concept at /app/SMART_MATCH_CONCEPT.md)
-- P2: Unified Platform — Phase 3+ (pipeline, Gmail, connected experiences)
+- P0: **Phase 2 — Athlete Dashboard Migration**
+  - Full athlete dashboard with recruiting stats and follow-up reminders
+  - Self-managed profile editor (athlete edits own profile fields)
+  - Public Profile page (/s/:id)
+  - School Knowledge Base (search D1/D2/D3 programs)
+  - Settings page
+- P1: **Phase 3 — Pipeline & Communication**
+  - Recruiting Pipeline/Board (Kanban)
+  - Gmail integration, AI email drafts
+  - Calendar
+- P2: **Phase 4 — Connected Experiences**
+  - Cross-role visibility (director sees athlete pipeline)
+  - Shared event calendars
+  - Cross-role notifications
+- P2: **Phase 5 — Advanced Features & Parent Experience**
+  - Stripe subscriptions
+  - Engagement analytics
+  - Smart Match AI
+  - Parent/family experience
 
 ## Refactoring Backlog
-- Extract modal components from RosterPage.js into frontend/src/components/roster/modals/
-- Migrate ATHLETES mock data array to real MongoDB collection
+- Extract modal components from RosterPage.js
+- Normalize camelCase→snake_case field names (Phase 2)
+- Events and schools still use mock data (addressed in Phase 4)
+
+## Key Files
+- `/app/UNIFICATION_PLAN.md` — Master architecture plan
+- `/app/backend/database/athlete_store.py` — Central athlete data access
+- `/app/backend/routers/auth.py` — Registration, login, claim flow
+- `/app/backend/routers/athlete_self.py` — Athlete self-service endpoint
+- `/app/frontend/src/pages/AthleteDashboard.js` — Athlete welcome dashboard
+- `/app/frontend/src/App.js` — Role-based routing
+- `/app/frontend/src/components/layout/Sidebar.js` — Role-based navigation
