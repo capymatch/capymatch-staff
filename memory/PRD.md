@@ -59,6 +59,12 @@ Unify two separate applications (`capymatch-staff` for coaches/directors and `ca
 - **Pages refactored:** Dashboard, Pipeline, Schools, Calendar, Settings, Profile, Journey, Inbox, Highlights, Analytics, SchoolDetail, AI Assistant Drawer
 - **Testing:** 100% pass rate across all 11 pages in both light and dark modes (iteration_61)
 
+### Phase 8 — Match Scoring V2 Frontend (DONE - March 9, 2026)
+- **School List Cards** — Pipeline cards now display match %, fit label badges (Strong Fit, Possible Fit, Stretch, Less Likely Fit), and confidence levels (High/Medium/Low Confidence, Estimated)
+- **Match Breakdown Section** — SchoolDetailPage shows full V2 breakdown with sub-score bars (Division, Region, Priorities, Academics, Measurables), athletic measurables detail with benchmark comparison, risk badges, and explanation text
+- **Guidance Banner** — Pipeline page shows "Improve your match accuracy" banner when measurables are incomplete, with "Update Profile" CTA
+- **Testing:** 100% pass rate across all V2 elements, both themes, and navigation flows (iteration_62)
+
 ## Key Collections
 - `university_knowledge_base` — 953 schools
 - `school_domain_aliases` — 2,534 aliases
