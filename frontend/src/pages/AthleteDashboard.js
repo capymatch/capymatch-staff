@@ -304,11 +304,23 @@ function InsightCard({ insight, onConfirm, onDismiss, confirming }) {
   );
 }
 
-function InboxIntelligenceWidget({ insights, onConfirm, onDismiss, confirming, scanStatus, onViewAll, navigate }) {
+function InboxIntelligenceWidget({ insights, onConfirm, onDismiss, confirming, scanStatus, gmailConnected, navigate }) {
   const [expanded, setExpanded] = useState(false);
   const displayed = expanded ? insights : insights.slice(0, 3);
   const hasPending = insights.length > 0;
   const isScanning = scanStatus?.status === "scanning";
+
+  const connectGmail = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API}/athlete/gmail/connect?return_to=/board`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.data?.auth_url) window.location.href = res.data.auth_url;
+    } catch {
+      toast.error("Failed to start Gmail connection");
+    }
+  };
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="inbox-intelligence">
@@ -320,7 +332,7 @@ function InboxIntelligenceWidget({ insights, onConfirm, onDismiss, confirming, s
           <div>
             <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Inbox Intelligence</h3>
             <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
-              {isScanning ? "Scanning emails..." : hasPending ? `${insights.length} signal${insights.length !== 1 ? "s" : ""} detected` : "No new signals"}
+              {isScanning ? "Scanning emails..." : hasPending ? `${insights.length} signal${insights.length !== 1 ? "s" : ""} detected` : !gmailConnected ? "Gmail not connected" : "No new signals"}
             </p>
           </div>
         </div>
@@ -331,9 +343,11 @@ function InboxIntelligenceWidget({ insights, onConfirm, onDismiss, confirming, s
               {insights.length}
             </span>
           )}
-          <button onClick={() => navigate("/inbox")} className="text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ color: "#1a8a80" }}>
-            Inbox <ChevronRight className="w-3 h-3" />
-          </button>
+          {gmailConnected && (
+            <button onClick={() => navigate("/inbox")} className="text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ color: "#1a8a80" }}>
+              Inbox <ChevronRight className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -356,6 +370,41 @@ function InboxIntelligenceWidget({ insights, onConfirm, onDismiss, confirming, s
             </div>
           )}
         </>
+      ) : !gmailConnected ? (
+        /* ── Connect Gmail nudge ── */
+        <div className="px-5 py-6" data-testid="gmail-connect-nudge">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(26,138,128,0.15))" }}>
+              <Mail className="w-5 h-5" style={{ color: "#8b5cf6" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold mb-1" style={{ color: "var(--cm-text)" }}>See what coaches are saying about you</p>
+              <p className="text-[11px] leading-relaxed mb-3" style={{ color: "var(--cm-text-2)" }}>
+                Connect Gmail to automatically detect coach interest, visit invites, and scholarship signals — so you never miss a recruiting opportunity.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                {[
+                  { label: "Detect coach interest", color: "#10b981" },
+                  { label: "Track urgency", color: "#f59e0b" },
+                  { label: "Suggested next steps", color: "#8b5cf6" },
+                ].map(b => (
+                  <span key={b.label} className="text-[10px] font-semibold inline-flex items-center gap-1.5" style={{ color: b.color }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: b.color }} />
+                    {b.label}
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={connectGmail}
+                className="px-4 py-2 rounded-lg text-[12px] font-bold inline-flex items-center gap-2 transition-all hover:opacity-90"
+                style={{ background: "linear-gradient(135deg, #8b5cf6, #1a8a80)", color: "#fff" }}
+                data-testid="intel-connect-gmail-btn"
+              >
+                <Mail className="w-3.5 h-3.5" /> Connect Gmail
+              </button>
+            </div>
+          </div>
+        </div>
       ) : (
         <div className="text-center py-8 px-5">
           <Brain className="w-7 h-7 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
@@ -363,7 +412,7 @@ function InboxIntelligenceWidget({ insights, onConfirm, onDismiss, confirming, s
             {isScanning ? "Analyzing your emails for recruiting signals..." : "No recruiting signals detected yet"}
           </p>
           <p className="text-[11px] mt-1" style={{ color: "var(--cm-text-3)" }}>
-            {isScanning ? "This may take a moment" : "Connect Gmail and email coaches to get started"}
+            {isScanning ? "This may take a moment" : "Email coaches to start getting AI-powered insights"}
           </p>
         </div>
       )}
@@ -649,6 +698,7 @@ export default function AthleteDashboard() {
         onDismiss={handleDismissInsight}
         confirming={confirming}
         scanStatus={scanStatus}
+        gmailConnected={gmailConnected}
         navigate={navigate}
       />
 
