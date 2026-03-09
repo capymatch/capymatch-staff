@@ -1,217 +1,279 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "sonner";
 import {
-  Search, Filter, ChevronDown, Plus, X, Loader2,
-  AlertTriangle, Clock, MessageSquare, Send, Archive,
-  Mail, MailOpen, Phone, Eye, MapPin, Star, StarOff,
-  MoreHorizontal, CheckCircle, ArrowRight, Users,
-  GraduationCap, Zap, ChevronRight,
+  Plus, ChevronRight, ChevronDown, Loader2,
+  Send, Eye, Link2, Users, Lightbulb,
+  Archive, RotateCcw, CheckCircle2, GraduationCap,
 } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import { toast } from "sonner";
+import UniversityLogo from "../../components/UniversityLogo";
+import { RAIL_STAGES } from "../../components/journey/constants";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-/* ── Board column config ── */
-const COLUMNS = [
-  { key: "overdue",           label: "Overdue",           icon: AlertTriangle, color: "rose",   dot: "bg-rose-500" },
-  { key: "needs_outreach",    label: "Needs Outreach",    icon: Send,          color: "amber",  dot: "bg-amber-500" },
-  { key: "waiting_on_reply",  label: "Waiting on Reply",  icon: Clock,         color: "blue",   dot: "bg-blue-500" },
-  { key: "in_conversation",   label: "In Conversation",   icon: MessageSquare, color: "emerald",dot: "bg-emerald-500" },
-  { key: "archived",          label: "Archived",          icon: Archive,       color: "slate",  dot: "bg-slate-400" },
+/* ── Section Config ── */
+const SECTIONS = [
+  { key: "outreach", label: "Needs outreach", color: "#d97706", bg: "#fffbeb" },
+  { key: "waiting", label: "Upcoming follow-ups", color: "#dc2626", bg: "#fef2f2" },
+  { key: "convo", label: "In conversation", color: "#2563eb", bg: "#eff6ff" },
+  { key: "committed", label: "Committed", color: "#16a34a", bg: "#f0fdf4" },
 ];
 
-const PRIORITY_COLORS = {
-  High:   "text-rose-600 bg-rose-50",
-  Medium: "text-amber-600 bg-amber-50",
-  Low:    "text-slate-500 bg-slate-50",
-};
-
-const INTERACTION_TYPES = [
-  "Email Sent", "Phone Call", "Video Call", "Camp",
-  "Campus Visit", "Showcase", "Text Message",
-];
-
-/* ── Helpers ── */
-function timeAgo(iso) {
-  if (!iso) return "";
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+/* ── Grouping ── */
+function groupIntoSections(programs) {
+  const s = { outreach: [], waiting: [], convo: [], committed: [] };
+  for (const p of programs) {
+    if (p.recruiting_status === "Committed" || p.journey_stage === "committed") {
+      s.committed.push(p); continue;
+    }
+    const g = p.board_group;
+    if (g === "needs_outreach") s.outreach.push(p);
+    else if (g === "waiting_on_reply" || g === "overdue") s.waiting.push(p);
+    else if (g === "in_conversation") s.convo.push(p);
+    else if (g !== "archived") s.outreach.push(p);
+  }
+  return s;
 }
 
-/* ── Add Program Modal ── */
-function AddProgramModal({ onClose, onAdded }) {
-  const [form, setForm] = useState({
-    university_name: "", division: "D1", conference: "", region: "",
-    priority: "Medium", notes: "",
-  });
-  const [saving, setSaving] = useState(false);
+/* ── Compute rail from journey_stage ── */
+function computeRail(journeyStage) {
+  const activeIdx = journeyStage ? RAIL_STAGES.findIndex(st => st.key === journeyStage) : 0;
+  const idx = activeIdx >= 0 ? activeIdx : 0;
+  return RAIL_STAGES.map((st, i) => ({
+    ...st,
+    state: i < idx ? "past" : i === idx ? "active" : "future",
+  }));
+}
 
-  const handleSave = async () => {
-    if (!form.university_name.trim()) return toast.error("School name is required");
-    setSaving(true);
-    try {
-      const { data } = await axios.post(`${API}/athlete/programs`, form);
-      toast.success(`${data.university_name} added to pipeline`);
-      onAdded();
-      onClose();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to add program");
-    } finally {
-      setSaving(false);
-    }
-  };
+/* ── Temperature tag ── */
+function getTemperature(p) {
+  const sig = p.signals || {};
+  if (p.board_group === "in_conversation") {
+    if (sig.days_since_activity != null && sig.days_since_activity <= 3) return { label: "Hot", cls: "hot" };
+    if (sig.days_since_activity != null && sig.days_since_activity <= 7) return { label: "Active", cls: "active-tag" };
+    return { label: "Warm", cls: "warm" };
+  }
+  if (p.board_group === "overdue") return { label: "Hot", cls: "hot" };
+  if (p.board_group === "waiting_on_reply") return { label: "Warm", cls: "warm" };
+  if (p.board_group === "needs_outreach" && !sig.outreach_count) return { label: "New", cls: "new-tag" };
+  if (sig.outreach_count > 0) return { label: "Warm", cls: "warm" };
+  return { label: "New", cls: "new-tag" };
+}
 
+/* ── Due text ── */
+function getDueInfo(p) {
+  const sig = p.signals || {};
+  if (p.next_action_due) {
+    const today = new Date().toISOString().split("T")[0];
+    const diff = Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date(today + "T00:00:00")) / 86400000);
+    if (diff < 0) return { text: `Due ${Math.abs(diff)}d`, color: "#dc2626", bg: "#fef2f2" };
+    if (diff === 0) return { text: "Due today", color: "#d97706", bg: "#fffbeb" };
+    if (diff <= 3) return { text: `Due ${diff}d`, color: "#d97706", bg: "#fffbeb" };
+  }
+  if (sig.days_since_activity != null && sig.days_since_activity > 0) {
+    return { text: `${sig.days_since_activity}d ago`, color: "#16a34a", bg: "#f0fdf4" };
+  }
+  return null;
+}
+
+/* ── Next action ── */
+function getNextAction(p) {
+  const status = p.recruiting_status || "";
+  if (status === "Committed" || p.journey_stage === "committed") return { label: "Committed" };
+  if (status) return { label: status };
+  if (p.board_group === "needs_outreach") return { label: "New" };
+  if (p.board_group === "waiting_on_reply" || p.board_group === "overdue") return { label: "Waiting" };
+  if (p.board_group === "in_conversation") return { label: "In Conversation" };
+  return { label: "Active" };
+}
+
+/* ── CTA config ── */
+function getCTA(p) {
+  if (p.board_group === "needs_outreach") return { label: "Start Outreach", cls: "primary" };
+  if (p.board_group === "waiting_on_reply" || p.board_group === "overdue") return { label: "Follow Up", cls: "warn" };
+  return { label: "Journey >", cls: "outline" };
+}
+
+/* ── Hero advice ── */
+function getHeroAdvice(p) {
+  if (!p) return "";
+  const g = p.board_group;
+  const s = p.signals || {};
+  if (g === "overdue") {
+    const days = p.next_action_due
+      ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000))
+      : "several";
+    return `Coach hasn't heard from you in ${days} days. Send a short follow-up mentioning your recent results.`;
+  }
+  if (g === "needs_outreach") return "This school matches your profile well. Send an introductory email with your highlight reel.";
+  if (g === "waiting_on_reply") {
+    return s.days_since_outreach > 5
+      ? "It's been a while since your outreach. Consider a brief follow-up."
+      : "Give the coach a bit more time, then follow up with a quick check-in.";
+  }
+  if (g === "in_conversation") return "You've got momentum here — keep the conversation going and ask about a campus visit.";
+  return "Review this school's program and plan your next outreach.";
+}
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Mini Progress Rail (for school cards) ── */
+/* ═══════════════════════════════════════════ */
+function SchoolRail({ journeyStage }) {
+  const stages = computeRail(journeyStage || "added");
+  const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Committed" };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900">Add School to Pipeline</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-        </div>
-        <div className="p-5 space-y-4">
-          <div>
-            <label className="text-xs font-medium text-slate-600 mb-1 block">School Name *</label>
-            <input
-              data-testid="add-program-name"
-              value={form.university_name}
-              onChange={(e) => setForm({ ...form, university_name: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-300"
-              placeholder="University of..."
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-slate-600 mb-1 block">Division</label>
-              <select
-                data-testid="add-program-division"
-                value={form.division}
-                onChange={(e) => setForm({ ...form, division: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              >
-                {["D1", "D2", "D3", "NAIA", "JUCO"].map((d) => <option key={d}>{d}</option>)}
-              </select>
+    <div data-testid="school-rail">
+      <div style={{ display: "flex", alignItems: "center", height: 22 }}>
+        {stages.map((s, i) => (
+          <React.Fragment key={s.key}>
+            {i > 0 && (
+              <div style={{
+                flex: 1, height: 3,
+                background: s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active") ? "#0d9488" : "#eee",
+              }} />
+            )}
+            <div className="rail-dot-wrap" style={{ position: "relative", flexShrink: 0 }}>
+              <div style={{
+                width: s.state === "active" ? 18 : 12,
+                height: s.state === "active" ? 18 : 12,
+                borderRadius: "50%",
+                background: s.state === "future" ? "white" : s.color,
+                border: s.state === "future" ? "2px solid #e5e7eb" : `2px solid ${s.color}`,
+                boxShadow: s.state === "active" ? `0 0 10px ${s.color}66` : "none",
+                cursor: "default",
+              }} />
+              {s.state === "active" && (
+                <div style={{
+                  position: "absolute", inset: -3, borderRadius: "50%",
+                  border: `2px solid ${s.color}`,
+                  animation: "scPulse 2s ease-out infinite", pointerEvents: "none",
+                }} />
+              )}
+              <span className="rail-dot-tip">{stageLabels[s.key]}</span>
             </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600 mb-1 block">Priority</label>
-              <select
-                data-testid="add-program-priority"
-                value={form.priority}
-                onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              >
-                {["High", "Medium", "Low"].map((p) => <option key={p}>{p}</option>)}
-              </select>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════ */
+/* ── Hero Progress Rail (Journey style) ──   */
+/* ═══════════════════════════════════════════ */
+function HeroRail({ journeyStage }) {
+  const stages = computeRail(journeyStage || "added");
+  return (
+    <div data-testid="hero-rail">
+      <div style={{ display: "flex", alignItems: "center", height: 28 }}>
+        {stages.map((s, i) => (
+          <React.Fragment key={s.key}>
+            {i > 0 && (
+              <div style={{
+                flex: 1, height: 2,
+                background: s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active")
+                  ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+              }} />
+            )}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <div style={{
+                width: s.state === "active" ? 20 : 14,
+                height: s.state === "active" ? 20 : 14,
+                borderRadius: "50%",
+                background: s.state === "future" ? "#141422" : s.color,
+                border: s.state === "future" ? "2px solid rgba(255,255,255,0.1)" : `2px solid ${s.color}`,
+                boxShadow: s.state === "active" ? `0 0 14px ${s.color}88` : "none",
+              }} />
+              {s.state === "active" && (
+                <div style={{
+                  position: "absolute", inset: -4, borderRadius: "50%",
+                  border: `2px solid ${s.color}`,
+                  animation: "heroPulse 2s ease-out infinite", pointerEvents: "none",
+                }} />
+              )}
             </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-600 mb-1 block">Conference</label>
-            <input
-              value={form.conference}
-              onChange={(e) => setForm({ ...form, conference: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              placeholder="e.g. Big Ten, ACC..."
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-600 mb-1 block">Notes</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              rows={2}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"
-              placeholder="Why this school?"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-          <button onClick={onClose} className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800">Cancel</button>
-          <button
-            data-testid="add-program-submit"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            Add School
-          </button>
-        </div>
+          </React.Fragment>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+        {stages.map(s => (
+          <span key={s.key} style={{
+            flex: 1, textAlign: "center", fontSize: 10, fontWeight: s.state === "active" ? 800 : 600,
+            color: s.state === "active" ? "#5eead4" : "rgba(255,255,255,0.2)",
+          }}>
+            {s.key === "in_conversation" ? "Talking" : s.key === "campus_visit" ? "Visit" : s.label}
+          </span>
+        ))}
       </div>
     </div>
   );
 }
 
-/* ── Log Interaction Modal ── */
-function LogInteractionModal({ program, onClose, onLogged }) {
-  const [form, setForm] = useState({ type: "Email Sent", notes: "", outcome: "No Response" });
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await axios.post(`${API}/athlete/interactions`, {
-        program_id: program.program_id,
-        type: form.type,
-        notes: form.notes,
-        outcome: form.outcome,
-      });
-      toast.success("Interaction logged");
-      onLogged();
-      onClose();
-    } catch (err) {
-      toast.error("Failed to log interaction");
-    } finally {
-      setSaving(false);
-    }
-  };
+/* ═══════════════════════════════════════════ */
+/* ── Hero Card (Journey-style)  ──           */
+/* ═══════════════════════════════════════════ */
+function PipelineHeroCard({ program: p, navigate }) {
+  if (!p) return null;
+  const sig = p.signals || {};
+  const meta = [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Log Interaction</h2>
-            <p className="text-xs text-slate-500">{program.university_name}</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-        </div>
-        <div className="p-5 space-y-4">
-          <div>
-            <label className="text-xs font-medium text-slate-600 mb-1 block">Type</label>
-            <select
-              data-testid="log-interaction-type"
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            >
-              {INTERACTION_TYPES.map((t) => <option key={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-600 mb-1 block">Notes</label>
-            <textarea
-              data-testid="log-interaction-notes"
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"
-              placeholder="What happened?"
-            />
+    <div style={{ background: "#141422", borderRadius: 14, overflow: "hidden", position: "relative" }} data-testid="pipeline-hero-card">
+      <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
+      <div style={{ padding: "22px 26px 22px" }}>
+        {/* Top row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+          <UniversityLogo domain={p.domain} name={p.university_name} size={48} className="rounded-[14px] border-2 border-white/10" />
+          <span className="text-lg sm:text-2xl" style={{ fontWeight: 800, color: "white", letterSpacing: -0.3 }}>{p.university_name}</span>
+          <div style={{ marginLeft: "auto", flexShrink: 0, width: 420 }} className="hidden md:block">
+            <HeroRail journeyStage={p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")} />
           </div>
         </div>
-        <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-          <button onClick={onClose} className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800">Cancel</button>
+
+        {/* Badges */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#94a3b8" }} />
+            {sig.has_coach_reply ? "Interested" : "Neutral"}
+          </span>
+          {p.division && (
+            <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>
+          )}
+          {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)" }}>{meta}</span>}
+        </div>
+
+        {/* Advice + CTA */}
+        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+          {(() => {
+            const advice = getHeroAdvice(p);
+            return advice ? (
+              <div style={{
+                flex: 1, minWidth: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(13,148,136,0.2)",
+                borderLeft: "3px solid #0d9488", borderRadius: 10, padding: "14px 18px",
+                display: "flex", gap: 12, alignItems: "flex-start",
+              }} data-testid="hero-advice-card">
+                <Lightbulb style={{ width: 16, height: 16, color: "#5eead4", flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.45)", marginBottom: 4, letterSpacing: 0.3 }}>What to do next</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{advice}</div>
+                </div>
+              </div>
+            ) : <div style={{ flex: 1 }} />;
+          })()}
           <button
-            data-testid="log-interaction-submit"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+            onClick={() => navigate(`/pipeline/${p.program_id}`)}
+            style={{
+              padding: "12px 26px", borderRadius: 10, border: "none", background: "#0d9488",
+              color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center", gap: 7, fontFamily: "inherit", flexShrink: 0,
+            }}
+            data-testid="hero-follow-up-btn"
           >
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-            Log
+            <Send style={{ width: 15, height: 15 }} />
+            {p.board_group === "needs_outreach" ? "Start Outreach" : "Follow Up"}
           </button>
         </div>
       </div>
@@ -219,224 +281,249 @@ function LogInteractionModal({ program, onClose, onLogged }) {
   );
 }
 
-/* ── Mark Replied Modal ── */
-function MarkRepliedModal({ program, onClose, onDone }) {
-  const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
+/* ═══════════════════════════════════════════ */
+/* ── School Card (compact row) ──            */
+/* ═══════════════════════════════════════════ */
+function PipelineSchoolCard({ program: p, navigate }) {
+  const temp = getTemperature(p);
+  const due = getDueInfo(p);
+  const next = getNextAction(p);
+  const cta = getCTA(p);
+  const sig = p.signals || {};
+  const meta = [p.conference, p.state].filter(Boolean).join(" · ");
 
-  const handleSave = async () => {
-    if (!note.trim()) return toast.error("A note is required");
-    setSaving(true);
-    try {
-      await axios.post(`${API}/athlete/programs/${program.program_id}/mark-replied`, { note });
-      toast.success("Reply logged!");
-      onDone();
-      onClose();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to mark replied");
-    } finally {
-      setSaving(false);
-    }
+  const tempStyles = {
+    hot: { background: "#fef2f2", color: "#dc2626" },
+    warm: { background: "#fffbeb", color: "#d97706" },
+    "new-tag": { background: "#e6f7f5", color: "#0d9488" },
+    "active-tag": { background: "#eff6ff", color: "#2563eb" },
   };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Coach Replied!</h2>
-            <p className="text-xs text-slate-500">{program.university_name}</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
-        </div>
-        <div className="p-5">
-          <label className="text-xs font-medium text-slate-600 mb-1 block">What did they say?</label>
-          <textarea
-            data-testid="mark-replied-note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"
-            placeholder="Summarize the coach's response..."
-          />
-        </div>
-        <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-          <button onClick={onClose} className="px-4 py-2 text-xs font-medium text-slate-600">Cancel</button>
-          <button
-            data-testid="mark-replied-submit"
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MailOpen className="w-3.5 h-3.5" />}
-            Log Reply
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-/* ── Program Card ── */
-function ProgramCard({ program, onLogInteraction, onMarkReplied, onViewJourney }) {
-  const signals = program.signals || {};
-  const priorityClass = PRIORITY_COLORS[program.priority] || PRIORITY_COLORS.Medium;
+  const ctaStyles = {
+    primary: { background: "#0d9488", color: "white", border: "none" },
+    warn: { background: "#d97706", color: "white", border: "none" },
+    outline: { background: "white", color: "#555", border: "1px solid #e5e7eb" },
+  };
 
   return (
     <div
-      data-testid={`program-card-${program.program_id}`}
-      className="bg-white rounded-lg border border-slate-200 p-3.5 hover:shadow-sm transition-shadow cursor-pointer group"
-      onClick={() => onViewJourney(program)}
+      onClick={() => navigate(`/pipeline/${p.program_id}`)}
+      style={{
+        background: "white", border: "1px solid #e5e7eb", borderRadius: 12,
+        padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center",
+        gap: 12, cursor: "pointer", transition: "all 0.15s", overflow: "hidden",
+      }}
+      className="hover:shadow-sm"
+      data-testid={`pipeline-card-${p.program_id}`}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-semibold text-slate-900 truncate group-hover:text-emerald-700 transition-colors">
-            {program.university_name}
-          </h4>
-          <div className="flex items-center gap-2 mt-0.5">
-            {program.division && (
-              <span className="text-[10px] font-bold text-slate-500">{program.division}</span>
-            )}
-            {program.conference && (
-              <span className="text-[10px] text-slate-400">{program.conference}</span>
-            )}
+      {/* Col 1: School identity */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 0%", marginRight: "auto" }}>
+        <UniversityLogo domain={p.domain} name={p.university_name} size={38} className="rounded-[10px] flex-shrink-0" />
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.2, color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
+          <div style={{ fontSize: 10, color: "#999", marginTop: 2, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+            {p.division && <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 3, background: "#f0f0f0", color: "#555" }}>{p.division}</span>}
+            <span>{meta}</span>
+            {due && <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 3, background: due.bg, color: due.color }}>{due.text}</span>}
           </div>
         </div>
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${priorityClass}`}>
-          {program.priority}
+      </div>
+
+      {/* Col 2: Progress rail */}
+      <div style={{ width: 160, flexShrink: 0 }} className="hidden md:block">
+        <SchoolRail journeyStage={p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")} />
+      </div>
+
+      {/* Col 3: Temp tag */}
+      <div style={{ width: 50, flexShrink: 0, textAlign: "center" }} className="hidden md:block">
+        <span style={{
+          fontSize: 10, fontWeight: 800, padding: "3px 0", borderRadius: 6,
+          display: "inline-block", width: "100%", textAlign: "center",
+          ...(tempStyles[temp.cls] || tempStyles["new-tag"]),
+        }}>{temp.label}</span>
+      </div>
+
+      {/* Col 4: Engagement metrics */}
+      <div style={{ width: 90, flexShrink: 0, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }} className="hidden lg:flex">
+        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "#555" }}>
+          <Eye style={{ width: 13, height: 13, color: "#999" }} />0
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "#555" }}>
+          <Link2 style={{ width: 13, height: 13, color: "#999" }} />0
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 700, color: "#555" }}>
+          <Users style={{ width: 13, height: 13, color: "#999" }} />{sig.total_interactions || 0}
         </span>
       </div>
 
-      {/* Coach */}
-      {program.primary_college_coach && (
-        <div className="flex items-center gap-1.5 mb-2 text-xs text-slate-500">
-          <Users className="w-3 h-3" />
-          <span className="truncate">{program.primary_college_coach}</span>
+      {/* Col 5: Next action */}
+      <div style={{ width: 100, flexShrink: 0, textAlign: "right" }} className="hidden xl:block">
+        <div style={{ fontSize: 10, color: "#999" }}>
+          <strong style={{ color: "#1a1a1a", fontWeight: 700 }}>Status:</strong> {next.label}
         </div>
-      )}
-
-      {/* Signals */}
-      <div className="flex items-center gap-3 mb-3 text-[10px] text-slate-400">
-        {signals.total_interactions > 0 && (
-          <span className="flex items-center gap-1">
-            <MessageSquare className="w-3 h-3" /> {signals.total_interactions}
-          </span>
-        )}
-        {signals.outreach_count > 0 && (
-          <span className="flex items-center gap-1">
-            <Send className="w-3 h-3" /> {signals.outreach_count} sent
-          </span>
-        )}
-        {signals.days_since_activity != null && (
-          <span>{signals.days_since_activity}d ago</span>
-        )}
       </div>
 
-      {/* Follow-up due */}
-      {program.next_action_due && (
-        <div className={`text-[10px] mb-2 flex items-center gap-1 ${
-          program.board_group === "overdue" ? "text-rose-600 font-medium" : "text-slate-400"
-        }`}>
-          <Clock className="w-3 h-3" />
-          Follow up: {program.next_action_due}
-        </div>
-      )}
+      {/* Col 6: CTA */}
+      <div style={{ width: 100, flexShrink: 0 }} className="hidden xl:block">
+        <button
+          onClick={e => { e.stopPropagation(); navigate(`/pipeline/${p.program_id}`); }}
+          style={{
+            padding: "8px 0", borderRadius: 8, fontSize: 11, fontWeight: 700,
+            cursor: "pointer", fontFamily: "inherit", width: "100%", textAlign: "center",
+            ...(ctaStyles[cta.cls] || ctaStyles.outline),
+          }}
+          data-testid={`card-cta-${p.program_id}`}
+        >{cta.label}</button>
+      </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100">
-        <button
-          data-testid={`log-interaction-btn-${program.program_id}`}
-          onClick={(e) => { e.stopPropagation(); onLogInteraction(program); }}
-          className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-        >
-          <Plus className="w-3 h-3" /> Log
-        </button>
-        {!signals.has_coach_reply && signals.outreach_count > 0 && (
-          <button
-            data-testid={`mark-replied-btn-${program.program_id}`}
-            onClick={(e) => { e.stopPropagation(); onMarkReplied(program); }}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-          >
-            <MailOpen className="w-3 h-3" /> Replied
-          </button>
-        )}
-        <button
-          onClick={(e) => { e.stopPropagation(); onViewJourney(program); }}
-          className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 hover:text-slate-700 rounded transition-colors ml-auto"
-        >
-          View <ChevronRight className="w-3 h-3" />
-        </button>
+      {/* Col 7: Arrow */}
+      <div style={{ width: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc" }}>
+        <ChevronRight style={{ width: 16, height: 16 }} />
       </div>
     </div>
   );
 }
 
-
-/* ── Board Column ── */
-function BoardColumn({ col, programs, onLogInteraction, onMarkReplied, onViewJourney }) {
-  const Icon = col.icon;
-  const colorMap = {
-    rose:    { bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-100" },
-    amber:   { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-100" },
-    blue:    { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-100" },
-    emerald: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-100" },
-    slate:   { bg: "bg-slate-50",   text: "text-slate-600",   border: "border-slate-200" },
-  };
-  const c = colorMap[col.color] || colorMap.slate;
-
+/* ═══════════════════════════════════════════ */
+/* ── Committed Card ──                       */
+/* ═══════════════════════════════════════════ */
+function CommittedSchoolCard({ program: p, navigate }) {
+  const meta = [p.division, p.conference, p.state].filter(Boolean).join(" · ");
   return (
-    <div className="flex flex-col min-w-[280px] max-w-[320px] flex-1" data-testid={`board-column-${col.key}`}>
-      {/* Column header */}
-      <div className={`flex items-center gap-2 px-3 py-2.5 rounded-t-xl ${c.bg} border ${c.border} border-b-0`}>
-        <div className={`w-2 h-2 rounded-full ${col.dot}`} />
-        <Icon className={`w-3.5 h-3.5 ${c.text}`} />
-        <span className={`text-xs font-semibold ${c.text}`}>{col.label}</span>
-        <span className={`ml-auto text-[10px] font-bold ${c.text} bg-white/60 px-1.5 py-0.5 rounded-full`}>
-          {programs.length}
-        </span>
+    <div
+      onClick={() => navigate(`/pipeline/${p.program_id}`)}
+      style={{
+        background: "#f0fdf4", border: "1px solid rgba(22,163,74,0.12)", borderRadius: 12,
+        padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, marginBottom: 8, cursor: "pointer",
+      }}
+      data-testid={`committed-card-${p.program_id}`}
+    >
+      <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <CheckCircle2 style={{ width: 18, height: 18, color: "white" }} />
       </div>
-
-      {/* Cards */}
-      <div className={`flex-1 p-2 space-y-2 rounded-b-xl border ${c.border} bg-slate-50/30 min-h-[200px] overflow-y-auto max-h-[calc(100vh-280px)]`}>
-        {programs.length === 0 ? (
-          <div className="text-center py-8 text-xs text-slate-400">
-            No schools here
-          </div>
-        ) : (
-          programs.map((p) => (
-            <ProgramCard
-              key={p.program_id}
-              program={p}
-              onLogInteraction={onLogInteraction}
-              onMarkReplied={onMarkReplied}
-              onViewJourney={onViewJourney}
-            />
-          ))
-        )}
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "#1a1a1a" }}>{p.university_name}</div>
+        <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{meta}</div>
       </div>
+      <span style={{ padding: "5px 14px", borderRadius: 8, background: "white", color: "#16a34a", fontSize: 11, fontWeight: 700, border: "1px solid rgba(22,163,74,0.12)" }}>Verbal Commit</span>
+      <ChevronRight style={{ width: 16, height: 16, color: "#ccc" }} />
     </div>
   );
 }
 
+/* ═══════════════════════════════════════════ */
+/* ── Section Header ──                       */
+/* ═══════════════════════════════════════════ */
+function SectionHeader({ section, count, collapsed, onToggle }) {
+  return (
+    <div
+      onClick={onToggle}
+      style={{ display: "flex", alignItems: "center", gap: 8, padding: "18px 0 10px", cursor: "pointer" }}
+      data-testid={`section-header-${section.key}`}
+    >
+      <ChevronDown style={{
+        width: 14, height: 14, color: "#999", transition: "transform 0.2s",
+        transform: collapsed ? "rotate(-90deg)" : "none",
+      }} />
+      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: section.color }}>{section.label}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: section.bg, color: section.color }}>{count}</span>
+      <div style={{ flex: 1, height: 1, background: "#f0f0f0", marginLeft: 6 }} />
+    </div>
+  );
+}
 
-/* ── Main Pipeline Page ── */
+/* ═══════════════════════════════════════════ */
+/* ── Filter Chips ──                         */
+/* ═══════════════════════════════════════════ */
+function FilterChips({ sectionCounts, total, active, onFilter }) {
+  const chips = [
+    { key: null, label: `All ${total}` },
+    ...SECTIONS.filter(s => (sectionCounts[s.key] || 0) > 0).map(s => ({
+      key: s.key,
+      label: `${s.key === "outreach" ? "Outreach" : s.key === "waiting" ? "Upcoming" : s.key === "convo" ? "In Convo" : "Committed"} ${sectionCounts[s.key]}`,
+    })),
+  ];
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22 }} data-testid="pipeline-filters">
+      {chips.map(c => (
+        <button
+          key={c.key || "all"}
+          onClick={() => onFilter(active === c.key && c.key !== null ? null : c.key)}
+          style={{
+            padding: "7px 14px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+            fontFamily: "inherit", cursor: "pointer",
+            background: active === c.key ? "#1a1a1a" : "white",
+            color: active === c.key ? "white" : "#555",
+            border: active === c.key ? "1px solid #1a1a1a" : "1px solid #e5e7eb",
+          }}
+          data-testid={`filter-${c.key || "all"}`}
+        >{c.label}</button>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════ */
+/* ── CSS Keyframes ──                        */
+/* ═══════════════════════════════════════════ */
+function PipelineStyles() {
+  return (
+    <style>{`
+      @keyframes heroPulse { 0%{box-shadow:0 0 0 0 currentColor;} 100%{box-shadow:0 0 0 8px transparent;} }
+      @keyframes scPulse { 0%{transform:scale(1);opacity:.4} 100%{transform:scale(1.8);opacity:0} }
+      .rail-dot-tip {
+        position:absolute; bottom:100%; left:50%; transform:translateX(-50%) translateY(2px);
+        background:#1e1e2e; color:#e2e8f0; font-size:10px; font-weight:700;
+        padding:3px 8px; border-radius:6px; white-space:nowrap; pointer-events:none;
+        opacity:0; transition:opacity 0.15s, transform 0.15s; z-index:10;
+        box-shadow:0 2px 8px rgba(0,0,0,0.18);
+      }
+      .rail-dot-tip::after {
+        content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+        border:4px solid transparent; border-top-color:#1e1e2e;
+      }
+      .rail-dot-wrap:hover .rail-dot-tip {
+        opacity:1; transform:translateX(-50%) translateY(-4px);
+      }
+    `}</style>
+  );
+}
+
+/* ═══════════════════════════════════════════ */
+/* ── Empty State ──                          */
+/* ═══════════════════════════════════════════ */
+function EmptyBoardState({ navigate }) {
+  return (
+    <div className="text-center py-20" data-testid="empty-pipeline">
+      <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+      <p className="text-sm font-medium text-slate-700 mb-1">No schools in your pipeline yet</p>
+      <p className="text-xs text-slate-500 mb-6">Browse the Knowledge Base to find volleyball programs that match your profile</p>
+      <Button
+        onClick={() => navigate("/schools")}
+        style={{ background: "#0d9488", color: "white", padding: "10px 24px", height: "auto", borderRadius: 10, fontSize: 14, fontWeight: 700 }}
+        data-testid="find-schools-btn"
+      >
+        <Plus className="w-4 h-4 mr-1.5" /> Find Schools
+      </Button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════ */
+/* ── Main Board ──                           */
+/* ═══════════════════════════════════════════ */
 export default function PipelinePage() {
-  const nav = useNavigate();
-  const [data, setData] = useState(null);
+  const [allPrograms, setAllPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [interactionTarget, setInteractionTarget] = useState(null);
-  const [repliedTarget, setRepliedTarget] = useState(null);
-  const [viewMode, setViewMode] = useState("board"); // board | list
+  const [activeSection, setActiveSection] = useState(null);
+  const [collapsedSections, setCollapsedSections] = useState({ archived: true });
+  const navigate = useNavigate();
 
   const fetchPrograms = useCallback(async () => {
     try {
-      const { data: d } = await axios.get(`${API}/athlete/programs?grouped=true`);
-      setData(d);
-    } catch (err) {
-      toast.error("Failed to load pipeline");
+      const res = await axios.get(`${API}/athlete/programs`);
+      setAllPrograms(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      toast.error("Failed to load programs");
     } finally {
       setLoading(false);
     }
@@ -444,195 +531,162 @@ export default function PipelinePage() {
 
   useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
 
-  const handleViewJourney = (program) => {
-    nav(`/pipeline/${program.program_id}`);
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
-        <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+      <div className="flex items-center justify-center py-24" data-testid="board-loading">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#999" }} />
+          <span className="text-sm" style={{ color: "#999" }}>Loading your board...</span>
+        </div>
       </div>
     );
   }
 
-  const groups = data?.groups || {};
-  const total = data?.total || 0;
-  const counts = data?.counts || {};
+  const activePrograms = allPrograms.filter(p => p.board_group !== "archived");
+  const archivedPrograms = allPrograms.filter(p => p.board_group === "archived");
+  const total = activePrograms.length;
+  const sectionGroups = groupIntoSections(activePrograms);
+  const sectionCounts = {};
+  SECTIONS.forEach(s => { sectionCounts[s.key] = sectionGroups[s.key].length; });
+
+  if (total === 0 && archivedPrograms.length === 0) {
+    return (
+      <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <PipelineStyles />
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "#1a1a1a" }} data-testid="pipeline-title">My Schools</h1>
+        </div>
+        <EmptyBoardState navigate={navigate} />
+      </div>
+    );
+  }
+
+  // Focus program: most urgent for hero card
+  const focusPriority = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
+  const focusProgram = focusPriority.reduce((found, stage) => {
+    if (found) return found;
+    const candidates = activePrograms.filter(p => p.board_group === stage && p.recruiting_status !== "Committed" && p.journey_stage !== "committed");
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => (a.next_action_due || "9999").localeCompare(b.next_action_due || "9999"));
+    return candidates[0];
+  }, null);
+
+  const toggleSection = (key) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <div className="space-y-5" data-testid="pipeline-page">
+    <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
+      <PipelineStyles />
+
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900" data-testid="pipeline-title">Recruiting Pipeline</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            {total} school{total !== 1 ? "s" : ""} in your pipeline
-          </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5, color: "#1a1a1a" }} data-testid="pipeline-title">My Schools</h1>
+        <span style={{ flex: 1 }} />
+        <Button
+          onClick={() => navigate("/schools")}
+          style={{ background: "#1a1a1a", color: "white", padding: "9px 18px", height: "auto", borderRadius: 8, fontSize: 13, fontWeight: 700 }}
+          data-testid="add-school-btn"
+        >
+          <Plus className="w-3.5 h-3.5 mr-1.5" />Add School
+        </Button>
+      </div>
+
+      {/* Hero Card */}
+      {focusProgram && (
+        <div style={{ marginBottom: 18 }}>
+          <PipelineHeroCard program={focusProgram} navigate={navigate} />
         </div>
-        <div className="flex items-center gap-2">
-          {/* View toggle */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
-            <button
-              data-testid="view-board"
-              onClick={() => setViewMode("board")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                viewMode === "board" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
-              }`}
-            >
-              Board
-            </button>
-            <button
-              data-testid="view-list"
-              onClick={() => setViewMode("list")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                viewMode === "list" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
-              }`}
-            >
-              List
-            </button>
+      )}
+
+      {/* Filter Chips */}
+      <FilterChips sectionCounts={sectionCounts} total={total} active={activeSection} onFilter={setActiveSection} />
+
+      {/* Sections */}
+      {SECTIONS.filter(s => activeSection === null || activeSection === s.key).map(s => {
+        const programs = sectionGroups[s.key];
+        if (programs.length === 0) return null;
+        const isCollapsed = collapsedSections[s.key];
+        const isCommittedSection = s.key === "committed";
+
+        return (
+          <div key={s.key} data-testid={`section-${s.key}`}>
+            <SectionHeader section={s} count={programs.length} collapsed={isCollapsed} onToggle={() => toggleSection(s.key)} />
+            {!isCollapsed && (
+              <>
+                {programs.map(p =>
+                  isCommittedSection ? (
+                    <CommittedSchoolCard key={p.program_id} program={p} navigate={navigate} />
+                  ) : (
+                    <PipelineSchoolCard key={p.program_id} program={p} navigate={navigate} />
+                  )
+                )}
+              </>
+            )}
           </div>
-          <button
-            data-testid="add-program-btn"
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+        );
+      })}
+
+      {activeSection && (sectionGroups[activeSection]?.length || 0) === 0 && (
+        <div className="text-center py-12 text-sm" style={{ color: "#999" }} data-testid="filtered-empty">
+          No schools in {SECTIONS.find(s => s.key === activeSection)?.label || activeSection}
+        </div>
+      )}
+
+      {/* Archived Section */}
+      {archivedPrograms.length > 0 && activeSection === null && (
+        <div data-testid="section-archived">
+          <div
+            onClick={() => toggleSection("archived")}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "24px 0 10px", cursor: "pointer" }}
+            data-testid="section-header-archived"
           >
-            <Plus className="w-3.5 h-3.5" /> Add School
-          </button>
-        </div>
-      </div>
-
-      {/* Summary chips */}
-      <div className="flex items-center gap-2 flex-wrap" data-testid="pipeline-summary">
-        {COLUMNS.filter((c) => counts[c.key] > 0).map((c) => (
-          <div key={c.key} className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-medium text-slate-600">
-            <div className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-            {c.label}: {counts[c.key]}
+            <ChevronDown style={{ width: 14, height: 14, color: "#999", transition: "transform 0.2s", transform: collapsedSections.archived ? "rotate(-90deg)" : "none" }} />
+            <Archive style={{ width: 13, height: 13, color: "#94a3b8" }} />
+            <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>Archived</span>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: "#f1f5f9", color: "#94a3b8" }}>{archivedPrograms.length}</span>
+            <div style={{ flex: 1, height: 1, background: "#f0f0f0", marginLeft: 6 }} />
           </div>
-        ))}
-      </div>
-
-      {total === 0 ? (
-        <div className="text-center py-20" data-testid="empty-pipeline">
-          <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-slate-700 mb-1">No schools in your pipeline yet</p>
-          <p className="text-xs text-slate-500 mb-4">Browse the Knowledge Base to add schools, or add one manually</p>
-          <div className="flex items-center justify-center gap-2">
-            <button
-              onClick={() => nav("/schools")}
-              className="px-4 py-2 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100"
+          {!collapsedSections.archived && archivedPrograms.map(p => (
+            <div key={p.program_id}
+              style={{
+                background: "white", border: "1px solid #e5e7eb", borderRadius: 12,
+                padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, opacity: 0.7,
+              }}
+              data-testid={`archived-card-${p.program_id}`}
             >
-              Browse Schools
-            </button>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="px-4 py-2 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
-            >
-              Add Manually
-            </button>
-          </div>
-        </div>
-      ) : viewMode === "board" ? (
-        /* Kanban Board */
-        <div className="flex gap-3 overflow-x-auto pb-4" data-testid="pipeline-board">
-          {COLUMNS.map((col) => (
-            <BoardColumn
-              key={col.key}
-              col={col}
-              programs={groups[col.key] || []}
-              onLogInteraction={setInteractionTarget}
-              onMarkReplied={setRepliedTarget}
-              onViewJourney={handleViewJourney}
-            />
+              <UniversityLogo domain={p.domain} name={p.university_name} size={34} className="rounded-[10px] grayscale" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.university_name}</div>
+                <div style={{ fontSize: 10, color: "#999", marginTop: 1 }}>
+                  {[p.division, p.conference, p.state].filter(Boolean).join(" · ")}
+                </div>
+              </div>
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true });
+                    toast.success(`${p.university_name} reactivated`);
+                    fetchPrograms();
+                  } catch { toast.error("Failed to reactivate"); }
+                }}
+                style={{
+                  padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+                  background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)",
+                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+                }}
+                data-testid={`reactivate-btn-${p.program_id}`}
+              >
+                <RotateCcw style={{ width: 12, height: 12 }} />Reactivate
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/pipeline/${p.program_id}`); }}
+                style={{ width: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#ccc", background: "none", border: "none", cursor: "pointer" }}
+              >
+                <ChevronRight style={{ width: 16, height: 16 }} />
+              </button>
+            </div>
           ))}
         </div>
-      ) : (
-        /* List View */
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden" data-testid="pipeline-list">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400">School</th>
-                <th className="text-left px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400">Status</th>
-                <th className="text-left px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400">Coach</th>
-                <th className="text-left px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400">Activity</th>
-                <th className="text-left px-4 py-2.5 text-[10px] font-bold tracking-widest uppercase text-slate-400">Priority</th>
-                <th className="px-4 py-2.5"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {COLUMNS.flatMap((col) =>
-                (groups[col.key] || []).map((p) => {
-                  const signals = p.signals || {};
-                  const priorityClass = PRIORITY_COLORS[p.priority] || PRIORITY_COLORS.Medium;
-                  const colDef = COLUMNS.find((c) => c.key === p.board_group);
-                  return (
-                    <tr
-                      key={p.program_id}
-                      data-testid={`list-row-${p.program_id}`}
-                      className="hover:bg-slate-50 cursor-pointer transition-colors"
-                      onClick={() => handleViewJourney(p)}
-                    >
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-semibold text-slate-900">{p.university_name}</div>
-                        <div className="text-[10px] text-slate-400">{p.division} {p.conference}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="flex items-center gap-1.5 text-xs">
-                          <span className={`w-1.5 h-1.5 rounded-full ${colDef?.dot || "bg-slate-400"}`} />
-                          {colDef?.label || p.board_group}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{p.primary_college_coach || "—"}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
-                        {signals.total_interactions || 0} interaction{signals.total_interactions !== 1 ? "s" : ""}
-                        {signals.days_since_activity != null && <span className="text-slate-400 ml-1">({signals.days_since_activity}d)</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${priorityClass}`}>{p.priority}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => setInteractionTarget(p)}
-                            className="p-1 text-slate-400 hover:text-emerald-600 rounded"
-                            title="Log interaction"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleViewJourney(p)}
-                            className="p-1 text-slate-400 hover:text-slate-700 rounded"
-                            title="View journey"
-                          >
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Modals */}
-      {showAdd && <AddProgramModal onClose={() => setShowAdd(false)} onAdded={fetchPrograms} />}
-      {interactionTarget && (
-        <LogInteractionModal
-          program={interactionTarget}
-          onClose={() => setInteractionTarget(null)}
-          onLogged={fetchPrograms}
-        />
-      )}
-      {repliedTarget && (
-        <MarkRepliedModal
-          program={repliedTarget}
-          onClose={() => setRepliedTarget(null)}
-          onDone={fetchPrograms}
-        />
       )}
     </div>
   );
