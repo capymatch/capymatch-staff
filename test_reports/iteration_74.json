@@ -1,0 +1,121 @@
+{
+  "summary": "Settings page with Profile and Plan & Billing tabs feature testing complete. All backend APIs (23/23) and UI integration tests passed. The two-tab structure, subscription display, Stripe checkout, and all interactive elements work correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_settings_billing.py",
+    "/app/test_reports/pytest/pytest_settings_billing_full.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_settings_billing.py"
+  ],
+  "success_rate": {
+    "backend": "100% (23/23 tests passed)",
+    "frontend": "100% (All features verified)"
+  },
+  "test_credentials": {
+    "email": "emma.chen@athlete.capymatch.com",
+    "password": "password123"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Settings page refactored to two tabs: Profile (Personal Info, Change Password, Notifications, Appearance, Gmail Integration) and Plan & Billing (Current Plan card, Usage bars, Upgrade highlights, Compare Plans, Data & Privacy). All endpoints verified. Stripe billing portal correctly returns 400 for basic tier users without stripe_customer_id.",
+  "features_verified": {
+    "settings_page_tabs": {
+      "status": "WORKING",
+      "description": "Two tabs: Profile and Plan & Billing using shadcn Tabs component",
+      "data_testids": ["settings-tabs", "tab-profile", "tab-billing"]
+    },
+    "profile_tab": {
+      "personal_information": {
+        "status": "WORKING",
+        "endpoint": "GET/PUT /api/athlete/settings",
+        "inputs": ["settings-name-input", "settings-email-input"],
+        "button": "save-profile-btn"
+      },
+      "change_password": {
+        "status": "WORKING",
+        "endpoint": "POST /api/athlete/settings/change-password",
+        "inputs": ["current-password-input", "new-password-input", "confirm-password-input"],
+        "button": "change-password-btn"
+      },
+      "notifications": {
+        "status": "WORKING",
+        "toggles": ["toggle-followup-reminders", "toggle-email-notifications"]
+      },
+      "appearance": {
+        "status": "WORKING",
+        "theme_buttons": ["theme-dark", "theme-light", "theme-system"]
+      },
+      "gmail_integration": {
+        "status": "WORKING",
+        "section": "section-gmail",
+        "buttons": ["gmail-connect-btn", "gmail-disconnect-btn"]
+      }
+    },
+    "billing_tab": {
+      "current_plan": {
+        "status": "WORKING",
+        "endpoint": "GET /api/subscription",
+        "displays": "Starter (FREE) tier with features and usage stats",
+        "data_testid": "section-current-plan"
+      },
+      "usage_bars": {
+        "status": "WORKING",
+        "schools": "12/5 (over limit, red bar)",
+        "ai_drafts": "0/3",
+        "data_testids": ["usage-schools", "usage-ai-drafts"]
+      },
+      "upgrade_modal": {
+        "status": "WORKING",
+        "trigger": "upgrade-plan-btn",
+        "modal": "upgrade-modal",
+        "tier_cards": ["tier-card-basic", "tier-card-pro", "tier-card-premium"],
+        "upgrade_buttons": ["tier-upgrade-pro", "tier-upgrade-premium"]
+      },
+      "compare_plans": {
+        "status": "WORKING",
+        "button": "compare-plans-btn",
+        "opens_modal": true
+      },
+      "upgrade_highlights": {
+        "status": "WORKING",
+        "section": "section-upgrade-highlights",
+        "shows_for": "basic tier users only"
+      },
+      "data_privacy": {
+        "status": "WORKING",
+        "export_data": "export-data-btn",
+        "delete_account": "delete-account-btn"
+      },
+      "manage_billing": {
+        "status": "WORKING",
+        "button": "manage-billing-btn (hidden for basic tier)",
+        "endpoint": "POST /api/checkout/create-portal-session",
+        "returns_400_for_basic": true
+      }
+    },
+    "stripe_integration": {
+      "checkout_session": {
+        "status": "WORKING",
+        "endpoint": "POST /api/checkout/create-session",
+        "creates_real_stripe_sessions": true
+      },
+      "billing_portal": {
+        "status": "WORKING",
+        "endpoint": "POST /api/checkout/create-portal-session",
+        "correctly_returns_400_for_users_without_stripe_customer_id": true
+      }
+    }
+  }
+}

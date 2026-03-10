@@ -1,4 +1,4 @@
-"""Stripe Checkout — subscription upgrade flow.
+"""Stripe Checkout — subscription upgrade flow + billing portal.
 
 Tiers defined server-side. Frontend sends tier + origin_url.
 """
@@ -7,6 +7,7 @@ import os
 import logging
 from datetime import datetime, timezone
 
+import stripe as stripe_sdk
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
@@ -29,6 +30,10 @@ TIERS = {
 class CheckoutRequest(BaseModel):
     tier: str
     origin_url: str
+
+
+class PortalRequest(BaseModel):
+    return_url: str
 
 
 @router.post("/checkout/create-session")
@@ -99,6 +104,19 @@ async def get_checkout_status(session_id: str, current_user: dict = get_current_
     except Exception:
         raise HTTPException(404, "Session not found")
 
+    # Try to extract and save stripe_customer_id from raw session
+    try:
+        stripe_sdk.api_key = api_key
+        raw_session = stripe_sdk.checkout.Session.retrieve(session_id)
+        customer_id = raw_session.get("customer")
+        if customer_id:
+            await db.users.update_one(
+                {"id": current_user["id"]},
+                {"$set": {"stripe_customer_id": customer_id}},
+            )
+    except Exception as e:
+        logger.warning(f"Could not extract stripe customer_id: {e}")
+
     # Update transaction record
     txn = await db.payment_transactions.find_one({"session_id": session_id})
     if txn:
@@ -135,6 +153,36 @@ async def get_checkout_status(session_id: str, current_user: dict = get_current_
         "amount_total": status.amount_total,
         "currency": status.currency,
     }
+
+
+@router.post("/checkout/create-portal-session")
+async def create_portal_session(
+    data: PortalRequest,
+    current_user: dict = get_current_user_dep(),
+):
+    """Create a Stripe Customer Portal session for managing billing."""
+    api_key = os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "Stripe not configured")
+
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    customer_id = user.get("stripe_customer_id")
+    if not customer_id:
+        raise HTTPException(400, "No billing account found. Please upgrade first.")
+
+    stripe_sdk.api_key = api_key
+    try:
+        session = stripe_sdk.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=data.return_url,
+        )
+        return {"url": session.url}
+    except Exception as e:
+        logger.error(f"Stripe portal error: {e}")
+        raise HTTPException(500, "Could not create billing portal session")
 
 
 @router.post("/webhook/stripe")

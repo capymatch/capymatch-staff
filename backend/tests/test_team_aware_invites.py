@@ -17,7 +17,7 @@ import uuid
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 if not BASE_URL:
-    BASE_URL = "https://kanban-tasks-19.preview.emergentagent.com"
+    BASE_URL = "https://profile-billing-1.preview.emergentagent.com"
 
 API = f"{BASE_URL}/api"
 
