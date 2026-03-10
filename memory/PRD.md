@@ -113,8 +113,11 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Profile tab**: Personal Information (name/email), Change Password, Notifications (follow-up reminders, email notifications), Appearance (dark/light/system theme), Gmail Integration (connect/disconnect/import)
 - **Plan & Billing tab**: Current Plan card (tier name, badge, price, features list), Usage bars (Schools, AI Drafts) with color-coded progress bars, Upgrade button opening UpgradeModal, Compare Plans CTA, "Unlock More with Pro" highlights for basic tier users, Data & Privacy (export data, delete account)
 - **Stripe Customer Portal**: Backend endpoint `POST /api/checkout/create-portal-session` creates a Stripe billing portal session. The checkout status endpoint now also saves `stripe_customer_id` from raw Stripe session data for portal access.
-- **New endpoint**: `POST /api/checkout/create-portal-session`
-- **Testing:** 100% pass rate (backend 23/23, frontend all verified - iteration_74)
+- **Billing History**: Transaction table with Date, Plan, Amount, Status columns. Data pulled from `payment_transactions` collection via `GET /api/stripe/billing-history`.
+- **Cancel Subscription**: `POST /api/stripe/cancel` schedules cancellation at billing period end. Shows confirmation dialog. Cancellation banner with reactivate option appears when pending.
+- **Reactivate Subscription**: `POST /api/stripe/reactivate` undoes a pending cancellation. "Keep My Plan" button in the cancellation banner.
+- **New endpoints**: `POST /api/checkout/create-portal-session`, `GET /api/stripe/billing-history`, `POST /api/stripe/cancel`, `POST /api/stripe/reactivate`
+- **Testing:** 100% pass rate (iteration_74: 23/23, iteration_75: 12/12)
 
 ## P1 Upcoming
 - Normalize camelCase → snake_case in database fields (technical debt)
