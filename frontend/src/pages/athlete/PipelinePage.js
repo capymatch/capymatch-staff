@@ -117,26 +117,32 @@ function getStatusDot(p) {
   return "#d1d5db"; // grey
 }
 
-/* Generate action items */
+/* Generate action items — ONLY past due and due today */
 function generateActions(programs, matchScores) {
   const actions = [];
-  const order = ["overdue", "waiting_on_reply", "needs_outreach", "in_conversation"];
-  const sorted = [...programs]
-    .filter(p => p.board_group !== "archived" && p.recruiting_status !== "Committed" && p.journey_stage !== "committed")
-    .sort((a, b) => {
-      const ai = order.indexOf(a.board_group); const bi = order.indexOf(b.board_group);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
+  const eligible = programs.filter(p => {
+    if (p.board_group === "archived" || p.recruiting_status === "Committed" || p.journey_stage === "committed") return false;
+    const due = getDueInfo(p);
+    // Only include overdue or due-today items
+    if (p.board_group === "overdue") return true;
+    if (due?.urgent) return true; // overdue or due today
+    return false;
+  });
 
-  for (const p of sorted.slice(0, 6)) {
+  // Sort: overdue first (most overdue at top), then due today
+  eligible.sort((a, b) => {
+    const aDue = getDueInfo(a);
+    const bDue = getDueInfo(b);
+    const aOverdue = aDue?.color === "#dc2626" ? 1 : 0;
+    const bOverdue = bDue?.color === "#dc2626" ? 1 : 0;
+    return bOverdue - aOverdue; // red (overdue) before amber (due today)
+  });
+
+  for (const p of eligible.slice(0, 6)) {
     const ms = matchScores[p.program_id];
     const cta = getCTA(p);
     const due = getDueInfo(p);
     actions.push({ id: p.program_id, type: "school", program: p, title: cta.label === "Start Outreach" ? `Start outreach to ${p.university_name}` : `Follow up with ${p.university_name}`, context: getActionContext(p), match_score: ms?.match_score, stage: p.journey_stage || "added", division: p.division, due, cta, matchScore: ms });
-  }
-  const activeCount = programs.filter(p => p.board_group !== "archived").length;
-  if (activeCount < 8) {
-    actions.push({ id: "add-schools", type: "growth", title: "Grow Your Target List", context: `Add ${Math.max(3, 8 - activeCount)} more target schools to keep your pipeline healthy.`, cta: { label: "Browse Schools", style: "primary" } });
   }
   return actions;
 }
