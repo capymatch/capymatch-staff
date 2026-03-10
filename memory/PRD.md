@@ -73,6 +73,15 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
 - **Director:** director@capymatch.com / director123
 
+### Phase J2 — Journey Page: Coach Relationship Depth (DONE - March 10, 2026)
+- **Coach Watch Alert**: Green "Staff Stable" badge in coaches card header (MOCKED — real detection requires background job)
+- **Engagement Stats Strip**: Opens/Clicks/Unique counts inside coaches card from `GET /api/athlete/engagement/{programId}`
+- **Coach Social Links**: `CoachSocialLinks` component renders social media links matched from `kb_coaches` data
+- **ConversationBubble Enrichment**: "YOU"/"COACH" labels, engagement badges on sent emails, show more/less with Gmail body fetch, HTML entity decoding
+- **New components**: `CoachSocialLinks.js`, enriched `ConversationBubble.js`
+- **New endpoint**: `GET /api/athlete/engagement/{program_id}`
+- **Testing:** 100% pass rate (backend 16/16, frontend all verified - iteration_70)
+
 ## P1 Upcoming — Journey Migration Phases
 - **Phase J2**: Coach Watch alert, Engagement stats strip, Coach social links, ConversationBubble enrichment
 - **Phase J3**: Send Profile card, Gmail connect nudge, Archive confirmation dialog, Notes sidebar, School intel link alignment
