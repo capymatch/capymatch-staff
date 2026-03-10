@@ -190,15 +190,26 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - Global: borderRadius 18→10px, consistent mb-4 spacing, 1120px width
 - Removed: Redundant "NEXT FOLLOW-UP" sidebar widget
 
+### Smart Match Phase 1 (DONE - March 10, 2026)
+- **Rule-Based Scoring Engine**: Backend `GET /api/smart-match/recommendations` scores ~953 schools across 5 categories (Athletic 30%, Academic 25%, Preference 20%, Geographic 15%, Opportunity 10%)
+- **Dashboard "Top Matches" Card**: 3-column card showing top recommended schools with match score circles, reason chips, "Add to Pipeline" CTA, and "Upgrade for more" badge for basic tier
+- **Find Schools "Recommended for You"**: Grid of smart match cards at top of the schools page with score circles, reason chips, AI summaries (Pro+), pipeline status, and "Unlock X+ matches" button for basic tier
+- **AI Explanations**: Pro/Premium users get Claude Sonnet-generated summaries, next steps, and verification points via `emergentintegrations`
+- **Subscription Gating**: Basic=3 results (no AI), Pro=unlimited with 5 AI, Premium=unlimited with 10 AI
+- **Navigation Fix**: Smart match cards navigate to `/schools/{domain}` correctly
+- **Testing:** 100% pass rate (iteration_81: 14/14 backend, all frontend verified)
+
 ## Credentials
 - **Coach (Williams):** coach.williams@capymatch.com / coach123
 - **Coach (Garcia):** coach.garcia@capymatch.com / coach123
 
 ## P1 Upcoming
+- Smart Match Phase 1 Nice-to-haves: school comparison, rerun recommendations after profile updates, recommendation history
 - Pydantic Hardening (Expansion) — Continue targeted Pydantic hardening on remaining non-critical API endpoints
 
 ## P2 Future/Backlog
+- Smart Match Later Phases (deeper LLM reasoning, roster/need intelligence, coach engagement signals)
 - Director-Specific Actions (Request Coach Review, Escalate Pipeline Risk)
 - Stripe Customer Portal integration for "Manage Billing" button
-- Advanced Features & Parent Experience (Smart Match AI, family experience)
+- Advanced Features & Parent Experience (family experience)
 - Engagement analytics
