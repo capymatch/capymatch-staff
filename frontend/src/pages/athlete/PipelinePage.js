@@ -702,6 +702,29 @@ export default function PipelinePage() {
         </div>
       )}
 
+      {/* Over-limit Upgrade Banner */}
+      {!usage.unlimited && usage.used > usage.limit && usage.limit > 0 && (
+        <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}
+          data-testid="over-limit-banner">
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <AlertTriangle style={{ width: 20, height: 20, color: "#f59e0b" }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", marginBottom: 2 }}>
+              You're tracking {usage.used} schools on a {usage.limit}-school plan
+            </div>
+            <div style={{ fontSize: 11, color: "var(--cm-text-2)" }}>
+              Your Starter plan allows {usage.limit} schools. Upgrade to track more and unlock AI email drafts, advanced insights, and more.
+            </div>
+          </div>
+          <button onClick={() => setShowUpgrade(true)}
+            style={{ padding: "8px 16px", borderRadius: 8, background: "#f59e0b", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0, border: "none" }}
+            data-testid="upgrade-from-banner">
+            Upgrade Plan
+          </button>
+        </div>
+      )}
+
       {/* 3. Upcoming Tasks */}
       <UpcomingTasksSection tasks={tasks} navigate={navigate} />
 

@@ -24,8 +24,8 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 TIERS = {
-    "pro": {"label": "Pro", "price": 12.00, "schools_limit": 25},
-    "premium": {"label": "Premium", "price": 29.00, "schools_limit": -1},
+    "pro": {"label": "Pro", "price": 29.00, "schools_limit": 25},
+    "premium": {"label": "Premium", "price": 49.00, "schools_limit": -1},
 }
 
 

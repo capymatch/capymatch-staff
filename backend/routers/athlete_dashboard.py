@@ -619,14 +619,30 @@ async def create_interaction(body: dict, current_user: dict = get_current_user_d
         "coach_reply": 2, "email_received": 2,
     }
     days = follow_up_days_map.get(event_type)
+    program_updates = {"updated_at": now.isoformat()}
+
     if days:
         follow_up_date = (now + timedelta(days=days)).strftime("%Y-%m-%d")
+        program_updates["next_action_due"] = follow_up_date
+
+    # AUTOMATION: Email sent → recruiting_status = Contacted, reply_status = Awaiting Reply
+    if event_type in ("email_sent", "email", "follow_up"):
+        current_status = prog.get("recruiting_status", "Not Contacted")
+        if current_status == "Not Contacted":
+            program_updates["recruiting_status"] = "Contacted"
+            program_updates["initial_contact_sent"] = now.strftime("%Y-%m-%d")
+        if prog.get("reply_status") in (None, "", "No Reply"):
+            program_updates["reply_status"] = "Awaiting Reply"
+
+    # AUTOMATION: Reply received → reply_status = Reply Received, priority = Very High
+    if event_type in ("coach_reply", "email_received"):
+        program_updates["reply_status"] = "Reply Received"
+        program_updates["priority"] = "Very High"
+
+    if program_updates:
         await db.programs.update_one(
             {"program_id": program_id, "tenant_id": tenant_id},
-            {"$set": {
-                "next_action_due": follow_up_date,
-                "updated_at": now.isoformat(),
-            }},
+            {"$set": program_updates},
         )
 
     return doc
@@ -663,6 +679,18 @@ async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_
     }
     await db.interactions.insert_one(doc)
     doc.pop("_id", None)
+
+    # AUTOMATION: Reply received → update program status + priority
+    await db.programs.update_one(
+        {"program_id": program_id, "tenant_id": tenant_id},
+        {"$set": {
+            "reply_status": "Reply Received",
+            "priority": "Very High",
+            "next_action_due": (now + timedelta(days=2)).strftime("%Y-%m-%d"),
+            "updated_at": now.isoformat(),
+        }},
+    )
+
     return doc
 
 

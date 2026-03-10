@@ -1,6 +1,6 @@
 """Subscription tiers and enforcement logic.
 
-Mirrors the capymatch repo's subscription system exactly.
+Matches the capymatch repo's subscription system exactly.
 Free tier: up to 5 schools. Pro: 25. Premium: unlimited.
 """
 
@@ -13,55 +13,55 @@ SUBSCRIPTION_TIERS = {
     "basic": {
         "label": "Starter",
         "price": 0,
-        "description": "Get started with the essentials. Track schools, log outreach, and start building your recruiting pipeline.",
+        "description": "Perfect for getting started",
         "max_schools": 5,
         "max_members": 1,
-        "ai_drafts_per_month": 3,
-        "gmail_integration": False,
-        "analytics": False,
+        "ai_drafts_per_month": 0,
+        "gmail_integration": True,
+        "analytics": True,
         "recruiting_insights": False,
-        "public_profile": False,
+        "public_profile": True,
         "follow_up_reminders": True,
         "auto_reply_detection": False,
         "weekly_digest": False,
+        "match_scores_limit": -1,
         "features": [
             "Track up to 5 schools",
-            "3 AI-drafted emails/month",
-            "Basic school profiles",
-            "Manual email logging",
-            "Follow-up reminders",
+            "Basic pipeline board",
+            "Athlete profile page",
+            "School discovery search",
+            "Email support",
         ],
     },
     "pro": {
         "label": "Pro",
-        "price": 12,
-        "description": "Everything in Starter, plus Gmail sync, analytics, and smart recommendations.",
+        "price": 29,
+        "description": "For serious recruiting families",
         "max_schools": 25,
-        "max_members": 3,
-        "ai_drafts_per_month": 50,
+        "max_members": 2,
+        "ai_drafts_per_month": 10,
         "gmail_integration": True,
         "analytics": True,
-        "recruiting_insights": True,
+        "recruiting_insights": False,
         "public_profile": True,
         "follow_up_reminders": True,
-        "auto_reply_detection": True,
-        "weekly_digest": True,
+        "auto_reply_detection": False,
+        "weekly_digest": False,
+        "match_scores_limit": -1,
         "features": [
             "Track up to 25 schools",
-            "50 AI-drafted emails/month",
-            "Gmail integration",
-            "Coach reply detection",
-            "Outreach analytics",
-            "Recruiting insights & recommendations",
-            "Public recruiting profile",
-            "Weekly progress digest",
-            "Up to 3 family members",
+            "Gmail sync & timeline",
+            "Automated follow-up reminders",
+            "AI-powered next steps",
+            "10 AI email drafts/month",
+            "Today's action dashboard",
+            "Priority email support",
         ],
     },
     "premium": {
         "label": "Premium",
-        "price": 29,
-        "description": "The ultimate recruiting toolkit. Unlimited everything plus priority support.",
+        "price": 49,
+        "description": "Complete recruiting solution",
         "max_schools": -1,
         "max_members": -1,
         "ai_drafts_per_month": -1,
@@ -72,13 +72,15 @@ SUBSCRIPTION_TIERS = {
         "follow_up_reminders": True,
         "auto_reply_detection": True,
         "weekly_digest": True,
+        "match_scores_limit": -1,
         "features": [
             "Unlimited schools",
-            "Unlimited AI-drafted emails",
-            "Everything in Pro",
-            "Unlimited family members",
-            "Priority support",
+            "AI email draft generator",
+            "Highlight video advisor",
+            "Coach activity watch",
             "Advanced analytics",
+            "Priority phone support",
+            "Recruiting strategy calls",
         ],
     },
 }
@@ -90,6 +92,8 @@ async def get_user_subscription(tenant_id: str) -> dict:
     """Get the subscription for a tenant. Returns tier data merged with DB overrides."""
     sub_doc = await db.subscriptions.find_one({"tenant_id": tenant_id}, {"_id": 0})
     tier_key = (sub_doc or {}).get("tier", "basic")
+    if tier_key == "free":
+        tier_key = "basic"
     if tier_key not in SUBSCRIPTION_TIERS:
         tier_key = "basic"
     tier = {**SUBSCRIPTION_TIERS[tier_key], "tier": tier_key}
@@ -132,3 +136,39 @@ async def enforce_school_limit(tenant_id: str) -> dict:
         }
 
     return {"allowed": True, "current": school_count, "limit": max_schools, "upgrade_to": None}
+
+
+async def enforce_ai_limit(tenant_id: str) -> dict:
+    """Check if the tenant can use AI drafts.
+    Returns {"allowed": True/False, "current": N, "limit": M, "upgrade_to": tier_key}.
+    """
+    subscription = await get_user_subscription(tenant_id)
+    limit = subscription.get("ai_drafts_per_month", 0)
+
+    if limit == 0:
+        return {
+            "allowed": False,
+            "current": 0,
+            "limit": 0,
+            "upgrade_to": "pro",
+            "message": "AI email drafts help you write personalized coach emails in seconds. Upgrade to Pro to unlock 10 drafts/month.",
+        }
+    if limit == -1:
+        return {"allowed": True, "current": 0, "limit": -1, "upgrade_to": None}
+
+    used = await get_ai_usage_this_month(tenant_id)
+    if used >= limit:
+        return {
+            "allowed": False,
+            "current": used,
+            "limit": limit,
+            "upgrade_to": "premium",
+            "message": f"You've used all {limit} AI drafts this month. Upgrade to Premium for unlimited drafts.",
+        }
+
+    return {"allowed": True, "current": used, "limit": limit, "upgrade_to": None}
+
+
+def check_feature_access(subscription: dict, feature: str) -> bool:
+    """Check if a feature is available in the current subscription."""
+    return subscription.get(feature, False)

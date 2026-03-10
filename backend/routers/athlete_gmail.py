@@ -235,18 +235,32 @@ async def send_email_via_gmail(request: Request, current_user: dict = get_curren
             sent = service.users().messages().send(userId="me", body={"raw": raw}).execute()
 
             # Log interaction
+            now = datetime.now(timezone.utc)
             await db.interactions.insert_one({
                 "interaction_id": str(uuid.uuid4()), "tenant_id": tenant_id,
                 "program_id": program_id, "university_name": university_name,
                 "type": "Email Sent", "notes": f"Subject: {subject}\n\n{body_text}",
-                "outcome": "No Response", "date_time": datetime.now(timezone.utc).isoformat(),
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "outcome": "No Response", "date_time": now.isoformat(),
+                "created_at": now.isoformat(),
             })
-            # Auto-set 14-day follow-up
-            follow_up = (datetime.now(timezone.utc) + timedelta(days=14)).strftime("%Y-%m-%d")
+            # AUTOMATION: Email sent → status updates + 14-day follow-up
+            follow_up = (now + timedelta(days=14)).strftime("%Y-%m-%d")
+            program_updates = {
+                "next_action_due": follow_up,
+                "updated_at": now.isoformat(),
+            }
+            prog = await db.programs.find_one(
+                {"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0}
+            )
+            if prog:
+                if prog.get("recruiting_status") == "Not Contacted":
+                    program_updates["recruiting_status"] = "Contacted"
+                    program_updates["initial_contact_sent"] = now.strftime("%Y-%m-%d")
+                if prog.get("reply_status") in (None, "", "No Reply"):
+                    program_updates["reply_status"] = "Awaiting Reply"
             await db.programs.update_one(
                 {"program_id": program_id, "tenant_id": tenant_id},
-                {"$set": {"next_action_due": follow_up, "updated_at": datetime.now(timezone.utc).isoformat()}}
+                {"$set": program_updates}
             )
             return {"status": "sent", "id": sent["id"], "gmail_sent": True}
         except Exception as e:
@@ -254,13 +268,24 @@ async def send_email_via_gmail(request: Request, current_user: dict = get_curren
             raise HTTPException(500, "Failed to send via Gmail")
     else:
         # Fallback: log as interaction
+        now = datetime.now(timezone.utc)
         await db.interactions.insert_one({
             "interaction_id": str(uuid.uuid4()), "tenant_id": tenant_id,
             "program_id": program_id, "university_name": university_name,
             "type": "Email Sent", "notes": f"Subject: {subject}\n\n{body_text}",
-            "outcome": "No Response", "date_time": datetime.now(timezone.utc).isoformat(),
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "outcome": "No Response", "date_time": now.isoformat(),
+            "created_at": now.isoformat(),
         })
+        # AUTOMATION: Email sent → status updates
+        program_updates = {"updated_at": now.isoformat(), "next_action_due": (now + timedelta(days=14)).strftime("%Y-%m-%d")}
+        prog = await db.programs.find_one({"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0})
+        if prog:
+            if prog.get("recruiting_status") == "Not Contacted":
+                program_updates["recruiting_status"] = "Contacted"
+                program_updates["initial_contact_sent"] = now.strftime("%Y-%m-%d")
+            if prog.get("reply_status") in (None, "", "No Reply"):
+                program_updates["reply_status"] = "Awaiting Reply"
+        await db.programs.update_one({"program_id": program_id, "tenant_id": tenant_id}, {"$set": program_updates})
         return {"status": "logged", "gmail_sent": False}
 
 

@@ -1,0 +1,83 @@
+{
+  "summary": "Subscription tiers and automation rules testing complete. All 15/15 backend tests passed. Frontend verified: over-limit banner shows '12 schools on 5-school plan', upgrade modal displays correct pricing ($0/$29/$49) and features per tier matching the repo.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_subscription_automations.py",
+    "/app/test_reports/pytest/pytest_subscription_automations.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: GET /api/subscription returns tier=basic, price=0, usage.schools=12, usage.schools_limit=5 for Emma",
+    "VERIFIED: GET /api/subscription/tiers returns all 3 tiers with correct pricing: basic=$0/5schools/0AI, pro=$29/25schools/10AI, premium=$49/unlimited",
+    "VERIFIED: POST /api/athlete/interactions with type='Email Sent' updates recruiting_status='Contacted' when 'Not Contacted'",
+    "VERIFIED: POST /api/athlete/interactions with type='Email Sent' sets reply_status='Awaiting Reply' when 'No Reply'",
+    "VERIFIED: POST /api/athlete/interactions with type='Email Sent' sets initial_contact_sent to today's date",
+    "VERIFIED: POST /api/athlete/interactions with type='Email Sent' sets next_action_due 14 days in future",
+    "VERIFIED: POST /api/athlete/programs/{pid}/mark-replied updates reply_status='Reply Received' and priority='Very High'",
+    "VERIFIED: POST /api/athlete/programs/{pid}/mark-replied sets next_action_due 2 days in future",
+    "VERIFIED: POST /api/athlete/programs/{pid}/mark-replied requires note (returns 400 for empty)",
+    "VERIFIED: POST /api/athlete/interactions with type='coach_reply' updates reply_status='Reply Received' and priority='Very High'",
+    "VERIFIED: POST /api/checkout/create-session validates tier (returns 400 for invalid tier)",
+    "VERIFIED: Stripe TIERS in stripe_checkout.py match subscription tiers: pro=$29, premium=$49",
+    "VERIFIED: Frontend over-limit banner displays 'You're tracking 12 schools on a 5-school plan' with 'Upgrade Plan' button",
+    "VERIFIED: UpgradeModal fetches tiers from API and displays correct pricing and feature lists"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_subscription_automations.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "athlete_email": "emma.chen@athlete.capymatch.com",
+    "athlete_password": "password123",
+    "athlete_schools": 12,
+    "athlete_plan_limit": 5
+  },
+  "seed_data_creation": "None - used existing Emma Chen account with 12 schools on basic plan",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Subscription tiers fully tested. Emma has 12 schools on basic (5-school limit) plan, triggering over-limit banner. Key data-testids: over-limit-banner, upgrade-from-banner, upgrade-modal, tier-card-basic, tier-card-pro, tier-card-premium. Automations working: email sent→Contacted/Awaiting Reply, mark-replied→Reply Received/Very High, next_action_due set correctly (14 days email, 2 days reply).",
+  "features_verified": {
+    "subscription_api": {
+      "GET /api/subscription": "WORKING - Returns tier info with usage stats",
+      "GET /api/subscription/tiers": "WORKING - Returns all 3 tiers with correct pricing"
+    },
+    "tier_pricing": {
+      "basic": "CORRECT - $0, 5 schools, 0 AI drafts, label='Starter'",
+      "pro": "CORRECT - $29, 25 schools, 10 AI drafts",
+      "premium": "CORRECT - $49, unlimited schools (-1), unlimited AI drafts (-1)"
+    },
+    "automation_rules": {
+      "email_sent_updates_status": "WORKING - Not Contacted → Contacted, No Reply → Awaiting Reply",
+      "email_sent_sets_initial_contact": "WORKING - Sets today's date",
+      "email_sent_sets_next_action_due": "WORKING - 14 days",
+      "mark_replied_updates_status": "WORKING - Reply Received + Very High priority",
+      "mark_replied_sets_next_action_due": "WORKING - 2 days",
+      "coach_reply_updates_status": "WORKING - Reply Received + Very High priority"
+    },
+    "frontend_over_limit_banner": {
+      "banner_visible": "WORKING - Shows when usage.used > usage.limit",
+      "banner_text": "CORRECT - 'You're tracking 12 schools on a 5-school plan'",
+      "upgrade_button": "WORKING - Opens upgrade modal"
+    },
+    "frontend_upgrade_modal": {
+      "pricing_displayed": "CORRECT - Free/$29/$49",
+      "features_per_tier": "CORRECT - Matches repo features list",
+      "current_plan_indicator": "WORKING - Shows 'Current Plan' for basic tier"
+    },
+    "stripe_checkout": {
+      "tier_validation": "WORKING - Returns 400 for invalid tier",
+      "TIERS_pricing": "CORRECT - pro=$29, premium=$49"
+    }
+  }
+}
