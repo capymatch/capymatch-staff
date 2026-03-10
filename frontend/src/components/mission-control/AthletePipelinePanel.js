@@ -164,7 +164,7 @@ function FlagModal({ school, athleteId, onClose, onFlagged }) {
     if (!reason) { toast.error("Select a reason"); return; }
     setSubmitting(true);
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       const res = await axios.post(`${API}/roster/athlete/${athleteId}/flag-followup`, {
         program_id: school.program_id,
         reason,
@@ -301,7 +301,7 @@ function DirectorActionModal({ athleteId, athleteName, coachId, actionType, onCl
     if (!reason) { toast.error("Select a reason"); return; }
     setSubmitting(true);
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       const payload = {
         type: actionType,
         athlete_id: athleteId,
@@ -422,7 +422,7 @@ function AthleteActionsSection({ athleteId, userRole }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("session_token");
+    const token = localStorage.getItem("capymatch_token");
     axios.get(`${API}/director/actions/athlete/${athleteId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => setActions(res.data.actions || []))
@@ -432,7 +432,7 @@ function AthleteActionsSection({ athleteId, userRole }) {
 
   const handleAck = async (actionId) => {
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       await axios.post(`${API}/director/actions/${actionId}/acknowledge`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -443,7 +443,7 @@ function AthleteActionsSection({ athleteId, userRole }) {
 
   const handleResolve = async (actionId) => {
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       await axios.post(`${API}/director/actions/${actionId}/resolve`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -542,7 +542,7 @@ export default function AthletePipelinePanel({ athleteId, onClose }) {
   // Get current user role from token
   const userRole = (() => {
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       if (!token) return "athlete";
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload.role || "athlete";

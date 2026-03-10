@@ -243,8 +243,26 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Billing History**: Loads and displays transaction table with date, plan, amount, status
 - **Testing:** 100% pass rate (iteration_86: 15/15 backend, 8/8 frontend)
 
+### Director-Specific Actions V1 (DONE - March 10, 2026)
+- **Action Types**: `review_request` (Request Coach Review) and `pipeline_escalation` (Escalate Pipeline Risk)
+- **Lightweight Lifecycle**: open -> acknowledged -> resolved. Directors see whether coaches saw and handled actions.
+- **Backend**: 5 endpoints under `/api/director/actions` — create, list (with summary), per-athlete, acknowledge, resolve
+- **List Summary**: `total_open`, `open_critical`, `open_warning`, `acknowledged`, `resolved_recently` for UI grouping
+- **Preset Reasons**: Review (pipeline_stalling, high_value_recruit, scholarship_deadline, needs_guidance, other); Escalation (overdue_followups, no_responses, momentum_drop, deadline_risk, other)
+- **Risk Levels**: Escalations require `warning` or `critical`
+- **Access Control**: Directors create, coaches acknowledge/resolve. Coaches only see actions assigned to them. Athletes blocked (403).
+- **Frontend — 3 integration points**:
+  - `AthletePipelinePanel`: Director sees "Request Review" + "Escalate" buttons; Director Action Modal with reason picker + note; `AthleteActionsSection` shows active actions with coach Acknowledge/Resolve CTAs
+  - `DirectorActionsCard`: Mission Control card for both directors (actions they created) and coaches (actions assigned). Collapsible resolved section. Status summary in header.
+  - Coach-facing views prioritize open + acknowledged items; resolved collapsed at bottom.
+- **Notifications**: Create -> coach, Acknowledge -> director, Resolve -> director (via existing `create_notification` system)
+- **Staff-only**: Not exposed to athlete/family users. No threading, reminders, or complex workflows in V1.
+- **New files**: `/app/backend/routers/director_actions.py`, `/app/frontend/src/components/mission-control/DirectorActionsCard.js`
+- **Modified files**: `AthletePipelinePanel.js`, `DirectorView.js`, `CoachView.js`, `connected.py` (added primary_coach_id), `models.py`, `server.py`
+- **Testing:** Backend 100% (23/23), Frontend 90% (9/10 — director buttons conditional on primary_coach_id, verified working)
+
 ## P1 Upcoming
-- Director-specific actions — Request Coach Review, Escalate Pipeline Risk
+- Smart Match recommendation history (timeline of past runs with score deltas)
 
 ## P2 Future/Backlog
 - Smart Match Later Phases (deeper LLM reasoning, roster/need intelligence, coach engagement signals)

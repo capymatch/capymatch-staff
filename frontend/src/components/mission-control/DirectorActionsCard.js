@@ -134,7 +134,7 @@ export default function DirectorActionsCard({ role }) {
 
   const fetchActions = useCallback(async () => {
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       const res = await axios.get(`${API}/director/actions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -150,7 +150,7 @@ export default function DirectorActionsCard({ role }) {
   const handleAcknowledge = async (actionId) => {
     setAckingId(actionId);
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       await axios.post(`${API}/director/actions/${actionId}/acknowledge`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -164,7 +164,7 @@ export default function DirectorActionsCard({ role }) {
   const handleResolve = async (actionId) => {
     setResolvingId(actionId);
     try {
-      const token = localStorage.getItem("session_token");
+      const token = localStorage.getItem("capymatch_token");
       await axios.post(`${API}/director/actions/${actionId}/resolve`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
