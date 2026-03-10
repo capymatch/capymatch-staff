@@ -342,11 +342,9 @@ export default function JourneyPage() {
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6">
-        <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
+        <div style={{ background: "#1e1e2e", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
           {/* Teal accent bar */}
           <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
-          {/* Subtle glow */}
-          <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
           <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
           {/* Back & Actions */}
           <div className="flex items-center justify-between mb-4">
