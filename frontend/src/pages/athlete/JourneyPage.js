@@ -341,7 +341,7 @@ export default function JourneyPage() {
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6">
         <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
           {/* Teal accent bar */}
           <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
@@ -470,7 +470,7 @@ export default function JourneyPage() {
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-6">
 
         {/* Coach Flag Card */}
         {coachFlags.length > 0 && (
