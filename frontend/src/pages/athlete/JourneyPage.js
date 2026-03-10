@@ -341,12 +341,13 @@ export default function JourneyPage() {
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
-      <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderBottom: "none", borderRadius: "18px 18px 0 0", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
-        {/* Teal accent bar */}
-        <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
-        {/* Subtle glow */}
-        <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+        <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
+          {/* Teal accent bar */}
+          <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
+          {/* Subtle glow */}
+          <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
           {/* Back & Actions */}
           <div className="flex items-center justify-between mb-4">
             <button onClick={() => navigate("/pipeline")} className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="back-to-pipeline">
@@ -465,6 +466,7 @@ export default function JourneyPage() {
           {/* Progress Rail */}
           <ProgressRail rail={rail} onStageClick={handleStageClick} />
         </div>
+      </div>
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
