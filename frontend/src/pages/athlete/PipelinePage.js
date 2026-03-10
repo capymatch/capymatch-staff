@@ -633,13 +633,6 @@ export default function PipelinePage() {
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, marginBottom: 20 }}>
-        <button onClick={handleAddSchool} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", borderRadius: 10, border: "1px solid var(--cm-border)", background: "var(--cm-surface)", fontSize: 13, fontWeight: 700, color: "var(--cm-text)", cursor: "pointer", fontFamily: "inherit" }} data-testid="add-school-btn">
-          <Plus style={{ width: 14, height: 14 }} /> Add School
-        </button>
-      </div>
-
       {/* Hero Card = Actions Carousel */}
       {actions.length > 0 && (
         <div style={{ marginBottom: 16 }}>
