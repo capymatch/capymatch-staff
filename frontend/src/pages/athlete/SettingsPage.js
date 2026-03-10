@@ -98,6 +98,35 @@ export default function SettingsPage() {
     }
   }, [searchParams, setSearchParams, fetchSettings]);
 
+  // Handle Stripe checkout redirect
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    const upgrade = searchParams.get("upgrade");
+    if (sessionId && upgrade === "success") {
+      const token = localStorage.getItem("session_token");
+      axios.get(`${API}/checkout/status/${sessionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(res => {
+        if (res.data?.payment_status === "paid") {
+          toast.success("Upgrade successful! Your plan has been updated.");
+        } else {
+          toast.info("Payment is processing. Your plan will update shortly.");
+        }
+      }).catch(() => {
+        toast.info("Checking payment status...");
+      }).finally(() => {
+        searchParams.delete("session_id");
+        searchParams.delete("upgrade");
+        setSearchParams(searchParams, { replace: true });
+        fetchSettings();
+      });
+    } else if (upgrade === "cancelled") {
+      toast.info("Upgrade cancelled. No charges were made.");
+      searchParams.delete("upgrade");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, fetchSettings]);
+
   const saveProfile = async () => {
     setSavingProfile(true);
     try {

@@ -46,6 +46,7 @@ from routers.subscription import router as subscription_router
 from routers.notifications import router as notifications_router
 from routers.athlete_tasks import router as athlete_tasks_router
 from routers.program_notes import router as program_notes_router
+from routers.stripe_checkout import router as stripe_checkout_router
 
 # Create the main app
 app = FastAPI()
@@ -123,6 +124,7 @@ api_router.include_router(subscription_router)
 api_router.include_router(notifications_router)
 api_router.include_router(athlete_tasks_router)
 api_router.include_router(program_notes_router)
+api_router.include_router(stripe_checkout_router)
 
 app.include_router(api_router)
 

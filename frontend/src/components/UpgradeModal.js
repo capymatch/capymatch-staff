@@ -105,12 +105,29 @@ export default function UpgradeModal({ isOpen, onClose, message, currentTier = "
     }).catch(() => setLoading(false));
   }, [isOpen]);
 
+  const [upgrading, setUpgrading] = useState(null);
+
   if (!isOpen) return null;
 
-  const handleUpgrade = (tier) => {
+  const handleUpgrade = async (tier) => {
     if (tier.price === 0) { onClose(); return; }
-    toast.info("Stripe checkout coming soon! Contact support to upgrade.");
-    onClose();
+    setUpgrading(tier.id);
+    try {
+      const token = localStorage.getItem("session_token");
+      const res = await axios.post(`${API}/checkout/create-session`, {
+        tier: tier.id,
+        origin_url: window.location.origin,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      } else {
+        toast.error("Failed to create checkout session");
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Payment error");
+    } finally {
+      setUpgrading(null);
+    }
   };
 
   return createPortal(

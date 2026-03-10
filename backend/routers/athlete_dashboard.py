@@ -238,7 +238,7 @@ async def list_programs(
         ).to_list(2000),
         db.university_knowledge_base.find(
             {"university_name": {"$in": uni_names}},
-            {"_id": 0, "university_name": 1, "logo_url": 1, "domain": 1},
+            {"_id": 0, "university_name": 1, "logo_url": 1, "domain": 1, "social_links": 1},
         ).to_list(500),
     )
 
@@ -266,6 +266,8 @@ async def list_programs(
             p["logo_url"] = kb.get("logo_url", "")
         if not p.get("domain"):
             p["domain"] = kb.get("domain", "")
+        if not p.get("social_links") and kb.get("social_links"):
+            p["social_links"] = kb["social_links"]
 
     if grouped:
         groups = {
@@ -310,6 +312,22 @@ async def get_program(program_id: str, current_user: dict = get_current_user_dep
     prog["signals"] = _compute_signals_from_interactions(interactions)
     prog["board_group"] = categorize_program(prog)
     prog["journey_rail"] = compute_journey_rail(prog)
+
+    # Enrich with KB data (social_links, logo, domain)
+    uni_name = prog.get("university_name", "")
+    if uni_name:
+        kb = await db.university_knowledge_base.find_one(
+            {"university_name": uni_name},
+            {"_id": 0, "logo_url": 1, "domain": 1, "social_links": 1},
+        )
+        if kb:
+            if not prog.get("logo_url"):
+                prog["logo_url"] = kb.get("logo_url", "")
+            if not prog.get("domain"):
+                prog["domain"] = kb.get("domain", "")
+            if not prog.get("social_links") and kb.get("social_links"):
+                prog["social_links"] = kb["social_links"]
+
     return prog
 
 

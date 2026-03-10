@@ -97,6 +97,9 @@ export default function JourneyPage() {
   const isPremium = subscription?.tier === "premium";
   const [showJourneyDetails, setShowJourneyDetails] = useState(false);
 
+  // Coach Watch (real API)
+  const [coachWatch, setCoachWatch] = useState(null);
+
   const fetchData = useCallback(async () => {
     try {
       const [pRes, jRes, msRes, engRes, gmailRes] = await Promise.allSettled([
@@ -125,6 +128,14 @@ export default function JourneyPage() {
 
       // Gmail connection status
       setGmailConnected(gmailRes.status === "fulfilled" && gmailRes.value.data?.connected === true);
+
+      // Coach Watch alert (fire-and-forget after program loads)
+      const uniName = pRes.value.data?.university_name;
+      if (uniName) {
+        axios.get(`${API}/ai/coach-watch/alert/${encodeURIComponent(uniName)}`)
+          .then(r => setCoachWatch(r.data))
+          .catch(() => {});
+      }
     } catch (e) {
       toast.error("Failed to load program");
     } finally { setLoading(false); }
@@ -730,12 +741,26 @@ export default function JourneyPage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Coaching Staff</h3>
-                  {/* J2: Coach Watch Alert */}
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
-                    style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)" }}
-                    data-testid="coach-watch-badge">
-                    <ShieldCheck className="w-2.5 h-2.5" /> Staff Stable
-                  </span>
+                  {/* Coach Watch Alert (real API) */}
+                  {coachWatch && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                      style={{
+                        backgroundColor: coachWatch.severity === "high" ? "rgba(239,68,68,0.1)" : coachWatch.severity === "medium" ? "rgba(245,158,11,0.1)" : "rgba(34,197,94,0.1)",
+                        color: coachWatch.severity === "high" ? "#f87171" : coachWatch.severity === "medium" ? "#fbbf24" : "#4ade80",
+                        border: `1px solid ${coachWatch.severity === "high" ? "rgba(239,68,68,0.2)" : coachWatch.severity === "medium" ? "rgba(245,158,11,0.2)" : "rgba(34,197,94,0.15)"}`,
+                      }}
+                      title={coachWatch.recommendation || ""}
+                      data-testid="coach-watch-badge">
+                      <ShieldCheck className="w-2.5 h-2.5" /> {coachWatch.status || "Staff Stable"}
+                    </span>
+                  )}
+                  {!coachWatch && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                      style={{ backgroundColor: "rgba(148,163,184,0.1)", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.15)" }}
+                      data-testid="coach-watch-badge">
+                      <ShieldCheck className="w-2.5 h-2.5" /> Loading...
+                    </span>
+                  )}
                 </div>
                 <button onClick={() => setShowCoachForm({})} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-500 transition-colors" data-testid="add-coach-btn">
                   <Plus className="w-3 h-3" />Add
