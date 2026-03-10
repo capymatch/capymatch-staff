@@ -8,6 +8,7 @@ import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
 import DirectorActionsCard from "./DirectorActionsCard";
+import DirectorActionsPulse from "./DirectorActionsPulse";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -179,7 +180,10 @@ export default function DirectorView({ data, userName }) {
         </div>
       </section>
 
-      {/* 2. AI PROGRAM BRIEF */}
+      {/* 2. DIRECTOR ACTIONS PULSE */}
+      <DirectorActionsPulse />
+
+      {/* 3. AI PROGRAM BRIEF */}
       <AIProgramBrief />
 
       {/* 3. RECRUITING SIGNALS */}

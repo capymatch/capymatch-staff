@@ -261,6 +261,12 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Modified files**: `AthletePipelinePanel.js`, `DirectorView.js`, `CoachView.js`, `connected.py` (added primary_coach_id), `models.py`, `server.py`
 - **Testing:** Backend 100% (23/23), Frontend 90% (9/10 — director buttons conditional on primary_coach_id, verified working)
 
+### Director Actions Pulse Widget (DONE - March 10, 2026)
+- Compact summary widget in Director Mission Control showing Open, Critical, Ack'd, Resolved This Week
+- Context-aware one-line insight (e.g., "3 critical items still waiting on coach response" or "Coach responsiveness is healthy this week")
+- Border color shifts based on urgency (red for critical, amber for open, default for clear)
+- New file: `/app/frontend/src/components/mission-control/DirectorActionsPulse.js`
+
 ## P1 Upcoming
 - Smart Match recommendation history (timeline of past runs with score deltas)
 
