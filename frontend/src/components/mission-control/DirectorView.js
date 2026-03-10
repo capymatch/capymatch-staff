@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock, AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import AIProgramBrief from "./AIProgramBrief";
 import NeedsAttentionCard from "./NeedsAttentionCard";
@@ -5,6 +6,7 @@ import CoachHealthCard from "./CoachHealthCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
+import AthletePipelinePanel from "./AthletePipelinePanel";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -24,6 +26,7 @@ const MOMENTUM_CONFIG = {
 };
 
 export default function DirectorView({ data, userName }) {
+  const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
   const firstName = userName?.split(" ")[0] || "Director";
   const ps = data.programStatus || {};
   const trend = data.trendData || {};
@@ -182,7 +185,7 @@ export default function DirectorView({ data, userName }) {
       <RecruitingSignalsCard signals={data.recruitingSignals} />
 
       {/* 4. NEEDS ATTENTION */}
-      <NeedsAttentionCard items={data.needsAttention || []} />
+      <NeedsAttentionCard items={data.needsAttention || []} onViewPipeline={setPipelineAthleteId} />
 
       {/* 5. COACH HEALTH */}
       <CoachHealthCard coaches={data.coachHealth || []} />
@@ -192,6 +195,14 @@ export default function DirectorView({ data, userName }) {
 
       {/* 7. PROGRAM ACTIVITY */}
       <ActivityFeed items={data.programActivity || []} title="Program Activity" />
+
+      {/* Pipeline Panel */}
+      {pipelineAthleteId && (
+        <AthletePipelinePanel
+          athleteId={pipelineAthleteId}
+          onClose={() => setPipelineAthleteId(null)}
+        />
+      )}
     </div>
   );
 }

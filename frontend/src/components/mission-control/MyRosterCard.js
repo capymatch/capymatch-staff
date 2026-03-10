@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, ChevronRight, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronRight, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, ArrowUpRight } from "lucide-react";
 import QuickNote from "@/components/QuickNote";
 
 const CATEGORY_CONFIG = {
@@ -39,7 +39,7 @@ function MomentumIndicator({ score, trend }) {
   );
 }
 
-export default function MyRosterCard({ athletes = [] }) {
+export default function MyRosterCard({ athletes = [], onViewPipeline }) {
   const navigate = useNavigate();
 
   if (!athletes.length) {
@@ -115,6 +115,11 @@ export default function MyRosterCard({ athletes = [] }) {
                     title={athlete.podHealth.label}
                   />
                 )}
+                <button onClick={(e) => { e.stopPropagation(); onViewPipeline?.(athlete.id); }}
+                  className="p-1.5 rounded-md hover:bg-teal-50 opacity-0 group-hover:opacity-100 transition-all"
+                  title="View Pipeline" data-testid={`view-pipeline-${athlete.id}`}>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-teal-600" />
+                </button>
                 <QuickNote athleteId={athlete.id} athleteName={athlete.name} compact />
                 <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
               </div>
@@ -151,6 +156,11 @@ export default function MyRosterCard({ athletes = [] }) {
                   title={athlete.podHealth.label}
                 />
               )}
+              <button onClick={(e) => { e.stopPropagation(); onViewPipeline?.(athlete.id); }}
+                className="p-1.5 rounded-md hover:bg-teal-50 opacity-0 group-hover:opacity-100 transition-all"
+                title="View Pipeline" data-testid={`view-pipeline-${athlete.id}`}>
+                <ArrowUpRight className="w-3.5 h-3.5 text-teal-600" />
+              </button>
               <QuickNote athleteId={athlete.id} athleteName={athlete.name} compact />
               <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
             </div>

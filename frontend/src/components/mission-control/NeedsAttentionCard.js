@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ShieldAlert, Zap, AlertTriangle, Users, Mail,
   ExternalLink, UserPlus, Bell, ClipboardCheck, FileText,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, ArrowUpRight,
 } from "lucide-react";
 
 const CATEGORY_CONFIG = {
@@ -24,39 +24,39 @@ const SEVERITY = {
 
 const ACTIONS_BY_CATEGORY = {
   event_follow_up: [
+    { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
-    { key: "assign", icon: UserPlus, label: "Assign Coach" },
     { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   ownership_gap: [
+    { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "assign", icon: UserPlus, label: "Assign Coach" },
-    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   momentum_drop: [
+    { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
-    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   blocker: [
+    { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "document", icon: FileText, label: "Request Document" },
-    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   engagement_drop: [
+    { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
-    { key: "reminder", icon: Bell, label: "Send Reminder" },
     { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
   ],
   deadline_proximity: [
+    { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
-    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
   readiness_issue: [
+    { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
     { key: "document", icon: FileText, label: "Request Document" },
-    { key: "reminder", icon: Bell, label: "Send Reminder" },
   ],
 };
 
@@ -93,13 +93,14 @@ function ActionButton({ icon: Icon, label, onClick }) {
   );
 }
 
-function AthleteRow({ item, navigate }) {
+function AthleteRow({ item, navigate, onViewPipeline }) {
   const sev = SEVERITY[item.badge_color] || SEVERITY.amber;
   const { description, impact } = parseProblem(item.why_this_surfaced);
   const actions = ACTIONS_BY_CATEGORY[item.category] || ACTIONS_BY_CATEGORY.momentum_drop;
 
   const handleAction = (key) => {
-    if (key === "open") navigate(`/support-pods/${item.athlete_id}`);
+    if (key === "pipeline") onViewPipeline?.(item.athlete_id);
+    else if (key === "open") navigate(`/support-pods/${item.athlete_id}`);
     else if (key === "assign") navigate("/roster");
     else navigate(`/support-pods/${item.athlete_id}`);
   };
@@ -134,7 +135,7 @@ function AthleteRow({ item, navigate }) {
   );
 }
 
-function CategoryGroup({ group, navigate }) {
+function CategoryGroup({ group, navigate, onViewPipeline }) {
   const [expanded, setExpanded] = useState(true);
   const GroupIcon = group.icon;
   const collapsible = group.items.length > 3;
@@ -170,7 +171,7 @@ function CategoryGroup({ group, navigate }) {
       {/* Athlete rows */}
       <div className="divide-y divide-slate-50">
         {visibleItems.map((item) => (
-          <AthleteRow key={`${item.athlete_id}_${item.category}`} item={item} navigate={navigate} />
+          <AthleteRow key={`${item.athlete_id}_${item.category}`} item={item} navigate={navigate} onViewPipeline={onViewPipeline} />
         ))}
       </div>
 
@@ -187,7 +188,7 @@ function CategoryGroup({ group, navigate }) {
   );
 }
 
-export default function NeedsAttentionCard({ items = [] }) {
+export default function NeedsAttentionCard({ items = [], onViewPipeline }) {
   const navigate = useNavigate();
 
   if (!items.length) {
@@ -226,7 +227,7 @@ export default function NeedsAttentionCard({ items = [] }) {
       {/* Category card groups */}
       <div className="space-y-3">
         {grouped.map((group) => (
-          <CategoryGroup key={group.category} group={group} navigate={navigate} />
+          <CategoryGroup key={group.category} group={group} navigate={navigate} onViewPipeline={onViewPipeline} />
         ))}
       </div>
     </section>

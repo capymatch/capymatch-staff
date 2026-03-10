@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Target, AlertTriangle, Calendar, Bell } from "lucide-react";
 import TodaysActionsCard from "./TodaysActionsCard";
 import MyRosterCard from "./MyRosterCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import ActivityFeed from "./ActivityFeed";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
+import AthletePipelinePanel from "./AthletePipelinePanel";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -17,6 +19,7 @@ function getDateLabel() {
 }
 
 export default function CoachView({ data, userName }) {
+  const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
   const firstName = userName?.split(" ")[0] || "Coach";
   const summary = data.todays_summary || {};
 
@@ -135,7 +138,7 @@ export default function CoachView({ data, userName }) {
       <TodaysActionsCard summary={summary} />
 
       {/* ── My Roster ── */}
-      <MyRosterCard athletes={data.myRoster || []} />
+      <MyRosterCard athletes={data.myRoster || []} onViewPipeline={setPipelineAthleteId} />
 
       {/* ── Events + Activity ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -146,6 +149,14 @@ export default function CoachView({ data, userName }) {
           <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />
         </div>
       </div>
+
+      {/* Pipeline Panel */}
+      {pipelineAthleteId && (
+        <AthletePipelinePanel
+          athleteId={pipelineAthleteId}
+          onClose={() => setPipelineAthleteId(null)}
+        />
+      )}
     </div>
   );
 }
