@@ -46,9 +46,19 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 ### Phase 12 — Upcoming Tasks Feature (DONE - March 10, 2026)
 - **Replaced "Upcoming Events" with "Upcoming Tasks"** on My Schools (Pipeline) page
 - **Backend endpoint** `GET /api/athlete/tasks`: returns only follow-ups due in 1-3 days
-- **Hero card expanded**: Now includes overdue, due-today, AND needs-outreach schools (was only overdue+due-today)
+- **Hero card expanded**: Now includes overdue, due-today, AND needs-outreach schools
 - **Upcoming Tasks section**: Shows only forward-looking items (1-3 day follow-ups), hides when empty
 - **Testing:** 100% pass rate (backend 10/10, frontend all verified - iteration_68)
+
+### Phase J1 — Journey Page: High-Impact UX + Trust (DONE - March 10, 2026)
+- **Match Score badge**: Shows "X% Match" in header with color coding (green >=80, amber >=60, gray <60)
+- **Risk Badges + Explainer Drawer**: Clickable pills (Roster Tight, Timeline Awareness, Funding Dependent, Academic Reach) with slide-in explainer panel
+- **Overdue Follow-Up Card**: Rich dark card with orange accent, "X DAYS OVERDUE" label, "Send Email" + "Reschedule" CTAs
+- **Upcoming Follow-Up Card**: Teal accent card for follow-ups due within 5 days, with action buttons
+- **Questionnaire Section + Nudge**: Persistent section with "Open Form" + "Mark Complete" toggle; dismissable amber nudge for incomplete questionnaires
+- **Real University Logos**: Uses shared UniversityLogo component (KB logo → Google favicon → letter avatar)
+- **New component**: `/app/frontend/src/components/RiskBadges.js`
+- **Testing:** 100% pass rate (backend 13/13, frontend all verified - iteration_69)
 
 ## Key API Endpoints
 - `GET /api/subscription` — Current user's tier, limits, usage
@@ -63,7 +73,12 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
 - **Director:** director@capymatch.com / director123
 
-## P1 Upcoming
+## P1 Upcoming — Journey Migration Phases
+- **Phase J2**: Coach Watch alert, Engagement stats strip, Coach social links, ConversationBubble enrichment
+- **Phase J3**: Send Profile card, Gmail connect nudge, Archive confirmation dialog, Notes sidebar, School intel link alignment
+- **Phase J4**: Subscription gating, AI premium gating, Compare button, Committed toggle, School social links
+
+## P2 Technical Debt
 - Normalize camelCase → snake_case in database fields
 
 ## P2 Future/Backlog
