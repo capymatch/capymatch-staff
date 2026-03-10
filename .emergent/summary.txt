@@ -3,79 +3,88 @@ The user wants to unify two separate applications:  (a coach/director app) and  
 
 **PRODUCT REQUIREMENTS:**
 - Create a single, canonical data model for shared entities like users, athletes, schools, etc.
-- Implement a unified authentication system that supports JWTs and multiple user roles (, , , ).
+- Implement a unified authentication system that supports JWTs and multiple user roles.
 - Build role-based routing on the frontend to direct users to the correct experience after login.
-- Incrementally migrate features from the original athlete/parent application () into the new unified platform, ensuring faithful replication of UI/UX and functionality.
-- Implement features from the original  app, including the onboarding quiz, knowledge base, pipeline, journey, settings with Gmail integration, and athlete dashboard.
-- Implement all AI-powered features from the original application.
-- Implement a functional light/dark theme switcher.
+- Incrementally migrate features from the original  app into the new unified platform. This session focused on implementing subscription tiers.
+- Implement a drag-and-drop Kanban board for the My Schools pipeline.
+- Implement a weekly notification system for profile completion.
+- Continuously refine the UI/UX of the My Schools page based on user feedback.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A unified full-stack application (FastAPI, React, MongoDB). The current session focused on major UI/UX improvements and a significant feature enhancement.
-
-- **Theme System:** A comprehensive light/dark theme system has been implemented and verified. A broken light theme was fixed by systematically refactoring all major athlete-facing pages and components to use CSS variables instead of hardcoded colors. This was validated with the frontend testing agent.
-- **UI/UX Polish:** Several user-requested UI cleanups were completed: an Athlete demo login button was added to the login page, duplicate in-page titles were removed, navigation links were renamed (Pipeline -> My Schools, Schools -> Find Schools), and icons were synchronized between the sidebar and top bar.
-- **Match Scoring V2 (Backend):** A sophisticated new school matching algorithm has been fully implemented on the backend. It enhances the previous logic by incorporating the athlete's physical measurables (height, position, jump stats) into the score. The API now returns a detailed payload including an overall match score, a specific Measurables Fit score with a label (e.g., Strong Fit, Possible Fit), a confidence level based on data completeness, and a human-readable explanation.
-- **Match Scoring V2 (Frontend - In Progress):** The frontend has been partially updated to consume the new V2 match score data. The My Schools hero card now displays the match percentage and social media links fetched from the new API.
+A unified full-stack application (FastAPI, React, MongoDB) with a sophisticated and heavily iterated UI. The application now includes:
+- **Subscription Tiers:** A fully integrated subscription system ported from the  repo. It enforces a 5-school limit on the free tier and displays an upgrade modal when the limit is reached.
+- **Drag-and-Drop Kanban Board:** The My Schools page features a responsive, 5-column Kanban board using . Card stage changes are persisted to the backend. The UI has been repeatedly refined to be clean, professional, and scannable.
+- **Real University Logos:** The Kanban cards display real university logos by fetching from a knowledge base and falling back to a Google favicon service.
+- **In-App Notification System:** A new notification bell in the header displays a badge for unread items. A weekly background task checks for incomplete athlete measurables and creates a notification, which deep-links to the profile page.
+- **Refined My Schools Page:** The page has been significantly decluttered. The hero card shows only Past Due or Due Today actions. The Improve match accuracy banner was moved to the profile page, and the + Add School button was removed to streamline the user flow.
 
 **Last working item**:
-    - Last item agent was working: Implementing the frontend UI for the new Match Scoring V2 feature, following a detailed user-approved plan. The agent had just updated the  and was about to modify the list-view  component to display the new fit labels and confidence scores.
+    - Last item agent was working: The user requested to replace the Upcoming Events list on the My Schools page with an Upcoming Tasks list, referencing the implementation in the original  GitHub repository. The agent has started gathering context by listing the relevant files from the specified repo.
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? frontend testing agent
+    - Which testing method agent to use? backend testing agent for the new API and frontend testing agent for the UI component.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Complete the UI implementation for Match Scoring V2. (P0)
+  - Issue 1: Replace Upcoming Events with Upcoming Tasks. (P0)
 
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: The backend API is complete and tested via . On the frontend, the  successfully fetches data from the new endpoint, and the  displays the initial set of data (match %, social links).
+     - Attempted fixes: The agent has identified the source files for the feature in the legacy  repository (, ,  router).
      - Next debug checklist: 
-        1. **Update School Cards:** Modify the list-view  component in  to display the  (Strong Fit, etc.) and  (High Confidence, etc.).
-        2. **Implement Detail Page Breakdown:** Create the Match Breakdown UI section on the  to visualize the scores for Division, Region, Academics, and Measurables, along with the detailed explanation text.
-        3. **Add Guidance Banner:** Implement the banner on the  that prompts users to add missing measurables in their profile to improve match accuracy.
-        4. **Verify and Test:** Use screenshots to verify the UI of the cards and detail page. Finally, call the  to perform a comprehensive test of the My Schools and School Detail pages to ensure all new data is displayed correctly and there are no regressions.
-     - Why fix this issue and what will be achieved with the fix? This will complete a major user-requested feature, transforming the school matching from a simple percentage into a transparent, trustworthy tool that helps families understand *why* a school is a good fit.
+        1. Read the contents of the identified files from  to understand the data source and business logic for Upcoming Tasks.
+        2. Implement a new backend service and API endpoint (e.g., ) in the current project to provide the necessary data.
+        3. In , replace the existing Upcoming Events section and its data fetching logic.
+        4. Create a new  component that fetches data from the new endpoint and renders the list as it appears in the  repo.
+        5. Test the backend endpoint via .
+        6. Test the frontend UI change via a  or the .
+     - Why fix this issue and what will be achieved with the fix? This will align the My Schools page with the user's desired functionality, making it a more effective task management tool for athletes.
      - Status:  IN PROGRESS
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? frontend
+     - Should Test frontend/backend/both after fix? both
      - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1: Complete the UI implementation for Match Scoring V2. (P0)
-     - Where to resume: Modify the school card component used within the list on  to add the new UI elements for the fit label and confidence score.
-     - What will be achieved with this? A fully-featured, user-friendly school matching system that provides actionable insights to athletes and their families, fulfilling the user's detailed specification.
+  - Task 1: Implement Upcoming Tasks Feature. (P0)
+     - Where to resume: The agent has listed the relevant files from the  repo. The next step is to read their content to understand the implementation.
+     - What will be achieved with this? The Upcoming Events section will be replaced with a more relevant Upcoming Tasks list, improving the page's utility.
      - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix? frontend
+     - Should Test frontend/backend/both after fix? both
      - Blocked on something: None
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
-- (P1) **AI-Powered Gmail Scanning:** Implement the background Gmail scanning functionality that analyzes email content to automatically suggest adding schools to an athlete's pipeline.
-- (P2) **Technical Debt:** Normalize  fields in the database (e.g., in the  collection) to  for consistency with Pydantic models.
+- (P1) **Technical Debt:** Normalize  fields in the database (e.g., in the  collection) to  for consistency with Pydantic models.
 
 **Future Tasks:**
 - **Connected Experiences:** Implement features that bridge the different roles, such as allowing directors to see athlete pipeline progress.
 - **Advanced Features & Parent Experience:** Port Stripe subscriptions, engagement analytics, the Smart Match AI, and build out the dedicated parent/family experience.
 
 **Completed work in this session**
-- **Light/Dark Theme System (DONE):**
-  - Fixed a broken light theme by refactoring all major athlete-facing pages (, , , , , , , , etc.) to use CSS variables from .
-  - Verified with  (100% pass rate).
-- **UI/UX Polish (DONE):**
-  - Added an Athlete demo login button to .
-  - Removed duplicate in-page titles from , , , and .
-  - Renamed nav links in  and updated titles in .
-  - Synchronized icons between  and  route metadata.
-- **Match Scoring V2 Backend (DONE):**
-  - Re-architected the scoring logic in  to use physical measurables, calculate confidence levels, and generate human-readable explanations.
-  - Fixed a critical bug to ensure the logic uses the athlete's real-time questionnaire data from the  collection instead of stale data.
+- **Subscription Tiers (DONE):**
+  - Ported and integrated backend logic () and frontend components (, ) from the legacy  repo.
+  - Enforced a 5-school free tier limit on the backend and frontend.
+- **Drag-and-Drop Kanban Board (DONE):**
+  - Implemented a 5-column Kanban board on  using .
+  - Created a backend endpoint to persist stage changes on drop.
+- **UI/UX Overhaul for My Schools Page (DONE):**
+  - Iteratively redesigned the Kanban board and cards to be minimalist and professional.
+  - Implemented real university logos on cards by enriching program data from a knowledge base.
+  - Made the page responsive for mobile, with the Kanban becoming a horizontal scroll view.
+  - Refined the hero card to show only urgent actions (Past Due / Due Today).
+  - Removed the Committed column, replacing it with a  component.
+- **In-App Notification System (DONE):**
+  - Created a backend service () and API () to manage user notifications.
+  - Implemented a weekly background task, triggered on login, to send a nudge for incomplete athlete measurables.
+  - Built a  component on the frontend with a badge and dropdown menu.
+- **Feature Relocation (DONE):**
+  - Moved the Improve your match accuracy banner from  to .
+  - Removed the + Add School button from  to streamline user flow.
 
 **Earlier issues found/mentioned but not fixed**
-   - Issue 1: Database fields in collections like  use  for some fields. This should be normalized to  to match backend Pydantic models and improve consistency.
+   - Issue 1: Database fields in collections like  use . This should be normalized to  to match backend Pydantic models.
 
 **Known issue recurrence from previous fork**
   - None.
@@ -84,76 +93,88 @@ A unified full-stack application (FastAPI, React, MongoDB). The current session 
 
 
 **Key Technical Concepts**
-- **V2 Match Scoring Algorithm:** A multi-factor weighted scoring model that incorporates:
-  - Athlete preferences (Division, Region, Priorities).
-  - Academic fit (GPA/SAT vs. school data).
-  - **Measurables Fit** (Height, Position, Jump stats vs. division benchmarks).
-  - A dynamic **Confidence Level** that changes based on how complete the athlete's profile is.
-  - Generates a **Fit Label** (e.g., Strong Fit) and a human-readable explanation for the score.
-- **Comprehensive UI Theming:** Executed a large-scale refactor to fix a broken theme, demonstrating how to audit and replace hardcoded styles (, , etc.) with theme-aware CSS variables (, ).
+- **Feature Gating & Subscriptions:** Using a  and  hook on the frontend, combined with a backend endpoint (), to conditionally render UI and gate features (e.g., adding schools) based on the user's plan.
+- **Drag-and-Drop Interface:** Utilized  to create an interactive Kanban board where users can drag school cards between columns. The  handler optimistically updates the UI and fires an API call to persist the new .
+- **In-App Notification System:** A backend service creates notifications in a dedicated  collection. It's triggered by a  on user login to check for conditions (e.g., incomplete profile, >7 days since last nudge). The frontend fetches these notifications and displays them in a header bell component.
+- **Dynamic Logo Fetching:** The backend  endpoint was enriched to perform a lookup against a  collection. It fetches a  and . The frontend  component uses the  if present, otherwise falls back to a Google high-resolution favicon service using the domain.
+- **Responsive UI (React Hook + CSS):** Implemented mobile responsiveness for the  using a dual approach: a  hook () renders a completely different layout for the Kanban (horizontal flex scroll), while CSS media queries handle smaller tweaks and provide a fallback.
 
 **key DB schema**
-- No schema changes were made. However, the application now heavily relies on the  object and measurable fields (, , , ) within the  collection for its core matching logic.
+- ****: 
+- ****: Now includes subscription-related fields like , .
+- ****: The  field is now updated by the drag-and-drop functionality.
 
 **changes in tech stack**
-- None.
+- Added  for the Kanban board.
+- Added  for LLM features.
 
 **All files of reference**
 **New Files:**
-- None.
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
 
 **Heavily Modified Files:**
-- : The entire match scoring logic was rewritten.
-- : Logic added to fetch V2 scores and pass them to child components.
-- : UI updated to show new V2 score data.
-- **All files in  and **: Refactored to remove hardcoded colors and use CSS theme variables.
-- : Refined CSS variables for the theme system.
-- : Updated route metadata and themed the loading spinner.
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
 
 **Areas that need refactoring**:
-- Database fields in the  collection should be normalized from  to  to align with backend Pydantic models.
+- Database fields in the  collection should be normalized from  to .
 
 **key api endpoints**
-- : This endpoint's response payload has been completely changed to support the V2 scoring model, now returning an object with ,  (score, label), , , , and .
+- ****: Fetches the current user's subscription plan and limits.
+- ****: Fetches unread notifications for the current user.
+- ****: Marks a notification as read.
+- ****: Now used by the drag-and-drop Kanban to update a school's .
 
 **Critical Info for New Agent**
-- Your immediate and highest priority (P0) is to **complete the frontend UI for the Match Scoring V2 feature**. The backend is complete and the user has approved a detailed multi-step plan for the UI.
-- **Resume here:** Start by modifying the list-view  component within . You need to add the  (e.g., Strong Fit) and  (e.g., Medium Confidence) to each card in the school list.
-- **Next Steps:**
-  1. Implement the Match Breakdown section on the .
-  2. Add the guidance banner on  to prompt for missing measurables.
-  3. After implementation, use the  to perform a thorough visual test of the My Schools and School Detail pages.
+- **Your immediate task (P0) is to replace the Upcoming Events section on the My Schools page with an Upcoming Tasks section.**
+- You must replicate the logic and UI from the legacy  repository. The user has provided the GitHub URL, and the previous agent has already identified the key source files.
+- The user is very detail-oriented about UI/UX. Be prepared for iterative feedback and refinement after the initial implementation.
+- The mobile responsiveness of the  was implemented, but could not be visually verified with a screenshot due to limitations in the testing environment. While the code should work, the user may have feedback once they test it on a real device.
 
 **documents and test reports created in this job**
 -  (Updated)
--  (Theme System Test Report)
+-  (Subscription & DnD Kanban Test Report)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1. **LATEST (Needs Action):** User approved the detailed V2 Match Scoring proposal and provided final adjustments and a clear implementation order. (Status: **IN PROGRESS**)
-2. User reviewed the detailed V2 Match Scoring proposal. (Status: **COMPLETED**)
-3. User asked for the current matching logic. (Status: **COMPLETED**)
-4. User requested to add athlete measurables to the matching logic and provided an image for context. (Status: **COMPLETED**)
-5. User asked if the current matching logic uses the athlete's questionnaire data. (Status: **COMPLETED**, agent found and fixed a bug where it wasn't).
-6. User requested the My Schools hero card look like the original  repo, including match % and social links. (Status: **COMPLETED**, and now being enhanced by V2).
-7. User requested matching icons on the sidebar and top bar. (Status: **COMPLETED**)
-8. User requested renaming Pipeline to My Schools and Schools to Find Schools. (Status: **COMPLETED**)
-9. User reported duplicate titles on pages. (Status: **COMPLETED**)
-10. User requested an athlete demo login link be added to the login page. (Status: **COMPLETED**)
+- **LATEST (Needs Action):** User confirmed the Upcoming Events list should be Upcoming Tasks and pointed to the  repo for the correct implementation.
+- User asked what to do with the Upcoming Events list.
+- User confirmed the hero card now correctly shows only 2 urgent items.
+- User asked to double-check the logic for the hero card to ensure it only shows Past Due or Due Today items.
+- User requested to change the Actions Needed Today text color to orange.
+- User asked to remove the + Add School button from the pipeline page.
+- User confirmed they want in-app notifications for incomplete measurables.
+- User asked about sending a weekly notification to complete measurables.
+- User confirmed moving the Improve match accuracy banner to the Profile/Settings page.
+- User asked to move the Improve match accuracy banner out of the pipeline page.
 
 **Project Health Check:**
-- **Broken:** No features are currently broken or crashing.
-- **Mocked/Needs Improvement:**
-  - The frontend UI for the Match Scoring V2 feature is incomplete. The backend logic is done, but the UI on the school list cards and school detail page needs to be built. This is the top-priority task.
+- **Broken:** None.
+- **Mocked/Needs Improvement:** The mobile responsiveness of the My Schools page was implemented using standard breakpoints and hooks, but could not be visually confirmed via a screenshot due to environment limitations. It requires verification on a real device.
 
 **3rd Party Integrations**
 - **Active:**
   - **MongoDB**: Primary database.
-  - **Google (Gmail API)**: Used for the Inbox feature.
-  - **Emergent LLM Key**: Used for all AI features via the  library.
-- **Planned:** Stripe.
+  - **Google (Gmail API)**: For email analysis.
+  - **Emergent LLM Key (Claude Sonnet)**: For AI Gmail Intelligence.
+  - **react-beautiful-dnd**: For the drag-and-drop Kanban board.
 
 **Testing status**
-  - Testing agent used after significant changes: YES. Used successfully to verify the theme system fix.
+  - Testing agent used after significant changes: YES. Used successfully to validate the subscription and drag-and-drop feature implementation. The agent found and fixed a critical bug related to the  key.
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
   - Known regressions: None.
@@ -163,4 +184,4 @@ A unified full-stack application (FastAPI, React, MongoDB). The current session 
 - **Director:**  / 
 
 **What agent forgot to execute**
-The agent was in the middle of a large, user-approved, multi-step implementation (Match Scoring V2). The task is not finished, but nothing has been forgotten. The next steps are clearly defined in the plan.</analysis>
+The agent has been diligent in following the user's rapid-fire requests. Nothing appears to have been forgotten; the current task is a direct continuation of the user's latest instruction.</analysis>
