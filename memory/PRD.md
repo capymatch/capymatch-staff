@@ -222,7 +222,11 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 
 ## P2 Future/Backlog
 - Smart Match Later Phases (deeper LLM reasoning, roster/need intelligence, coach engagement signals)
+- Full Admin Users page (user management, plan changes)
+- Full Admin Subscriptions page (subscription management with audit log)
 - Director-Specific Actions (Request Coach Review, Escalate Pipeline Risk)
 - Stripe Customer Portal integration for "Manage Billing" button
 - Advanced Features & Parent Experience (family experience)
+- Multi-agent intelligence pipeline (NIL readiness, roster stability, scholarship analysis)
+- Community contributions & import analytics
 - Engagement analytics
