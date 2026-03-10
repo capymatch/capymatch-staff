@@ -1,0 +1,158 @@
+<analysis>**original_problem_statement:**
+The user wants to unify two separate applications:  (a coach/director app) and  (an athlete/parent app). The end goal is a single, unified platform with a shared backend, data model, and authentication system, which provides distinct, role-based user experiences for Directors, Coaches, Athletes, and Parents. The project is following a detailed, multi-phase unification and migration plan.
+
+**PRODUCT REQUIREMENTS:**
+- Create a single, canonical data model for shared entities like users, athletes, schools, etc.
+- Implement a unified authentication system that supports JWTs and multiple user roles.
+- Build role-based routing on the frontend to direct users to the correct experience after login.
+- Incrementally migrate features from the original  app into the new unified platform.
+- Implement Connected Experiences to bridge the different user roles (e.g., allowing staff to view athlete progress).
+- Continuously refine the UI/UX and improve technical robustness (e.g., database normalization, Pydantic models).
+- Implement a Smart Match feature to provide personalized school recommendations.
+
+**User's preferred language**: English
+
+**what currently exists?**
+A unified full-stack application (FastAPI, React, MongoDB) with a sophisticated and consistent UI. The application includes:
+- **Core Features:** A multi-phase Journey Page, full Stripe integration, a tabbed Settings Page, automated Coach Watch news alerts, a Connected Experiences panel for staff, and a coach-to-athlete Flag for Follow-Up tasking system.
+- **Robust Subscription Enforcement:** The backend now strictly enforces plan limits for school pipeline size and AI draft usage, returning 403 errors when limits are exceeded. The frontend displays dynamic upgrade banners, usage indicators in the UI, and handles upgrade prompts gracefully.
+- **Core Automations:** Key workflow automations from the original repo have been implemented, such as updating an athlete's  to Contacted after an email is sent.
+- **Consistent UI/UX:** A major refactoring pass was completed to align card spacing, border-radius (), and hero card styling across all major pages, creating a polished and unified user experience.
+
+**Last working item**:
+    - Last item agent was working: The agent was implementing Phase 1 of the Smart Match feature. A rule-based backend scoring engine has been built and tested (). The agent was in the process of building the frontend components on the  and  pages.
+    - Status: IN PROGRESS
+    - Agent Testing Done: N
+    - Which testing method agent to use? both
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:
+- There are no pending issues.
+
+**In progress Task List**:
+  - Task 1: (P0) Complete Smart Match Phase 1 Implementation.
+
+ Task Detail:
+  - Task 1: 
+     - Where to resume: 
+        1. **Frontend (Find Schools):** Complete the Recommended for You section in . The data-fetching logic is in place; the UI rendering needs to be completed to match the user's specification (school cards with score, reason chips, CTAs).
+        2. **Frontend (Dashboard):** Complete the Top Matches card in . Data-fetching logic is present; the card UI needs to be fully built out.
+        3. **Backend (AI Explanations):** Integrate the AI call (using  with Claude Sonnet) into the  endpoint. This should generate the , , and  for top matches, gated for Pro/Premium users.
+        4. **Testing:** Conduct end-to-end testing of the entire feature across different subscription tiers.
+     - What will be achieved with this? This will deliver a valuable, parent-friendly feature that provides personalized school recommendations, driving user engagement and creating a clear upgrade path to premium tiers.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? both
+     - Blocked on something: Nothing.
+
+**Upcoming and Future Tasks**
+**Upcoming Tasks:**
+- (P1) **Smart Match (Phase 1 Nice-to-haves):** Implement school comparison, allow users to rerun recommendations after profile updates, and add recommendation history.
+
+**Future Tasks:**
+- **Smart Match (Later Phases):** Integrate deeper LLM reasoning, roster/need intelligence, and coach engagement signals.
+- **Director-Specific Actions:** Implement director-level actions like Request Coach Review or Escalate Pipeline Risk.
+- **Stripe Customer Portal:** Implement the Manage Billing button on the Settings page by integrating Stripe's customer portal.
+- **Advanced Features & Parent Experience:** Build out the dedicated parent/family experience.
+
+**Completed work in this session**
+- **Flag for Follow-Up Feature (DONE):** Implemented the full workflow, allowing coaches to flag schools in a panel, which creates a clickable task on the athlete's pipeline page, leading to a Mark Complete action on the specific school's journey page.
+- **Subscription Plan Enforcement & Pricing Fix (DONE):**
+    - Corrected backend subscription tiers and Stripe prices to /bin/bash/9/9.
+    - Implemented hard API-level enforcement for school and AI draft limits.
+    - Added a dynamic upgrade banner on the pipeline page and subtle usage indicators in the hero card.
+    - Ensured frontend modals correctly handle 403 errors and prompt for an upgrade.
+- **Major UI/UX Refactoring (DONE):**
+    - Standardized card layouts, border-radius, and spacing across the entire application for a consistent look and feel.
+    - Fixed the Journey page layout, hero card colors, and width to match the rest of the app.
+    - Cleaned up the Journey page by repositioning the Getting Started checklist and removing a redundant sidebar widget.
+- **Core Automation Rules (DONE):** Re-implemented key automations from the original repo, such as updating  and  when emails are sent or replies are logged.
+
+**Earlier issues found/mentioned but not fixed**
+   - None.
+
+**Known issue recurrence from previous fork**
+  - None.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Hybrid AI Model:** Combining a deterministic, rule-based scoring engine for core logic with LLM-generated explanations for user-facing insights.
+- **Global UI Refactoring:** Systematically applying design changes (border-radius, spacing) across dozens of components for visual consistency.
+- **Subscription Gating & Enforcement:** Implementing hard limits in backend APIs (returning 403 errors) and creating responsive frontend UIs (upgrade modals, banners, usage indicators) to manage plan limits.
+- **State-Driven Automations:** Modifying backend endpoints to trigger automatic state changes in the database (e.g., updating  when an email is sent).
+
+**key DB schema**
+- ****: Contains  and  sub-documents, which are now actively used for enforcement.
+- ****: The count of an athlete's programs is checked against their subscription limit.
+- ****: The source of rich data for the Smart Match scoring engine (953 documents).
+
+**changes in tech stack**
+-  is planned for use with Claude Sonnet for AI explanations.
+
+**All files of reference**
+-  (New)
+-  (Heavily Modified)
+-  (Heavily Modified)
+-  (Modified)
+-  (Modified)
+-  (Modified)
+-  (Modified)
+-  (Modified)
+
+**Areas that need refactoring**:
+- None. The session focused heavily on refactoring and consistency improvements.
+
+**key api endpoints**
+- ** (New):** Returns a ranked list of school recommendations based on a rule-based scoring engine. Gated by subscription tier.
+- ** (Modified):** Now enforces subscription limits on the number of schools an athlete can add.
+- ** (Modified):** Now enforces subscription limits on the number of AI drafts a user can generate.
+- ** (Modified):** Triggers automations to update  and .
+
+**Critical Info for New Agent**
+- **Your immediate task is to complete Phase 1 of the Smart Match feature.**
+- The backend rule-based scoring engine is complete and tested. You need to build out the frontend components on the **Dashboard** and **Find Schools** pages.
+- After the frontend is complete, you must integrate the **AI-powered explanations** into the backend  endpoint using the  library. This feature should be gated for Pro/Premium users.
+- The user has provided a very detailed specification for Smart Match. Adhere to it closely regarding UI placement, subscription gating, and the hybrid model (rules for score, AI for explanation).
+- All subscription plan enforcement logic is now in place and tested. Do not change it.
+
+**documents and test reports created in this job**
+-  (Updated)
+- 
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**
+- **LATEST:** User provided a highly detailed specification for implementing the Smart Match feature, including the hybrid approach (rules + AI), UI placement, subscription gating, and data assumptions.
+- User requested to discuss the plan for the Smart Match feature.
+- User accepted the proposed plan for usage indicators on the dashboard hero card.
+- User requested to implement P1 task: strict subscription plan enforcement.
+- User requested to keep the dashboard focused on workflow, not billing, and use subtle indicators for plan usage.
+- User asked the agent to create a plan to add a Plan Usage Dashboard card.
+- User confirmed the pricing and automation rules are correct and asked the agent to finish.
+- User asked the agent to proceed with fixing subscription tiers, adding an upgrade banner, and auditing automations, prioritizing specific rules.
+- Agent presented findings on discrepancies between the repo's subscription rules and the current implementation.
+- User asked the agent to review all subscription rules and automations from the  repo and apply them to the current app.
+
+**Project Health Check:**
+- **Broken:** None.
+- **Mocked/Needs Improvement:**
+    - The Manage Billing button on the Settings page needs integration with the Stripe Customer Portal.
+    - The Smart Match feature is mid-implementation.
+
+**3rd Party Integrations**
+- **Active:** MongoDB, Google (Gmail API), Emergent LLM Key (Claude Sonnet), react-beautiful-dnd, Stripe, apscheduler, duckduckgo-search.
+- **Planned:**  for AI-powered explanations in Smart Match.
+
+**Testing status**
+  - Testing agent used after significant changes: YES. Used after subscription enforcement and automation rules were implemented, with a 100% pass rate.
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: , 
+  - Known regressions: None.
+
+**Credentials to test flow:**
+- **Athlete:**  /  (Currently on Free plan, over school limit)
+- **Director:**  / 
+- **Coach:**  / 
+
+**What agent forgot to execute**
+- The agent was in the middle of a large, multi-step implementation (Smart Match) when the session ended. The work is logically paused between backend completion and frontend/AI integration. No tasks were forgotten.</analysis>

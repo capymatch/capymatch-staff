@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Search, Plus, MapPin, Check, LayoutGrid, List, Star,
   Target, MapPinned, GraduationCap, X, Filter, ExternalLink,
-  Loader2, RotateCcw, Sparkles, ArrowRight, Database
+  Loader2, RotateCcw, Sparkles, ArrowRight, Database, Lock, Zap
 } from "lucide-react";
 import UpgradeModal from "../../components/UpgradeModal";
 import { useSubscription } from "../../lib/subscription";
@@ -266,6 +266,12 @@ export default function SchoolsPage() {
   const [upgradeMessage, setUpgradeMessage] = useState("");
   const { subscription, refresh: refreshSub } = useSubscription();
 
+  // Smart Match
+  const [smartMatches, setSmartMatches] = useState([]);
+  const [smartLoading, setSmartLoading] = useState(true);
+  const [smartGated, setSmartGated] = useState(false);
+  const [smartGatedTotal, setSmartGatedTotal] = useState(0);
+
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -284,6 +290,13 @@ export default function SchoolsPage() {
     axios.get(`${API}/suggested-schools`, { headers }).then(res => {
       setSuggestions(res.data?.suggestions || []);
     }).catch(() => {}).finally(() => setSuggestionsLoading(false));
+
+    // Smart Match
+    axios.get(`${API}/smart-match/recommendations`, { headers }).then(res => {
+      setSmartMatches(res.data?.recommendations || []);
+      setSmartGated(res.data?.gated || false);
+      setSmartGatedTotal(res.data?.gated_total || 0);
+    }).catch(() => {}).finally(() => setSmartLoading(false));
   }, []);
 
   const fetchUniversities = useCallback(async () => {
@@ -394,6 +407,101 @@ export default function SchoolsPage() {
 
   return (
     <div data-testid="knowledge-base" className="max-w-[1280px] mx-auto">
+
+      {/* ── Smart Match: Recommended for You ── */}
+      {!smartLoading && smartMatches.length > 0 && (
+        <div className="mb-8" data-testid="smart-match-section">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,148,136,0.12)" }}>
+                <Sparkles className="w-4 h-4 text-teal-600" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Recommended for You</h2>
+                <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+                  Based on your profile, division, academics, and location
+                </p>
+              </div>
+            </div>
+            {smartGated && (
+              <button onClick={() => setShowUpgrade(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all"
+                style={{ background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}
+                data-testid="smart-match-unlock-btn">
+                <Lock className="w-3 h-3" /> Unlock {smartGatedTotal}+ matches
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {smartMatches.map(m => (
+              <div key={m.university_name}
+                className="rounded-lg border p-4 transition-all hover:border-teal-600/30 cursor-pointer group"
+                style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
+                onClick={() => m.domain ? navigate(`/schools/${m.domain}`) : navigate(`/schools/${encodeURIComponent(m.university_name)}`)}
+                data-testid={`smart-match-card-${m.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
+                <div className="flex items-start gap-3 mb-3">
+                  {m.logo_url ? (
+                    <img src={m.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain flex-shrink-0" style={{ backgroundColor: "var(--cm-surface-2)" }} />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--cm-surface-2)" }}>
+                      <GraduationCap className="w-5 h-5" style={{ color: "var(--cm-text-3)" }} />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-xs font-bold truncate" style={{ color: "var(--cm-text)" }}>{m.university_name}</h3>
+                    <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+                      {m.division}{m.conference ? ` \u00B7 ${m.conference}` : ""}{m.state ? ` \u00B7 ${m.state}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center"
+                    style={{
+                      background: m.match_score >= 80 ? "rgba(16,185,129,0.1)" : m.match_score >= 60 ? "rgba(245,158,11,0.1)" : "var(--cm-surface-2)",
+                      border: `2px solid ${m.match_score >= 80 ? "rgba(16,185,129,0.4)" : m.match_score >= 60 ? "rgba(245,158,11,0.3)" : "var(--cm-border)"}`,
+                    }}>
+                    <span className="text-xs font-extrabold" style={{ color: m.match_score >= 80 ? "#10b981" : m.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)" }}>
+                      {m.match_score}
+                    </span>
+                  </div>
+                </div>
+                {/* Reason chips */}
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {m.chips.map((chip, i) => (
+                    <span key={i} className="text-[9px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: "rgba(13,148,136,0.06)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)" }}>
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+                {/* AI summary (Pro/Premium) */}
+                {m.ai_summary && (
+                  <p className="text-[11px] mb-3 leading-relaxed" style={{ color: "var(--cm-text-2)" }}>{m.ai_summary}</p>
+                )}
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  {m.in_pipeline ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color: "#10b981" }}>
+                      <Check className="w-3 h-3" /> In Pipeline
+                    </span>
+                  ) : (
+                    <button onClick={(e) => { e.stopPropagation(); addToBoard({ university_name: m.university_name }); }}
+                      disabled={adding[m.university_name]}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all"
+                      style={{ backgroundColor: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}
+                      data-testid={`add-match-${m.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
+                      {adding[m.university_name] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                      Add to Pipeline
+                    </button>
+                  )}
+                  <span className="text-[10px] ml-auto group-hover:text-teal-600 transition-colors" style={{ color: "var(--cm-text-3)" }}>
+                    View details <ArrowRight className="w-3 h-3 inline" />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Search + Filter Toggle */}
       <div className="flex gap-2.5 items-center mb-5" data-testid="search-row">
         <div className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-[14px] bg-[var(--cm-surface)] border border-[var(--cm-border)]">

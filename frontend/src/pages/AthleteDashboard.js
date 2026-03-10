@@ -7,7 +7,8 @@ import {
   ChevronRight, Target, MessageCircle, Mail, Clock,
   Zap, Send, Sparkles, CheckCircle,
   ArrowRight, Calendar, Activity, ChevronDown, ChevronUp,
-  Eye, Flame, Brain, AlertCircle, CheckCircle2, X, ArrowUpRight
+  Eye, Flame, Brain, AlertCircle, CheckCircle2, X, ArrowUpRight,
+  GraduationCap, Plus, Check, Lock, Loader2
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -472,6 +473,33 @@ export default function AthleteDashboard() {
   const [insights, setInsights] = useState([]);
   const [scanStatus, setScanStatus] = useState(null);
   const [confirming, setConfirming] = useState(null);
+  const [topMatches, setTopMatches] = useState([]);
+  const [smartTier, setSmartTier] = useState("basic");
+  const [smartGated, setSmartGated] = useState(false);
+  const [addingMatch, setAddingMatch] = useState({});
+
+  const addMatchToBoard = async (universityName) => {
+    setAddingMatch(prev => ({ ...prev, [universityName]: true }));
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API}/knowledge-base/add-to-board`, { university_name: universityName }, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      toast.success(`${universityName} added to your board`);
+      setTopMatches(prev => prev.map(m =>
+        m.university_name === universityName ? { ...m, in_pipeline: true } : m
+      ));
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      if (err.response?.status === 403) {
+        toast.error(typeof detail === "object" ? detail.message : "School limit reached. Upgrade to add more.");
+      } else {
+        toast.error("Failed to add school");
+      }
+    } finally {
+      setAddingMatch(prev => ({ ...prev, [universityName]: false }));
+    }
+  };
 
   const fetchInsights = async () => {
     try {
@@ -489,8 +517,9 @@ export default function AthleteDashboard() {
       axios.get(`${API}/athlete/gmail/status`).catch(() => ({ data: { connected: false } })),
       axios.get(`${API}/athlete/gmail/intelligence/insights?status=pending`).catch(() => ({ data: { insights: [] } })),
       axios.get(`${API}/athlete/gmail/intelligence/status`).catch(() => ({ data: {} })),
+      axios.get(`${API}/smart-match/recommendations`).catch(() => ({ data: { recommendations: [] } })),
     ])
-      .then(([progRes, evtRes, intRes, profRes, gmailRes, insightRes, scanRes]) => {
+      .then(([progRes, evtRes, intRes, profRes, gmailRes, insightRes, scanRes, matchRes]) => {
         setPrograms(progRes.data || []);
         setEvents(Array.isArray(evtRes.data) ? evtRes.data : []);
         setInteractions(Array.isArray(intRes.data) ? intRes.data : []);
@@ -498,6 +527,9 @@ export default function AthleteDashboard() {
         setGmailConnected(gmailRes.data?.connected || false);
         setInsights(insightRes.data?.insights || []);
         setScanStatus(scanRes.data || null);
+        setTopMatches((matchRes.data?.recommendations || []).slice(0, 3));
+        setSmartTier(matchRes.data?.tier || "basic");
+        setSmartGated(matchRes.data?.gated || false);
       })
       .catch(() => toast.error("Failed to load dashboard"))
       .finally(() => setLoading(false));
@@ -701,6 +733,92 @@ export default function AthleteDashboard() {
         gmailConnected={gmailConnected}
         navigate={navigate}
       />
+
+      {/* ═══ Smart Match: Top Matches ═══ */}
+      {topMatches.length > 0 && (
+        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="top-matches">
+          <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,148,136,0.12)" }}>
+                <Sparkles className="w-4 h-4" style={{ color: "#0d9488" }} strokeWidth={2} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Top Matches</h3>
+                <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>Personalized school recommendations based on your profile</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {smartGated && (
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: "rgba(13,148,136,0.1)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}>
+                  <Lock className="w-2.5 h-2.5 inline mr-0.5" style={{ verticalAlign: "-1px" }} /> Upgrade for more
+                </span>
+              )}
+              <button onClick={() => navigate("/schools")} className="text-xs font-semibold flex items-center gap-1 transition-opacity hover:opacity-80" style={{ color: "#1a8a80" }} data-testid="top-matches-view-all">
+                Find schools <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3">
+            {topMatches.map((m, idx) => {
+              const scoreColor = m.match_score >= 80 ? "#10b981" : m.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)";
+              const scoreBg = m.match_score >= 80 ? "rgba(16,185,129,0.1)" : m.match_score >= 60 ? "rgba(245,158,11,0.1)" : "var(--cm-surface-2)";
+              const scoreBorder = m.match_score >= 80 ? "rgba(16,185,129,0.35)" : m.match_score >= 60 ? "rgba(245,158,11,0.3)" : "var(--cm-border)";
+              return (
+                <div key={m.university_name}
+                  className={`px-5 py-4 cursor-pointer transition-colors${idx < topMatches.length - 1 ? " border-b sm:border-b-0 sm:border-r" : ""}`}
+                  style={{ borderColor: "var(--cm-border)" }}
+                  onClick={() => m.domain ? navigate(`/schools/${m.domain}`) : navigate(`/schools/${encodeURIComponent(m.university_name)}`)}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                  data-testid={`top-match-${idx}`}>
+                  <div className="flex items-start gap-3 mb-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-bold truncate" style={{ color: "var(--cm-text)" }}>{m.university_name}</p>
+                      <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+                        {m.division}{m.conference ? ` \u00B7 ${m.conference}` : ""}{m.state ? ` \u00B7 ${m.state}` : ""}
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ background: scoreBg, border: `2px solid ${scoreBorder}` }}>
+                      <span className="text-xs font-extrabold" style={{ color: scoreColor }}>{m.match_score}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-2.5">
+                    {m.chips.slice(0, 2).map((chip, i) => (
+                      <span key={i} className="text-[9px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: "rgba(13,148,136,0.06)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)" }}>
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+                  {m.ai_summary && (
+                    <p className="text-[10px] leading-relaxed mb-2.5" style={{ color: "var(--cm-text-2)" }}>{m.ai_summary}</p>
+                  )}
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    {m.in_pipeline ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color: "#10b981" }}>
+                        <Check className="w-3 h-3" /> In Pipeline
+                      </span>
+                    ) : (
+                      <button onClick={() => addMatchToBoard(m.university_name)}
+                        disabled={addingMatch[m.university_name]}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all"
+                        style={{ backgroundColor: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}
+                        data-testid={`add-top-match-${idx}`}>
+                        {addingMatch[m.university_name] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                        Add to Pipeline
+                      </button>
+                    )}
+                    <span className="text-[10px] ml-auto" style={{ color: "var(--cm-text-3)" }}>
+                      View <ArrowRight className="w-3 h-3 inline" />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ═══ Section 2: Today's Actions ═══ */}
       <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="todays-actions">
