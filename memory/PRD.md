@@ -219,9 +219,21 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New component**: `/app/frontend/src/components/CompareDrawer.js`
 - **Testing:** 100% pass rate (iteration_84: 15/15 backend, all frontend verified)
 
+### Multi-Tenant Organization Architecture (DONE - March 10, 2026)
+- **Data Model**: `organizations` (id, name, slug, plan, billing), `athlete_user_links` (athlete_id, user_id, relationship_type, permissions), `org_invites` (codes for joining orgs). Users/athletes have nullable `org_id`.
+- **Role Standardization**: `platform_admin` (superadmin, no org), `director` (club admin), `club_coach` (hard-renamed from coach), `athlete`, `parent`. College coach remains a KB data entity, not a user role.
+- **Access Control** (`org_access.py`): Org-scoped queries, cross-org guards, per-athlete access checks. Platform admin bypasses all org checks.
+- **Organizations CRUD** (`/api/organizations`): Create/list/get/update orgs, invite codes, join via code, athlete-user links.
+- **Independent Families**: Athletes/parents with null `org_id` can use all features without a club.
+- **Global KB**: University knowledge base remains global (not org-scoped).
+- **Migration**: Idempotent startup: coach→club_coach rename, platform_admin creation, org_id backfill, athlete_user_links backfill.
+- **Testing:** 100% pass rate (iteration_85: 24/24 backend, 6/6 frontend)
+
 ## Credentials
-- **Coach (Williams):** coach.williams@capymatch.com / coach123
-- **Coach (Garcia):** coach.garcia@capymatch.com / coach123
+- **Platform Admin:** douglas@capymatch.com / 1234
+- **Director:** director@capymatch.com / director123
+- **Club Coach (Williams):** coach.williams@capymatch.com / coach123
+- **Club Coach (Garcia):** coach.garcia@capymatch.com / coach123
 
 ## P1 Upcoming
 - Stripe Customer Portal — "Manage Billing" button on Settings page
