@@ -452,7 +452,7 @@ export default function JourneyPage() {
                     {program.next_action || "Send a follow-up to stay on their radar and show continued interest."}
                   </p>
                   <div className="flex gap-2 flex-wrap">
-                    <button onClick={() => { setShowEmail(true); setActiveAction("email"); }}
+                    <button onClick={openGatedEmail}
                       className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium bg-orange-600 hover:bg-orange-700 text-white transition-colors shadow-md"
                       data-testid="overdue-email-btn">
                       <Mail className="w-3.5 h-3.5" /> Send Email
@@ -491,7 +491,7 @@ export default function JourneyPage() {
                     {program.next_action || "You have a follow-up coming up. Get ahead of it to show coaches you're organized and committed."}
                   </p>
                   <div className="flex gap-2 flex-wrap">
-                    <button onClick={() => { setShowEmail(true); setActiveAction("email"); }}
+                    <button onClick={openGatedEmail}
                       className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium text-white transition-colors shadow-md"
                       style={{ backgroundColor: "#1a8a80" }}
                       data-testid="upcoming-email-btn">

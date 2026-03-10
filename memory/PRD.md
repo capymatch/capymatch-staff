@@ -92,7 +92,17 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New component**: `NotesSidebar.js`
 - **Testing:** 100% pass rate (backend 15/15, frontend all verified - iteration_71)
 
+### Phase J4 — Journey Page: Monetization + Polish (DONE - March 10, 2026)
+- **Subscription Gating**: Basic tier email actions show upgrade toast; School Intelligence link hidden for basic
+- **AI Premium Gating**: Non-premium users see lock icon + "Upgrade to Premium" CTA; premium users get full AI buttons
+- **Compare Button**: Header button linking to `/compare?selected={programId}` (hidden on mobile)
+- **Committed Toggle**: CommittedHero + "View full journey" button toggles content visibility for committed schools
+- **School Social Links**: `SchoolSocialLinks` component renders Twitter/Instagram/etc when `program.social_links` exists (data-ready, no current data)
+- **Bug Fix**: Overdue follow-up card Send Email button now properly gated by subscription
+- **Testing:** 95% → 100% after bug fix (iteration_72)
+
 ## P1 Upcoming — Journey Migration Phases
+- All Journey phases (J1-J4) are COMPLETE
 - **Phase J2**: Coach Watch alert, Engagement stats strip, Coach social links, ConversationBubble enrichment
 - **Phase J3**: Send Profile card, Gmail connect nudge, Archive confirmation dialog, Notes sidebar, School intel link alignment
 - **Phase J4**: Subscription gating, AI premium gating, Compare button, Committed toggle, School social links
