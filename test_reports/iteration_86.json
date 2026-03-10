@@ -1,0 +1,84 @@
+{
+  "summary": "Stripe Customer Portal Integration Testing Complete. All 15 backend tests PASSED (100%). All 8 frontend UI tests PASSED. Portal session endpoint, cancel/reactivate flows, and billing button visibility gating all working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_stripe_portal.py",
+    "/app/test_reports/pytest/pytest_stripe_portal.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: POST /api/checkout/create-portal-session returns 401 without auth token",
+    "VERIFIED: POST /api/checkout/create-portal-session returns 400 'No billing account found' for users without stripe_customer_id (basic tier users)",
+    "VERIFIED: POST /api/checkout/create-portal-session requires return_url parameter (422 if missing)",
+    "VERIFIED: POST /api/stripe/cancel returns 401 without auth",
+    "VERIFIED: POST /api/stripe/cancel returns 400 'already on free plan' for basic tier users",
+    "VERIFIED: POST /api/stripe/reactivate returns 401 without auth",
+    "VERIFIED: POST /api/stripe/reactivate returns 400 'No pending cancellation found' when no cancellation scheduled",
+    "VERIFIED: GET /api/stripe/billing-history returns correct structure (transactions, subscription, cancel_at_period_end)",
+    "VERIFIED: GET /api/subscription returns basic tier for Emma Chen (free user)",
+    "VERIFIED: UI - Manage Billing button is NOT in DOM for basic tier (correct gating via tier !== 'basic')",
+    "VERIFIED: UI - Cancel Plan button is NOT in DOM for basic tier",
+    "VERIFIED: UI - Upgrade button IS visible for basic tier users",
+    "VERIFIED: UI - Plan shows 'Starter' label with 'FREE' badge",
+    "VERIFIED: UI - Billing History section loads and displays transactions",
+    "VERIFIED: UI - Compare Plans button visible for basic tier",
+    "VERIFIED: UI - Upgrade highlights section visible for basic tier"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_stripe_portal.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (8/8 UI tests passed)"
+  },
+  "test_credentials": {
+    "basic_athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "password123",
+      "tier": "basic",
+      "has_stripe_customer_id": false
+    },
+    "director": {
+      "email": "director@capymatch.com",
+      "password": "director123"
+    }
+  },
+  "seed_data_creation": "None - using existing seeded users",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Stripe Customer Portal integration fully tested. Key behaviors verified: (1) create-portal-session requires stripe_customer_id on user doc - returns 400 if missing, (2) Manage Billing button and Cancel Plan button are gated by tier !== 'basic' in SettingsPage.js BillingTab component (lines 329-351), (3) Basic tier users see Upgrade button, Compare Plans button, and Upgrade highlights section instead. Emma Chen is on basic tier without stripe_customer_id, so portal button correctly hidden for her. Test file /app/backend/tests/test_stripe_portal.py covers all portal, cancel, reactivate, and billing-history endpoints.",
+  "features_verified": {
+    "portal_session_endpoint": {
+      "auth_required": "WORKING - returns 401 without token",
+      "stripe_customer_required": "WORKING - returns 400 'No billing account found' for users without stripe_customer_id",
+      "return_url_required": "WORKING - returns 422 if return_url missing"
+    },
+    "cancel_endpoint": {
+      "auth_required": "WORKING - returns 401 without token",
+      "basic_tier_blocked": "WORKING - returns 400 'already on free plan' for basic tier"
+    },
+    "reactivate_endpoint": {
+      "auth_required": "WORKING - returns 401 without token",
+      "no_pending_cancellation": "WORKING - returns 400 'No pending cancellation found'"
+    },
+    "billing_history_endpoint": {
+      "auth_required": "WORKING - returns 401 without token",
+      "returns_structure": "WORKING - includes transactions, subscription, cancel_at_period_end"
+    },
+    "ui_billing_tab": {
+      "manage_billing_hidden_for_basic": "WORKING - button not in DOM for basic tier",
+      "cancel_plan_hidden_for_basic": "WORKING - button not in DOM for basic tier",
+      "upgrade_visible_for_basic": "WORKING - button IS visible",
+      "plan_label_shows_starter": "WORKING - shows 'Starter' with 'FREE' badge",
+      "billing_history_loads": "WORKING - section visible with transactions table"
+    }
+  }
+}
