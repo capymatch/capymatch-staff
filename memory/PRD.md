@@ -72,6 +72,8 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 ## Credentials
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
 - **Director:** director@capymatch.com / director123
+- **Coach (Williams):** coach.williams@capymatch.com / coach123
+- **Coach (Garcia):** coach.garcia@capymatch.com / coach123
 
 ### Phase J2 — Journey Page: Coach Relationship Depth (DONE - March 10, 2026)
 - **Coach Watch Alert**: Green "Staff Stable" badge in coaches card header (MOCKED — real detection requires background job)
@@ -153,9 +155,30 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - All models defined in `/app/backend/models.py`
 - All endpoints validated with real API calls — responses match contracts exactly
 
+### Coach-to-Athlete Flag for Follow-Up (DONE - March 10, 2026)
+- **Backend endpoints:**
+  - `POST /api/roster/athlete/{athlete_id}/flag-followup` — Coach flags a school (enforces coach-only + assignment check)
+  - `GET /api/athlete/flags` — Athlete gets active flags
+  - `POST /api/athlete/flags/{flag_id}/complete` — Athlete marks flag as done
+  - `GET /api/athlete/tasks` — Updated to include coach flags alongside system tasks (coach flags sorted first)
+- **Preset reasons:** reply_needed, followup_overdue, strong_interest, review_school
+- **Due options:** today, this_week, none
+- **Coach UI (AthletePipelinePanel):** Flag icon on school rows (hover-revealed), FlagModal with reason selection, optional note, due picker
+- **Athlete UI (PipelinePage):** "Flagged by Coach" section with amber border, flag icon, coach name, due label, "Done" button
+- **Timeline (JourneyPage):** "Coach Directive" (amber, flag icon) and "Flag Completed" (green, checkmark) rendered as distinct center-aligned events
+- **Notifications:** Athlete notified on flag creation; coach notified on flag completion
+- **Files:** `/app/backend/routers/coach_flags.py`, `/app/backend/routers/athlete_tasks.py`, `/app/frontend/src/components/mission-control/AthletePipelinePanel.js`, `/app/frontend/src/pages/athlete/PipelinePage.js`, `/app/frontend/src/components/journey/ConversationBubble.js`, `/app/frontend/src/components/journey/constants.js`
+- **Testing:** 100% pass rate (iteration_79: 15/15 backend, all frontend verified)
+
+## Credentials
+- **Coach (Williams):** coach.williams@capymatch.com / coach123
+- **Coach (Garcia):** coach.garcia@capymatch.com / coach123
+
+## P1 Upcoming
+- Pydantic Hardening (Expansion) — Continue targeted Pydantic hardening on remaining non-critical API endpoints
+
 ## P2 Future/Backlog
-- Connected Experiences (Director ↔ Athlete visibility)
+- Director-Specific Actions (Request Coach Review, Escalate Pipeline Risk)
+- Stripe Customer Portal integration for "Manage Billing" button
+- Advanced Features & Parent Experience (Smart Match AI, family experience)
 - Engagement analytics
-- Smart Match AI (advanced matching)
-- Parent/Family experience
-- Coach Watch scheduled auto-scanning
