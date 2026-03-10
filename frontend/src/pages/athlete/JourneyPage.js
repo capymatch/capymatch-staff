@@ -341,7 +341,7 @@ export default function JourneyPage() {
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6 pb-8">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6 pb-4">
         <div style={{ background: "#1e1e2e", borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
           {/* Teal accent bar */}
           <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
@@ -468,11 +468,11 @@ export default function JourneyPage() {
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-8">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-4">
 
         {/* Coach Flag Card */}
         {coachFlags.length > 0 && (
-          <div className="mb-8 space-y-4" data-testid="journey-coach-flags">
+          <div className="mb-4 space-y-4" data-testid="journey-coach-flags">
             {coachFlags.map(flag => {
               const dueLabel = flag.due === "today" ? "Due today"
                 : flag.due === "this_week" ? "Due this week"
@@ -526,7 +526,7 @@ export default function JourneyPage() {
 
         {/* J1: Overdue Follow-Up Card (rich dark style) */}
         {followUpOverdue && !activeAction && (
-          <div className="mb-8 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="overdue-followup-card">
+          <div className="mb-4 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="overdue-followup-card">
             <div style={{ height: 2, background: "linear-gradient(90deg, #f97316, rgba(249,115,22,0.2))" }} />
             <div className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
@@ -565,7 +565,7 @@ export default function JourneyPage() {
 
         {/* J1: Upcoming Follow-Up Card (due within 5 days) */}
         {followUpUpcoming && !followUpOverdue && !activeAction && (
-          <div className="mb-8 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="upcoming-followup-card">
+          <div className="mb-4 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="upcoming-followup-card">
             <div style={{ height: 2, background: "linear-gradient(90deg, #1a8a80, rgba(26,138,128,0.2))" }} />
             <div className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
