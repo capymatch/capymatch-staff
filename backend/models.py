@@ -123,10 +123,163 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class UserOut(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: str
+    org_id: Optional[str] = None
+    created_at: str = ""
+
 class TokenResponse(BaseModel):
     token: str
-    user: dict
-    claimed_athlete_id: str | None = None
+    user: UserOut
+    claimed_athlete_id: Optional[str] = None
+
+class MeResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    role: str
+    org_id: Optional[str] = None
+
+
+# ── Athlete Self / Dashboard ──
+
+class AthleteHeader(BaseModel):
+    id: str
+    first_name: str = ""
+    last_name: str = ""
+    full_name: str = ""
+    email: str = ""
+    phone: str = ""
+    grad_year: Optional[int] = None
+    position: str = ""
+    team: str = ""
+    height: str = ""
+    weight: str = ""
+    gpa: str = ""
+    high_school: str = ""
+    hudl_url: str = ""
+    video_link: str = ""
+    photo_url: str = ""
+    bio: str = ""
+    recruiting_stage: str = ""
+    momentum_score: Optional[int] = None
+    momentum_trend: str = ""
+    school_targets: int = 0
+    active_interest: int = 0
+    last_activity: str = ""
+
+class AthleteClaimResponse(BaseModel):
+    claimed: bool
+    athlete: Optional[AthleteHeader] = None
+    coach: Optional[dict] = None
+
+class DashboardProfile(BaseModel):
+    first_name: str = ""
+    last_name: str = ""
+    full_name: str = ""
+    position: str = ""
+    team: str = ""
+    grad_year: Optional[int] = None
+
+
+# ── Subscription ──
+
+class UsageLimits(BaseModel):
+    schools: int = 0
+    schools_limit: int = 5
+    schools_remaining: int = 5
+    unlimited: bool = False
+    ai_drafts_used: int = 0
+    ai_drafts_limit: int = 0
+    ai_drafts_remaining: int = 0
+
+class SubscriptionResponse(BaseModel):
+    tier: str = "basic"
+    label: str = "Starter"
+    price: float = 0
+    features: List[str] = []
+    usage: UsageLimits = UsageLimits()
+
+
+# ── Settings ──
+
+class PreferencesOut(BaseModel):
+    followup_reminders: bool = True
+    email_notifications: bool = True
+    theme: str = "dark"
+    inbound_scan: bool = False
+
+class SettingsResponse(BaseModel):
+    name: str = ""
+    email: str = ""
+    preferences: PreferencesOut = PreferencesOut()
+
+
+# ── Connected Experiences ──
+
+class PipelineHeader(BaseModel):
+    id: str
+    name: str = "Unknown"
+    grad_year: Optional[int] = None
+    position: Optional[str] = None
+    team: Optional[str] = None
+    momentum_score: int = 0
+    momentum_trend: str = "stable"
+    recruiting_stage: str = "exploring"
+    days_since_activity: int = 0
+    photo_url: str = ""
+
+class PipelineSummary(BaseModel):
+    total_schools: int = 0
+    response_rate: int = 0
+    active_conversations: int = 0
+    overdue_followups: int = 0
+    waiting_on_reply: int = 0
+
+class StageCount(BaseModel):
+    stage: str
+    label: str
+    count: int = 0
+
+class SchoolEntry(BaseModel):
+    program_id: str
+    university_name: str = ""
+    logo_url: str = ""
+    division: str = ""
+    conference: str = ""
+    primary_coach: str = ""
+    reply_status: str = ""
+    board_group: str = ""
+    follow_up_days: Optional[int] = None
+    next_action: str = ""
+    next_action_due: str = ""
+    priority: str = ""
+    pulse: str = ""
+    risks: List[str] = []
+    updated_at: str = ""
+
+class SchoolGroup(BaseModel):
+    stage: str
+    label: str
+    schools: List[SchoolEntry] = []
+
+class ActivityEntry(BaseModel):
+    type: str = ""
+    university_name: str = ""
+    notes: str = ""
+    outcome: str = ""
+    date: str = ""
+
+class PipelineResponse(BaseModel):
+    header: PipelineHeader
+    summary: PipelineSummary
+    stage_distribution: List[StageCount] = []
+    schools: List[SchoolGroup] = []
+    recent_activity: List[ActivityEntry] = []
+    momentum_assessment: str = "steady"
 
 
 # ── Invites ──

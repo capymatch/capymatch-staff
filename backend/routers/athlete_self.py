@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from auth_middleware import get_current_user_dep
 from db_client import db
+from models import AthleteClaimResponse
 
 router = APIRouter()
 
@@ -40,7 +41,7 @@ def _safe_athlete(doc: dict) -> dict:
     }
 
 
-@router.get("/athlete/me")
+@router.get("/athlete/me", response_model=AthleteClaimResponse)
 async def get_my_athlete_profile(current_user: dict = get_current_user_dep()):
     """Return the athlete record linked to the current user, if any."""
     if current_user["role"] not in ("athlete", "parent"):

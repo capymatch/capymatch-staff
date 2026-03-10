@@ -8,7 +8,7 @@ from passlib.hash import bcrypt
 from datetime import datetime, timezone, timedelta
 
 from db_client import db
-from models import UserCreate, UserLogin, TokenResponse
+from models import UserCreate, UserLogin, TokenResponse, UserOut, MeResponse
 from auth_middleware import create_token, get_current_user_dep
 
 import logging
@@ -161,7 +161,7 @@ async def login(body: UserLogin, background_tasks: BackgroundTasks):
     return {"token": token, "user": safe}
 
 
-@router.get("/auth/me")
+@router.get("/auth/me", response_model=MeResponse)
 async def me(current_user: dict = get_current_user_dep()):
     return current_user
 

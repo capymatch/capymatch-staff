@@ -13,6 +13,7 @@ from db_client import db
 from auth_middleware import get_current_user_dep
 from services.athlete_store import get_by_id as get_athlete_by_id
 from routers.athlete_dashboard import compute_journey_rail, categorize_program
+from models import PipelineResponse
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ def _classify_risk(program: dict) -> list:
     return risks
 
 
-@router.get("/roster/athlete/{athlete_id}/pipeline")
+@router.get("/roster/athlete/{athlete_id}/pipeline", response_model=PipelineResponse)
 async def get_athlete_pipeline_summary(
     athlete_id: str,
     current_user: dict = get_current_user_dep(),

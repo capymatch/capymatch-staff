@@ -6,6 +6,7 @@ import uuid
 
 from auth_middleware import get_current_user_dep
 from db_client import db
+from models import SettingsResponse
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ async def _get_athlete_tenant(current_user: dict) -> str:
     return athlete["tenant_id"]
 
 
-@router.get("/athlete/settings")
+@router.get("/athlete/settings", response_model=SettingsResponse)
 async def get_settings(current_user: dict = get_current_user_dep()):
     user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
     if not user:

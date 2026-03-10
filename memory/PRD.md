@@ -134,6 +134,25 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **API responses** now use 100% snake_case field names — zero camelCase athlete fields remain
 - **Testing:** 100% pass rate (iteration_77: 8/8 backend, all frontend verified)
 
+### Connected Experiences V1 (DONE - March 10, 2026)
+- **New endpoint**: `GET /api/roster/athlete/{athlete_id}/pipeline` — staff-shaped pipeline summary for directors/assigned coaches
+- **Response includes**: athlete header (name, position, year, team, momentum), top summary row (total schools, response rate, active conversations, overdue follow-ups), stage distribution (6-stage pipeline bar), schools grouped by stage (with risk badges, reply status, pulse indicators), recent recruiting activity (last 10 interactions)
+- **Access control**: Directors can view any athlete; coaches can only view their assigned athletes
+- **Graceful fallback**: Mock athletes without tenant return header + empty pipeline (no errors)
+- **Frontend**: `AthletePipelinePanel` slide-over panel accessible from NeedsAttentionCard and MyRosterCard via "Pipeline" / ArrowUpRight button
+- **Files**: `/app/backend/routers/connected.py`, `/app/frontend/src/components/mission-control/AthletePipelinePanel.js`
+- **Testing:** 100% pass rate (iteration_78: 12/12 backend, all frontend verified)
+
+### Pydantic Hardening Pass (DONE - March 10, 2026)
+- **Response models added** to core endpoints:
+  - `auth`: `TokenResponse` (typed `UserOut`), `MeResponse`
+  - `athlete/me`: `AthleteClaimResponse` (typed `AthleteHeader`)
+  - `subscription`: `SubscriptionResponse` (typed `UsageLimits`)
+  - `athlete/settings`: `SettingsResponse` (typed `PreferencesOut`)
+  - `roster/athlete/{id}/pipeline`: `PipelineResponse` (typed `PipelineHeader`, `PipelineSummary`, `StageCount`, `SchoolEntry`, `SchoolGroup`, `ActivityEntry`)
+- All models defined in `/app/backend/models.py`
+- All endpoints validated with real API calls — responses match contracts exactly
+
 ## P2 Future/Backlog
 - Connected Experiences (Director ↔ Athlete visibility)
 - Engagement analytics

@@ -8,6 +8,7 @@ Endpoints:
 from fastapi import APIRouter, HTTPException
 from auth_middleware import get_current_user_dep
 from db_client import db
+from models import SubscriptionResponse
 from subscriptions import (
     SUBSCRIPTION_TIERS,
     TIER_ORDER,
@@ -18,7 +19,7 @@ from subscriptions import (
 router = APIRouter()
 
 
-@router.get("/subscription")
+@router.get("/subscription", response_model=SubscriptionResponse)
 async def get_my_subscription(current_user: dict = get_current_user_dep()):
     """Get the current user's subscription details and usage stats."""
     user_id = current_user["id"]
