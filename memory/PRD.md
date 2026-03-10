@@ -82,6 +82,16 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New endpoint**: `GET /api/athlete/engagement/{program_id}`
 - **Testing:** 100% pass rate (backend 16/16, frontend all verified - iteration_70)
 
+### Phase J3 — Journey Page: Communication + Workflow (DONE - March 10, 2026)
+- **Send Profile Card**: Opens email composer with pre-filled recruiting profile template; shows when school has coaches
+- **Gmail Connect Nudge**: Teal banner above timeline when Gmail not connected, links to /settings
+- **Archive Confirmation Dialog**: AlertDialog from shadcn/ui replaces instant toggle; navigates to /pipeline after archiving
+- **Notes Sidebar**: Slide-in panel from right edge with full CRUD (create, pin, edit, delete notes per program)
+- **School Intelligence Link**: Uses domain when available (`/school/${domain}`)
+- **New endpoint**: `GET/POST /api/athlete/programs/{id}/notes`, `PUT/DELETE /api/athlete/notes/{noteId}`
+- **New component**: `NotesSidebar.js`
+- **Testing:** 100% pass rate (backend 15/15, frontend all verified - iteration_71)
+
 ## P1 Upcoming — Journey Migration Phases
 - **Phase J2**: Coach Watch alert, Engagement stats strip, Coach social links, ConversationBubble enrichment
 - **Phase J3**: Send Profile card, Gmail connect nudge, Archive confirmation dialog, Notes sidebar, School intel link alignment
