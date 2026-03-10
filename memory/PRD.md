@@ -170,6 +170,26 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Files:** `/app/backend/routers/coach_flags.py`, `/app/backend/routers/athlete_tasks.py`, `/app/frontend/src/components/mission-control/AthletePipelinePanel.js`, `/app/frontend/src/pages/athlete/PipelinePage.js`, `/app/frontend/src/components/journey/ConversationBubble.js`, `/app/frontend/src/components/journey/constants.js`
 - **Testing:** 100% pass rate (iteration_79: 15/15 backend, all frontend verified)
 
+### Subscription Tier Fix (DONE - March 10, 2026)
+- **Aligned SUBSCRIPTION_TIERS** with capymatch repo: Basic=$0/5schools/0AI, Pro=$29/25schools/10AI, Premium=$49/unlimited
+- **Updated Stripe checkout** prices: Pro $29, Premium $49
+- **Updated feature access**: Basic now includes gmail_integration, public_profile, analytics. Pro/Premium recruiting_insights and auto_reply_detection aligned
+- **Over-limit upgrade banner** on Pipeline page when schools exceed plan limit
+- **Files:** `/app/backend/subscriptions.py`, `/app/backend/routers/stripe_checkout.py`, `/app/frontend/src/pages/athlete/PipelinePage.js`
+
+### Automation Rules (DONE - March 10, 2026)
+- **Email Sent → Contacted/Awaiting Reply**: Auto-updates recruiting_status, reply_status, initial_contact_sent, next_action_due +14d
+- **Reply Received → Very High Priority**: Auto-updates reply_status, priority, next_action_due +2d
+- **Implemented in**: `athlete_dashboard.py` (create_interaction + mark_as_replied), `athlete_gmail.py` (send_email)
+- **Testing:** 100% (iteration_80: 15/15 backend, all frontend)
+
+### UI Polish (DONE - March 10, 2026)
+- Journey hero: Solid #1e1e2e, 10px corners, teal bar (matching Pipeline)
+- CelebrationHero: Dark card style, green accent bar
+- GettingStartedChecklist: Light theme, positioned right under hero
+- Global: borderRadius 18→10px, consistent mb-4 spacing, 1120px width
+- Removed: Redundant "NEXT FOLLOW-UP" sidebar widget
+
 ## Credentials
 - **Coach (Williams):** coach.williams@capymatch.com / coach123
 - **Coach (Garcia):** coach.garcia@capymatch.com / coach123
