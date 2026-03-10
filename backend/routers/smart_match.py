@@ -9,6 +9,8 @@ Scoring categories:
   - Opportunity / Reach (10%): Acceptance rate, cost
 """
 
+import hashlib
+import json
 import logging
 import os
 import uuid
@@ -432,6 +434,21 @@ Respond with ONLY valid JSON:
         return {"summary": "", "next_step": "", "verify": ""}
 
 
+
+
+def _profile_hash(athlete: dict, profile: dict) -> str:
+    """Create a hash of match-relevant profile fields to detect changes."""
+    relevant = {
+        "division": profile.get("division") or athlete.get("recruiting_profile", {}).get("division", []),
+        "gpa": profile.get("gpa") or athlete.get("gpa"),
+        "sat": profile.get("sat_score") or athlete.get("sat_score"),
+        "act": profile.get("act_score") or athlete.get("act_score"),
+        "regions": sorted(profile.get("regions", [])),
+        "priorities": sorted(profile.get("priorities", [])),
+    }
+    return hashlib.md5(json.dumps(relevant, sort_keys=True, default=str).encode()).hexdigest()
+
+
 # ── API Endpoints ────────────────────────────────────────────────────────
 @router.get("/smart-match/recommendations")
 async def get_recommendations(limit: int = 50, current_user: dict = get_current_user_dep()):
@@ -529,10 +546,54 @@ async def get_recommendations(limit: int = 50, current_user: dict = get_current_
                 rec["ai_next_step"] = ai.get("next_step", "")
                 rec["ai_verify"] = ai.get("verify", "")
 
+    # Track this run for "last refreshed" + profile change detection
+    now = datetime.now(timezone.utc).isoformat()
+    current_hash = _profile_hash(athlete, profile)
+    last_run = await db.smart_match_runs.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    profile_changed = False
+    if last_run and last_run.get("profile_hash") and last_run["profile_hash"] != current_hash:
+        profile_changed = True
+
+    await db.smart_match_runs.update_one(
+        {"tenant_id": tenant_id},
+        {"$set": {"tenant_id": tenant_id, "last_refreshed": now, "profile_hash": current_hash}},
+        upsert=True,
+    )
+
     return {
         "recommendations": scored,
         "total": len(scored),
         "tier": tier,
         "gated": gated,
         "gated_total": len(schools) if gated else None,
+        "last_refreshed": now,
+        "profile_changed_since_last_run": profile_changed,
+    }
+
+
+
+@router.get("/smart-match/status")
+async def get_match_status(current_user: dict = get_current_user_dep()):
+    """Lightweight check: last refreshed + whether profile changed since last run."""
+    user_id = current_user["id"]
+    if current_user["role"] not in ("athlete", "parent"):
+        raise HTTPException(403, "Only athletes can access Smart Match")
+
+    athlete_rec = await db.athletes.find_one({"user_id": user_id}, {"_id": 0, "tenant_id": 1})
+    if not athlete_rec or not athlete_rec.get("tenant_id"):
+        return {"last_refreshed": None, "profile_changed": False}
+    tenant_id = athlete_rec["tenant_id"]
+
+    last_run = await db.smart_match_runs.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    if not last_run:
+        return {"last_refreshed": None, "profile_changed": False}
+
+    athlete = await db.athletes.find_one({"user_id": user_id}, {"_id": 0})
+    profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0}) or {}
+    current_hash = _profile_hash(athlete or {}, profile)
+    changed = last_run.get("profile_hash", "") != current_hash
+
+    return {
+        "last_refreshed": last_run.get("last_refreshed"),
+        "profile_changed": changed,
     }

@@ -5,10 +5,12 @@ import { toast } from "sonner";
 import {
   Search, Plus, MapPin, Check, LayoutGrid, List, Star,
   Target, MapPinned, GraduationCap, X, Filter, ExternalLink,
-  Loader2, RotateCcw, Sparkles, ArrowRight, Database, Lock, Zap
+  Loader2, RotateCcw, Sparkles, ArrowRight, Database, Lock, Zap,
+  RefreshCw, AlertTriangle, BarChart3
 } from "lucide-react";
 import UpgradeModal from "../../components/UpgradeModal";
 import MatchDetailDrawer from "../../components/MatchDetailDrawer";
+import CompareDrawer from "../../components/CompareDrawer";
 import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -273,6 +275,11 @@ export default function SchoolsPage() {
   const [smartGated, setSmartGated] = useState(false);
   const [smartGatedTotal, setSmartGatedTotal] = useState(0);
   const [drawerSchool, setDrawerSchool] = useState(null);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [profileChanged, setProfileChanged] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [compareSelected, setCompareSelected] = useState([]);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -298,8 +305,37 @@ export default function SchoolsPage() {
       setSmartMatches(res.data?.recommendations || []);
       setSmartGated(res.data?.gated || false);
       setSmartGatedTotal(res.data?.gated_total || 0);
+      setLastRefreshed(res.data?.last_refreshed || null);
+      setProfileChanged(res.data?.profile_changed_since_last_run || false);
     }).catch(() => {}).finally(() => setSmartLoading(false));
   }, []);
+
+  const refreshMatches = async () => {
+    setRefreshing(true);
+    try {
+      const res = await axios.get(`${API}/smart-match/recommendations`, { headers });
+      setSmartMatches(res.data?.recommendations || []);
+      setSmartGated(res.data?.gated || false);
+      setSmartGatedTotal(res.data?.gated_total || 0);
+      setLastRefreshed(res.data?.last_refreshed || null);
+      setProfileChanged(false);
+      setCompareSelected([]);
+      toast.success("Recommendations refreshed");
+    } catch {
+      toast.error("Failed to refresh recommendations");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const toggleCompare = (school) => {
+    setCompareSelected(prev => {
+      const exists = prev.find(s => s.university_name === school.university_name);
+      if (exists) return prev.filter(s => s.university_name !== school.university_name);
+      if (prev.length >= 3) { toast.error("Compare up to 3 schools"); return prev; }
+      return [...prev, school];
+    });
+  };
 
   const fetchUniversities = useCallback(async () => {
     try {
@@ -413,6 +449,25 @@ export default function SchoolsPage() {
       {/* ── Smart Match: Recommended for You ── */}
       {!smartLoading && smartMatches.length > 0 && (
         <div className="mb-8" data-testid="smart-match-section">
+          {/* Profile changed banner */}
+          {profileChanged && (
+            <div className="mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl border"
+              style={{ backgroundColor: "rgba(245,158,11,0.06)", borderColor: "rgba(245,158,11,0.2)" }}
+              data-testid="profile-changed-banner">
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#d97706" }} />
+              <span className="text-[11px] font-medium flex-1" style={{ color: "#d97706" }}>
+                Your profile has been updated since these recommendations were generated.
+              </span>
+              <button onClick={refreshMatches} disabled={refreshing}
+                className="text-[10px] font-bold px-3 py-1 rounded-lg flex items-center gap-1"
+                style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#d97706", border: "1px solid rgba(245,158,11,0.3)" }}
+                data-testid="refresh-from-banner">
+                {refreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                Refresh Now
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,148,136,0.12)" }}>
@@ -422,17 +477,39 @@ export default function SchoolsPage() {
                 <h2 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Recommended for You</h2>
                 <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
                   Based on your profile, division, academics, and location
+                  {lastRefreshed && (
+                    <span className="ml-1.5" style={{ color: "var(--cm-text-4)" }}>
+                      &middot; Updated {new Date(lastRefreshed).toLocaleDateString()}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
-            {smartGated && (
-              <button onClick={() => setShowUpgrade(true)}
+            <div className="flex items-center gap-2">
+              {compareSelected.length >= 2 && (
+                <button onClick={() => setCompareOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                  style={{ background: "linear-gradient(135deg, #1a8a80, #25a99e)", color: "#fff" }}
+                  data-testid="compare-btn">
+                  <BarChart3 className="w-3 h-3" /> Compare ({compareSelected.length})
+                </button>
+              )}
+              <button onClick={refreshMatches} disabled={refreshing}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all"
-                style={{ background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}
-                data-testid="smart-match-unlock-btn">
-                <Lock className="w-3 h-3" /> Unlock {smartGatedTotal}+ matches
+                style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)", border: "1px solid var(--cm-border)" }}
+                data-testid="refresh-matches-btn">
+                {refreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                Refresh
               </button>
-            )}
+              {smartGated && (
+                <button onClick={() => setShowUpgrade(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all"
+                  style={{ background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}
+                  data-testid="smart-match-unlock-btn">
+                  <Lock className="w-3 h-3" /> Unlock {smartGatedTotal}+ matches
+                </button>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {smartMatches.map(m => (
@@ -480,6 +557,17 @@ export default function SchoolsPage() {
                 )}
                 {/* Actions */}
                 <div className="flex items-center gap-2">
+                  <button onClick={(e) => { e.stopPropagation(); toggleCompare(m); }}
+                    className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all"
+                    style={{
+                      backgroundColor: compareSelected.find(s => s.university_name === m.university_name) ? "#0d9488" : "transparent",
+                      border: compareSelected.find(s => s.university_name === m.university_name) ? "2px solid #0d9488" : "2px solid var(--cm-border)",
+                    }}
+                    data-testid={`compare-check-${m.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
+                    {compareSelected.find(s => s.university_name === m.university_name) && (
+                      <Check className="w-3 h-3 text-white" />
+                    )}
+                  </button>
                   {m.in_pipeline ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color: "#10b981" }}>
                       <Check className="w-3 h-3" /> In Pipeline
@@ -628,6 +716,15 @@ export default function SchoolsPage() {
         onClose={() => setDrawerSchool(null)}
         onAddToPipeline={(name) => { setDrawerSchool(null); addToBoard({ university_name: name }); }}
         adding={drawerSchool ? adding[drawerSchool.university_name] : false}
+        onNavigate={(s) => s.domain ? navigate(`/schools/${s.domain}`) : navigate(`/schools/${encodeURIComponent(s.university_name)}`)}
+      />
+
+      <CompareDrawer
+        schools={compareSelected}
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        onAddToPipeline={(name) => addToBoard({ university_name: name })}
+        adding={adding}
         onNavigate={(s) => s.domain ? navigate(`/schools/${s.domain}`) : navigate(`/schools/${encodeURIComponent(s.university_name)}`)}
       />
     </div>

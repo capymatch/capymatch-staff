@@ -8,7 +8,7 @@ import {
   Zap, Send, Sparkles, CheckCircle,
   ArrowRight, Calendar, Activity, ChevronDown, ChevronUp,
   Eye, Flame, Brain, AlertCircle, CheckCircle2, X, ArrowUpRight,
-  GraduationCap, Plus, Check, Lock, Loader2
+  GraduationCap, Plus, Check, Lock, Loader2, RefreshCw, AlertTriangle
 } from "lucide-react";
 import MatchDetailDrawer from "../components/MatchDetailDrawer";
 
@@ -479,6 +479,9 @@ export default function AthleteDashboard() {
   const [smartGated, setSmartGated] = useState(false);
   const [addingMatch, setAddingMatch] = useState({});
   const [drawerSchool, setDrawerSchool] = useState(null);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [profileChanged, setProfileChanged] = useState(false);
+  const [refreshingMatches, setRefreshingMatches] = useState(false);
 
   const addMatchToBoard = async (universityName) => {
     setAddingMatch(prev => ({ ...prev, [universityName]: true }));
@@ -500,6 +503,23 @@ export default function AthleteDashboard() {
       }
     } finally {
       setAddingMatch(prev => ({ ...prev, [universityName]: false }));
+    }
+  };
+
+  const refreshTopMatches = async () => {
+    setRefreshingMatches(true);
+    try {
+      const res = await axios.get(`${API}/smart-match/recommendations`);
+      setTopMatches((res.data?.recommendations || []).slice(0, 3));
+      setSmartTier(res.data?.tier || "basic");
+      setSmartGated(res.data?.gated || false);
+      setLastRefreshed(res.data?.last_refreshed || null);
+      setProfileChanged(false);
+      toast.success("Recommendations refreshed");
+    } catch {
+      toast.error("Failed to refresh");
+    } finally {
+      setRefreshingMatches(false);
     }
   };
 
@@ -532,6 +552,8 @@ export default function AthleteDashboard() {
         setTopMatches((matchRes.data?.recommendations || []).slice(0, 3));
         setSmartTier(matchRes.data?.tier || "basic");
         setSmartGated(matchRes.data?.gated || false);
+        setLastRefreshed(matchRes.data?.last_refreshed || null);
+        setProfileChanged(matchRes.data?.profile_changed_since_last_run || false);
       })
       .catch(() => toast.error("Failed to load dashboard"))
       .finally(() => setLoading(false));
@@ -739,6 +761,23 @@ export default function AthleteDashboard() {
       {/* ═══ Smart Match: Top Matches ═══ */}
       {topMatches.length > 0 && (
         <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="top-matches">
+          {profileChanged && (
+            <div className="flex items-center gap-2 px-5 py-2.5 border-b"
+              style={{ backgroundColor: "rgba(245,158,11,0.05)", borderColor: "var(--cm-border)" }}
+              data-testid="dash-profile-changed">
+              <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: "#d97706" }} />
+              <span className="text-[10px] font-medium flex-1" style={{ color: "#d97706" }}>
+                Profile updated — refresh to see new recommendations
+              </span>
+              <button onClick={refreshTopMatches} disabled={refreshingMatches}
+                className="text-[9px] font-bold px-2 py-0.5 rounded flex items-center gap-1"
+                style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#d97706" }}
+                data-testid="dash-refresh-banner">
+                {refreshingMatches ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <RefreshCw className="w-2.5 h-2.5" />}
+                Refresh
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,148,136,0.12)" }}>
@@ -746,10 +785,23 @@ export default function AthleteDashboard() {
               </div>
               <div>
                 <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Top Matches</h3>
-                <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>Personalized school recommendations based on your profile</p>
+                <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+                  Personalized recommendations
+                  {lastRefreshed && (
+                    <span style={{ color: "var(--cm-text-4)" }}>
+                      {" "}&middot; {new Date(lastRefreshed).toLocaleDateString()}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button onClick={refreshTopMatches} disabled={refreshingMatches}
+                className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                style={{ backgroundColor: "var(--cm-surface-2)" }}
+                data-testid="dash-refresh-matches">
+                {refreshingMatches ? <Loader2 className="w-3 h-3 animate-spin" style={{ color: "var(--cm-text-3)" }} /> : <RefreshCw className="w-3 h-3" style={{ color: "var(--cm-text-3)" }} />}
+              </button>
               {smartGated && (
                 <span className="text-[9px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: "rgba(13,148,136,0.1)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}>
                   <Lock className="w-2.5 h-2.5 inline mr-0.5" style={{ verticalAlign: "-1px" }} /> Upgrade for more
