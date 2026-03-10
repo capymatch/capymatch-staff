@@ -1,0 +1,82 @@
+{
+  "summary": "Phase J4 Journey page features tested. All J4 features verified: Compare button, Archive AlertDialog, AI premium gating (lock icon + upgrade CTA), School Intel hidden for basic tier, Overdue Follow-up card. Email toast shows for basic tier in FAB but bypassed in Overdue card (minor bug). J1-J3 regression tests pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Overdue Follow-up Card",
+        "issue": "Send Email button (data-testid='overdue-email-btn') bypasses subscription gating - opens EmailComposer directly instead of showing upgrade toast for basic tier",
+        "selector": "[data-testid='overdue-email-btn']",
+        "priority": "MEDIUM",
+        "fix_location": "JourneyPage.js line 455 - should use openGatedEmail() instead of setShowEmail(true)"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_72.json"
+  ],
+  "action_items": [
+    "Fix overdue-email-btn to use openGatedEmail() for subscription gating consistency"
+  ],
+  "critical_code_review_comments": [
+    "Subscription gating inconsistency: FAB Email uses openGatedEmail() correctly, but Overdue card's Send Email button directly sets setShowEmail(true) bypassing the check",
+    "Compare button navigates correctly but /compare route may 404 (expected per requirements)",
+    "Coach Watch Alert remains MOCKED as 'Staff Stable'",
+    "School social links data is null for current programs (expected - no data yet)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend-only test)",
+    "frontend": "95% - 11 of 12 features pass (1 minor subscription gating bug)"
+  },
+  "test_credentials": {
+    "email": "emma.chen@athlete.capymatch.com",
+    "password": "password123"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "J4 adds: (1) Compare button in header links to /compare?selected={programId}. (2) Archive uses AlertDialog confirmation. (3) AI section shows PREMIUM badge + lock icon + 'Upgrade to Premium' button for non-premium users. (4) School Intelligence link hidden for basic tier. (5) Email gating - FAB shows upgrade toast for basic tier. The actual route is /pipeline/{programId} not /journey/{programId}. Minor bug: overdue card's Send Email bypasses subscription check.",
+  "mocked_apis": {
+    "Coach Watch Alert": "Always shows 'Staff Stable' green badge",
+    "School social links": "No data for current programs"
+  },
+  "tests_passed": {
+    "j4_features": {
+      "compare_button": "PASS - data-testid='compare-btn' found, visible on desktop, links to /compare?selected={programId}",
+      "archive_alertdialog": "PASS - data-testid='archive-btn' triggers AlertDialog with data-testid='confirm-archive-btn'",
+      "ai_premium_gating": "PASS - data-testid='ai-premium-teaser' shows lock icon and 'Upgrade to Premium' button (data-testid='ai-upgrade-btn')",
+      "school_intel_hidden": "PASS - data-testid='school-intel-link' not in DOM for basic tier",
+      "overdue_followup_card": "PASS - data-testid='overdue-followup-card' displays correctly for Stanford",
+      "fab_email_toast": "PASS - data-testid='fab-email' shows upgrade toast 'Email integration is available on Pro and Premium plans'"
+    },
+    "j1_j3_regression": {
+      "match_score_badge": "PASS - data-testid='journey-match-score' shows 64% Match (Stanford) and 70% Match (BYU)",
+      "risk_badges": "PASS - data-testid='journey-risk-badges' with Roster Tight, Timeline Awareness",
+      "coach_watch_badge": "PASS - data-testid='coach-watch-badge' shows 'Staff Stable' (MOCKED)",
+      "engagement_strip": "PASS - data-testid='engagement-strip' shows Opens/Clicks/Unique",
+      "notes_tab": "PASS - data-testid='notes-tab' found",
+      "gmail_nudge": "PASS - data-testid='gmail-nudge-banner' found"
+    }
+  },
+  "verified_programs": {
+    "stanford": {
+      "program_id": "a54a0014-0e83-4a16-b0c2-5e8f10401de2",
+      "match_score": "64% Match (some displays show 84%)",
+      "risk_badges": ["Roster Tight", "Timeline Awareness"],
+      "overdue_followup": true,
+      "days_overdue": 3
+    },
+    "byu": {
+      "program_id": "06553aea-e820-40a9-97f2-b3fc0df66313",
+      "match_score": "70% Match",
+      "risk_badges": ["Roster Tight", "Timeline Awareness"],
+      "coaches": ["Heather Olmstead (Head Coach)"]
+    }
+  }
+}

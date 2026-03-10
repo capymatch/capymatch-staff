@@ -7,6 +7,7 @@ import {
   Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
   Eye, MousePointerClick, ShieldCheck, Send, Share2,
+  GitCompare, ChevronDown, ChevronUp, Lock,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
@@ -24,8 +25,34 @@ import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
 import NotesSidebar from "../../components/NotesSidebar";
+import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+/* J4: School Social Links icons */
+function SchoolSocialLinks({ links }) {
+  const icons = {
+    twitter: <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
+    instagram: <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>,
+    facebook: <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
+    youtube: <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>,
+    tiktok: <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>,
+  };
+  const entries = Object.entries(links).filter(([, url]) => url);
+  if (entries.length === 0) return null;
+  return (
+    <span className="flex items-center gap-1.5 ml-1" data-testid="school-social-links">
+      {entries.map(([platform, url]) => (
+        <a key={platform} href={url} target="_blank" rel="noopener noreferrer" title={platform}
+          className="w-5 h-5 rounded flex items-center justify-center transition-colors hover:bg-white/10"
+          style={{ color: "var(--cm-text-3)" }} data-testid={`social-${platform}`}
+          onClick={e => e.stopPropagation()}>
+          {icons[platform] || <ExternalLink className="w-3 h-3" />}
+        </a>
+      ))}
+    </span>
+  );
+}
 
 export default function JourneyPage() {
   const { programId } = useParams();
@@ -63,6 +90,12 @@ export default function JourneyPage() {
   // J3: Gmail connected check + email initial (for Send Profile)
   const [gmailConnected, setGmailConnected] = useState(true);
   const [emailInitial, setEmailInitial] = useState({});
+
+  // J4: Subscription + committed toggle
+  const { subscription } = useSubscription();
+  const isBasic = subscription?.tier === "basic" || !subscription;
+  const isPremium = subscription?.tier === "premium";
+  const [showJourneyDetails, setShowJourneyDetails] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -104,10 +137,18 @@ export default function JourneyPage() {
 
   // J3: Send Profile — open email composer with profile template
   const openEmailWithProfile = () => {
+    if (isBasic) { toast.info("Email integration is available on Pro and Premium plans", { action: { label: "Upgrade", onClick: () => navigate("/settings") } }); return; }
     setEmailInitial({
       subject: `My Recruiting Profile — ${program?.university_name || ""}`,
       body: `Coach,\n\nI wanted to share my recruiting profile with you.\n\nIt includes my athletic measurables, academics, highlight video, and upcoming tournament schedule. I'd love the opportunity to discuss how I can contribute to your program.\n\nThank you for your time!`,
     });
+    setShowEmail(true);
+    setActiveAction("email");
+  };
+
+  // J4: Gated email open
+  const openGatedEmail = () => {
+    if (isBasic) { toast.info("Email integration is available on Pro and Premium plans", { action: { label: "Upgrade", onClick: () => navigate("/settings") } }); return; }
     setShowEmail(true);
     setActiveAction("email");
   };
@@ -273,6 +314,13 @@ export default function JourneyPage() {
               <ArrowLeft className="w-3.5 h-3.5" />Pipeline
             </button>
             <div className="flex items-center gap-2">
+              {/* J4: Compare button */}
+              <button onClick={() => navigate(`/compare?selected=${programId}`)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-white/5"
+                style={{ color: "var(--cm-text-3)", borderColor: "var(--cm-border)" }}
+                data-testid="compare-btn">
+                <GitCompare className="w-3 h-3" />Compare
+              </button>
               {program.questionnaire_url && (
                 <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-teal-700/10 text-teal-600 border-teal-700/20"
@@ -358,6 +406,10 @@ export default function JourneyPage() {
                   <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{program.location}</span>
                 )}
                 <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{timeline.length} interactions</span>
+                {/* J4: School Social Links */}
+                {program.social_links && typeof program.social_links === "object" && Object.keys(program.social_links).length > 0 && (
+                  <SchoolSocialLinks links={program.social_links} />
+                )}
               </div>
             </div>
           </div>
@@ -545,20 +597,30 @@ export default function JourneyPage() {
 
         {/* Contextual Hero Section */}
         {isCommitted ? (
-          <div className="mb-6"><CommittedHero program={program} /></div>
+          <div className="mb-6">
+            <CommittedHero program={program} />
+            {/* J4: View full journey toggle */}
+            <button onClick={() => setShowJourneyDetails(prev => !prev)}
+              className="mx-auto mt-4 flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-medium transition-colors hover:bg-white/5"
+              style={{ color: "var(--cm-text-3)", borderColor: "var(--cm-border)" }}
+              data-testid="toggle-journey-details">
+              {showJourneyDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showJourneyDetails ? "Hide journey details" : "View full journey"}
+            </button>
+          </div>
         ) : isNewSchool ? (
           <div className="mb-6">
             <GettingStartedChecklist
               program={program} coaches={coaches} timeline={timeline}
               profileComplete={profileComplete}
               onAddCoach={() => { setShowCoachForm({}); }}
-              onSendEmail={() => { setShowEmail(true); setActiveAction("email"); }}
+              onSendEmail={openGatedEmail}
             />
           </div>
         ) : hasCoachReply ? (
           <div className="mb-6">
             <CelebrationHero program={program} coaches={coaches}
-              onEmail={() => { setShowEmail(true); setActiveAction("email"); }}
+              onEmail={isBasic ? null : openGatedEmail}
               onLog={() => { setShowLog(true); setActiveAction("log"); }}
               onCall={() => { setShowLog(true); setActiveAction("log"); }}
             />
@@ -571,7 +633,7 @@ export default function JourneyPage() {
             <NextStepCard
               latestEvent={latestEvent}
               universityName={program.university_name}
-              onEmail={() => { setShowEmail(true); setActiveAction("email"); }}
+              onEmail={openGatedEmail}
               onLog={() => { setShowLog(true); setActiveAction("log"); }}
               onFollowup={() => { setShowFollowup(true); setActiveAction("followup"); }}
               onDismiss={() => setNextStepDismissed(true)}
@@ -579,8 +641,11 @@ export default function JourneyPage() {
           </div>
         )}
 
-        {/* Knowledge Base / School Intelligence link */}
-        {(program.school_id || domain) && (
+        {/* J4: Hide remaining content when committed and toggle is off */}
+        {(!isCommitted || showJourneyDetails) && (
+          <>
+        {/* Knowledge Base / School Intelligence link — gated on non-basic */}
+        {!isBasic && (program.school_id || domain) && (
           <div className="mb-6">
             <button onClick={() => navigate(domain ? `/school/${domain}` : `/schools/${program.school_id}`)}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors"
@@ -774,98 +839,118 @@ export default function JourneyPage() {
             )}
 
             {/* AI Section */}
-            <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "rgba(26,138,128,0.2)" }} data-testid="ai-section">
+            {/* AI Section — gated on premium */}
+            <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(26,138,128,0.2)" : "var(--cm-border)" }} data-testid="ai-section">
               <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5 text-[#1a8a80]">
                 <Sparkles className="w-3.5 h-3.5" /> AI Insights
+                {!isPremium && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 ml-1">PREMIUM</span>}
               </h3>
-              <div className="space-y-2">
-                {/* AI Next Step */}
-                <button onClick={fetchAiNextStep} disabled={aiNextStepLoading}
-                  className="w-full text-left p-3 rounded-xl border transition-colors"
-                  style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
-                  data-testid="ai-next-step-btn">
-                  {aiNextStepLoading ? (
-                    <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Analyzing...</span></div>
-                  ) : aiNextStep ? (
-                    <>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${aiNextStep.urgency === "high" ? "bg-red-400" : aiNextStep.urgency === "medium" ? "bg-amber-400" : "bg-green-400"}`} />
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80]">AI Recommended</span>
+
+              {isPremium ? (
+                <div className="space-y-2">
+                  {/* AI Next Step */}
+                  <button onClick={fetchAiNextStep} disabled={aiNextStepLoading}
+                    className="w-full text-left p-3 rounded-xl border transition-colors"
+                    style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
+                    data-testid="ai-next-step-btn">
+                    {aiNextStepLoading ? (
+                      <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Analyzing...</span></div>
+                    ) : aiNextStep ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`w-2 h-2 rounded-full ${aiNextStep.urgency === "high" ? "bg-red-400" : aiNextStep.urgency === "medium" ? "bg-amber-400" : "bg-green-400"}`} />
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80]">AI Recommended</span>
+                        </div>
+                        <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--cm-text)" }}>{aiNextStep.next_step}</p>
+                        <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{aiNextStep.reasoning}</p>
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get AI Next Step</span>
                       </div>
-                      <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--cm-text)" }}>{aiNextStep.next_step}</p>
-                      <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{aiNextStep.reasoning}</p>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                      <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get AI Next Step</span>
-                    </div>
-                  )}
-                </button>
+                    )}
+                  </button>
 
-                {/* AI Journey Summary */}
-                <button onClick={fetchAiSummary} disabled={aiSummaryLoading}
-                  className="w-full text-left p-3 rounded-xl border transition-colors"
-                  style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
-                  data-testid="ai-journey-summary-btn">
-                  {aiSummaryLoading ? (
-                    <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Summarizing...</span></div>
-                  ) : aiSummary ? (
-                    <>
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">Journey Summary</p>
-                      <p className="text-[12px] mb-1" style={{ color: "var(--cm-text-2)" }}>{aiSummary.relationship_summary}</p>
-                      {aiSummary.suggested_action && <p className="text-[11px] text-[#1a8a80] font-semibold mt-2">Next: {aiSummary.suggested_action}</p>}
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                      <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get Journey Summary</span>
-                    </div>
-                  )}
-                </button>
+                  {/* AI Journey Summary */}
+                  <button onClick={fetchAiSummary} disabled={aiSummaryLoading}
+                    className="w-full text-left p-3 rounded-xl border transition-colors"
+                    style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
+                    data-testid="ai-journey-summary-btn">
+                    {aiSummaryLoading ? (
+                      <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Summarizing...</span></div>
+                    ) : aiSummary ? (
+                      <>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">Journey Summary</p>
+                        <p className="text-[12px] mb-1" style={{ color: "var(--cm-text-2)" }}>{aiSummary.relationship_summary}</p>
+                        {aiSummary.suggested_action && <p className="text-[11px] text-[#1a8a80] font-semibold mt-2">Next: {aiSummary.suggested_action}</p>}
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get Journey Summary</span>
+                      </div>
+                    )}
+                  </button>
 
-                {/* AI School Insight */}
-                <button onClick={fetchAiInsight} disabled={aiInsightLoading}
-                  className="w-full text-left p-3 rounded-xl border transition-colors"
-                  style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
-                  data-testid="ai-school-insight-btn">
-                  {aiInsightLoading ? (
-                    <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Analyzing school...</span></div>
-                  ) : aiInsight?.insight ? (
-                    <>
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">School Fit Analysis</p>
-                      <p className="text-[12px] mb-2" style={{ color: "var(--cm-text-2)" }}>{aiInsight.insight.summary}</p>
-                      {aiInsight.insight.strengths?.slice(0, 2).map((s, i) => (
-                        <div key={i} className="flex items-start gap-1.5 mb-1">
-                          <span className="text-[9px] text-emerald-400 mt-0.5">+</span>
-                          <span className="text-[11px] text-emerald-400/70">{s.text}</span>
-                        </div>
-                      ))}
-                      {aiInsight.insight.concerns?.slice(0, 1).map((c, i) => (
-                        <div key={i} className="flex items-start gap-1.5 mt-1">
-                          <span className="text-[9px] text-amber-400 mt-0.5">!</span>
-                          <span className="text-[11px] text-amber-400/70">{c.text}</span>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                      <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get School Insight</span>
-                    </div>
-                  )}
-                </button>
-              </div>
+                  {/* AI School Insight */}
+                  <button onClick={fetchAiInsight} disabled={aiInsightLoading}
+                    className="w-full text-left p-3 rounded-xl border transition-colors"
+                    style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
+                    data-testid="ai-school-insight-btn">
+                    {aiInsightLoading ? (
+                      <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Analyzing school...</span></div>
+                    ) : aiInsight?.insight ? (
+                      <>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">School Fit Analysis</p>
+                        <p className="text-[12px] mb-2" style={{ color: "var(--cm-text-2)" }}>{aiInsight.insight.summary}</p>
+                        {aiInsight.insight.strengths?.slice(0, 2).map((s, i) => (
+                          <div key={i} className="flex items-start gap-1.5 mb-1">
+                            <span className="text-[9px] text-emerald-400 mt-0.5">+</span>
+                            <span className="text-[11px] text-emerald-400/70">{s.text}</span>
+                          </div>
+                        ))}
+                        {aiInsight.insight.concerns?.slice(0, 1).map((c, i) => (
+                          <div key={i} className="flex items-start gap-1.5 mt-1">
+                            <span className="text-[9px] text-amber-400 mt-0.5">!</span>
+                            <span className="text-[11px] text-amber-400/70">{c.text}</span>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                        <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get School Insight</span>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                /* Non-premium teaser */
+                <div className="p-4 rounded-xl border border-dashed text-center" style={{ borderColor: "var(--cm-border)" }} data-testid="ai-premium-teaser">
+                  <Lock className="w-6 h-6 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+                  <p className="text-xs font-semibold mb-1" style={{ color: "var(--cm-text-2)" }}>AI-powered recruiting insights</p>
+                  <p className="text-[10px] mb-3" style={{ color: "var(--cm-text-3)" }}>Get personalized next steps, journey summaries, and school fit analysis</p>
+                  <button onClick={() => navigate("/settings")}
+                    className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors text-white"
+                    style={{ backgroundColor: "#1a8a80" }}
+                    data-testid="ai-upgrade-btn">
+                    Upgrade to Premium
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* ─── FLOATING ACTION BAR ─── */}
       {!isCommitted && !isArchived && (
         <FloatingActionBar
           activeAction={activeAction}
-          onEmail={() => { closeAll(); setShowEmail(true); setActiveAction("email"); }}
+          onEmail={() => { closeAll(); openGatedEmail(); }}
           onLog={() => { closeAll(); setShowLog(true); setActiveAction("log"); }}
           onReplied={() => { closeAll(); setShowReplied(true); setActiveAction("replied"); }}
           onFollowup={() => { closeAll(); setShowFollowup(true); setActiveAction("followup"); }}
