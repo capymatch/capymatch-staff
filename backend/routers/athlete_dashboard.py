@@ -642,6 +642,37 @@ async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_
 
 
 # ─────────────────────────────────────────────────────────────────────────
+# School Engagement Stats
+# ─────────────────────────────────────────────────────────────────────────
+
+@router.get("/athlete/engagement/{program_id}")
+async def get_school_engagement(program_id: str, current_user: dict = get_current_user_dep()):
+    """Return engagement stats for a program: opens, clicks, unique opens, timeline."""
+    tenant_id = await get_athlete_tenant(current_user)
+
+    # Check engagement_events collection first (email tracking pixels)
+    engagement_events = await db.engagement_events.find(
+        {"tenant_id": tenant_id, "program_id": program_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(200)
+
+    total_opens = sum(1 for e in engagement_events if e.get("event_type") == "email_open")
+    total_clicks = sum(1 for e in engagement_events if e.get("event_type") == "link_click")
+    unique_emails = set()
+    for e in engagement_events:
+        if e.get("event_type") == "email_open" and e.get("coach_email"):
+            unique_emails.add(e["coach_email"])
+    unique_opens = len(unique_emails) if unique_emails else (1 if total_opens > 0 else 0)
+
+    return {
+        "total_opens": total_opens,
+        "total_clicks": total_clicks,
+        "unique_opens": unique_opens,
+        "timeline": engagement_events,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────
 # Follow-ups
 # ─────────────────────────────────────────────────────────────────────────
 

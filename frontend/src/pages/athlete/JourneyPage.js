@@ -6,6 +6,7 @@ import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
   Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
+  Eye, MousePointerClick, ShieldCheck,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
 import { RAIL_STAGES, STAGE_LABELS } from "../../components/journey/constants";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
+import { CoachSocialLinks } from "../../components/CoachSocialLinks";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -50,12 +52,16 @@ export default function JourneyPage() {
   const [questLoading, setQuestLoading] = useState(false);
   const [questNudgeDismissed, setQuestNudgeDismissed] = useState(false);
 
+  // J2: Engagement data
+  const [engagement, setEngagement] = useState(null);
+
   const fetchData = useCallback(async () => {
     try {
-      const [pRes, jRes, msRes] = await Promise.allSettled([
+      const [pRes, jRes, msRes, engRes] = await Promise.allSettled([
         axios.get(`${API}/athlete/programs/${programId}`),
         axios.get(`${API}/athlete/programs/${programId}/journey`),
         axios.get(`${API}/match-scores`),
+        axios.get(`${API}/athlete/engagement/${programId}`),
       ]);
       if (pRes.status !== "fulfilled") throw new Error("Failed to load program");
       setProgram(pRes.value.data);
@@ -70,6 +76,9 @@ export default function JourneyPage() {
           setRiskBadges(found.risk_badges || []);
         }
       }
+
+      // Engagement data
+      if (engRes.status === "fulfilled") setEngagement(engRes.value.data);
     } catch (e) {
       toast.error("Failed to load program");
     } finally { setLoading(false); }
@@ -551,7 +560,7 @@ export default function JourneyPage() {
             ) : (
               <div className="space-y-1" data-testid="timeline-list">
                 {timeline.map((ev, idx) => (
-                  <ConversationBubble key={ev.id || idx} event={ev} />
+                  <ConversationBubble key={ev.id || idx} event={ev} engagement={engagement} />
                 ))}
               </div>
             )}
@@ -562,11 +571,41 @@ export default function JourneyPage() {
             {/* Coaches */}
             <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coaches-sidebar">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Coaching Staff</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Coaching Staff</h3>
+                  {/* J2: Coach Watch Alert */}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                    style={{ backgroundColor: "rgba(34,197,94,0.1)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.15)" }}
+                    data-testid="coach-watch-badge">
+                    <ShieldCheck className="w-2.5 h-2.5" /> Staff Stable
+                  </span>
+                </div>
                 <button onClick={() => setShowCoachForm({})} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-500 transition-colors" data-testid="add-coach-btn">
                   <Plus className="w-3 h-3" />Add
                 </button>
               </div>
+
+              {/* J2: Engagement Stats Strip */}
+              <div className="flex items-center gap-3 mb-3 py-2 px-3 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }} data-testid="engagement-strip">
+                <div className="flex items-center gap-1.5">
+                  <Eye className="w-3 h-3" style={{ color: "#10b981" }} />
+                  <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_opens ?? 0}</span>
+                  <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Opens</span>
+                </div>
+                <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
+                <div className="flex items-center gap-1.5">
+                  <MousePointerClick className="w-3 h-3" style={{ color: "#3b82f6" }} />
+                  <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_clicks ?? 0}</span>
+                  <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Clicks</span>
+                </div>
+                <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
+                <div className="flex items-center gap-1.5">
+                  <User className="w-3 h-3" style={{ color: "#a78bfa" }} />
+                  <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.unique_opens ?? 0}</span>
+                  <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Unique</span>
+                </div>
+              </div>
+
               {coaches.length === 0 ? (
                 <p className="text-xs text-center py-4" style={{ color: "var(--cm-text-3)" }}>No coaches added yet</p>
               ) : (
@@ -591,6 +630,8 @@ export default function JourneyPage() {
                             <span className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{c.phone}</span>
                           </div>
                         )}
+                        {/* J2: Coach Social Links */}
+                        <CoachSocialLinks coachName={c.coach_name} kbCoaches={program.kb_coaches} />
                       </div>
                       <div className="flex gap-1 flex-shrink-0">
                         <button onClick={() => setShowCoachForm(c)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`edit-coach-${c.coach_id}`}>
