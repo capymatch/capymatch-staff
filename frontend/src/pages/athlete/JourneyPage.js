@@ -342,7 +342,7 @@ export default function JourneyPage() {
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6">
-        <div style={{ background: "#1e1e2e", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
+        <div style={{ background: "#1e1e2e", borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
           {/* Teal accent bar */}
           <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
           <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
@@ -468,18 +468,18 @@ export default function JourneyPage() {
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-6">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-8">
 
         {/* Coach Flag Card */}
         {coachFlags.length > 0 && (
-          <div className="mb-5 space-y-3" data-testid="journey-coach-flags">
+          <div className="mb-6 space-y-4" data-testid="journey-coach-flags">
             {coachFlags.map(flag => {
               const dueLabel = flag.due === "today" ? "Due today"
                 : flag.due === "this_week" ? "Due this week"
                 : flag.due_date ? `Due ${flag.due_date}` : null;
               return (
                 <div key={flag.flag_id} className="rounded-xl overflow-hidden"
-                  style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)" }}
+                  style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12 }}
                   data-testid={`journey-flag-${flag.flag_id}`}>
                   <div style={{ height: 2, background: "linear-gradient(90deg, #f59e0b, rgba(245,158,11,0.2))" }} />
                   <div className="p-4 sm:p-5">
@@ -526,7 +526,7 @@ export default function JourneyPage() {
 
         {/* J1: Overdue Follow-Up Card (rich dark style) */}
         {followUpOverdue && !activeAction && (
-          <div className="mb-5 rounded-xl overflow-hidden" style={{ background: "#1e1e2e" }} data-testid="overdue-followup-card">
+          <div className="mb-6 rounded-xl overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 12 }} data-testid="overdue-followup-card">
             <div style={{ height: 2, background: "linear-gradient(90deg, #f97316, rgba(249,115,22,0.2))" }} />
             <div className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
@@ -565,7 +565,7 @@ export default function JourneyPage() {
 
         {/* J1: Upcoming Follow-Up Card (due within 5 days) */}
         {followUpUpcoming && !followUpOverdue && !activeAction && (
-          <div className="mb-5 rounded-xl overflow-hidden" style={{ background: "#1e1e2e" }} data-testid="upcoming-followup-card">
+          <div className="mb-6 rounded-xl overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 12 }} data-testid="upcoming-followup-card">
             <div style={{ height: 2, background: "linear-gradient(90deg, #1a8a80, rgba(26,138,128,0.2))" }} />
             <div className="p-4 sm:p-5">
               <div className="flex items-start gap-3">

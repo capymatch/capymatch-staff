@@ -8,7 +8,7 @@ export function CelebrationHero({ program, coaches, onEmail, onLog, onCall }) {
   const timeText = daysAgo === 0 ? "today" : daysAgo === 1 ? "yesterday" : daysAgo != null ? `${daysAgo} days ago` : "recently";
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "#1e1e2e" }} data-testid="celebration-hero">
+    <div className="overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 12 }} data-testid="celebration-hero">
       <div style={{ height: 2, background: "linear-gradient(90deg, #10b981, rgba(16,185,129,0.2))" }} />
       <div className="p-4 sm:p-5">
         <div className="flex items-start gap-3">
