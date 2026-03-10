@@ -6,6 +6,7 @@ import {
   ChevronLeft, Plus, Mail, ExternalLink, Users, User,
   Check, Loader2, Activity, GraduationCap, DollarSign, BookOpen, Sparkles, PieChart, Target
 } from "lucide-react";
+import UpgradeModal from "../../components/UpgradeModal";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -223,6 +224,7 @@ export default function SchoolDetailPage() {
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [matchData, setMatchData] = useState(null);
 
   const token = localStorage.getItem("token");
@@ -256,7 +258,12 @@ export default function SchoolDetailPage() {
       setSchool(prev => ({ ...prev, on_board: true }));
     } catch (err) {
       const detail = err.response?.data?.detail;
-      toast.error(typeof detail === "string" ? detail : "Failed to add");
+      if (detail?.type === "subscription_limit") {
+        toast.error(detail.message || `You've reached your limit of ${detail.limit} schools.`);
+        setShowUpgrade(true);
+      } else {
+        toast.error(typeof detail === "string" ? detail : "Failed to add");
+      }
     } finally {
       setAdding(false);
     }
@@ -521,6 +528,7 @@ export default function SchoolDetailPage() {
           </div>
         )}
       </div>
+      {showUpgrade && <UpgradeModal feature="schools" currentTier="basic" onClose={() => setShowUpgrade(false)} />}
     </div>
   );
 }

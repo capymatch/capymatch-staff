@@ -73,6 +73,18 @@ async def draft_email(data: DraftEmailRequest, request: Request):
     user_id, _ = _get_user_info(request)
     tenant_id = await _get_tenant_id(user_id)
 
+    # Enforce AI draft limit
+    from subscriptions import enforce_ai_limit
+    ai_check = await enforce_ai_limit(tenant_id)
+    if not ai_check["allowed"]:
+        raise HTTPException(403, detail={
+            "type": "subscription_limit",
+            "message": ai_check.get("message", "AI draft limit reached."),
+            "current": ai_check["current"],
+            "limit": ai_check["limit"],
+            "upgrade_to": ai_check.get("upgrade_to"),
+        })
+
     profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0})
     if not profile:
         raise HTTPException(400, "Please set up your athlete profile first")
@@ -150,6 +162,14 @@ Return ONLY valid JSON: {{"subject": "email subject line", "body": "email body t
         chat = LlmChat(api_key=api_key, session_id=f"draft_{uuid.uuid4().hex[:8]}", system_message=system_message).with_model(LLM_MODEL_PROVIDER, LLM_MODEL_NAME)
         response = await chat.send_message(UserMessage(text=user_prompt))
         result = await _parse_llm_json(response)
+
+        # Track AI usage
+        await db.ai_usage.insert_one({
+            "tenant_id": tenant_id,
+            "type": "draft_email",
+            "email_type": data.email_type,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
 
         return {
             "subject": result.get("subject", ""),

@@ -42,7 +42,12 @@ export function EmailComposer({ coaches, programId, universityName, onSent, onCa
       if (res.data.coach_email && !to) setTo(res.data.coach_email);
       toast.success("AI draft generated!");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to generate AI draft");
+      const detail = err.response?.data?.detail;
+      if (detail?.type === "subscription_limit") {
+        toast.error(detail.message || "AI draft limit reached. Upgrade your plan.");
+      } else {
+        toast.error(typeof detail === "string" ? detail : "Failed to generate AI draft");
+      }
     } finally {
       setDrafting(false);
     }
