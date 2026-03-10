@@ -36,13 +36,23 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **School limit enforcement**: Backend 403 with subscription_limit error type
 - **Upgrade modal**: 3-tier comparison, "Most Popular" badge on Pro, "Current Plan" indicator
 - **Frontend integration**: SubscriptionProvider context, useSubscription hook, canAccess/getUsage helpers
-- **Drag-and-drop Kanban**: @hello-pangea/dnd library, 6 columns (Added → Committed)
+- **Drag-and-drop Kanban**: @hello-pangea/dnd library, 5 columns (Added → Offered)
   - Optimistic UI updates on drag
   - Backend persistence via PUT /api/athlete/programs/{id}
   - Toast notifications on stage change
   - Visual feedback (shadow, outline) during drag
-- **Testing:** 100% pass rate (backend 9/9, frontend all verified - iteration_67)
 - **Note:** Stripe checkout is MOCKED — shows toast instead of redirecting
+
+### Phase 12 — Upcoming Tasks Feature (DONE - March 10, 2026)
+- **Replaced "Upcoming Events" with "Upcoming Tasks"** on My Schools (Pipeline) page
+- **Backend endpoint** `GET /api/athlete/tasks`: auto-generates tasks from pipeline data
+  - Overdue follow-ups (high priority, red)
+  - Due-today follow-ups (high priority, amber)
+  - Due-soon follow-ups 1-3 days (medium priority, blue)
+  - First outreach needed (medium priority, teal)
+  - Profile completion / missing measurables (low priority, purple)
+- **Frontend**: `UpcomingTasksSection` component with color-coded icons, priority badges, clickable navigation
+- **Testing:** 100% pass rate (backend 10/10, frontend all verified - iteration_68)
 
 ## Key API Endpoints
 - `GET /api/subscription` — Current user's tier, limits, usage
@@ -51,6 +61,7 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - `PUT /api/athlete/programs/{id}` — Update program (used by DnD)
 - `POST /api/gmail-intelligence/scan` — Trigger Gmail scan
 - `GET /api/gmail-intelligence/insights` — Fetch AI insights
+- `GET /api/athlete/tasks` — Auto-generated upcoming tasks from pipeline state
 
 ## Credentials
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
