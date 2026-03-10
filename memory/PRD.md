@@ -212,20 +212,27 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Backend enhanced**: `compute_match_score` now returns `fit_label`, `confidence`, `strengths`, `improvements`
 - **Testing:** 100% pass rate (iteration_82: 11/11 backend, all frontend verified)
 
+### Smart Match Refinements: Rerun Recommendations + School Comparison (DONE - March 10, 2026)
+- **Rerun Recommendations**: Manual refresh button on both Dashboard (icon) and Find Schools (text button). Shows "Updated [date]" timestamp. Profile change detection: if athlete updates GPA/scores/regions/priorities, a yellow banner prompts "Profile updated — refresh to see new recommendations" with one-click refresh. Backend stores `smart_match_runs` collection with `profile_hash` for change detection.
+- **School Comparison**: Checkboxes on smart match cards (2-3 max). "Compare (N)" button opens side-by-side CompareDrawer. Cards show school name, score, fit label. 5-category horizontal bars with best score highlighted. Strengths and improvements per school. "Add to Pipeline" and "Details" actions per school.
+- **New endpoint**: `GET /api/smart-match/status` — lightweight check for last_refreshed + profile_changed
+- **New component**: `/app/frontend/src/components/CompareDrawer.js`
+- **Testing:** 100% pass rate (iteration_84: 15/15 backend, all frontend verified)
+
 ## Credentials
 - **Coach (Williams):** coach.williams@capymatch.com / coach123
 - **Coach (Garcia):** coach.garcia@capymatch.com / coach123
 
 ## P1 Upcoming
-- Smart Match Phase 1 Nice-to-haves: school comparison, rerun recommendations after profile updates, recommendation history
-- Pydantic Hardening (Expansion) — Continue targeted Pydantic hardening on remaining non-critical API endpoints
+- Stripe Customer Portal — "Manage Billing" button on Settings page
+- Director-specific actions — Request Coach Review, Escalate Pipeline Risk
 
 ## P2 Future/Backlog
 - Smart Match Later Phases (deeper LLM reasoning, roster/need intelligence, coach engagement signals)
+- Smart Match recommendation history (timeline of past runs with score deltas)
+- Coach Scraper Health Report V1 (dashboard health card, weekly digest, stale/missing/failure signals, one-click re-scrape)
 - Full Admin Users page (user management, plan changes)
 - Full Admin Subscriptions page (subscription management with audit log)
-- Director-Specific Actions (Request Coach Review, Escalate Pipeline Risk)
-- Stripe Customer Portal integration for "Manage Billing" button
 - Advanced Features & Parent Experience (family experience)
 - Multi-agent intelligence pipeline (NIL readiness, roster stability, scholarship analysis)
 - Community contributions & import analytics
