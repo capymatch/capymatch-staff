@@ -8,6 +8,7 @@ import {
   Loader2, RotateCcw, Sparkles, ArrowRight, Database, Lock, Zap
 } from "lucide-react";
 import UpgradeModal from "../../components/UpgradeModal";
+import MatchDetailDrawer from "../../components/MatchDetailDrawer";
 import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -271,6 +272,7 @@ export default function SchoolsPage() {
   const [smartLoading, setSmartLoading] = useState(true);
   const [smartGated, setSmartGated] = useState(false);
   const [smartGatedTotal, setSmartGatedTotal] = useState(0);
+  const [drawerSchool, setDrawerSchool] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -437,7 +439,7 @@ export default function SchoolsPage() {
               <div key={m.university_name}
                 className="rounded-lg border p-4 transition-all hover:border-teal-600/30 cursor-pointer group"
                 style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
-                onClick={() => m.domain ? navigate(`/schools/${m.domain}`) : navigate(`/schools/${encodeURIComponent(m.university_name)}`)}
+                onClick={() => setDrawerSchool(m)}
                 data-testid={`smart-match-card-${m.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
                 <div className="flex items-start gap-3 mb-3">
                   {m.logo_url ? (
@@ -618,6 +620,15 @@ export default function SchoolsPage() {
         onClose={() => setShowUpgrade(false)}
         message={upgradeMessage}
         currentTier={subscription?.tier || "basic"}
+      />
+
+      <MatchDetailDrawer
+        school={drawerSchool}
+        open={!!drawerSchool}
+        onClose={() => setDrawerSchool(null)}
+        onAddToPipeline={(name) => { setDrawerSchool(null); addToBoard({ university_name: name }); }}
+        adding={drawerSchool ? adding[drawerSchool.university_name] : false}
+        onNavigate={(s) => s.domain ? navigate(`/schools/${s.domain}`) : navigate(`/schools/${encodeURIComponent(s.university_name)}`)}
       />
     </div>
   );

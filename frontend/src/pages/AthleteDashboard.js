@@ -10,6 +10,7 @@ import {
   Eye, Flame, Brain, AlertCircle, CheckCircle2, X, ArrowUpRight,
   GraduationCap, Plus, Check, Lock, Loader2
 } from "lucide-react";
+import MatchDetailDrawer from "../components/MatchDetailDrawer";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -477,6 +478,7 @@ export default function AthleteDashboard() {
   const [smartTier, setSmartTier] = useState("basic");
   const [smartGated, setSmartGated] = useState(false);
   const [addingMatch, setAddingMatch] = useState({});
+  const [drawerSchool, setDrawerSchool] = useState(null);
 
   const addMatchToBoard = async (universityName) => {
     setAddingMatch(prev => ({ ...prev, [universityName]: true }));
@@ -767,7 +769,7 @@ export default function AthleteDashboard() {
                 <div key={m.university_name}
                   className={`px-5 py-4 cursor-pointer transition-colors${idx < topMatches.length - 1 ? " border-b sm:border-b-0 sm:border-r" : ""}`}
                   style={{ borderColor: "var(--cm-border)" }}
-                  onClick={() => m.domain ? navigate(`/schools/${m.domain}`) : navigate(`/schools/${encodeURIComponent(m.university_name)}`)}
+                  onClick={() => setDrawerSchool(m)}
                   onMouseEnter={e => e.currentTarget.style.backgroundColor = "var(--cm-surface-hover)"}
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
                   data-testid={`top-match-${idx}`}>
@@ -1007,6 +1009,15 @@ export default function AthleteDashboard() {
           </button>
         </div>
       )}
+
+      <MatchDetailDrawer
+        school={drawerSchool}
+        open={!!drawerSchool}
+        onClose={() => setDrawerSchool(null)}
+        onAddToPipeline={addMatchToBoard}
+        adding={drawerSchool ? addingMatch[drawerSchool.university_name] : false}
+        onNavigate={(s) => s.domain ? navigate(`/schools/${s.domain}`) : navigate(`/schools/${encodeURIComponent(s.university_name)}`)}
+      />
     </div>
   );
 }

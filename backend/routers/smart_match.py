@@ -279,8 +279,105 @@ def compute_match_score(athlete: dict, profile: dict, school: dict) -> dict:
             chips.append(c)
     chips = chips[:3]
 
+    # ── Fit label ──
+    if total >= 90:
+        fit_label = "Excellent Fit"
+    elif total >= 80:
+        fit_label = "Strong Fit"
+    elif total >= 70:
+        fit_label = "Good Fit"
+    elif total >= 60:
+        fit_label = "Moderate Fit"
+    elif total >= 50:
+        fit_label = "Possible Fit"
+    else:
+        fit_label = "Stretch"
+
+    # ── Confidence (based on data completeness) ──
+    data_points = 0
+    max_data_points = 0
+    # Athlete data
+    max_data_points += 1
+    if athlete_divisions:
+        data_points += 1
+    max_data_points += 1
+    if athlete_gpa > 0:
+        data_points += 1
+    max_data_points += 1
+    if athlete_sat > 0 or athlete_act > 0:
+        data_points += 1
+    max_data_points += 1
+    if athlete_regions:
+        data_points += 1
+    max_data_points += 1
+    if athlete_priorities:
+        data_points += 1
+    # School data
+    max_data_points += 1
+    if school_gpa > 0:
+        data_points += 1
+    max_data_points += 1
+    if school_sat > 0:
+        data_points += 1
+    max_data_points += 1
+    if acceptance_rate > 0:
+        data_points += 1
+
+    confidence_ratio = data_points / max_data_points if max_data_points > 0 else 0
+    if confidence_ratio >= 0.75:
+        confidence = "high"
+    elif confidence_ratio >= 0.5:
+        confidence = "medium"
+    else:
+        confidence = "low"
+
+    # ── Strengths (why this school matches) ──
+    strengths = []
+    category_data = [
+        (ath_score, ath_reason, "athletic"),
+        (acad_score, acad_reason, "academic"),
+        (pref_score, pref_reason, "preference"),
+        (geo_score, geo_reason, "geographic"),
+        (opp_score, opp_reason, "opportunity"),
+    ]
+    for s, r, cat in sorted(category_data, key=lambda x: x[0], reverse=True):
+        if s >= 65 and r and "unavailable" not in r.lower() and "limited" not in r.lower():
+            strengths.append(r)
+    for c in pref_chips:
+        if c not in strengths:
+            strengths.append(c)
+    strengths = strengths[:4]
+
+    # ── Improvements (what could make this match better) ──
+    improvements = []
+    if not athlete_divisions:
+        improvements.append("Add your division preferences to improve athletic matching")
+    elif ath_score < 60:
+        improvements.append(f"This school is {school_division or 'unknown division'} — consider if that aligns with your goals")
+    if athlete_gpa == 0:
+        improvements.append("Add your GPA to get more accurate academic fit scores")
+    elif acad_score < 60 and acad_reason:
+        improvements.append(f"{acad_reason} — this school may be an academic stretch")
+    if athlete_sat == 0 and athlete_act == 0:
+        improvements.append("Add SAT or ACT scores to refine academic matching")
+    if not athlete_regions:
+        improvements.append("Set your preferred regions to improve location-based recommendations")
+    elif geo_score < 60 and geo_reason:
+        improvements.append(geo_reason)
+    if not athlete_priorities:
+        improvements.append("Set your recruiting priorities (scholarship, school size, etc.)")
+    if school_gpa == 0 and school_sat == 0:
+        improvements.append("Limited academic data available for this school")
+    if acceptance_rate == 0 and cost == 0:
+        improvements.append("Admission and cost data unavailable for this school")
+    elif opp_score < 50:
+        improvements.append("Admission selectivity or cost may be a factor — research financial aid options")
+    improvements = improvements[:4]
+
     return {
         "match_score": max(0, min(100, total)),
+        "fit_label": fit_label,
+        "confidence": confidence,
         "breakdown": {
             "athletic": ath_score,
             "academic": acad_score,
@@ -290,6 +387,8 @@ def compute_match_score(athlete: dict, profile: dict, school: dict) -> dict:
         },
         "chips": chips,
         "top_reason": chips[0] if chips else "Possible fit based on available data",
+        "strengths": strengths,
+        "improvements": improvements,
     }
 
 
@@ -390,9 +489,13 @@ async def get_recommendations(limit: int = 50, current_user: dict = get_current_
             "acceptance_rate": scorecard.get("acceptance_rate"),
             "scholarship_type": school.get("scholarship_type", ""),
             "match_score": match["match_score"],
+            "fit_label": match["fit_label"],
+            "confidence": match["confidence"],
             "breakdown": match["breakdown"],
             "chips": match["chips"],
             "top_reason": match["top_reason"],
+            "strengths": match["strengths"],
+            "improvements": match["improvements"],
             "in_pipeline": name.lower() in pipeline_schools,
             "ai_summary": None,
             "ai_next_step": None,
