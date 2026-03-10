@@ -3,7 +3,7 @@
 import uuid
 import hashlib
 import secrets
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from passlib.hash import bcrypt
 from datetime import datetime, timezone, timedelta
 
@@ -143,13 +143,21 @@ async def register(body: UserCreate):
 
 
 @router.post("/auth/login", response_model=TokenResponse)
-async def login(body: UserLogin):
+async def login(body: UserLogin, background_tasks: BackgroundTasks):
     user = await db.users.find_one({"email": body.email}, {"_id": 0})
-    if not user or not bcrypt.verify(body.password, user["password_hash"]):
+    if not bcrypt.verify(body.password, user["password_hash"]) if user else True:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     safe = _safe_user(user)
     token = create_token(safe)
+
+    # Background: check weekly measurables nudge for athletes
+    if safe.get("role") in ("athlete", "parent"):
+        athlete = await db.athletes.find_one({"user_id": safe["id"]}, {"_id": 0, "tenant_id": 1})
+        if athlete and athlete.get("tenant_id"):
+            from services.notifications import check_and_send_measurables_nudge
+            background_tasks.add_task(check_and_send_measurables_nudge, safe["id"], athlete["tenant_id"])
+
     return {"token": token, "user": safe}
 
 

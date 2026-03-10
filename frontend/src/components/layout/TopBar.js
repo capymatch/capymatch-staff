@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Moon, Sun, LogOut, User, Menu, Settings } from "lucide-react";
+import { Moon, Sun, LogOut, User, Menu, Settings } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 import { useTheme } from "@/ThemeContext";
+import NotificationBell from "../NotificationBell";
 
 export default function TopBar({ title, icon: Icon, onMenuToggle }) {
   const navigate = useNavigate();
@@ -45,9 +46,7 @@ export default function TopBar({ title, icon: Icon, onMenuToggle }) {
         </button>
 
         {/* Notifications */}
-        <button className="p-2 rounded-lg transition-colors" style={{ color: "var(--cm-text-3)" }} data-testid="notification-btn">
-          <Bell className="w-[18px] h-[18px]" />
-        </button>
+        <NotificationBell />
 
         {/* User menu */}
         <div className="relative" ref={menuRef}>
