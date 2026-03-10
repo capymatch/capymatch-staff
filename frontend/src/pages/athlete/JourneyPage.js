@@ -341,18 +341,22 @@ export default function JourneyPage() {
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
-      <div style={{ background: "linear-gradient(180deg, var(--cm-hero-from) 0%, var(--cm-bg) 100%)", borderBottom: "1px solid var(--cm-border)" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-5">
+      <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderBottom: "none", borderRadius: "18px 18px 0 0", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }}>
+        {/* Teal accent bar */}
+        <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
+        {/* Subtle glow */}
+        <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
           {/* Back & Actions */}
           <div className="flex items-center justify-between mb-4">
-            <button onClick={() => navigate("/pipeline")} className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: "var(--cm-text-3)" }} data-testid="back-to-pipeline">
+            <button onClick={() => navigate("/pipeline")} className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="back-to-pipeline">
               <ArrowLeft className="w-3.5 h-3.5" />Pipeline
             </button>
             <div className="flex items-center gap-2">
               {/* J4: Compare button */}
               <button onClick={() => navigate(`/compare?selected=${programId}`)}
                 className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-white/5"
-                style={{ color: "var(--cm-text-3)", borderColor: "var(--cm-border)" }}
+                style={{ color: "rgba(255,255,255,0.4)", borderColor: "rgba(255,255,255,0.08)" }}
                 data-testid="compare-btn">
                 <GitCompare className="w-3 h-3" />Compare
               </button>
@@ -374,7 +378,7 @@ export default function JourneyPage() {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <button className="px-3 py-1 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1.5"
-                      style={{ background: "rgba(148,163,184,0.1)", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.2)" }}
+                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}
                       data-testid="archive-btn">
                       <Archive className="w-3 h-3" />Archive
                     </button>
@@ -412,7 +416,7 @@ export default function JourneyPage() {
             <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-xl" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }} data-testid="journey-school-name">
+                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#ffffff" }} data-testid="journey-school-name">
                   {program.university_name}
                 </h1>
                 <PulseIndicator pulse={rail.pulse} />
@@ -435,12 +439,12 @@ export default function JourneyPage() {
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-700/20 text-teal-500">{program.division}</span>
                 )}
                 {program.conference && (
-                  <span className="text-[11px]" style={{ color: "var(--cm-text-2)" }}>{program.conference}</span>
+                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>{program.conference}</span>
                 )}
                 {program.location && (
-                  <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{program.location}</span>
+                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{program.location}</span>
                 )}
-                <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{timeline.length} interactions</span>
+                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{timeline.length} interactions</span>
                 {/* J4: School Social Links */}
                 {program.social_links && typeof program.social_links === "object" && Object.keys(program.social_links).length > 0 && (
                   <SchoolSocialLinks links={program.social_links} />
