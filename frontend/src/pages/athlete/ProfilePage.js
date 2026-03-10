@@ -220,7 +220,7 @@ export default function ProfilePage() {
 
       {/* Photo */}
       <div data-testid="profile-photo-hero" className="rounded-xl border p-4 mb-3 flex items-center gap-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0 cursor-pointer group border-2 border-white shadow-lg" onClick={() => photoRef.current?.click()}>
+        <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 cursor-pointer group border-2 border-white shadow-lg" onClick={() => photoRef.current?.click()}>
           {profile.photo_url ? (
             <img src={profile.photo_url} alt="" className="w-full h-full object-cover" />
           ) : (

@@ -1,6 +1,6 @@
 export function CommittedHero({ program }) {
   return (
-    <div className="rounded-2xl border relative overflow-hidden"
+    <div className="rounded-lg border relative overflow-hidden"
       style={{
         borderColor: "rgba(251,191,36,0.3)",
         background: "linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(16,185,129,0.06) 40%, #0f172a 100%)",

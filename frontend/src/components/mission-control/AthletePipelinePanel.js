@@ -182,7 +182,7 @@ function FlagModal({ school, athleteId, onClose, onFlagged }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" data-testid="flag-modal-overlay">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm mx-4 rounded-2xl p-5" style={{ backgroundColor: "var(--cm-bg)", border: "1px solid var(--cm-border)" }}
+      <div className="relative w-full max-w-sm mx-4 rounded-lg p-5" style={{ backgroundColor: "var(--cm-bg)", border: "1px solid var(--cm-border)" }}
         data-testid="flag-modal">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

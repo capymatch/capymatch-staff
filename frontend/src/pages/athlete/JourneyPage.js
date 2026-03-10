@@ -412,7 +412,7 @@ export default function JourneyPage() {
           {/* School Info + Logo + Match Score */}
           <div className="flex items-start gap-4 mb-3">
             {/* J1: Real university logo */}
-            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-xl" />
+            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-lg" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
                 <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#ffffff" }} data-testid="journey-school-name">
@@ -472,19 +472,19 @@ export default function JourneyPage() {
 
         {/* Coach Flag Card */}
         {coachFlags.length > 0 && (
-          <div className="mb-6 space-y-4" data-testid="journey-coach-flags">
+          <div className="mb-8 space-y-4" data-testid="journey-coach-flags">
             {coachFlags.map(flag => {
               const dueLabel = flag.due === "today" ? "Due today"
                 : flag.due === "this_week" ? "Due this week"
                 : flag.due_date ? `Due ${flag.due_date}` : null;
               return (
-                <div key={flag.flag_id} className="rounded-xl overflow-hidden"
-                  style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12 }}
+                <div key={flag.flag_id} className="rounded-lg overflow-hidden"
+                  style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10 }}
                   data-testid={`journey-flag-${flag.flag_id}`}>
                   <div style={{ height: 2, background: "linear-gradient(90deg, #f59e0b, rgba(245,158,11,0.2))" }} />
                   <div className="p-4 sm:p-5">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
                         style={{ backgroundColor: "rgba(245,158,11,0.15)" }}>
                         <Flag className="w-5 h-5" style={{ color: "#f59e0b" }} />
                       </div>
@@ -526,11 +526,11 @@ export default function JourneyPage() {
 
         {/* J1: Overdue Follow-Up Card (rich dark style) */}
         {followUpOverdue && !activeAction && (
-          <div className="mb-6 rounded-xl overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 12 }} data-testid="overdue-followup-card">
+          <div className="mb-8 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="overdue-followup-card">
             <div style={{ height: 2, background: "linear-gradient(90deg, #f97316, rgba(249,115,22,0.2))" }} />
             <div className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ backgroundColor: "rgba(249,115,22,0.15)" }}>
                   <AlertCircle className="w-5 h-5" style={{ color: "#f97316" }} />
                 </div>
@@ -565,11 +565,11 @@ export default function JourneyPage() {
 
         {/* J1: Upcoming Follow-Up Card (due within 5 days) */}
         {followUpUpcoming && !followUpOverdue && !activeAction && (
-          <div className="mb-6 rounded-xl overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 12 }} data-testid="upcoming-followup-card">
+          <div className="mb-8 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="upcoming-followup-card">
             <div style={{ height: 2, background: "linear-gradient(90deg, #1a8a80, rgba(26,138,128,0.2))" }} />
             <div className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ backgroundColor: "rgba(26,138,128,0.15)" }}>
                   <Clock className="w-5 h-5" style={{ color: "#2dd4bf" }} />
                 </div>
@@ -605,7 +605,7 @@ export default function JourneyPage() {
 
         {/* J1: Questionnaire Section */}
         {program.questionnaire_url && (
-          <div className="mb-5 rounded-xl border p-4 sm:p-5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="questionnaire-section">
+          <div className="mb-5 rounded-lg border p-4 sm:p-5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="questionnaire-section">
             <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${program.questionnaire_completed ? "bg-green-500/10" : "bg-teal-600/10"}`}>
@@ -649,7 +649,7 @@ export default function JourneyPage() {
 
         {/* J1: Questionnaire Nudge (incomplete) */}
         {program.questionnaire_url && !program.questionnaire_completed && !questNudgeDismissed && !activeAction && (
-          <div className="mb-5 rounded-xl overflow-hidden relative"
+          <div className="mb-5 rounded-lg overflow-hidden relative"
             style={{ borderColor: "rgba(245,158,11,0.3)", background: "#1e1e2e", border: "1px solid rgba(245,158,11,0.3)" }}
             data-testid="questionnaire-nudge">
             <button onClick={() => setQuestNudgeDismissed(true)}
@@ -659,7 +659,7 @@ export default function JourneyPage() {
             </button>
             <div className="p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ backgroundColor: "rgba(245,158,11,0.12)" }}>
                   <ClipboardCheck className="w-5 h-5" style={{ color: "#f59e0b" }} />
                 </div>
@@ -694,7 +694,7 @@ export default function JourneyPage() {
             <CommittedHero program={program} />
             {/* J4: View full journey toggle */}
             <button onClick={() => setShowJourneyDetails(prev => !prev)}
-              className="mx-auto mt-4 flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-medium transition-colors hover:bg-white/5"
+              className="mx-auto mt-4 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-medium transition-colors hover:bg-white/5"
               style={{ color: "var(--cm-text-3)", borderColor: "var(--cm-border)" }}
               data-testid="toggle-journey-details">
               {showJourneyDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -711,7 +711,7 @@ export default function JourneyPage() {
             />
           </div>
         ) : hasCoachReply ? (
-          <div className="mb-6">
+          <div className="mb-8">
             <CelebrationHero program={program} coaches={coaches}
               onEmail={isBasic ? null : openGatedEmail}
               onLog={() => { setShowLog(true); setActiveAction("log"); }}
@@ -722,7 +722,7 @@ export default function JourneyPage() {
 
         {/* Next Step Automation Card */}
         {latestEvent && !isCommitted && !nextStepDismissed && (
-          <div className="mb-6">
+          <div className="mb-8">
             <NextStepCard
               latestEvent={latestEvent}
               universityName={program.university_name}
@@ -741,7 +741,7 @@ export default function JourneyPage() {
         {!isBasic && (program.school_id || domain) && (
           <div className="mb-6">
             <button onClick={() => navigate(domain ? `/school/${domain}` : `/schools/${program.school_id}`)}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors"
               style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
               data-testid="school-intel-link">
               <BookOpen className="w-4 h-4 text-teal-700 flex-shrink-0" />
@@ -764,7 +764,7 @@ export default function JourneyPage() {
 
             {/* J3: Gmail Connect Nudge */}
             {!gmailConnected && (
-              <div className="flex items-start gap-3 rounded-xl p-3.5 mb-4" style={{ backgroundColor: "rgba(26,138,128,0.08)", border: "1px solid rgba(26,138,128,0.18)" }} data-testid="gmail-nudge-banner">
+              <div className="flex items-start gap-3 rounded-lg p-3.5 mb-4" style={{ backgroundColor: "rgba(26,138,128,0.08)", border: "1px solid rgba(26,138,128,0.18)" }} data-testid="gmail-nudge-banner">
                 <Mail className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#1a8a80" }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium" style={{ color: "var(--cm-text)" }}>
@@ -779,7 +779,7 @@ export default function JourneyPage() {
 
             {/* J3: Send Profile Card */}
             {!isCommitted && !isArchived && coaches.length > 0 && (
-              <div className="rounded-xl border p-4 mb-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="send-profile-card">
+              <div className="rounded-lg border p-4 mb-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="send-profile-card">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(26,138,128,0.15)" }}>
                     <Share2 className="w-3.5 h-3.5" style={{ color: "#1a8a80" }} />
@@ -798,7 +798,7 @@ export default function JourneyPage() {
               </div>
             )}
             {timeline.length === 0 ? (
-              <div className="text-center py-16 rounded-2xl border border-dashed" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="empty-timeline">
+              <div className="text-center py-16 rounded-lg border border-dashed" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="empty-timeline">
                 <p className="text-sm font-semibold mb-1" style={{ color: "var(--cm-text-2)" }}>No interactions yet</p>
                 <p className="text-xs mb-4" style={{ color: "var(--cm-text-3)" }}>Start your journey by reaching out to a coach</p>
                 <Button size="sm" onClick={() => { setShowEmail(true); setActiveAction("email"); }}
@@ -819,7 +819,7 @@ export default function JourneyPage() {
           {/* RIGHT: Sidebar */}
           <div className="space-y-5">
             {/* Coaches */}
-            <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coaches-sidebar">
+            <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coaches-sidebar">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Coaching Staff</h3>
@@ -875,7 +875,7 @@ export default function JourneyPage() {
               ) : (
                 <div className="space-y-2">
                   {coaches.map(c => (
-                    <div key={c.coach_id} className="flex items-start gap-3 p-3 rounded-xl border transition-colors" style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }} data-testid={`coach-card-${c.coach_id}`}>
+                    <div key={c.coach_id} className="flex items-start gap-3 p-3 rounded-lg border transition-colors" style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }} data-testid={`coach-card-${c.coach_id}`}>
                       <div className="w-8 h-8 rounded-full bg-teal-700/15 flex items-center justify-center flex-shrink-0">
                         <User className="w-3.5 h-3.5 text-teal-700" />
                       </div>
@@ -912,7 +912,7 @@ export default function JourneyPage() {
             </div>
 
             {/* Engagement Stats */}
-            <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="engagement-stats">
+            <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="engagement-stats">
               <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--cm-text-3)" }}>Engagement</h3>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -921,7 +921,7 @@ export default function JourneyPage() {
                   { label: "Days Since Activity", value: signals.days_since_activity != null ? signals.days_since_activity : "\u2014" },
                   { label: "Interactions", value: timeline.length },
                 ].map(stat => (
-                  <div key={stat.label} className="p-3 rounded-xl" style={{ backgroundColor: "var(--cm-card-stat)" }} data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}>
+                  <div key={stat.label} className="p-3 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }} data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}>
                     <p className="text-[10px] font-medium mb-0.5" style={{ color: "var(--cm-text-3)" }}>{stat.label}</p>
                     <p className="text-lg font-extrabold" style={{ color: "var(--cm-text)" }}>{stat.value}</p>
                   </div>
@@ -931,10 +931,10 @@ export default function JourneyPage() {
 
             {/* Next Follow-up */}
             {program.next_action_due && (
-              <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="next-followup-sidebar">
+              <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="next-followup-sidebar">
                 <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--cm-text-3)" }}>Next Follow-up</h3>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-teal-700/10">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-teal-700/10">
                     <Clock className="w-4 h-4 text-teal-700" />
                   </div>
                   <div>
@@ -947,7 +947,7 @@ export default function JourneyPage() {
 
             {/* AI Section */}
             {/* AI Section — gated on premium */}
-            <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(26,138,128,0.2)" : "var(--cm-border)" }} data-testid="ai-section">
+            <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(26,138,128,0.2)" : "var(--cm-border)" }} data-testid="ai-section">
               <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5 text-[#1a8a80]">
                 <Sparkles className="w-3.5 h-3.5" /> AI Insights
                 {!isPremium && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 ml-1">PREMIUM</span>}
@@ -957,7 +957,7 @@ export default function JourneyPage() {
                 <div className="space-y-2">
                   {/* AI Next Step */}
                   <button onClick={fetchAiNextStep} disabled={aiNextStepLoading}
-                    className="w-full text-left p-3 rounded-xl border transition-colors"
+                    className="w-full text-left p-3 rounded-lg border transition-colors"
                     style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                     data-testid="ai-next-step-btn">
                     {aiNextStepLoading ? (
@@ -981,7 +981,7 @@ export default function JourneyPage() {
 
                   {/* AI Journey Summary */}
                   <button onClick={fetchAiSummary} disabled={aiSummaryLoading}
-                    className="w-full text-left p-3 rounded-xl border transition-colors"
+                    className="w-full text-left p-3 rounded-lg border transition-colors"
                     style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                     data-testid="ai-journey-summary-btn">
                     {aiSummaryLoading ? (
@@ -1002,7 +1002,7 @@ export default function JourneyPage() {
 
                   {/* AI School Insight */}
                   <button onClick={fetchAiInsight} disabled={aiInsightLoading}
-                    className="w-full text-left p-3 rounded-xl border transition-colors"
+                    className="w-full text-left p-3 rounded-lg border transition-colors"
                     style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                     data-testid="ai-school-insight-btn">
                     {aiInsightLoading ? (
@@ -1034,7 +1034,7 @@ export default function JourneyPage() {
                 </div>
               ) : (
                 /* Non-premium teaser */
-                <div className="p-4 rounded-xl border border-dashed text-center" style={{ borderColor: "var(--cm-border)" }} data-testid="ai-premium-teaser">
+                <div className="p-4 rounded-lg border border-dashed text-center" style={{ borderColor: "var(--cm-border)" }} data-testid="ai-premium-teaser">
                   <Lock className="w-6 h-6 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
                   <p className="text-xs font-semibold mb-1" style={{ color: "var(--cm-text-2)" }}>AI-powered recruiting insights</p>
                   <p className="text-[10px] mb-3" style={{ color: "var(--cm-text-3)" }}>Get personalized next steps, journey summaries, and school fit analysis</p>

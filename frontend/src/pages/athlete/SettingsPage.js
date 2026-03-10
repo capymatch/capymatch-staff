@@ -30,7 +30,7 @@ function Toggle({ checked, onChange, testId }) {
 
 function SectionCard({ icon: Icon, title, children, testId }) {
   return (
-    <div className="rounded-2xl border p-5 sm:p-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid={testId}>
+    <div className="rounded-lg border p-5 sm:p-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid={testId}>
       <div className="flex items-center gap-2.5 mb-4">
         <div className="w-8 h-8 rounded-lg bg-teal-700/15 flex items-center justify-center">
           <Icon className="w-4 h-4 text-teal-600" />
@@ -258,7 +258,7 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
     <div className="space-y-5">
       {/* Cancellation Banner */}
       {cancelPending && tier !== "basic" && (
-        <div className="rounded-2xl border border-amber-500/30 p-4 flex items-start gap-3" style={{ backgroundColor: "rgba(245,158,11,0.05)" }} data-testid="cancel-banner">
+        <div className="rounded-lg border border-amber-500/30 p-4 flex items-start gap-3" style={{ backgroundColor: "rgba(245,158,11,0.05)" }} data-testid="cancel-banner">
           <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>Cancellation Scheduled</p>
@@ -276,7 +276,7 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
       )}
 
       {/* Current Plan Card */}
-      <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="section-current-plan">
+      <div className="rounded-lg border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="section-current-plan">
         <div className="p-5 sm:p-6">
           <div className="flex items-start justify-between mb-5">
             <div className="flex items-center gap-3">
@@ -353,7 +353,7 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
 
       {/* Cancel Confirmation Dialog */}
       {showCancelConfirm && (
-        <div className="rounded-2xl border border-red-500/30 p-5" style={{ backgroundColor: "rgba(239,68,68,0.03)" }} data-testid="cancel-confirm-dialog">
+        <div className="rounded-lg border border-red-500/30 p-5" style={{ backgroundColor: "rgba(239,68,68,0.03)" }} data-testid="cancel-confirm-dialog">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -441,7 +441,7 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
       {/* Compare Plans */}
       {tier !== "premium" && !cancelPending && (
         <button onClick={onOpenUpgrade}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl border transition-all hover:border-teal-700/40"
+          className="w-full flex items-center gap-3 p-4 rounded-lg border transition-all hover:border-teal-700/40"
           style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
           data-testid="compare-plans-btn">
           <div className="w-10 h-10 rounded-xl bg-teal-700/15 flex items-center justify-center">
@@ -457,7 +457,7 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
 
       {/* Key Feature Highlights for basic tier */}
       {tier === "basic" && (
-        <div className="rounded-2xl border p-5 sm:p-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="section-upgrade-highlights">
+        <div className="rounded-lg border p-5 sm:p-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="section-upgrade-highlights">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="w-8 h-8 rounded-lg bg-amber-600/15 flex items-center justify-center">
               <Zap className="w-4 h-4 text-amber-500" />

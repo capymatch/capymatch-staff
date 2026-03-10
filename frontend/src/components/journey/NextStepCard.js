@@ -10,7 +10,7 @@ export function NextStepCard({ latestEvent, universityName, onEmail, onLog, onFo
   const actionHandlers = { email: onEmail, log: onLog, followup: onFollowup };
 
   return (
-    <div className="rounded-2xl border p-5 relative overflow-hidden"
+    <div className="rounded-lg border p-5 relative overflow-hidden"
       style={{ borderColor: "rgba(26,138,128,0.3)", background: "#1e1e2e" }}
       data-testid="next-step-card">
       <button onClick={onDismiss} className="absolute top-3 right-3 p-1 rounded-lg hover:bg-white/10 transition-colors" style={{ color: "rgba(255,255,255,0.35)" }}

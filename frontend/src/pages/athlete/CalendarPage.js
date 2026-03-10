@@ -72,7 +72,7 @@ function EventModal({ onClose, onSaved, editEvent, programs }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" data-testid="event-modal">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+      <div className="relative w-full max-w-lg rounded-lg border shadow-2xl overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--cm-border)" }}>
           <h3 className="text-lg font-semibold" style={{ color: "var(--cm-text)" }}>{editEvent?.event_id ? "Edit Event" : "New Event"}</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: "var(--cm-text-3)" }}><X className="w-5 h-5" /></button>

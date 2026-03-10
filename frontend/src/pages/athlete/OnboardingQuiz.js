@@ -211,7 +211,7 @@ export default function OnboardingQuiz() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-10 text-center relative overflow-hidden" data-testid="quiz-complete">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-10 text-center relative overflow-hidden" data-testid="quiz-complete">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-300/40 to-transparent" />
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto mb-5 sm:mb-6 flex items-center justify-center text-3xl sm:text-4xl bg-gradient-to-br from-emerald-50 to-emerald-100/50" style={{ boxShadow: "0 0 40px rgba(52,211,153,0.15)" }}>
               {"\uD83C\uDF89"}
@@ -311,9 +311,9 @@ export default function OnboardingQuiz() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-10 relative overflow-hidden">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-10 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl mx-auto mb-5 sm:mb-6 flex items-center justify-center text-4xl sm:text-5xl bg-gradient-to-br from-emerald-50 to-teal-50" style={{ boxShadow: "0 0 40px rgba(52,211,153,0.1)" }}>
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg mx-auto mb-5 sm:mb-6 flex items-center justify-center text-4xl sm:text-5xl bg-gradient-to-br from-emerald-50 to-teal-50" style={{ boxShadow: "0 0 40px rgba(52,211,153,0.1)" }}>
               {"\uD83C\uDFD0"}
             </div>
 
@@ -385,7 +385,7 @@ export default function OnboardingQuiz() {
         </div>
 
         {/* Question Card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-10 relative overflow-hidden">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-10 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
           <span className="text-3xl sm:text-4xl block mb-4 sm:mb-5">{q.emoji}</span>
           <p className="text-[10px] uppercase tracking-[1.5px] font-semibold mb-2 text-slate-400">Question {step + 1} of {QUESTIONS.length}</p>

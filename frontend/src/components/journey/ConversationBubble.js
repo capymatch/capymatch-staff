@@ -172,7 +172,7 @@ export function ConversationBubble({ event, engagement }) {
 
   return (
     <div className={`flex ${isRight ? "justify-end" : "justify-start"} my-1`} data-testid={`conv-bubble-${isRight ? "right" : "left"}`}>
-      <div className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 border relative ${
+      <div className={`max-w-[80%] sm:max-w-[70%] rounded-lg px-4 py-3 border relative ${
         isAiInsight
           ? "rounded-bl-md border-violet-500/25"
           : isRight

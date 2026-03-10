@@ -77,7 +77,7 @@ export default function OutreachAnalysisPage() {
 
       {/* Top Stats + Score */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <div className="sm:col-span-1 flex justify-center items-center rounded-2xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-6">
+        <div className="sm:col-span-1 flex justify-center items-center rounded-lg border border-[var(--cm-border)] bg-[var(--cm-surface)] p-6">
           {ai.overall_score != null ? (
             <ScoreRing score={ai.overall_score} label={ai.score_label || "Score"} />
           ) : (
@@ -102,7 +102,7 @@ export default function OutreachAnalysisPage() {
 
       {/* AI Summary */}
       {ai.summary && (
-        <div className="rounded-2xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 mb-5" data-testid="ai-summary">
+        <div className="rounded-lg border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 mb-5" data-testid="ai-summary">
           <p className="text-[13px] text-[var(--cm-text)]/60 leading-relaxed">{ai.summary}</p>
         </div>
       )}
@@ -110,7 +110,7 @@ export default function OutreachAnalysisPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
         {/* Strengths */}
         {ai.strengths?.length > 0 && (
-          <div className="rounded-2xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5" data-testid="strengths-section">
+          <div className="rounded-lg border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5" data-testid="strengths-section">
             <h3 className="text-[12px] font-bold uppercase tracking-[0.1em] text-emerald-400 mb-3 flex items-center gap-2">
               <Award className="w-4 h-4" /> Strengths
             </h3>
@@ -126,7 +126,7 @@ export default function OutreachAnalysisPage() {
 
         {/* Improvements */}
         {ai.improvements?.length > 0 && (
-          <div className="rounded-2xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5" data-testid="improvements-section">
+          <div className="rounded-lg border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5" data-testid="improvements-section">
             <h3 className="text-[12px] font-bold uppercase tracking-[0.1em] text-amber-400 mb-3 flex items-center gap-2">
               <AlertCircle className="w-4 h-4" /> Areas to Improve
             </h3>
@@ -143,7 +143,7 @@ export default function OutreachAnalysisPage() {
 
       {/* Next Steps */}
       {ai.next_steps?.length > 0 && (
-        <div className="rounded-2xl border border-[#1a8a80]/15 bg-[#1a8a80]/5 p-5" data-testid="next-steps-section">
+        <div className="rounded-lg border border-[#1a8a80]/15 bg-[#1a8a80]/5 p-5" data-testid="next-steps-section">
           <h3 className="text-[12px] font-bold uppercase tracking-[0.1em] text-[#1a8a80] mb-3">Recommended Next Steps</h3>
           <ul className="space-y-2">
             {ai.next_steps.map((s, i) => (
@@ -158,7 +158,7 @@ export default function OutreachAnalysisPage() {
 
       {/* Division Insights */}
       {ai.division_insights && (
-        <div className="rounded-2xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 mt-5" data-testid="division-insights">
+        <div className="rounded-lg border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 mt-5" data-testid="division-insights">
           <h3 className="text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/40 mb-2">Division Insights</h3>
           <p className="text-[13px] text-[var(--cm-text)]/60 leading-relaxed">{ai.division_insights}</p>
         </div>

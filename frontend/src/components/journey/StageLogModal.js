@@ -20,7 +20,7 @@ export function StageLogModal({ stageKey, currentStage, universityName, onConfir
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" data-testid="stage-log-modal">
       <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
-      <div className="relative w-full max-w-md mx-4 rounded-2xl border p-6 bg-slate-900 border-slate-700">
+      <div className="relative w-full max-w-md mx-4 rounded-lg border p-6 bg-slate-900 border-slate-700">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-white">
             Log progress: <span className="text-teal-500">{newLabel}</span>

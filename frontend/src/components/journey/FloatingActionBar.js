@@ -5,7 +5,7 @@ export function FloatingActionBar({ onEmail, onLog, onReplied, onFollowup, activ
   const btnActive = "bg-teal-600 text-white font-semibold hover:bg-teal-700";
   const btnInactive = "hover:bg-white/5 text-slate-300";
   return (
-    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1.5 rounded-2xl border shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1.5 rounded-lg border shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       style={{ background: "rgba(22,27,37,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderColor: "rgba(255,255,255,0.08)" }}
       data-testid="floating-action-bar">
       <button className={`${btnBase} ${activeAction === "email" ? btnActive : btnInactive}`}

@@ -12,7 +12,7 @@ export function GettingStartedChecklist({ program, coaches, timeline, profileCom
   const doneCount = steps.filter(s => s.done).length;
 
   return (
-    <div className="rounded-2xl border p-5 sm:p-6 bg-slate-900 border-slate-700/50" data-testid="getting-started-checklist">
+    <div className="rounded-lg border p-5 sm:p-6 bg-slate-900 border-slate-700/50" data-testid="getting-started-checklist">
       <h3 className="text-base font-bold mb-1 text-white">Start your {program.university_name} journey</h3>
       <p className="text-xs mb-5 text-slate-400">Complete these steps to kickstart your recruiting relationship</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

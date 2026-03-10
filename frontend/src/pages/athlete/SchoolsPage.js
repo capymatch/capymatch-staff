@@ -112,7 +112,7 @@ function TopMatchBanner({ school, adding, addToBoard, boardSchools, navigate }) 
   if (!school) return null;
   const isOnBoard = boardSchools.has(school.university_name);
   return (
-    <div className="flex flex-col sm:flex-row rounded-2xl overflow-hidden mb-7 border border-[#1a8a80]/12" data-testid="top-match-banner">
+    <div className="flex flex-col sm:flex-row rounded-lg overflow-hidden mb-7 border border-[#1a8a80]/12" data-testid="top-match-banner">
       <div className="flex-1 p-5 sm:p-7" style={{ background: "linear-gradient(135deg, var(--cm-hero-from) 0%, var(--cm-surface) 100%)" }}>
         <div className="text-[10px] font-bold tracking-[1.5px] uppercase text-[#1a8a80] mb-2.5 flex items-center gap-1.5">
           <Sparkles className="w-3 h-3" /> Your #1 Match

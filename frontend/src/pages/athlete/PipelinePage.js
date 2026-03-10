@@ -180,7 +180,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
   };
 
   return (
-    <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 18, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
+    <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
       {/* Teal accent bar */}
       <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
       {/* Subtle glow */}
@@ -315,7 +315,7 @@ function UpcomingTasksSection({ tasks, navigate }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
       {/* Coach Flags — clickable overview, navigates to Journey */}
       {coachTasks.length > 0 && (
-        <div style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 14, padding: "16px 20px" }} data-testid="coach-flags-section">
+        <div style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, padding: "16px 20px" }} data-testid="coach-flags-section">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
               <Flag style={{ width: 15, height: 15, color: "#f59e0b" }} /> Flagged by Coach
@@ -350,7 +350,7 @@ function UpcomingTasksSection({ tasks, navigate }) {
 
       {/* System Tasks */}
       {systemTasks.length > 0 && (
-        <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px" }} data-testid="upcoming-tasks">
+        <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 10, padding: "16px 20px" }} data-testid="upcoming-tasks">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
               <CheckSquare style={{ width: 15, height: 15, color: "#3b82f6" }} /> Upcoming Tasks
@@ -534,7 +534,7 @@ function CommittedBanner({ programs, navigate }) {
       {programs.map(p => (
         <div key={p.program_id} onClick={() => navigate(`/pipeline/${p.program_id}`)} style={{
           background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-          borderRadius: 14, padding: "18px 24px", cursor: "pointer",
+          borderRadius: 10, padding: "18px 24px", cursor: "pointer",
           display: "flex", alignItems: "center", gap: 16, marginBottom: 8,
         }} data-testid={`committed-card-${p.program_id}`}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>

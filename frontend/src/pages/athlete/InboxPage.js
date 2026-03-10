@@ -69,7 +69,7 @@ function ComposeModal({ open, onClose, replyTo, threadId, messageId, onSent }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" data-testid="compose-modal">
-      <div className="w-full max-w-2xl mx-4 rounded-2xl border shadow-2xl" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+      <div className="w-full max-w-2xl mx-4 rounded-lg border shadow-2xl" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10">
           <h3 className="text-[14px] font-bold text-[var(--cm-text)]">{replyTo ? "Reply" : "New Email"}</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: "var(--cm-text-3)" }}><X className="w-4 h-4" /></button>
@@ -257,7 +257,7 @@ export default function InboxPage() {
   if (gmailConnected === false) {
     return (
       <div className="max-w-xl mx-auto text-center py-20" data-testid="inbox-not-connected">
-        <div className="w-16 h-16 rounded-2xl bg-[#1a8a80]/10 flex items-center justify-center mx-auto mb-5">
+        <div className="w-16 h-16 rounded-lg bg-[#1a8a80]/10 flex items-center justify-center mx-auto mb-5">
           <Mail className="w-8 h-8 text-[#1a8a80]" />
         </div>
         <h2 className="text-xl font-bold text-[var(--cm-text)] mb-2">Connect Your Gmail</h2>

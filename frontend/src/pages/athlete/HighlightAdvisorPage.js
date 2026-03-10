@@ -11,7 +11,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 function Section({ icon: Icon, title, color, children, testId }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-2xl border border-[var(--cm-border)] bg-[var(--cm-surface)] overflow-hidden" data-testid={testId}>
+    <div className="rounded-lg border border-[var(--cm-border)] bg-[var(--cm-surface)] overflow-hidden" data-testid={testId}>
       <button onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-2.5 px-5 py-3.5 text-left transition-colors"
         style={{ backgroundColor: "transparent" }}
@@ -57,7 +57,7 @@ export default function HighlightAdvisorPage() {
       </div>
 
       {/* Input */}
-      <div className="rounded-2xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 mb-5" data-testid="highlight-input-section">
+      <div className="rounded-lg border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 mb-5" data-testid="highlight-input-section">
         <div className="flex items-end gap-2 mb-3">
           <textarea value={question} onChange={e => setQuestion(e.target.value)}
             placeholder="Ask about your highlight video, or click 'Generate' for full recommendations..." rows={2}
@@ -92,7 +92,7 @@ export default function HighlightAdvisorPage() {
         <div className="space-y-4">
           {/* Video Length */}
           {advice.video_length && (
-            <div className="flex items-center gap-3 rounded-2xl border border-[#1a8a80]/15 bg-[#1a8a80]/5 p-4" data-testid="video-length-card">
+            <div className="flex items-center gap-3 rounded-lg border border-[#1a8a80]/15 bg-[#1a8a80]/5 p-4" data-testid="video-length-card">
               <Clock className="w-5 h-5 text-[#1a8a80]" />
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80]">Recommended Length</div>
