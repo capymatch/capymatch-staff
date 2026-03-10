@@ -4,8 +4,8 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
-  Edit2, Trash2, Plus, AlertTriangle, Clock, BookOpen, ExternalLink,
-  Sparkles, Loader2
+  Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
+  Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
@@ -15,17 +15,10 @@ import {
   EmailComposer, FollowUpScheduler, MarkAsRepliedModal, CoachForm,
 } from "../../components/journey";
 import { RAIL_STAGES, STAGE_LABELS } from "../../components/journey/constants";
+import UniversityLogo from "../../components/UniversityLogo";
+import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const UniversityLogo = ({ name, size = 40 }) => {
-  const skip = new Set(["of", "the", "and", "at", "in"]);
-  const initials = (name || "").split(" ").filter(w => !skip.has(w.toLowerCase())).map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  return (
-    <div style={{ width: size, height: size, borderRadius: 12, background: "rgba(26,138,128,0.15)", border: "1px solid rgba(26,138,128,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <span style={{ color: "#1a8a80", fontWeight: 700, fontSize: size * 0.35 }}>{initials}</span>
-    </div>
-  );
-};
 
 export default function JourneyPage() {
   const { programId } = useParams();
@@ -48,14 +41,35 @@ export default function JourneyPage() {
   const [aiInsight, setAiInsight] = useState(null);
   const [aiInsightLoading, setAiInsightLoading] = useState(false);
 
+  // J1: Match score + risk badges
+  const [matchScore, setMatchScore] = useState(null);
+  const [riskBadges, setRiskBadges] = useState([]);
+  const [riskDrawer, setRiskDrawer] = useState(false);
+
+  // J1: Questionnaire
+  const [questLoading, setQuestLoading] = useState(false);
+  const [questNudgeDismissed, setQuestNudgeDismissed] = useState(false);
+
   const fetchData = useCallback(async () => {
     try {
-      const [pRes, jRes] = await Promise.all([
+      const [pRes, jRes, msRes] = await Promise.allSettled([
         axios.get(`${API}/athlete/programs/${programId}`),
         axios.get(`${API}/athlete/programs/${programId}/journey`),
+        axios.get(`${API}/match-scores`),
       ]);
-      setProgram(pRes.data);
-      setTimeline(jRes.data.timeline || []);
+      if (pRes.status !== "fulfilled") throw new Error("Failed to load program");
+      setProgram(pRes.value.data);
+      if (jRes.status === "fulfilled") setTimeline(jRes.value.data.timeline || []);
+
+      // Match score lookup
+      if (msRes.status === "fulfilled") {
+        const scores = msRes.value.data?.scores || [];
+        const found = scores.find(s => s.program_id === programId);
+        if (found) {
+          setMatchScore(found);
+          setRiskBadges(found.risk_badges || []);
+        }
+      }
     } catch (e) {
       toast.error("Failed to load program");
     } finally { setLoading(false); }
@@ -152,6 +166,25 @@ export default function JourneyPage() {
     } catch { toast.error("Failed to delete coach"); }
   };
 
+  // J1: Questionnaire toggle
+  const toggleQuestionnaire = async () => {
+    setQuestLoading(true);
+    try {
+      const newVal = !program.questionnaire_completed;
+      await axios.put(`${API}/athlete/programs/${programId}`, {
+        questionnaire_completed: newVal,
+        questionnaire_completed_at: newVal ? new Date().toISOString() : null,
+      });
+      setProgram(prev => ({
+        ...prev,
+        questionnaire_completed: newVal,
+        questionnaire_completed_at: newVal ? new Date().toISOString() : null,
+      }));
+      toast.success(newVal ? "Questionnaire marked complete" : "Questionnaire unmarked");
+    } catch { toast.error("Failed to update"); }
+    setQuestLoading(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
@@ -177,19 +210,25 @@ export default function JourneyPage() {
   const isNewSchool = !isCommitted && !hasCoachReply && timeline.length < 2;
   const latestEvent = timeline[0];
 
-  // Follow-up due computation
+  // J1: Follow-up computation (expanded to 5 days)
   const followUpDue = program.next_action_due;
   let followUpOverdue = false;
   let followUpUpcoming = false;
+  let daysOverdue = 0;
+  let daysUntilDue = 0;
   if (followUpDue) {
-    const dueDate = new Date(followUpDue);
-    const now = new Date();
-    const diffDays = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) followUpOverdue = true;
-    else if (diffDays <= 3) followUpUpcoming = true;
+    const dueDate = new Date(followUpDue + "T00:00:00");
+    const today = new Date(new Date().toISOString().split("T")[0] + "T00:00:00");
+    const diffDays = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) { followUpOverdue = true; daysOverdue = Math.abs(diffDays); }
+    else if (diffDays <= 5) { followUpUpcoming = true; daysUntilDue = diffDays; }
   }
 
   const profileComplete = !!(program.athlete_name || program.athlete_video);
+
+  // Resolve logo from match score data
+  const logoUrl = matchScore?.logo_url || program.logo_url || null;
+  const domain = matchScore?.domain || program.domain || null;
 
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
@@ -219,15 +258,29 @@ export default function JourneyPage() {
             </div>
           </div>
 
-          {/* School Info + Pulse */}
-          <div className="flex items-start gap-4 mb-5">
-            <UniversityLogo name={program.university_name} size={48} />
+          {/* School Info + Logo + Match Score */}
+          <div className="flex items-start gap-4 mb-3">
+            {/* J1: Real university logo */}
+            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-xl" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
                 <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }} data-testid="journey-school-name">
                   {program.university_name}
                 </h1>
                 <PulseIndicator pulse={rail.pulse} />
+                {/* J1: Match score badge */}
+                {matchScore && (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      color: matchScore.match_score >= 80 ? "#4ade80" : matchScore.match_score >= 60 ? "#fbbf24" : "#94a3b8",
+                    }}
+                    data-testid="journey-match-score"
+                  >
+                    <Target className="w-3 h-3" /> {matchScore.match_score}% Match
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 {program.division && (
@@ -239,8 +292,18 @@ export default function JourneyPage() {
                 {program.location && (
                   <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{program.location}</span>
                 )}
+                <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{timeline.length} interactions</span>
               </div>
             </div>
+          </div>
+
+          {/* J1: Risk Badges */}
+          <div className="ml-16 mb-3" data-testid="journey-risk-badges">
+            {riskBadges.length > 0 ? (
+              <RiskBadgeRow badges={riskBadges} onBadgeClick={(b) => setRiskDrawer(b)} />
+            ) : matchScore ? (
+              <RiskBadgeEmpty />
+            ) : null}
           </div>
 
           {/* Progress Rail */}
@@ -250,23 +313,167 @@ export default function JourneyPage() {
 
       {/* ─── MAIN CONTENT ─── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
-        {/* Follow-up Alerts */}
-        {followUpOverdue && (
-          <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border bg-red-600/5 border-red-500/30" data-testid="followup-overdue-alert">
-            <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-xs font-bold text-red-300">Follow-up overdue</p>
-              <p className="text-[11px] text-red-400/70">{program.next_action || "Follow-up"} was due {followUpDue}</p>
+
+        {/* J1: Overdue Follow-Up Card (rich dark style) */}
+        {followUpOverdue && !activeAction && (
+          <div className="mb-5 rounded-xl overflow-hidden" style={{ background: "#1e1e2e" }} data-testid="overdue-followup-card">
+            <div style={{ height: 2, background: "linear-gradient(90deg, #f97316, rgba(249,115,22,0.2))" }} />
+            <div className="p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ backgroundColor: "rgba(249,115,22,0.15)" }}>
+                  <AlertCircle className="w-5 h-5" style={{ color: "#f97316" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#f97316" }}>
+                    {daysOverdue > 0 ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue` : "Due today"}
+                  </p>
+                  <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>
+                    Follow up with {program.university_name}
+                  </h3>
+                  <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {program.next_action || "Send a follow-up to stay on their radar and show continued interest."}
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    <button onClick={() => { setShowEmail(true); setActiveAction("email"); }}
+                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium bg-orange-600 hover:bg-orange-700 text-white transition-colors shadow-md"
+                      data-testid="overdue-email-btn">
+                      <Mail className="w-3.5 h-3.5" /> Send Email
+                    </button>
+                    <button onClick={() => { setShowFollowup(true); setActiveAction("followup"); }}
+                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors"
+                      style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      data-testid="overdue-reschedule-btn">
+                      <Clock className="w-3.5 h-3.5" /> Reschedule
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <Button size="sm" className="bg-red-600/10 hover:bg-red-600/20 text-red-300 border-red-500/30 text-xs h-7 px-3" variant="outline" onClick={() => { setShowFollowup(true); setActiveAction("followup"); }} data-testid="reschedule-btn">Reschedule</Button>
           </div>
         )}
-        {followUpUpcoming && !followUpOverdue && (
-          <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-xl border bg-amber-600/5 border-amber-500/30" data-testid="followup-upcoming-alert">
-            <Clock className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-xs font-bold text-amber-300">Follow-up coming up</p>
-              <p className="text-[11px] text-amber-400/70">{program.next_action || "Follow-up"} on {followUpDue}</p>
+
+        {/* J1: Upcoming Follow-Up Card (due within 5 days) */}
+        {followUpUpcoming && !followUpOverdue && !activeAction && (
+          <div className="mb-5 rounded-xl overflow-hidden" style={{ background: "#1e1e2e" }} data-testid="upcoming-followup-card">
+            <div style={{ height: 2, background: "linear-gradient(90deg, #1a8a80, rgba(26,138,128,0.2))" }} />
+            <div className="p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ backgroundColor: "rgba(26,138,128,0.15)" }}>
+                  <Clock className="w-5 h-5" style={{ color: "#2dd4bf" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#2dd4bf" }}>
+                    {daysUntilDue === 0 ? "Due today" : daysUntilDue === 1 ? "Due tomorrow" : `Due in ${daysUntilDue} days`}
+                  </p>
+                  <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>
+                    Follow up with {program.university_name}
+                  </h3>
+                  <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {program.next_action || "You have a follow-up coming up. Get ahead of it to show coaches you're organized and committed."}
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    <button onClick={() => { setShowEmail(true); setActiveAction("email"); }}
+                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium text-white transition-colors shadow-md"
+                      style={{ backgroundColor: "#1a8a80" }}
+                      data-testid="upcoming-email-btn">
+                      <Mail className="w-3.5 h-3.5" /> Send Email
+                    </button>
+                    <button onClick={() => { setShowFollowup(true); setActiveAction("followup"); }}
+                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors"
+                      style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      data-testid="upcoming-reschedule-btn">
+                      <Clock className="w-3.5 h-3.5" /> Reschedule
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* J1: Questionnaire Section */}
+        {program.questionnaire_url && (
+          <div className="mb-5 rounded-xl border p-4 sm:p-5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="questionnaire-section">
+            <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${program.questionnaire_completed ? "bg-green-500/10" : "bg-teal-600/10"}`}>
+                  {program.questionnaire_completed
+                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    : <ClipboardCheck className="w-4 h-4 text-teal-600" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>Recruiting Questionnaire</p>
+                  {program.questionnaire_completed ? (
+                    <p className="text-xs text-green-500 mt-0.5">
+                      Completed {program.questionnaire_completed_at ? new Date(program.questionnaire_completed_at).toLocaleDateString() : ""}
+                    </p>
+                  ) : (
+                    <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3)" }}>Required by most programs — fill it out to show interest</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:opacity-80"
+                  style={{ color: "#0d9488", borderColor: "rgba(13,148,136,0.3)" }}
+                  data-testid="questionnaire-open-link">
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Form
+                </a>
+                <button onClick={toggleQuestionnaire} disabled={questLoading}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    program.questionnaire_completed
+                      ? "bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                      : "text-white hover:opacity-90"
+                  }`}
+                  style={program.questionnaire_completed ? {} : { backgroundColor: "#0d9488" }}
+                  data-testid="questionnaire-toggle-btn">
+                  {questLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {program.questionnaire_completed ? "Completed" : "Mark Complete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* J1: Questionnaire Nudge (incomplete) */}
+        {program.questionnaire_url && !program.questionnaire_completed && !questNudgeDismissed && !activeAction && (
+          <div className="mb-5 rounded-xl overflow-hidden relative"
+            style={{ borderColor: "rgba(245,158,11,0.3)", background: "#1e1e2e", border: "1px solid rgba(245,158,11,0.3)" }}
+            data-testid="questionnaire-nudge">
+            <button onClick={() => setQuestNudgeDismissed(true)}
+              className="absolute top-3 right-3 p-1 rounded-lg hover:bg-white/10 transition-colors"
+              style={{ color: "rgba(255,255,255,0.35)" }} data-testid="quest-nudge-dismiss">
+              <X className="w-4 h-4" />
+            </button>
+            <div className="p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ backgroundColor: "rgba(245,158,11,0.12)" }}>
+                  <ClipboardCheck className="w-5 h-5" style={{ color: "#f59e0b" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#f59e0b" }}>Action Required</p>
+                  <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>Complete {program.university_name}'s questionnaire</h3>
+                  <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    Filling out the recruiting questionnaire shows coaches you're genuinely interested. Most programs require it.
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white transition-colors shadow-md"
+                      data-testid="quest-nudge-open">
+                      <ExternalLink className="w-3.5 h-3.5" /> Open Questionnaire
+                    </a>
+                    <button onClick={toggleQuestionnaire}
+                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors"
+                      style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      data-testid="quest-nudge-complete">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Mark as Done
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -433,7 +640,7 @@ export default function JourneyPage() {
               </div>
             )}
 
-            {/* ── AI Section ── */}
+            {/* AI Section */}
             <div className="rounded-2xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "rgba(26,138,128,0.2)" }} data-testid="ai-section">
               <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5 text-[#1a8a80]">
                 <Sparkles className="w-3.5 h-3.5" /> AI Insights
@@ -579,6 +786,15 @@ export default function JourneyPage() {
           program={program}
           onSaved={() => { closeAll(); refresh(); }}
           onCancel={closeAll}
+        />
+      )}
+
+      {/* J1: Risk Explainer Drawer */}
+      {riskDrawer && (
+        <RiskExplainerDrawer
+          badges={riskBadges}
+          activeBadge={riskDrawer}
+          onClose={() => setRiskDrawer(false)}
         />
       )}
     </div>
