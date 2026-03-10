@@ -21,6 +21,9 @@ import ProgramIntelligence from "./pages/ProgramIntelligence";
 import InvitesPage from "./pages/InvitesPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
 import AdminStatus from "./pages/AdminStatus";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminIntegrationsPage from "./pages/admin/AdminIntegrationsPage";
+import AdminUniversitiesPage from "./pages/admin/AdminUniversitiesPage";
 import RosterPage from "./pages/RosterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
@@ -108,6 +111,9 @@ function AppRoutes() {
       <Route path="/roster" element={<ProtectedRoute allowedRoles={["director"]}><RosterPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["director"]}><AdminStatus /></ProtectedRoute>} />
+      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["director"]}><AdminDashboardPage /></ProtectedRoute>} />
+      <Route path="/admin/integrations" element={<ProtectedRoute allowedRoles={["director"]}><AdminIntegrationsPage /></ProtectedRoute>} />
+      <Route path="/admin/universities" element={<ProtectedRoute allowedRoles={["director"]}><AdminUniversitiesPage /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","coach"]}><SupportPod /></ProtectedRoute>} />
 
       {/* ── Athlete / Parent routes ── */}

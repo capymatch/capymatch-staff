@@ -51,6 +51,11 @@ from routers.stripe_checkout import router as stripe_checkout_router
 from routers.connected import router as connected_router
 from routers.coach_flags import router as coach_flags_router
 from routers.smart_match import router as smart_match_router
+from routers.coach_scraper import router as coach_scraper_router
+from routers.college_scorecard import router as college_scorecard_router
+from routers.admin_universities import router as admin_universities_router
+from routers.admin_integrations import router as admin_integrations_router
+from routers.admin_dashboard import router as admin_dashboard_router
 
 logger = logging.getLogger(__name__)
 
@@ -245,6 +250,11 @@ api_router.include_router(stripe_checkout_router)
 api_router.include_router(connected_router)
 api_router.include_router(coach_flags_router)
 api_router.include_router(smart_match_router)
+api_router.include_router(coach_scraper_router)
+api_router.include_router(college_scorecard_router)
+api_router.include_router(admin_universities_router)
+api_router.include_router(admin_integrations_router)
+api_router.include_router(admin_dashboard_router)
 
 app.include_router(api_router)
 

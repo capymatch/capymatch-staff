@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Calendar, Megaphone, BarChart3, Users,
   ChevronRight, Kanban, GraduationCap, Mail, Video,
+  Shield, Plug, Database,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
@@ -14,6 +15,12 @@ const STAFF_NAV = [
 
 const DIRECTOR_EXTRA = [
   { id: "roster", label: "Roster", icon: Users, path: "/roster" },
+];
+
+const ADMIN_NAV = [
+  { id: "admin-dashboard", label: "Admin", icon: Shield, path: "/admin/dashboard" },
+  { id: "admin-integrations", label: "Integrations", icon: Plug, path: "/admin/integrations" },
+  { id: "admin-universities", label: "Universities", icon: Database, path: "/admin/universities" },
 ];
 
 const ATHLETE_NAV = [
@@ -88,6 +95,36 @@ export default function Sidebar({ open, onClose }) {
             );
           })}
         </div>
+
+        {/* Admin Section */}
+        {isDirector && (
+          <>
+            <div className="mt-4 mb-2 px-3">
+              <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--cm-text-4)" }}>Admin</span>
+            </div>
+            <div className="space-y-0.5">
+              {ADMIN_NAV.map((item) => {
+                const active = isActive(item.path);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { navigate(item.path); onClose?.(); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all group"
+                    style={{
+                      backgroundColor: active ? "var(--cm-sidebar-active)" : "transparent",
+                      color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-2)",
+                    }}
+                    data-testid={`nav-${item.id}`}
+                  >
+                    <item.icon className="w-[18px] h-[18px]" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Bottom */}
