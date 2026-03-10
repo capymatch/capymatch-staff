@@ -119,6 +119,14 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New endpoints**: `POST /api/checkout/create-portal-session`, `GET /api/stripe/billing-history`, `POST /api/stripe/cancel`, `POST /api/stripe/reactivate`
 - **Testing:** 100% pass rate (iteration_74: 23/23, iteration_75: 12/12)
 
+### Coach Watch Scheduled Auto-Scanning (DONE - March 10, 2026)
+- **Real Web Search**: Replaced LLM-knowledge-only approach with DuckDuckGo real news search (`_search_coaching_news`) for each school in the pipeline
+- **Weekly Background Task**: `coach_watch_weekly_scan()` asyncio task runs every 7 days, scanning all premium tenants' pipeline schools for coaching staff changes
+- **AI Analysis**: Claude Sonnet analyzes DuckDuckGo news results and returns structured alerts (severity: red/yellow/green, change_type, recommendation)
+- **Subscription Enforcement**: `POST /ai/coach-watch/scan` and `GET /ai/coach-watch/alerts` now require premium tier (auto_reply_detection feature flag). Individual alert endpoint (`/alert/{university_name}`) remains open for Journey page badges
+- **Notifications**: Red/yellow severity alerts automatically create in-app notifications via `create_notification`
+- **Testing:** 100% pass rate (iteration_76: 10/10)
+
 ## P1 Upcoming
 - Normalize camelCase → snake_case in database fields (technical debt)
 
