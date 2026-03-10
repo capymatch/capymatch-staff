@@ -12,30 +12,39 @@ export function GettingStartedChecklist({ program, coaches, timeline, profileCom
   const doneCount = steps.filter(s => s.done).length;
 
   return (
-    <div className="rounded-lg border p-5 sm:p-6 bg-slate-900 border-slate-700/50" data-testid="getting-started-checklist">
-      <h3 className="text-base font-bold mb-1 text-white">Start your {program.university_name} journey</h3>
-      <p className="text-xs mb-5 text-slate-400">Complete these steps to kickstart your recruiting relationship</p>
+    <div className="rounded-lg border p-5 sm:p-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="getting-started-checklist">
+      <h3 className="text-base font-bold mb-1" style={{ color: "var(--cm-text)" }}>Start your {program.university_name} journey</h3>
+      <p className="text-xs mb-5" style={{ color: "var(--cm-text-3)" }}>Complete these steps to kickstart your recruiting relationship</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {steps.map(s => (
-          <button key={s.key} className={`w-full flex items-center gap-3.5 p-3.5 rounded-xl border transition-all text-left ${s.done ? "opacity-50 border-slate-700" : "border-slate-700 hover:border-teal-700/30 hover:bg-slate-800"}`}
+          <button key={s.key} className="w-full flex items-center gap-3.5 p-3.5 rounded-lg border transition-all text-left"
+            style={{
+              borderColor: "var(--cm-border)",
+              backgroundColor: s.done ? "transparent" : "var(--cm-surface-2)",
+              opacity: s.done ? 0.5 : 1,
+            }}
             onClick={() => !s.done && s.action && s.action()} disabled={s.done}
             data-testid={`checklist-step-${s.key}`}>
-            <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${s.done ? "bg-slate-500 border-slate-500" : "border-slate-600"}`}>
+            <div className="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
+              style={{
+                borderColor: s.done ? "#0d9488" : "var(--cm-border)",
+                backgroundColor: s.done ? "#0d9488" : "transparent",
+              }}>
               {s.done && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
             </div>
             <div className="min-w-0">
-              <p className={`text-sm font-medium text-white ${s.done ? "line-through" : ""}`}>{s.label}</p>
-              <p className="text-[11px] text-slate-400">{s.desc}</p>
+              <p className={`text-sm font-medium ${s.done ? "line-through" : ""}`} style={{ color: "var(--cm-text)" }}>{s.label}</p>
+              <p className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{s.desc}</p>
             </div>
-            {!s.done && s.action && <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0 text-slate-500" />}
+            {!s.done && s.action && <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" style={{ color: "var(--cm-text-3)" }} />}
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-700">
-        <div className="flex-1 h-1 rounded-full overflow-hidden bg-slate-800">
-          <div className="h-full rounded-full bg-teal-700 transition-all duration-500" style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+      <div className="flex items-center gap-3 mt-4 pt-4" style={{ borderTop: "1px solid var(--cm-border)" }}>
+        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
+          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${(doneCount / steps.length) * 100}%`, backgroundColor: "#0d9488" }} />
         </div>
-        <span className="text-[11px] font-semibold text-teal-700">{doneCount} of {steps.length}</span>
+        <span className="text-[11px] font-semibold" style={{ color: "#0d9488" }}>{doneCount} of {steps.length}</span>
       </div>
     </div>
   );

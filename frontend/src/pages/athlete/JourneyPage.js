@@ -524,6 +524,18 @@ export default function JourneyPage() {
           </div>
         )}
 
+        {/* Getting Started Checklist — shows right under hero for new schools */}
+        {isNewSchool && (
+          <div className="mb-4">
+            <GettingStartedChecklist
+              program={program} coaches={coaches} timeline={timeline}
+              profileComplete={profileComplete}
+              onAddCoach={() => { setShowCoachForm({}); }}
+              onSendEmail={openGatedEmail}
+            />
+          </div>
+        )}
+
         {/* J1: Overdue Follow-Up Card (rich dark style) */}
         {followUpOverdue && !activeAction && (
           <div className="mb-4 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="overdue-followup-card">
@@ -700,15 +712,6 @@ export default function JourneyPage() {
               {showJourneyDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               {showJourneyDetails ? "Hide journey details" : "View full journey"}
             </button>
-          </div>
-        ) : isNewSchool ? (
-          <div className="mb-6">
-            <GettingStartedChecklist
-              program={program} coaches={coaches} timeline={timeline}
-              profileComplete={profileComplete}
-              onAddCoach={() => { setShowCoachForm({}); }}
-              onSendEmail={openGatedEmail}
-            />
           </div>
         ) : hasCoachReply ? (
           <div className="mb-8">
