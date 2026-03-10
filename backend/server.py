@@ -57,6 +57,7 @@ from routers.admin_universities import router as admin_universities_router
 from routers.admin_integrations import router as admin_integrations_router
 from routers.admin_dashboard import router as admin_dashboard_router
 from routers.organizations import router as organizations_router
+from routers.director_actions import router as director_actions_router
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +258,7 @@ api_router.include_router(admin_universities_router)
 api_router.include_router(admin_integrations_router)
 api_router.include_router(admin_dashboard_router)
 api_router.include_router(organizations_router)
+api_router.include_router(director_actions_router)
 
 app.include_router(api_router)
 

@@ -6,6 +6,7 @@ import UpcomingEventsCard from "./UpcomingEventsCard";
 import ActivityFeed from "./ActivityFeed";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import AthletePipelinePanel from "./AthletePipelinePanel";
+import DirectorActionsCard from "./DirectorActionsCard";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -133,6 +134,9 @@ export default function CoachView({ data, userName }) {
           })}
         </div>
       </section>
+
+      {/* ── Director Actions (assigned to this coach) ── */}
+      <DirectorActionsCard role="club_coach" />
 
       {/* ── Today's Actions (AI) ── */}
       <TodaysActionsCard summary={summary} />

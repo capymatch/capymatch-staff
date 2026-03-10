@@ -231,6 +231,7 @@ class PipelineHeader(BaseModel):
     recruiting_stage: str = "exploring"
     days_since_activity: int = 0
     photo_url: str = ""
+    primary_coach_id: Optional[str] = None
 
 class PipelineSummary(BaseModel):
     total_schools: int = 0

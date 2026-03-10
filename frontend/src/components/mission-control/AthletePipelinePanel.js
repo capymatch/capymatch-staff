@@ -4,7 +4,7 @@ import {
   X, Loader2, TrendingUp, TrendingDown, Minus, School,
   MessageCircle, Clock, AlertTriangle, ChevronDown, ChevronRight,
   Mail, Phone, Send, FileText, MapPin, Trophy, Users, Zap,
-  ArrowUpRight, Flag, Check
+  ArrowUpRight, Flag, Check, ClipboardCheck, Shield, Eye, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -268,6 +268,267 @@ function FlagModal({ school, athleteId, onClose, onFlagged }) {
   );
 }
 
+// ─── Director Action Presets ─────────────────────
+const REVIEW_REASONS = [
+  { key: "pipeline_stalling", label: "Pipeline stalling" },
+  { key: "high_value_recruit", label: "High-value recruit" },
+  { key: "scholarship_deadline", label: "Scholarship deadline approaching" },
+  { key: "needs_guidance", label: "Needs guidance" },
+  { key: "other", label: "Other" },
+];
+
+const ESCALATION_REASONS = [
+  { key: "overdue_followups", label: "Overdue follow-ups" },
+  { key: "no_responses", label: "No responses from schools" },
+  { key: "momentum_drop", label: "Momentum drop" },
+  { key: "deadline_risk", label: "Deadline risk" },
+  { key: "other", label: "Other" },
+];
+
+function DirectorActionModal({ athleteId, athleteName, coachId, actionType, onClose, onCreated }) {
+  const [reason, setReason] = useState("");
+  const [note, setNote] = useState("");
+  const [riskLevel, setRiskLevel] = useState("warning");
+  const [submitting, setSubmitting] = useState(false);
+
+  const isEscalation = actionType === "pipeline_escalation";
+  const reasons = isEscalation ? ESCALATION_REASONS : REVIEW_REASONS;
+  const accentColor = isEscalation ? "#ef4444" : "#3b82f6";
+  const Icon = isEscalation ? AlertTriangle : ClipboardCheck;
+  const title = isEscalation ? "Escalate Pipeline" : "Request Coach Review";
+
+  const handleSubmit = async () => {
+    if (!reason) { toast.error("Select a reason"); return; }
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem("session_token");
+      const payload = {
+        type: actionType,
+        athlete_id: athleteId,
+        coach_id: coachId,
+        reason,
+        note: note.trim(),
+      };
+      if (isEscalation) payload.risk_level = riskLevel;
+      const res = await axios.post(`${API}/director/actions`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success(res.data.message || "Action created");
+      onCreated?.();
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to create action");
+    } finally { setSubmitting(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center" data-testid="director-action-modal-overlay">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-sm mx-4 rounded-lg p-5"
+        style={{ backgroundColor: "var(--cm-bg)", border: "1px solid var(--cm-border)" }}
+        data-testid="director-action-modal">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accentColor}15` }}>
+              <Icon className="w-4 h-4" style={{ color: accentColor }} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>{title}</h3>
+              <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>{athleteName}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/5">
+            <X className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} />
+          </button>
+        </div>
+
+        {/* Risk Level (escalation only) */}
+        {isEscalation && (
+          <div className="mb-3">
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Severity</label>
+            <div className="flex gap-2">
+              {[
+                { key: "warning", label: "Warning", color: "#f59e0b" },
+                { key: "critical", label: "Critical", color: "#ef4444" },
+              ].map(rl => (
+                <button key={rl.key} onClick={() => setRiskLevel(rl.key)}
+                  className="flex-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all text-center"
+                  style={{
+                    backgroundColor: riskLevel === rl.key ? `${rl.color}15` : "var(--cm-surface-2)",
+                    color: riskLevel === rl.key ? rl.color : "var(--cm-text-3)",
+                    border: `1px solid ${riskLevel === rl.key ? `${rl.color}40` : "transparent"}`,
+                  }}
+                  data-testid={`risk-level-${rl.key}`}>
+                  {rl.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reason */}
+        <div className="mb-3">
+          <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Reason</label>
+          <div className="space-y-1.5">
+            {reasons.map(r => (
+              <button key={r.key} onClick={() => setReason(r.key)}
+                className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                style={{
+                  backgroundColor: reason === r.key ? `${accentColor}12` : "var(--cm-surface-2)",
+                  color: reason === r.key ? accentColor : "var(--cm-text-2)",
+                  border: `1px solid ${reason === r.key ? `${accentColor}30` : "transparent"}`,
+                }}
+                data-testid={`action-reason-${r.key}`}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Note */}
+        <div className="mb-4">
+          <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Note (optional)</label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={300}
+            rows={2}
+            placeholder="Add context for the coach..."
+            className="w-full px-3 py-2 rounded-lg text-xs resize-none focus:outline-none"
+            style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text)", border: "1px solid var(--cm-border)" }}
+            data-testid="action-note-input" />
+        </div>
+
+        {/* Submit */}
+        <button onClick={handleSubmit} disabled={submitting || !reason}
+          className="w-full py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2"
+          style={{
+            backgroundColor: reason ? accentColor : "var(--cm-surface-2)",
+            color: reason ? "#fff" : "var(--cm-text-3)",
+            opacity: submitting ? 0.6 : 1,
+          }}
+          data-testid="action-submit-btn">
+          {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Icon className="w-3.5 h-3.5" />}
+          {submitting ? "Creating..." : title}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+function AthleteActionsSection({ athleteId, userRole }) {
+  const [actions, setActions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("session_token");
+    axios.get(`${API}/director/actions/athlete/${athleteId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => setActions(res.data.actions || []))
+    .catch(() => {})
+    .finally(() => setLoading(false));
+  }, [athleteId]);
+
+  const handleAck = async (actionId) => {
+    try {
+      const token = localStorage.getItem("session_token");
+      await axios.post(`${API}/director/actions/${actionId}/acknowledge`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Acknowledged");
+      setActions(prev => prev.map(a => a.action_id === actionId ? { ...a, status: "acknowledged", acknowledged_at: new Date().toISOString() } : a));
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed"); }
+  };
+
+  const handleResolve = async (actionId) => {
+    try {
+      const token = localStorage.getItem("session_token");
+      await axios.post(`${API}/director/actions/${actionId}/resolve`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Resolved");
+      setActions(prev => prev.map(a => a.action_id === actionId ? { ...a, status: "resolved", resolved_at: new Date().toISOString() } : a));
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed"); }
+  };
+
+  const active = actions.filter(a => a.status === "open" || a.status === "acknowledged");
+  if (loading || active.length === 0) return null;
+
+  const STATUS_CFG = {
+    open: { label: "Open", color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+    acknowledged: { label: "Ack'd", color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  };
+
+  const isCoach = userRole === "club_coach";
+
+  return (
+    <div data-testid="athlete-actions-section">
+      <span className="text-[10px] font-bold uppercase tracking-wider block mb-2" style={{ color: "var(--cm-text-3)" }}>
+        Director Actions
+      </span>
+      <div className="space-y-2">
+        {active.map(a => {
+          const isEsc = a.type === "pipeline_escalation";
+          const sc = STATUS_CFG[a.status] || STATUS_CFG.open;
+          return (
+            <div key={a.action_id} className="rounded-xl border p-3"
+              style={{
+                backgroundColor: isEsc ? "rgba(239,68,68,0.04)" : "rgba(59,130,246,0.04)",
+                borderColor: isEsc ? "rgba(239,68,68,0.15)" : "rgba(59,130,246,0.15)",
+              }}
+              data-testid={`pipeline-action-${a.action_id}`}>
+              <div className="flex items-center gap-2 mb-1">
+                {isEsc
+                  ? <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />
+                  : <ClipboardCheck className="w-3.5 h-3.5" style={{ color: "#3b82f6" }} />
+                }
+                <span className="text-[10px] font-bold" style={{ color: isEsc ? "#ef4444" : "#3b82f6" }}>
+                  {isEsc ? "Escalation" : "Review Request"}
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: sc.bg, color: sc.color }}>
+                  {sc.label}
+                </span>
+                {a.risk_level && (
+                  <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor: a.risk_level === "critical" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)",
+                      color: a.risk_level === "critical" ? "#ef4444" : "#f59e0b",
+                    }}>
+                    {a.risk_level}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px]" style={{ color: "var(--cm-text-2)" }}>
+                {a.reason_label}{a.note ? ` — ${a.note}` : ""}
+              </p>
+              <p className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-3)" }}>
+                From {a.director_name} · {a.created_at ? new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+              </p>
+              {isCoach && (
+                <div className="flex items-center gap-2 mt-2">
+                  {a.status === "open" && (
+                    <Button size="sm" onClick={() => handleAck(a.action_id)}
+                      className="text-[10px] h-6 px-2.5 bg-blue-600/80 hover:bg-blue-600 text-white"
+                      data-testid={`panel-ack-${a.action_id}`}>
+                      <Eye className="w-3 h-3 mr-1" />Acknowledge
+                    </Button>
+                  )}
+                  <Button size="sm" onClick={() => handleResolve(a.action_id)}
+                    className="text-[10px] h-6 px-2.5 bg-emerald-600/80 hover:bg-emerald-600 text-white"
+                    data-testid={`panel-resolve-${a.action_id}`}>
+                    <CheckCircle2 className="w-3 h-3 mr-1" />Resolve
+                  </Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 
 export default function AthletePipelinePanel({ athleteId, onClose }) {
   const [data, setData] = useState(null);
@@ -275,6 +536,21 @@ export default function AthletePipelinePanel({ athleteId, onClose }) {
   const [error, setError] = useState(null);
   const [expandedStage, setExpandedStage] = useState(null);
   const [flagTarget, setFlagTarget] = useState(null);
+  const [dirActionType, setDirActionType] = useState(null); // "review_request" | "pipeline_escalation" | null
+  const [actionsKey, setActionsKey] = useState(0); // refresh trigger
+
+  // Get current user role from token
+  const userRole = (() => {
+    try {
+      const token = localStorage.getItem("session_token");
+      if (!token) return "athlete";
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.role || "athlete";
+    } catch { return "athlete"; }
+  })();
+
+  const isDirector = userRole === "director" || userRole === "platform_admin";
+  const isCoach = userRole === "club_coach";
 
   useEffect(() => {
     if (!athleteId) return;
@@ -353,6 +629,25 @@ export default function AthletePipelinePanel({ athleteId, onClose }) {
                 </span>
               </div>
             </div>
+
+            {/* Director Action Buttons */}
+            {isDirector && data.header?.primary_coach_id && (
+              <div className="flex items-center gap-2" data-testid="director-action-buttons">
+                <Button size="sm" onClick={() => setDirActionType("review_request")}
+                  className="text-[10px] h-7 px-3 bg-blue-600/80 hover:bg-blue-600 text-white"
+                  data-testid="request-review-btn">
+                  <ClipboardCheck className="w-3 h-3 mr-1.5" />Request Review
+                </Button>
+                <Button size="sm" onClick={() => setDirActionType("pipeline_escalation")}
+                  className="text-[10px] h-7 px-3 bg-red-600/80 hover:bg-red-600 text-white"
+                  data-testid="escalate-btn">
+                  <AlertTriangle className="w-3 h-3 mr-1.5" />Escalate
+                </Button>
+              </div>
+            )}
+
+            {/* Active Director Actions for this athlete */}
+            <AthleteActionsSection key={actionsKey} athleteId={athleteId} userRole={userRole} />
 
             {/* Summary Row */}
             <div className="flex gap-2" data-testid="pipeline-summary-row">
@@ -448,6 +743,18 @@ export default function AthletePipelinePanel({ athleteId, onClose }) {
           athleteId={athleteId}
           onClose={() => setFlagTarget(null)}
           onFlagged={() => toast.success("Flag sent to athlete")}
+        />
+      )}
+
+      {/* Director Action Modal */}
+      {dirActionType && data && (
+        <DirectorActionModal
+          athleteId={athleteId}
+          athleteName={data.header?.name || "Athlete"}
+          coachId={data.header?.primary_coach_id || ""}
+          actionType={dirActionType}
+          onClose={() => setDirActionType(null)}
+          onCreated={() => setActionsKey(k => k + 1)}
         />
       )}
     </div>

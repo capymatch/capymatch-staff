@@ -7,6 +7,7 @@ import UpcomingEventsCard from "./UpcomingEventsCard";
 import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
+import DirectorActionsCard from "./DirectorActionsCard";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -184,7 +185,10 @@ export default function DirectorView({ data, userName }) {
       {/* 3. RECRUITING SIGNALS */}
       <RecruitingSignalsCard signals={data.recruitingSignals} />
 
-      {/* 4. NEEDS ATTENTION */}
+      {/* 4. DIRECTOR ACTIONS */}
+      <DirectorActionsCard role="director" />
+
+      {/* 5. NEEDS ATTENTION */}
       <NeedsAttentionCard items={data.needsAttention || []} onViewPipeline={setPipelineAthleteId} />
 
       {/* 5. COACH HEALTH */}

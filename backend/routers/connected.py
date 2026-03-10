@@ -80,6 +80,7 @@ async def get_athlete_pipeline_summary(
         "recruiting_stage": athlete.get("recruiting_stage", "exploring"),
         "days_since_activity": athlete.get("days_since_activity", 0),
         "photo_url": athlete.get("photo_url", ""),
+        "primary_coach_id": athlete.get("primary_coach_id"),
     }
 
     # Athletes without tenant (seeded mock data) — return header + empty pipeline
