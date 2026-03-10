@@ -127,8 +127,12 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Notifications**: Red/yellow severity alerts automatically create in-app notifications via `create_notification`
 - **Testing:** 100% pass rate (iteration_76: 10/10)
 
-## P1 Upcoming
-- Normalize camelCase → snake_case in database fields (technical debt)
+### Database Normalization: camelCase → snake_case (DONE - March 10, 2026)
+- **Migrated 25 athlete documents** in MongoDB — renamed 11 fields: `firstName→first_name`, `lastName→last_name`, `fullName→full_name`, `gradYear→grad_year`, `lastActivity→last_activity`, `daysSinceActivity→days_since_activity`, `momentumScore→momentum_score`, `momentumTrend→momentum_trend`, `recruitingStage→recruiting_stage`, `schoolTargets→school_targets`, `activeInterest→active_interest`
+- **Updated 20+ backend Python files** including `mock_data.py`, `database.py`, `athlete_store.py`, `decision_engine.py`, `advocacy_engine.py`, `event_engine.py`, `program_engine.py`, `support_pod.py`, and all routers
+- **Updated 8 frontend JS files** including `AthleteDashboard.js`, `MyRosterCard.js`, `AthleteSnapshot.js`, `PodHeader.js`, `EventPrep.js`, `LiveEvent.js`, `RecommendationBuilder.js`, `SupportPod.js`
+- **API responses** now use 100% snake_case field names — zero camelCase athlete fields remain
+- **Testing:** 100% pass rate (iteration_77: 8/8 backend, all frontend verified)
 
 ## P2 Future/Backlog
 - Connected Experiences (Director ↔ Athlete visibility)
