@@ -48,7 +48,7 @@ function TrendCard({ trend }) {
 
 function ProgramTrends({ trends, viewMode }) {
   if (!trends || trends.length === 0) return null;
-  const isCoach = viewMode === "coach";
+  const isCoach = viewMode === "club_coach";
 
   return (
     <section className="mb-5" data-testid="section-trends">
@@ -416,7 +416,7 @@ function ProgramIntelligence() {
       .finally(() => setLoading(false));
   }, [selectedCoach]);
 
-  const isCoachView = data?.view_mode === "coach";
+  const isCoachView = data?.view_mode === "club_coach";
 
   if (loading && !data) {
     return (

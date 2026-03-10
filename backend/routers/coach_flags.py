@@ -62,7 +62,7 @@ async def flag_for_followup(
     """Coach flags a school in an athlete's pipeline for follow-up."""
 
     # V1: coach-only
-    if current_user["role"] != "coach":
+    if current_user["role"] != "club_coach":
         raise HTTPException(403, "Only coaches can flag follow-ups in V1.")
 
     # Verify athlete exists

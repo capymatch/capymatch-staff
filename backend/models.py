@@ -117,7 +117,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     name: str
-    role: str = "coach"  # "coach", "athlete", or "parent" — director cannot self-register
+    role: str = "club_coach"  # "club_coach", "athlete", or "parent" — director cannot self-register
 
 class UserLogin(BaseModel):
     email: str

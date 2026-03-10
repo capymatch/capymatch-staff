@@ -18,8 +18,8 @@ log_auth = logging.getLogger(__name__)
 router = APIRouter()
 
 
-ALLOWED_ROLES = {"director", "coach", "athlete", "parent"}
-SELF_REGISTER_ROLES = {"coach", "athlete", "parent"}
+ALLOWED_ROLES = {"director", "club_coach", "athlete", "parent"}
+SELF_REGISTER_ROLES = {"club_coach", "athlete", "parent"}
 
 
 def _safe_user(doc):

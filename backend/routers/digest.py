@@ -33,7 +33,7 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
 
     # 1. Coach activation summary
     coaches = await db.users.find(
-        {"role": "coach"},
+        {"role": "club_coach"},
         {"_id": 0, "id": 1, "name": 1, "email": 1, "onboarding": 1, "last_active": 1, "created_at": 1},
     ).to_list(200)
 

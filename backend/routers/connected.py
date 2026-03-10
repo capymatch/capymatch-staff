@@ -33,7 +33,7 @@ def _require_director_or_assigned(user: dict, athlete: dict):
     """Only directors or the athlete's assigned coach may view."""
     if user["role"] == "director":
         return
-    if user["role"] == "coach" and athlete.get("primary_coach_id") == user["id"]:
+    if user["role"] == "club_coach" and athlete.get("primary_coach_id") == user["id"]:
         return
     raise HTTPException(403, "You don't have access to this athlete's pipeline")
 

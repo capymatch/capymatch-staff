@@ -389,7 +389,7 @@ def compute_all(coach_id=None):
         for i in get_interventions():
             if i.get("owner") == coach_id:
                 athlete_ids.add(i["athlete_id"])
-        view_mode = "coach"
+        view_mode = "club_coach"
 
     athletes = _filter_athletes(athlete_ids)
 

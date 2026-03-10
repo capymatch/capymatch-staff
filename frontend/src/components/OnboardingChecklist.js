@@ -38,7 +38,7 @@ export default function OnboardingChecklist() {
   }, []);
 
   useEffect(() => {
-    if (user?.role === "coach") fetchStatus();
+    if (user?.role === "club_coach") fetchStatus();
   }, [user, fetchStatus]);
 
   // Auto-complete "mission_control" on first render

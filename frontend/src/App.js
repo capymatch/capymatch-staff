@@ -42,7 +42,8 @@ import AthleteOutreachPage from "./pages/athlete/OutreachAnalysisPage";
 import AthleteHighlightPage from "./pages/athlete/HighlightAdvisorPage";
 
 function getHomeRoute(role, onboardingDone) {
-  if (role === "director" || role === "coach") return "/mission-control";
+  if (role === "platform_admin") return "/admin/dashboard";
+  if (role === "director" || role === "club_coach") return "/mission-control";
   if ((role === "athlete" || role === "parent") && onboardingDone === false) return "/onboarding";
   return "/board"; // athlete, parent
 }
@@ -57,7 +58,7 @@ function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
     );
   }
   if (!user) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && !allowedRoles.includes(user.role) && user.role !== "platform_admin") {
     return <Navigate to={getHomeRoute(user.role, onboardingDone)} replace />;
   }
   // For athletes: wait for onboarding check, then redirect if needed
@@ -97,24 +98,24 @@ function AppRoutes() {
       <Route path="/invite/:token" element={user ? <Navigate to={home} replace /> : <AcceptInvitePage />} />
 
       {/* ── Staff routes (director + coach) ── */}
-      <Route path="/mission-control" element={<ProtectedRoute allowedRoles={["director","coach"]}><MissionControl /></ProtectedRoute>} />
-      <Route path="/events" element={<ProtectedRoute allowedRoles={["director","coach"]}><EventHome /></ProtectedRoute>} />
-      <Route path="/events/:eventId/prep" element={<ProtectedRoute allowedRoles={["director","coach"]}><EventPrep /></ProtectedRoute>} />
-      <Route path="/events/:eventId/live" element={<ProtectedRoute allowedRoles={["director","coach"]}><LiveEvent /></ProtectedRoute>} />
-      <Route path="/events/:eventId/summary" element={<ProtectedRoute allowedRoles={["director","coach"]}><EventSummary /></ProtectedRoute>} />
-      <Route path="/advocacy" element={<ProtectedRoute allowedRoles={["director","coach"]}><AdvocacyHome /></ProtectedRoute>} />
-      <Route path="/advocacy/new" element={<ProtectedRoute allowedRoles={["director","coach"]}><RecommendationBuilder /></ProtectedRoute>} />
-      <Route path="/advocacy/:recommendationId" element={<ProtectedRoute allowedRoles={["director","coach"]}><RecommendationDetail /></ProtectedRoute>} />
-      <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute allowedRoles={["director","coach"]}><RelationshipDetail /></ProtectedRoute>} />
-      <Route path="/program" element={<ProtectedRoute allowedRoles={["director","coach"]}><ProgramIntelligence /></ProtectedRoute>} />
+      <Route path="/mission-control" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><MissionControl /></ProtectedRoute>} />
+      <Route path="/events" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><EventHome /></ProtectedRoute>} />
+      <Route path="/events/:eventId/prep" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><EventPrep /></ProtectedRoute>} />
+      <Route path="/events/:eventId/live" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><LiveEvent /></ProtectedRoute>} />
+      <Route path="/events/:eventId/summary" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><EventSummary /></ProtectedRoute>} />
+      <Route path="/advocacy" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><AdvocacyHome /></ProtectedRoute>} />
+      <Route path="/advocacy/new" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RecommendationBuilder /></ProtectedRoute>} />
+      <Route path="/advocacy/:recommendationId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RecommendationDetail /></ProtectedRoute>} />
+      <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RelationshipDetail /></ProtectedRoute>} />
+      <Route path="/program" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><ProgramIntelligence /></ProtectedRoute>} />
       <Route path="/invites" element={<ProtectedRoute allowedRoles={["director"]}><InvitesPage /></ProtectedRoute>} />
       <Route path="/roster" element={<ProtectedRoute allowedRoles={["director"]}><RosterPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute allowedRoles={["director"]}><AdminStatus /></ProtectedRoute>} />
-      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["director"]}><AdminDashboardPage /></ProtectedRoute>} />
-      <Route path="/admin/integrations" element={<ProtectedRoute allowedRoles={["director"]}><AdminIntegrationsPage /></ProtectedRoute>} />
-      <Route path="/admin/universities" element={<ProtectedRoute allowedRoles={["director"]}><AdminUniversitiesPage /></ProtectedRoute>} />
-      <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","coach"]}><SupportPod /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminStatus /></ProtectedRoute>} />
+      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminDashboardPage /></ProtectedRoute>} />
+      <Route path="/admin/integrations" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminIntegrationsPage /></ProtectedRoute>} />
+      <Route path="/admin/universities" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminUniversitiesPage /></ProtectedRoute>} />
+      <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SupportPod /></ProtectedRoute>} />
 
       {/* ── Athlete / Parent routes ── */}
       <Route path="/onboarding" element={<ProtectedRoute useLayout={false} allowedRoles={["athlete","parent"]}><AthleteOnboardingQuiz /></ProtectedRoute>} />

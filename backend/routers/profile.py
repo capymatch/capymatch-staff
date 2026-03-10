@@ -120,7 +120,7 @@ async def get_coach_profile(coach_id: str, current_user: dict = get_current_user
     if current_user["role"] != "director":
         raise HTTPException(status_code=403, detail="Director only")
 
-    user = await db.users.find_one({"id": coach_id, "role": "coach"}, {"_id": 0})
+    user = await db.users.find_one({"id": coach_id, "role": "club_coach"}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="Coach not found")
     return _build_profile_response(user)

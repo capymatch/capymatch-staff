@@ -214,7 +214,7 @@ async def _compute_trends(current_status):
 async def _get_coach_health(coach_map):
     """Build coach health summary for Director MC."""
     coaches = await db.users.find(
-        {"role": "coach"},
+        {"role": "club_coach"},
         {"_id": 0, "id": 1, "name": 1, "last_active": 1, "onboarding": 1, "profile": 1},
     ).to_list(50)
 
@@ -344,7 +344,7 @@ def _build_coach_response(user, alerts, attention, signals, events):
     activity = sorted(signals, key=lambda s: s.get("hoursAgo", 0))[:8]
 
     return {
-        "role": "coach",
+        "role": "club_coach",
         "todays_summary": todays_summary,
         "myRoster": roster,
         "upcomingEvents": upcoming,

@@ -30,7 +30,7 @@ function SupportPod() {
 
   // Track onboarding steps for coaches
   useEffect(() => {
-    if (user?.role !== "coach") return;
+    if (user?.role !== "club_coach") return;
     const track = async () => {
       try {
         await Promise.all([

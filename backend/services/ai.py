@@ -52,7 +52,7 @@ async def _send_with_retry(chat: LlmChat, message: UserMessage) -> str:
 
 async def generate_program_narrative(data: dict, view_mode: str = "program") -> str:
     """Generate a 2-3 sentence narrative for Program Intelligence."""
-    scope = "the full program" if view_mode != "coach" else f"your athletes ({data.get('athlete_count', 0)} total)"
+    scope = "the full program" if view_mode != "club_coach" else f"your athletes ({data.get('athlete_count', 0)} total)"
 
     prompt = f"""You are an assistant for a recruiting program director/coach.
 Analyze this data and write a 2-3 sentence briefing about {scope}.

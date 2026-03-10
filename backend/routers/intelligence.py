@@ -47,7 +47,7 @@ router = APIRouter()
 async def program_narrative(current_user: dict = get_current_user_dep()):
     """Generate a narrative briefing for Program Intelligence."""
     coach_id = None
-    if current_user["role"] == "coach":
+    if current_user["role"] == "club_coach":
         coach_id = current_user["name"]
 
     data = compute_program_intelligence(coach_id=coach_id)

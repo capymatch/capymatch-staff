@@ -64,7 +64,7 @@ def _build_steps(completed: list, has_athletes: bool, first_athlete_id: str | No
 @router.get("/onboarding/status")
 async def get_onboarding_status(current_user: dict = get_current_user_dep()):
     """Return the onboarding checklist state for the current coach."""
-    if current_user["role"] != "coach":
+    if current_user["role"] != "club_coach":
         return {"show_checklist": False}
 
     user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
@@ -122,7 +122,7 @@ async def get_onboarding_status(current_user: dict = get_current_user_dep()):
 @router.post("/onboarding/complete-step")
 async def complete_step(body: dict, current_user: dict = get_current_user_dep()):
     """Mark an onboarding step as complete."""
-    if current_user["role"] != "coach":
+    if current_user["role"] != "club_coach":
         raise HTTPException(status_code=403, detail="Coach only")
 
     step_key = body.get("step")
@@ -167,7 +167,7 @@ async def complete_step(body: dict, current_user: dict = get_current_user_dep())
 @router.post("/onboarding/dismiss")
 async def dismiss_onboarding(current_user: dict = get_current_user_dep()):
     """Dismiss the onboarding checklist (can be re-shown if needed)."""
-    if current_user["role"] != "coach":
+    if current_user["role"] != "club_coach":
         raise HTTPException(status_code=403, detail="Coach only")
 
     now = datetime.now(timezone.utc).isoformat()

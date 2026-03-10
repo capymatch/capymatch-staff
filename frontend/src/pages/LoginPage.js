@@ -88,7 +88,7 @@ export default function LoginPage() {
                     {[
                       { value: "athlete", label: "Athlete" },
                       { value: "parent", label: "Parent" },
-                      { value: "coach", label: "Coach" },
+                      { value: "club_coach", label: "Coach" },
                     ].map((r) => (
                       <button
                         key={r.value}

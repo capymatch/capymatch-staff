@@ -72,7 +72,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
     _require_director(current_user)
 
     coaches = await db.users.find(
-        {"role": "coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1, "profile": 1}
+        {"role": "club_coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1, "profile": 1}
     ).to_list(100)
 
     athlete_map = get_coach_athlete_map()
@@ -229,7 +229,7 @@ async def list_coaches(current_user: dict = get_current_user_dep()):
     """List all coaches (for reassignment dropdowns)."""
     _require_director(current_user)
     coaches = await db.users.find(
-        {"role": "coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1}
+        {"role": "club_coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1}
     ).to_list(100)
     return coaches
 
@@ -250,7 +250,7 @@ async def reassign_athlete(
 
     # Validate target coach exists and is a coach
     new_coach = await db.users.find_one(
-        {"id": body.new_coach_id, "role": "coach"}, {"_id": 0, "id": 1, "name": 1}
+        {"id": body.new_coach_id, "role": "club_coach"}, {"_id": 0, "id": 1, "name": 1}
     )
     if not new_coach:
         raise HTTPException(status_code=404, detail="Target coach not found")
@@ -446,7 +446,7 @@ async def get_coach_activation(current_user: dict = get_current_user_dep()):
 
     # Get all coaches
     coaches = await db.users.find(
-        {"role": "coach"},
+        {"role": "club_coach"},
         {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1,
          "created_at": 1, "onboarding": 1, "last_active": 1, "profile": 1},
     ).to_list(100)
@@ -609,7 +609,7 @@ async def nudge_coach(body: dict, current_user: dict = get_current_user_dep()):
 
     # Validate coach exists
     coach = await db.users.find_one(
-        {"id": coach_id, "role": "coach"},
+        {"id": coach_id, "role": "club_coach"},
         {"_id": 0, "id": 1, "name": 1, "email": 1},
     )
     if not coach:
@@ -711,7 +711,7 @@ async def bulk_assign(body: dict, current_user: dict = get_current_user_dep()):
     if not athlete_ids or not coach_id:
         raise HTTPException(status_code=400, detail="athlete_ids and coach_id required")
 
-    coach = await db.users.find_one({"id": coach_id, "role": "coach"}, {"_id": 0, "id": 1, "name": 1})
+    coach = await db.users.find_one({"id": coach_id, "role": "club_coach"}, {"_id": 0, "id": 1, "name": 1})
     if not coach:
         raise HTTPException(status_code=404, detail="Coach not found")
 

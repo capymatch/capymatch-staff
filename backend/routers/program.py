@@ -31,7 +31,7 @@ async def program_intelligence(
     """
     # If the user is a coach, force the view to their own data
     effective_coach_id = coach_id
-    if current_user["role"] == "coach":
+    if current_user["role"] == "club_coach":
         effective_coach_id = current_user["name"]
 
     data = compute_program_intelligence(coach_id=effective_coach_id)

@@ -104,7 +104,7 @@ function EventHome() {
 
   // Track onboarding step for coaches
   useEffect(() => {
-    if (user?.role === "coach") {
+    if (user?.role === "club_coach") {
       axios.post(`${API}/onboarding/complete-step`, { step: "events" }).catch(() => {});
     }
   }, [user]);

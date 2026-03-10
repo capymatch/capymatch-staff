@@ -39,6 +39,8 @@ export default function Sidebar({ open, onClose }) {
   const { user } = useAuth();
   const isAthlete = user?.role === "athlete" || user?.role === "parent";
   const isDirector = user?.role === "director";
+  const isAdmin = user?.role === "platform_admin";
+  const isStaff = isDirector || user?.role === "club_coach" || isAdmin;
 
   let navItems = isAthlete ? ATHLETE_NAV : [...STAFF_NAV, ...(isDirector ? DIRECTOR_EXTRA : [])];
 
@@ -68,7 +70,7 @@ export default function Sidebar({ open, onClose }) {
       <div className="px-5 mb-3">
         <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-md"
           style={{ backgroundColor: "var(--cm-accent-light)", color: "var(--cm-accent)" }}>
-          {user?.role === "director" ? "Director" : user?.role === "coach" ? "Coach" : "Athlete"}
+          {user?.role === "director" ? "Director" : user?.role === "club_coach" ? "Coach" : "Athlete"}
         </span>
       </div>
 
@@ -97,7 +99,7 @@ export default function Sidebar({ open, onClose }) {
         </div>
 
         {/* Admin Section */}
-        {isDirector && (
+        {(isDirector || isAdmin) && (
           <>
             <div className="mt-4 mb-2 px-3">
               <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--cm-text-4)" }}>Admin</span>

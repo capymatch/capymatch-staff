@@ -1,0 +1,83 @@
+{
+  "summary": "Multi-tenant Organization Architecture Testing Complete. All 24 backend tests PASSED (100%). All 6 frontend UI tests PASSED. Migration from coach→club_coach, platform_admin creation, and org foundation all working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_org_multitenancy.py",
+    "/app/test_reports/pytest/pytest_org_multitenancy.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: Platform admin login returns role=platform_admin with org_id=null",
+    "VERIFIED: Director login returns role=director with org_id=org-capymatch-default",
+    "VERIFIED: Club coach login returns role=club_coach (migrated from coach) with org_id set",
+    "VERIFIED: Athlete login returns role=athlete with org_id set",
+    "VERIFIED: GET /api/organizations - platform_admin sees all orgs, director sees own org",
+    "VERIFIED: GET /api/organizations/{org_id} returns members, athletes, directors, coaches lists",
+    "VERIFIED: POST /api/organizations works for director and platform_admin, 403 for athlete",
+    "VERIFIED: POST /api/organizations/{org_id}/invites creates invite with code",
+    "VERIFIED: GET /api/organizations/{org_id}/invites lists pending invites",
+    "VERIFIED: GET /api/admin/dashboard/stats - works for platform_admin and director, 403 for athlete/club_coach",
+    "VERIFIED: Registration allows club_coach role, rejects director self-registration",
+    "VERIFIED: Smart Match still works after migration",
+    "VERIFIED: Platform admin redirects to /admin/dashboard on login",
+    "VERIFIED: Director redirects to /mission-control and sees Admin section in sidebar",
+    "VERIFIED: Club coach redirects to /mission-control, does NOT see Admin section",
+    "VERIFIED: Athlete redirects to /board and does NOT see Admin section",
+    "VERIFIED: Registration form shows 'Coach' label with club_coach value internally"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_org_multitenancy.py"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24 tests passed)",
+    "frontend": "100% (6/6 UI tests passed)"
+  },
+  "test_credentials": {
+    "platform_admin": {"email": "douglas@capymatch.com", "password": "1234"},
+    "director": {"email": "director@capymatch.com", "password": "director123"},
+    "club_coach": {"email": "coach.williams@capymatch.com", "password": "coach123"},
+    "athlete": {"email": "emma.chen@athlete.capymatch.com", "password": "password123"}
+  },
+  "seed_data_creation": "None - migration runs on startup (idempotent)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Multi-tenant org architecture fully tested. Key changes verified: coach→club_coach migration, platform_admin role (douglas@capymatch.com), organizations CRUD at /api/organizations, invites at /api/organizations/{org_id}/invites, admin access control via admin_guard.py (platform_admin and director allowed), athlete_user_links collection for parent-athlete linking. All users backfilled with org_id=org-capymatch-default. The org foundation migration is idempotent and runs on every server startup.",
+  "features_verified": {
+    "login_roles": {
+      "platform_admin": "WORKING - douglas@capymatch.com returns role=platform_admin, org_id=null",
+      "director": "WORKING - director@capymatch.com returns role=director, org_id=org-capymatch-default",
+      "club_coach": "WORKING - coach.williams@capymatch.com returns role=club_coach (migrated from coach)",
+      "athlete": "WORKING - emma.chen@athlete.capymatch.com returns role=athlete"
+    },
+    "organizations_crud": {
+      "list_orgs": "WORKING - platform_admin sees all, director sees own",
+      "get_org_detail": "WORKING - includes members, athletes, directors, coaches",
+      "create_org": "WORKING - director/platform_admin only, 403 for athlete",
+      "invites": "WORKING - create and list invites for org members"
+    },
+    "admin_access_control": {
+      "platform_admin": "WORKING - full access to /api/admin/* endpoints",
+      "director": "WORKING - access to admin endpoints",
+      "club_coach": "WORKING - 403 for admin endpoints",
+      "athlete": "WORKING - 403 for admin endpoints"
+    },
+    "frontend_routing": {
+      "platform_admin": "WORKING - redirects to /admin/dashboard, Admin section in sidebar",
+      "director": "WORKING - redirects to /mission-control, Admin section in sidebar",
+      "club_coach": "WORKING - redirects to /mission-control, NO Admin section in sidebar",
+      "athlete": "WORKING - redirects to /board, NO Admin section in sidebar"
+    },
+    "registration": {
+      "club_coach_role": "WORKING - Coach label maps to club_coach internally",
+      "director_blocked": "WORKING - directors cannot self-register (403)"
+    }
+  }
+}
