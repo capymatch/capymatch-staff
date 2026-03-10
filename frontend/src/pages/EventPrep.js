@@ -106,8 +106,8 @@ function EventPrep() {
                 <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0" data-testid={`prep-athlete-${a.id}`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-gray-900">{a.fullName}</span>
-                      <span className="text-xs text-gray-400">{a.gradYear} · {a.position}</span>
+                      <span className="font-medium text-sm text-gray-900">{a.full_name}</span>
+                      <span className="text-xs text-gray-400">{a.grad_year} · {a.position}</span>
                       <span className={`flex items-center gap-1 text-[10px] font-medium ${ps.cls}`}>
                         <Icon className="w-3 h-3" /> {ps.label}
                       </span>

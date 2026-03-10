@@ -920,12 +920,12 @@ async def get_athlete_dashboard(current_user: dict = get_current_user_dep()):
 
     return {
         "profile": {
-            "firstName": athlete.get("firstName", "") if athlete else "",
-            "lastName": athlete.get("lastName", "") if athlete else "",
-            "fullName": athlete.get("fullName", "") if athlete else "",
+            "first_name": athlete.get("first_name", "") if athlete else "",
+            "last_name": athlete.get("last_name", "") if athlete else "",
+            "full_name": athlete.get("full_name", "") if athlete else "",
             "position": athlete.get("position", "") if athlete else "",
             "team": athlete.get("team", "") if athlete else "",
-            "gradYear": athlete.get("gradYear") if athlete else None,
+            "grad_year": athlete.get("grad_year") if athlete else None,
         },
         "stats": {
             "total_schools": total_schools,

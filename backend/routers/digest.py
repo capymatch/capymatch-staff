@@ -111,7 +111,7 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
     unassigned_athletes = []
     for a in get_athletes():
         if a["id"] in unassigned_ids:
-            unassigned_athletes.append({"name": a["fullName"], "team": a["team"]})
+            unassigned_athletes.append({"name": a["full_name"], "team": a["team"]})
 
     # 5. Upcoming events (next 7 days)
     upcoming = []

@@ -88,7 +88,7 @@ export default function MyRosterCard({ athletes = [] }) {
             >
               {/* Momentum */}
               <div className="w-10 shrink-0 text-center">
-                <MomentumIndicator score={athlete.momentumScore} trend={athlete.momentumTrend} />
+                <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
               </div>
 
               {/* Info */}
@@ -97,7 +97,7 @@ export default function MyRosterCard({ athletes = [] }) {
                   <span className="text-sm font-semibold text-slate-800 group-hover:text-primary transition-colors">
                     {athlete.name}
                   </span>
-                  <span className="text-[11px] text-slate-400">{athlete.gradYear} · {athlete.position}</span>
+                  <span className="text-[11px] text-slate-400">{athlete.grad_year} · {athlete.position}</span>
                   <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${colorClass}`}>
                     <CatIcon className="w-2.5 h-2.5" />
                     {cat?.label}
@@ -133,7 +133,7 @@ export default function MyRosterCard({ athletes = [] }) {
             onClick={() => navigate(`/support-pods/${athlete.id}`)}
           >
             <div className="w-10 shrink-0 text-center">
-              <MomentumIndicator score={athlete.momentumScore} trend={athlete.momentumTrend} />
+              <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
             </div>
 
             <div className="flex-1 min-w-0">
@@ -141,7 +141,7 @@ export default function MyRosterCard({ athletes = [] }) {
                 <span className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
                   {athlete.name}
                 </span>
-                <span className="text-[11px] text-slate-400">{athlete.gradYear} · {athlete.position}</span>
+                <span className="text-[11px] text-slate-400">{athlete.grad_year} · {athlete.position}</span>
               </div>
             </div>
 

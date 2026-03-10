@@ -88,7 +88,7 @@ def get_event_prep(event_id):
             for b in blocker_interventions:
                 blockers.append({
                     "athleteId": aid,
-                    "athleteName": athlete["fullName"],
+                    "athleteName": athlete["full_name"],
                     "category": b["category"],
                     "trigger": b["trigger"],
                     "impact": b["why_this_surfaced"],
@@ -105,13 +105,13 @@ def get_event_prep(event_id):
             if school:
                 athlete_school_targets.append(school["name"])
         # Limit to a realistic subset based on athlete's target count
-        target_count = min(athlete.get("schoolTargets", 3), len(athlete_school_targets))
+        target_count = min(athlete.get("school_targets", 3), len(athlete_school_targets))
         athlete_school_targets = athlete_school_targets[:target_count]
 
         athletes_attending.append({
             "id": aid,
-            "fullName": athlete["fullName"],
-            "gradYear": athlete["gradYear"],
+            "full_name": athlete["full_name"],
+            "grad_year": athlete["grad_year"],
             "position": athlete["position"],
             "team": athlete["team"],
             "prepStatus": prep_status,
@@ -181,7 +181,7 @@ def capture_note(event_id, data):
         "id": str(uuid.uuid4()),
         "event_id": event_id,
         "athlete_id": data["athlete_id"],
-        "athlete_name": athlete["fullName"] if athlete else "Unknown",
+        "athlete_name": athlete["full_name"] if athlete else "Unknown",
         "school_id": data.get("school_id"),
         "school_name": data.get("school_name", ""),
         "interest_level": interest,

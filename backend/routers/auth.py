@@ -131,7 +131,7 @@ async def register(body: UserCreate):
         await seed_athlete_demo_data(
             db,
             claimed_athlete["tenant_id"],
-            claimed_athlete.get("fullName", body.name),
+            claimed_athlete.get("full_name", body.name),
         )
 
     safe = _safe_user(user_doc)

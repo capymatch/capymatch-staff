@@ -62,16 +62,16 @@ def _build_athlete_roster_item(athlete: dict) -> dict:
 
     return {
         "id": athlete["id"],
-        "name": athlete.get("fullName", athlete.get("name", "Unknown")),
-        "gradYear": athlete.get("gradYear"),
+        "name": athlete.get("full_name", athlete.get("name", "Unknown")),
+        "grad_year": athlete.get("grad_year"),
         "position": athlete.get("position"),
         "team": athlete.get("team"),
-        "momentumScore": athlete.get("momentumScore", 0),
-        "momentumTrend": athlete.get("momentumTrend", "stable"),
-        "recruitingStage": athlete.get("recruitingStage", "exploring"),
-        "daysSinceActivity": athlete.get("daysSinceActivity", 0),
-        "schoolTargets": athlete.get("schoolTargets", 0),
-        "activeInterest": athlete.get("activeInterest", 0),
+        "momentum_score": athlete.get("momentum_score", 0),
+        "momentum_trend": athlete.get("momentum_trend", "stable"),
+        "recruiting_stage": athlete.get("recruiting_stage", "exploring"),
+        "days_since_activity": athlete.get("days_since_activity", 0),
+        "school_targets": athlete.get("school_targets", 0),
+        "active_interest": athlete.get("active_interest", 0),
         "podHealth": health,
         "category": category,
         "badgeColor": badge_color,
@@ -324,7 +324,7 @@ def _build_coach_response(user, alerts, attention, signals, events):
 
     # Build roster items with health info
     roster = [_build_athlete_roster_item(a) for a in my_athletes]
-    roster.sort(key=lambda a: a.get("momentumScore", 0))  # lowest momentum first
+    roster.sort(key=lambda a: a.get("momentum_score", 0))  # lowest momentum first
 
     # Count how many need action
     needing_action = len([a for a in roster if a.get("category")])

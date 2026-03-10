@@ -35,10 +35,10 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
           <div className="h-5 w-px bg-gray-200" />
           <div>
             <h1 className="font-semibold text-gray-900 text-base leading-tight" data-testid="pod-athlete-name">
-              {athlete?.fullName}
+              {athlete?.full_name}
             </h1>
             <p className="text-xs text-gray-500">
-              {athlete?.gradYear} · {athlete?.position} · {athlete?.team}
+              {athlete?.grad_year} · {athlete?.position} · {athlete?.team}
             </p>
           </div>
         </div>

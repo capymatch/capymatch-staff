@@ -185,7 +185,7 @@ def list_recommendations(status_filter=None, athlete_filter=None, school_filter=
         for r in recs:
             athlete = next((a for a in get_athletes() if a["id"] == r["athlete_id"]), None)
             if athlete:
-                r["_grad_year"] = athlete.get("gradYear")
+                r["_grad_year"] = athlete.get("grad_year")
         recs = [r for r in recs if r.get("_grad_year") == int(grad_year_filter)]
 
     now = datetime.now(timezone.utc)
@@ -239,7 +239,7 @@ def create_recommendation(data):
     rec = {
         "id": f"rec_{str(uuid.uuid4())[:8]}",
         "athlete_id": data["athlete_id"],
-        "athlete_name": athlete["fullName"] if athlete else "Unknown",
+        "athlete_name": athlete["full_name"] if athlete else "Unknown",
         "school_id": data.get("school_id", ""),
         "school_name": school["name"] if school else data.get("school_name", ""),
         "college_coach_name": data.get("college_coach_name", ""),
@@ -293,7 +293,7 @@ def update_recommendation(rec_id, updates):
     if "athlete_id" in updates:
         athlete = next((a for a in get_athletes() if a["id"] == updates["athlete_id"]), None)
         if athlete:
-            rec["athlete_name"] = athlete["fullName"]
+            rec["athlete_name"] = athlete["full_name"]
 
     return rec
 
@@ -526,14 +526,14 @@ def get_event_context(athlete_id, school_id=None):
     if athlete:
         athlete_snapshot = {
             "id": athlete["id"],
-            "fullName": athlete["fullName"],
-            "gradYear": athlete["gradYear"],
+            "full_name": athlete["full_name"],
+            "grad_year": athlete["grad_year"],
             "position": athlete["position"],
             "team": athlete["team"],
-            "momentumScore": athlete["momentumScore"],
-            "momentumTrend": athlete["momentumTrend"],
-            "recruitingStage": athlete["recruitingStage"],
-            "schoolTargets": athlete["schoolTargets"],
+            "momentum_score": athlete["momentum_score"],
+            "momentum_trend": athlete["momentum_trend"],
+            "recruiting_stage": athlete["recruiting_stage"],
+            "school_targets": athlete["school_targets"],
         }
 
     return {

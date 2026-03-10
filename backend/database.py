@@ -39,10 +39,10 @@ async def load_athletes_to_memory(db):
 
     now = datetime.now(timezone.utc)
     for a in athletes:
-        # Recompute daysSinceActivity from stored lastActivity timestamp
+        # Recompute days_since_activity from stored last_activity timestamp
         try:
-            last = datetime.fromisoformat(a["lastActivity"])
-            a["daysSinceActivity"] = max(0, (now - last).days)
+            last = datetime.fromisoformat(a["last_activity"])
+            a["days_since_activity"] = max(0, (now - last).days)
         except (KeyError, ValueError):
             pass
 

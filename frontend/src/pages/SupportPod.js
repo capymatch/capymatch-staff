@@ -138,7 +138,7 @@ function SupportPod() {
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm" data-testid="pod-quick-note">
             <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Add Note</h3>
-            <QuickNote athleteId={athleteId} athleteName={athlete?.fullName} onSaved={fetchPodData} />
+            <QuickNote athleteId={athleteId} athleteName={athlete?.full_name} onSaved={fetchPodData} />
           </div>
           <TreatmentTimeline timeline={timeline} />
         </div>

@@ -95,7 +95,7 @@ function LiveEvent() {
       setNoteText("");
       setFollowUps([]);
       const ath = athletes.find((a) => a.id === selectedAthlete);
-      toast.success(`Saved — ${ath?.fullName || "Athlete"} × ${school?.name || "—"}`);
+      toast.success(`Saved — ${ath?.full_name || "Athlete"} × ${school?.name || "—"}`);
       noteRef.current?.focus();
     } catch {
       toast.error("Failed to save note");
@@ -153,7 +153,7 @@ function LiveEvent() {
                         : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                     }`}
                   >
-                    {a.fullName.split(" ")[0]} {a.fullName.split(" ")[1]?.[0]}.
+                    {a.full_name.split(" ")[0]} {a.full_name.split(" ")[1]?.[0]}.
                   </button>
                 ))}
               </div>

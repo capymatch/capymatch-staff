@@ -82,7 +82,7 @@ async def event_recap(event_id: str, current_user: dict = get_current_user_dep()
 
     # Enrich notes with athlete names
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes()}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes()}
     enriched_notes = []
     for n in notes:
         if current_user["role"] != "director" and n.get("athlete_id") not in visible:
@@ -133,7 +133,7 @@ async def advocacy_draft(
     return {
         "text": text,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "athlete_name": athlete.get("fullName") or athlete.get("name"),
+        "athlete_name": athlete.get("full_name") or athlete.get("name"),
         "school_name": school.get("name", school_id),
         "notes_used": len(event_notes),
     }
@@ -163,7 +163,7 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
         snapshot = get_program_snapshot(my_athletes)
 
     # Enrich attention items with athlete names
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes()}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes()}
     for a in attention:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
@@ -290,7 +290,7 @@ def _parse_program_insights(raw: str) -> dict:
 async def suggested_actions(current_user: dict = get_current_user_dep()):
     """V2: Generate structured next-action suggestions for Mission Control."""
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes() if a["id"] in visible}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes() if a["id"] in visible}
 
     alerts = [a for a in get_alerts() if a.get("athlete_id") in visible]
     for a in alerts:
@@ -393,7 +393,7 @@ async def pod_actions_ai(athlete_id: str, current_user: dict = get_current_user_
     actions = _parse_structured_actions(raw)
     return {
         "actions": actions,
-        "athlete_name": athlete.get("fullName", athlete.get("name")),
+        "athlete_name": athlete.get("full_name", athlete.get("name")),
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -444,7 +444,7 @@ async def pod_brief_ai(athlete_id: str, current_user: dict = get_current_user_de
 
     return {
         **parsed,
-        "athlete_name": athlete.get("fullName", athlete.get("name")),
+        "athlete_name": athlete.get("full_name", athlete.get("name")),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "confidence": {"signal": signal, "basis": basis},
     }
@@ -509,7 +509,7 @@ async def event_followups_ai(event_id: str, current_user: dict = get_current_use
 
     # Filter notes by ownership
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("fullName", a.get("name", "Unknown")) for a in get_athletes()}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes()}
     notes = []
     for n in all_notes:
         if current_user["role"] != "director" and n.get("athlete_id") not in visible:

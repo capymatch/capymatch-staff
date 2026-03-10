@@ -161,13 +161,13 @@ function RecommendationBuilder() {
             className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 bg-white"
           >
             <option value="">Select athlete...</option>
-            {athletes.map((a) => <option key={a.id} value={a.id}>{a.name} · {a.gradYear} · {a.position}</option>)}
+            {athletes.map((a) => <option key={a.id} value={a.id}>{a.name} · {a.grad_year} · {a.position}</option>)}
           </select>
           {snap && (
             <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
-              <span>Momentum: {snap.momentumTrend === "rising" ? "↗" : snap.momentumTrend === "dropping" ? "↘" : "→"} {snap.momentumScore}</span>
-              <span>Stage: {snap.recruitingStage?.replace(/_/g, " ")}</span>
-              <span>{snap.schoolTargets} target schools</span>
+              <span>Momentum: {snap.momentum_trend === "rising" ? "↗" : snap.momentum_trend === "dropping" ? "↘" : "→"} {snap.momentum_score}</span>
+              <span>Stage: {snap.recruiting_stage?.replace(/_/g, " ")}</span>
+              <span>{snap.school_targets} target schools</span>
             </div>
           )}
         </section>

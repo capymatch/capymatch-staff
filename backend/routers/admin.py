@@ -30,7 +30,7 @@ async def admin_status(current_user: dict = get_current_user_dep()):
         "persistence_phase": "Phase 2",
         "collections": {
             "persisted": [
-                {"name": "athletes", "count": athletes_count, "source": "MongoDB", "phase": 2, "description": "Athlete profiles — durable across restarts, daysSinceActivity recomputed on load"},
+                {"name": "athletes", "count": athletes_count, "source": "MongoDB", "phase": 2, "description": "Athlete profiles — durable across restarts, days_since_activity recomputed on load"},
                 {"name": "events", "count": events_count, "source": "MongoDB", "phase": 2, "description": "Event records — durable, daysAway recomputed on load, capturedNotes in event_notes"},
                 {"name": "event_notes", "count": event_notes_count, "source": "MongoDB", "phase": 1, "description": "Live event captures — courtside notes, interest levels, follow-ups"},
                 {"name": "recommendations", "count": recommendations_count, "source": "MongoDB", "phase": 1, "description": "Coach recommendations — full lifecycle with response history"},
@@ -53,7 +53,7 @@ async def admin_status(current_user: dict = get_current_user_dep()):
             "Schools are static (10 entries) and loaded from code — low priority for persistence",
             "Interventions are recomputed on every startup from persisted athletes + events",
             "Momentum signals are regenerated on startup (not persisted individually)",
-            "daysSinceActivity (athletes) and daysAway (events) are recomputed from stored timestamps on each load",
+            "days_since_activity (athletes) and daysAway (events) are recomputed from stored timestamps on each load",
         ],
         "architecture": "DB-first: all reads from MongoDB via athlete_store. Derived data (interventions, signals) recomputed from DB on startup and after writes.",
     }

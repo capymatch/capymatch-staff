@@ -21,7 +21,7 @@ def detect_momentum_drop(athlete: Dict) -> Dict or None:
     Category 1: Momentum Drop
     Triggers: No activity 21+ days (3 weeks = meaningful silence, not just a busy week)
     """
-    days_since = athlete['daysSinceActivity']
+    days_since = athlete['days_since_activity']
 
     if days_since >= 21:
         urgency = min(10, 6 + (days_since - 21) // 3)
@@ -47,8 +47,8 @@ def detect_momentum_drop(athlete: Dict) -> Dict or None:
             'owner': "Coach Martinez",
 
             'details': {
-                'last_activity': athlete['lastActivity'],
-                'momentum_score': athlete['momentumScore'],
+                'last_activity': athlete['last_activity'],
+                'momentum_score': athlete['momentum_score'],
                 'expected_frequency': 'Weekly updates',
                 'suggested_steps': [
                     'Phone call to check in (preferred over text)',
@@ -68,7 +68,7 @@ def detect_blocker(athlete: Dict) -> Dict or None:
     Uses deterministic checks based on athlete archetype/state, not pure randomness.
     """
     # Missing transcript — 2025 grads who are actively recruiting or narrowing
-    if athlete['gradYear'] == 2025 and athlete.get('archetype') in ('blocked_docs', 'blocked_materials'):
+    if athlete['grad_year'] == 2025 and athlete.get('archetype') in ('blocked_docs', 'blocked_materials'):
         if athlete.get('archetype') == 'blocked_docs':
             urgency = 9
             impact = 8
@@ -181,7 +181,7 @@ def detect_deadline_proximity(athlete: Dict, upcoming_events: List[Dict]) -> Dic
     Triggers: Event in <=2 days without prep, for athletes who are actively recruiting.
     Only fires for athletes in active stages — not everyone.
     """
-    if athlete['recruitingStage'] not in ('actively_recruiting', 'narrowing'):
+    if athlete['recruiting_stage'] not in ('actively_recruiting', 'narrowing'):
         return None
 
     for event in upcoming_events:
@@ -234,7 +234,7 @@ def detect_engagement_drop(athlete: Dict) -> Dict or None:
     Triggers: Athlete/family inactive 7-20 days (not yet "gone dark" like momentum_drop)
     Catches the warning signs before full momentum collapse.
     """
-    days = athlete['daysSinceActivity']
+    days = athlete['days_since_activity']
 
     # 7-20 day window — between "busy week" and "gone dark"
     if 7 <= days <= 20:
@@ -259,12 +259,12 @@ def detect_engagement_drop(athlete: Dict) -> Dict or None:
                 'ownership': ownership,
 
                 'why_this_surfaced': f"Family hasn't engaged in {days} days — early warning",
-                'what_changed': f"No logins or responses since {athlete['lastActivity'][:10]}",
+                'what_changed': f"No logins or responses since {athlete['last_activity'][:10]}",
                 'recommended_action': "Personal phone call to check in before momentum drops further",
                 'owner': "Coach Rivera",
 
                 'details': {
-                    'last_login': athlete['lastActivity'],
+                    'last_login': athlete['last_activity'],
                     'days_inactive': days,
                     'engagement_pattern': 'declining',
                     'suggested_steps': [
@@ -284,7 +284,7 @@ def detect_ownership_gap(athlete: Dict) -> Dict or None:
     Triggers: College responded but no follow-up owner assigned.
     Fires for athletes with active college interest (>= 3 schools showing interest).
     """
-    if athlete['activeInterest'] >= 3:
+    if athlete['active_interest'] >= 3:
         # Higher probability for hot prospects who have lots of inbound
         threshold = 0.5 if athlete.get('archetype') == 'hot_prospect' else 0.15
         if random.random() < threshold:
@@ -336,7 +336,7 @@ def detect_readiness_issue(athlete: Dict) -> Dict or None:
     Triggers: 2025 grad with too few target schools (< 4).
     This is deterministic — if your list is thin, we surface it.
     """
-    if athlete['gradYear'] == 2025 and athlete['schoolTargets'] < 4:
+    if athlete['grad_year'] == 2025 and athlete['school_targets'] < 4:
         urgency = 8
         impact = 7
         actionability = 5
@@ -354,15 +354,15 @@ def detect_readiness_issue(athlete: Dict) -> Dict or None:
             'actionability': actionability,
             'ownership': ownership,
 
-            'why_this_surfaced': f"Only {athlete['schoolTargets']} target schools for a {athlete['gradYear']} grad",
+            'why_this_surfaced': f"Only {athlete['school_targets']} target schools for a {athlete['grad_year']} grad",
             'what_changed': "Spring recruiting window is open — narrow list limits options",
             'recommended_action': "Expand target list to 5-8 schools based on athletic and academic fit",
             'owner': "Coach + Athlete",
 
             'details': {
-                'current_target_count': athlete['schoolTargets'],
+                'current_target_count': athlete['school_targets'],
                 'recommended_range': '5-8 schools',
-                'grad_year': athlete['gradYear'],
+                'grad_year': athlete['grad_year'],
                 'suggested_steps': [
                     'Research 3-5 schools matching athletic profile',
                     'Discuss academic/geographic fit with family',
@@ -506,13 +506,13 @@ def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List
     for intervention in detectors:
         if intervention:
             intervention['athlete_id'] = athlete['id']
-            intervention['athlete_name'] = athlete['fullName']
-            intervention['grad_year'] = athlete['gradYear']
+            intervention['athlete_name'] = athlete['full_name']
+            intervention['grad_year'] = athlete['grad_year']
             intervention['position'] = athlete['position']
-            intervention['momentum_score'] = athlete['momentumScore']
-            intervention['momentum_trend'] = athlete['momentumTrend']
-            intervention['recruiting_stage'] = athlete['recruitingStage']
-            intervention['school_targets'] = athlete['schoolTargets']
+            intervention['momentum_score'] = athlete['momentum_score']
+            intervention['momentum_trend'] = athlete['momentum_trend']
+            intervention['recruiting_stage'] = athlete['recruiting_stage']
+            intervention['school_targets'] = athlete['school_targets']
             intervention['team'] = athlete['team']
 
             score = intervention['score']

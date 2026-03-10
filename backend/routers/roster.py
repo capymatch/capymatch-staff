@@ -94,9 +94,9 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         coach = coach_by_id.get(cid) if cid else None
 
         # Momentum label: Strong / Stable / Declining
-        mscore = a.get("momentumScore", 0) or 0
-        mtrend = a.get("momentumTrend", "stable")
-        days_inactive = a.get("daysSinceActivity")
+        mscore = a.get("momentum_score", 0) or 0
+        mtrend = a.get("momentum_trend", "stable")
+        days_inactive = a.get("days_since_activity")
         if mtrend == "rising" and mscore >= 5:
             momentum_label = "strong"
         elif mscore <= 0 or (mtrend == "declining" and (days_inactive or 0) > 10):
@@ -105,9 +105,9 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             momentum_label = "stable"
 
         # Detailed recruiting stage pipeline (7-stage)
-        raw_stage = a.get("recruitingStage", "exploring")
-        active_interest = a.get("activeInterest", 0) or 0
-        school_targets = a.get("schoolTargets", 0) or 0
+        raw_stage = a.get("recruiting_stage", "exploring")
+        active_interest = a.get("active_interest", 0) or 0
+        school_targets = a.get("school_targets", 0) or 0
         if raw_stage == "committed":
             detailed_stage = "committed"
         elif raw_stage == "narrowing" and active_interest >= 3:
@@ -127,15 +127,15 @@ async def get_roster(current_user: dict = get_current_user_dep()):
 
         enriched_athletes.append({
             "id": a["id"],
-            "name": a.get("fullName", a.get("name", "Unknown")),
-            "grad_year": a.get("gradYear"),
+            "name": a.get("full_name", a.get("name", "Unknown")),
+            "grad_year": a.get("grad_year"),
             "position": a.get("position"),
             "team": a.get("team"),
             "recruiting_stage": detailed_stage,
             "momentum_score": mscore,
             "momentum_trend": mtrend,
             "momentum_label": momentum_label,
-            "last_activity": a.get("lastActivity"),
+            "last_activity": a.get("last_activity"),
             "days_since_activity": days_inactive,
             "coach_id": cid,
             "coach_name": coach["name"] if coach else None,
@@ -280,7 +280,7 @@ async def reassign_athlete(
     log_entry = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
-        "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+        "athlete_name": athlete.get("full_name", athlete.get("name", "Unknown")),
         "type": "reassign",
         "from_coach_id": from_coach_id,
         "from_coach_name": from_coach_name,
@@ -302,7 +302,7 @@ async def reassign_athlete(
     return {
         "status": "reassigned",
         "athlete_id": athlete_id,
-        "athlete_name": athlete.get("fullName", athlete.get("name")),
+        "athlete_name": athlete.get("full_name", athlete.get("name")),
         "from_coach": from_coach_name,
         "to_coach": new_coach["name"],
         "open_actions_warning": open_warnings,
@@ -343,7 +343,7 @@ async def unassign_athlete(
     log_entry = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
-        "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+        "athlete_name": athlete.get("full_name", athlete.get("name", "Unknown")),
         "type": "unassign",
         "from_coach_id": from_coach_id,
         "from_coach_name": from_coach_name,
@@ -364,7 +364,7 @@ async def unassign_athlete(
     return {
         "status": "unassigned",
         "athlete_id": athlete_id,
-        "athlete_name": athlete.get("fullName", athlete.get("name")),
+        "athlete_name": athlete.get("full_name", athlete.get("name")),
         "from_coach": from_coach_name,
         "open_actions_warning": open_warnings,
         "log_entry": log_entry,
@@ -751,7 +751,7 @@ async def bulk_remind(body: dict, current_user: dict = get_current_user_dep()):
             continue
         reminders.append({
             "athlete_id": aid,
-            "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+            "athlete_name": athlete.get("full_name", athlete.get("name", "Unknown")),
             "message": message,
             "created_by": current_user["id"],
             "created_by_name": current_user.get("name", "Director"),
@@ -783,7 +783,7 @@ async def bulk_note(body: dict, current_user: dict = get_current_user_dep()):
             continue
         notes.append({
             "athlete_id": aid,
-            "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+            "athlete_name": athlete.get("full_name", athlete.get("name", "Unknown")),
             "text": note_text,
             "created_by": current_user["id"],
             "created_by_name": current_user.get("name", "Director"),

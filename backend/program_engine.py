@@ -86,8 +86,8 @@ def compute_program_health(athlete_ids=None):
                 parts.append(f"{counts['blockers']} blockers")
             if counts["momentum_drops"]:
                 parts.append(f"{counts['momentum_drops']} momentum drops")
-            gy_athletes = [a for a in athletes if a["gradYear"] == gy]
-            active_count = sum(1 for a in gy_athletes if a["recruitingStage"] in ("actively_recruiting", "narrowing"))
+            gy_athletes = [a for a in athletes if a["grad_year"] == gy]
+            active_count = sum(1 for a in gy_athletes if a["recruiting_stage"] in ("actively_recruiting", "narrowing"))
             stage_note = f"in {'actively recruiting' if active_count > len(gy_athletes) // 2 else 'early'} cohort"
             highest_risk = {
                 "type": "grad_year",
@@ -121,7 +121,7 @@ def compute_readiness(athlete_ids=None):
     stalled_athletes = []
 
     for athlete in athletes:
-        gy = athlete["gradYear"]
+        gy = athlete["grad_year"]
         if gy not in by_grad_year:
             by_grad_year[gy] = {
                 "grad_year": gy,
@@ -138,7 +138,7 @@ def compute_readiness(athlete_ids=None):
 
         entry = by_grad_year[gy]
         entry["total_athletes"] += 1
-        stage = athlete.get("recruitingStage", "exploring")
+        stage = athlete.get("recruiting_stage", "exploring")
         if stage in entry:
             entry[stage] += 1
 
@@ -146,7 +146,7 @@ def compute_readiness(athlete_ids=None):
         blocker_count = sum(1 for i in athlete_interventions if i["category"] == "blocker")
         entry["blockers"] += blocker_count
 
-        days = athlete.get("daysSinceActivity", 0)
+        days = athlete.get("days_since_activity", 0)
         threshold = stall_thresholds.get(gy, 90)
 
         is_stalled = False
@@ -160,7 +160,7 @@ def compute_readiness(athlete_ids=None):
         if is_stalled:
             stalled_athletes.append({
                 "id": athlete["id"],
-                "name": athlete["fullName"],
+                "name": athlete["full_name"],
                 "grad_year": gy,
                 "stage": stage,
                 "days_in_stage": days,

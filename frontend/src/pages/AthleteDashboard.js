@@ -558,7 +558,7 @@ export default function AthleteDashboard() {
   }
 
   /* ── Derived data ── */
-  const athleteName = profile?.athlete_name || profile?.fullName || user?.name || "";
+  const athleteName = profile?.athlete_name || profile?.full_name || user?.name || "";
   const firstName = athleteName.split(" ")[0] || "Athlete";
   const now = new Date();
   const hour = now.getHours();

@@ -308,9 +308,9 @@ async def get_pending_assignments(current_user: dict = get_current_user_dep()):
         unassigned_on_team = [
             {
                 "id": a["id"],
-                "name": a.get("fullName", a.get("name", "Unknown")),
+                "name": a.get("full_name", a.get("name", "Unknown")),
                 "position": a.get("position"),
-                "grad_year": a.get("gradYear"),
+                "grad_year": a.get("grad_year"),
                 "team": a.get("team"),
             }
             for a in get_athletes()
@@ -380,7 +380,7 @@ async def assign_athletes_from_invite(
         await db.reassignment_log.insert_one({
             "id": str(uuid.uuid4()),
             "athlete_id": aid,
-            "athlete_name": athlete.get("fullName", athlete.get("name", "Unknown")),
+            "athlete_name": athlete.get("full_name", athlete.get("name", "Unknown")),
             "type": "assign",
             "from_coach_id": None,
             "from_coach_name": None,

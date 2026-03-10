@@ -98,20 +98,20 @@ def generate_athletes():
 
         athlete = {
             "id": f"athlete_{i+1}",
-            "firstName": first_names[i],
-            "lastName": last_names[i],
-            "fullName": f"{first_names[i]} {last_names[i]}",
+            "first_name": first_names[i],
+            "last_name": last_names[i],
+            "full_name": f"{first_names[i]} {last_names[i]}",
             "email": f"{first_names[i].lower()}.{last_names[i].lower()}@athlete.capymatch.com",
-            "gradYear": grad_year,
+            "grad_year": grad_year,
             "position": positions[i % len(positions)],
             "team": teams[str(grad_year)],
-            "recruitingStage": profile["stage"],
-            "momentumScore": momentum_score,
-            "momentumTrend": momentum_trend,
-            "lastActivity": (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(),
-            "daysSinceActivity": days,
-            "schoolTargets": profile["targets"],
-            "activeInterest": profile["interest"],
+            "recruiting_stage": profile["stage"],
+            "momentum_score": momentum_score,
+            "momentum_trend": momentum_trend,
+            "last_activity": (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(),
+            "days_since_activity": days,
+            "school_targets": profile["targets"],
+            "active_interest": profile["interest"],
             "archetype": profile["archetype"],
         }
 
@@ -137,8 +137,8 @@ def generate_momentum_signals(athletes):
     ]
 
     # Pick 8 diverse signals from different athletes
-    active_athletes = [a for a in athletes if a["daysSinceActivity"] <= 7]
-    inactive_athletes = [a for a in athletes if a["daysSinceActivity"] > 7]
+    active_athletes = [a for a in athletes if a["days_since_activity"] <= 7]
+    inactive_athletes = [a for a in athletes if a["days_since_activity"] > 7]
 
     # 5 positive signals from active athletes
     for i in range(5):
@@ -150,7 +150,7 @@ def generate_momentum_signals(athletes):
         signals.append({
             "id": f"signal_{i+1}",
             "athleteId": athlete["id"],
-            "athleteName": athlete["fullName"],
+            "athleteName": athlete["full_name"],
             "type": template["type"],
             "sentiment": template["sentiment"],
             "icon": template["icon"],
@@ -165,7 +165,7 @@ def generate_momentum_signals(athletes):
         athlete = inactive_athletes[i % len(inactive_athletes)]
         if i < 2:
             template = signal_templates[3]  # no_activity
-            description = template["template"].format(school="", days=athlete["daysSinceActivity"])
+            description = template["template"].format(school="", days=athlete["days_since_activity"])
         else:
             template = signal_templates[4]  # stage_change
             description = template["template"]
@@ -175,7 +175,7 @@ def generate_momentum_signals(athletes):
         signals.append({
             "id": f"signal_{len(signals)+1}",
             "athleteId": athlete["id"],
-            "athleteName": athlete["fullName"],
+            "athleteName": athlete["full_name"],
             "type": template["type"],
             "sentiment": template["sentiment"],
             "icon": template["icon"],
@@ -372,13 +372,13 @@ def get_program_snapshot(athletes):
     by_grad_year = {}
 
     for athlete in athletes:
-        stage = athlete["recruitingStage"]
-        grad_year = athlete["gradYear"]
+        stage = athlete["recruiting_stage"]
+        grad_year = athlete["grad_year"]
         by_stage[stage] = by_stage.get(stage, 0) + 1
         by_grad_year[grad_year] = by_grad_year.get(grad_year, 0) + 1
 
-    needing_attention_count = len([a for a in athletes if a["daysSinceActivity"] > 10 or a["momentumTrend"] == "declining"])
-    positive_momentum_count = len([a for a in athletes if a["momentumScore"] > 5])
+    needing_attention_count = len([a for a in athletes if a["days_since_activity"] > 10 or a["momentum_trend"] == "declining"])
+    positive_momentum_count = len([a for a in athletes if a["momentum_score"] > 5])
 
     return {
         "totalAthletes": total_athletes,

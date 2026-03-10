@@ -110,8 +110,8 @@ router = APIRouter()
 # ── Field mapping: canonical athletes → athlete-app profile names ──────
 
 _TO_PROFILE = {
-    "fullName": "athlete_name",
-    "gradYear": "graduation_year",
+    "full_name": "athlete_name",
+    "grad_year": "graduation_year",
     "position": "position",
     "team": "club_team",
     "height": "height",
@@ -163,12 +163,12 @@ def _profile_to_updates(body: dict) -> dict:
             updates[prof_key] = value
     # Keep fullName in sync if athlete_name is set
     if "athlete_name" in body and body["athlete_name"]:
-        updates["fullName"] = body["athlete_name"]
+        updates["full_name"] = body["athlete_name"]
         parts = body["athlete_name"].strip().split(" ", 1)
-        updates["firstName"] = parts[0]
-        updates["lastName"] = parts[1] if len(parts) > 1 else ""
+        updates["first_name"] = parts[0]
+        updates["last_name"] = parts[1] if len(parts) > 1 else ""
     if "graduation_year" in body:
-        updates["gradYear"] = body["graduation_year"]
+        updates["grad_year"] = body["graduation_year"]
     return updates
 
 
@@ -805,7 +805,7 @@ async def get_match_scores(current_user: dict = get_current_user_dep()):
         "gpa": recruiting_profile.get("gpa") or fallback_profile.get("gpa") or athlete.get("gpa"),
         "sat_score": recruiting_profile.get("sat_score") or fallback_profile.get("sat_score") or athlete.get("sat_score"),
         "act_score": recruiting_profile.get("act_score") or fallback_profile.get("act_score") or athlete.get("act_score"),
-        "graduation_year": athlete.get("gradYear") or athlete.get("grad_year"),
+        "graduation_year": athlete.get("grad_year") or athlete.get("grad_year"),
         "position": recruiting_profile.get("position") or athlete.get("position"),
         "academic_interests": recruiting_profile.get("academic_interests"),
         "height": athlete.get("height"),

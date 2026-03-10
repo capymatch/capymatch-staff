@@ -67,12 +67,12 @@ async def ensure_org_foundation(db):
     # 4. Backfill email on athletes that don't have one (for claim flow)
     athletes_no_email = await db.athletes.find(
         {"$or": [{"email": {"$exists": False}}, {"email": None}]},
-        {"_id": 0, "id": 1, "firstName": 1, "lastName": 1},
+        {"_id": 0, "id": 1, "first_name": 1, "last_name": 1},
     ).to_list(10000)
     if athletes_no_email:
         for a in athletes_no_email:
-            fn = a.get("firstName", "unknown").lower()
-            ln = a.get("lastName", "unknown").lower()
+            fn = a.get("first_name", "unknown").lower()
+            ln = a.get("last_name", "unknown").lower()
             email = f"{fn}.{ln}@athlete.capymatch.com"
             await db.athletes.update_one(
                 {"id": a["id"]},

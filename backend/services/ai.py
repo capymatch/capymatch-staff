@@ -260,11 +260,11 @@ async def generate_pod_actions(athlete: dict, interventions: list, actions: list
 
     prompt = f"""Generate 2-4 specific next actions for this athlete's support pod.
 
-Athlete: {athlete.get('fullName', athlete.get('name', 'Unknown'))}
+Athlete: {athlete.get('full_name', athlete.get('name', 'Unknown'))}
 Position: {athlete.get('position', 'N/A')}
-Grad Year: {athlete.get('gradYear', 'N/A')}
+Grad Year: {athlete.get('grad_year', 'N/A')}
 Health: {athlete.get('overallHealth', 'N/A')}
-Days since activity: {athlete.get('daysSinceActivity', 'N/A')}
+Days since activity: {athlete.get('days_since_activity', 'N/A')}
 Timeline events: {timeline_count}
 
 Active interventions:
@@ -303,11 +303,11 @@ async def generate_pod_brief(athlete: dict, interventions: list, pod_health: dic
 
     prompt = f"""Write a 2-3 sentence support pod brief for this athlete.
 
-Athlete: {athlete.get('fullName', athlete.get('name', 'Unknown'))}
+Athlete: {athlete.get('full_name', athlete.get('name', 'Unknown'))}
 Position: {athlete.get('position', 'N/A')}
-Grad Year: {athlete.get('gradYear', 'N/A')}
+Grad Year: {athlete.get('grad_year', 'N/A')}
 Overall Health: {athlete.get('overallHealth', 'N/A')}
-Days Since Activity: {athlete.get('daysSinceActivity', 'N/A')}
+Days Since Activity: {athlete.get('days_since_activity', 'N/A')}
 Pod Health Score: {pod_health.get('score', 'N/A')} ({pod_health.get('label', 'N/A')})
 Timeline Events: {timeline_count}
 
