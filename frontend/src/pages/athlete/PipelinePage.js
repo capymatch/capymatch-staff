@@ -350,7 +350,7 @@ function UpcomingTasksSection({ tasks, navigate, onCompleteFlag }) {
                   cursor: "pointer", flexShrink: 0, marginTop: 2,
                 }}
                 data-testid={`complete-flag-${task.flag_id || task.task_id}`}>
-                <Check style={{ width: 12, height: 12 }} /> Done
+                <Check style={{ width: 12, height: 12 }} /> Mark Complete
               </button>
             </div>
           ))}
