@@ -6,7 +6,8 @@ import {
   User, Mail, Shield, Key, Palette, ChevronRight,
   CheckCircle2, XCircle, Loader2, Eye, EyeOff, Download,
   Trash2, AlertTriangle, ToggleLeft, ToggleRight,
-  CreditCard, Zap, Crown, BarChart3, ExternalLink, Bell
+  CreditCard, Zap, Crown, BarChart3, ExternalLink, Bell,
+  Clock, Receipt, RotateCcw
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/tabs";
@@ -227,8 +228,10 @@ function ProfileTab({
 }
 
 // ─── Billing Tab Content ─────────────────────
-function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, managingBilling }) {
-  if (subLoading) {
+function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, managingBilling, billingData, billingLoading, onCancel, onReactivate, cancelling, reactivating, onRefreshBilling }) {
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  if (subLoading && billingLoading) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
@@ -242,14 +245,36 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
   const price = sub.price || 0;
   const features = sub.features || [];
   const usage = sub.usage || {};
-  const limits = sub.limits || {};
 
   const tierIcon = tier === "premium" ? Crown : tier === "pro" ? Zap : BarChart3;
   const TierIcon = tierIcon;
   const tierColor = tier === "premium" ? "#a855f7" : tier === "pro" ? "#0d9488" : "#64748b";
 
+  const cancelPending = billingData?.cancel_at_period_end || false;
+  const expiresAt = billingData?.plan_expires_at;
+  const transactions = billingData?.transactions || [];
+
   return (
     <div className="space-y-5">
+      {/* Cancellation Banner */}
+      {cancelPending && tier !== "basic" && (
+        <div className="rounded-2xl border border-amber-500/30 p-4 flex items-start gap-3" style={{ backgroundColor: "rgba(245,158,11,0.05)" }} data-testid="cancel-banner">
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>Cancellation Scheduled</p>
+            <p className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-2)" }}>
+              Your {label} plan will remain active until {expiresAt ? new Date(expiresAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "the end of your billing period"}.
+              After that, you'll be downgraded to the free Starter plan.
+            </p>
+            <Button size="sm" onClick={onReactivate} disabled={reactivating}
+              className="mt-2.5 text-xs h-7 px-4 bg-amber-600 hover:bg-amber-700 text-white" data-testid="reactivate-btn">
+              {reactivating ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : <RotateCcw className="w-3 h-3 mr-1.5" />}
+              Keep My Plan
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Current Plan Card */}
       <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="section-current-plan">
         <div className="p-5 sm:p-6">
@@ -262,7 +287,7 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold" style={{ color: "var(--cm-text)" }}>{label}</h3>
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: `${tierColor}20`, color: tierColor }}>
-                    {tier === "basic" ? "Free" : "Active"}
+                    {tier === "basic" ? "Free" : cancelPending ? "Cancelling" : "Active"}
                   </span>
                 </div>
                 <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3)" }}>
@@ -270,14 +295,16 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
                 </p>
               </div>
             </div>
-            {tier !== "premium" && (
-              <Button onClick={onOpenUpgrade}
-                className="text-xs h-8 px-4 font-bold"
-                style={{ backgroundColor: "#0d9488", color: "#fff" }}
-                data-testid="upgrade-plan-btn">
-                <Zap className="w-3.5 h-3.5 mr-1.5" />Upgrade
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {tier !== "premium" && !cancelPending && (
+                <Button onClick={onOpenUpgrade}
+                  className="text-xs h-8 px-4 font-bold"
+                  style={{ backgroundColor: "#0d9488", color: "#fff" }}
+                  data-testid="upgrade-plan-btn">
+                  <Zap className="w-3.5 h-3.5 mr-1.5" />Upgrade
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Plan Features */}
@@ -298,24 +325,121 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
           </div>
         </div>
 
-        {/* Manage Billing Bar */}
+        {/* Action Bar */}
         {tier !== "basic" && (
-          <div className="px-5 sm:px-6 py-3.5 flex items-center justify-between" style={{ borderTop: "1px solid var(--cm-border)", backgroundColor: "var(--cm-surface-2)" }}>
+          <div className="px-5 sm:px-6 py-3.5 flex items-center justify-between gap-3 flex-wrap" style={{ borderTop: "1px solid var(--cm-border)", backgroundColor: "var(--cm-surface-2)" }}>
             <div>
               <p className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>Manage Billing</p>
               <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>Update payment method, view invoices, or cancel</p>
             </div>
-            <Button variant="outline" size="sm" onClick={onManageBilling} disabled={managingBilling}
-              className="text-xs h-8 px-4" data-testid="manage-billing-btn">
-              {managingBilling ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : <ExternalLink className="w-3 h-3 mr-1.5" />}
-              Billing Portal
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={onManageBilling} disabled={managingBilling}
+                className="text-xs h-8 px-4" data-testid="manage-billing-btn">
+                {managingBilling ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : <ExternalLink className="w-3 h-3 mr-1.5" />}
+                Billing Portal
+              </Button>
+              {!cancelPending && (
+                <Button variant="outline" size="sm"
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="text-xs h-8 px-4 text-red-400 border-red-500/30 hover:bg-red-500/10"
+                  data-testid="cancel-plan-btn">
+                  Cancel Plan
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
+      {/* Cancel Confirmation Dialog */}
+      {showCancelConfirm && (
+        <div className="rounded-2xl border border-red-500/30 p-5" style={{ backgroundColor: "rgba(239,68,68,0.03)" }} data-testid="cancel-confirm-dialog">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-red-400 mb-1">Cancel your {label} plan?</p>
+              <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--cm-text-2)" }}>
+                Your plan will remain active until the end of your billing period. After that, you'll be downgraded
+                to the free Starter plan and lose access to premium features. You can reactivate anytime before then.
+              </p>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={async () => { await onCancel(); setShowCancelConfirm(false); }} disabled={cancelling}
+                  className="text-xs h-8 px-4 bg-red-600/80 hover:bg-red-600 text-white" data-testid="confirm-cancel-btn">
+                  {cancelling ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
+                  Yes, Cancel
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowCancelConfirm(false)}
+                  className="text-xs h-8 px-4" data-testid="keep-plan-btn">
+                  Keep Plan
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Billing History */}
+      <SectionCard icon={Receipt} title="Billing History" testId="section-billing-history">
+        {billingLoading ? (
+          <div className="flex items-center gap-2 py-3">
+            <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
+            <span className="text-xs" style={{ color: "var(--cm-text-3)" }}>Loading transactions...</span>
+          </div>
+        ) : transactions.length === 0 ? (
+          <div className="text-center py-6">
+            <Receipt className="w-8 h-8 mx-auto mb-2" style={{ color: "var(--cm-text-3)", opacity: 0.4 }} />
+            <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>No transactions yet</p>
+            <p className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-3)", opacity: 0.6 }}>
+              Your payment history will appear here after your first upgrade.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full text-xs" data-testid="billing-history-table">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--cm-border)" }}>
+                  <th className="text-left py-2 px-2 font-semibold" style={{ color: "var(--cm-text-3)" }}>Date</th>
+                  <th className="text-left py-2 px-2 font-semibold" style={{ color: "var(--cm-text-3)" }}>Plan</th>
+                  <th className="text-right py-2 px-2 font-semibold" style={{ color: "var(--cm-text-3)" }}>Amount</th>
+                  <th className="text-right py-2 px-2 font-semibold" style={{ color: "var(--cm-text-3)" }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((txn, i) => {
+                  const date = txn.created_at ? new Date(txn.created_at) : null;
+                  const statusColor = txn.payment_status === "paid" ? "#10b981" : txn.payment_status === "pending" ? "#f59e0b" : "#ef4444";
+                  return (
+                    <tr key={txn.txn_id || txn.session_id || i} style={{ borderBottom: "1px solid var(--cm-border)" }} data-testid={`txn-row-${i}`}>
+                      <td className="py-2.5 px-2" style={{ color: "var(--cm-text-2)" }}>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 flex-shrink-0" style={{ color: "var(--cm-text-3)" }} />
+                          {date ? date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-2 font-medium" style={{ color: "var(--cm-text)" }}>
+                        {TIERS_MAP[txn.tier] || txn.tier || "—"}
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-semibold" style={{ color: "var(--cm-text)" }}>
+                        ${txn.amount ? txn.amount.toFixed(2) : "0.00"}
+                      </td>
+                      <td className="py-2.5 px-2 text-right">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: `${statusColor}15`, color: statusColor }}>
+                          {txn.payment_status === "paid" && <CheckCircle2 className="w-2.5 h-2.5" />}
+                          {txn.payment_status || "unknown"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
       {/* Compare Plans */}
-      {tier !== "premium" && (
+      {tier !== "premium" && !cancelPending && (
         <button onClick={onOpenUpgrade}
           className="w-full flex items-center gap-3 p-4 rounded-2xl border transition-all hover:border-teal-700/40"
           style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
@@ -367,6 +491,8 @@ function BillingTab({ subscription, subLoading, onOpenUpgrade, onManageBilling, 
     </div>
   );
 }
+
+const TIERS_MAP = { basic: "Starter", pro: "Pro", premium: "Premium" };
 
 // ─── Data & Privacy Section (shared) ─────────
 function DataPrivacyContent() {
@@ -464,6 +590,12 @@ export default function SettingsPage() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [managingBilling, setManagingBilling] = useState(false);
 
+  // Billing data state
+  const [billingData, setBillingData] = useState(null);
+  const [billingLoading, setBillingLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+
   // Active tab
   const [activeTab, setActiveTab] = useState("profile");
 
@@ -491,10 +623,20 @@ export default function SettingsPage() {
     } finally { setSubLoading(false); }
   }, []);
 
+  const fetchBillingHistory = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/stripe/billing-history`);
+      setBillingData(res.data);
+    } catch {
+      // Billing fetch failed silently
+    } finally { setBillingLoading(false); }
+  }, []);
+
   useEffect(() => {
     fetchSettings();
     fetchSubscription();
-  }, [fetchSettings, fetchSubscription]);
+    fetchBillingHistory();
+  }, [fetchSettings, fetchSubscription, fetchBillingHistory]);
 
   // Handle Gmail callback redirect
   useEffect(() => {
@@ -536,6 +678,7 @@ export default function SettingsPage() {
         searchParams.delete("upgrade");
         setSearchParams(searchParams, { replace: true });
         fetchSettings();
+        fetchBillingHistory();
       });
     } else if (upgrade === "cancelled") {
       setActiveTab("billing");
@@ -595,6 +738,30 @@ export default function SettingsPage() {
       toast.success("Gmail disconnected");
     } catch { toast.error("Failed to disconnect"); }
     finally { setDisconnecting(false); }
+  };
+
+  const handleCancelSubscription = async () => {
+    setCancelling(true);
+    try {
+      const res = await axios.post(`${API}/stripe/cancel`);
+      toast.success(res.data?.message || "Cancellation scheduled");
+      fetchSubscription();
+      fetchBillingHistory();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to cancel subscription");
+    } finally { setCancelling(false); }
+  };
+
+  const handleReactivate = async () => {
+    setReactivating(true);
+    try {
+      const res = await axios.post(`${API}/stripe/reactivate`);
+      toast.success(res.data?.message || "Subscription reactivated!");
+      fetchSubscription();
+      fetchBillingHistory();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to reactivate");
+    } finally { setReactivating(false); }
   };
 
   const handleManageBilling = async () => {
@@ -681,6 +848,13 @@ export default function SettingsPage() {
               onOpenUpgrade={() => setShowUpgrade(true)}
               onManageBilling={handleManageBilling}
               managingBilling={managingBilling}
+              billingData={billingData}
+              billingLoading={billingLoading}
+              onCancel={handleCancelSubscription}
+              onReactivate={handleReactivate}
+              cancelling={cancelling}
+              reactivating={reactivating}
+              onRefreshBilling={fetchBillingHistory}
             />
           </TabsContent>
         </Tabs>

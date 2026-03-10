@@ -1,11 +1,12 @@
-"""Stripe Checkout — subscription upgrade flow + billing portal.
+"""Stripe Checkout — subscription upgrade flow, billing portal, cancel/reactivate.
 
 Tiers defined server-side. Frontend sends tier + origin_url.
 """
 
 import os
+import uuid
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import stripe as stripe_sdk
 from fastapi import APIRouter, HTTPException, Request
@@ -17,6 +18,7 @@ from emergentintegrations.payments.stripe.checkout import (
 )
 from auth_middleware import get_current_user_dep
 from db_client import db
+from subscriptions import SUBSCRIPTION_TIERS, get_user_subscription
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -76,7 +78,9 @@ async def create_checkout_session(
     session = await stripe.create_checkout_session(checkout_req)
 
     # Record pending transaction
+    txn_id = f"txn_{uuid.uuid4().hex[:12]}"
     await db.payment_transactions.insert_one({
+        "txn_id": txn_id,
         "session_id": session.session_id,
         "user_id": current_user["id"],
         "email": current_user.get("email", ""),
@@ -221,3 +225,124 @@ async def stripe_webhook(request: Request):
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return {"ok": False}
+
+
+# ─── Billing History ──────────────────────────
+
+async def _get_athlete_tenant(user_id: str) -> str | None:
+    athlete = await db.athletes.find_one({"user_id": user_id}, {"_id": 0, "tenant_id": 1})
+    return athlete.get("tenant_id") if athlete else None
+
+
+@router.get("/stripe/billing-history")
+async def get_billing_history(current_user: dict = get_current_user_dep()):
+    """Get payment history, subscription status, and cancellation info."""
+    user_id = current_user["id"]
+    tenant_id = await _get_athlete_tenant(user_id)
+
+    # Get payment transactions
+    txns = await db.payment_transactions.find(
+        {"user_id": user_id},
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(50)
+
+    # Get subscription info
+    subscription = {"tier": "basic", "label": "Starter", "price": 0}
+    if tenant_id:
+        sub = await get_user_subscription(tenant_id)
+        subscription = {
+            "tier": sub["tier"],
+            "label": sub["label"],
+            "price": sub.get("price", 0),
+        }
+
+    # Check cancellation status from user doc
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    cancel_at_period_end = (user or {}).get("cancel_at_period_end", False)
+    plan_expires_at = (user or {}).get("plan_expires_at")
+
+    return {
+        "transactions": txns,
+        "subscription": subscription,
+        "cancel_at_period_end": cancel_at_period_end,
+        "plan_expires_at": plan_expires_at,
+    }
+
+
+@router.post("/stripe/cancel")
+async def cancel_subscription(current_user: dict = get_current_user_dep()):
+    """Cancel subscription at end of billing period (keeps access until expiry)."""
+    user_id = current_user["id"]
+    tenant_id = await _get_athlete_tenant(user_id)
+
+    # Check current tier
+    subscription = {"tier": "basic"}
+    if tenant_id:
+        subscription = await get_user_subscription(tenant_id)
+
+    if subscription["tier"] == "basic":
+        raise HTTPException(400, "You are already on the free plan.")
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if user and user.get("cancel_at_period_end"):
+        raise HTTPException(400, "Cancellation is already scheduled.")
+
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(days=30)).isoformat()
+
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "cancel_at_period_end": True,
+            "plan_expires_at": expires_at,
+            "updated_at": now.isoformat(),
+        }},
+    )
+
+    # Audit log
+    await db.subscription_logs.insert_one({
+        "log_id": f"sublog_{uuid.uuid4().hex[:12]}",
+        "user_id": user_id,
+        "old_plan": subscription["tier"],
+        "new_plan": "basic (scheduled)",
+        "reason": "User requested cancellation",
+        "changed_by": "user",
+        "created_at": now.isoformat(),
+    })
+
+    label = subscription.get("label", subscription["tier"].title())
+    logger.info(f"Subscription cancellation scheduled: user {user_id} ({subscription['tier']} -> basic at {expires_at})")
+
+    return {
+        "message": f"Your {label} plan will remain active until the end of your billing period.",
+        "plan_expires_at": expires_at,
+    }
+
+
+@router.post("/stripe/reactivate")
+async def reactivate_subscription(current_user: dict = get_current_user_dep()):
+    """Cancel a pending cancellation and keep the current plan."""
+    user_id = current_user["id"]
+
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user or not user.get("cancel_at_period_end"):
+        raise HTTPException(400, "No pending cancellation found.")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"cancel_at_period_end": False, "plan_expires_at": None, "updated_at": now}},
+    )
+
+    await db.subscription_logs.insert_one({
+        "log_id": f"sublog_{uuid.uuid4().hex[:12]}",
+        "user_id": user_id,
+        "old_plan": user.get("subscription_plan", "basic"),
+        "new_plan": user.get("subscription_plan", "basic"),
+        "reason": "User reactivated subscription",
+        "changed_by": "user",
+        "created_at": now,
+    })
+
+    logger.info(f"Subscription reactivated: user {user_id}")
+    return {"message": "Your subscription has been reactivated. No changes will be made to your plan."}
