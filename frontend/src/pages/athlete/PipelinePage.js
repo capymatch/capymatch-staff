@@ -4,7 +4,8 @@ import axios from "axios";
 import {
   Plus, ChevronRight, ChevronLeft, Loader2,
   Send, GraduationCap, AlertTriangle, Lightbulb,
-  Archive, RotateCcw, Calendar,
+  Archive, RotateCcw, CheckSquare, Circle, Clock,
+  Mail, User,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "../../components/ui/button";
@@ -302,33 +303,58 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Upcoming Events                        ── */
+/* ── Upcoming Tasks                         ── */
 /* ═══════════════════════════════════════════ */
-function UpcomingEventsSection({ events, navigate }) {
-  if (!events || events.length === 0) return null;
-  const upcoming = events
-    .filter(e => new Date(e.date || e.start_date || e.event_date) >= new Date(new Date().toDateString()))
-    .sort((a, b) => new Date(a.date || a.start_date || a.event_date) - new Date(b.date || b.start_date || b.event_date))
-    .slice(0, 3);
-  if (upcoming.length === 0) return null;
-  const dotColors = ["#0d9488", "#f59e0b", "#3b82f6"];
+const TASK_CONFIG = {
+  follow_up_overdue: { icon: Clock, color: "#dc2626", label: "Overdue" },
+  follow_up_today: { icon: Clock, color: "#d97706", label: "Due Today" },
+  follow_up_soon: { icon: Clock, color: "#3b82f6", label: "Upcoming" },
+  first_outreach: { icon: Mail, color: "#0d9488", label: "Outreach" },
+  profile_completion: { icon: User, color: "#8b5cf6", label: "Profile" },
+};
+
+function UpcomingTasksSection({ tasks, navigate }) {
+  if (!tasks || tasks.length === 0) return null;
+  const shown = tasks.slice(0, 5);
 
   return (
-    <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }} data-testid="upcoming-events">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+    <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }} data-testid="upcoming-tasks">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
-          <Calendar style={{ width: 15, height: 15, color: "#0d9488" }} /> Upcoming Events
+          <CheckSquare style={{ width: 15, height: 15, color: "#0d9488" }} /> Upcoming Tasks
         </div>
-        <button onClick={() => navigate("/calendar")} style={{ fontSize: 11, fontWeight: 600, color: "#0d9488", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 3 }}>View Calendar <ChevronRight style={{ width: 12, height: 12 }} /></button>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{tasks.length} total</span>
       </div>
-      {upcoming.map((ev, i) => {
-        const d = new Date(ev.date || ev.start_date || ev.event_date);
-        const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      {shown.map((task, i) => {
+        const cfg = TASK_CONFIG[task.type] || TASK_CONFIG.first_outreach;
+        const Icon = cfg.icon;
         return (
-          <div key={ev.event_id || i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: "1px solid var(--cm-border)" }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: dotColors[i % 3], flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", flex: 1 }}>{ev.title || ev.name || "Event"}</span>
-            <span style={{ fontSize: 11, fontWeight: 500, color: "var(--cm-text-3)" }}>{dateStr}</span>
+          <div
+            key={task.task_id}
+            onClick={() => navigate(task.link)}
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "10px 0", borderTop: "1px solid var(--cm-border)",
+              cursor: "pointer", transition: "opacity 0.15s",
+            }}
+            data-testid={`task-item-${task.task_id}`}
+          >
+            <div style={{
+              width: 28, height: 28, borderRadius: 7,
+              background: `${cfg.color}15`, display: "flex",
+              alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
+              <Icon style={{ width: 14, height: 14, color: cfg.color }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</div>
+              <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 1 }}>{task.description}</div>
+            </div>
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: "2px 8px",
+              borderRadius: 5, background: `${cfg.color}15`, color: cfg.color,
+              flexShrink: 0,
+            }}>{cfg.label}</span>
           </div>
         );
       })}
@@ -554,7 +580,7 @@ export default function PipelinePage() {
   const [allPrograms, setAllPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [matchScores, setMatchScores] = useState({});
-  const [events, setEvents] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [collapsedArchived, setCollapsedArchived] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const navigate = useNavigate();
@@ -576,7 +602,7 @@ export default function PipelinePage() {
       setMatchScores(byId);
     }).catch(() => {});
   }, [allPrograms.length]);
-  useEffect(() => { axios.get(`${API}/athlete/events`).then(res => setEvents(Array.isArray(res.data) ? res.data : [])).catch(() => {}); }, []);
+  useEffect(() => { axios.get(`${API}/athlete/tasks`).then(res => setTasks(res.data?.tasks || [])).catch(() => {}); }, [allPrograms.length]);
 
   /* ── Drag & Drop handler ── */
   const handleDragEnd = useCallback(async (result) => {
@@ -646,8 +672,8 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* 3. Upcoming Events */}
-      <UpcomingEventsSection events={events} navigate={navigate} />
+      {/* 3. Upcoming Tasks */}
+      <UpcomingTasksSection tasks={tasks} navigate={navigate} />
 
       {/* Committed Banner */}
       <CommittedBanner programs={committedPrograms} navigate={navigate} />

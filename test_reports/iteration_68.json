@@ -1,0 +1,97 @@
+{
+  "summary": "Completed testing of Upcoming Tasks feature. Backend API (GET /api/athlete/tasks) and Frontend UI both fully working. All 10 backend tests pass. Frontend displays tasks correctly with proper icons, badges, and navigation.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Pipeline page",
+        "issues": ["ERR_BLOCKED_BY_RESPONSE.NotSameOrigin errors for external university logo resources - cosmetic only, not blocking functionality"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_athlete_tasks.py",
+    "/app/test_reports/pytest/pytest_athlete_tasks.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_athlete_tasks.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% - All features verified working"
+  },
+  "test_credentials": {
+    "email": "emma.chen@athlete.capymatch.com",
+    "password": "password123",
+    "localStorage_key": "capymatch_token"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Upcoming Tasks feature fully working. The tasks endpoint generates tasks from: overdue follow-ups, due-today, due-soon (1-3 days), first outreach needs, and profile completion. Frontend shows up to 5 tasks with color-coded icons and priority badges.",
+  "tests_passed": {
+    "backend": {
+      "tasks_endpoint": [
+        "GET /api/athlete/tasks returns 200 with tasks array",
+        "Response has 'tasks' and 'total' fields",
+        "Each task has required fields: task_id, type, priority, title, description, link",
+        "Tasks sorted by priority (high first) then by urgency (most overdue first)"
+      ],
+      "task_types_validation": [
+        "follow_up_overdue: has negative days_diff, high priority",
+        "follow_up_today: has days_diff=0, high priority",
+        "follow_up_soon: has days_diff 1-3, medium priority",
+        "first_outreach: no due_date, medium priority",
+        "profile_completion: low priority, links to /profile"
+      ],
+      "auth_protection": [
+        "GET /api/athlete/tasks returns 401 without auth token"
+      ]
+    },
+    "frontend": {
+      "upcoming_tasks_section": [
+        "Section has data-testid='upcoming-tasks'",
+        "Shows CheckSquare icon and 'Upcoming Tasks' heading",
+        "Shows total task count (12 total)",
+        "Displays up to 5 task items",
+        "Each task item has data-testid='task-item-{task_id}'"
+      ],
+      "task_item_display": [
+        "Colored icons: Clock (red) for overdue, Clock (amber) for due today, Mail (teal) for outreach",
+        "Priority badges: 'Overdue', 'Due Today', 'Outreach' labels",
+        "Task title and description shown"
+      ],
+      "task_navigation": [
+        "Clicking task navigates to /pipeline/{program_id}",
+        "Profile completion tasks navigate to /profile"
+      ],
+      "old_events_removed": [
+        "No 'Upcoming Events' section (data-testid='upcoming-events')",
+        "No 'Upcoming Events' text on page"
+      ],
+      "other_features_working": [
+        "Kanban board displays with 5 columns and 12 cards",
+        "Kanban cards have cursor: grab (draggable)",
+        "Hero card 'Actions Needed Today' carousel working (2 items)",
+        "Carousel navigation buttons working"
+      ]
+    }
+  },
+  "verified_task_data": {
+    "example_tasks": [
+      {"title": "Follow up with Stanford University", "type": "follow_up_overdue", "badge": "Overdue"},
+      {"title": "Follow up with UCLA", "type": "follow_up_today", "badge": "Due Today"},
+      {"title": "Send first outreach to University of Tampa", "type": "first_outreach", "badge": "Outreach"},
+      {"title": "Send first outreach to Emory University", "type": "first_outreach", "badge": "Outreach"},
+      {"title": "Send first outreach to Brigham Young University", "type": "first_outreach", "badge": "Outreach"}
+    ],
+    "total_tasks": 12
+  }
+}

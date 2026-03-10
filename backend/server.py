@@ -44,6 +44,7 @@ from routers.admin_kb_jobs import router as admin_kb_jobs_router
 from routers.ai_features import router as ai_features_router
 from routers.subscription import router as subscription_router
 from routers.notifications import router as notifications_router
+from routers.athlete_tasks import router as athlete_tasks_router
 
 # Create the main app
 app = FastAPI()
@@ -119,6 +120,7 @@ api_router.include_router(admin_kb_jobs_router)
 api_router.include_router(ai_features_router)
 api_router.include_router(subscription_router)
 api_router.include_router(notifications_router)
+api_router.include_router(athlete_tasks_router)
 
 app.include_router(api_router)
 
