@@ -199,6 +199,19 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Navigation Fix**: Smart match cards navigate to `/schools/{domain}` correctly
 - **Testing:** 100% pass rate (iteration_81: 14/14 backend, all frontend verified)
 
+### "Why This School?" Detail Drawer (DONE - March 10, 2026)
+- **MatchDetailDrawer component**: Slide-in drawer from right edge, triggered by clicking any Smart Match card on Dashboard or Find Schools page
+- **Header**: School name, logo, division/conference/location, overall match score in rounded badge, fit label (Excellent Fit → Stretch), confidence badge (High/Medium/Low based on data completeness)
+- **Score Breakdown**: 5 horizontal progress bars with category icons (Athletic 30%, Academic 25%, Preference 20%, Geographic 15%, Opportunity 10%), scores, and weight labels
+- **Why This School Matches**: 2-4 strength bullet points derived from top-scoring categories
+- **What Could Improve**: Contextual improvement suggestions (missing GPA, test scores, regions, priorities, or low-scoring categories) — hidden when none apply
+- **AI Insight section**: Shows AI summary/next step/verify for Pro/Premium users
+- **Actions**: "Add to Pipeline" CTA + "Details" navigation button
+- **Mobile-friendly**: Max 420px width, scrollable, overlay close
+- **New file**: `/app/frontend/src/components/MatchDetailDrawer.js`
+- **Backend enhanced**: `compute_match_score` now returns `fit_label`, `confidence`, `strengths`, `improvements`
+- **Testing:** 100% pass rate (iteration_82: 11/11 backend, all frontend verified)
+
 ## Credentials
 - **Coach (Williams):** coach.williams@capymatch.com / coach123
 - **Coach (Garcia):** coach.garcia@capymatch.com / coach123
