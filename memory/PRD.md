@@ -235,8 +235,15 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Club Coach (Williams):** coach.williams@capymatch.com / coach123
 - **Club Coach (Garcia):** coach.garcia@capymatch.com / coach123
 
+### Stripe Customer Portal Verification (DONE - March 10, 2026)
+- **Backend**: `POST /api/checkout/create-portal-session` creates Stripe billing portal session; requires `stripe_customer_id` on user doc
+- **Access Control**: Returns 400 "No billing account found" for users without Stripe customer ID; 401 for unauthenticated requests
+- **Frontend**: "Billing Portal" button gated to paid users only (`tier !== "basic"`); hidden for basic/free tier
+- **Cancel/Reactivate**: Both endpoints properly validated (basic tier blocked from cancel, no-pending blocked from reactivate)
+- **Billing History**: Loads and displays transaction table with date, plan, amount, status
+- **Testing:** 100% pass rate (iteration_86: 15/15 backend, 8/8 frontend)
+
 ## P1 Upcoming
-- Stripe Customer Portal — "Manage Billing" button on Settings page
 - Director-specific actions — Request Coach Review, Escalate Pipeline Risk
 
 ## P2 Future/Backlog
