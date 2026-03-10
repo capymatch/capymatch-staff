@@ -108,15 +108,18 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New endpoints**: `POST /api/checkout/create-session`, `GET /api/checkout/status/{session_id}`, `POST /api/webhook/stripe`
 - **Testing:** 100% pass (backend 12/12, frontend all verified - iteration_73)
 
-## P1 Upcoming — Journey Migration Phases
-- All Journey phases (J1-J4) are COMPLETE
-- All mocks have been replaced with real implementations
-- **Phase J2**: Coach Watch alert, Engagement stats strip, Coach social links, ConversationBubble enrichment
-- **Phase J3**: Send Profile card, Gmail connect nudge, Archive confirmation dialog, Notes sidebar, School intel link alignment
-- **Phase J4**: Subscription gating, AI premium gating, Compare button, Committed toggle, School social links
+### Enhanced Settings Page (DONE - March 10, 2026)
+- **Two-tab layout**: Refactored `/athlete-settings` into "Profile" and "Plan & Billing" tabs using shadcn Tabs component
+- **Profile tab**: Personal Information (name/email), Change Password, Notifications (follow-up reminders, email notifications), Appearance (dark/light/system theme), Gmail Integration (connect/disconnect/import)
+- **Plan & Billing tab**: Current Plan card (tier name, badge, price, features list), Usage bars (Schools, AI Drafts) with color-coded progress bars, Upgrade button opening UpgradeModal, Compare Plans CTA, "Unlock More with Pro" highlights for basic tier users, Data & Privacy (export data, delete account)
+- **Stripe Customer Portal**: Backend endpoint `POST /api/checkout/create-portal-session` creates a Stripe billing portal session. The checkout status endpoint now also saves `stripe_customer_id` from raw Stripe session data for portal access.
+- **New endpoint**: `POST /api/checkout/create-portal-session`
+- **Testing:** 100% pass rate (backend 23/23, frontend all verified - iteration_74)
+
+## P1 Upcoming
+- Normalize camelCase → snake_case in database fields (technical debt)
 
 ## P2 Future/Backlog
-- Normalize camelCase → snake_case in database fields
 - Connected Experiences (Director ↔ Athlete visibility)
 - Engagement analytics
 - Smart Match AI (advanced matching)
