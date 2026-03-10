@@ -7,7 +7,7 @@ import {
   Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
   Eye, MousePointerClick, ShieldCheck, Send, Share2,
-  GitCompare, ChevronDown, ChevronUp, Lock,
+  GitCompare, ChevronDown, ChevronUp, Lock, Flag, Check,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
@@ -100,6 +100,10 @@ export default function JourneyPage() {
   // Coach Watch (real API)
   const [coachWatch, setCoachWatch] = useState(null);
 
+  // Coach flags for this program
+  const [coachFlags, setCoachFlags] = useState([]);
+  const [completingFlag, setCompletingFlag] = useState(null);
+
   const fetchData = useCallback(async () => {
     try {
       const [pRes, jRes, msRes, engRes, gmailRes] = await Promise.allSettled([
@@ -136,6 +140,14 @@ export default function JourneyPage() {
           .then(r => setCoachWatch(r.data))
           .catch(() => {});
       }
+
+      // Fetch coach flags for this program
+      axios.get(`${API}/athlete/flags`)
+        .then(r => {
+          const flags = (r.data?.flags || []).filter(f => f.program_id === programId);
+          setCoachFlags(flags);
+        })
+        .catch(() => {});
     } catch (e) {
       toast.error("Failed to load program");
     } finally { setLoading(false); }
@@ -145,6 +157,18 @@ export default function JourneyPage() {
 
   const refresh = () => { setLoading(false); fetchData(); };
   const closeAll = () => { setShowEmail(false); setShowLog(false); setShowReplied(false); setShowCoachForm(null); setShowFollowup(false); setActiveAction(null); setEmailInitial({}); };
+
+  // Complete a coach flag
+  const handleCompleteFlag = async (flagId) => {
+    setCompletingFlag(flagId);
+    try {
+      await axios.post(`${API}/athlete/flags/${flagId}/complete`, { resolution_note: "" });
+      toast.success("Flag marked as complete");
+      setCoachFlags(prev => prev.filter(f => f.flag_id !== flagId));
+      refresh();
+    } catch { toast.error("Failed to complete flag"); }
+    finally { setCompletingFlag(null); }
+  };
 
   // J3: Send Profile — open email composer with profile template
   const openEmailWithProfile = () => {
@@ -441,6 +465,60 @@ export default function JourneyPage() {
 
       {/* ─── MAIN CONTENT ─── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
+
+        {/* Coach Flag Card */}
+        {coachFlags.length > 0 && (
+          <div className="mb-5 space-y-3" data-testid="journey-coach-flags">
+            {coachFlags.map(flag => {
+              const dueLabel = flag.due === "today" ? "Due today"
+                : flag.due === "this_week" ? "Due this week"
+                : flag.due_date ? `Due ${flag.due_date}` : null;
+              return (
+                <div key={flag.flag_id} className="rounded-xl overflow-hidden"
+                  style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)" }}
+                  data-testid={`journey-flag-${flag.flag_id}`}>
+                  <div style={{ height: 2, background: "linear-gradient(90deg, #f59e0b, rgba(245,158,11,0.2))" }} />
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ backgroundColor: "rgba(245,158,11,0.15)" }}>
+                        <Flag className="w-5 h-5" style={{ color: "#f59e0b" }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#f59e0b" }}>
+                          Coach Directive {dueLabel ? `\u00B7 ${dueLabel}` : ""}
+                        </p>
+                        <h3 className="text-sm font-bold mb-1" style={{ color: "var(--cm-text)" }}>
+                          {flag.reason_label}
+                        </h3>
+                        {flag.note && (
+                          <p className="text-xs mb-3" style={{ color: "var(--cm-text-2)" }}>
+                            {flag.note}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <button onClick={() => handleCompleteFlag(flag.flag_id)}
+                            disabled={completingFlag === flag.flag_id}
+                            className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors shadow-sm"
+                            style={{ backgroundColor: "#f59e0b", color: "#000", opacity: completingFlag === flag.flag_id ? 0.6 : 1 }}
+                            data-testid={`complete-flag-${flag.flag_id}`}>
+                            {completingFlag === flag.flag_id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <Check className="w-3.5 h-3.5" />}
+                            Mark Complete
+                          </button>
+                          <span className="text-[10px] font-medium" style={{ color: "var(--cm-text-3)" }}>
+                            Flagged by {flag.flagged_by_name || "Coach"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* J1: Overdue Follow-Up Card (rich dark style) */}
         {followUpOverdue && !activeAction && (

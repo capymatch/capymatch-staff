@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   Plus, ChevronRight, ChevronLeft, Loader2,
   Send, GraduationCap, AlertTriangle, Lightbulb,
-  Archive, RotateCcw, CheckSquare, Clock, Flag, Check,
+  Archive, RotateCcw, CheckSquare, Clock, Flag, ArrowRight,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "../../components/ui/button";
@@ -305,7 +305,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
 /* ── Upcoming Tasks (due in 1-3 days)       ── */
 /* ═══════════════════════════════════════════ */
 
-function UpcomingTasksSection({ tasks, navigate, onCompleteFlag }) {
+function UpcomingTasksSection({ tasks, navigate }) {
   if (!tasks || tasks.length === 0) return null;
 
   const coachTasks = tasks.filter(t => t.source === "coach");
@@ -313,7 +313,7 @@ function UpcomingTasksSection({ tasks, navigate, onCompleteFlag }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
-      {/* Coach Flags — visually distinct */}
+      {/* Coach Flags — clickable overview, navigates to Journey */}
       {coachTasks.length > 0 && (
         <div style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 14, padding: "16px 20px" }} data-testid="coach-flags-section">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -323,7 +323,9 @@ function UpcomingTasksSection({ tasks, navigate, onCompleteFlag }) {
             <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{coachTasks.length} item{coachTasks.length !== 1 ? "s" : ""}</span>
           </div>
           {coachTasks.map(task => (
-            <div key={task.task_id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderTop: "1px solid rgba(245,158,11,0.12)" }}
+            <div key={task.task_id}
+              onClick={() => navigate(task.link)}
+              style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderTop: "1px solid rgba(245,158,11,0.12)", cursor: "pointer" }}
               data-testid={`coach-flag-${task.flag_id || task.task_id}`}>
               <div style={{
                 width: 28, height: 28, borderRadius: 7,
@@ -332,7 +334,7 @@ function UpcomingTasksSection({ tasks, navigate, onCompleteFlag }) {
               }}>
                 <Flag style={{ width: 14, height: 14, color: "#f59e0b" }} />
               </div>
-              <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => navigate(task.link)}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.4 }}>{task.title}</div>
                 <div style={{ fontSize: 11, color: "var(--cm-text-2)", marginTop: 2 }}>{task.description}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
@@ -340,18 +342,7 @@ function UpcomingTasksSection({ tasks, navigate, onCompleteFlag }) {
                   {task.due_label && <span style={{ fontSize: 10, color: "var(--cm-text-3)" }}>{task.due_label}</span>}
                 </div>
               </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); onCompleteFlag?.(task.flag_id || task.task_id); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 4,
-                  padding: "4px 10px", borderRadius: 6,
-                  border: "1px solid rgba(16,185,129,0.3)", background: "rgba(16,185,129,0.08)",
-                  color: "#10b981", fontSize: 10, fontWeight: 700,
-                  cursor: "pointer", flexShrink: 0, marginTop: 2,
-                }}
-                data-testid={`complete-flag-${task.flag_id || task.task_id}`}>
-                <Check style={{ width: 12, height: 12 }} /> Mark Complete
-              </button>
+              <ArrowRight style={{ width: 14, height: 14, color: "var(--cm-text-3)", flexShrink: 0, marginTop: 6 }} />
             </div>
           ))}
         </div>
@@ -712,13 +703,7 @@ export default function PipelinePage() {
       )}
 
       {/* 3. Upcoming Tasks */}
-      <UpcomingTasksSection tasks={tasks} navigate={navigate} onCompleteFlag={async (flagId) => {
-        try {
-          await axios.post(`${API}/athlete/flags/${flagId}/complete`, { resolution_note: "" });
-          toast.success("Flag marked as complete");
-          setTasks(prev => prev.filter(t => t.flag_id !== flagId && t.task_id !== flagId));
-        } catch { toast.error("Failed to complete flag"); }
-      }} />
+      <UpcomingTasksSection tasks={tasks} navigate={navigate} />
 
       {/* Committed Banner */}
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
