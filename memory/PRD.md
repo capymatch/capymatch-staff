@@ -101,17 +101,22 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Bug Fix**: Overdue follow-up card Send Email button now properly gated by subscription
 - **Testing:** 95% → 100% after bug fix (iteration_72)
 
+### Unmocking Sprint (DONE - March 10, 2026)
+- **Coach Watch Alert**: Wired real backend API (`GET /api/ai/coach-watch/alert/{university_name}`). Dynamic green/yellow/red badge based on severity.
+- **School Social Links**: KB social_links (862 entries) now piped to programs during fetch. Twitter/Instagram/Facebook/YouTube icons render in Journey header.
+- **Stripe Checkout**: Real Stripe integration via `emergentintegrations`. Creates real checkout sessions, redirects to stripe.com, handles return with status polling. Settings page processes the redirect.
+- **New endpoints**: `POST /api/checkout/create-session`, `GET /api/checkout/status/{session_id}`, `POST /api/webhook/stripe`
+- **Testing:** 100% pass (backend 12/12, frontend all verified - iteration_73)
+
 ## P1 Upcoming — Journey Migration Phases
 - All Journey phases (J1-J4) are COMPLETE
+- All mocks have been replaced with real implementations
 - **Phase J2**: Coach Watch alert, Engagement stats strip, Coach social links, ConversationBubble enrichment
 - **Phase J3**: Send Profile card, Gmail connect nudge, Archive confirmation dialog, Notes sidebar, School intel link alignment
 - **Phase J4**: Subscription gating, AI premium gating, Compare button, Committed toggle, School social links
 
-## P2 Technical Debt
-- Normalize camelCase → snake_case in database fields
-
 ## P2 Future/Backlog
-- Stripe integration for real payment processing
+- Normalize camelCase → snake_case in database fields
 - Connected Experiences (Director ↔ Athlete visibility)
 - Engagement analytics
 - Smart Match AI (advanced matching)
