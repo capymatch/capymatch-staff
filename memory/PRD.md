@@ -45,13 +45,9 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 
 ### Phase 12 — Upcoming Tasks Feature (DONE - March 10, 2026)
 - **Replaced "Upcoming Events" with "Upcoming Tasks"** on My Schools (Pipeline) page
-- **Backend endpoint** `GET /api/athlete/tasks`: auto-generates tasks from pipeline data
-  - Overdue follow-ups (high priority, red)
-  - Due-today follow-ups (high priority, amber)
-  - Due-soon follow-ups 1-3 days (medium priority, blue)
-  - First outreach needed (medium priority, teal)
-  - Profile completion / missing measurables (low priority, purple)
-- **Frontend**: `UpcomingTasksSection` component with color-coded icons, priority badges, clickable navigation
+- **Backend endpoint** `GET /api/athlete/tasks`: returns only follow-ups due in 1-3 days
+- **Hero card expanded**: Now includes overdue, due-today, AND needs-outreach schools (was only overdue+due-today)
+- **Upcoming Tasks section**: Shows only forward-looking items (1-3 day follow-ups), hides when empty
 - **Testing:** 100% pass rate (backend 10/10, frontend all verified - iteration_68)
 
 ## Key API Endpoints

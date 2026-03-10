@@ -4,8 +4,7 @@ import axios from "axios";
 import {
   Plus, ChevronRight, ChevronLeft, Loader2,
   Send, GraduationCap, AlertTriangle, Lightbulb,
-  Archive, RotateCcw, CheckSquare, Circle, Clock,
-  Mail, User,
+  Archive, RotateCcw, CheckSquare, Clock,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "../../components/ui/button";
@@ -118,25 +117,25 @@ function getStatusDot(p) {
   return "#d1d5db"; // grey
 }
 
-/* Generate action items — ONLY past due and due today */
+/* Generate action items — past due, due today, and needs outreach */
 function generateActions(programs, matchScores) {
   const actions = [];
   const eligible = programs.filter(p => {
     if (p.board_group === "archived" || p.recruiting_status === "Committed" || p.journey_stage === "committed") return false;
     const due = getDueInfo(p);
-    // Only include overdue or due-today items
     if (p.board_group === "overdue") return true;
     if (due?.urgent) return true; // overdue or due today
+    if (p.board_group === "needs_outreach") return true; // first outreach needed
     return false;
   });
 
-  // Sort: overdue first (most overdue at top), then due today
+  // Sort: overdue first, then due today, then needs outreach
   eligible.sort((a, b) => {
     const aDue = getDueInfo(a);
     const bDue = getDueInfo(b);
-    const aOverdue = aDue?.color === "#dc2626" ? 1 : 0;
-    const bOverdue = bDue?.color === "#dc2626" ? 1 : 0;
-    return bOverdue - aOverdue; // red (overdue) before amber (due today)
+    const aScore = aDue?.color === "#dc2626" ? 0 : aDue?.urgent ? 1 : 2;
+    const bScore = bDue?.color === "#dc2626" ? 0 : bDue?.urgent ? 1 : 2;
+    return aScore - bScore;
   });
 
   for (const p of eligible.slice(0, 6)) {
@@ -303,61 +302,49 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
 
 
 /* ═══════════════════════════════════════════ */
-/* ── Upcoming Tasks                         ── */
+/* ── Upcoming Tasks (due in 1-3 days)       ── */
 /* ═══════════════════════════════════════════ */
-const TASK_CONFIG = {
-  follow_up_overdue: { icon: Clock, color: "#dc2626", label: "Overdue" },
-  follow_up_today: { icon: Clock, color: "#d97706", label: "Due Today" },
-  follow_up_soon: { icon: Clock, color: "#3b82f6", label: "Upcoming" },
-  first_outreach: { icon: Mail, color: "#0d9488", label: "Outreach" },
-  profile_completion: { icon: User, color: "#8b5cf6", label: "Profile" },
-};
 
 function UpcomingTasksSection({ tasks, navigate }) {
   if (!tasks || tasks.length === 0) return null;
-  const shown = tasks.slice(0, 5);
 
   return (
     <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }} data-testid="upcoming-tasks">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
-          <CheckSquare style={{ width: 15, height: 15, color: "#0d9488" }} /> Upcoming Tasks
+          <CheckSquare style={{ width: 15, height: 15, color: "#3b82f6" }} /> Upcoming Tasks
         </div>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{tasks.length} total</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{tasks.length} coming up</span>
       </div>
-      {shown.map((task, i) => {
-        const cfg = TASK_CONFIG[task.type] || TASK_CONFIG.first_outreach;
-        const Icon = cfg.icon;
-        return (
-          <div
-            key={task.task_id}
-            onClick={() => navigate(task.link)}
-            style={{
-              display: "flex", alignItems: "center", gap: 12,
-              padding: "10px 0", borderTop: "1px solid var(--cm-border)",
-              cursor: "pointer", transition: "opacity 0.15s",
-            }}
-            data-testid={`task-item-${task.task_id}`}
-          >
-            <div style={{
-              width: 28, height: 28, borderRadius: 7,
-              background: `${cfg.color}15`, display: "flex",
-              alignItems: "center", justifyContent: "center", flexShrink: 0,
-            }}>
-              <Icon style={{ width: 14, height: 14, color: cfg.color }} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</div>
-              <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 1 }}>{task.description}</div>
-            </div>
-            <span style={{
-              fontSize: 10, fontWeight: 700, padding: "2px 8px",
-              borderRadius: 5, background: `${cfg.color}15`, color: cfg.color,
-              flexShrink: 0,
-            }}>{cfg.label}</span>
+      {tasks.map((task) => (
+        <div
+          key={task.task_id}
+          onClick={() => navigate(task.link)}
+          style={{
+            display: "flex", alignItems: "center", gap: 12,
+            padding: "10px 0", borderTop: "1px solid var(--cm-border)",
+            cursor: "pointer",
+          }}
+          data-testid={`task-item-${task.task_id}`}
+        >
+          <div style={{
+            width: 28, height: 28, borderRadius: 7,
+            background: "rgba(59,130,246,0.1)", display: "flex",
+            alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <Clock style={{ width: 14, height: 14, color: "#3b82f6" }} />
           </div>
-        );
-      })}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</div>
+            <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 1 }}>{task.description}</div>
+          </div>
+          <span style={{
+            fontSize: 10, fontWeight: 700, padding: "2px 8px",
+            borderRadius: 5, background: "rgba(59,130,246,0.1)", color: "#3b82f6",
+            flexShrink: 0,
+          }}>In {task.days_diff}d</span>
+        </div>
+      ))}
     </div>
   );
 }
