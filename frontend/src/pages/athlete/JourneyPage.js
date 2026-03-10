@@ -932,22 +932,6 @@ export default function JourneyPage() {
               </div>
             </div>
 
-            {/* Next Follow-up */}
-            {program.next_action_due && (
-              <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="next-followup-sidebar">
-                <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--cm-text-3)" }}>Next Follow-up</h3>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-teal-700/10">
-                    <Clock className="w-4 h-4 text-teal-700" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>{program.next_action || "Follow-up"}</p>
-                    <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{program.next_action_due}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* AI Section */}
             {/* AI Section — gated on premium */}
             <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(26,138,128,0.2)" : "var(--cm-border)" }} data-testid="ai-section">
