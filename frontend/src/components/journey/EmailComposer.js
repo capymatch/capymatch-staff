@@ -13,10 +13,10 @@ const EMAIL_TYPES = [
   { id: "interest_update", label: "Interest Update" },
 ];
 
-export function EmailComposer({ coaches, programId, universityName, onSent, onCancel }) {
+export function EmailComposer({ coaches, programId, universityName, onSent, onCancel, initialSubject, initialBody }) {
   const [to, setTo] = useState(coaches?.[0]?.email || "");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const [subject, setSubject] = useState(initialSubject || "");
+  const [body, setBody] = useState(initialBody || "");
   const [sending, setSending] = useState(false);
   const [gmailConnected, setGmailConnected] = useState(false);
   const [draftType, setDraftType] = useState("intro");

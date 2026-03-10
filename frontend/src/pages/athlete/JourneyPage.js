@@ -6,9 +6,13 @@ import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
   Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
-  Eye, MousePointerClick, ShieldCheck,
+  Eye, MousePointerClick, ShieldCheck, Send, Share2,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "../../components/ui/alert-dialog";
 import {
   ProgressRail, PulseIndicator, GettingStartedChecklist,
   CommittedHero, CelebrationHero, NextStepCard, ConversationBubble,
@@ -19,6 +23,7 @@ import { RAIL_STAGES, STAGE_LABELS } from "../../components/journey/constants";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
+import NotesSidebar from "../../components/NotesSidebar";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -55,13 +60,18 @@ export default function JourneyPage() {
   // J2: Engagement data
   const [engagement, setEngagement] = useState(null);
 
+  // J3: Gmail connected check + email initial (for Send Profile)
+  const [gmailConnected, setGmailConnected] = useState(true);
+  const [emailInitial, setEmailInitial] = useState({});
+
   const fetchData = useCallback(async () => {
     try {
-      const [pRes, jRes, msRes, engRes] = await Promise.allSettled([
+      const [pRes, jRes, msRes, engRes, gmailRes] = await Promise.allSettled([
         axios.get(`${API}/athlete/programs/${programId}`),
         axios.get(`${API}/athlete/programs/${programId}/journey`),
         axios.get(`${API}/match-scores`),
         axios.get(`${API}/athlete/engagement/${programId}`),
+        axios.get(`${API}/athlete/gmail/status`),
       ]);
       if (pRes.status !== "fulfilled") throw new Error("Failed to load program");
       setProgram(pRes.value.data);
@@ -79,6 +89,9 @@ export default function JourneyPage() {
 
       // Engagement data
       if (engRes.status === "fulfilled") setEngagement(engRes.value.data);
+
+      // Gmail connection status
+      setGmailConnected(gmailRes.status === "fulfilled" && gmailRes.value.data?.connected === true);
     } catch (e) {
       toast.error("Failed to load program");
     } finally { setLoading(false); }
@@ -87,7 +100,17 @@ export default function JourneyPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const refresh = () => { setLoading(false); fetchData(); };
-  const closeAll = () => { setShowEmail(false); setShowLog(false); setShowReplied(false); setShowCoachForm(null); setShowFollowup(false); setActiveAction(null); };
+  const closeAll = () => { setShowEmail(false); setShowLog(false); setShowReplied(false); setShowCoachForm(null); setShowFollowup(false); setActiveAction(null); setEmailInitial({}); };
+
+  // J3: Send Profile — open email composer with profile template
+  const openEmailWithProfile = () => {
+    setEmailInitial({
+      subject: `My Recruiting Profile — ${program?.university_name || ""}`,
+      body: `Coach,\n\nI wanted to share my recruiting profile with you.\n\nIt includes my athletic measurables, academics, highlight video, and upcoming tournament schedule. I'd love the opportunity to discuss how I can contribute to your program.\n\nThank you for your time!`,
+    });
+    setShowEmail(true);
+    setActiveAction("email");
+  };
 
   const fetchAiNextStep = async () => {
     setAiNextStepLoading(true);
@@ -257,13 +280,46 @@ export default function JourneyPage() {
                   <ExternalLink className="w-3 h-3" />Questionnaire
                 </a>
               )}
-              <Button variant="outline" size="sm" onClick={handleArchiveToggle}
-                className="text-xs h-7 px-3"
-                style={{ color: isArchived ? "#0d9488" : "var(--cm-text-3)", borderColor: isArchived ? "rgba(13,148,136,0.3)" : "var(--cm-border)" }}
-                data-testid="archive-toggle-btn">
-                {isArchived ? <RotateCcw className="w-3 h-3 mr-1" /> : <Archive className="w-3 h-3 mr-1" />}
-                {isArchived ? "Reactivate" : "Archive"}
-              </Button>
+              {isArchived ? (
+                <Button variant="outline" size="sm" onClick={handleArchiveToggle}
+                  className="text-xs h-7 px-3"
+                  style={{ color: "#0d9488", borderColor: "rgba(13,148,136,0.3)" }}
+                  data-testid="reactivate-btn">
+                  <RotateCcw className="w-3 h-3 mr-1" />Reactivate
+                </Button>
+              ) : (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="px-3 py-1 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1.5"
+                      style={{ background: "rgba(148,163,184,0.1)", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.2)" }}
+                      data-testid="archive-btn">
+                      <Archive className="w-3 h-3" />Archive
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent style={{ background: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle style={{ color: "var(--cm-text)" }}>Archive {program.university_name}?</AlertDialogTitle>
+                      <AlertDialogDescription style={{ color: "var(--cm-text-3)" }}>
+                        This school will be moved to your Archived section on the pipeline. You can reactivate it anytime — nothing is deleted.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel style={{ color: "var(--cm-text-3)" }}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={async () => {
+                          try {
+                            await axios.put(`${API}/athlete/programs/${programId}`, { recruiting_status: "archived" });
+                            toast.success(`${program.university_name} archived`);
+                            navigate("/pipeline");
+                          } catch { toast.error("Failed to archive"); }
+                        }}
+                        style={{ background: "#94a3b8", color: "white" }}
+                        data-testid="confirm-archive-btn"
+                      >Archive</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           </div>
 
@@ -523,10 +579,10 @@ export default function JourneyPage() {
           </div>
         )}
 
-        {/* Knowledge Base link */}
-        {program.school_id && (
+        {/* Knowledge Base / School Intelligence link */}
+        {(program.school_id || domain) && (
           <div className="mb-6">
-            <button onClick={() => navigate(`/schools/${program.school_id}`)}
+            <button onClick={() => navigate(domain ? `/school/${domain}` : `/schools/${program.school_id}`)}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors"
               style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
               data-testid="school-intel-link">
@@ -547,6 +603,42 @@ export default function JourneyPage() {
               <h2 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Timeline</h2>
               <span className="text-[10px] font-semibold text-teal-600" data-testid="timeline-count">{timeline.length} interactions</span>
             </div>
+
+            {/* J3: Gmail Connect Nudge */}
+            {!gmailConnected && (
+              <div className="flex items-start gap-3 rounded-xl p-3.5 mb-4" style={{ backgroundColor: "rgba(26,138,128,0.08)", border: "1px solid rgba(26,138,128,0.18)" }} data-testid="gmail-nudge-banner">
+                <Mail className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#1a8a80" }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium" style={{ color: "var(--cm-text)" }}>
+                    Connect Gmail to automatically track your emails with coaches, detect replies, and get smart follow-up reminders.
+                  </p>
+                  <a href="/settings" className="inline-flex items-center gap-1 text-xs font-semibold mt-1.5 transition-colors hover:underline" style={{ color: "#1a8a80" }} data-testid="gmail-nudge-connect-btn">
+                    Connect Gmail <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* J3: Send Profile Card */}
+            {!isCommitted && !isArchived && coaches.length > 0 && (
+              <div className="rounded-xl border p-4 mb-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="send-profile-card">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(26,138,128,0.15)" }}>
+                    <Share2 className="w-3.5 h-3.5" style={{ color: "#1a8a80" }} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Share Profile</h3>
+                    <p className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Send your recruiting profile to {program.university_name}'s coaches</p>
+                  </div>
+                </div>
+                <button onClick={openEmailWithProfile}
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-all text-white"
+                  style={{ backgroundColor: "#1a8a80" }}
+                  data-testid="send-profile-btn">
+                  <Send className="w-3.5 h-3.5" />Send Profile to Coach
+                </button>
+              </div>
+            )}
             {timeline.length === 0 ? (
               <div className="text-center py-16 rounded-2xl border border-dashed" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="empty-timeline">
                 <p className="text-sm font-semibold mb-1" style={{ color: "var(--cm-text-2)" }}>No interactions yet</p>
@@ -795,6 +887,8 @@ export default function JourneyPage() {
           coaches={coaches}
           programId={programId}
           universityName={program.university_name}
+          initialSubject={emailInitial.subject}
+          initialBody={emailInitial.body}
           onSent={() => { closeAll(); refresh(); }}
           onCancel={closeAll}
         />
@@ -838,6 +932,9 @@ export default function JourneyPage() {
           onClose={() => setRiskDrawer(false)}
         />
       )}
+
+      {/* J3: Notes Sidebar */}
+      <NotesSidebar programId={programId} universityName={program.university_name} />
     </div>
   );
 }
