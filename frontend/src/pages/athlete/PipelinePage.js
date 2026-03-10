@@ -151,7 +151,7 @@ function generateActions(programs, matchScores) {
 /* ═══════════════════════════════════════════ */
 /* ── Hero Card = Actions Carousel           ── */
 /* ═══════════════════════════════════════════ */
-function HeroActionsCarousel({ actions, matchScores, navigate }) {
+function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage, aiUsage }) {
   const [idx, setIdx] = useState(0);
   const total = actions.length;
   if (total === 0) return null;
@@ -295,7 +295,28 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
         </div>
       </div>
 
-      <div style={{ height: 18 }} />
+      {/* Usage indicators */}
+      <div style={{ padding: "0 28px 14px", display: "flex", alignItems: "center", gap: 12, position: "relative", zIndex: 1 }} className="pipeline-hero-card" data-testid="hero-usage-bar">
+        <span style={{ fontSize: 10, fontWeight: 600, color: schoolPct >= 1 ? "rgba(245,158,11,0.8)" : "rgba(255,255,255,0.3)" }} data-testid="hero-school-usage">
+          {usage.unlimited ? `${usage.used} schools` : `${usage.used}/${usage.limit} schools`}
+        </span>
+        {!aiUsage.unlimited && aiUsage.limit > 0 && (
+          <>
+            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.12)" }} />
+            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)" }} data-testid="hero-ai-usage">
+              {aiUsage.limit - aiUsage.used} AI drafts left
+            </span>
+          </>
+        )}
+        {aiUsage.limit === 0 && (
+          <>
+            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.12)" }} />
+            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.25)" }} data-testid="hero-ai-usage">
+              AI drafts: Pro
+            </span>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -690,6 +711,9 @@ export default function PipelinePage() {
   const actions = generateActions(allPrograms, matchScores);
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
   const usage = getUsage(subscription, "schools");
+  const aiUsage = getUsage(subscription, "ai_drafts");
+  const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;
+  const nearLimit = schoolPct >= 0.8;
 
   return (
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
@@ -698,29 +722,33 @@ export default function PipelinePage() {
       {/* Hero Card = Actions Carousel */}
       {actions.length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          <HeroActionsCarousel actions={actions} matchScores={matchScores} navigate={navigate} />
+          <HeroActionsCarousel actions={actions} matchScores={matchScores} navigate={navigate} schoolPct={schoolPct} usage={usage} aiUsage={aiUsage} />
         </div>
       )}
 
-      {/* Over-limit Upgrade Banner */}
-      {!usage.unlimited && usage.used > usage.limit && usage.limit > 0 && (
-        <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, padding: "16px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}
+      {/* Upgrade prompt — shows at 80%+ of limit */}
+      {nearLimit && !usage.unlimited && usage.limit > 0 && (
+        <div style={{ background: usage.used >= usage.limit ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${usage.used >= usage.limit ? "rgba(245,158,11,0.2)" : "var(--cm-border)"}`, borderRadius: 10, padding: "14px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}
           data-testid="over-limit-banner">
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <AlertTriangle style={{ width: 20, height: 20, color: "#f59e0b" }} />
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: usage.used >= usage.limit ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <AlertTriangle style={{ width: 18, height: 18, color: usage.used >= usage.limit ? "#f59e0b" : "var(--cm-text-3)" }} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", marginBottom: 2 }}>
-              You're tracking {usage.used} schools on a {usage.limit}-school plan
+            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", marginBottom: 1 }}>
+              {usage.used >= usage.limit
+                ? `You've reached your ${usage.limit}-school limit`
+                : `${usage.used} of ${usage.limit} schools used`}
             </div>
-            <div style={{ fontSize: 11, color: "var(--cm-text-2)" }}>
-              Your Starter plan allows {usage.limit} schools. Upgrade to track more and unlock AI email drafts, advanced insights, and more.
+            <div style={{ fontSize: 11, color: "var(--cm-text-3)" }}>
+              {usage.used >= usage.limit
+                ? "Upgrade to add more schools and unlock AI drafts."
+                : "You're approaching your plan limit. Upgrade for more schools and AI drafts."}
             </div>
           </div>
           <button onClick={() => setShowUpgrade(true)}
-            style={{ padding: "8px 16px", borderRadius: 8, background: "#f59e0b", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0, border: "none" }}
+            style={{ padding: "7px 14px", borderRadius: 8, background: usage.used >= usage.limit ? "#f59e0b" : "var(--cm-surface-2)", color: usage.used >= usage.limit ? "#000" : "var(--cm-text-2)", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0, border: usage.used >= usage.limit ? "none" : "1px solid var(--cm-border)" }}
             data-testid="upgrade-from-banner">
-            Upgrade Plan
+            Upgrade
           </button>
         </div>
       )}
