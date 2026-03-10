@@ -1,0 +1,85 @@
+{
+  "summary": "Coach-to-Athlete 'Flag for Follow-Up' feature - Full E2E testing complete. All 15/15 backend tests passed. Frontend verified: (1) PipelinePage shows 'Flagged by Coach' section with active flags and 'Done' button works, (2) AthletePipelinePanel shows flag icons on school rows that open FlagModal, (3) FlagModal allows selecting reason, note, due date, (4) JourneyPage timeline displays 'Coach Directive' and 'Flag Completed' events with distinct amber/green styling after bug fix.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_coach_flags.py",
+    "/app/test_reports/pytest/pytest_coach_flags.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: POST /api/roster/athlete/{athlete_id}/flag-followup creates flag with flag_id, creates timeline interaction, creates notification",
+    "VERIFIED: Only coaches can create flags (athletes and directors get 403)",
+    "VERIFIED: Coach can only flag their assigned athletes (403 for athlete_4 assigned to coach-garcia)",
+    "VERIFIED: Invalid reason/due values return 400",
+    "VERIFIED: GET /api/athlete/flags returns active flags sorted by created_at descending",
+    "VERIFIED: POST /api/athlete/flags/{flag_id}/complete marks flag complete, creates timeline entry, notifies coach",
+    "VERIFIED: GET /api/athlete/tasks includes coach flags (source: 'coach') sorted before system tasks",
+    "VERIFIED: PipelinePage displays 'Flagged by Coach' section with flag icon, coach name, due label, and Done button",
+    "VERIFIED: Done button calls POST complete endpoint and removes flag from UI with success toast",
+    "VERIFIED: AthletePipelinePanel shows flag icon on school rows (hover-revealed) that opens FlagModal",
+    "VERIFIED: FlagModal has 4 reason options, note textarea, 3 due options, submit button",
+    "BUG FIX: Timeline was not showing coach_directive/flag_completed as center events - added mappings to athlete_dashboard.py type_map"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_coach_flags.py",
+    "/app/backend/routers/athlete_dashboard.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all features working)"
+  },
+  "test_credentials": {
+    "coach_email": "coach.williams@capymatch.com",
+    "coach_password": "coach123",
+    "coach_id": "coach-williams",
+    "athlete_email": "emma.chen@athlete.capymatch.com",
+    "athlete_password": "password123",
+    "athlete_id": "athlete_3",
+    "director_email": "director@capymatch.com",
+    "director_password": "director123"
+  },
+  "seed_data_creation": "Multiple test flags created during testing for athlete_3 (Emma Chen) on Stanford and other schools",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Coach Flag feature fully tested. Key data-testids: coach-flags-section, complete-flag-{flag_id}, flag-school-{program_id}, flag-modal, flag-reason-{key}, flag-note-input, flag-due-{key}, flag-submit-btn, conv-flag-coach_directive, conv-flag-flag_completed. Emma (athlete_3) has many active flags for Stanford. Login via Enter key (button click may not work). Bug fix applied to athlete_dashboard.py to map coach_directive and flag_completed event types for proper timeline rendering.",
+  "features_verified": {
+    "backend_endpoints": {
+      "POST /api/roster/athlete/{athlete_id}/flag-followup": "WORKING - Coach creates flag",
+      "GET /api/athlete/flags": "WORKING - Athlete gets active flags",
+      "POST /api/athlete/flags/{flag_id}/complete": "WORKING - Athlete completes flag",
+      "GET /api/athlete/tasks": "WORKING - Returns coach flags + system tasks"
+    },
+    "authorization": {
+      "coach_only_create": "VERIFIED - 403 for athlete/director",
+      "assignment_check": "VERIFIED - 403 for non-assigned athletes",
+      "validation": "VERIFIED - 400 for invalid reason/due"
+    },
+    "frontend_athlete_view": {
+      "flagged_by_coach_section": "WORKING - Shows active flags with Done button",
+      "done_button": "WORKING - Completes flag and removes from UI",
+      "toast_notification": "WORKING - Shows success message"
+    },
+    "frontend_coach_view": {
+      "pipeline_panel": "WORKING - Opens from Mission Control roster",
+      "flag_icon_on_schools": "WORKING - Hover reveals flag button",
+      "flag_modal": "WORKING - Reason, note, due options"
+    },
+    "timeline_display": {
+      "coach_directive": "WORKING - Amber centered event with flag icon",
+      "flag_completed": "WORKING - Green centered event with checkmark icon"
+    }
+  },
+  "bug_fix_applied": {
+    "file": "/app/backend/routers/athlete_dashboard.py",
+    "issue": "Timeline endpoint was not mapping 'Coach Directive' and 'Flag Completed' types to proper event_types, causing them to render as 'interaction' (right-aligned 'YOU' bubbles) instead of center-aligned milestones",
+    "fix": "Added 'coach_directive' and 'flag_completed' to type_map and added created_by_name to timeline output for proper attribution display"
+  }
+}

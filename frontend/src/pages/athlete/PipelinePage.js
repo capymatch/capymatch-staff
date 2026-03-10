@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   Plus, ChevronRight, ChevronLeft, Loader2,
   Send, GraduationCap, AlertTriangle, Lightbulb,
-  Archive, RotateCcw, CheckSquare, Clock,
+  Archive, RotateCcw, CheckSquare, Clock, Flag, Check,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "../../components/ui/button";
@@ -305,46 +305,98 @@ function HeroActionsCarousel({ actions, matchScores, navigate }) {
 /* ── Upcoming Tasks (due in 1-3 days)       ── */
 /* ═══════════════════════════════════════════ */
 
-function UpcomingTasksSection({ tasks, navigate }) {
+function UpcomingTasksSection({ tasks, navigate, onCompleteFlag }) {
   if (!tasks || tasks.length === 0) return null;
 
+  const coachTasks = tasks.filter(t => t.source === "coach");
+  const systemTasks = tasks.filter(t => t.source !== "coach");
+
   return (
-    <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }} data-testid="upcoming-tasks">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
-          <CheckSquare style={{ width: 15, height: 15, color: "#3b82f6" }} /> Upcoming Tasks
-        </div>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{tasks.length} coming up</span>
-      </div>
-      {tasks.map((task) => (
-        <div
-          key={task.task_id}
-          onClick={() => navigate(task.link)}
-          style={{
-            display: "flex", alignItems: "center", gap: 12,
-            padding: "10px 0", borderTop: "1px solid var(--cm-border)",
-            cursor: "pointer",
-          }}
-          data-testid={`task-item-${task.task_id}`}
-        >
-          <div style={{
-            width: 28, height: 28, borderRadius: 7,
-            background: "rgba(59,130,246,0.1)", display: "flex",
-            alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}>
-            <Clock style={{ width: 14, height: 14, color: "#3b82f6" }} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+      {/* Coach Flags — visually distinct */}
+      {coachTasks.length > 0 && (
+        <div style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 14, padding: "16px 20px" }} data-testid="coach-flags-section">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
+              <Flag style={{ width: 15, height: 15, color: "#f59e0b" }} /> Flagged by Coach
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{coachTasks.length} item{coachTasks.length !== 1 ? "s" : ""}</span>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</div>
-            <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 1 }}>{task.description}</div>
-          </div>
-          <span style={{
-            fontSize: 10, fontWeight: 700, padding: "2px 8px",
-            borderRadius: 5, background: "rgba(59,130,246,0.1)", color: "#3b82f6",
-            flexShrink: 0,
-          }}>In {task.days_diff}d</span>
+          {coachTasks.map(task => (
+            <div key={task.task_id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderTop: "1px solid rgba(245,158,11,0.12)" }}
+              data-testid={`coach-flag-${task.flag_id || task.task_id}`}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 7,
+                background: "rgba(245,158,11,0.15)", display: "flex",
+                alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2,
+              }}>
+                <Flag style={{ width: 14, height: 14, color: "#f59e0b" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => navigate(task.link)}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.4 }}>{task.title}</div>
+                <div style={{ fontSize: 11, color: "var(--cm-text-2)", marginTop: 2 }}>{task.description}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b" }}>{task.flagged_by_name}</span>
+                  {task.due_label && <span style={{ fontSize: 10, color: "var(--cm-text-3)" }}>{task.due_label}</span>}
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); onCompleteFlag?.(task.flag_id || task.task_id); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 4,
+                  padding: "4px 10px", borderRadius: 6,
+                  border: "1px solid rgba(16,185,129,0.3)", background: "rgba(16,185,129,0.08)",
+                  color: "#10b981", fontSize: 10, fontWeight: 700,
+                  cursor: "pointer", flexShrink: 0, marginTop: 2,
+                }}
+                data-testid={`complete-flag-${task.flag_id || task.task_id}`}>
+                <Check style={{ width: 12, height: 12 }} /> Done
+              </button>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
+
+      {/* System Tasks */}
+      {systemTasks.length > 0 && (
+        <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 14, padding: "16px 20px" }} data-testid="upcoming-tasks">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
+              <CheckSquare style={{ width: 15, height: 15, color: "#3b82f6" }} /> Upcoming Tasks
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{systemTasks.length} coming up</span>
+          </div>
+          {systemTasks.map((task) => (
+            <div
+              key={task.task_id}
+              onClick={() => navigate(task.link)}
+              style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 0", borderTop: "1px solid var(--cm-border)",
+                cursor: "pointer",
+              }}
+              data-testid={`task-item-${task.task_id}`}
+            >
+              <div style={{
+                width: 28, height: 28, borderRadius: 7,
+                background: "rgba(59,130,246,0.1)", display: "flex",
+                alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                <Clock style={{ width: 14, height: 14, color: "#3b82f6" }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</div>
+                <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 1 }}>{task.description}</div>
+              </div>
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: "2px 8px",
+                borderRadius: 5, background: "rgba(59,130,246,0.1)", color: "#3b82f6",
+                flexShrink: 0,
+              }}>In {task.days_diff}d</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -660,7 +712,13 @@ export default function PipelinePage() {
       )}
 
       {/* 3. Upcoming Tasks */}
-      <UpcomingTasksSection tasks={tasks} navigate={navigate} />
+      <UpcomingTasksSection tasks={tasks} navigate={navigate} onCompleteFlag={async (flagId) => {
+        try {
+          await axios.post(`${API}/athlete/flags/${flagId}/complete`, { resolution_note: "" });
+          toast.success("Flag marked as complete");
+          setTasks(prev => prev.filter(t => t.flag_id !== flagId && t.task_id !== flagId));
+        } catch { toast.error("Failed to complete flag"); }
+      }} />
 
       {/* Committed Banner */}
       <CommittedBanner programs={committedPrograms} navigate={navigate} />

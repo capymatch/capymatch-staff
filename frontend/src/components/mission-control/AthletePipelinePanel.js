@@ -4,9 +4,10 @@ import {
   X, Loader2, TrendingUp, TrendingDown, Minus, School,
   MessageCircle, Clock, AlertTriangle, ChevronDown, ChevronRight,
   Mail, Phone, Send, FileText, MapPin, Trophy, Users, Zap,
-  ArrowUpRight
+  ArrowUpRight, Flag, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -62,7 +63,7 @@ function StageBar({ distribution }) {
   );
 }
 
-function SchoolRow({ school }) {
+function SchoolRow({ school, onFlag }) {
   const pulseClass = PULSE_DOT[school.pulse] || "bg-slate-600";
   return (
     <div className="flex items-center gap-3 py-2.5 px-1 group" data-testid={`school-row-${school.program_id}`}>
@@ -97,6 +98,16 @@ function SchoolRow({ school }) {
         {school.next_action && (
           <span className="text-[10px] hidden group-hover:block" style={{ color: "var(--cm-text-3)" }}>{school.next_action}</span>
         )}
+        {onFlag && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onFlag(school); }}
+            className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-amber-500/10"
+            style={{ color: "var(--cm-text-3)" }}
+            title="Flag for follow-up"
+            data-testid={`flag-school-${school.program_id}`}>
+            <Flag className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -130,11 +141,140 @@ function ActivityItem({ item }) {
 }
 
 
+const PRESET_REASONS = [
+  { key: "reply_needed", label: "Reply needed" },
+  { key: "followup_overdue", label: "Follow-up overdue" },
+  { key: "strong_interest", label: "Strong interest worth pursuing" },
+  { key: "review_school", label: "Review this school" },
+];
+
+const DUE_OPTIONS = [
+  { key: "none", label: "No deadline" },
+  { key: "today", label: "Today" },
+  { key: "this_week", label: "This week" },
+];
+
+function FlagModal({ school, athleteId, onClose, onFlagged }) {
+  const [reason, setReason] = useState("");
+  const [note, setNote] = useState("");
+  const [due, setDue] = useState("none");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!reason) { toast.error("Select a reason"); return; }
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem("session_token");
+      const res = await axios.post(`${API}/roster/athlete/${athleteId}/flag-followup`, {
+        program_id: school.program_id,
+        reason,
+        note: note.trim(),
+        due,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(res.data.message || "Flagged for follow-up");
+      onFlagged?.();
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to flag");
+    } finally { setSubmitting(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center" data-testid="flag-modal-overlay">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-sm mx-4 rounded-2xl p-5" style={{ backgroundColor: "var(--cm-bg)", border: "1px solid var(--cm-border)" }}
+        data-testid="flag-modal">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(245,158,11,0.15)" }}>
+              <Flag className="w-4 h-4" style={{ color: "#f59e0b" }} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Flag for Follow-Up</h3>
+              <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>{school.university_name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/5">
+            <X className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} />
+          </button>
+        </div>
+
+        {/* Reason */}
+        <div className="mb-3">
+          <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Reason</label>
+          <div className="space-y-1.5">
+            {PRESET_REASONS.map(r => (
+              <button key={r.key} onClick={() => setReason(r.key)}
+                className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                style={{
+                  backgroundColor: reason === r.key ? "rgba(245,158,11,0.12)" : "var(--cm-surface-2)",
+                  color: reason === r.key ? "#f59e0b" : "var(--cm-text-2)",
+                  border: `1px solid ${reason === r.key ? "rgba(245,158,11,0.3)" : "transparent"}`,
+                }}
+                data-testid={`flag-reason-${r.key}`}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Note */}
+        <div className="mb-3">
+          <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Note (optional)</label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={300}
+            rows={2}
+            placeholder="Add context for the athlete..."
+            className="w-full px-3 py-2 rounded-lg text-xs resize-none focus:outline-none"
+            style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text)", border: "1px solid var(--cm-border)" }}
+            data-testid="flag-note-input" />
+        </div>
+
+        {/* Due */}
+        <div className="mb-4">
+          <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Due</label>
+          <div className="flex gap-2">
+            {DUE_OPTIONS.map(d => (
+              <button key={d.key} onClick={() => setDue(d.key)}
+                className="flex-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-all text-center"
+                style={{
+                  backgroundColor: due === d.key ? "rgba(245,158,11,0.12)" : "var(--cm-surface-2)",
+                  color: due === d.key ? "#f59e0b" : "var(--cm-text-3)",
+                  border: `1px solid ${due === d.key ? "rgba(245,158,11,0.3)" : "transparent"}`,
+                }}
+                data-testid={`flag-due-${d.key}`}>
+                {d.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Submit */}
+        <button onClick={handleSubmit} disabled={submitting || !reason}
+          className="w-full py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2"
+          style={{
+            backgroundColor: reason ? "#f59e0b" : "var(--cm-surface-2)",
+            color: reason ? "#000" : "var(--cm-text-3)",
+            opacity: submitting ? 0.6 : 1,
+          }}
+          data-testid="flag-submit-btn">
+          {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Flag className="w-3.5 h-3.5" />}
+          {submitting ? "Flagging..." : "Flag for Follow-Up"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 export default function AthletePipelinePanel({ athleteId, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedStage, setExpandedStage] = useState(null);
+  const [flagTarget, setFlagTarget] = useState(null);
 
   useEffect(() => {
     if (!athleteId) return;
@@ -263,7 +403,7 @@ export default function AthletePipelinePanel({ athleteId, onClose }) {
                       </button>
                       {isExpanded && (
                         <div className="px-3 pb-2" style={{ borderTop: "1px solid var(--cm-border)" }}>
-                          {group.schools.map(s => <SchoolRow key={s.program_id} school={s} />)}
+                          {group.schools.map(s => <SchoolRow key={s.program_id} school={s} onFlag={(school) => setFlagTarget(school)} />)}
                         </div>
                       )}
                     </div>
@@ -300,6 +440,16 @@ export default function AthletePipelinePanel({ athleteId, onClose }) {
           </div>
         ) : null}
       </div>
+
+      {/* Flag Modal */}
+      {flagTarget && (
+        <FlagModal
+          school={flagTarget}
+          athleteId={athleteId}
+          onClose={() => setFlagTarget(null)}
+          onFlagged={() => toast.success("Flag sent to athlete")}
+        />
+      )}
     </div>
   );
 }

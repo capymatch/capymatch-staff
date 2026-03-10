@@ -33,6 +33,8 @@ export const CONV_CONFIG = {
   showcase:       { label: "Showcase", color: "amber", side: "center" },
   stage_update:   { label: "Stage Update", color: "slate", side: "center" },
   ai_gmail_insight: { label: "AI Detected", color: "violet", side: "left" },
+  coach_directive: { label: "Coach Directive", color: "amber", side: "center" },
+  flag_completed: { label: "Flag Completed", color: "emerald", side: "center" },
   interaction:    { label: "Interaction", color: "slate", side: "right" },
 };
 

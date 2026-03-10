@@ -358,13 +358,19 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
             "camp_meeting": "camp", "campus_visit": "campus_visit",
             "showcase": "showcase", "stage_update": "stage_update",
             "follow_up": "email_sent",
+            "coach_directive": "coach_directive", "flag_completed": "flag_completed",
         }
         event_type = type_map.get(itype_lower, "interaction")
 
         uni_name = ix.get("university_name") or ""
         is_coach_msg = itype_lower in ("coach_reply", "email_received")
+        is_coach_flag = itype_lower in ("coach_directive", "flag_completed")
         if is_coach_msg:
             title = "Coach replied"
+        elif itype_lower == "coach_directive":
+            title = "Coach Directive"
+        elif itype_lower == "flag_completed":
+            title = "Flag Completed"
         elif itype_lower in ("camp", "camp_meeting", "campus_visit", "showcase"):
             title = f"{uni_name} {itype}".strip() if uni_name else itype
         elif itype_lower == "stage_update":
@@ -383,6 +389,7 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
             "notes": ix.get("notes") or "",
             "outcome": ix.get("outcome") or "",
             "coach_name": ix.get("coach_name", "Coach") if is_coach_msg else "",
+            "created_by_name": ix.get("created_by_name") if is_coach_flag else "",
         })
 
     # Also include linked events
