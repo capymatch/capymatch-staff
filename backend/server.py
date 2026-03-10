@@ -1,12 +1,13 @@
 """CapyMatch API — main application entry point.
 
 Slim orchestrator: creates the FastAPI app, registers routers,
-and runs the startup pipeline. All route logic lives in /routers/.
+runs the startup pipeline, and manages background tasks.
 """
 
 from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
 import os
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import List
@@ -48,22 +49,135 @@ from routers.athlete_tasks import router as athlete_tasks_router
 from routers.program_notes import router as program_notes_router
 from routers.stripe_checkout import router as stripe_checkout_router
 
+logger = logging.getLogger(__name__)
+
 # Create the main app
 app = FastAPI()
 
 # Parent router with /api prefix — all sub-routers inherit this
 api_router = APIRouter(prefix="/api")
 
+# ── Background Tasks ──
+
+coach_watch_task = None
+
+
+async def coach_watch_weekly_scan():
+    """Background task: weekly Coach Watch scan for all Premium tenants."""
+    from routers.ai_features import _search_coaching_news, _parse_llm_json
+    from services.notifications import create_notification
+    from subscriptions import get_user_subscription
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    import json
+    import uuid as _uuid
+
+    while True:
+        try:
+            await asyncio.sleep(604800)  # 7 days
+
+            premium_tenants = await db.tenants.find({"plan": "premium"}, {"_id": 0}).to_list(500)
+            logger.info(f"Coach Watch: scanning {len(premium_tenants)} premium tenants")
+
+            for tenant in premium_tenants:
+                tenant_id = tenant["tenant_id"]
+                try:
+                    programs = await db.programs.find(
+                        {"tenant_id": tenant_id},
+                        {"_id": 0, "university_name": 1},
+                    ).to_list(100)
+                    if not programs:
+                        continue
+
+                    school_names = list(set(p["university_name"] for p in programs))
+                    news_results = await _search_coaching_news(school_names)
+
+                    news_ctx = ""
+                    for school, articles in news_results.items():
+                        if articles:
+                            news_ctx += f"\n## {school}\n"
+                            for a in articles:
+                                news_ctx += f"- {a['title']} ({a['date']})\n  {a['body'][:200]}\n"
+                        else:
+                            news_ctx += f"\n## {school}\nNo recent news found.\n"
+
+                    api_key = os.environ.get("EMERGENT_LLM_KEY")
+                    chat = LlmChat(
+                        api_key=api_key,
+                        session_id=f"cw_auto_{_uuid.uuid4().hex[:8]}",
+                        system_message="You are a volleyball recruiting analyst. Analyze news for coaching changes. Return ONLY valid JSON.",
+                    ).with_model("anthropic", "claude-sonnet-4-5-20250929")
+
+                    prompt = f"""Analyze these news articles about volleyball coaching staff. For EACH school with noteworthy changes, return a JSON array entry.
+{news_ctx}
+Return JSON array: [{{"university_name":"","severity":"red|yellow|green","headline":"","summary":"","coach_name":"","change_type":"departure|new_hire|extension|staff_change|stable","recommendation":""}}]
+If no changes found, return []"""
+
+                    response = await chat.send_message(UserMessage(text=prompt))
+                    response_text = response.text if hasattr(response, "text") else str(response)
+                    response_text = response_text.strip()
+                    if response_text.startswith("```"):
+                        response_text = response_text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+
+                    alerts = json.loads(response_text)
+                    if not isinstance(alerts, list):
+                        alerts = []
+
+                    now = datetime.now(timezone.utc).isoformat()
+                    await db.coach_watch_alerts.delete_many({"tenant_id": tenant_id})
+
+                    if alerts:
+                        for alert in alerts:
+                            alert["alert_id"] = f"cw_{_uuid.uuid4().hex[:12]}"
+                            alert["tenant_id"] = tenant_id
+                            alert["created_at"] = now
+                            alert["read"] = False
+                        await db.coach_watch_alerts.insert_many(alerts)
+
+                        # Notify for red/yellow alerts
+                        athlete = await db.athletes.find_one({"tenant_id": tenant_id}, {"_id": 0, "user_id": 1})
+                        if athlete:
+                            for alert in alerts:
+                                if alert.get("severity") in ("red", "yellow"):
+                                    await create_notification(
+                                        tenant_id,
+                                        athlete["user_id"],
+                                        "coach_watch",
+                                        f"Coach Watch: {alert['university_name']}",
+                                        alert.get("headline", "Coaching update detected"),
+                                        "",
+                                    )
+
+                    logger.info(f"Coach Watch: {tenant_id} - {len(alerts)} alerts found")
+                except Exception as e:
+                    logger.error(f"Coach Watch scan error for {tenant_id}: {e}")
+                    continue
+
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(f"Coach Watch background task error: {e}")
+            await asyncio.sleep(3600)  # Retry in 1 hour on error
+
 
 # ── Startup ──
 
 @app.on_event("startup")
 async def startup():
+    global coach_watch_task
     await run_startup(db)
+    coach_watch_task = asyncio.create_task(coach_watch_weekly_scan())
+    logger.info("Coach Watch background task started (7-day interval)")
 
 
 @app.on_event("shutdown")
 async def shutdown():
+    global coach_watch_task
+    if coach_watch_task:
+        coach_watch_task.cancel()
+        try:
+            await coach_watch_task
+        except asyncio.CancelledError:
+            pass
     client.close()
 
 
