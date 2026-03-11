@@ -39,7 +39,7 @@ const RISK_CONFIG = {
   warning: { label: "Warning", color: "#f59e0b", bgColor: "rgba(245,158,11,0.12)" },
 };
 
-function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, resolving }) {
+function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, resolving, justChanged }) {
   const type = TYPE_CONFIG[action.type] || TYPE_CONFIG.review_request;
   const status = STATUS_CONFIG[action.status] || STATUS_CONFIG.open;
   const risk = action.risk_level ? RISK_CONFIG[action.risk_level] : null;
@@ -52,8 +52,12 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
 
   return (
     <div
-      className="px-4 py-3 transition-colors hover:bg-white/3"
-      style={{ borderBottom: "1px solid var(--cm-border)" }}
+      className="px-4 py-3 transition-all hover:bg-white/3"
+      style={{
+        borderBottom: "1px solid var(--cm-border)",
+        backgroundColor: justChanged ? (action.status === "resolved" ? "rgba(16,185,129,0.06)" : "rgba(59,130,246,0.06)") : "transparent",
+        transition: "background-color 1s ease-out",
+      }}
       data-testid={`director-action-${action.action_id}`}
     >
       <div className="flex items-start gap-3">
@@ -131,6 +135,7 @@ export default function DirectorActionsCard({ role }) {
   const [showResolved, setShowResolved] = useState(false);
   const [ackingId, setAckingId] = useState(null);
   const [resolvingId, setResolvingId] = useState(null);
+  const [justChangedId, setJustChangedId] = useState(null);
 
   const fetchActions = useCallback(async () => {
     try {
@@ -149,29 +154,44 @@ export default function DirectorActionsCard({ role }) {
 
   const handleAcknowledge = async (actionId) => {
     setAckingId(actionId);
+    // Optimistic update: change status locally first
+    setActions(prev => prev.map(a =>
+      a.action_id === actionId ? { ...a, status: "acknowledged" } : a
+    ));
+    setJustChangedId(actionId);
+    setTimeout(() => setJustChangedId(null), 2500);
     try {
       const token = localStorage.getItem("capymatch_token");
       await axios.post(`${API}/director/actions/${actionId}/acknowledge`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Action acknowledged");
+      toast.success("Acknowledged — you're on it");
       fetchActions();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to acknowledge");
+      fetchActions(); // revert on error
     } finally { setAckingId(null); }
   };
 
   const handleResolve = async (actionId) => {
     setResolvingId(actionId);
+    // Optimistic update: change status locally first
+    setActions(prev => prev.map(a =>
+      a.action_id === actionId ? { ...a, status: "resolved" } : a
+    ));
+    setJustChangedId(actionId);
+    setShowResolved(true); // Auto-expand resolved section
+    setTimeout(() => setJustChangedId(null), 2500);
     try {
       const token = localStorage.getItem("capymatch_token");
       await axios.post(`${API}/director/actions/${actionId}/resolve`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Action resolved");
+      toast.success("Resolved — nice work");
       fetchActions();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to resolve");
+      fetchActions(); // revert on error
     } finally { setResolvingId(null); }
   };
 
@@ -249,6 +269,7 @@ export default function DirectorActionsCard({ role }) {
             onResolve={handleResolve}
             acknowledging={ackingId === action.action_id}
             resolving={resolvingId === action.action_id}
+            justChanged={justChangedId === action.action_id}
           />
         ))}
 
@@ -278,6 +299,7 @@ export default function DirectorActionsCard({ role }) {
                 onResolve={handleResolve}
                 acknowledging={ackingId === action.action_id}
                 resolving={resolvingId === action.action_id}
+                justChanged={justChangedId === action.action_id}
               />
             ))}
           </>
