@@ -60,6 +60,7 @@ from routers.organizations import router as organizations_router
 from routers.director_actions import router as director_actions_router
 from routers.admin_user_management import router as admin_user_mgmt_router
 from routers.program_metrics import router as program_metrics_router
+from routers.public_profile import router as public_profile_router
 
 logger = logging.getLogger(__name__)
 
@@ -263,6 +264,7 @@ api_router.include_router(organizations_router)
 api_router.include_router(director_actions_router)
 api_router.include_router(admin_user_mgmt_router)
 api_router.include_router(program_metrics_router)
+api_router.include_router(public_profile_router)
 
 app.include_router(api_router)
 

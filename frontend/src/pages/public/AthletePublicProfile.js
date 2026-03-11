@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Mail, Phone, Play, User, Loader2, MapPin, Share2, Copy, Check } from "lucide-react";
+import { Mail, Phone, Play, User, Loader2, MapPin, Share2, Copy, Check, GraduationCap, Ruler, Activity } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -81,8 +81,7 @@ function QuickFact({ icon, value, label }) {
 }
 
 export default function AthletePublicProfile() {
-  const { shortId } = useParams();
-  const tenantId = shortId ? `tenant-${shortId}` : "";
+  const { slug, shortId } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -90,12 +89,32 @@ export default function AthletePublicProfile() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/public/athlete/${tenantId}`)
-      .then((r) => { if (!r.ok) throw new Error("not found"); return r.json(); })
-      .then(setData)
-      .catch(() => setError("Athlete not found"))
-      .finally(() => setLoading(false));
-  }, [tenantId]);
+    async function fetchProfile() {
+      setLoading(true);
+      setError(null);
+
+      // Try slug-based endpoint first
+      if (slug) {
+        try {
+          const r = await fetch(`${BACKEND_URL}/api/public/profile/${slug}`);
+          if (r.ok) { setData(await r.json()); setLoading(false); return; }
+        } catch { /* fall through */ }
+      }
+
+      // Legacy fallback for /s/:shortId route
+      if (shortId) {
+        const tenantId = `tenant-${shortId}`;
+        try {
+          const r = await fetch(`${BACKEND_URL}/api/public/athlete/${tenantId}`);
+          if (r.ok) { setData(await r.json()); setLoading(false); return; }
+        } catch { /* fall through */ }
+      }
+
+      setError("Profile not found");
+      setLoading(false);
+    }
+    fetchProfile();
+  }, [slug, shortId]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50" data-testid="public-profile-loading">
@@ -107,12 +126,12 @@ export default function AthletePublicProfile() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50" data-testid="public-profile-error">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-800 mb-2">Athlete Not Found</h1>
-        <p className="text-gray-500">This profile link may be invalid.</p>
+        <p className="text-gray-500">This profile link may be invalid or the athlete hasn't published their profile yet.</p>
       </div>
     </div>
   );
 
-  const { profile, upcoming_events, past_events } = data;
+  const { profile, coach_summary, upcoming_events = [], past_events = [] } = data;
   const hasPhoto = profile.photo_url && (profile.photo_url.startsWith("data:") || profile.photo_url.startsWith("http"));
   const videoId = getYouTubeId(profile.video_link);
   const hasStats = profile.standing_reach || profile.approach_touch || profile.block_touch || profile.wingspan;
@@ -139,7 +158,7 @@ export default function AthletePublicProfile() {
               <img src={profile.photo_url} alt={profile.athlete_name}
                 className="w-52 h-64 sm:w-[280px] sm:h-[340px] rounded-[20px] object-cover object-[center_15%] shadow-lg border border-gray-100" data-testid="athlete-photo" />
             ) : (
-              <div className="w-52 h-64 sm:w-[280px] sm:h-[340px] rounded-[20px] bg-gradient-to-br from-emerald-500 to-indigo-500 flex items-center justify-center shadow-lg">
+              <div className="w-52 h-64 sm:w-[280px] sm:h-[340px] rounded-[20px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg" data-testid="athlete-photo-placeholder">
                 <User className="w-20 h-20 text-white/70" />
               </div>
             )}
@@ -149,7 +168,7 @@ export default function AthletePublicProfile() {
           {/* Info */}
           <div className="flex-1 text-center sm:text-left pt-0 sm:pt-4">
             <div className="text-[12px] font-semibold tracking-[3px] uppercase text-emerald-600">
-              {[profile.position, profile.graduation_year && `Class of ${profile.graduation_year}`].filter(Boolean).join("  ·  ")}
+              {[profile.position, profile.graduation_year && `Class of ${profile.graduation_year}`].filter(Boolean).join("  \u00B7  ")}
             </div>
             <h1 className="text-[42px] sm:text-[58px] font-extrabold leading-none uppercase text-slate-800 mt-3" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
               data-testid="athlete-name">
@@ -163,9 +182,9 @@ export default function AthletePublicProfile() {
             </div>
 
             <div className="flex flex-wrap gap-5 mt-7 justify-center sm:justify-start">
-              <QuickFact icon={<span className="text-emerald-600 text-sm font-bold">H</span>} value={profile.height} label="Height" />
-              <QuickFact icon={<span className="text-emerald-600 text-sm font-bold">W</span>} value={profile.weight && `${profile.weight} lbs`} label="Weight" />
-              <QuickFact icon={<span className="text-emerald-600 text-sm font-bold">G</span>} value={profile.gpa && `${profile.gpa} GPA`} label="Academics" />
+              <QuickFact icon={<Ruler className="w-4 h-4 text-emerald-600" />} value={profile.height} label="Height" />
+              <QuickFact icon={<Activity className="w-4 h-4 text-emerald-600" />} value={profile.weight && `${profile.weight} lbs`} label="Weight" />
+              <QuickFact icon={<GraduationCap className="w-4 h-4 text-emerald-600" />} value={profile.gpa && `${profile.gpa} GPA`} label="Academics" />
               <QuickFact icon={<span className="text-emerald-600 text-sm font-bold">D</span>} value={profile.handed} label="Dominant" />
             </div>
 
@@ -203,10 +222,20 @@ export default function AthletePublicProfile() {
 
       {/* Content */}
       <div className="bg-gray-50">
+        {/* Coach Summary */}
+        {coach_summary && (
+          <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-10" data-testid="coach-summary-section">
+            <div className="rounded-2xl bg-white border border-emerald-100 p-6 sm:p-8 shadow-sm">
+              <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-emerald-600 mb-4">Recruiting Summary</h2>
+              <p className="text-[15px] leading-relaxed text-gray-700 font-medium">{coach_summary}</p>
+            </div>
+          </div>
+        )}
+
         {/* Bio */}
         {profile.bio && (
-          <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-10">
-            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm">
+          <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-6">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm" data-testid="bio-section">
               <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">About</h2>
               <p className="text-[15px] leading-relaxed text-gray-600 max-w-[600px]">{profile.bio}</p>
             </div>
@@ -216,7 +245,7 @@ export default function AthletePublicProfile() {
         {/* Measurables */}
         {hasStats && (
           <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-6">
-            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm" data-testid="measurables-section">
               <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">Athletic Measurables</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatCard value={profile.standing_reach} label="Standing Reach" />
@@ -231,24 +260,24 @@ export default function AthletePublicProfile() {
         {/* Club Coach */}
         {hasCoach && (
           <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-6">
-            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm" data-testid="club-coach-section">
               <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">Club Coach</h2>
               <div className="flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-[52px] h-[52px] rounded-[14px] bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold shrink-0">
+                <div className="w-[52px] h-[52px] rounded-[14px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
                   {(profile.parent_name || "C")[0].toUpperCase()}
                 </div>
                 <div className="flex-1 text-center sm:text-left">
                   <p className="font-bold text-[15px] text-slate-800">{profile.parent_name || "Coach"}</p>
-                  {profile.club_team && <p className="text-xs text-gray-400 mt-0.5">Club Director · {profile.club_team}</p>}
+                  {profile.club_team && <p className="text-xs text-gray-400 mt-0.5">Club Director &middot; {profile.club_team}</p>}
                 </div>
                 <div className="flex gap-2">
                   {profile.parent_email && (
-                    <a href={`mailto:${profile.parent_email}`} className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                    <a href={`mailto:${profile.parent_email}`} className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center hover:bg-gray-100 transition-colors" data-testid="coach-email-link">
                       <Mail className="w-4 h-4 text-gray-400" />
                     </a>
                   )}
                   {profile.parent_phone && (
-                    <a href={`tel:${profile.parent_phone}`} className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                    <a href={`tel:${profile.parent_phone}`} className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center hover:bg-gray-100 transition-colors" data-testid="coach-phone-link">
                       <Phone className="w-4 h-4 text-gray-400" />
                     </a>
                   )}
@@ -281,14 +310,40 @@ export default function AthletePublicProfile() {
         )}
 
         {/* Events */}
-        <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-6 pb-8">
-          <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm">
-            <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">Where to See Me Play</h2>
-            {upcoming_events.length > 0 ? (
-              <div data-testid="upcoming-events">
-                {upcoming_events.map((evt, i) => <EventCard key={evt.event_id} event={evt} isLast={i === upcoming_events.length - 1} />)}
-              </div>
-            ) : (
+        {(upcoming_events.length > 0 || past_events.length > 0) && (
+          <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-6 pb-8">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm" data-testid="events-section">
+              <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">Where to See Me Play</h2>
+              {upcoming_events.length > 0 ? (
+                <div data-testid="upcoming-events">
+                  {upcoming_events.map((evt, i) => <EventCard key={evt.event_id} event={evt} isLast={i === upcoming_events.length - 1} />)}
+                </div>
+              ) : (
+                <div className="text-center py-14 rounded-2xl bg-gray-50 border border-gray-100">
+                  <p className="text-sm text-gray-400">Schedule coming soon</p>
+                  {profile.contact_email && (
+                    <a href={`mailto:${profile.contact_email}`}
+                      className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100">
+                      <Mail className="w-3.5 h-3.5" /> Get in touch
+                    </a>
+                  )}
+                </div>
+              )}
+              {past_events.length > 0 && (
+                <div className="mt-10 opacity-60">
+                  <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">Past Events</h2>
+                  <div data-testid="past-events">{past_events.map((evt, i) => <EventCard key={evt.event_id} event={evt} isLast={i === past_events.length - 1} />)}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* No events fallback */}
+        {upcoming_events.length === 0 && past_events.length === 0 && (
+          <div className="max-w-[860px] mx-auto px-6 sm:px-8 pt-6 pb-8">
+            <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm">
+              <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">Where to See Me Play</h2>
               <div className="text-center py-14 rounded-2xl bg-gray-50 border border-gray-100">
                 <p className="text-sm text-gray-400">Schedule coming soon</p>
                 {profile.contact_email && (
@@ -298,15 +353,9 @@ export default function AthletePublicProfile() {
                   </a>
                 )}
               </div>
-            )}
-            {past_events.length > 0 && (
-              <div className="mt-10 opacity-60">
-                <h2 className="text-[11px] font-semibold tracking-[3px] uppercase text-gray-400 mb-4">Past Events</h2>
-                <div data-testid="past-events">{past_events.map((evt, i) => <EventCard key={evt.event_id} event={evt} isLast={i === past_events.length - 1} />)}</div>
-              </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Footer */}
@@ -315,20 +364,22 @@ export default function AthletePublicProfile() {
       </footer>
 
       {/* Mobile CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/90 backdrop-blur border-t border-gray-200" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }} data-testid="mobile-cta-bar">
-        <div className="flex gap-2 px-4 pt-3 max-w-[500px] mx-auto">
-          {profile.contact_email && (
-            <a href={`mailto:${profile.contact_email}`} className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-[13px] font-semibold text-white bg-emerald-600 shadow-sm">
-              <Mail className="w-4 h-4" /> Email
-            </a>
-          )}
-          {profile.contact_phone && (
-            <a href={`tel:${profile.contact_phone}`} className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-[13px] font-semibold text-slate-700 bg-white border border-gray-200 shadow-sm">
-              <Phone className="w-4 h-4" /> Call
-            </a>
-          )}
+      {(profile.contact_email || profile.contact_phone) && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/90 backdrop-blur border-t border-gray-200" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }} data-testid="mobile-cta-bar">
+          <div className="flex gap-2 px-4 pt-3 max-w-[500px] mx-auto">
+            {profile.contact_email && (
+              <a href={`mailto:${profile.contact_email}`} className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-[13px] font-semibold text-white bg-emerald-600 shadow-sm" data-testid="mobile-email-cta">
+                <Mail className="w-4 h-4" /> Email
+              </a>
+            )}
+            {profile.contact_phone && (
+              <a href={`tel:${profile.contact_phone}`} className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-[13px] font-semibold text-slate-700 bg-white border border-gray-200 shadow-sm" data-testid="mobile-phone-cta">
+                <Phone className="w-4 h-4" /> Call
+              </a>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

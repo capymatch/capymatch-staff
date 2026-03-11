@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/ui/ta
 import GmailConsentModal from "../../components/GmailConsentModal";
 import GmailImportModal from "../../components/GmailImportModal";
 import UpgradeModal from "../../components/UpgradeModal";
+import PublicProfileSettings from "../../components/settings/PublicProfileSettings";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -223,6 +224,9 @@ function ProfileTab({
           </div>
         )}
       </SectionCard>
+
+      {/* Public Profile */}
+      <PublicProfileSettings />
     </div>
   );
 }

@@ -138,6 +138,7 @@ function AppRoutes() {
       <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSettingsPage /></ProtectedRoute>} />
 
       {/* ── Public routes (no auth) ── */}
+      <Route path="/p/:slug" element={<AthletePublicProfile />} />
       <Route path="/s/:shortId" element={<AthletePublicProfile />} />
 
       <Route path="*" element={<Navigate to={home} replace />} />
