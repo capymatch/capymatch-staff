@@ -4,7 +4,9 @@ Exposes pre-computed recruiting metrics per athlete-school relationship.
 Intended for consumption by intelligence cards and internal services.
 """
 
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from auth_middleware import _get_current_user
 from admin_guard import require_admin
 from models import ProgramMetricsResponse, RecomputeAllResponse
@@ -12,6 +14,42 @@ from services.program_metrics import get_metrics, recompute_metrics, recompute_a
 from db_client import db
 
 router = APIRouter(prefix="/internal/programs", tags=["program-metrics"])
+
+
+class BatchMetricsRequest(BaseModel):
+    program_ids: List[str]
+
+
+async def _resolve_tenant(current_user: dict) -> str:
+    """Resolve tenant_id from the user's linked athlete record."""
+    if current_user["role"] not in ("athlete", "parent"):
+        raise HTTPException(403, "Only athletes/parents can access this")
+    athlete = await db.athletes.find_one(
+        {"user_id": current_user["id"]}, {"_id": 0, "tenant_id": 1}
+    )
+    if not athlete or not athlete.get("tenant_id"):
+        raise HTTPException(404, "No claimed athlete profile found")
+    return athlete["tenant_id"]
+
+
+@router.post("/batch-metrics")
+async def batch_metrics(
+    body: BatchMetricsRequest,
+    current_user: dict = Depends(_get_current_user),
+):
+    """Fetch metrics for multiple programs in a single request."""
+    tenant_id = await _resolve_tenant(current_user)
+    ids = body.program_ids[:50]  # cap at 50
+
+    results = {}
+    for pid in ids:
+        try:
+            m = await get_metrics(pid, tenant_id)
+            results[pid] = m
+        except Exception:
+            pass  # skip programs that fail or don't exist
+
+    return {"metrics": results}
 
 
 async def _resolve_tenant(current_user: dict) -> str:

@@ -14,6 +14,7 @@ import { RAIL_STAGES } from "../../components/journey/constants";
 import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
+import { PipelineHealthBadge } from "../../components/PipelineHealthBadge";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -432,7 +433,7 @@ const COL_TO_STAGE = {
   offer: { journey_stage: "offer", recruiting_status: "Offer" },
 };
 
-function KanbanCard({ program: p, matchScore, navigate, index }) {
+function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics }) {
   const due = getDueInfo(p);
   const hasUrgent = due?.urgent && due?.color === "#dc2626";
 
@@ -462,6 +463,11 @@ function KanbanCard({ program: p, matchScore, navigate, index }) {
                 {hasUrgent && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", flexShrink: 0, marginTop: 5 }} />}
               </div>
               <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 2 }}>{[p.division, p.conference].filter(Boolean).join(" · ")}</div>
+              {healthMetrics && (
+                <div style={{ marginTop: 5 }}>
+                  <PipelineHealthBadge metrics={healthMetrics} variant="compact" />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -470,7 +476,7 @@ function KanbanCard({ program: p, matchScore, navigate, index }) {
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
+function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -510,7 +516,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd }) {
                 </div>
                 <div style={{ padding: "0 8px 10px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
                   {columns[col.key].length > 0 ? (
-                    columns[col.key].map((p, idx) => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} index={idx} />)
+                    columns[col.key].map((p, idx) => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} index={idx} healthMetrics={healthMap[p.program_id]} />)
                   ) : (
                     <div style={{ padding: "30px 14px", textAlign: "center", fontSize: 12, color: "var(--cm-text-4)", fontWeight: 500 }}>No schools yet</div>
                   )}
@@ -622,6 +628,7 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [matchScores, setMatchScores] = useState({});
   const [tasks, setTasks] = useState([]);
+  const [healthMap, setHealthMap] = useState({});
   const [collapsedArchived, setCollapsedArchived] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const navigate = useNavigate();
@@ -644,6 +651,23 @@ export default function PipelinePage() {
     }).catch(() => {});
   }, [allPrograms.length]);
   useEffect(() => { axios.get(`${API}/athlete/tasks`).then(res => setTasks(res.data?.tasks || [])).catch(() => {}); }, [allPrograms.length]);
+
+  // Fetch pipeline health metrics in batch
+  useEffect(() => {
+    const ids = allPrograms.map(p => p.program_id).filter(Boolean);
+    if (ids.length === 0) return;
+    axios.post(`${API}/internal/programs/batch-metrics`, { program_ids: ids })
+      .then(res => {
+        const m = res.data?.metrics || {};
+        // Key by program_id, attach program_id into each metrics object
+        const mapped = {};
+        for (const [pid, data] of Object.entries(m)) {
+          mapped[pid] = { ...data, program_id: pid };
+        }
+        setHealthMap(mapped);
+      })
+      .catch(() => {});
+  }, [allPrograms.length]);
 
   /* ── Drag & Drop handler ── */
   const handleDragEnd = useCallback(async (result) => {
@@ -750,7 +774,7 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} />
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (
