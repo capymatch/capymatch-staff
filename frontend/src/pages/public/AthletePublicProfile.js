@@ -47,17 +47,6 @@ function ScanFact({ label, value }) {
   );
 }
 
-/* ── Measurable chip ── */
-function MeasurableChip({ label, value }) {
-  if (!value) return null;
-  return (
-    <div className="text-center">
-      <div className="text-lg font-extrabold text-slate-800">{value}</div>
-      <div className="text-[8px] font-bold uppercase tracking-[1.5px] text-gray-400 mt-0.5">{label}</div>
-    </div>
-  );
-}
-
 /* ── Event card ── */
 function EventCard({ event, isLast }) {
   const { month, day } = fmtDate(event.start_date);
@@ -156,7 +145,6 @@ export default function AthletePublicProfile() {
   const { profile: p, coach_summary, recruiting_signals = [], upcoming_events = [], past_events = [] } = data;
   const hasPhoto = p.photo_url && (p.photo_url.startsWith("data:") || p.photo_url.startsWith("http"));
   const videoId = getYouTubeId(p.video_link);
-  const hasStats = p.standing_reach || p.approach_touch || p.block_touch || p.wingspan;
   const hasCoach = p.parent_name || p.parent_email;
   const hasCTA = p.contact_email || p.contact_phone;
   const location = [p.city, p.state].filter(Boolean).join(", ");
@@ -227,25 +215,16 @@ export default function AthletePublicProfile() {
                 )}
               </div>
 
-              {/* Row 2: Key Facts Grid */}
+              {/* Row 2: Key Facts + Measurables */}
               <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 justify-center sm:justify-start" data-testid="key-facts">
                 <ScanFact label="Height" value={p.height} />
                 <ScanFact label="Weight" value={p.weight ? `${p.weight} lbs` : null} />
                 <ScanFact label="GPA" value={p.gpa} />
                 <ScanFact label="Dominant" value={p.handed} />
+                <ScanFact label="Stnd Reach" value={p.standing_reach} />
+                <ScanFact label="App Touch" value={p.approach_touch} />
+                <ScanFact label="Blk Touch" value={p.block_touch} />
               </div>
-
-              {/* Row 3: Measurables (compact) */}
-              {hasStats && (
-                <div className="mt-4 flex items-center gap-0 justify-center sm:justify-start" data-testid="scan-measurables">
-                  <div className="flex items-center gap-5 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                    <MeasurableChip label="Stnd Reach" value={p.standing_reach} />
-                    <MeasurableChip label="App Touch" value={p.approach_touch} />
-                    <MeasurableChip label="Blk Touch" value={p.block_touch} />
-                    <MeasurableChip label="Wingspan" value={p.wingspan} />
-                  </div>
-                </div>
-              )}
 
               {/* Row 4: CTAs */}
               <div className="mt-5 flex flex-wrap gap-2.5 justify-center sm:justify-start" data-testid="hero-ctas">
@@ -285,35 +264,56 @@ export default function AthletePublicProfile() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* DYNAMIC RECRUITING SNAPSHOT                                    */}
+      {/* CONTENT: Highlights → Snapshot → About → Coach → Events       */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      {recruiting_signals.length > 0 && (
-        <section className="bg-white border-b border-gray-100" data-testid="recruiting-snapshot">
-          <div className="max-w-[900px] mx-auto px-5 sm:px-8 py-4">
-            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-              <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              {recruiting_signals.map((signal, i) => (
-                <span key={i}
-                  className="text-[11px] font-semibold text-gray-500 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-full"
-                  data-testid={`signal-${i}`}>
-                  {signal}
-                </span>
-              ))}
-            </div>
+      <div className="max-w-[900px] mx-auto px-5 sm:px-8 pt-8 space-y-5">
+
+        {/* Highlights Video — first thing after hero */}
+        {videoId && (
+          <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm" data-testid="video-embed-section">
+            <h2 className="text-[10px] font-bold uppercase tracking-[2px] text-gray-400 mb-4">Highlights</h2>
+            {videoPlaying ? (
+              <div className="rounded-2xl overflow-hidden aspect-video bg-black shadow-lg">
+                <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} title="Highlights" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full" />
+              </div>
+            ) : (
+              <div className="relative rounded-2xl overflow-hidden aspect-video bg-black cursor-pointer group shadow-lg" onClick={() => setVideoPlaying(true)} data-testid="video-thumbnail">
+                <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} alt="Highlights" className="w-full h-full object-cover brightness-[0.6] group-hover:brightness-[0.4] transition-all duration-300"
+                  onError={(e) => { e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[68px] h-[68px] rounded-full bg-white/95 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                  <Play className="w-7 h-7 text-slate-900 fill-slate-900 ml-1" />
+                </div>
+              </div>
+            )}
           </div>
-        </section>
+        )}
+      </div>
+
+      {/* Recruiting Snapshot — below highlights */}
+      {recruiting_signals.length > 0 && (
+        <div className="max-w-[900px] mx-auto px-5 sm:px-8 pt-5" data-testid="recruiting-snapshot">
+          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+            <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            {recruiting_signals.map((signal, i) => (
+              <span key={i}
+                className="text-[11px] font-semibold text-gray-500 bg-white border border-gray-100 px-3 py-1.5 rounded-full shadow-sm"
+                data-testid={`signal-${i}`}>
+                {signal}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* CONTENT SECTIONS                                               */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      <div className="max-w-[900px] mx-auto px-5 sm:px-8 py-8 space-y-5">
+      <div className="max-w-[900px] mx-auto px-5 sm:px-8 py-5 space-y-5">
 
-        {/* Bio */}
+        {/* About */}
         {p.bio && (
           <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm" data-testid="bio-section">
-            <h2 className="text-[10px] font-bold uppercase tracking-[2px] text-gray-400 mb-3">About</h2>
-            <p className="text-[15px] leading-[1.7] text-gray-600 max-w-[640px]">{p.bio}</p>
+            <h2 className="text-[10px] font-bold uppercase tracking-[2px] text-gray-400 mb-4">About</h2>
+            <div className="max-w-[660px]">
+              <p className="text-[15px] leading-[1.8] text-gray-600">{p.bio}</p>
+            </div>
           </div>
         )}
 
@@ -346,26 +346,6 @@ export default function AthletePublicProfile() {
                 )}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Highlights Video */}
-        {videoId && (
-          <div className="rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 shadow-sm" data-testid="video-embed-section">
-            <h2 className="text-[10px] font-bold uppercase tracking-[2px] text-gray-400 mb-4">Highlights</h2>
-            {videoPlaying ? (
-              <div className="rounded-2xl overflow-hidden aspect-video bg-black shadow-lg">
-                <iframe src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} title="Highlights" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full" />
-              </div>
-            ) : (
-              <div className="relative rounded-2xl overflow-hidden aspect-video bg-black cursor-pointer group shadow-lg" onClick={() => setVideoPlaying(true)} data-testid="video-thumbnail">
-                <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} alt="Highlights" className="w-full h-full object-cover brightness-[0.6] group-hover:brightness-[0.4] transition-all duration-300"
-                  onError={(e) => { e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`; }} />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[68px] h-[68px] rounded-full bg-white/95 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-                  <Play className="w-7 h-7 text-slate-900 fill-slate-900 ml-1" />
-                </div>
-              </div>
-            )}
           </div>
         )}
 
