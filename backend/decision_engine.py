@@ -21,7 +21,7 @@ def detect_momentum_drop(athlete: Dict) -> Dict or None:
     Category 1: Momentum Drop
     Triggers: No activity 21+ days (3 weeks = meaningful silence, not just a busy week)
     """
-    days_since = athlete['days_since_activity']
+    days_since = athlete.get('days_since_activity', 0)
 
     if days_since >= 21:
         urgency = min(10, 6 + (days_since - 21) // 3)
@@ -491,6 +491,10 @@ def detect_event_follow_up(athlete: Dict, past_events: List[Dict]) -> Dict or No
 
 def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List[Dict]:
     """Run all 7 detection categories and return list of interventions"""
+    # Skip athletes that lack computed/derived fields (e.g. new onboarding athletes)
+    if 'days_since_activity' not in athlete or 'momentum_score' not in athlete:
+        return []
+
     interventions = []
 
     detectors = [

@@ -267,6 +267,24 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - Border color shifts based on urgency (red for critical, amber for open, default for clear)
 - New file: `/app/frontend/src/components/mission-control/DirectorActionsPulse.js`
 
+### User Onboarding Flow (DONE - March 11, 2026)
+- **Volleyball Quiz**: 6-question onboarding quiz (position, division, priorities, regions, academics, academic interests) replicated from legacy capymatch repo
+- **Quiz Completion**: Shows profile summary card with top suggested matches and "Start Recruiting" CTA
+- **Pipeline EmptyBoardState**: Rich 3-step guided experience on the Pipeline page for athletes with no programs:
+  - Step 1: Complete Profile (checks 6 essential fields: name, grad year, position, height, city/state, club/HS)
+  - Step 2: Connect Gmail (with consent modal and OAuth flow)
+  - Step 3: Add Schools (with AI suggestions grid and "Find Schools" button)
+  - Ghost board preview showing what the pipeline will look like
+- **Auto-redirect**: New athletes are redirected to `/onboarding` on login. After quiz, they go to `/pipeline` which shows the EmptyBoardState
+- **Backend fixes**: Registration creates athlete doc for new users; onboarding-status returns `completed: false` (not 404) for new athletes; demo data not seeded for new accounts
+- **Robustness**: Fixed KeyError crashes in decision_engine, mock_data, support_pod, program_engine, advocacy_engine for athletes without computed fields
+- **New file**: `/app/frontend/src/components/onboarding/EmptyBoardState.js`
+- **Modified files**: `auth.py` (registration), `athlete_onboarding.py` (status endpoint), `PipelinePage.js`, `decision_engine.py`, `mock_data.py`, `support_pod.py`, `program_engine.py`, `advocacy_engine.py`
+- **Testing:** 8/8 backend, 1/1 E2E frontend (iteration_88)
+
+## P0 In Progress
+- User Onboarding Flow: DONE
+
 ## P1 Upcoming
 - Smart Match recommendation history (timeline of past runs with score deltas)
 

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="14" failures="5" skipped="0" tests="19" time="963.843" timestamp="2026-03-11T00:24:44.821577+00:00" hostname="agent-env-c0ef89bf-5cfd-4dd2-ba66-93a7faad5464"><testcase classname="backend.tests.test_onboarding_flow.TestNewAthleteRegistration" name="test_registration_creates_athlete_record" time="60.225"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestNewAthleteRegistration" name="test_fresh_athlete_onboarding_incomplete" time="60.468"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestNewAthleteRegistration" name="test_fresh_athlete_has_empty_programs" time="60.263"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestNewAthleteRegistration" name="test_fresh_athlete_gmail_not_connected" time="60.205"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestOnboardingQuiz" name="test_save_recruiting_profile_success" time="60.251"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestOnboardingQuiz" name="test_onboarding_complete_after_quiz" time="60.209"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestOnboardingQuiz" name="test_suggested_schools_returns_matches" time="60.242"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestOnboardingQuiz" name="test_suggested_schools_ordered_by_score" time="60.238"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestAthleteProfile" name="test_get_profile_success" time="60.209"><error message="failed on setup with &quot;AssertionError: Registration failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:63: in fresh_athlete
+    assert response.status_code == 200, f"Registration failed: {response.text}"
+E   AssertionError: Registration failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestExistingAthleteWithPrograms" name="test_emma_has_completed_onboarding" time="60.196"><error message="failed on setup with &quot;AssertionError: Emma login failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:37: in emma_token
+    assert response.status_code == 200, f"Emma login failed: {response.text}"
+E   AssertionError: Emma login failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestExistingAthleteWithPrograms" name="test_emma_has_programs" time="0.000"><error message="failed on setup with &quot;AssertionError: Emma login failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:37: in emma_token
+    assert response.status_code == 200, f"Emma login failed: {response.text}"
+E   AssertionError: Emma login failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestDirectorAccess" name="test_director_onboarding_status_returns_true" time="60.212"><error message="failed on setup with &quot;AssertionError: Director login failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:48: in director_token
+    assert response.status_code == 200, f"Director login failed: {response.text}"
+E   AssertionError: Director login failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestDirectorAccess" name="test_director_blocked_from_recruiting_profile" time="0.000"><error message="failed on setup with &quot;AssertionError: Director login failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:48: in director_token
+    assert response.status_code == 200, f"Director login failed: {response.text}"
+E   AssertionError: Director login failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestDirectorAccess" name="test_director_blocked_from_suggested_schools" time="0.000"><error message="failed on setup with &quot;AssertionError: Director login failed: The preview environment is not responding. It may be starting up.&#10;  &#10;assert 502 == 200&#10; +  where 502 = &lt;Response [502]&gt;.status_code&quot;">backend/tests/test_onboarding_flow.py:48: in director_token
+    assert response.status_code == 200, f"Director login failed: {response.text}"
+E   AssertionError: Director login failed: The preview environment is not responding. It may be starting up.
+E     
+E   assert 502 == 200
+E    +  where 502 = &lt;Response [502]&gt;.status_code</error></testcase><testcase classname="backend.tests.test_onboarding_flow.TestAuthRequired" name="test_onboarding_status_requires_auth" time="60.187"><failure message="assert 502 in [401, 403, 422]&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_onboarding_flow.py:321: in test_onboarding_status_requires_auth
+    assert response.status_code in [401, 403, 422]
+E   assert 502 in [401, 403, 422]
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_onboarding_flow.TestAuthRequired" name="test_recruiting_profile_requires_auth" time="60.195"><failure message="assert 502 in [401, 403, 422]&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_onboarding_flow.py:329: in test_recruiting_profile_requires_auth
+    assert response.status_code in [401, 403, 422]
+E   assert 502 in [401, 403, 422]
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_onboarding_flow.TestAuthRequired" name="test_suggested_schools_requires_auth" time="60.237"><failure message="assert 502 in [401, 403, 422]&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_onboarding_flow.py:334: in test_suggested_schools_requires_auth
+    assert response.status_code in [401, 403, 422]
+E   assert 502 in [401, 403, 422]
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_onboarding_flow.TestAuthRequired" name="test_profile_requires_auth" time="60.144"><failure message="assert 502 in [401, 403, 422]&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_onboarding_flow.py:339: in test_profile_requires_auth
+    assert response.status_code in [401, 403, 422]
+E   assert 502 in [401, 403, 422]
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_onboarding_flow.TestAuthRequired" name="test_gmail_status_requires_auth" time="60.184"><failure message="assert 502 in [401, 403, 422]&#10; +  where 502 = &lt;Response [502]&gt;.status_code">backend/tests/test_onboarding_flow.py:344: in test_gmail_status_requires_auth
+    assert response.status_code in [401, 403, 422]
+E   assert 502 in [401, 403, 422]
+E    +  where 502 = &lt;Response [502]&gt;.status_code</failure></testcase></testsuite></testsuites>

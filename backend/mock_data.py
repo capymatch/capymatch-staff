@@ -137,8 +137,8 @@ def generate_momentum_signals(athletes):
     ]
 
     # Pick 8 diverse signals from different athletes
-    active_athletes = [a for a in athletes if a["days_since_activity"] <= 7]
-    inactive_athletes = [a for a in athletes if a["days_since_activity"] > 7]
+    active_athletes = [a for a in athletes if a.get("days_since_activity", 999) <= 7]
+    inactive_athletes = [a for a in athletes if a.get("days_since_activity", 999) > 7]
 
     # 5 positive signals from active athletes
     for i in range(5):
@@ -165,7 +165,7 @@ def generate_momentum_signals(athletes):
         athlete = inactive_athletes[i % len(inactive_athletes)]
         if i < 2:
             template = signal_templates[3]  # no_activity
-            description = template["template"].format(school="", days=athlete["days_since_activity"])
+            description = template["template"].format(school="", days=athlete.get("days_since_activity", 0))
         else:
             template = signal_templates[4]  # stage_change
             description = template["template"]
@@ -372,13 +372,13 @@ def get_program_snapshot(athletes):
     by_grad_year = {}
 
     for athlete in athletes:
-        stage = athlete["recruiting_stage"]
-        grad_year = athlete["grad_year"]
+        stage = athlete.get("recruiting_stage", "unknown")
+        grad_year = athlete.get("grad_year", "unknown")
         by_stage[stage] = by_stage.get(stage, 0) + 1
         by_grad_year[grad_year] = by_grad_year.get(grad_year, 0) + 1
 
-    needing_attention_count = len([a for a in athletes if a["days_since_activity"] > 10 or a["momentum_trend"] == "declining"])
-    positive_momentum_count = len([a for a in athletes if a["momentum_score"] > 5])
+    needing_attention_count = len([a for a in athletes if a.get("days_since_activity", 0) > 10 or a.get("momentum_trend") == "declining"])
+    positive_momentum_count = len([a for a in athletes if a.get("momentum_score", 0) > 5])
 
     return {
         "totalAthletes": total_athletes,

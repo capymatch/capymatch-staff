@@ -13,6 +13,7 @@ import UniversityLogo from "../../components/UniversityLogo";
 import { RAIL_STAGES } from "../../components/journey/constants";
 import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
+import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -610,18 +611,7 @@ function PipelineStyles() {
   );
 }
 
-function EmptyBoardState({ navigate }) {
-  return (
-    <div className="text-center py-20" data-testid="empty-pipeline">
-      <GraduationCap className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--cm-text-4)" }} />
-      <p className="text-sm font-medium mb-1" style={{ color: "var(--cm-text-2)" }}>No schools in your pipeline yet</p>
-      <p className="text-xs mb-6" style={{ color: "var(--cm-text-3)" }}>Browse the Knowledge Base to find volleyball programs that match your profile</p>
-      <Button onClick={() => navigate("/schools")} style={{ background: "#0d9488", color: "white", padding: "10px 24px", height: "auto", borderRadius: 10, fontSize: 14, fontWeight: 700 }} data-testid="find-schools-btn">
-        <Plus className="w-4 h-4 mr-1.5" /> Find Schools
-      </Button>
-    </div>
-  );
-}
+/* EmptyBoardState replaced by onboarding/EmptyBoardState component */
 
 
 /* ═══════════════════════════════════════════ */
@@ -705,7 +695,7 @@ export default function PipelinePage() {
   const committedPrograms = allPrograms.filter(p => p.recruiting_status === "Committed" || p.journey_stage === "committed");
 
   if (activePrograms.length === 0 && archivedPrograms.length === 0) {
-    return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><EmptyBoardState navigate={navigate} /></div>;
+    return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchPrograms} /></div>;
   }
 
   const actions = generateActions(allPrograms, matchScores);

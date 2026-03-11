@@ -30,7 +30,13 @@ async def _get_athlete(current_user: dict) -> dict:
 @router.get("/athlete/onboarding-status")
 async def get_onboarding_status(current_user: dict = get_current_user_dep()):
     """Check if the athlete has completed the onboarding quiz."""
-    athlete = await _get_athlete(current_user)
+    if current_user["role"] not in ("athlete", "parent"):
+        return {"completed": True, "profile": None}
+    athlete = await db.athletes.find_one(
+        {"user_id": current_user["id"]}, {"_id": 0}
+    )
+    if not athlete:
+        return {"completed": False, "profile": None}
     recruiting_profile = athlete.get("recruiting_profile")
     return {
         "completed": recruiting_profile is not None and bool(recruiting_profile),

@@ -121,7 +121,7 @@ def compute_readiness(athlete_ids=None):
     stalled_athletes = []
 
     for athlete in athletes:
-        gy = athlete["grad_year"]
+        gy = athlete.get("grad_year", "unknown")
         if gy not in by_grad_year:
             by_grad_year[gy] = {
                 "grad_year": gy,
@@ -160,7 +160,7 @@ def compute_readiness(athlete_ids=None):
         if is_stalled:
             stalled_athletes.append({
                 "id": athlete["id"],
-                "name": athlete["full_name"],
+                "name": athlete.get("full_name", ""),
                 "grad_year": gy,
                 "stage": stage,
                 "days_in_stage": days,
@@ -187,7 +187,7 @@ def compute_readiness(athlete_ids=None):
         if stalled_in_gy:
             entry["attention_note"] = f"{len(stalled_in_gy)} athletes stalled in exploring stage"
 
-    result = sorted(by_grad_year.values(), key=lambda x: x["grad_year"])
+    result = sorted(by_grad_year.values(), key=lambda x: str(x["grad_year"]))
     return {"by_grad_year": result, "stalled_athletes": stalled_athletes}
 
 

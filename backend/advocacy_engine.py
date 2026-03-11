@@ -526,14 +526,14 @@ def get_event_context(athlete_id, school_id=None):
     if athlete:
         athlete_snapshot = {
             "id": athlete["id"],
-            "full_name": athlete["full_name"],
-            "grad_year": athlete["grad_year"],
-            "position": athlete["position"],
-            "team": athlete["team"],
-            "momentum_score": athlete["momentum_score"],
-            "momentum_trend": athlete["momentum_trend"],
-            "recruiting_stage": athlete["recruiting_stage"],
-            "school_targets": athlete["school_targets"],
+            "full_name": athlete.get("full_name", ""),
+            "grad_year": athlete.get("grad_year", ""),
+            "position": athlete.get("position", ""),
+            "team": athlete.get("team", ""),
+            "momentum_score": athlete.get("momentum_score", 0),
+            "momentum_trend": athlete.get("momentum_trend", "steady"),
+            "recruiting_stage": athlete.get("recruiting_stage", "prospect"),
+            "school_targets": athlete.get("school_targets", 0),
         }
 
     return {

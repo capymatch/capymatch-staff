@@ -125,8 +125,44 @@ async def register(body: UserCreate):
     if body.role == "athlete":
         claimed_athlete = await _try_claim_athlete(user_doc)
 
-    # Seed demo pipeline data for a newly claimed athlete
-    if claimed_athlete and claimed_athlete.get("tenant_id"):
+    # If no existing athlete record was claimed, create a fresh one
+    if body.role == "athlete" and not claimed_athlete:
+        tenant_id = f"tenant-{user_doc['id']}"
+        now_str = datetime.now(timezone.utc).isoformat()
+        parts = body.name.strip().split(" ", 1)
+        new_athlete = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_doc["id"],
+            "tenant_id": tenant_id,
+            "org_id": None,
+            "email": body.email,
+            "full_name": body.name,
+            "first_name": parts[0],
+            "last_name": parts[1] if len(parts) > 1 else "",
+            "position": "",
+            "grad_year": "",
+            "team": "",
+            "height": "",
+            "city": "",
+            "state": "",
+            "high_school": "",
+            "gpa": "",
+            "recruiting_stage": "prospect",
+            "recruiting_profile": None,
+            "onboarding_completed": False,
+            "created_at": now_str,
+            "updated_at": now_str,
+            "claimed_at": now_str,
+        }
+        await db.athletes.insert_one(new_athlete)
+        new_athlete.pop("_id", None)
+        claimed_athlete = new_athlete
+        log_auth.info(f"Created fresh athlete record for user {user_doc['id']}")
+
+    # Seed demo pipeline data only for athletes who claimed an existing record.
+    # Fresh athletes (onboarding_completed=False) get the onboarding EmptyBoardState instead.
+    should_seed = claimed_athlete and claimed_athlete.get("tenant_id") and claimed_athlete.get("onboarding_completed") is not False
+    if should_seed:
         from seeders.seed_athlete_demo import seed_athlete_demo_data
         await seed_athlete_demo_data(
             db,

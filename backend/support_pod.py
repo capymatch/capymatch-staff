@@ -20,7 +20,7 @@ def get_athlete_interventions(athlete_id):
 
 def generate_pod_members(athlete):
     """Deterministic mock pod members based on athlete profile"""
-    days = athlete["days_since_activity"]
+    days = athlete.get("days_since_activity", 0)
     parent_inactive_days = max(0, days - 3)
 
     return [
@@ -37,7 +37,7 @@ def generate_pod_members(athlete):
         },
         {
             "id": f"member_parent_{athlete['id']}",
-            "name": f"{athlete['last_name']} Family",
+            "name": f"{athlete.get('last_name', 'Unknown')} Family",
             "role": "parent",
             "role_label": "Parent/Guardian",
             "is_primary": False,
@@ -48,11 +48,11 @@ def generate_pod_members(athlete):
         },
         {
             "id": f"member_athlete_{athlete['id']}",
-            "name": athlete["full_name"],
+            "name": athlete.get("full_name", "Athlete"),
             "role": "athlete",
             "role_label": "Athlete",
             "is_primary": False,
-            "last_active": athlete["last_activity"],
+            "last_active": athlete.get("last_activity", datetime.now(timezone.utc).isoformat()),
             "tasks_owned": 0,
             "tasks_overdue": 0,
             "status": "active" if days <= 7 else "inactive",
@@ -108,9 +108,9 @@ def calculate_pod_health(athlete, members, actions):
     )
     overdue = sum(1 for a in actions if a.get("status") == "overdue")
 
-    if athlete["days_since_activity"] > 21 or overdue >= 3:
+    if athlete.get("days_since_activity", 0) > 21 or overdue >= 3:
         return "red"
-    if athlete["days_since_activity"] > 7 or overdue >= 1 or non_coach_inactive:
+    if athlete.get("days_since_activity", 0) > 7 or overdue >= 1 or non_coach_inactive:
         return "yellow"
     return "green"
 
@@ -128,7 +128,7 @@ def explain_pod_health(athlete, interventions):
     4. Ownership clarity (ownership_gap category present)
     5. Issue severity (any critical-tier interventions)
     """
-    days = athlete["days_since_activity"]
+    days = athlete.get("days_since_activity", 0)
     issue_count = len(interventions)
     has_blocker = any(i["category"] == "blocker" for i in interventions)
     has_ownership_gap = any(i["category"] == "ownership_gap" for i in interventions)
