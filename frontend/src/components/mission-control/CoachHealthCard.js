@@ -3,7 +3,7 @@ import { Users, Eye, Bell, ArrowRightLeft } from "lucide-react";
 
 const STATUS_CONFIG = {
   active: { label: "Active", dot: "bg-emerald-500", bg: "bg-emerald-50", text: "text-emerald-700" },
-  activating: { label: "Activating", dot: "bg-yellow-400", bg: "bg-yellow-50", text: "text-yellow-700" },
+  activating: { label: "Getting Started", dot: "bg-yellow-400", bg: "bg-yellow-50", text: "text-yellow-700" },
   needs_support: { label: "Needs Support", dot: "bg-orange-500", bg: "bg-orange-50", text: "text-orange-700" },
   inactive: { label: "Inactive", dot: "bg-red-500", bg: "bg-red-50", text: "text-red-700" },
 };
