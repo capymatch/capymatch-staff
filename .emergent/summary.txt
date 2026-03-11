@@ -1,74 +1,69 @@
 <analysis>**original_problem_statement:**
-The user wants to unify two separate applications:  (a coach/director app) and  (an athlete/parent app). The end goal is a single, unified platform with a shared backend, data model, and authentication system, which provides distinct, role-based user experiences. This evolved to include a Smart Match recommendation engine, a full admin data pipeline, and most recently, a robust multi-tenancy architecture to support both independent families and multi-user clubs/organizations.
+The user wants to unify two separate applications:  (a coach/director app) and  (an athlete/parent app). The end goal is a single, unified platform with a shared backend, data model, and authentication system, which provides distinct, role-based user experiences. This has evolved to include a Smart Match recommendation engine, a full admin data pipeline, a robust multi-tenancy architecture, a phased AI intelligence pipeline, and most recently, the creation of foundational data layers to support future advanced analytics.
 
 **PRODUCT REQUIREMENTS:**
-- Implement a multi-tenant architecture with a new  collection and standardized user roles (, , , , ).
-- Support both club-affiliated users and independent family users within the same system.
-- Ensure the university knowledge base remains global and is kept up-to-date via automated scrapers and admin tools.
-- Incrementally migrate valuable features and data pipelines from the original  repo into the new unified platform.
-- Implement a Smart Match feature to provide personalized school recommendations, with progressive enhancements.
-- Integrate the Stripe Customer Portal to allow users to self-manage their subscriptions.
+- Implement a multi-tenant architecture with standardized user roles.
+- Support both club-affiliated users and independent family users.
+- Incrementally migrate valuable features and data pipelines from the original  repo.
+- Implement a Smart Match feature with progressive enhancements.
+- Integrate Stripe for checkout and customer portal self-management.
 - Implement a comprehensive onboarding flow for new athletes.
+- Build out full admin user and subscription management capabilities.
+- Develop a multi-agent AI pipeline for school-specific intelligence (in phases).
+- Create structured data models and derived metric layers to serve as a substrate for future intelligence features like engagement outlook, ensuring any user-facing analytics are framed in a supportive, action-oriented manner.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A unified full-stack application (FastAPI, React, MongoDB) with a sophisticated multi-tenant architecture.
-- **Multi-Tenancy & Admin:** A full data model supports  and independent users, with role-based access control. A functional admin area exists for platform monitoring and data management.
-- **Core Features:** Includes a Journey Page, full Stripe Checkout & Customer Portal integration, a tabbed Settings Page, Coach Watch alerts, and a Flag for Follow-Up system.
-- **Smart Match:** A refined recommendation engine with AI explanations, a Why this school? drawer, a Rerun Recommendations flow, and a School Comparison tool.
-- **Director Tools:** A Director Actions feature allows directors to issue  and  tasks to coaches, with an  lifecycle. A Director Pulse widget in Mission Control provides a high-level summary of these actions.
-- **Onboarding Analysis:** The agent has completed a full analysis of the user onboarding flow from the legacy  repository, including the initial questionnaire and the subsequent pipeline setup steps.
+A unified full-stack application (FastAPI, React, MongoDB) with a sophisticated multi-tenant architecture and several major features implemented and tested.
+- **Core Platform:** Role-based access control, Stripe Checkout & Customer Portal, and a tabbed Settings Page are fully functional.
+- **User Onboarding:** A complete, multi-step onboarding flow for new athletes is live, including a questionnaire and a guided pipeline setup. The system correctly handles new user registration and enforces the onboarding process.
+- **Admin Management:** A full admin area exists, allowing platform admins to manage users (list, search, filter), view user details, change subscription plans, and review an audit log of changes. A subscription dashboard provides high-level revenue and conversion metrics.
+- **AI Intelligence (Phase 1):** An Intelligence section is integrated into the school Journey page. It features two AI-powered, expandable cards: School Insight and Recruiting Timeline. These are powered by a backend service that uses a Payload Builder and dedicated agents with the Emergent LLM Key (Claude Sonnet).
+- **Data Foundation:** The backend has undergone a significant schema evolution to add structured data collection. New collections like , , and  exist, and history tracking is wired into the application logic.
 
 **Last working item**:
-    - Last item agent was working: Analyzing the legacy  repository to understand the user onboarding flow, which needs to be replicated. The user specified that new athletes should see a questionnaire and then be guided through setting up their pipeline (completing their profile, connecting Gmail, and selecting a school). The analysis phase is complete.
-    - Status: IN PROGRESS
+    - Last item agent was working: The user requested the creation of a derived metrics layer () to summarize key recruiting signals for each athlete-school relationship. This is a foundational backend task to create a reusable data service for future intelligence cards. The agent was in the analysis phase, identifying the source data collections.
+    - Status: NOT STARTED
     - Agent Testing Done: N
-    - Which testing method agent to use? both
+    - Which testing method agent to use? backend testing agent
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
   - There are no pending issues.
 
 **In progress Task List**:
-  - Task 1: (P0) Implement User Onboarding Flow
+  - Task 1: (P0) Implement Derived  Layer
 
  Task Detail:
   - Task 1: 
-     - Where to resume: 
-        1.  **Backend Model:** Add a flag like  to the  or  model in the database to track completion status.
-        2.  **Backend Endpoint:** Create a new endpoint, e.g., , to update this flag.
-        3.  **Migrate Components:** Port the required React components from the legacy repository (, , ) into the new application's codebase, likely under a new  directory.
-        4.  **Routing Logic:** In  (or a root-level component), implement logic to check if a logged-in user is an  and has . If so, redirect them to the onboarding questionnaire.
-        5.  **Pipeline Onboarding:** Integrate the  component into the  (the pipeline view). This component should render conditionally for new athletes and guide them through the three required steps: complete profile, connect Gmail, and select at least one school from the knowledge base.
-     - What will be achieved with this? New athlete users will get a guided setup experience, improving initial engagement and ensuring their profiles are populated with essential data from the start.
+     - Where to resume: The agent has analyzed the source data collections. The next step is to begin implementation.
+        1.  **Create Models/Collections:** Define the Pydantic model and MongoDB collection for .
+        2.  **Build Metrics Service:** Create a new service (e.g., ) to contain the logic for calculating each derived metric (, , , etc.).
+        3.  **Implement Calculation Logic:** Write the functions to compute each metric by querying the existing structured data collections (, , , etc.).
+        4.  **Create Recomputation Endpoint:** Build an idempotent internal API endpoint (e.g., ) that can be called to refresh the metrics for a specific program.
+        5.  **Expose Metrics API:** Create a clean internal  endpoint (e.g., ) for future intelligence cards to consume the pre-computed metrics.
+     - What will be achieved with this? A reusable, summarized data layer that will serve as the foundation for future intelligence features like engagement outlook and pipeline health. This abstracts away complex, repetitive calculations from feature-level code, improving performance and maintainability.
      - Status: NOT STARTED
-     - Should Test frontend/backend/both after fix? both
+     - Should Test frontend/backend/both after fix? backend
      - Blocked on something: Nothing.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
-- (P1) **Recommendation History (Smart Match):** Implement the history feature for Smart Match recommendations.
+- (P1) **Engagement Outlook Card:** Build the first intelligence card that consumes data from the new  layer.
 - (P2) **Club Billing:** Implement the subscription billing and management flow for organizations/clubs.
 
 **Future Tasks:**
-- **Smart Match (Later Phases):** Integrate deeper LLM reasoning, roster/need intelligence, and coach engagement signals.
+- **Multi-Agent Intelligence Pipeline (Phase 2+):** Implement the remaining agents: , , and .
 - **Coach Scraper Health Report (V1):** Implement a dashboard health card and weekly admin digest for monitoring data freshness.
-- **Full Admin User Management:** Build out the deferred  and  pages.
-- **Full multi-agent intelligence pipeline:** Implement the advanced AI analysis pipeline from the old repo.
-- **Advanced Features & Parent Experience:** Build out the dedicated parent/family experience.
+- **Parent/Family Experience:** Build out the dedicated user experience for parents.
+- **Coach Probability / Program Receptivity Feature:** Cautiously build a supportive, action-oriented intelligence card based on the structured data and metrics layers, with a strict rule to avoid negative or discouraging language.
 
 **Completed work in this session**
-- **Stripe Customer Portal Integration (DONE):**
-  - Connected the Manage Billing button on  to the  API, allowing users to self-manage subscriptions. Verified end-to-end.
-- **Director-Specific Actions (V1 DONE):**
-  - Implemented a full backend and frontend for directors to create  and  tasks for coaches.
-  - The feature includes a three-state lifecycle (, , ) and notifications.
-  - Key files: , , and modifications to .
-- **Director Pulse Widget (DONE):**
-  - Created and integrated  into the Director's Mission Control page to provide a compact, at-a-glance summary of director action statuses.
-- **Authentication Bug Fix (DONE):**
-  - Resolved a bug in newly created components by correcting the localStorage key used to retrieve the JWT from  to , aligning them with the application's auth context.
+- **User Onboarding Flow (DONE):** Implemented a full end-to-end onboarding experience for new athletes, including a questionnaire and a guided 3-step pipeline setup. This included fixing a critical bug that caused new users to skip onboarding and refactoring backend AI services to handle incomplete athlete profiles gracefully.
+- **Full Admin User & Subscription Management (DONE):** Replicated and integrated the admin management functionality from the legacy repo. This includes new frontend pages for listing/detailing users and viewing subscription analytics, supported by a new backend router and an  collection for tracking changes.
+- **Multi-Agent Intelligence Pipeline (Phase 1 DONE):** Implemented a  service and the first two intelligence agents (, ). These are integrated as expandable, premium Intelligence Cards on the school Journey page.
+- **Structured Data Schema Evolution (DONE):** Executed a major backend-only task to enhance the data model for future analytics. This involved creating new collections (, , ), enriching existing models, and deploying a data migration script to backfill data. Stage change history is now actively being recorded.
 
 **Earlier issues found/mentioned but not fixed**
    - None.
@@ -80,126 +75,90 @@ A unified full-stack application (FastAPI, React, MongoDB) with a sophisticated 
 
 
 **Key Technical Concepts**
-- **Stateful Action Lifecycle:** Implemented a simple  state machine for the director actions feature, managed via dedicated API endpoints, providing a closed feedback loop.
-- **Conditional Rendering by Role:** Enhanced components like  to render different UI controls and information based on the logged-in user's role ( vs. ).
-- **Data-Driven UI Widgets:** Created the  that consumes data from the new  API to present a dynamic, high-level summary for leadership.
-- **Legacy Codebase Analysis:** The agent successfully used usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
-           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
-           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
-           <command> [<args>]
-
-These are common Git commands used in various situations:
-
-start a working area (see also: git help tutorial)
-   clone     Clone a repository into a new directory
-   init      Create an empty Git repository or reinitialize an existing one
-
-work on the current change (see also: git help everyday)
-   add       Add file contents to the index
-   mv        Move or rename a file, a directory, or a symlink
-   restore   Restore working tree files
-   rm        Remove files from the working tree and from the index
-
-examine the history and state (see also: git help revisions)
-   bisect    Use binary search to find the commit that introduced a bug
-   diff      Show changes between commits, commit and working tree, etc
-   grep      Print lines matching a pattern
-   log       Show commit logs
-   show      Show various types of objects
-   status    Show the working tree status
-
-grow, mark and tweak your common history
-   branch    List, create, or delete branches
-   commit    Record changes to the repository
-   merge     Join two or more development histories together
-   rebase    Reapply commits on top of another base tip
-   reset     Reset current HEAD to the specified state
-   switch    Switch branches
-   tag       Create, list, delete or verify a tag object signed with GPG
-
-collaborate (see also: git help workflows)
-   fetch     Download objects and refs from another repository
-   pull      Fetch from and integrate with another repository or a local branch
-   push      Update remote refs along with associated objects
-
-'git help -a' and 'git help -g' list available subcommands and some
-concept guides. See 'git help <command>' or 'git help <concept>'
-to read about a specific subcommand or concept.
-See 'git help git' for an overview of the system. and  to explore a separate, legacy repository () to understand and document a feature (onboarding) for reimplementation.
+- **Derived Metrics Layer:** The current task focuses on creating a service that pre-computes and aggregates raw event data into meaningful metrics (), creating a clean separation of concerns for future AI features.
+- **Backend Data Migration:** A versioned migration script was created and executed on application startup to safely evolve the database schema and backfill data for existing records.
+- **Phased Feature Implementation:** The complex multi-agent intelligence pipeline was broken down into a smaller, value-focused Phase 1 (Payload Builder + 2 agents), demonstrating an effective incremental delivery strategy.
+- **History Tracking:** The application now logs all changes to an athlete's recruiting stage in a dedicated  collection, creating a persistent audit trail.
+- **Defensive Coding for AI Services:** Backend AI modules were refactored to use  with default values, making them resilient to incomplete data from new user profiles and preventing crashes.
 
 **key DB schema**
+- ** (To Be Implemented):** 
 - ** (New):** 
-- **:** 
-- **:** 
-- **:** 
+- ** (New):** 
+- ** (New):** 
+- ** (New):** 
+- ** (Modified):** Enriched with fields like , , and various  fields.
+- ** (Modified):** Enriched with fields like  and .
 
 **changes in tech stack**
-- No changes to the tech stack in this session.
+- No changes to the core tech stack.
 
 **All files of reference**
-- **Target files for next task (Onboarding):**
-  -  (for routing logic)
-  -  (for pipeline onboarding)
-  -  (to add onboarding flag)
-- **Key files created/modified in this session:**
-  -  (New feature backend)
-  -  (New UI widget)
-  -  (New UI component)
-  -  (Modified for new feature)
-  -  (Modified for Stripe Portal)
+- **For current task ():**
+  - 
+  -  (contains )
+  - 
+  - 
+- **Key new files from this session:**
+  -  (entire folder)
+  - 
+  - 
+  -  (entire folder)
+  - 
+  - 
 
 **Areas that need refactoring**:
 - None.
 
 **key api endpoints**
--  (Implemented)
 -  (New)
 -  (New)
+-  &  (New)
 -  (New)
--  (New)
+-  &  (New)
 
 **Critical Info for New Agent**
-- **Your immediate task is to implement the user onboarding flow.** The analysis of the legacy repo is complete. You need to migrate the necessary React components, add backend logic to track onboarding completion for athletes, and implement routing to enforce the flow for all new athlete accounts.
-- The user's requirements for onboarding are specific: an initial questionnaire, followed by a guided pipeline setup (complete profile, connect Gmail, select a school).
-- The JWT token is stored in localStorage under the key . Ensure any new components that make authenticated API calls use this key or rely on the global  interceptor.
+- **Your immediate task is to build the  derived data layer.** This is a **backend-only task**. The goal is to create a reusable service that computes key recruiting metrics from existing structured data (, , etc.). This layer will be the foundation for future, more advanced intelligence features.
+- The user has explicitly stated this should be an internal service first, with no major new UI. Focus on creating the data model, the calculation logic, and internal APIs to expose the metrics.
+- The design must be recomputable and idempotent. Refer to the detailed list of fields for  provided by the user in their last request.
 
 **documents and test reports created in this job**
 -  (Updated)
 - 
+- 
+- 
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **LATEST:** User confirmed the final requirements for the onboarding flow: it's for athletes only, the volleyball quiz should be kept, and after the quiz, users must be directed to a pipeline onboarding process (complete profile, connect Gmail, select a school). (PENDING IMPLEMENTATION)
-- User asked the agent to investigate the pipeline part of the onboarding process in the old repo. (DONE)
-- User specified that the onboarding quiz should only be for volleyball. (ACKNOWLEDGED)
-- User reported that a new account () was redirected to the dashboard instead of an onboarding flow, initiating the task to replicate the legacy onboarding experience. (PENDING IMPLEMENTATION)
-- User approved the Director Pulse widget, providing clear specs for what it should display. (DONE)
-- User approved the plan for Director-Specific Actions with four specific adjustments to the implementation. (DONE)
-- User confirmed the high-level plan for Director-Specific Actions V1 was correct. (DONE)
-- User reported issues copying text from the  tool's rendered output. (RESOLVED)
-- User provided detailed requirements for the Director-Specific Actions feature, defining a lightweight  lifecycle. (ACKNOWLEDGED)
-- User asked for the agent's thoughts on how to implement the P1 task, Director-Specific Actions. (DONE)
+- **LATEST:** User requested the creation of a derived  layer as a foundational step before building more intelligence UI. Provided a detailed schema and requirements. (PENDING IMPLEMENTATION)
+- User provided a critical product caution: any future Coach Probability feature must be framed in a supportive, action-oriented way, avoiding discouraging language. (ACKNOWLEDGED)
+- User provided a detailed schema for evolving the data model to collect structured event and relationship data. (DONE)
+- User approved the Phase 1 plan for the intelligence pipeline with specific adjustments (GET endpoints, caching, confidence calculation). (DONE)
+- User requested the agent re-paste text due to a copy-paste issue on their end. (DONE)
+- User requested a phased implementation of the multi-agent intelligence pipeline, prioritizing the most valuable agents for Phase 1. (DONE)
+- User confirmed the intelligence cards should be placed on the school Journey page. (DONE)
+- User asked for a detailed breakdown of the legacy multi-agent intelligence pipeline. (DONE)
+- User confirmed the plan to build the full admin user and subscription management features. (DONE)
+- User asked the agent to replicate the admin functionality from the legacy repository. (ACKNOWLEDGED)
 
 **Project Health Check:**
-- **Broken:** The user onboarding experience is non-existent. New users are dropped directly into the dashboard without guidance.
-- **Mocked/Needs Improvement:** None.
+- **Broken:** None.
+- **Mocked/Needs Improvement:** None. The project is in a healthy state.
 
 **3rd Party Integrations**
 - **Active:** MongoDB, Google (Gmail API), Emergent LLM Key (Claude Sonnet), Stripe (Checkout & Customer Portal), , , , .
 
 **Testing status**
-  - Testing agent used after significant changes: YES. Used to validate the backend of the Director Actions feature.
+  - Testing agent used after significant changes: YES
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: []
+  - Test files created: [, , ]
   - Known regressions: None.
 
 **Credentials to test flow:**
 - **Platform Admin:**  / 
 - **Director:**  / 
 - **Club Coach:**  / 
-- **Athlete (New User for Onboarding Test):**  / 
-- **Athlete (to test paid features):** 
+- **Athlete (Pro Plan):**  / 
+- **New Athlete (for Onboarding):** Register a new user with an  role.
 
 **What agent forgot to execute**
-- The agent successfully completed all user-requested tasks during the session. The current pending task (onboarding) was introduced by the user at the very end of the session.</analysis>
+- Nothing. The agent is currently in the planning phase for the user's latest request.</analysis>
