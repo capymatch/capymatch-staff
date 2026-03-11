@@ -112,7 +112,11 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 ## P0 In Progress
 - (None — all P0 items completed)
 
-### Pipeline Hero Card UX Refinement (DONE - March 11, 2026)
+### NCAA Timeline on Calendar Page (DONE - March 11, 2026)
+- **Ported from GitHub:** Brought the `NcaaTimeline.js` component from `github.com/capymatch/capymatch` repo, adapted CSS variables (`--t-*` → `--cm-*`).
+- **Tab Switcher:** Added "My Calendar" / "NCAA Timeline" tab switcher to CalendarPage. NCAA tab uses teal active state.
+- **Features:** Current period banner (with days remaining), Division selector (D1/D2/D3/NAIA), horizontal color-coded timeline bar with NOW marker, Key NCAA Dates & Deadlines cards with status tags (Passed/Xd away/Active Now/Info).
+- **Testing:** 100% frontend (iteration_103: all 14 features verified)
 - **Action-First Layout:** Flipped visual hierarchy — CTA label (e.g., "Reply Now") is the headline, school name is secondary context. Removed cluttered badges row (social links, fit labels, conference/events).
 - **Directive Language:** Updated all ACTION_MAP labels in `top_action_engine.py` to be imperative (e.g., "Reply to Coach Now", "Send Your Intro Email", "Follow Up Now — {days}d Overdue"). Labels now support template variables.
 - **Dual CTAs:** Primary action button (color-coded by urgency) + secondary "View School >" outline button, replacing single generic "Open School" CTA.
