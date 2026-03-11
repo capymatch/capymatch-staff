@@ -208,6 +208,8 @@ async def update_profile(body: dict, current_user: dict = get_current_user_dep()
         updates["measurables_updated_at"] = updates["updated_at"]
     if academic_keys & updates.keys():
         updates["academic_profile_updated_at"] = updates["updated_at"]
+    if "video_link" in updates and updates["video_link"] != athlete.get("video_link"):
+        updates["video_updated_at"] = updates["updated_at"]
 
     await db.athletes.update_one(
         {"id": athlete["id"]},

@@ -175,10 +175,24 @@ async def _build_recruiting_signals(athlete: dict, settings: dict) -> list:
                 else:
                     signals.append(f"Interested in programs across {len(state_list)} states")
 
-    # 2. Highlight reel
+    # 2. Highlight reel freshness
     video = athlete.get("video_link") or ""
     if video and str(video).lower() != "none":
-        signals.append("Highlight reel available")
+        video_ts = athlete.get("video_updated_at") or ""
+        if video_ts:
+            try:
+                vid_dt = datetime.fromisoformat(str(video_ts).replace("Z", "+00:00"))
+                days_since = (datetime.now(timezone.utc) - vid_dt).days
+                if days_since <= 30:
+                    signals.append("New highlights added recently")
+                elif days_since <= 180:
+                    signals.append("Highlight reel updated this season")
+                else:
+                    signals.append("Highlight reel available")
+            except (ValueError, TypeError):
+                signals.append("Highlight reel available")
+        else:
+            signals.append("Highlight reel available")
 
     # 3. Academic info
     gpa = athlete.get("gpa")
