@@ -405,6 +405,13 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Files**: `backend/routers/intelligence.py`, `frontend/src/components/intelligence/EngagementOutlookCard.js`, `frontend/src/pages/athlete/JourneyPage.js`
 - **Testing:** 100% (iteration_95: 12/12 backend, all frontend verified)
 
+### Performance: Smart Match Caching (DONE - March 11, 2026)
+- **Root cause**: `GET /smart-match/recommendations` scored 2000 schools on every dashboard load (~10.7s)
+- **Fix**: Added 1-hour cache in `smart_match_cache` MongoDB collection. First call computes and caches, subsequent calls return in ~0.12s (76x faster)
+- Dashboard initial load: `/smart-match/status` (lightweight), then cached recommendations in background
+- Full recompute only on explicit `?force=true` or when cache expires
+- **Files Modified**: `backend/routers/smart_match.py`, `frontend/src/pages/AthleteDashboard.js`
+
 ## P0 In Progress
 - (None — all P0 items completed)
 

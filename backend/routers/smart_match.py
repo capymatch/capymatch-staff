@@ -451,7 +451,7 @@ def _profile_hash(athlete: dict, profile: dict) -> str:
 
 # ── API Endpoints ────────────────────────────────────────────────────────
 @router.get("/smart-match/recommendations")
-async def get_recommendations(limit: int = 50, current_user: dict = get_current_user_dep()):
+async def get_recommendations(limit: int = 50, force: bool = False, current_user: dict = get_current_user_dep()):
     user_id = current_user["id"]
     if current_user["role"] not in ("athlete", "parent"):
         raise HTTPException(403, "Only athletes can access Smart Match")
@@ -465,6 +465,40 @@ async def get_recommendations(limit: int = 50, current_user: dict = get_current_
     subscription = await get_user_subscription(tenant_id)
     tier = subscription.get("tier", "basic")
 
+    # ── Return cached results if fresh (< 1 hour) and not forced ──
+    if not force:
+        cached = await db.smart_match_cache.find_one(
+            {"tenant_id": tenant_id}, {"_id": 0}
+        )
+        if cached and cached.get("computed_at"):
+            try:
+                cached_dt = datetime.fromisoformat(cached["computed_at"])
+                if cached_dt.tzinfo is None:
+                    cached_dt = cached_dt.replace(tzinfo=timezone.utc)
+                age_hours = (datetime.now(timezone.utc) - cached_dt).total_seconds() / 3600
+                if age_hours < 1:
+                    recs = cached.get("recommendations", [])
+                    gated = False
+                    if tier == "basic":
+                        if len(recs) > 3:
+                            gated = True
+                        recs = recs[:3]
+                    else:
+                        recs = recs[:limit]
+                    return {
+                        "recommendations": recs,
+                        "total": len(recs),
+                        "tier": tier,
+                        "gated": gated,
+                        "gated_total": cached.get("total_scored") if gated else None,
+                        "last_refreshed": cached.get("computed_at"),
+                        "profile_changed_since_last_run": cached.get("profile_changed", False),
+                        "cached": True,
+                    }
+            except (ValueError, TypeError):
+                pass
+
+    # ── Full recompute ──
     # Get athlete data
     athlete = await db.athletes.find_one({"user_id": user_id}, {"_id": 0})
     if not athlete:
@@ -522,6 +556,33 @@ async def get_recommendations(limit: int = 50, current_user: dict = get_current_
     # Sort by match score descending
     scored.sort(key=lambda x: x["match_score"], reverse=True)
 
+    # Track profile hash for change detection
+    now = datetime.now(timezone.utc).isoformat()
+    current_hash = _profile_hash(athlete, profile)
+    last_run = await db.smart_match_runs.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    profile_changed = False
+    if last_run and last_run.get("profile_hash") and last_run["profile_hash"] != current_hash:
+        profile_changed = True
+
+    await db.smart_match_runs.update_one(
+        {"tenant_id": tenant_id},
+        {"$set": {"tenant_id": tenant_id, "last_refreshed": now, "profile_hash": current_hash}},
+        upsert=True,
+    )
+
+    # Cache the full scored list (before tier gating) for fast subsequent loads
+    await db.smart_match_cache.update_one(
+        {"tenant_id": tenant_id},
+        {"$set": {
+            "tenant_id": tenant_id,
+            "recommendations": scored[:50],  # cache top 50
+            "total_scored": len(scored),
+            "computed_at": now,
+            "profile_changed": profile_changed,
+        }},
+        upsert=True,
+    )
+
     # Subscription gating
     gated = False
     if tier == "basic":
@@ -545,20 +606,6 @@ async def get_recommendations(limit: int = 50, current_user: dict = get_current_
                 rec["ai_summary"] = ai.get("summary", "")
                 rec["ai_next_step"] = ai.get("next_step", "")
                 rec["ai_verify"] = ai.get("verify", "")
-
-    # Track this run for "last refreshed" + profile change detection
-    now = datetime.now(timezone.utc).isoformat()
-    current_hash = _profile_hash(athlete, profile)
-    last_run = await db.smart_match_runs.find_one({"tenant_id": tenant_id}, {"_id": 0})
-    profile_changed = False
-    if last_run and last_run.get("profile_hash") and last_run["profile_hash"] != current_hash:
-        profile_changed = True
-
-    await db.smart_match_runs.update_one(
-        {"tenant_id": tenant_id},
-        {"$set": {"tenant_id": tenant_id, "last_refreshed": now, "profile_hash": current_hash}},
-        upsert=True,
-    )
 
     return {
         "recommendations": scored,

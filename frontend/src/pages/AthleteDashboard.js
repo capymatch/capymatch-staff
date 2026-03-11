@@ -539,9 +539,9 @@ export default function AthleteDashboard() {
       axios.get(`${API}/athlete/gmail/status`).catch(() => ({ data: { connected: false } })),
       axios.get(`${API}/athlete/gmail/intelligence/insights?status=pending`).catch(() => ({ data: { insights: [] } })),
       axios.get(`${API}/athlete/gmail/intelligence/status`).catch(() => ({ data: {} })),
-      axios.get(`${API}/smart-match/recommendations`).catch(() => ({ data: { recommendations: [] } })),
+      axios.get(`${API}/smart-match/status`).catch(() => ({ data: {} })),
     ])
-      .then(([progRes, evtRes, intRes, profRes, gmailRes, insightRes, scanRes, matchRes]) => {
+      .then(([progRes, evtRes, intRes, profRes, gmailRes, insightRes, scanRes, matchStatusRes]) => {
         setPrograms(progRes.data || []);
         setEvents(Array.isArray(evtRes.data) ? evtRes.data : []);
         setInteractions(Array.isArray(intRes.data) ? intRes.data : []);
@@ -549,11 +549,17 @@ export default function AthleteDashboard() {
         setGmailConnected(gmailRes.data?.connected || false);
         setInsights(insightRes.data?.insights || []);
         setScanStatus(scanRes.data || null);
-        setTopMatches((matchRes.data?.recommendations || []).slice(0, 3));
-        setSmartTier(matchRes.data?.tier || "basic");
-        setSmartGated(matchRes.data?.gated || false);
-        setLastRefreshed(matchRes.data?.last_refreshed || null);
-        setProfileChanged(matchRes.data?.profile_changed_since_last_run || false);
+        // Use lightweight status — don't compute recommendations on dashboard load
+        setSmartTier("basic");
+        setSmartGated(false);
+        setLastRefreshed(matchStatusRes.data?.last_refreshed || null);
+        setProfileChanged(matchStatusRes.data?.profile_changed || false);
+        // Load cached recommendations (fast, no recompute)
+        axios.get(`${API}/smart-match/recommendations`).then(res => {
+          setTopMatches((res.data?.recommendations || []).slice(0, 3));
+          setSmartTier(res.data?.tier || "basic");
+          setSmartGated(res.data?.gated || false);
+        }).catch(() => {});
       })
       .catch(() => toast.error("Failed to load dashboard"))
       .finally(() => setLoading(false));
