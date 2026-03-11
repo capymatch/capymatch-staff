@@ -98,6 +98,7 @@ function SupportPod() {
         lastRefreshed={lastRefreshed}
         isPolling={isPolling}
         onManualRefresh={() => fetchPodData(true)}
+        athleteId={athleteId}
       />
 
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-6">

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Activity, RefreshCw } from "lucide-react";
+import { ArrowLeft, Activity, RefreshCw, User } from "lucide-react";
 
 const HEALTH_COLORS = {
   green: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500", label: "Healthy" },
@@ -16,7 +16,7 @@ function formatTime(date) {
   return `${Math.floor(diff / 60)}m ago`;
 }
 
-function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefresh }) {
+function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefresh, athleteId }) {
   const navigate = useNavigate();
   const health = HEALTH_COLORS[podHealth] || HEALTH_COLORS.yellow;
 
@@ -63,6 +63,18 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
               <RefreshCw className={`w-3.5 h-3.5 ${isPolling ? "animate-spin" : ""}`} />
             </button>
           </div>
+
+          {/* View Profile */}
+          {athleteId && (
+            <button
+              onClick={() => navigate(`/internal/athlete/${athleteId}/profile`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-full transition-colors"
+              data-testid="pod-view-profile-btn"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">View Profile</span>
+            </button>
+          )}
 
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
             <div className={`w-2 h-2 rounded-full ${health.dot}`} />

@@ -74,6 +74,11 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - Navigates directly to `/internal/athlete/:athleteId/profile` for quick staff access
 - Stands out from other gray action buttons with teal accent color
 
+### Support Pod "View Profile" Link (DONE - March 11, 2026)
+- Added teal "View Profile" pill button in the Support Pod header bar
+- Navigates to `/internal/athlete/:athleteId/profile` for seamless staff workflow
+- Responsive: shows icon-only on mobile, full text on desktop
+
 ## Key API Endpoints
 - `GET /api/subscription` — Current user's tier
 - `GET /api/public/profile/{slug}` — Public athlete profile (no auth)
