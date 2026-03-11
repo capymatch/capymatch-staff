@@ -83,7 +83,7 @@ export default function DirectorView({ data, userName }) {
   ];
 
   return (
-    <div className="space-y-8" data-testid="director-mission-control">
+    <div className="space-y-8 overflow-x-hidden" data-testid="director-mission-control">
       {/* 1. PROGRAM OVERVIEW */}
       <section
         className="relative rounded-[10px] overflow-hidden"
@@ -91,7 +91,7 @@ export default function DirectorView({ data, userName }) {
         data-testid="director-hero"
       >
         <div className="px-4 py-5 sm:px-7 sm:py-6">
-          <div className="absolute" style={{ top: 20, right: 20 }}>
+          <div className="absolute hidden sm:block" style={{ top: 20, right: 20 }}>
             <span
               className="inline-block font-medium text-xs sm:text-[13px]"
               style={{ backgroundColor: "#363D59", color: "#E5E5E5", padding: "6px 12px", borderRadius: 6 }}
@@ -110,16 +110,15 @@ export default function DirectorView({ data, userName }) {
 
           <div style={{ borderTop: "1px solid #363D59", margin: "14px 0 16px 0" }} />
 
-        {/* KPI Row — grid on mobile, flex on desktop */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:flex lg:gap-0">
+        {/* KPI Row — 2 cols on mobile, 3 on tablet, flex on desktop */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:flex lg:gap-0">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
             return (
-              <div key={kpi.label} className="flex flex-1 min-w-0 lg:pr-5 lg:mr-5" style={{ borderRight: idx < kpis.length - 1 ? undefined : "none" }}>
+              <div key={kpi.label} className={`flex flex-1 min-w-0 lg:pr-5 lg:mr-5 ${idx === kpis.length - 1 ? "col-span-2 sm:col-span-1" : ""}`} style={{ borderRight: idx < kpis.length - 1 ? undefined : "none" }}>
                 <div className="flex items-start justify-between w-full" style={idx < kpis.length - 1 ? {} : {}}>
                   <div>
                     <p className="text-2xl sm:text-3xl" style={{
-                      fontSize: undefined,
                       fontWeight: 700,
                       color: kpi.color,
                       lineHeight: 1,

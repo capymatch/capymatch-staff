@@ -6,10 +6,10 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 function Stat({ value, label, color, icon: Icon }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: `${color}08` }}>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg min-w-0" style={{ backgroundColor: `${color}08` }}>
       <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
       <span className="text-base font-bold tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-[10px] font-medium" style={{ color: "var(--cm-text-3)" }}>{label}</span>
+      <span className="text-[10px] font-medium whitespace-nowrap" style={{ color: "var(--cm-text-3)" }}>{label}</span>
     </div>
   );
 }
@@ -46,8 +46,8 @@ export default function DirectorActionsPulse() {
   return (
     <div className="rounded-xl border px-4 py-3" data-testid="director-actions-pulse"
       style={{ backgroundColor: "var(--cm-surface)", borderColor: allClear ? "var(--cm-border)" : open_critical > 0 ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)" }}>
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
           <Stat value={total_open} label="Open" color="#f59e0b" icon={Clock} />
           {open_critical > 0 && <Stat value={open_critical} label="Critical" color="#ef4444" icon={AlertTriangle} />}
           <Stat value={acknowledged} label="Ack'd" color="#3b82f6" icon={Eye} />
