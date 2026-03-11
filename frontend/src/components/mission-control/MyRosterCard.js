@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, ChevronRight, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, ArrowUpRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronRight, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target } from "lucide-react";
 import QuickNote from "@/components/QuickNote";
 
 const CATEGORY_CONFIG = {
-  momentum_drop: { icon: Zap, label: "Momentum" },
-  blocker: { icon: ShieldAlert, label: "Blocker" },
-  deadline_proximity: { icon: Clock, label: "Deadline" },
-  engagement_drop: { icon: AlertTriangle, label: "Engagement" },
-  ownership_gap: { icon: Users, label: "Unassigned" },
-  readiness_issue: { icon: Target, label: "Readiness" },
+  momentum_drop: { icon: Zap, label: "Momentum Drop", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
+  blocker: { icon: ShieldAlert, label: "Blocker", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
+  deadline_proximity: { icon: Clock, label: "Deadline", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
+  engagement_drop: { icon: AlertTriangle, label: "Engagement Drop", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
+  ownership_gap: { icon: Users, label: "Unassigned", color: "#3b82f6", bg: "rgba(59,130,246,0.08)" },
+  readiness_issue: { icon: Target, label: "Readiness Issue", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)" },
 };
 
 const HEALTH_DOT = {
@@ -39,18 +39,91 @@ function MomentumIndicator({ score, trend }) {
   );
 }
 
-export default function MyRosterCard({ athletes = [], onViewPipeline }) {
+function AthleteRow({ athlete, onViewPipeline, isLast }) {
   const navigate = useNavigate();
+  const cat = athlete.category ? CATEGORY_CONFIG[athlete.category] : null;
+  const CatIcon = cat?.icon || AlertTriangle;
+  const hasIssue = !!cat;
 
+  return (
+    <div
+      data-testid={`roster-athlete-${athlete.id}`}
+      className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group"
+      style={{ borderBottom: isLast ? "none" : "1px solid var(--cm-border)" }}
+      onClick={() => navigate(`/support-pods/${athlete.id}`)}
+    >
+      {/* Momentum */}
+      <div className="w-10 shrink-0 text-center pt-1">
+        <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {/* Row 1: Name + issue type badge */}
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-semibold group-hover:text-primary transition-colors" style={{ color: "var(--cm-text)" }}>
+            {athlete.name}
+          </span>
+          <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{athlete.grad_year} · {athlete.position}</span>
+          {hasIssue && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+              style={{ backgroundColor: cat.bg, color: cat.color }}>
+              <CatIcon className="w-2.5 h-2.5" />
+              {cat.label}
+            </span>
+          )}
+        </div>
+
+        {/* Row 2: Reason (why) */}
+        {athlete.why && (
+          <p className="text-xs mb-1 truncate" style={{ color: "var(--cm-text-3)" }}>{athlete.why}</p>
+        )}
+
+        {/* Row 3: Next step */}
+        {athlete.next_step && hasIssue && (
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Next:</span>
+            <span className="text-xs font-medium" style={{ color: "var(--cm-text-2)" }}>{athlete.next_step}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Right: health dot + CTA */}
+      <div className="flex items-center gap-2 shrink-0 pt-1">
+        {athlete.podHealth && (
+          <span className={`w-2 h-2 rounded-full ${HEALTH_DOT[athlete.podHealth.status] || HEALTH_DOT.green}`}
+            title={athlete.podHealth.label}
+          />
+        )}
+        <QuickNote athleteId={athlete.id} athleteName={athlete.name} compact />
+        <button
+          onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all opacity-0 group-hover:opacity-100"
+          style={{
+            backgroundColor: hasIssue ? "rgba(13,148,136,0.1)" : "transparent",
+            color: "#0d9488",
+            border: "1px solid rgba(13,148,136,0.2)",
+          }}
+          data-testid={`open-pod-${athlete.id}`}
+        >
+          Open Pod
+          <ChevronRight className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function MyRosterCard({ athletes = [], onViewPipeline }) {
   if (!athletes.length) {
     return (
       <section data-testid="my-roster-card">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">My Roster</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>My Roster</span>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-          <Users className="w-5 h-5 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-400">No athletes assigned yet.</p>
+        <div className="rounded-xl border p-8 text-center" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+          <Users className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+          <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>No athletes assigned yet.</p>
         </div>
       </section>
     );
@@ -63,108 +136,45 @@ export default function MyRosterCard({ athletes = [], onViewPipeline }) {
   return (
     <section data-testid="my-roster-card">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">My Roster</span>
-          <span className="text-[11px] text-slate-300 font-medium">{athletes.length} athletes</span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>My Roster</span>
+          <span className="text-xs font-medium" style={{ color: "var(--cm-text-3)" }}>
+            {athletes.length} athletes
+            {needsAction.length > 0 && (
+              <span style={{ color: "#f59e0b" }}> · {needsAction.length} need action</span>
+            )}
+          </span>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
         {/* Athletes needing action first */}
-        {needsAction.map((athlete, idx) => {
-          const cat = CATEGORY_CONFIG[athlete.category];
-          const CatIcon = cat?.icon || AlertTriangle;
-          const colorClass = athlete.badgeColor === "red" ? "text-red-600 bg-red-50" :
-            athlete.badgeColor === "amber" ? "text-amber-600 bg-amber-50" : "text-blue-600 bg-blue-50";
-
-          return (
-            <div
-              key={athlete.id}
-              data-testid={`roster-athlete-${athlete.id}`}
-              className={`flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group ${
-                idx < needsAction.length + onTrack.length - 1 ? "border-b border-gray-50" : ""
-              }`}
-              onClick={() => navigate(`/support-pods/${athlete.id}`)}
-            >
-              {/* Momentum */}
-              <div className="w-10 shrink-0 text-center">
-                <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-semibold text-slate-800 group-hover:text-primary transition-colors">
-                    {athlete.name}
-                  </span>
-                  <span className="text-[11px] text-slate-400">{athlete.grad_year} · {athlete.position}</span>
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${colorClass}`}>
-                    <CatIcon className="w-2.5 h-2.5" />
-                    {cat?.label}
-                  </span>
-                </div>
-                {athlete.why && (
-                  <p className="text-xs text-slate-500 truncate">{athlete.why}</p>
-                )}
-              </div>
-
-              {/* Right side */}
-              <div className="flex items-center gap-3 shrink-0">
-                {athlete.podHealth && (
-                  <span className={`w-2 h-2 rounded-full ${HEALTH_DOT[athlete.podHealth.status] || HEALTH_DOT.green}`}
-                    title={athlete.podHealth.label}
-                  />
-                )}
-                <button onClick={(e) => { e.stopPropagation(); onViewPipeline?.(athlete.id); }}
-                  className="p-1.5 rounded-md hover:bg-teal-50 opacity-0 group-hover:opacity-100 transition-all"
-                  title="View Pipeline" data-testid={`view-pipeline-${athlete.id}`}>
-                  <ArrowUpRight className="w-3.5 h-3.5 text-teal-600" />
-                </button>
-                <QuickNote athleteId={athlete.id} athleteName={athlete.name} compact />
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
-              </div>
-            </div>
-          );
-        })}
-
-        {/* On-track athletes */}
-        {onTrack.map((athlete, idx) => (
-          <div
+        {needsAction.map((athlete, idx) => (
+          <AthleteRow
             key={athlete.id}
-            data-testid={`roster-athlete-${athlete.id}`}
-            className={`flex items-center gap-4 px-5 py-3.5 cursor-pointer hover:bg-slate-50/60 transition-colors group ${
-              idx < onTrack.length - 1 ? "border-b border-gray-50" : ""
-            }`}
-            onClick={() => navigate(`/support-pods/${athlete.id}`)}
-          >
-            <div className="w-10 shrink-0 text-center">
-              <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
-            </div>
+            athlete={athlete}
+            onViewPipeline={onViewPipeline}
+            isLast={idx === needsAction.length - 1 && onTrack.length === 0}
+          />
+        ))}
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-700 group-hover:text-primary transition-colors">
-                  {athlete.name}
-                </span>
-                <span className="text-[11px] text-slate-400">{athlete.grad_year} · {athlete.position}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              {athlete.podHealth && (
-                <span className={`w-2 h-2 rounded-full ${HEALTH_DOT[athlete.podHealth.status] || HEALTH_DOT.green}`}
-                  title={athlete.podHealth.label}
-                />
-              )}
-              <button onClick={(e) => { e.stopPropagation(); onViewPipeline?.(athlete.id); }}
-                className="p-1.5 rounded-md hover:bg-teal-50 opacity-0 group-hover:opacity-100 transition-all"
-                title="View Pipeline" data-testid={`view-pipeline-${athlete.id}`}>
-                <ArrowUpRight className="w-3.5 h-3.5 text-teal-600" />
-              </button>
-              <QuickNote athleteId={athlete.id} athleteName={athlete.name} compact />
-              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
-            </div>
+        {/* Separator between groups */}
+        {needsAction.length > 0 && onTrack.length > 0 && (
+          <div className="px-5 py-2" style={{ backgroundColor: "rgba(16,185,129,0.04)", borderTop: "1px solid var(--cm-border)", borderBottom: "1px solid var(--cm-border)" }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#10b981" }}>
+              On Track — {onTrack.length} athlete{onTrack.length !== 1 ? "s" : ""}
+            </span>
           </div>
+        )}
+
+        {/* On-track athletes — compact */}
+        {onTrack.map((athlete, idx) => (
+          <AthleteRow
+            key={athlete.id}
+            athlete={athlete}
+            onViewPipeline={onViewPipeline}
+            isLast={idx === onTrack.length - 1}
+          />
         ))}
       </div>
     </section>

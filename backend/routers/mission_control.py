@@ -60,6 +60,9 @@ def _build_athlete_roster_item(athlete: dict) -> dict:
             why = item.get("why_this_surfaced")
             break
 
+    # Compute human-friendly next step based on category
+    next_step = _compute_next_step(category, athlete)
+
     return {
         "id": athlete["id"],
         "name": athlete.get("full_name", athlete.get("name", "Unknown")),
@@ -76,7 +79,26 @@ def _build_athlete_roster_item(athlete: dict) -> dict:
         "category": category,
         "badgeColor": badge_color,
         "why": why,
+        "next_step": next_step,
     }
+
+
+def _compute_next_step(category: str | None, athlete: dict) -> str:
+    """Return a human-friendly next step based on athlete's issue category."""
+    days = athlete.get("days_since_activity", 0)
+    name_first = (athlete.get("full_name") or athlete.get("name", "")).split(" ")[0]
+
+    step_map = {
+        "momentum_drop": f"Check in with {name_first}" if days > 14 else f"Review {name_first}'s recent activity",
+        "blocker": f"Remove blocker for {name_first}",
+        "deadline_proximity": f"Review upcoming deadline with {name_first}",
+        "engagement_drop": f"Re-engage {name_first} with a check-in",
+        "ownership_gap": f"Assign a primary coach for {name_first}",
+        "readiness_issue": f"Review {name_first}'s readiness gaps",
+    }
+    if category and category in step_map:
+        return step_map[category]
+    return f"Keep supporting {name_first}'s progress"
 
 
 @router.get("/mission-control")
@@ -284,7 +306,7 @@ async def _get_coach_health(coach_map):
 
 async def _get_recruiting_signals():
     """Build recruiting signals summary for Director MC."""
-    from datetime import datetime, timezone, timedelta
+    from datetime import datetime, timezone
     week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
 
     # Count event notes with school interest this week
@@ -318,7 +340,7 @@ async def _get_recruiting_signals():
 
 
 def _build_coach_response(user, alerts, attention, signals, events):
-    """Coach: personal work dashboard."""
+    """Coach: personal work dashboard — intervention-focused."""
     visible_ids = get_visible_athlete_ids(user)
     my_athletes = [a for a in get_athletes() if a["id"] in visible_ids]
 
@@ -327,15 +349,10 @@ def _build_coach_response(user, alerts, attention, signals, events):
     roster.sort(key=lambda a: a.get("momentum_score", 0))  # lowest momentum first
 
     # Count how many need action
-    needing_action = len([a for a in roster if a.get("category")])
+    needing_action = [a for a in roster if a.get("category")]
 
-    # Today's summary for the hero
-    todays_summary = {
-        "athleteCount": len(roster),
-        "needingAction": needing_action,
-        "upcomingEvents": len([e for e in events if e.get("daysAway", 99) <= 7]),
-        "alertCount": len(alerts),
-    }
+    # Build priorities queue — structured by urgency
+    priorities = _build_priorities_queue(needing_action, events, alerts)
 
     # Upcoming events — next 5
     upcoming = sorted(events, key=lambda e: e.get("daysAway", 99))[:5]
@@ -343,13 +360,129 @@ def _build_coach_response(user, alerts, attention, signals, events):
     # Recent activity — latest 8
     activity = sorted(signals, key=lambda s: s.get("hoursAgo", 0))[:8]
 
+    # Count events needing prep (within 7 days)
+    events_this_week = [e for e in events if e.get("daysAway", 99) <= 7]
+
+    # Today's summary for the hero
+    todays_summary = {
+        "athleteCount": len(roster),
+        "needingAction": len(needing_action),
+        "upcomingEvents": len(events_this_week),
+        "directorRequests": 0,  # Will be enriched by frontend via DirectorActionsCard
+    }
+
+    # Compact summary sentences
+    summary_lines = []
+    momentum_drops = [a for a in needing_action if a.get("category") == "momentum_drop"]
+    blockers = [a for a in needing_action if a.get("category") == "blocker"]
+    engagement_drops = [a for a in needing_action if a.get("category") == "engagement_drop"]
+    other_issues = [a for a in needing_action if a.get("category") not in ("momentum_drop", "blocker", "engagement_drop")]
+
+    if momentum_drops:
+        summary_lines.append(f"{len(momentum_drops)} athlete{'s' if len(momentum_drops) > 1 else ''} {'have' if len(momentum_drops) > 1 else 'has'} momentum drop")
+    if blockers:
+        summary_lines.append(f"{len(blockers)} athlete{'s' if len(blockers) > 1 else ''} {'have' if len(blockers) > 1 else 'has'} a blocker")
+    if engagement_drops:
+        summary_lines.append(f"{len(engagement_drops)} athlete{'s' if len(engagement_drops) > 1 else ''} {'have' if len(engagement_drops) > 1 else 'has'} engagement drop")
+    if other_issues:
+        summary_lines.append(f"{len(other_issues)} athlete{'s' if len(other_issues) > 1 else ''} need{'s' if len(other_issues) == 1 else ''} attention")
+    events_prep = [e for e in events_this_week if e.get("daysAway", 99) <= 3]
+    if events_prep:
+        summary_lines.append(f"{len(events_prep)} event{'s' if len(events_prep) > 1 else ''} require{'s' if len(events_prep) == 1 else ''} prep")
+    if not summary_lines:
+        summary_lines.append("All athletes are on track today")
+
     return {
         "role": "club_coach",
         "todays_summary": todays_summary,
+        "summary_lines": summary_lines,
+        "priorities": priorities,
         "myRoster": roster,
         "upcomingEvents": upcoming,
         "recentActivity": activity,
     }
+
+
+def _build_priorities_queue(needing_action, events, alerts):
+    """Build a structured priority queue for the coach's work surface."""
+    priorities = []
+
+    # Critical: momentum drops, blockers
+    for a in needing_action:
+        cat = a.get("category", "")
+        if cat in ("momentum_drop", "blocker"):
+            priorities.append({
+                "urgency": "critical",
+                "athlete_id": a["id"],
+                "athlete_name": a["name"],
+                "action": _category_to_action(cat),
+                "reason": a.get("why") or _category_to_reason(cat, a),
+                "cta_label": "Open Pod",
+                "cta_path": f"/support-pods/{a['id']}",
+            })
+
+    # Follow-up needed: engagement drop, deadline, readiness
+    for a in needing_action:
+        cat = a.get("category", "")
+        if cat in ("engagement_drop", "deadline_proximity", "readiness_issue"):
+            priorities.append({
+                "urgency": "follow_up",
+                "athlete_id": a["id"],
+                "athlete_name": a["name"],
+                "action": _category_to_action(cat),
+                "reason": a.get("why") or _category_to_reason(cat, a),
+                "cta_label": "Open Pod",
+                "cta_path": f"/support-pods/{a['id']}",
+            })
+
+    # Event prep: events in next 3 days
+    for e in events:
+        if e.get("daysAway", 99) <= 3 and e.get("daysAway", 99) >= 0:
+            days_away = e.get("daysAway", 0)
+            athlete_count = e.get("athleteCount", 0) or len(e.get("athlete_ids", []))
+            if days_away == 0:
+                time_label = "Today"
+            elif days_away == 1:
+                time_label = "In 1 day"
+            else:
+                time_label = f"In {days_away} days"
+            priorities.append({
+                "urgency": "event_prep",
+                "event_id": e.get("id"),
+                "event_name": e.get("name"),
+                "action": f"Prepare for {e.get('name', 'event')}",
+                "reason": f"{time_label} — {athlete_count} athletes attending",
+                "cta_label": "Prep Event",
+                "cta_path": f"/events/{e.get('id')}/prep",
+            })
+
+    return priorities
+
+
+def _category_to_action(category):
+    """Convert issue category to human-friendly coach action language."""
+    return {
+        "momentum_drop": "Check in with athlete",
+        "blocker": "Remove blocker",
+        "deadline_proximity": "Review upcoming deadline",
+        "engagement_drop": "Re-engage athlete",
+        "ownership_gap": "Assign coach ownership",
+        "readiness_issue": "Review readiness gaps",
+    }.get(category, "Review athlete status")
+
+
+def _category_to_reason(category, athlete):
+    """Generate a short reason string from category and athlete data."""
+    days = athlete.get("days_since_activity", 0)
+    name = athlete.get("name", "Athlete")
+    return {
+        "momentum_drop": f"No activity in {days} days",
+        "blocker": f"{name} has an active blocker",
+        "deadline_proximity": f"Deadline approaching for {name}",
+        "engagement_drop": f"Engagement declining for {name}",
+        "ownership_gap": f"{name} has no assigned primary coach",
+        "readiness_issue": f"{name} has readiness gaps to address",
+    }.get(category, f"{name} needs attention")
 
 
 # ── Sub-endpoints (kept for backward compatibility) ──
