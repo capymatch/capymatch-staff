@@ -112,6 +112,18 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 ## P0 In Progress
 - (None — all P0 items completed)
 
+### Coach Dashboard Restructure — Phase 1-2 (DONE - March 11, 2026)
+- **Phase 1 — Dashboard Restructure:**
+  - Hero KPIs refined: MY ATHLETES, NEED ACTION, EVENTS THIS WEEK, DIRECTOR REQUESTS (replaced vague "ALERTS")
+  - Compact Summary Card: bullet points ("3 athletes have momentum drop", "1 athlete has a blocker", etc.) + "Review Priorities" CTA
+  - Today's Priorities: deterministic work queue grouped by urgency (Critical / Follow-Up / Event Prep), each row: athlete, action, reason, CTA
+  - Replaced AI-powered "What Should I Do Today?" with deterministic priorities engine
+- **Phase 2 — My Roster Improvements:**
+  - Each athlete row: name, grad year, position, issue type badge, short reason, NEXT step, "Open Pod" CTA on hover
+  - "ON TRACK" separator between athletes needing action and healthy athletes
+  - Backend enriched with `next_step`, `summary_lines`, `priorities` queue per coach response
+- **Testing:** 100% (iteration_104: 18/18 backend, all frontend verified)
+
 ### NCAA Timeline on Calendar Page (DONE - March 11, 2026)
 - **Ported from GitHub:** Brought the `NcaaTimeline.js` component from `github.com/capymatch/capymatch` repo, adapted CSS variables (`--t-*` → `--cm-*`).
 - **Tab Switcher:** Added "My Calendar" / "NCAA Timeline" tab switcher to CalendarPage. NCAA tab uses teal active state.
