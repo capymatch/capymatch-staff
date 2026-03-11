@@ -26,6 +26,7 @@ import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../compone
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
 import NotesSidebar from "../../components/NotesSidebar";
 import { SchoolInsightCard, TimelineCard } from "../../components/intelligence/IntelligenceCards";
+import { EngagementOutlookCard } from "../../components/intelligence/EngagementOutlookCard";
 import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -939,6 +940,7 @@ export default function JourneyPage() {
                 Intelligence
               </h3>
               <div className="space-y-2">
+                <EngagementOutlookCard programId={program.program_id} isBasic={isBasic} />
                 <SchoolInsightCard programId={program.program_id} isBasic={isBasic} />
                 <TimelineCard programId={program.program_id} isBasic={isBasic} />
               </div>

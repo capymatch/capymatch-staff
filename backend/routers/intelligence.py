@@ -649,3 +649,151 @@ async def intelligence_timeline(
 
     await _store_card(card, program_id, tenant_id)
     return card
+
+
+# ── Engagement Outlook Card (deterministic, no LLM) ─────────────────────
+
+def _build_next_step(m: dict) -> dict:
+    """Build the primary recommended action from metrics. Action-first framing."""
+    unanswered = m.get("unanswered_coach_questions", 0)
+    overdue = m.get("overdue_followups", 0)
+    days_m = m.get("days_since_last_meaningful_engagement")
+    trend = m.get("engagement_trend", "insufficient_data")
+    meaningful_count = m.get("meaningful_interaction_count", 0)
+    health = m.get("pipeline_health_state", "at_risk")
+
+    # Priority order: urgent items first, then proactive guidance
+    if unanswered > 0:
+        q_word = "question" if unanswered == 1 else "questions"
+        return {
+            "action": f"Reply to {unanswered} unanswered coach {q_word}",
+            "urgency": "high",
+            "context": "Coaches who ask questions are actively engaged — a quick reply keeps the conversation going.",
+        }
+
+    if overdue > 0:
+        return {
+            "action": "Send your scheduled follow-up",
+            "urgency": "high",
+            "context": "You have an overdue follow-up. Reaching out now shows continued interest.",
+        }
+
+    if days_m is not None and days_m > 14:
+        return {
+            "action": "Reach out to keep the conversation alive",
+            "urgency": "medium",
+            "context": f"It's been {days_m} days since your last meaningful exchange. A short check-in can reignite momentum.",
+        }
+
+    if trend in ("decelerating", "stalled") and meaningful_count >= 2:
+        return {
+            "action": "Re-engage with a thoughtful update",
+            "urgency": "medium",
+            "context": "Engagement has slowed down. Share a recent highlight or ask a genuine question about the program.",
+        }
+
+    if meaningful_count == 0:
+        return {
+            "action": "Start a conversation with this program",
+            "urgency": "low",
+            "context": "You haven't had meaningful contact yet. An introductory email or call request is a great first step.",
+        }
+
+    if health == "strong_momentum":
+        return {
+            "action": "Keep it up — engagement is strong",
+            "urgency": "none",
+            "context": "This relationship is in a great place. Continue responding promptly and showing genuine interest.",
+        }
+
+    return {
+        "action": "Stay engaged and respond promptly",
+        "urgency": "low",
+        "context": "The relationship is active. Keep communication flowing to build on this foundation.",
+    }
+
+
+_FRESHNESS_LABELS = {
+    "active_recently": {"label": "Active Recently", "color": "green"},
+    "needs_follow_up": {"label": "Needs Follow-Up", "color": "amber"},
+    "momentum_slowing": {"label": "Momentum Slowing", "color": "orange"},
+    "no_recent_engagement": {"label": "No Recent Engagement", "color": "gray"},
+}
+
+
+@router.get("/intelligence/program/{program_id}/engagement-outlook")
+async def intelligence_engagement_outlook(
+    program_id: str, current_user: dict = get_current_user_dep()
+):
+    """Engagement Outlook card — deterministic, action-first, no LLM."""
+    from services.program_metrics import get_metrics
+
+    tenant_id = await _get_tenant_id(current_user)
+    if not tenant_id:
+        raise HTTPException(status_code=404, detail="No athlete profile found")
+
+    # Verify ownership
+    program = await db.programs.find_one(
+        {"program_id": program_id, "tenant_id": tenant_id},
+        {"_id": 0, "program_id": 1, "university_name": 1},
+    )
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+
+    m = await get_metrics(program_id, tenant_id)
+
+    freshness_key = m.get("engagement_freshness_label", "no_recent_engagement")
+    freshness = _FRESHNESS_LABELS.get(freshness_key, _FRESHNESS_LABELS["no_recent_engagement"])
+    next_step = _build_next_step(m)
+
+    # Signals breakdown (for Pro users — frontend decides what to show)
+    signals = []
+    last_type = m.get("last_meaningful_engagement_type")
+    days_m = m.get("days_since_last_meaningful_engagement")
+    if last_type and days_m is not None:
+        type_label = last_type.replace("_", " ").replace("-", " ").title()
+        if days_m == 0:
+            signals.append({"label": f"{type_label} today", "type": "positive"})
+        elif days_m == 1:
+            signals.append({"label": f"{type_label} yesterday", "type": "positive"})
+        elif days_m <= 7:
+            signals.append({"label": f"{type_label} {days_m}d ago", "type": "positive"})
+        else:
+            signals.append({"label": f"Last meaningful: {type_label} {days_m}d ago", "type": "neutral"})
+    elif days_m is None:
+        signals.append({"label": "No meaningful engagement yet", "type": "neutral"})
+
+    unanswered = m.get("unanswered_coach_questions", 0)
+    if unanswered > 0:
+        signals.append({"label": f"{unanswered} unanswered coach question{'s' if unanswered > 1 else ''}", "type": "attention"})
+
+    overdue = m.get("overdue_followups", 0)
+    if overdue > 0:
+        signals.append({"label": "Overdue follow-up", "type": "attention"})
+
+    trend = m.get("engagement_trend", "insufficient_data")
+    trend_labels = {
+        "accelerating": ("Engagement accelerating", "positive"),
+        "steady": ("Steady engagement", "positive"),
+        "decelerating": ("Engagement slowing down", "neutral"),
+        "stalled": ("Engagement has stalled", "attention"),
+        "inactive": ("No recent activity", "neutral"),
+    }
+    if trend in trend_labels:
+        signals.append({"label": trend_labels[trend][0], "type": trend_labels[trend][1]})
+
+    meaningful_count = m.get("meaningful_interaction_count", 0)
+    if meaningful_count > 0:
+        signals.append({"label": f"{meaningful_count} meaningful interaction{'s' if meaningful_count > 1 else ''}", "type": "positive"})
+
+    return {
+        "card_type": "engagement_outlook",
+        "program_id": program_id,
+        "university_name": program.get("university_name", ""),
+        "freshness_label": freshness["label"],
+        "freshness_color": freshness["color"],
+        "pipeline_health_state": m.get("pipeline_health_state", "at_risk"),
+        "next_step": next_step,
+        "signals": signals,
+        "data_confidence": m.get("data_confidence", "LOW"),
+    }
