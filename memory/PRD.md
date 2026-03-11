@@ -112,6 +112,20 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 ## P0 In Progress
 - (None — all P0 items completed)
 
+### Coach Area Overhaul — Phases 3-5 (DONE - March 11, 2026)
+- **Phase 3 — Support Pod Refinement:**
+  - ActiveIssueBanner: "WHAT TO DO NOW" is the star element (16px bold), "WHAT IS WRONG"/"WHAT CHANGED" as two-column context cards. Log Check-in, Send Message, Mark Resolved CTAs.
+  - NextActions: Grouped by OVERDUE (red) → READY (blue) → UPCOMING (purple) instead of by owner. Overdue counter in header.
+  - AthleteSnapshot: Added Pipeline Health (% responding + engagement label), health bars, upcoming events list.
+  - PodMembers: PRIMARY COACH badge with crown icon, teal background highlight, ownership task summary.
+- **Phase 4 — Events/Prep:**
+  - UpcomingEventsCard: per-event athletes attending count, "need attention" count, prep steps remaining, amber badges for athletes with issues (e.g., "Emma — momentum drop").
+  - Progress bars per event. Past events shown at reduced opacity.
+- **Phase 5 — Language & UX Polish:**
+  - Header: "need action" replaces "alerts". ActivityFeed: CSS variable theming replaces hardcoded colors.
+  - Human-friendly action language: "Check in with athlete", "Re-engage athlete", "Remove blocker", "Review readiness gaps".
+- **Testing:** 100% (iteration_105: 16/16 backend, all 15 frontend features verified)
+
 ### Coach Dashboard Restructure — Phase 1-2 (DONE - March 11, 2026)
 - **Phase 1 — Dashboard Restructure:**
   - Hero KPIs refined: MY ATHLETES, NEED ACTION, EVENTS THIS WEEK, DIRECTOR REQUESTS (replaced vague "ALERTS")
