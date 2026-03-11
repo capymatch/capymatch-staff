@@ -374,6 +374,14 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Integration**: Pipeline page fetches batch metrics on load, passes to each KanbanCard. 12 badges rendered across all cards.
 - **Testing:** 100% pass rate (iteration_94: 18/18 backend, all frontend verified)
 
+### Engagement Outlook Card (DONE - March 11, 2026)
+- **Backend Endpoint** (`GET /api/intelligence/program/{program_id}/engagement-outlook`): Deterministic, no LLM. Returns freshness_label, freshness_color, pipeline_health_state, next_step (action/urgency/context), signals array, data_confidence.
+- **Next Step Logic** (`_build_next_step`): Priority-ordered action recommendations — unanswered coach questions > overdue follow-ups > stale engagement > declining trend > no contact yet > healthy relationship.
+- **Frontend Card** (`EngagementOutlookCard.js`): Expandable card in Intelligence section on Journey page. Action-first design — next step is most prominent. Freshness pill in header. Signals breakdown for Pro users, basic users see only next step.
+- **Gating**: Basic users see simplified version (header + next step). Pro users see full signals breakdown.
+- **Files**: `backend/routers/intelligence.py`, `frontend/src/components/intelligence/EngagementOutlookCard.js`, `frontend/src/pages/athlete/JourneyPage.js`
+- **Testing:** 100% (iteration_95: 12/12 backend, all frontend verified)
+
 ## P0 In Progress
 - (None — all P0 items completed)
 
