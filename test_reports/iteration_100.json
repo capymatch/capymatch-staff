@@ -1,0 +1,109 @@
+{
+  "summary": "Public Profile V2 - Coach Scan Mode & Dynamic Recruiting Snapshot - ALL TESTS PASSED. Backend (14/14 API tests) and Frontend UI tests verified the redesigned public profile with Coach Scan hero, recruiting_signals array, key facts grid, and signal pills.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_public_profile_v2.py",
+    "/app/test_reports/pytest/pytest_public_profile_v2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: GET /api/public/profile/{slug} returns recruiting_signals array",
+    "VERIFIED: recruiting_signals includes division interest (e.g., 'Actively exploring D1, D2, and D3 opportunities')",
+    "VERIFIED: recruiting_signals includes 'Academic information available' when GPA exists",
+    "VERIFIED: recruiting_signals includes 'Profile updated this season' for recently updated profiles",
+    "VERIFIED: recruiting_signals are privacy-safe - no school names or pipeline counts exposed",
+    "VERIFIED: GET /api/internal/athlete/{athlete_id}/profile still works for staff",
+    "VERIFIED: PUT /api/internal/athlete/{athlete_id}/profile/publish still works",
+    "VERIFIED: GET /api/athlete/public-profile/settings still returns profile_visible",
+    "VERIFIED: Frontend Coach Scan section renders with name, class year badge, position, key facts",
+    "VERIFIED: Frontend Key Facts grid shows Height (5'10), Weight (145 lbs), GPA (3.8)",
+    "VERIFIED: Frontend Contact CTA button present in hero when email is available",
+    "VERIFIED: Frontend Recruiting Snapshot section shows signal pills below hero",
+    "VERIFIED: Frontend signal pills display correct text from backend",
+    "VERIFIED: Frontend Bio section renders",
+    "VERIFIED: Frontend Events section shows upcoming events",
+    "VERIFIED: Frontend 404 page for non-existent slug",
+    "VERIFIED: Internal staff profile shows Pipeline Status with 12 schools"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_public_profile_v2.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "director": {
+      "email": "director@capymatch.com",
+      "password": "director123"
+    },
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "password123"
+    }
+  },
+  "seed_data_creation": "None - used existing Emma Chen data (athlete_3) with slug 'emma-chen-2026-oh'",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Public Profile V2 fully implemented and tested. The new features added: (1) Coach Scan Mode - scannable hero with name/class/position/height/GPA/club/measurables/CTAs, (2) Dynamic Recruiting Snapshot - recruiting_signals array with privacy-safe signals like division interest, academic info available, profile freshness. Emma Chen profile shows 3 signals: 'Actively exploring D1, D2, and D3 opportunities', 'Academic information available', 'Profile updated this season'. ScanFact and MeasurableChip components render key facts. Internal profile endpoint does NOT include recruiting_signals (uses recruiting_context instead with full pipeline details).",
+  "features_verified": {
+    "backend_recruiting_signals": {
+      "recruiting_signals in response": "PASS",
+      "division interest signal": "PASS - 'Actively exploring D1, D2, and D3 opportunities'",
+      "academic info signal": "PASS - 'Academic information available' (GPA=3.8)",
+      "profile freshness signal": "PASS - 'Profile updated this season'",
+      "privacy - no school names": "PASS",
+      "privacy - no pipeline counts": "PASS"
+    },
+    "backend_existing_endpoints": {
+      "GET /api/internal/athlete/{athlete_id}/profile - staff": "PASS",
+      "PUT /api/internal/athlete/{athlete_id}/profile/publish": "PASS",
+      "GET /api/athlete/public-profile/settings": "PASS"
+    },
+    "frontend_coach_scan_mode": {
+      "coach-scan-section": "PASS",
+      "athlete-name": "PASS - EMMA CHEN",
+      "class-year-badge": "PASS - Class of 2026",
+      "key-facts grid": "PASS",
+      "scan-height": "PASS - 5'10",
+      "scan-weight": "PASS - 145 lbs",
+      "scan-gpa": "PASS - 3.8",
+      "hero-ctas": "PASS",
+      "contact-email-cta": "PASS"
+    },
+    "frontend_recruiting_snapshot": {
+      "recruiting-snapshot section": "PASS",
+      "signal-0": "PASS - 'Actively exploring D1, D2, and D3 opportunities'",
+      "signal-1": "PASS - 'Academic information available'",
+      "signal-2": "PASS - 'Profile updated this season'"
+    },
+    "frontend_other_sections": {
+      "bio-section": "PASS - 'Love volleyball'",
+      "events-section": "PASS - 4 upcoming events shown",
+      "share-button": "PASS"
+    },
+    "frontend_404": {
+      "/p/nonexistent-slug-xyz": "PASS - 'Athlete Not Found' message"
+    },
+    "internal_staff_profile": {
+      "internal-athlete-profile": "PASS",
+      "profile-card": "PASS",
+      "staff-athlete-name": "PASS - Emma Chen",
+      "staff-publish-btn": "PASS - shows 'Unpublish'",
+      "preview-public-btn": "PASS",
+      "copy-profile-link-btn": "PASS",
+      "context-pipeline": "PASS - 12 schools",
+      "context-flags": "PASS",
+      "context-actions": "PASS",
+      "context-interactions": "PASS"
+    }
+  }
+}

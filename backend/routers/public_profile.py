@@ -132,6 +132,78 @@ def _build_coach_summary(athlete: dict) -> str:
     return " ".join([intro] + extras)
 
 
+# ── Recruiting Signals (deterministic, privacy-safe) ──────────────────
+
+async def _build_recruiting_signals(athlete: dict, settings: dict) -> list:
+    """Build tasteful, privacy-safe recruiting signals for the public profile."""
+    signals = []
+    tenant_id = athlete.get("tenant_id", "")
+
+    # 1. Division interest — from pipeline programs
+    if tenant_id:
+        programs = await db.programs.find(
+            {"tenant_id": tenant_id, "is_active": {"$ne": False}},
+            {"_id": 0, "division": 1, "state": 1},
+        ).to_list(200)
+
+        if programs:
+            # Division spread
+            divs = set()
+            for p in programs:
+                d = (p.get("division") or "").strip()
+                if d:
+                    divs.add(d)
+            if divs:
+                div_list = sorted(divs)
+                if len(div_list) == 1:
+                    signals.append(f"Exploring {div_list[0]} opportunities")
+                elif len(div_list) == 2:
+                    signals.append(f"Actively exploring {div_list[0]} and {div_list[1]} opportunities")
+                else:
+                    signals.append(f"Actively exploring {', '.join(div_list[:-1])}, and {div_list[-1]} opportunities")
+
+            # Region interest — show up to 3 states
+            states = set()
+            for p in programs:
+                s = (p.get("state") or "").strip()
+                if s and len(s) <= 3:
+                    states.add(s.upper())
+            if states:
+                state_list = sorted(states)
+                if len(state_list) <= 3:
+                    signals.append(f"Interested in programs in {', '.join(state_list[:-1])} and {state_list[-1]}" if len(state_list) > 1 else f"Interested in programs in {state_list[0]}")
+                else:
+                    signals.append(f"Interested in programs across {len(state_list)} states")
+
+    # 2. Highlight reel
+    video = athlete.get("video_link") or ""
+    if video and str(video).lower() != "none":
+        signals.append("Highlight reel available")
+
+    # 3. Academic info
+    gpa = athlete.get("gpa")
+    if settings.get("show_academics", True) and gpa and str(gpa).lower() != "none":
+        signals.append("Academic information available")
+
+    # 4. Club coach contact
+    parent_name = athlete.get("parent_name") or ""
+    if settings.get("show_club_coach", True) and parent_name and str(parent_name).lower() != "none":
+        signals.append("Club coach contact available")
+
+    # 5. Profile freshness
+    updated = athlete.get("updated_at") or athlete.get("profile_updated_at") or ""
+    if updated:
+        try:
+            updated_dt = datetime.fromisoformat(str(updated).replace("Z", "+00:00"))
+            days_ago = (datetime.now(timezone.utc) - updated_dt).days
+            if days_ago <= 90:
+                signals.append("Profile updated this season")
+        except (ValueError, TypeError):
+            pass
+
+    return signals
+
+
 # ── Profile → response mapping ────────────────────────────────────
 
 _PROFILE_MAP = {
@@ -266,6 +338,7 @@ async def get_public_profile(slug: str):
     full_profile = _athlete_to_profile_dict(athlete)
     profile = _apply_privacy_filters(full_profile, settings)
     coach_summary = _build_coach_summary(athlete)
+    recruiting_signals = await _build_recruiting_signals(athlete, settings)
 
     tenant_id = athlete.get("tenant_id", "")
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -282,6 +355,7 @@ async def get_public_profile(slug: str):
     return {
         "profile": profile,
         "coach_summary": coach_summary,
+        "recruiting_signals": recruiting_signals,
         "upcoming_events": upcoming,
         "past_events": past,
         "visibility": {k: v for k, v in settings.items() if k != "profile_visible"},
