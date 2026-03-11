@@ -86,6 +86,14 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - Navigates to `/internal/athlete/:athleteId/profile` for seamless staff workflow
 - Responsive: shows icon-only on mobile, full text on desktop
 
+### Pipeline Command Center — Phase A+B+C (DONE - March 11, 2026)
+- **Phase A — Top Action Engine (Backend):** New `top_action_engine.py` with centralized `ACTION_MAP` (8 priority levels, 14 action types). Deterministic rules engine computes one primary action per school with: `action_key`, `reason_code`, `priority`, `category`, `label`, `owner`, `explanation`, `cta_label`. Priority: coach_flag > director_action > overdue > reply_needed > due_today > first_outreach > cooling_off > on_track.
+- **Phase B — School Card Enhancement:** Each Kanban card now shows: health badge + top action label + owner badge (Athlete/Parent/Coach/Shared with color coding) + contextual explanation. Cards feel like an operating system for recruiting, not a static tracker.
+- **Phase C — Hero Card Enhancement:** Hero carousel now driven by Top Action Engine. Shows all actionable items with owner badges, expanded categories (Coach Flags, Director Actions, Reply Needed, Re-engage). Filter pills updated with new categories.
+- **Owner inference:** Auto-inferred from action type (athlete for most, shared for director actions). No manual assignment yet.
+- **New endpoints:** `GET /api/internal/programs/top-actions` (batch), `GET /api/internal/programs/{id}/top-action` (per-program)
+- **Testing:** 100% (iteration_101: 18/18 backend, all frontend verified)
+
 ## Key API Endpoints
 - `GET /api/subscription` — Current user's tier
 - `GET /api/public/profile/{slug}` — Public athlete profile (no auth)
