@@ -362,6 +362,18 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Files Modified**: `services/program_metrics.py` (_compute_pipeline_health), `models.py`
 - **Testing:** 100% pass rate (iteration_93: 57/57 backend tests)
 
+### Pipeline Health Badges on Kanban Cards (DONE - March 11, 2026)
+- **Batch Metrics Endpoint** (`POST /api/internal/programs/batch-metrics`): Accepts `{program_ids: [...]}`, returns `{metrics: {pid: {...}}}`. Caps at 50 IDs. Athlete-only auth.
+- **PipelineHealthBadge Component** (`/app/frontend/src/components/PipelineHealthBadge.js`): Compact badge with icon + label, calm colors per state:
+  - `strong_momentum` — green (TrendingUp icon)
+  - `active` — blue (Zap icon)
+  - `needs_follow_up` — amber (Clock icon)
+  - `cooling_off` — orange (Activity icon)
+  - `at_risk` — red (AlertCircle icon)
+- **Explanation Line**: Tooltip shows context like "Coach Reply 2d ago", "No meaningful engagement in 11d", "No meaningful engagement yet"
+- **Integration**: Pipeline page fetches batch metrics on load, passes to each KanbanCard. 12 badges rendered across all cards.
+- **Testing:** 100% pass rate (iteration_94: 18/18 backend, all frontend verified)
+
 ## P0 In Progress
 - (None — all P0 items completed)
 
