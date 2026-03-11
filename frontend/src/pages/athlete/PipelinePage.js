@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   Plus, ChevronRight, ChevronLeft, Loader2,
   Send, GraduationCap, AlertTriangle, Lightbulb,
-  Archive, RotateCcw, CheckSquare, Clock, Flag, ArrowRight,
+  Archive, RotateCcw, CheckSquare, Clock, ArrowRight,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "../../components/ui/button";
@@ -483,46 +483,11 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
 function UpcomingTasksSection({ tasks, navigate }) {
   if (!tasks || tasks.length === 0) return null;
 
-  const coachTasks = tasks.filter(t => t.source === "coach");
   const systemTasks = tasks.filter(t => t.source !== "coach");
+  if (systemTasks.length === 0) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
-      {/* Coach Flags — clickable overview, navigates to Journey */}
-      {coachTasks.length > 0 && (
-        <div style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10, padding: "16px 20px" }} data-testid="coach-flags-section">
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
-              <Flag style={{ width: 15, height: 15, color: "#f59e0b" }} /> Flagged by Coach
-            </div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{coachTasks.length} item{coachTasks.length !== 1 ? "s" : ""}</span>
-          </div>
-          {coachTasks.map(task => (
-            <div key={task.task_id}
-              onClick={() => navigate(task.link)}
-              style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderTop: "1px solid rgba(245,158,11,0.12)", cursor: "pointer" }}
-              data-testid={`coach-flag-${task.flag_id || task.task_id}`}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 7,
-                background: "rgba(245,158,11,0.15)", display: "flex",
-                alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2,
-              }}>
-                <Flag style={{ width: 14, height: 14, color: "#f59e0b" }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.4 }}>{task.title}</div>
-                <div style={{ fontSize: 11, color: "var(--cm-text-2)", marginTop: 2 }}>{task.description}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b" }}>{task.flagged_by_name}</span>
-                  {task.due_label && <span style={{ fontSize: 10, color: "var(--cm-text-3)" }}>{task.due_label}</span>}
-                </div>
-              </div>
-              <ArrowRight style={{ width: 14, height: 14, color: "var(--cm-text-3)", flexShrink: 0, marginTop: 6 }} />
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* System Tasks */}
       {systemTasks.length > 0 && (
         <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 10, padding: "16px 20px" }} data-testid="upcoming-tasks">
