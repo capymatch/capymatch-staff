@@ -45,63 +45,75 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - Volleyball quiz, admin users/subscriptions, School Insight & Timeline agents
 
 ### Schema V2 + Derived Metrics + Hero Carousel + Performance Fix (DONE)
-- Structured signals, program_metrics, priority alerts, smart-match caching (11s→1s)
+- Structured signals, program_metrics, priority alerts, smart-match caching (11s->1s)
 
 ### Public Athlete Profile V1 (DONE - March 11, 2026)
 - Slug-based public profile (`/p/{slug}`), privacy-filtered by `profile_visible` + section toggles
 - Settings UI with publish toggle, share link, completeness bar, coach summary preview
-- Safe defaults: contact email/phone hidden, profile unpublished by default
 
 ### Internal Staff Profile + Dual-Mode Profiles (DONE - March 11, 2026)
-- **Two profile modes:**
-  - `/p/{slug}` — Public, anyone with link, respects `profile_visible` + all privacy toggles
-  - `/internal/athlete/:athleteId/profile` — Staff-only (director, club_coach, platform_admin), ignores publish toggle, shows full recruiting context
-- **Internal profile features:**
-  - Full athlete profile card (same design as public, no privacy filtering)
-  - Recruiting Context panel: Pipeline Status (school list with stages, reply status, due dates), Coach Flags, Director Actions, Recent Interactions (with meaningful engagement indicators)
-  - Quick actions: "Publish Profile" toggle, "Copy Athlete Profile Link" (with warning if unpublished), "Preview Public Profile" (opens public page in new tab)
-  - Unpublished banner when `profile_visible=false`
-  - Profile completeness bar with missing fields
-- **Rename:** `is_published` → `profile_visible` (backward-compatible normalization)
-- **New endpoints:**
-  - `GET /api/internal/athlete/{athlete_id}/profile` — staff-only full view
-  - `PUT /api/internal/athlete/{athlete_id}/profile/publish` — staff publish toggle
-- **New files:** `InternalAthleteProfile.js`, updated `public_profile.py`
-- **Testing:** 100% pass (iteration_99: 31/31 backend, all frontend verified)
+- Two profile modes: public `/p/{slug}` + staff-only `/internal/athlete/:athleteId/profile`
+- Internal recruiting context panel, quick actions, profile completeness
 
 ### Public Profile V2 — Coach Scan Mode + Dynamic Recruiting Snapshot (DONE - March 11, 2026)
-- **Coach Scan Mode:** Redesigned hero for 10-second coach comprehension — name + class year badge + position, key facts grid (Height/Weight/GPA), measurables row, prominent CTAs (Watch Highlights / Contact).
-- **Dynamic Recruiting Snapshot:** Privacy-safe signal pills below hero — "Actively exploring D1, D2, and D3 opportunities", "Academic information available", "Profile updated this season". Deterministic, no LLM.
-- **Backend:** New `recruiting_signals` field in public profile response. Computed from pipeline divisions/states, athlete data (video, GPA, coach), profile freshness.
-- **Design:** Premium, clean, mobile-first. Dark slate photo placeholder, tight info-dense layout, no form-dump feel.
-- **Testing:** 100% (iteration_100: 14/14 backend, all frontend verified)
-
-### Roster "View Profile" Quick Action (DONE - March 11, 2026)
-- Added teal "Profile" button to athlete rows on the Roster page (both desktop hover and mobile)
-- Navigates directly to `/internal/athlete/:athleteId/profile` for quick staff access
-- Stands out from other gray action buttons with teal accent color
-
-### Support Pod "View Profile" Link (DONE - March 11, 2026)
-- Added teal "View Profile" pill button in the Support Pod header bar
-- Navigates to `/internal/athlete/:athleteId/profile` for seamless staff workflow
-- Responsive: shows icon-only on mobile, full text on desktop
+- Coach Scan Mode redesigned hero, Dynamic Recruiting Snapshot privacy-safe signal pills
 
 ### Pipeline Command Center — Phase A+B+C (DONE - March 11, 2026)
-- **Phase A — Top Action Engine (Backend):** New `top_action_engine.py` with centralized `ACTION_MAP` (8 priority levels, 14 action types). Deterministic rules engine computes one primary action per school with: `action_key`, `reason_code`, `priority`, `category`, `label`, `owner`, `explanation`, `cta_label`. Priority: coach_flag > director_action > overdue > reply_needed > due_today > first_outreach > cooling_off > on_track.
-- **Phase B — School Card Enhancement:** Each Kanban card now shows: health badge + top action label + owner badge (Athlete/Parent/Coach/Shared with color coding) + contextual explanation. Cards feel like an operating system for recruiting, not a static tracker.
-- **Phase C — Hero Card Enhancement:** Hero carousel now driven by Top Action Engine. Shows all actionable items with owner badges, expanded categories (Coach Flags, Director Actions, Reply Needed, Re-engage). Filter pills updated with new categories.
-- **Owner inference:** Auto-inferred from action type (athlete for most, shared for director actions). No manual assignment yet.
-- **New endpoints:** `GET /api/internal/programs/top-actions` (batch), `GET /api/internal/programs/{id}/top-action` (per-program)
-- **Testing:** 100% (iteration_101: 18/18 backend, all frontend verified)
+- Top Action Engine, School Card Enhancement, Hero Card Enhancement
+- Owner inference, dual CTAs, keyboard shortcuts
+
+### Coach Dashboard Restructure — Phase 1-2 (DONE - March 11, 2026)
+- Hero KPIs, Today's Priorities work queue, My Roster with next steps
+
+### Coach Area Overhaul — Phases 3-5 (DONE - March 11, 2026)
+- Support Pod Refinement, Events/Prep, Language & UX Polish
+
+### Real-Time Notifications V1 (DONE - March 11, 2026)
+- Background polling, live indicators, KPI pulse, quiet toasts
+
+### NCAA Timeline on Calendar Page (DONE - March 11, 2026)
+- Tab Switcher, Division selector, horizontal timeline bar with NOW marker
+
+### Support Pod V2 — Intervention Console (DONE - March 11, 2026)
+**10-point upgrade transforming the Support Pod into a "Diagnose -> Decide -> Act" workflow:**
+
+1. **Active Issue Banner Enhancement (Point 1):** Emphasized primary action with larger text (text-xl), urgency "ACT NOW" badge for high-score interventions, stronger visual contrast on recommended action box.
+
+2. **Athlete Snapshot — Recruiting Context (Point 2):** Added Recruiting Progress bar (Exploring -> Contacted -> Engaged -> Committed step indicator), Coach Engagement metric (X/Y engaged with health bar and response rate percentage).
+
+3. **Support Team — Quick Contact (Point 3):** Message and Call buttons per pod member, inline message form on click, call logging to timeline. Primary coach gets filled teal action buttons.
+
+4. **Next Actions — Top 3 Priority (Point 4):** Top 3 highest-priority actions shown prominently with numbered badges (1, 2, 3). Remaining actions collapsed under "Show X more actions" expandable. Priority order: Overdue > Ready > Upcoming.
+
+5. **Coaching Suggestions (Point 5):** Renamed AI button from "Suggest Actions" to "Get Coaching Suggestions". Added helper text: "AI will analyze this athlete's situation and suggest next steps".
+
+6. **Treatment History — Enhanced Scannability (Point 6):** Colored left borders per event type, type label badges (Note, Resolved, Message, Call, Reassignment, Blocker, Stage Change), expanded filter options including Calls, Blockers, Stage Changes.
+
+7. **Recruiting Timeline (Point 7 - NEW):** Compact vertical timeline showing key milestones: Profile Created, Schools Added, Outreach Sent, Coach Responded, Last Activity. Color-coded by milestone type. Deterministic data from athlete profile.
+
+8. **Recruiting Intelligence (Point 8 - NEW):** Rule-based signal detection panel with priority-ranked cards (Critical, High, Medium, Low). Each signal: icon, title, description, recommended intervention. Signals: Low Response Rate, No D1 Engagement, Extended Inactivity, Momentum Low, Event Prep, Profile Incomplete, Strong Engagement (positive). Backend: `generate_recruiting_signals()` in `support_pod.py`.
+
+9. **Intervention Playbook (Point 9 - NEW):** Single playbook displayed matching the active intervention category. Expandable with checkable steps, progress bar, estimated timeline, owner per step, success criteria. 6 playbooks: Momentum Recovery, Blocker Resolution, Event Prep, Re-engagement, Ownership Assignment, Readiness Improvement. Backend: `INTERVENTION_PLAYBOOKS` + `get_intervention_playbook()`.
+
+10. **Quick Actions Bar (Point 10 - NEW):** Sticky bar below header with 4 actions: Send Message, Log Interaction, Schedule Check-in, Escalate to Director. Inline text form on click. Responsive with horizontal scroll on mobile.
+
+**Page Layout Order:** Header -> Quick Actions Bar -> Active Issue Banner -> Athlete Snapshot + Support Team -> Next Actions -> Recruiting Intelligence -> Intervention Playbook -> Coaching Suggestions -> Recruiting Timeline -> Quick Note -> Treatment History
+
+**P0 Bug Fix:** DirectorActionsCard disappearing items on Acknowledge/Resolve — fixed with optimistic UI update + delayed re-fetch (2.5s timeout).
+
+**New Backend Fields:** `recruiting_timeline`, `recruiting_signals`, `intervention_playbook` added to `GET /api/support-pods/:athleteId` response.
+
+**Testing:** 100% (iteration_107: 21/21 backend, all 10 frontend points + P0 bug fix verified)
 
 ## Key API Endpoints
+- `GET /api/coach/mission-control` — Coach dashboard data
+- `GET /api/support-pods/:athleteId` — Full Support Pod with V2 fields (recruiting_timeline, recruiting_signals, intervention_playbook)
+- `POST /api/support-pods/:athleteId/actions` — Create action item
+- `PATCH /api/support-pods/:athleteId/actions/:actionId` — Update action
+- `POST /api/support-pods/:athleteId/resolve` — Resolve active issue
 - `GET /api/subscription` — Current user's tier
-- `GET /api/public/profile/{slug}` — Public athlete profile (no auth)
-- `GET /api/internal/athlete/{athlete_id}/profile` — Staff-only full profile + recruiting context
-- `PUT /api/internal/athlete/{athlete_id}/profile/publish` — Staff toggle publish
-- `GET /api/athlete/public-profile/settings` — Athlete's public profile settings
-- `PUT /api/athlete/public-profile/settings` — Update visibility settings
-- `POST /api/athlete/public-profile/generate-slug` — Regenerate slug
+- `GET /api/public/profile/{slug}` — Public athlete profile
+- `GET /api/internal/athlete/{athlete_id}/profile` — Staff-only full profile
 
 ## Credentials
 - **Platform Admin:** douglas@capymatch.com / 1234
@@ -111,53 +123,6 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 
 ## P0 In Progress
 - (None — all P0 items completed)
-
-### Real-Time Notifications V1 (DONE - March 11, 2026)
-- **Background Polling:** MissionControl.js polls `/api/mission-control` every 45s (background fetch). Director count polled separately in sync.
-- **Live Indicators:** "Updated just now" / "Updated Xs ago" label with green pulse dot. 15s refresh for relative timestamp.
-- **KPI Pulse:** When a KPI value changes between polls, the number briefly scales up with an animated ping dot (3s).
-- **Quiet Toasts (high-priority only):** New Director Request, new Critical issue, major momentum drop (15+ points). No toast on initial load (isFirstLoad guard + prev.directorRequestCount > 0 check).
-- **Bug Fixed:** Director request toast was firing on first load (0→5 comparison). Fixed by requiring prev count > 0.
-- **Testing:** 100% backend (15/15), frontend bug fixed and self-verified (iteration_106)
-
-### Coach Area Overhaul — Phases 3-5 (DONE - March 11, 2026)
-- **Phase 3 — Support Pod Refinement:**
-  - ActiveIssueBanner: "WHAT TO DO NOW" is the star element (16px bold), "WHAT IS WRONG"/"WHAT CHANGED" as two-column context cards. Log Check-in, Send Message, Mark Resolved CTAs.
-  - NextActions: Grouped by OVERDUE (red) → READY (blue) → UPCOMING (purple) instead of by owner. Overdue counter in header.
-  - AthleteSnapshot: Added Pipeline Health (% responding + engagement label), health bars, upcoming events list.
-  - PodMembers: PRIMARY COACH badge with crown icon, teal background highlight, ownership task summary.
-- **Phase 4 — Events/Prep:**
-  - UpcomingEventsCard: per-event athletes attending count, "need attention" count, prep steps remaining, amber badges for athletes with issues (e.g., "Emma — momentum drop").
-  - Progress bars per event. Past events shown at reduced opacity.
-- **Phase 5 — Language & UX Polish:**
-  - Header: "need action" replaces "alerts". ActivityFeed: CSS variable theming replaces hardcoded colors.
-  - Human-friendly action language: "Check in with athlete", "Re-engage athlete", "Remove blocker", "Review readiness gaps".
-- **Testing:** 100% (iteration_105: 16/16 backend, all 15 frontend features verified)
-
-### Coach Dashboard Restructure — Phase 1-2 (DONE - March 11, 2026)
-- **Phase 1 — Dashboard Restructure:**
-  - Hero KPIs refined: MY ATHLETES, NEED ACTION, EVENTS THIS WEEK, DIRECTOR REQUESTS (replaced vague "ALERTS")
-  - Compact Summary Card: bullet points ("3 athletes have momentum drop", "1 athlete has a blocker", etc.) + "Review Priorities" CTA
-  - Today's Priorities: deterministic work queue grouped by urgency (Critical / Follow-Up / Event Prep), each row: athlete, action, reason, CTA
-  - Replaced AI-powered "What Should I Do Today?" with deterministic priorities engine
-- **Phase 2 — My Roster Improvements:**
-  - Each athlete row: name, grad year, position, issue type badge, short reason, NEXT step, "Open Pod" CTA on hover
-  - "ON TRACK" separator between athletes needing action and healthy athletes
-  - Backend enriched with `next_step`, `summary_lines`, `priorities` queue per coach response
-- **Testing:** 100% (iteration_104: 18/18 backend, all frontend verified)
-
-### NCAA Timeline on Calendar Page (DONE - March 11, 2026)
-- **Ported from GitHub:** Brought the `NcaaTimeline.js` component from `github.com/capymatch/capymatch` repo, adapted CSS variables (`--t-*` → `--cm-*`).
-- **Tab Switcher:** Added "My Calendar" / "NCAA Timeline" tab switcher to CalendarPage. NCAA tab uses teal active state.
-- **Features:** Current period banner (with days remaining), Division selector (D1/D2/D3/NAIA), horizontal color-coded timeline bar with NOW marker, Key NCAA Dates & Deadlines cards with status tags (Passed/Xd away/Active Now/Info).
-- **Testing:** 100% frontend (iteration_103: all 14 features verified)
-- **Action-First Layout:** Flipped visual hierarchy — CTA label (e.g., "Reply Now") is the headline, school name is secondary context. Removed cluttered badges row (social links, fit labels, conference/events).
-- **Directive Language:** Updated all ACTION_MAP labels in `top_action_engine.py` to be imperative (e.g., "Reply to Coach Now", "Send Your Intro Email", "Follow Up Now — {days}d Overdue"). Labels now support template variables.
-- **Dual CTAs:** Primary action button (color-coded by urgency) + secondary "View School >" outline button, replacing single generic "Open School" CTA.
-- **Compact Progress Rail:** Moved from full-width row to inline dots in the CTA row, saving vertical space.
-- **Inline Explanation:** Replaced boxed "What to do next" card with clean inline text under the headline.
-- **Keyboard Shortcuts:** Arrow keys navigate between actions, Enter executes the CTA. Subtle keyboard hint displayed on desktop. Uses ref-based callbacks for React hooks compliance.
-- **Testing:** 100% (iteration_102: 15/15 backend, all frontend verified + keyboard self-tested)
 
 ## P1 Upcoming
 - Club Billing (subscription billing and management for organizations)
