@@ -361,7 +361,7 @@ def _build_coach_response(user, alerts, attention, signals, events):
     activity = sorted(signals, key=lambda s: s.get("hoursAgo", 0))[:8]
 
     # Count events needing prep (within 7 days)
-    events_this_week = [e for e in events if e.get("daysAway", 99) <= 7]
+    events_this_week = [e for e in events if 0 <= e.get("daysAway", 99) <= 7]
 
     # Today's summary for the hero
     todays_summary = {
