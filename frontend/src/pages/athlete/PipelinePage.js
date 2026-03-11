@@ -61,35 +61,6 @@ function getDueInfo(p) {
   return null;
 }
 
-function getCTA(p) {
-  if (p.board_group === "needs_outreach") return { label: "Start Outreach", style: "primary" };
-  if (p.board_group === "waiting_on_reply" || p.board_group === "overdue") return { label: "Follow Up", style: "warn" };
-  return { label: "View Journey", style: "outline" };
-}
-
-function getHeroAdvice(p) {
-  if (!p) return "";
-  const g = p.board_group;
-  const s = p.signals || {};
-  if (g === "overdue") {
-    const days = p.next_action_due ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000)) : "several";
-    return `Coach hasn't heard from you in ${days} days. Send a short follow-up mentioning your recent results.`;
-  }
-  if (g === "needs_outreach") return "This school matches your profile well. Send an introductory email with your highlight reel.";
-  if (g === "waiting_on_reply") return s.days_since_outreach > 5 ? "It's been a while since your outreach. Consider a brief follow-up." : "Give the coach a bit more time, then follow up with a quick check-in.";
-  if (g === "in_conversation") return "You've got momentum here — keep the conversation going and ask about a campus visit.";
-  return "Review this school's program and plan your next outreach.";
-}
-
-function getActionContext(p) {
-  const g = p.board_group;
-  if (g === "overdue") return "A short follow-up would help keep momentum going with the coaching staff.";
-  if (g === "needs_outreach") return "Send an introductory email with your highlight reel.";
-  if (g === "waiting_on_reply") return "Consider a brief follow-up to keep the conversation alive.";
-  if (g === "in_conversation") return "Keep the conversation going and ask about next steps.";
-  return "Plan your next outreach.";
-}
-
 /* ── Kanban column config ── */
 const KANBAN_COLS = [
   { key: "added", label: "Added", color: "#94a3b8" },
@@ -119,34 +90,116 @@ function getStatusDot(p) {
   return "#d1d5db"; // grey
 }
 
-/* Generate action items — past due, due today, and needs outreach */
-function generateActions(programs, matchScores) {
-  const actions = [];
-  const eligible = programs.filter(p => {
-    if (p.board_group === "archived" || p.recruiting_status === "Committed" || p.journey_stage === "committed") return false;
-    const due = getDueInfo(p);
-    if (p.board_group === "overdue") return true;
-    if (due?.urgent) return true; // overdue or due today
-    if (p.board_group === "needs_outreach") return true; // first outreach needed
-    return false;
-  });
+/* Generate action items — priority-ordered hero alerts.
+   Every school with an alert condition appears. One alert per school, highest priority wins.
+   Priority: 1) Past Due  2) Due Today  3) Coach Flags  4) Engagement Cooling/Needs Follow-Up  5) Needs First Outreach
+*/
+const ALERT_CATEGORIES = {
+  past_due:     { label: "Past Due",           color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.25)",  priority: 0 },
+  due_today:    { label: "Due Today",          color: "#d97706", bg: "rgba(217,119,6,0.12)",  border: "rgba(217,119,6,0.25)",  priority: 1 },
+  coach_flag:   { label: "Coach Flag",         color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", priority: 2 },
+  cooling_off:  { label: "Momentum Slowing",   color: "#fb923c", bg: "rgba(251,146,60,0.10)", border: "rgba(251,146,60,0.22)", priority: 3 },
+  first_outreach: { label: "First Outreach",   color: "#3b82f6", bg: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.22)", priority: 4 },
+};
 
-  // Sort: overdue first, then due today, then needs outreach
-  eligible.sort((a, b) => {
-    const aDue = getDueInfo(a);
-    const bDue = getDueInfo(b);
-    const aScore = aDue?.color === "#dc2626" ? 0 : aDue?.urgent ? 1 : 2;
-    const bScore = bDue?.color === "#dc2626" ? 0 : bDue?.urgent ? 1 : 2;
-    return aScore - bScore;
-  });
+function generateActions(programs, matchScores, tasks, healthMap) {
+  const seen = new Set();
+  const alerts = [];
 
-  for (const p of eligible.slice(0, 6)) {
-    const ms = matchScores[p.program_id];
-    const cta = getCTA(p);
+  const active = programs.filter(p =>
+    p.board_group !== "archived" && p.recruiting_status !== "Committed" && p.journey_stage !== "committed"
+  );
+
+  // Pass 1: Past Due
+  for (const p of active) {
     const due = getDueInfo(p);
-    actions.push({ id: p.program_id, type: "school", program: p, title: cta.label === "Start Outreach" ? `Start outreach to ${p.university_name}` : `Follow up with ${p.university_name}`, context: getActionContext(p), match_score: ms?.match_score, stage: p.journey_stage || "added", division: p.division, due, cta, matchScore: ms });
+    if (due?.color === "#dc2626") {
+      seen.add(p.program_id);
+      const days = p.next_action_due ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000)) : null;
+      alerts.push({
+        id: p.program_id, type: "school", program: p, category: "past_due",
+        title: `Follow up with ${p.university_name}`,
+        context: days ? `Overdue by ${days} day${days !== 1 ? "s" : ""}. A short follow-up keeps momentum going.` : "This follow-up is overdue. Reach out to keep the conversation alive.",
+        cta: { label: "Follow Up", style: "warn" },
+        matchScore: matchScores[p.program_id], due,
+      });
+    }
   }
-  return actions;
+
+  // Pass 2: Due Today
+  for (const p of active) {
+    if (seen.has(p.program_id)) continue;
+    const due = getDueInfo(p);
+    if (due?.urgent && due?.color !== "#dc2626") {
+      seen.add(p.program_id);
+      alerts.push({
+        id: p.program_id, type: "school", program: p, category: "due_today",
+        title: `Reach out to ${p.university_name} today`,
+        context: "You have a follow-up scheduled for today. Timely responses show genuine interest.",
+        cta: { label: "Follow Up", style: "warn" },
+        matchScore: matchScores[p.program_id], due,
+      });
+    }
+  }
+
+  // Pass 3: Coach Flags
+  const coachTasks = (tasks || []).filter(t => t.source === "coach");
+  for (const task of coachTasks) {
+    const pid = task.program_id;
+    if (!pid || seen.has(pid)) continue;
+    const p = active.find(pr => pr.program_id === pid);
+    if (!p) continue;
+    seen.add(pid);
+    alerts.push({
+      id: pid, type: "school", program: p, category: "coach_flag",
+      title: task.title || `Coach flagged ${p.university_name}`,
+      context: task.description || "A coach has flagged this school for your attention.",
+      cta: { label: "View Details", style: "primary" },
+      matchScore: matchScores[pid], due: getDueInfo(p),
+    });
+  }
+
+  // Pass 4: Engagement Cooling Off / Needs Follow-Up
+  for (const p of active) {
+    if (seen.has(p.program_id)) continue;
+    const hm = healthMap[p.program_id];
+    if (!hm) continue;
+    const state = hm.pipeline_health_state;
+    if (state === "cooling_off" || state === "at_risk" || state === "needs_follow_up") {
+      seen.add(p.program_id);
+      const days = hm.days_since_last_meaningful_engagement;
+      let context;
+      if (days != null) {
+        context = `No meaningful engagement in ${days} days. A short check-in can reignite momentum.`;
+      } else {
+        context = "Engagement has slowed. Consider reaching out with a genuine update.";
+      }
+      alerts.push({
+        id: p.program_id, type: "school", program: p, category: "cooling_off",
+        title: `Momentum slowing with ${p.university_name}`,
+        context,
+        cta: { label: "Re-engage", style: "primary" },
+        matchScore: matchScores[p.program_id], due: getDueInfo(p),
+      });
+    }
+  }
+
+  // Pass 5: Needs First Outreach
+  for (const p of active) {
+    if (seen.has(p.program_id)) continue;
+    if (p.board_group === "needs_outreach") {
+      seen.add(p.program_id);
+      alerts.push({
+        id: p.program_id, type: "school", program: p, category: "first_outreach",
+        title: `Start outreach to ${p.university_name}`,
+        context: "This school matches your profile. Send an introductory email with your highlight reel.",
+        cta: { label: "Start Outreach", style: "primary" },
+        matchScore: matchScores[p.program_id], due: getDueInfo(p),
+      });
+    }
+  }
+
+  return alerts;
 }
 
 
@@ -155,12 +208,29 @@ function generateActions(programs, matchScores) {
 /* ═══════════════════════════════════════════ */
 function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage, aiUsage }) {
   const [idx, setIdx] = useState(0);
-  const total = actions.length;
-  if (total === 0) return null;
+  const [filter, setFilter] = useState("all");
 
-  const prev = () => setIdx(i => (i - 1 + total) % total);
-  const next = () => setIdx(i => (i + 1) % total);
-  const action = actions[idx];
+  const filtered = useMemo(() => {
+    if (filter === "all") return actions;
+    return actions.filter(a => a.category === filter);
+  }, [actions, filter]);
+
+  const total = filtered.length;
+  // Reset to first item when filter changes
+  const prevFilter = React.useRef(filter);
+  useEffect(() => { if (prevFilter.current !== filter) { setIdx(0); prevFilter.current = filter; } }, [filter]);
+
+  if (actions.length === 0) return null;
+
+  // If filtered is empty, fall back to all
+  const displayActions = total > 0 ? filtered : actions;
+  const displayTotal = displayActions.length;
+  const safeIdx = Math.min(idx, Math.max(0, displayTotal - 1));
+  const prev = () => setIdx(i => (i - 1 + displayTotal) % displayTotal);
+  const next = () => setIdx(i => (i + 1) % displayTotal);
+  const action = displayActions[safeIdx];
+  if (!action) return null;
+
   const isSchool = action.type === "school";
   const p = action.program;
   const ms = isSchool ? (action.matchScore || matchScores[p?.program_id]) : null;
@@ -172,35 +242,93 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
   const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
   const confidence = ms?.confidence;
   const confLabel = CONFIDENCE_LABELS[confidence] || "";
-  const advice = isSchool ? getHeroAdvice(p) : action.context;
+  const advice = action.context;
   const stages = isSchool ? computeRail(p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")) : null;
   const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Committed" };
+  const cat = ALERT_CATEGORIES[action.category] || ALERT_CATEGORIES.past_due;
 
   const handleCTA = () => {
     if (action.type === "growth") navigate("/schools");
     else if (p) navigate(`/pipeline/${p.program_id}`);
   };
 
+  // Count alerts per category for filter pills
+  const catCounts = {};
+  for (const a of actions) { catCounts[a.category] = (catCounts[a.category] || 0) + 1; }
+
+  const FILTER_PILLS = [
+    { key: "all", label: "All", count: actions.length },
+    { key: "past_due", label: "Past Due" },
+    { key: "due_today", label: "Due Today" },
+    { key: "coach_flag", label: "Coach Flags" },
+    { key: "cooling_off", label: "Cooling Off" },
+    { key: "first_outreach", label: "First Outreach" },
+  ].filter(pill => pill.key === "all" || (catCounts[pill.key] || 0) > 0)
+   .map(pill => ({ ...pill, count: pill.key === "all" ? actions.length : catCounts[pill.key] || 0 }));
+
   return (
     <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
-      {/* Teal accent bar */}
-      <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
-      {/* Subtle glow */}
-      <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: "radial-gradient(circle, rgba(13,148,136,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
+      {/* Accent bar — colored by category */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${cat.color}, ${cat.color}88)` }} />
+      {/* Ambient glow */}
+      <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: `radial-gradient(circle, ${cat.color}10 0%, transparent 70%)`, pointerEvents: "none" }} />
 
       <div style={{ padding: "24px 28px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
-        {/* Header: label + carousel nav */}
+        {/* Filter pills — only when there are multiple alert categories */}
+        {FILTER_PILLS.length > 2 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }} data-testid="hero-filter-pills">
+            {FILTER_PILLS.map(pill => (
+              <button
+                key={pill.key}
+                onClick={() => setFilter(pill.key)}
+                data-testid={`hero-filter-${pill.key}`}
+                style={{
+                  padding: "4px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700,
+                  cursor: "pointer", transition: "all 0.15s", border: "1px solid", fontFamily: "inherit",
+                  background: filter === pill.key ? "rgba(13,148,136,0.15)" : "rgba(255,255,255,0.04)",
+                  borderColor: filter === pill.key ? "rgba(13,148,136,0.35)" : "rgba(255,255,255,0.08)",
+                  color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.4)",
+                  display: "flex", alignItems: "center", gap: 5,
+                }}
+              >
+                {pill.label}
+                <span style={{
+                  fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 8,
+                  background: filter === pill.key ? "rgba(13,148,136,0.25)" : "rgba(255,255,255,0.06)",
+                  color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.3)",
+                }}>{pill.count}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Header: category label + carousel nav */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,158,11,0.8)" }}>Actions Needed Today</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}
+              data-testid="hero-category-label"
+            >{cat.label}</span>
+            <span style={{
+              fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6,
+              background: cat.bg, color: cat.color, border: `1px solid ${cat.border}`,
+            }} data-testid="hero-alert-count">{safeIdx + 1} of {displayTotal}</span>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.25)" }}>{idx + 1} of {total}</span>
-            {total > 1 && (
+            {displayTotal > 1 && (
               <>
                 <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 14, height: 14 }} /></button>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {actions.map((_, i) => (
-                    <div key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: i === idx ? 4 : "50%", background: i === idx ? "#0d9488" : "rgba(255,255,255,0.15)", cursor: "pointer", transition: "all 0.2s" }} data-testid={`carousel-dot-${i}`} />
-                  ))}
+                <div style={{ display: "flex", gap: 3, maxWidth: 200, flexWrap: "wrap" }}>
+                  {displayActions.map((a, i) => {
+                    const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
+                    return (
+                      <div key={i} onClick={() => setIdx(i)} style={{
+                        width: i === safeIdx ? 18 : 6, height: 6,
+                        borderRadius: i === safeIdx ? 4 : "50%",
+                        background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
+                        cursor: "pointer", transition: "all 0.2s",
+                      }} data-testid={`carousel-dot-${i}`} />
+                    );
+                  })}
                 </div>
                 <button onClick={next} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 14, height: 14 }} /></button>
               </>
@@ -276,7 +404,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
         {/* Bottom: Advice box + CTA button */}
         <div style={{ display: "flex", gap: 16, alignItems: "center" }} className="hero-advice-row">
           {advice && (
-            <div style={{ flex: 1, minWidth: 0, background: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.15)", borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }} data-testid="hero-advice-card">
+            <div style={{ flex: 1, minWidth: 0, background: `${cat.color}0a`, border: `1px solid ${cat.color}22`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }} data-testid="hero-advice-card">
               <Lightbulb style={{ width: 16, height: 16, color: "rgba(255,255,255,0.3)", flexShrink: 0, marginTop: 2 }} />
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>What to do next</div>
@@ -722,7 +850,7 @@ export default function PipelinePage() {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchPrograms} /></div>;
   }
 
-  const actions = generateActions(allPrograms, matchScores);
+  const actions = generateActions(allPrograms, matchScores, tasks, healthMap);
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
   const usage = getUsage(subscription, "schools");
   const aiUsage = getUsage(subscription, "ai_drafts");
