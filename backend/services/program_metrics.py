@@ -82,6 +82,10 @@ async def recompute_metrics(program_id: str, tenant_id: str) -> dict:
     m.update(_compute_engagement_trend(interactions, now))
 
     # Pipeline health (depends on all previous metrics)
+    # Compute program age for "still early" override
+    created_at = _parse_dt(program.get("created_at"))
+    program_age_days = (now - created_at).days if created_at else None
+    m["program_age_days"] = program_age_days
     m["pipeline_health_state"] = _compute_pipeline_health(m)
 
     # Data confidence
@@ -469,15 +473,24 @@ def _compute_pipeline_health(m: dict) -> str:
             score -= 1  # slow progression
 
     # ── Map score to state ──
+    raw_state = "at_risk"
     if score >= 5:
-        return "strong_momentum"
-    if score >= 2:
-        return "active"
-    if score >= 0:
-        return "needs_follow_up"
-    if score >= -3:
-        return "cooling_off"
-    return "at_risk"
+        raw_state = "strong_momentum"
+    elif score >= 2:
+        raw_state = "active"
+    elif score >= 0:
+        raw_state = "needs_follow_up"
+    elif score >= -3:
+        raw_state = "cooling_off"
+
+    # Override for new programs: don't show discouraging states
+    age = m.get("program_age_days")
+    meaningful_count = m.get("meaningful_interaction_count", 0)
+    if raw_state in ("cooling_off", "at_risk") and meaningful_count == 0:
+        if age is not None and age <= 14:
+            return "still_early"
+
+    return raw_state
 
 
 def _compute_data_confidence(metrics: dict, interactions: list, stage_history: list) -> str:
@@ -531,6 +544,7 @@ def _empty_metrics(program_id: str, tenant_id: str, reason: str) -> dict:
         "stage_stalled_days": None,
         "engagement_trend": "insufficient_data",
         "pipeline_health_state": "at_risk",
+        "program_age_days": None,
         "invite_count": 0,
         "info_request_count": 0,
         "coach_flag_count": 0,
