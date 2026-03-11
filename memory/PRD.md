@@ -374,6 +374,12 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Integration**: Pipeline page fetches batch metrics on load, passes to each KanbanCard. 12 badges rendered across all cards.
 - **Testing:** 100% pass rate (iteration_94: 18/18 backend, all frontend verified)
 
+### Pipeline Badge Refinements (DONE - March 11, 2026)
+- **Explanation Lines**: Each badge now shows a contextual line below it (e.g., "Coach Reply today", "Camp 12d ago", "No signals yet")
+- **"Still Early" State**: New programs (<=14 days old) with no meaningful engagement show `still_early` (purple, Sprout icon) instead of `cooling_off` / `at_risk` — avoids demotivating athletes
+- **New field**: `program_age_days` in program_metrics for age-aware health computation
+- **Testing:** 100% (iteration_96: 10/10 backend, all frontend verified)
+
 ### Engagement Outlook Card (DONE - March 11, 2026)
 - **Backend Endpoint** (`GET /api/intelligence/program/{program_id}/engagement-outlook`): Deterministic, no LLM. Returns freshness_label, freshness_color, pipeline_health_state, next_step (action/urgency/context), signals array, data_confidence.
 - **Next Step Logic** (`_build_next_step`): Priority-ordered action recommendations — unanswered coach questions > overdue follow-ups > stale engagement > declining trend > no contact yet > healthy relationship.
