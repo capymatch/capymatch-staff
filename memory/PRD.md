@@ -118,7 +118,8 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Dual CTAs:** Primary action button (color-coded by urgency) + secondary "View School >" outline button, replacing single generic "Open School" CTA.
 - **Compact Progress Rail:** Moved from full-width row to inline dots in the CTA row, saving vertical space.
 - **Inline Explanation:** Replaced boxed "What to do next" card with clean inline text under the headline.
-- **Testing:** 100% (iteration_102: 15/15 backend, all frontend verified)
+- **Keyboard Shortcuts:** Arrow keys navigate between actions, Enter executes the CTA. Subtle keyboard hint displayed on desktop. Uses ref-based callbacks for React hooks compliance.
+- **Testing:** 100% (iteration_102: 15/15 backend, all frontend verified + keyboard self-tested)
 
 ## P1 Upcoming
 - Club Billing (subscription billing and management for organizations)

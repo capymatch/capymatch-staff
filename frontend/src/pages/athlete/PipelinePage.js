@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -165,6 +165,8 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
   const [idx, setIdx] = useState(0);
   const [filter, setFilter] = useState("all");
   const [seenCategories, setSeenCategories] = useState(new Set(["all"]));
+  const heroRef = useRef(null);
+  const callbacksRef = useRef({ prev: null, next: null, cta: null });
 
   const handleFilter = (key) => {
     setFilter(key);
@@ -179,6 +181,20 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
   const total = filtered.length;
   const prevFilter = React.useRef(filter);
   useEffect(() => { if (prevFilter.current !== filter) { setIdx(0); prevFilter.current = filter; } }, [filter]);
+
+  // Keyboard shortcuts: Arrow keys to navigate, Enter to execute CTA
+  useEffect(() => {
+    const handleKey = (e) => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      const cb = callbacksRef.current;
+      if (e.key === "ArrowLeft" && cb.prev) { e.preventDefault(); cb.prev(); }
+      else if (e.key === "ArrowRight" && cb.next) { e.preventDefault(); cb.next(); }
+      else if (e.key === "Enter" && cb.cta) { e.preventDefault(); cb.cta(); }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   if (actions.length === 0) return null;
 
@@ -205,6 +221,9 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
     else if (p) navigate(`/pipeline/${p.program_id}`);
   };
 
+  // Keep refs up to date for keyboard handler
+  callbacksRef.current = { prev, next, cta: handleCTA };
+
   const catCounts = {};
   for (const a of actions) { catCounts[a.category] = (catCounts[a.category] || 0) + 1; }
 
@@ -225,7 +244,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
   const oc = owColors[action.owner] || "rgba(255,255,255,0.5)";
 
   return (
-    <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 14, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
+    <div ref={heroRef} tabIndex={-1} style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 14, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)", outline: "none" }} data-testid="pipeline-hero-card">
       {/* Accent bar — thicker for urgent */}
       <div style={{ height: isUrgent ? 4 : 3, background: `linear-gradient(90deg, ${cat.color}, ${cat.color}66)` }} />
       {/* Ambient glow — stronger for urgent */}
@@ -390,6 +409,16 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
               AI drafts: Pro
             </span>
           </>
+        )}
+        {displayTotal > 1 && (
+          <span className="hidden md:inline-flex" style={{ marginLeft: "auto", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.18)", display: "inline-flex", alignItems: "center", gap: 4 }} data-testid="keyboard-hint">
+            <kbd style={{ padding: "1px 4px", borderRadius: 3, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 8, lineHeight: "12px" }}>&larr;</kbd>
+            <kbd style={{ padding: "1px 4px", borderRadius: 3, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 8, lineHeight: "12px" }}>&rarr;</kbd>
+            <span style={{ marginLeft: 2 }}>navigate</span>
+            <span style={{ margin: "0 2px", color: "rgba(255,255,255,0.1)" }}>|</span>
+            <kbd style={{ padding: "1px 4px", borderRadius: 3, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 8, lineHeight: "12px" }}>Enter</kbd>
+            <span style={{ marginLeft: 2 }}>open</span>
+          </span>
         )}
       </div>
     </div>
