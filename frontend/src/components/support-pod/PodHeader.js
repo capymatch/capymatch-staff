@@ -22,64 +22,61 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="pod-header">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate("/mission-control")}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
-            data-testid="back-to-mc"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Mission Control</span>
-          </button>
-          <div className="h-5 w-px bg-gray-200" />
-          <div>
-            <h1 className="font-semibold text-gray-900 text-base leading-tight" data-testid="pod-athlete-name">
-              {athlete?.full_name}
-            </h1>
-            <p className="text-xs text-gray-500">
-              {athlete?.grad_year} · {athlete?.position} · {athlete?.team}
-            </p>
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3">
+        {/* Mobile: 2-row layout. Desktop: single row */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Left: back + name */}
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <button
+              onClick={() => navigate("/mission-control")}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors shrink-0"
+              data-testid="back-to-mc"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Mission Control</span>
+            </button>
+            <div className="h-5 w-px bg-gray-200 hidden sm:block" />
+            <div className="min-w-0">
+              <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="pod-athlete-name">
+                {athlete?.full_name}
+              </h1>
+              <p className="text-[11px] sm:text-xs text-gray-500 truncate">
+                {athlete?.grad_year} · {athlete?.position} · {athlete?.team}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          {/* Live indicator + manual refresh */}
-          <div className="flex items-center gap-2 text-xs text-gray-400" data-testid="live-indicator">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="hidden sm:inline">
-              {lastRefreshed ? `Updated ${formatTime(lastRefreshed)}` : "Live"}
-            </span>
+          {/* Right: actions */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Refresh - always visible */}
             <button
               onClick={onManualRefresh}
               disabled={isPolling}
-              className="p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="p-1.5 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
               title="Refresh now"
               data-testid="manual-refresh-btn"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isPolling ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${isPolling ? "animate-spin" : ""}`} />
             </button>
-          </div>
 
-          {/* View Profile */}
-          {athleteId && (
-            <button
-              onClick={() => navigate(`/internal/athlete/${athleteId}/profile`)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-full transition-colors"
-              data-testid="pod-view-profile-btn"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">View Profile</span>
-            </button>
-          )}
+            {/* View Profile */}
+            {athleteId && (
+              <button
+                onClick={() => navigate(`/internal/athlete/${athleteId}/profile`)}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-full transition-colors"
+                data-testid="pod-view-profile-btn"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">View Profile</span>
+              </button>
+            )}
 
-          <div className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
-            <div className={`w-2 h-2 rounded-full ${health.dot}`} />
-            <Activity className={`w-3.5 h-3.5 ${health.text}`} />
-            <span className={`text-xs font-medium ${health.text} hidden sm:inline`}>{health.label}</span>
+            {/* Health badge */}
+            <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
+              <div className={`w-2 h-2 rounded-full ${health.dot}`} />
+              <Activity className={`w-3.5 h-3.5 ${health.text}`} />
+              <span className={`text-xs font-medium ${health.text} hidden sm:inline`}>{health.label}</span>
+            </div>
           </div>
         </div>
       </div>

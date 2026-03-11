@@ -53,8 +53,8 @@ function QuickActionsBar({ athleteId, athleteName, onRefresh }) {
   };
 
   return (
-    <div className="sticky top-[57px] z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="quick-actions-bar">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-2">
+    <div className="sticky top-[49px] sm:top-[57px] z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="quick-actions-bar">
+      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
           {actions.map(({ key, icon: Icon, label, color }) => (
             <Button
@@ -73,21 +73,21 @@ function QuickActionsBar({ athleteId, athleteName, onRefresh }) {
         </div>
 
         {activeForm && (
-          <div className="mt-2 pb-1 flex gap-2 items-start" data-testid="qa-form">
+          <div className="mt-2 pb-1 flex items-center gap-2" data-testid="qa-form">
             <input
               value={formText}
               onChange={(e) => setFormText(e.target.value)}
               placeholder={placeholders[activeForm]}
-              className="flex-1 text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="flex-1 min-w-0 text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
               style={{ borderColor: "#e5e7eb" }}
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               data-testid="qa-input"
             />
-            <Button size="sm" onClick={handleSubmit} disabled={!formText.trim() || saving} className="rounded-full text-xs h-9" data-testid="qa-submit">
-              {saving ? "Saving..." : "Send"}
+            <Button size="sm" onClick={handleSubmit} disabled={!formText.trim() || saving} className="rounded-full text-xs h-9 shrink-0" data-testid="qa-submit">
+              {saving ? "..." : "Send"}
             </Button>
-            <button onClick={close} className="p-2 text-gray-400 hover:text-gray-600" data-testid="qa-close">
+            <button onClick={close} className="p-1.5 text-gray-400 hover:text-gray-600 shrink-0" data-testid="qa-close">
               <X className="w-4 h-4" />
             </button>
           </div>
