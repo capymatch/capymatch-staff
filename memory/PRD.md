@@ -112,6 +112,14 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 ## P0 In Progress
 - (None — all P0 items completed)
 
+### Pipeline Hero Card UX Refinement (DONE - March 11, 2026)
+- **Action-First Layout:** Flipped visual hierarchy — CTA label (e.g., "Reply Now") is the headline, school name is secondary context. Removed cluttered badges row (social links, fit labels, conference/events).
+- **Directive Language:** Updated all ACTION_MAP labels in `top_action_engine.py` to be imperative (e.g., "Reply to Coach Now", "Send Your Intro Email", "Follow Up Now — {days}d Overdue"). Labels now support template variables.
+- **Dual CTAs:** Primary action button (color-coded by urgency) + secondary "View School >" outline button, replacing single generic "Open School" CTA.
+- **Compact Progress Rail:** Moved from full-width row to inline dots in the CTA row, saving vertical space.
+- **Inline Explanation:** Replaced boxed "What to do next" card with clean inline text under the headline.
+- **Testing:** 100% (iteration_102: 15/15 backend, all frontend verified)
+
 ## P1 Upcoming
 - Club Billing (subscription billing and management for organizations)
 
