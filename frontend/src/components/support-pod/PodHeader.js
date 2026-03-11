@@ -76,10 +76,10 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
             </button>
           )}
 
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
+          <div className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
             <div className={`w-2 h-2 rounded-full ${health.dot}`} />
             <Activity className={`w-3.5 h-3.5 ${health.text}`} />
-            <span className={`text-xs font-medium ${health.text}`}>{health.label}</span>
+            <span className={`text-xs font-medium ${health.text} hidden sm:inline`}>{health.label}</span>
           </div>
         </div>
       </div>

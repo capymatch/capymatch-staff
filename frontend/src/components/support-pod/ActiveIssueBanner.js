@@ -94,7 +94,7 @@ function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
             </div>
             <div className="flex-1">
               <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: meta.color }}>What to do now</p>
-              <p className="text-xl font-bold leading-snug" style={{ color: "var(--cm-text)" }} data-testid="banner-recommended-text">
+              <p className="text-base sm:text-xl font-bold leading-snug" style={{ color: "var(--cm-text)" }} data-testid="banner-recommended-text">
                 {intervention.recommended_action}
               </p>
               <p className="text-xs mt-2" style={{ color: "var(--cm-text-3)" }}>

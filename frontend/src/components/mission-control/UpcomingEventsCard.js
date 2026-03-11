@@ -84,37 +84,37 @@ export default function UpcomingEventsCard({ events = [], roster = [] }) {
               onClick={() => navigate(`/events/${event.id}/prep`)}
             >
               {/* Event header */}
-              <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: "1px solid var(--cm-border)" }}>
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-3.5" style={{ borderBottom: "1px solid var(--cm-border)" }}>
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <div className={`w-2 h-8 rounded-full flex-shrink-0 ${urgent ? "bg-red-500 animate-pulse" : isPast ? "bg-gray-300" : "bg-emerald-500"}`} />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold truncate" style={{ color: "var(--cm-text)" }}>{event.name}</span>
-                      <span className={`text-xs font-semibold ${urgent ? "text-red-500" : "text-slate-400"}`}>{timeLabel}</span>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <span className="text-xs sm:text-sm font-semibold truncate" style={{ color: "var(--cm-text)" }}>{event.name}</span>
+                      <span className={`text-[10px] sm:text-xs font-semibold ${urgent ? "text-red-500" : "text-slate-400"}`}>{timeLabel}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-[11px]" style={{ color: "var(--cm-text-3)" }}>
-                      <span className="flex items-center gap-0.5">
-                        <MapPin className="w-3 h-3" />{event.location}
+                    <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px]" style={{ color: "var(--cm-text-3)" }}>
+                      <span className="flex items-center gap-0.5 truncate">
+                        <MapPin className="w-3 h-3 shrink-0" />{event.location}
                       </span>
-                      <span>{event.expectedSchools} schools</span>
+                      <span className="hidden sm:inline">{event.expectedSchools} schools</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  {readiness != null && <ProgressBar pct={readiness} />}
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                  {readiness != null && <span className="hidden sm:block"><ProgressBar pct={readiness} /></span>}
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" style={{ color: "var(--cm-text-3)" }} />
                 </div>
               </div>
 
               {/* Athlete readiness details */}
               {attendingAthletes.length > 0 && !isPast && (
-                <div className="px-5 py-3 space-y-2">
+                <div className="px-3 sm:px-5 py-2 sm:py-3 space-y-2">
                   {/* Athletes summary row */}
-                  <div className="flex items-center gap-4 text-[11px]" style={{ color: "var(--cm-text-3)" }}>
+                  <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] flex-wrap" style={{ color: "var(--cm-text-3)" }}>
                     <span className="flex items-center gap-1.5">
                       <Users className="w-3 h-3" />
                       <span className="font-semibold" style={{ color: "var(--cm-text-2)" }}>
-                        {attendingAthletes.length} athletes attending
+                        {attendingAthletes.length} athletes
                       </span>
                     </span>
                     {athletesWithIssues.length > 0 && (
@@ -124,9 +124,9 @@ export default function UpcomingEventsCard({ events = [], roster = [] }) {
                       </span>
                     )}
                     {checklistRemaining > 0 && (
-                      <span className="flex items-center gap-1 font-medium" style={{ color: "var(--cm-text-3)" }}>
+                      <span className="flex items-center gap-1 font-medium hidden sm:flex" style={{ color: "var(--cm-text-3)" }}>
                         <CheckCircle2 className="w-3 h-3" />
-                        {checklistRemaining} prep steps left
+                        {checklistRemaining} prep left
                       </span>
                     )}
                   </div>

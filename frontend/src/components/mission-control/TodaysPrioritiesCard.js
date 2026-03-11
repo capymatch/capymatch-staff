@@ -48,34 +48,34 @@ function PriorityRow({ item, isLast }) {
   return (
     <div
       onClick={() => item.cta_path && navigate(item.cta_path)}
-      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-slate-50/60 transition-colors group"
+      className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-3.5 cursor-pointer hover:bg-slate-50/60 transition-colors group"
       style={{ borderBottom: isLast ? "none" : "1px solid var(--cm-border)" }}
       data-testid={`priority-row-${item.athlete_id || item.event_id}`}
     >
       {/* Urgency dot + icon */}
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: urgency.bg }}>
-        <ActionIcon className="w-4 h-4" style={{ color: urgency.color }} />
+        <ActionIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: urgency.color }} />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 flex-wrap">
+          <span className="text-xs sm:text-sm font-semibold truncate" style={{ color: "var(--cm-text)" }}>
             {item.athlete_name || item.event_name}
           </span>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+          <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded hidden sm:inline"
             style={{ backgroundColor: urgency.bg, color: urgency.color }}>
             {item.action}
           </span>
         </div>
-        <p className="text-xs truncate" style={{ color: "var(--cm-text-3)" }}>{item.reason}</p>
+        <p className="text-[11px] sm:text-xs truncate" style={{ color: "var(--cm-text-3)" }}>{item.reason}</p>
       </div>
 
       {/* CTA */}
       <button
         onClick={(e) => { e.stopPropagation(); if (item.cta_path) navigate(item.cta_path); }}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all opacity-70 group-hover:opacity-100 flex-shrink-0"
+        className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all opacity-70 group-hover:opacity-100 flex-shrink-0"
         style={{
           backgroundColor: urgency.bg,
           color: urgency.color,
@@ -83,7 +83,7 @@ function PriorityRow({ item, isLast }) {
         }}
         data-testid={`priority-cta-${item.athlete_id || item.event_id}`}
       >
-        {item.cta_label}
+        <span className="hidden sm:inline">{item.cta_label}</span>
         <ChevronRight className="w-3 h-3" />
       </button>
     </div>

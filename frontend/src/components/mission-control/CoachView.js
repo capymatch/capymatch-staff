@@ -197,58 +197,68 @@ export default function CoachView({ data, userName }) {
       {/* ── Hero Card ── */}
       <section
         className="relative rounded-[10px] overflow-hidden"
-        style={{ backgroundColor: "#1E213A", padding: "32px" }}
+        style={{ backgroundColor: "#1E213A", padding: "24px" }}
         data-testid="coach-hero"
       >
-        {/* Top-right: date + live indicator */}
-        <div className="absolute flex items-center gap-3" style={{ top: 24, right: 28 }}>
-          <span
-            className="flex items-center gap-1.5"
-            style={{ fontSize: 11, color: "#5a6278" }}
-            data-testid="live-updated-label"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Updated {timeSinceLabel}
-          </span>
-          <span
-            className="inline-block font-medium"
-            style={{
-              backgroundColor: "#363D59",
-              color: "#E5E5E5",
-              fontSize: 14,
-              padding: "8px 16px",
-              borderRadius: 6,
-            }}
-          >
-            {getDateLabel()}
-          </span>
+        {/* Top row: greeting + date + live indicator */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-xl sm:text-[28px] font-semibold text-white leading-tight">
+              {getGreeting()},{" "}
+              <span style={{ color: "#30C5BE" }}>{firstName}</span>
+            </h2>
+            <p className="text-sm sm:text-base mt-0.5" style={{ color: "#8A92A3" }}>
+              Here's what's happening with your athletes today
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span
+              className="flex items-center gap-1.5"
+              style={{ fontSize: 11, color: "#5a6278" }}
+              data-testid="live-updated-label"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Updated {timeSinceLabel}
+            </span>
+            <span
+              className="hidden sm:inline-block font-medium"
+              style={{
+                backgroundColor: "#363D59",
+                color: "#E5E5E5",
+                fontSize: 14,
+                padding: "8px 16px",
+                borderRadius: 6,
+              }}
+            >
+              {getDateLabel()}
+            </span>
+          </div>
         </div>
 
-        {/* Greeting */}
-        <h2 style={{ fontSize: 28, fontWeight: 600, color: "#FFFFFF", marginBottom: 2 }}>
-          {getGreeting()},{" "}
-          <span style={{ color: "#30C5BE" }}>{firstName}</span>
-        </h2>
-        <p style={{ fontSize: 16, color: "#8A92A3", marginBottom: 0 }}>
-          Here's what's happening with your athletes today
-        </p>
-
         {/* Separator */}
-        <div style={{ borderTop: "1px solid #363D59", margin: "20px 0 24px 0" }} />
+        <div style={{ borderTop: "1px solid #363D59", margin: "0 0 20px 0" }} />
 
-        {/* KPIs with live pulse */}
-        <div className="flex flex-wrap sm:flex-nowrap">
+        {/* KPIs — 2-col on mobile, 4-col on desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-0">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
             const isPulsing = pulseKeys.has(kpi.label);
             return (
-              <div key={kpi.label} className="flex flex-1 min-w-0" style={{ paddingRight: idx < kpis.length - 1 ? 24 : 0, marginRight: idx < kpis.length - 1 ? 24 : 0, borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none" }}>
+              <div
+                key={kpi.label}
+                className="sm:flex-1 sm:min-w-0"
+                style={{
+                  paddingRight: idx < kpis.length - 1 ? "clamp(8px, 2vw, 24px)" : 0,
+                  borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none",
+                }}
+              >
                 <div className="flex items-start justify-between w-full">
                   <div>
                     <div className="flex items-center gap-2">
                       <p
+                        className="text-2xl sm:text-4xl font-bold leading-none mb-2"
                         style={{
-                          fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8,
+                          color: kpi.color,
                           transition: "transform 0.3s ease",
                           transform: isPulsing ? "scale(1.08)" : "scale(1)",
                         }}
@@ -264,15 +274,15 @@ export default function CoachView({ data, userName }) {
                         />
                       )}
                     </div>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
+                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#8A92A3" }}>
                       {kpi.label}
                     </p>
-                    <p style={{ fontSize: 14, fontWeight: 400, color: "#8A92A3" }}>
+                    <p className="text-xs sm:text-sm hidden sm:block" style={{ color: "#8A92A3" }}>
                       {kpi.subtitle}
                     </p>
                   </div>
                   <div
-                    className="flex items-center justify-center shrink-0"
+                    className="hidden sm:flex items-center justify-center shrink-0"
                     style={{
                       width: 40,
                       height: 40,
@@ -297,7 +307,7 @@ export default function CoachView({ data, userName }) {
           style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
           data-testid="coach-summary-card"
         >
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3">
             <div className="space-y-1.5 flex-1">
               {summaryLines.map((line, i) => (
                 <div key={i} className="flex items-center gap-2.5">
@@ -312,14 +322,14 @@ export default function CoachView({ data, userName }) {
                         : "#f59e0b",
                     }}
                   />
-                  <span className="text-sm" style={{ color: "var(--cm-text-2)" }}>{line}</span>
+                  <span className="text-xs sm:text-sm" style={{ color: "var(--cm-text-2)" }}>{line}</span>
                 </div>
               ))}
             </div>
             {priorities.length > 0 && (
               <button
                 onClick={scrollToPriorities}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90 flex-shrink-0"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all hover:opacity-90 flex-shrink-0 w-full sm:w-auto justify-center sm:justify-start"
                 style={{ backgroundColor: "#1E213A", color: "#30C5BE" }}
                 data-testid="review-priorities-btn"
               >

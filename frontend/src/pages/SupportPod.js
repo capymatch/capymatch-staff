@@ -96,7 +96,7 @@ function SupportPod() {
   } = data;
 
   return (
-    <div data-testid="support-pod-page">
+    <div data-testid="support-pod-page" className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
       {/* Header */}
       <PodHeader
         athlete={athlete}

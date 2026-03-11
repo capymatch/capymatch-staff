@@ -196,9 +196,9 @@ function TreatmentTimeline({ timeline }) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm" data-testid="treatment-timeline">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Treatment History</h3>
-        <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">Treatment History</h3>
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar w-full sm:w-auto pb-1 sm:pb-0">
           {filterOptions.map((opt) => (
             <button
               key={opt.value}

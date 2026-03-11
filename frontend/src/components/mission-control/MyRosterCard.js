@@ -48,42 +48,42 @@ function AthleteRow({ athlete, onViewPipeline, isLast }) {
   return (
     <div
       data-testid={`roster-athlete-${athlete.id}`}
-      className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group"
+      className="flex items-start gap-2 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group"
       style={{ borderBottom: isLast ? "none" : "1px solid var(--cm-border)" }}
       onClick={() => navigate(`/support-pods/${athlete.id}`)}
     >
       {/* Momentum */}
-      <div className="w-10 shrink-0 text-center pt-1">
+      <div className="w-8 sm:w-10 shrink-0 text-center pt-1">
         <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         {/* Row 1: Name + issue type badge */}
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-semibold group-hover:text-primary transition-colors" style={{ color: "var(--cm-text)" }}>
+        <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+          <span className="text-xs sm:text-sm font-semibold group-hover:text-primary transition-colors" style={{ color: "var(--cm-text)" }}>
             {athlete.name}
           </span>
-          <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>{athlete.grad_year} · {athlete.position}</span>
+          <span className="text-[10px] sm:text-[11px] hidden sm:inline" style={{ color: "var(--cm-text-3)" }}>{athlete.grad_year} · {athlete.position}</span>
           {hasIssue && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider"
               style={{ backgroundColor: cat.bg, color: cat.color }}>
               <CatIcon className="w-2.5 h-2.5" />
-              {cat.label}
+              <span className="hidden sm:inline">{cat.label}</span>
             </span>
           )}
         </div>
 
         {/* Row 2: Reason (why) */}
         {athlete.why && (
-          <p className="text-xs mb-1 truncate" style={{ color: "var(--cm-text-3)" }}>{athlete.why}</p>
+          <p className="text-[11px] sm:text-xs mb-1 truncate" style={{ color: "var(--cm-text-3)" }}>{athlete.why}</p>
         )}
 
         {/* Row 3: Next step */}
         {athlete.next_step && hasIssue && (
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Next:</span>
-            <span className="text-xs font-medium" style={{ color: "var(--cm-text-2)" }}>{athlete.next_step}</span>
+            <span className="text-[11px] sm:text-xs font-medium truncate" style={{ color: "var(--cm-text-2)" }}>{athlete.next_step}</span>
           </div>
         )}
       </div>
@@ -95,10 +95,10 @@ function AthleteRow({ athlete, onViewPipeline, isLast }) {
             title={athlete.podHealth.label}
           />
         )}
-        <QuickNote athleteId={athlete.id} athleteName={athlete.name} compact />
+        <span className="hidden sm:block"><QuickNote athleteId={athlete.id} athleteName={athlete.name} compact /></span>
         <button
           onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all opacity-0 group-hover:opacity-100"
+          className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all sm:opacity-0 sm:group-hover:opacity-100"
           style={{
             backgroundColor: hasIssue ? "rgba(13,148,136,0.1)" : "transparent",
             color: "#0d9488",
@@ -106,7 +106,7 @@ function AthleteRow({ athlete, onViewPipeline, isLast }) {
           }}
           data-testid={`open-pod-${athlete.id}`}
         >
-          Open Pod
+          <span className="hidden sm:inline">Open Pod</span>
           <ChevronRight className="w-3 h-3" />
         </button>
       </div>
