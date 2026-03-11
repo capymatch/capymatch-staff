@@ -347,6 +347,21 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Files Modified**: `services/program_metrics.py`, `models.py`, `routers/athlete_dashboard.py`
 - **Testing:** 100% pass rate (iteration_92: 38/38 backend tests — 22 original + 16 new)
 
+### Pipeline Health State (DONE - March 11, 2026)
+- **New derived field** `pipeline_health_state` in `program_metrics` — a deterministic, supportive indicator of each athlete-school recruiting relationship health
+- **5 States**: `strong_momentum`, `active`, `needs_follow_up`, `cooling_off`, `at_risk`
+- **Scoring System**: Point-based using 6 input signals:
+  - Meaningful engagement recency (+3 to -3)
+  - Engagement trend (+2 to -2)
+  - Meaningful interaction depth (+2 to -1)
+  - Overdue follow-ups (-2)
+  - Unanswered coach questions (-2)
+  - Stage velocity (+1 to -1)
+- **Thresholds**: >=5 strong_momentum, >=2 active, >=0 needs_follow_up, >=-3 cooling_off, else at_risk
+- **Product philosophy**: Supportive, action-oriented — guides athlete prioritization without predicting success or discouraging
+- **Files Modified**: `services/program_metrics.py` (_compute_pipeline_health), `models.py`
+- **Testing:** 100% pass rate (iteration_93: 57/57 backend tests)
+
 ## P0 In Progress
 - (None — all P0 items completed)
 
