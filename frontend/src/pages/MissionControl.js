@@ -6,28 +6,38 @@ import DirectorView from "@/components/mission-control/DirectorView";
 import CoachView from "@/components/mission-control/CoachView";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const POLL_INTERVAL = 45_000; // 45 seconds
 
 function MissionControl() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchData = async () => {
+  const fetchData = async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       const res = await axios.get(`${API}/mission-control`);
       setData(res.data);
     } catch (error) {
-      console.error("Error fetching mission control data:", error);
-      toast.error("Failed to load Mission Control data");
+      if (!isBackground) {
+        console.error("Error fetching mission control data:", error);
+        toast.error("Failed to load Mission Control data");
+      }
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchData(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Background polling
+  useEffect(() => {
+    const interval = setInterval(() => fetchData(true), POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isDirector = data?.role === "director" || user?.role === "director";
 

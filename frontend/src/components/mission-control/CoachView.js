@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Target, AlertTriangle, Calendar, MessageCircle, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 import TodaysPrioritiesCard from "./TodaysPrioritiesCard";
 import MyRosterCard from "./MyRosterCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
@@ -23,6 +24,95 @@ function getDateLabel() {
   return new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
+function timeSince(ts) {
+  if (!ts) return "";
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 10) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  return `${Math.floor(m / 60)}h ago`;
+}
+
+// ─── Live change detection ───────────────────────
+function useLiveIndicators(data, directorRequestCount) {
+  const prevRef = useRef(null);
+  const isFirstLoad = useRef(true);
+  const [pulseKeys, setPulseKeys] = useState(new Set());
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
+  const [, forceRender] = useState(0);
+
+  // Tick every 15s to update "Xs ago" label
+  useEffect(() => {
+    const t = setInterval(() => forceRender(n => n + 1), 15_000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    // Skip first load — no comparisons on initial data
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      prevRef.current = { data, directorRequestCount };
+      return;
+    }
+
+    const prev = prevRef.current;
+    if (!prev || !data) { prevRef.current = { data, directorRequestCount }; return; }
+
+    const prevSummary = prev.data?.todays_summary || {};
+    const currSummary = data.todays_summary || {};
+    const changed = new Set();
+
+    // Detect KPI changes
+    if (currSummary.needingAction !== prevSummary.needingAction) changed.add("NEED ACTION");
+    if (currSummary.upcomingEvents !== prevSummary.upcomingEvents) changed.add("EVENTS THIS WEEK");
+    if (currSummary.athleteCount !== prevSummary.athleteCount) changed.add("MY ATHLETES");
+    if (directorRequestCount !== prev.directorRequestCount) changed.add("DIRECTOR REQUESTS");
+
+    // Quiet toasts for high-priority changes only
+    if (directorRequestCount > prev.directorRequestCount) {
+      const diff = directorRequestCount - prev.directorRequestCount;
+      toast.info(`${diff} new director request${diff > 1 ? "s" : ""}`, {
+        description: "Tap to review",
+        duration: 4000,
+      });
+    }
+
+    const prevCritical = (prev.data?.priorities || []).filter(p => p.urgency === "critical").length;
+    const currCritical = (data.priorities || []).filter(p => p.urgency === "critical").length;
+    if (currCritical > prevCritical) {
+      toast.info(`${currCritical - prevCritical} new critical issue${currCritical - prevCritical > 1 ? "s" : ""}`, {
+        description: "Athlete needs immediate attention",
+        duration: 4000,
+      });
+    }
+
+    // Detect major momentum drops
+    const prevRoster = prev.data?.myRoster || [];
+    const currRoster = data.myRoster || [];
+    for (const curr of currRoster) {
+      const old = prevRoster.find(a => a.id === curr.id);
+      if (old && old.momentum_score - curr.momentum_score >= 15 && curr.momentum_trend === "declining") {
+        toast.info(`${curr.name.split(" ")[0]}'s momentum dropped significantly`, {
+          description: `Score: ${old.momentum_score} → ${curr.momentum_score}`,
+          duration: 5000,
+        });
+        break; // Only one toast per poll
+      }
+    }
+
+    if (changed.size > 0) {
+      setPulseKeys(changed);
+      setLastUpdated(Date.now());
+      setTimeout(() => setPulseKeys(new Set()), 3000);
+    }
+
+    prevRef.current = { data, directorRequestCount };
+  }, [data, directorRequestCount]);
+
+  return { pulseKeys, lastUpdated, timeSinceLabel: timeSince(lastUpdated) };
+}
+
 export default function CoachView({ data, userName }) {
   const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
   const [directorRequestCount, setDirectorRequestCount] = useState(0);
@@ -32,7 +122,7 @@ export default function CoachView({ data, userName }) {
   const summaryLines = data.summary_lines || [];
   const priorities = data.priorities || [];
 
-  // Fetch director actions count for the hero KPI
+  // Fetch director actions count (also polled)
   const fetchDirectorCount = useCallback(async () => {
     try {
       const token = localStorage.getItem("capymatch_token");
@@ -48,6 +138,15 @@ export default function CoachView({ data, userName }) {
   }, []);
 
   useEffect(() => { fetchDirectorCount(); }, [fetchDirectorCount]);
+
+  // Poll director count in sync with main data
+  useEffect(() => {
+    const t = setInterval(fetchDirectorCount, 45_000);
+    return () => clearInterval(t);
+  }, [fetchDirectorCount]);
+
+  // Live change detection
+  const { pulseKeys, timeSinceLabel } = useLiveIndicators(data, directorRequestCount);
 
   const kpis = [
     {
@@ -100,8 +199,16 @@ export default function CoachView({ data, userName }) {
         style={{ backgroundColor: "#1E213A", padding: "32px" }}
         data-testid="coach-hero"
       >
-        {/* Date badge */}
-        <div className="absolute" style={{ top: 24, right: 28 }}>
+        {/* Top-right: date + live indicator */}
+        <div className="absolute flex items-center gap-3" style={{ top: 24, right: 28 }}>
+          <span
+            className="flex items-center gap-1.5"
+            style={{ fontSize: 11, color: "#5a6278" }}
+            data-testid="live-updated-label"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Updated {timeSinceLabel}
+          </span>
           <span
             className="inline-block font-medium"
             style={{
@@ -128,17 +235,34 @@ export default function CoachView({ data, userName }) {
         {/* Separator */}
         <div style={{ borderTop: "1px solid #363D59", margin: "20px 0 24px 0" }} />
 
-        {/* KPIs */}
+        {/* KPIs with live pulse */}
         <div className="flex flex-wrap sm:flex-nowrap">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
+            const isPulsing = pulseKeys.has(kpi.label);
             return (
               <div key={kpi.label} className="flex flex-1 min-w-0" style={{ paddingRight: idx < kpis.length - 1 ? 24 : 0, marginRight: idx < kpis.length - 1 ? 24 : 0, borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none" }}>
                 <div className="flex items-start justify-between w-full">
                   <div>
-                    <p style={{ fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8 }}>
-                      {kpi.value}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p
+                        style={{
+                          fontSize: 36, fontWeight: 700, color: kpi.color, lineHeight: 1, marginBottom: 8,
+                          transition: "transform 0.3s ease",
+                          transform: isPulsing ? "scale(1.08)" : "scale(1)",
+                        }}
+                        data-testid={`kpi-value-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
+                        {kpi.value}
+                      </p>
+                      {isPulsing && (
+                        <span
+                          className="w-2 h-2 rounded-full animate-ping"
+                          style={{ backgroundColor: kpi.color, marginBottom: 8 }}
+                          data-testid={`kpi-pulse-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
+                        />
+                      )}
+                    </div>
                     <p style={{ fontSize: 12, fontWeight: 700, color: "#8A92A3", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>
                       {kpi.label}
                     </p>
