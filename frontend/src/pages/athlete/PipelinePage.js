@@ -90,27 +90,53 @@ function getStatusDot(p) {
   return "#d1d5db"; // grey
 }
 
-/* Generate action items — priority-ordered hero alerts.
-   Every school with an alert condition appears. One alert per school, highest priority wins.
-   Priority: 1) Past Due  2) Due Today  3) Coach Flags  4) Engagement Cooling/Needs Follow-Up  5) Needs First Outreach
+/* Generate action items — now driven by topActionsMap from the Top Action Engine.
+   Falls back to legacy generation when topActionsMap is empty (loading).
 */
 const ALERT_CATEGORIES = {
-  past_due:     { label: "Past Due",           color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.25)",  priority: 0 },
-  due_today:    { label: "Due Today",          color: "#d97706", bg: "rgba(217,119,6,0.12)",  border: "rgba(217,119,6,0.25)",  priority: 1 },
-  coach_flag:   { label: "Coach Flag",         color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", priority: 2 },
-  cooling_off:  { label: "Momentum Slowing",   color: "#fb923c", bg: "rgba(251,146,60,0.10)", border: "rgba(251,146,60,0.22)", priority: 3 },
-  first_outreach: { label: "First Outreach",   color: "#3b82f6", bg: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.22)", priority: 4 },
+  coach_flag:     { label: "Coach Flag",         color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", priority: 0 },
+  director_action:{ label: "Director Action",    color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.22)",  priority: 1 },
+  past_due:       { label: "Past Due",           color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.25)",  priority: 2 },
+  reply_needed:   { label: "Reply Needed",       color: "#d97706", bg: "rgba(217,119,6,0.12)",  border: "rgba(217,119,6,0.25)",  priority: 3 },
+  due_today:      { label: "Due Today",          color: "#d97706", bg: "rgba(217,119,6,0.10)",  border: "rgba(217,119,6,0.22)",  priority: 4 },
+  first_outreach: { label: "First Outreach",     color: "#3b82f6", bg: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.22)", priority: 5 },
+  cooling_off:    { label: "Re-engage",          color: "#fb923c", bg: "rgba(251,146,60,0.10)", border: "rgba(251,146,60,0.22)", priority: 6 },
+  on_track:       { label: "On Track",           color: "#22c55e", bg: "rgba(34,197,94,0.10)",  border: "rgba(34,197,94,0.22)",  priority: 7 },
 };
 
-function generateActions(programs, matchScores, tasks, healthMap) {
-  const seen = new Set();
-  const alerts = [];
-
+function generateActions(programs, matchScores, tasks, healthMap, topActionsMap) {
   const active = programs.filter(p =>
     p.board_group !== "archived" && p.recruiting_status !== "Committed" && p.journey_stage !== "committed"
   );
 
-  // Pass 1: Past Due
+  // If top actions available, use them (skip "on_track" for hero)
+  if (topActionsMap && Object.keys(topActionsMap).length > 0) {
+    const alerts = [];
+    for (const p of active) {
+      const ta = topActionsMap[p.program_id];
+      if (!ta || ta.action_key === "no_action_needed") continue;
+      alerts.push({
+        id: p.program_id,
+        type: "school",
+        program: p,
+        category: ta.category,
+        title: `${p.university_name} — ${ta.label}`,
+        context: ta.explanation,
+        owner: ta.owner,
+        cta: { label: ta.cta_label, style: ta.priority <= 3 ? "warn" : "primary" },
+        matchScore: matchScores[p.program_id],
+        due: getDueInfo(p),
+        priority: ta.priority,
+      });
+    }
+    alerts.sort((a, b) => a.priority - b.priority);
+    return alerts;
+  }
+
+  // Legacy fallback (during loading)
+  const seen = new Set();
+  const alerts = [];
+
   for (const p of active) {
     const due = getDueInfo(p);
     if (due?.color === "#dc2626") {
@@ -119,86 +145,25 @@ function generateActions(programs, matchScores, tasks, healthMap) {
       alerts.push({
         id: p.program_id, type: "school", program: p, category: "past_due",
         title: `Follow up with ${p.university_name}`,
-        context: days ? `Overdue by ${days} day${days !== 1 ? "s" : ""}. A short follow-up keeps momentum going.` : "This follow-up is overdue. Reach out to keep the conversation alive.",
+        context: days ? `Overdue by ${days} day${days !== 1 ? "s" : ""}. A short follow-up keeps momentum going.` : "This follow-up is overdue.",
         cta: { label: "Follow Up", style: "warn" },
         matchScore: matchScores[p.program_id], due,
       });
     }
   }
-
-  // Pass 2: Due Today
-  for (const p of active) {
-    if (seen.has(p.program_id)) continue;
-    const due = getDueInfo(p);
-    if (due?.urgent && due?.color !== "#dc2626") {
-      seen.add(p.program_id);
-      alerts.push({
-        id: p.program_id, type: "school", program: p, category: "due_today",
-        title: `Reach out to ${p.university_name} today`,
-        context: "You have a follow-up scheduled for today. Timely responses show genuine interest.",
-        cta: { label: "Follow Up", style: "warn" },
-        matchScore: matchScores[p.program_id], due,
-      });
-    }
-  }
-
-  // Pass 3: Coach Flags
-  const coachTasks = (tasks || []).filter(t => t.source === "coach");
-  for (const task of coachTasks) {
-    const pid = task.program_id;
-    if (!pid || seen.has(pid)) continue;
-    const p = active.find(pr => pr.program_id === pid);
-    if (!p) continue;
-    seen.add(pid);
-    alerts.push({
-      id: pid, type: "school", program: p, category: "coach_flag",
-      title: task.title || `Coach flagged ${p.university_name}`,
-      context: task.description || "A coach has flagged this school for your attention.",
-      cta: { label: "View Details", style: "primary" },
-      matchScore: matchScores[pid], due: getDueInfo(p),
-    });
-  }
-
-  // Pass 4: Engagement Cooling Off / Needs Follow-Up
-  for (const p of active) {
-    if (seen.has(p.program_id)) continue;
-    const hm = healthMap[p.program_id];
-    if (!hm) continue;
-    const state = hm.pipeline_health_state;
-    if (state === "cooling_off" || state === "at_risk" || state === "needs_follow_up") {
-      seen.add(p.program_id);
-      const days = hm.days_since_last_meaningful_engagement;
-      let context;
-      if (days != null) {
-        context = `No meaningful engagement in ${days} days. A short check-in can reignite momentum.`;
-      } else {
-        context = "Engagement has slowed. Consider reaching out with a genuine update.";
-      }
-      alerts.push({
-        id: p.program_id, type: "school", program: p, category: "cooling_off",
-        title: `Momentum slowing with ${p.university_name}`,
-        context,
-        cta: { label: "Re-engage", style: "primary" },
-        matchScore: matchScores[p.program_id], due: getDueInfo(p),
-      });
-    }
-  }
-
-  // Pass 5: Needs First Outreach
   for (const p of active) {
     if (seen.has(p.program_id)) continue;
     if (p.board_group === "needs_outreach") {
       seen.add(p.program_id);
       alerts.push({
         id: p.program_id, type: "school", program: p, category: "first_outreach",
-        title: `Start outreach to ${p.university_name}`,
-        context: "This school matches your profile. Send an introductory email with your highlight reel.",
+        title: `Send intro email to ${p.university_name}`,
+        context: "This school is on your board but hasn't been contacted yet.",
         cta: { label: "Start Outreach", style: "primary" },
         matchScore: matchScores[p.program_id], due: getDueInfo(p),
       });
     }
   }
-
   return alerts;
 }
 
@@ -264,11 +229,13 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
 
   const FILTER_PILLS = [
     { key: "all", label: "All", count: actions.length },
-    { key: "past_due", label: "Past Due" },
-    { key: "due_today", label: "Due Today" },
     { key: "coach_flag", label: "Coach Flags" },
-    { key: "cooling_off", label: "Cooling Off" },
+    { key: "director_action", label: "Director" },
+    { key: "past_due", label: "Past Due" },
+    { key: "reply_needed", label: "Reply Needed" },
+    { key: "due_today", label: "Due Today" },
     { key: "first_outreach", label: "First Outreach" },
+    { key: "cooling_off", label: "Re-engage" },
   ].filter(pill => pill.key === "all" || (catCounts[pill.key] || 0) > 0)
    .map(pill => ({ ...pill, count: pill.key === "all" ? actions.length : catCounts[pill.key] || 0 }));
 
@@ -326,12 +293,17 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
           </div>
         )}
 
-        {/* Header: category label + carousel nav */}
+        {/* Header: category label + owner + carousel nav */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}
               data-testid="hero-category-label"
             >{cat.label}</span>
+            {action.owner && (() => {
+              const owColors = { athlete: "#5eead4", parent: "#a78bfa", coach: "#fbbf24", shared: "#93c5fd" };
+              const oc = owColors[action.owner] || "rgba(255,255,255,0.5)";
+              return <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}20`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }} data-testid="hero-owner-badge">{action.owner}</span>;
+            })()}
             <span style={{
               fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6,
               background: cat.bg, color: cat.color, border: `1px solid ${cat.border}`,
@@ -550,9 +522,18 @@ const COL_TO_STAGE = {
   offer: { journey_stage: "offer", recruiting_status: "Offer" },
 };
 
-function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics }) {
+const OWNER_STYLES = {
+  athlete: { bg: "rgba(13,148,136,0.1)", color: "#0d9488", label: "Athlete" },
+  parent:  { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Parent" },
+  coach:   { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Coach" },
+  shared:  { bg: "rgba(59,130,246,0.1)", color: "#3b82f6", label: "Shared" },
+};
+
+function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction }) {
   const due = getDueInfo(p);
   const hasUrgent = due?.urgent && due?.color === "#dc2626";
+  const ownerStyle = topAction ? (OWNER_STYLES[topAction.owner] || OWNER_STYLES.athlete) : null;
+  const showAction = topAction && topAction.action_key !== "no_action_needed";
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -587,13 +568,22 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics }) 
               )}
             </div>
           </div>
+          {showAction && (
+            <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 8, background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)" }} data-testid={`top-action-${p.program_id}`}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--cm-text)" }}>{topAction.label}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 4, background: ownerStyle.bg, color: ownerStyle.color, textTransform: "uppercase", letterSpacing: "0.05em" }} data-testid={`owner-${p.program_id}`}>{ownerStyle.label}</span>
+              </div>
+              <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 3, lineHeight: 1.4 }}>{topAction.explanation}</div>
+            </div>
+          )}
         </div>
       )}
     </Draggable>
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap }) {
+function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, topActionsMap }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -633,7 +623,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap }) 
                 </div>
                 <div style={{ padding: "0 8px 10px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
                   {columns[col.key].length > 0 ? (
-                    columns[col.key].map((p, idx) => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} index={idx} healthMetrics={healthMap[p.program_id]} />)
+                    columns[col.key].map((p, idx) => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} index={idx} healthMetrics={healthMap[p.program_id]} topAction={topActionsMap[p.program_id]} />)
                   ) : (
                     <div style={{ padding: "30px 14px", textAlign: "center", fontSize: 12, color: "var(--cm-text-4)", fontWeight: 500 }}>No schools yet</div>
                   )}
@@ -747,6 +737,7 @@ export default function PipelinePage() {
   const [matchScores, setMatchScores] = useState({});
   const [tasks, setTasks] = useState([]);
   const [healthMap, setHealthMap] = useState({});
+  const [topActionsMap, setTopActionsMap] = useState({});
   const [collapsedArchived, setCollapsedArchived] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const navigate = useNavigate();
@@ -777,12 +768,23 @@ export default function PipelinePage() {
     axios.post(`${API}/internal/programs/batch-metrics`, { program_ids: ids })
       .then(res => {
         const m = res.data?.metrics || {};
-        // Key by program_id, attach program_id into each metrics object
         const mapped = {};
         for (const [pid, data] of Object.entries(m)) {
           mapped[pid] = { ...data, program_id: pid };
         }
         setHealthMap(mapped);
+      })
+      .catch(() => {});
+  }, [allPrograms.length]);
+
+  // Fetch top actions
+  useEffect(() => {
+    if (allPrograms.length === 0) return;
+    axios.get(`${API}/internal/programs/top-actions`)
+      .then(res => {
+        const map = {};
+        (res.data?.actions || []).forEach(a => { map[a.program_id] = a; });
+        setTopActionsMap(map);
       })
       .catch(() => {});
   }, [allPrograms.length]);
@@ -840,7 +842,7 @@ export default function PipelinePage() {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchPrograms} /></div>;
   }
 
-  const actions = generateActions(allPrograms, matchScores, tasks, healthMap);
+  const actions = generateActions(allPrograms, matchScores, tasks, healthMap, topActionsMap);
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
   const usage = getUsage(subscription, "schools");
   const aiUsage = getUsage(subscription, "ai_drafts");
@@ -892,7 +894,7 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} />
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} topActionsMap={topActionsMap} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (

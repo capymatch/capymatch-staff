@@ -11,6 +11,7 @@ from auth_middleware import _get_current_user
 from admin_guard import require_admin
 from models import ProgramMetricsResponse, RecomputeAllResponse
 from services.program_metrics import get_metrics, recompute_metrics, recompute_all
+from services.top_action_engine import compute_all_top_actions, compute_top_action
 from db_client import db
 
 router = APIRouter(prefix="/internal/programs", tags=["program-metrics"])
@@ -109,3 +110,24 @@ async def recompute_all_metrics(
 ):
     """Recompute metrics for all active programs. Admin-only."""
     return await recompute_all()
+
+
+@router.get("/top-actions")
+async def get_all_top_actions(
+    current_user: dict = Depends(_get_current_user),
+):
+    """Get the single top action for every active program."""
+    tenant_id = await _resolve_tenant(current_user)
+    actions = await compute_all_top_actions(tenant_id)
+    return {"actions": actions}
+
+
+@router.get("/{program_id}/top-action")
+async def get_program_top_action(
+    program_id: str,
+    current_user: dict = Depends(_get_current_user),
+):
+    """Get the top action for a specific program."""
+    tenant_id = await _resolve_tenant(current_user)
+    action = await compute_top_action(program_id, tenant_id)
+    return action
