@@ -1,0 +1,90 @@
+{
+  "summary": "Pipeline Hero Card UX Refinements - ALL TESTS PASSED. Backend (15/15 tests) verified top-actions API returns directive labels ('Reply to Coach Now', 'Send Your Intro Email'), owner/category fields, and priority ordering. Frontend UI tests confirmed action-first layout: CTA label as headline, school name as context, dual CTAs (primary + View School), filter pills working with counts, carousel navigation, and kanban cards with top actions.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pipeline_hero_card.py",
+    "/app/test_reports/pytest/pytest_pipeline_hero_card.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: GET /api/internal/programs/top-actions returns 200 with 12 actions",
+    "VERIFIED: Action labels use directive language: 'Reply to Coach Now', 'Send Your Intro Email', 'On Track'",
+    "VERIFIED: CTA labels are specific: 'Reply Now', 'Start Outreach', 'View School'",
+    "VERIFIED: Priority ordering correct (1=coach_flag, 6=first_outreach, 8=on_track)",
+    "VERIFIED: Owner field values: 'athlete' present for all current actions",
+    "VERIFIED: Category field values: 'coach_flag', 'first_outreach', 'on_track' present",
+    "VERIFIED: Explanation text is user-friendly, no technical terms",
+    "VERIFIED: Frontend hero card shows CTA label as headline ('Reply Now' for coach_flag, 'Start Outreach' for first_outreach)",
+    "VERIFIED: School name shown as secondary context below headline (e.g., 'University of Florida D1 76%')",
+    "VERIFIED: Dual CTAs present: primary action button + 'View School >' secondary button",
+    "VERIFIED: Filter pills show counts and filter correctly (All:9, Coach Flags:1, First Outreach:8)",
+    "VERIFIED: Carousel navigation works - counter updates correctly (1/9 -> 2/9 etc)",
+    "VERIFIED: Category label ('COACH FLAG') and owner badge ('ATHLETE') displayed in hero",
+    "VERIFIED: Explanation text inline (not in card/box) - clean layout",
+    "VERIFIED: Progress rail compact inline on desktop (dots with connecting lines)",
+    "VERIFIED: Kanban board has 12 cards, 9 display top actions with owner badges",
+    "VERIFIED: Kanban cards show directive labels: 'Send Your Intro Email', 'Reply to Coach Now'",
+    "VERIFIED: CTA button navigates to school detail page (/pipeline/{program_id})"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pipeline_hero_card.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "password123"
+    }
+  },
+  "seed_data_creation": "None - used existing data with coach flags on University of Florida and multiple uncontacted schools",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pipeline Hero Card UX Refinements fully implemented and tested. Key changes: 1) Action-first layout with CTA label as headline (e.g., 'Reply Now' not school name), 2) School name as context below headline, 3) Dual CTAs: primary action button + 'View School >' link, 4) Filter pills with counts: All, Coach Flags, First Outreach, 5) Carousel navigation with dot indicators, 6) Category label (e.g., 'COACH FLAG') and owner badge (e.g., 'ATHLETE'), 7) Inline explanation text (no box), 8) Compact progress rail (dots + lines), 9) Kanban cards showing directive labels from Top Action Engine. Backend top_action_engine.py ACTION_MAP returns directive labels like 'Reply to Coach Now', 'Send Your Intro Email'. Frontend PipelinePage.js HeroActionsCarousel uses action.cta.label for headline.",
+  "features_verified": {
+    "pipeline_hero_card_action_first_layout": {
+      "headline_shows_cta_label": "PASS - 'Reply Now' for coach_flag, 'Start Outreach' for first_outreach",
+      "school_name_as_context": "PASS - 'University of Florida D1 76%' shown below headline",
+      "dual_ctas_visible": "PASS - Primary button + 'View School >' secondary",
+      "reduced_visual_clutter": "PASS - No social links, fit labels, confidence in hero"
+    },
+    "filter_pills": {
+      "all_filter": "PASS - Shows count 9, resets to full list",
+      "coach_flags_filter": "PASS - Shows count 1, filters to coach_flag category",
+      "first_outreach_filter": "PASS - Shows count 8, filters to first_outreach category"
+    },
+    "carousel_navigation": {
+      "prev_button": "PASS - Decrements counter",
+      "next_button": "PASS - Increments counter",
+      "dot_indicators": "PASS - Clickable, shows active state"
+    },
+    "hero_components": {
+      "category_label": "PASS - 'COACH FLAG' displayed",
+      "owner_badge": "PASS - 'ATHLETE' in teal",
+      "alert_counter": "PASS - '1/9' format",
+      "explanation_inline": "PASS - Not in box, clean text",
+      "progress_rail_compact": "PASS - Dots with connecting lines inline"
+    },
+    "kanban_board": {
+      "cards_with_top_actions": "PASS - 9 out of 12 cards show top actions",
+      "owner_badges_on_cards": "PASS - 9 badges displayed",
+      "directive_labels": "PASS - 'Send Your Intro Email', 'Reply to Coach Now'"
+    },
+    "backend_api": {
+      "directive_labels": "PASS - 'Reply to Coach Now', 'Send Your Intro Email', 'On Track'",
+      "cta_labels": "PASS - 'Reply Now', 'Start Outreach', 'View School'",
+      "owner_inference": "PASS - 'athlete' for all current actions",
+      "priority_ordering": "PASS - 1, 6, 6, 6, 6, 6, 6, 6, 6, 8, 8, 8"
+    }
+  }
+}

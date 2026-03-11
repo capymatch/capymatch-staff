@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Plus, ChevronRight, ChevronLeft, Loader2,
-  Send, GraduationCap, AlertTriangle, Lightbulb,
-  Archive, RotateCcw, CheckSquare, Clock, ArrowRight,
+  ChevronRight, ChevronLeft, Loader2,
+  AlertTriangle, ArrowRight,
+  Archive, RotateCcw, CheckSquare, Clock,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RAIL_STAGES } from "../../components/journey/constants";
@@ -31,15 +30,6 @@ function useIsMobile(breakpoint = 768) {
 /* ═══════════════════════════════════════════ */
 /* ── Helpers                                 */
 /* ═══════════════════════════════════════════ */
-const FIT_COLORS = {
-  "Strong Fit": { bg: "rgba(22,163,74,0.15)", text: "#4ade80", border: "rgba(22,163,74,0.2)" },
-  "Possible Fit": { bg: "rgba(13,148,136,0.15)", text: "#5eead4", border: "rgba(13,148,136,0.2)" },
-  "Stretch": { bg: "rgba(245,158,11,0.12)", text: "#fbbf24", border: "rgba(245,158,11,0.2)" },
-  "Less Likely Fit": { bg: "rgba(239,68,68,0.1)", text: "#f87171", border: "rgba(239,68,68,0.15)" },
-  "Not Enough Data": { bg: "var(--cm-surface-2)", text: "var(--cm-text-3)", border: "var(--cm-border)" },
-};
-
-const CONFIDENCE_LABELS = { high: "High Confidence", medium: "Medium Confidence", low: "Low Confidence", estimated: "Estimated" };
 
 function computeRail(journeyStage) {
   const activeIdx = journeyStage ? RAIL_STAGES.findIndex(st => st.key === journeyStage) : 0;
@@ -187,13 +177,11 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
   }, [actions, filter]);
 
   const total = filtered.length;
-  // Reset to first item when filter changes
   const prevFilter = React.useRef(filter);
   useEffect(() => { if (prevFilter.current !== filter) { setIdx(0); prevFilter.current = filter; } }, [filter]);
 
   if (actions.length === 0) return null;
 
-  // If filtered is empty, fall back to all
   const displayActions = total > 0 ? filtered : actions;
   const displayTotal = displayActions.length;
   const safeIdx = Math.min(idx, Math.max(0, displayTotal - 1));
@@ -206,24 +194,17 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
   const p = action.program;
   const ms = isSchool ? (action.matchScore || matchScores[p?.program_id]) : null;
   const matchPct = ms?.match_score ?? action.match_score;
-  const socialLinks = ms?.social_links || p?.social_links;
-  const sig = p?.signals || {};
-  const meta = p ? [p.conference, sig.total_interactions ? `${sig.total_interactions} events` : null].filter(Boolean).join(" · ") : "";
-  const fitLabel = ms?.measurables_fit?.label;
-  const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
-  const confidence = ms?.confidence;
-  const confLabel = CONFIDENCE_LABELS[confidence] || "";
   const advice = action.context;
   const stages = isSchool ? computeRail(p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")) : null;
   const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Committed" };
   const cat = ALERT_CATEGORIES[action.category] || ALERT_CATEGORIES.past_due;
+  const isUrgent = action.priority <= 3;
 
   const handleCTA = () => {
     if (action.type === "growth") navigate("/schools");
     else if (p) navigate(`/pipeline/${p.program_id}`);
   };
 
-  // Count alerts per category for filter pills
   const catCounts = {};
   for (const a of actions) { catCounts[a.category] = (catCounts[a.category] || 0) + 1; }
 
@@ -239,17 +220,21 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
   ].filter(pill => pill.key === "all" || (catCounts[pill.key] || 0) > 0)
    .map(pill => ({ ...pill, count: pill.key === "all" ? actions.length : catCounts[pill.key] || 0 }));
 
-  return (
-    <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 12, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
-      {/* Accent bar — colored by category */}
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${cat.color}, ${cat.color}88)` }} />
-      {/* Ambient glow */}
-      <div style={{ position: "absolute", top: "-40%", right: "-10%", width: 400, height: 400, background: `radial-gradient(circle, ${cat.color}10 0%, transparent 70%)`, pointerEvents: "none" }} />
+  // Owner badge config
+  const owColors = { athlete: "#5eead4", parent: "#a78bfa", coach: "#fbbf24", shared: "#93c5fd" };
+  const oc = owColors[action.owner] || "rgba(255,255,255,0.5)";
 
-      <div style={{ padding: "24px 28px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
-        {/* Filter pills — only when there are multiple alert categories */}
+  return (
+    <div style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 14, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="pipeline-hero-card">
+      {/* Accent bar — thicker for urgent */}
+      <div style={{ height: isUrgent ? 4 : 3, background: `linear-gradient(90deg, ${cat.color}, ${cat.color}66)` }} />
+      {/* Ambient glow — stronger for urgent */}
+      <div style={{ position: "absolute", top: "-30%", right: "-5%", width: 350, height: 350, background: `radial-gradient(circle, ${cat.color}${isUrgent ? "18" : "0a"} 0%, transparent 70%)`, pointerEvents: "none" }} />
+
+      <div style={{ padding: "20px 24px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
+        {/* Filter pills */}
         {FILTER_PILLS.length > 2 && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }} data-testid="hero-filter-pills">
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 16 }} data-testid="hero-filter-pills">
             {FILTER_PILLS.map(pill => {
               const URGENT_CATS = new Set(["past_due", "due_today", "coach_flag"]);
               const shouldPulse = pill.key !== "all" && URGENT_CATS.has(pill.key) && pill.count > 0 && !seenCategories.has(pill.key);
@@ -270,174 +255,138 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
               >
                 {shouldPulse && (
                   <span style={{ position: "relative", width: 6, height: 6, flexShrink: 0 }}>
-                    <span style={{
-                      position: "absolute", inset: 0, borderRadius: "50%",
-                      background: pillCat?.color || "#ef4444",
-                    }} />
-                    <span style={{
-                      position: "absolute", inset: -2, borderRadius: "50%",
-                      border: `1.5px solid ${pillCat?.color || "#ef4444"}`,
-                      animation: "pillPulse 2s ease-out infinite", pointerEvents: "none",
-                    }} data-testid={`pill-pulse-${pill.key}`} />
+                    <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: pillCat?.color || "#ef4444" }} />
+                    <span style={{ position: "absolute", inset: -2, borderRadius: "50%", border: `1.5px solid ${pillCat?.color || "#ef4444"}`, animation: "pillPulse 2s ease-out infinite", pointerEvents: "none" }} data-testid={`pill-pulse-${pill.key}`} />
                   </span>
                 )}
                 {pill.label}
-                <span style={{
-                  fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 8,
-                  background: filter === pill.key ? "rgba(13,148,136,0.25)" : "rgba(255,255,255,0.06)",
-                  color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.3)",
-                }}>{pill.count}</span>
+                <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 8, background: filter === pill.key ? "rgba(13,148,136,0.25)" : "rgba(255,255,255,0.06)", color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.3)" }}>{pill.count}</span>
               </button>
               );
             })}
           </div>
         )}
 
-        {/* Header: category label + owner + carousel nav */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+        {/* ── Action-First Layout ── */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 6 }}>
+          {/* Left: category + counter */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}
-              data-testid="hero-category-label"
-            >{cat.label}</span>
-            {action.owner && (() => {
-              const owColors = { athlete: "#5eead4", parent: "#a78bfa", coach: "#fbbf24", shared: "#93c5fd" };
-              const oc = owColors[action.owner] || "rgba(255,255,255,0.5)";
-              return <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}20`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }} data-testid="hero-owner-badge">{action.owner}</span>;
-            })()}
-            <span style={{
-              fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6,
-              background: cat.bg, color: cat.color, border: `1px solid ${cat.border}`,
-            }} data-testid="hero-alert-count">{safeIdx + 1} of {displayTotal}</span>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }} data-testid="hero-category-label">{cat.label}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }} data-testid="hero-owner-badge">{action.owner}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }} data-testid="hero-alert-count">{safeIdx + 1}/{displayTotal}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {displayTotal > 1 && (
-              <>
-                <button onClick={prev} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 14, height: 14 }} /></button>
-                <div style={{ display: "flex", gap: 3, maxWidth: 200, flexWrap: "wrap" }}>
-                  {displayActions.map((a, i) => {
-                    const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
-                    return (
-                      <div key={i} onClick={() => setIdx(i)} style={{
-                        width: i === safeIdx ? 18 : 6, height: 6,
-                        borderRadius: i === safeIdx ? 4 : "50%",
-                        background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
-                        cursor: "pointer", transition: "all 0.2s",
-                      }} data-testid={`carousel-dot-${i}`} />
-                    );
-                  })}
-                </div>
-                <button onClick={next} style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 14, height: 14 }} /></button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Top row: logo + name on left, progress rail on right */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, marginBottom: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            {isSchool && p ? (
-              <>
-                <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={48} className="rounded-[14px]" />
-                <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{p.university_name}</span>
-              </>
-            ) : (
-              <span style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.3 }}>{action.title}</span>
-            )}
-          </div>
-          {/* Progress Rail */}
-          {isSchool && stages && (
-            <div style={{ width: 320, flexShrink: 0 }} className="hidden md:block">
-              <div style={{ display: "flex", alignItems: "center", height: 24 }}>
-                {stages.map((s, i) => (
-                  <React.Fragment key={s.key}>
-                    {i > 0 && <div style={{ flex: 1, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
-                    <div style={{ position: "relative" }}>
-                      <div style={{
-                        width: s.state === "active" ? 16 : 10, height: s.state === "active" ? 16 : 10,
-                        borderRadius: "50%",
-                        background: s.state === "future" ? "transparent" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
-                        border: s.state === "future" ? "2px solid rgba(255,255,255,0.15)" : "none",
-                        boxShadow: s.state === "active" ? "0 0 12px rgba(13,148,136,0.5)" : "none",
-                      }} />
-                      {s.state === "active" && <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "2px solid rgba(13,148,136,0.4)", animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
-                    </div>
-                  </React.Fragment>
-                ))}
+          {/* Right: carousel nav */}
+          {displayTotal > 1 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
+              <div style={{ display: "flex", gap: 3 }}>
+                {displayActions.slice(0, 12).map((a, i) => {
+                  const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
+                  return (
+                    <div key={i} onClick={() => setIdx(i)} style={{
+                      width: i === safeIdx ? 16 : 5, height: 5,
+                      borderRadius: i === safeIdx ? 3 : "50%",
+                      background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
+                      cursor: "pointer", transition: "all 0.2s",
+                    }} data-testid={`carousel-dot-${i}`} />
+                  );
+                })}
+                {displayActions.length > 12 && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", lineHeight: "5px" }}>+{displayActions.length - 12}</span>}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-                {stages.map(s => (
-                  <span key={s.key} style={{ flex: 1, textAlign: "center", fontSize: 9, fontWeight: s.state === "active" ? 800 : 600, color: s.state === "active" ? "#5eead4" : "rgba(255,255,255,0.25)" }}>
-                    {stageLabels[s.key] || s.label}
-                  </span>
-                ))}
-              </div>
+              <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
             </div>
           )}
         </div>
 
-        {/* Badges row */}
-        {isSchool && p && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }} className="hero-badges-row">
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#94a3b8" }} />
-              {sig.has_coach_reply ? "Interested" : "Neutral"}
-            </span>
-            {p.division && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>}
-            {matchPct != null && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>{matchPct}% Match</span>}
-            {fitLabel && <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>{fitLabel}</span>}
-            {confLabel && confidence !== "high" && <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>{confLabel}</span>}
-            {meta && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.3)" }}>{meta}</span>}
-            {socialLinks && (
-              <div style={{ display: "flex", gap: 8, marginLeft: 4 }}>
-                {socialLinks.twitter && <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>X</a>}
-                {socialLinks.instagram && <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>IG</a>}
-                {socialLinks.facebook && <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 22, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.35)", fontSize: 9, fontWeight: 700, textDecoration: "none" }}>FB</a>}
+        {/* ── ACTION HEADLINE (primary visual weight) ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 8 }}>
+          {isSchool && p && (
+            <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={40} className="rounded-[10px] flex-shrink-0" />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: -0.3, lineHeight: 1.3 }} data-testid="hero-action-headline">
+              {action.cta?.label || "Take Action"}
+            </div>
+            {isSchool && p && (
+              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)", marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
+                <span>{p.university_name}</span>
+                {p.division && <span style={{ padding: "1px 7px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(13,148,136,0.15)", color: "#5eead4" }}>{p.division}</span>}
+                {matchPct != null && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)" }}>{matchPct}%</span>}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* ── Explanation (inline, not in a card) ── */}
+        {advice && (
+          <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.55)", lineHeight: 1.5, marginBottom: 14, paddingLeft: 54 }} data-testid="hero-explanation">
+            {advice}
           </div>
         )}
 
-        {/* Bottom: Advice box + CTA button */}
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }} className="hero-advice-row">
-          {advice && (
-            <div style={{ flex: 1, minWidth: 0, background: `${cat.color}0a`, border: `1px solid ${cat.color}22`, borderRadius: 12, padding: "16px 18px", display: "flex", gap: 12, alignItems: "flex-start" }} data-testid="hero-advice-card">
-              <Lightbulb style={{ width: 16, height: 16, color: "rgba(255,255,255,0.3)", flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>What to do next</div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.7)", lineHeight: 1.55 }}>{advice}</div>
-              </div>
-            </div>
-          )}
+        {/* ── CTA row: primary action + secondary "View School" ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }} className="hero-advice-row">
           <button onClick={handleCTA} style={{
-            padding: "10px 28px", borderRadius: 10, border: "none",
-            background: action.cta.style === "warn" ? "#f59e0b" : "#0d9488",
-            color: "white", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex",
-            alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "inherit", flexShrink: 0,
-            minWidth: 140, transition: "all 0.2s",
+            padding: "10px 24px", borderRadius: 10, border: "none",
+            background: isUrgent ? cat.color : "#0d9488",
+            color: isUrgent && cat.color === "#f59e0b" ? "#000" : "#fff",
+            fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", gap: 7, fontFamily: "inherit",
+            transition: "all 0.2s", flexShrink: 0,
           }} data-testid="hero-cta-btn">
-            <Send style={{ width: 15, height: 15 }} />
+            <ArrowRight style={{ width: 15, height: 15 }} />
             {action.cta.label}
           </button>
+          {isSchool && p && (
+            <button onClick={handleCTA} style={{
+              padding: "10px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)",
+              background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 600,
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "inherit",
+              transition: "all 0.15s",
+            }} data-testid="hero-view-school-btn">
+              View School <ChevronRight style={{ width: 12, height: 12 }} />
+            </button>
+          )}
+          {/* Progress Rail — compact, inline */}
+          {isSchool && stages && (
+            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }} className="hidden md:flex">
+              {stages.map((s, i) => (
+                <React.Fragment key={s.key}>
+                  {i > 0 && <div style={{ width: 16, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
+                  <div style={{ position: "relative" }} title={stageLabels[s.key] || s.label}>
+                    <div style={{
+                      width: s.state === "active" ? 12 : 7, height: s.state === "active" ? 12 : 7,
+                      borderRadius: "50%",
+                      background: s.state === "future" ? "transparent" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
+                      border: s.state === "future" ? "1.5px solid rgba(255,255,255,0.12)" : "none",
+                      boxShadow: s.state === "active" ? "0 0 8px rgba(13,148,136,0.5)" : "none",
+                    }} />
+                    {s.state === "active" && <div style={{ position: "absolute", inset: -3, borderRadius: "50%", border: "1.5px solid rgba(13,148,136,0.3)", animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Usage indicators */}
-      <div style={{ padding: "0 28px 14px", display: "flex", alignItems: "center", gap: 12, position: "relative", zIndex: 1 }} className="pipeline-hero-card" data-testid="hero-usage-bar">
-        <span style={{ fontSize: 10, fontWeight: 600, color: schoolPct >= 1 ? "rgba(245,158,11,0.8)" : "rgba(255,255,255,0.3)" }} data-testid="hero-school-usage">
+      {/* Usage bar */}
+      <div style={{ padding: "8px 24px 12px", display: "flex", alignItems: "center", gap: 10, position: "relative", zIndex: 1 }} className="pipeline-hero-card" data-testid="hero-usage-bar">
+        <span style={{ fontSize: 10, fontWeight: 600, color: schoolPct >= 1 ? "rgba(245,158,11,0.8)" : "rgba(255,255,255,0.25)" }} data-testid="hero-school-usage">
           {usage.unlimited ? `${usage.used} schools` : `${usage.used}/${usage.limit} schools`}
         </span>
         {!aiUsage.unlimited && aiUsage.limit > 0 && (
           <>
-            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.12)" }} />
-            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)" }} data-testid="hero-ai-usage">
+            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
+            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.25)" }} data-testid="hero-ai-usage">
               {aiUsage.limit - aiUsage.used} AI drafts left
             </span>
           </>
         )}
         {aiUsage.limit === 0 && (
           <>
-            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.12)" }} />
-            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.25)" }} data-testid="hero-ai-usage">
+            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
+            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.2)" }} data-testid="hero-ai-usage">
               AI drafts: Pro
             </span>
           </>
@@ -716,9 +665,9 @@ function PipelineStyles() {
           flex-shrink: 0 !important;
           scroll-snap-align: start !important;
         }
-        .pipeline-hero-card { padding: 16px 16px 0 !important; }
-        .hero-advice-row { flex-direction: column !important; }
-        .hero-advice-row button { width: 100% !important; min-width: unset !important; }
+        .pipeline-hero-card { padding: 14px 14px 0 !important; }
+        .hero-advice-row { flex-wrap: wrap !important; }
+        .hero-advice-row button { flex: 1 !important; min-width: 120px !important; }
         .pipeline-events-row { flex-direction: column !important; gap: 8px !important; }
       }
     `}</style>

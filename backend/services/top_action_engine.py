@@ -35,73 +35,73 @@ ACTION_MAP = {
     # --- Priority 1: Coach flags ---
     "coach_flag_reply_needed": {
         "priority": 1,
-        "label": "Reply to coach",
+        "label": "Reply to Coach Now",
         "owner": "athlete",
-        "explanation_template": "Coach flagged this — a reply is expected",
-        "cta_label": "Open School",
+        "explanation_template": "Your club coach flagged this — they expect a reply from you",
+        "cta_label": "Reply Now",
         "category": "coach_flag",
     },
     "coach_flag_update_requested": {
         "priority": 1,
-        "label": "Send updated info",
+        "label": "Send Updated Info",
         "owner": "athlete",
-        "explanation_template": "Coach requested updated information",
-        "cta_label": "Open School",
+        "explanation_template": "Coach requested updated information — send it before they follow up",
+        "cta_label": "Send Update",
         "category": "coach_flag",
     },
     "coach_flag_general": {
         "priority": 1,
-        "label": "Review coach flag",
+        "label": "Review Coach Flag",
         "owner": "athlete",
-        "explanation_template": "Your club coach flagged this for your attention",
-        "cta_label": "View Details",
+        "explanation_template": "Your club coach flagged this for your attention — check the details",
+        "cta_label": "Review Flag",
         "category": "coach_flag",
     },
 
     # --- Priority 2: Director actions ---
     "director_action_open": {
         "priority": 2,
-        "label": "Review director action",
+        "label": "Action Required from Director",
         "owner": "shared",
-        "explanation_template": "Director raised an action that needs attention",
-        "cta_label": "View Details",
+        "explanation_template": "Your director raised an action — review and respond",
+        "cta_label": "Review Action",
         "category": "director_action",
     },
 
     # --- Priority 3: Overdue follow-up ---
     "overdue_followup": {
         "priority": 3,
-        "label": "Follow up — overdue",
+        "label": "Follow Up Now — {days_overdue}d Overdue",
         "owner": "athlete",
-        "explanation_template": "Follow-up was due {days_overdue} day{s} ago. A quick message keeps this alive",
-        "cta_label": "Follow Up",
+        "explanation_template": "This follow-up is {days_overdue} day{s} late. Send a quick message to keep momentum",
+        "cta_label": "Follow Up Now",
         "category": "past_due",
     },
 
     # --- Priority 4: Reply needed ---
     "reply_to_coach_question": {
         "priority": 4,
-        "label": "Reply to coach question",
+        "label": "Answer Coach's Question",
         "owner": "athlete",
-        "explanation_template": "Coach asked a question that hasn't been answered yet",
-        "cta_label": "Reply",
+        "explanation_template": "A coach asked you a question — reply to keep the conversation moving",
+        "cta_label": "Reply Now",
         "category": "reply_needed",
     },
     "reply_to_coach_message": {
         "priority": 4,
-        "label": "Reply to coach",
+        "label": "Reply to Coach Message",
         "owner": "athlete",
-        "explanation_template": "Coach reached out recently — reply to keep the conversation going",
-        "cta_label": "Reply",
+        "explanation_template": "Coach reached out — a timely reply shows strong interest",
+        "cta_label": "Reply Now",
         "category": "reply_needed",
     },
 
     # --- Priority 5: Due today ---
     "due_today": {
         "priority": 5,
-        "label": "Follow up today",
+        "label": "Follow Up Today",
         "owner": "athlete",
-        "explanation_template": "You have a follow-up scheduled for today",
+        "explanation_template": "You have a follow-up scheduled for today — don't let it slip",
         "cta_label": "Follow Up",
         "category": "due_today",
     },
@@ -109,9 +109,9 @@ ACTION_MAP = {
     # --- Priority 6: First outreach ---
     "send_intro_email": {
         "priority": 6,
-        "label": "Send intro email",
+        "label": "Send Your Intro Email",
         "owner": "athlete",
-        "explanation_template": "This school is on your board but hasn't been contacted yet",
+        "explanation_template": "You added this school but haven't reached out yet — make your first impression",
         "cta_label": "Start Outreach",
         "category": "first_outreach",
     },
@@ -119,17 +119,17 @@ ACTION_MAP = {
     # --- Priority 7: Engagement slowing ---
     "follow_up_this_week": {
         "priority": 7,
-        "label": "Follow up this week",
+        "label": "Check In This Week",
         "owner": "athlete",
-        "explanation_template": "No meaningful engagement in {days} days. A short check-in can help",
-        "cta_label": "Re-engage",
+        "explanation_template": "It's been {days} days since last contact. A short check-in keeps you on their radar",
+        "cta_label": "Send Check-In",
         "category": "cooling_off",
     },
     "reengage_relationship": {
         "priority": 7,
-        "label": "Re-engage this program",
+        "label": "Re-engage This Program",
         "owner": "athlete",
-        "explanation_template": "This relationship has gone quiet. Consider sending an update",
+        "explanation_template": "This relationship has gone quiet — send an update or schedule touchpoint",
         "cta_label": "Re-engage",
         "category": "cooling_off",
     },
@@ -137,10 +137,10 @@ ACTION_MAP = {
     # --- Priority 8: No action ---
     "no_action_needed": {
         "priority": 8,
-        "label": "On track",
+        "label": "On Track",
         "owner": "athlete",
-        "explanation_template": "Everything looks good. Keep the momentum going",
-        "cta_label": "Open School",
+        "explanation_template": "Everything looks good — keep the momentum going",
+        "cta_label": "View School",
         "category": "on_track",
     },
 }
@@ -373,11 +373,16 @@ def _make_action(
     definition = ACTION_MAP.get(action_key, ACTION_MAP["no_action_needed"])
 
     explanation = definition["explanation_template"]
+    label = definition["label"]
     if template_vars:
         try:
             explanation = explanation.format(**template_vars)
         except (KeyError, IndexError):
             pass  # Keep template as-is if vars don't match
+        try:
+            label = label.format(**template_vars)
+        except (KeyError, IndexError):
+            pass
 
     return {
         "program_id": program_id,
@@ -386,7 +391,7 @@ def _make_action(
         "reason_code": reason_code,
         "priority": definition["priority"],
         "category": definition["category"],
-        "label": definition["label"],
+        "label": label,
         "owner": definition["owner"],
         "explanation": explanation,
         "cta_label": definition["cta_label"],
