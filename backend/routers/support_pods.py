@@ -15,6 +15,9 @@ from support_pod import (
     calculate_pod_health,
     get_relevant_events,
     enrich_members_with_tasks,
+    generate_recruiting_timeline,
+    generate_recruiting_signals,
+    get_intervention_playbook,
 )
 
 router = APIRouter()
@@ -59,6 +62,13 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
 
     unassigned = [a for a in all_actions if a.get("owner") in ("Unassigned", None, "") and a.get("status") != "completed"]
 
+    # New V2 fields
+    recruiting_timeline = generate_recruiting_timeline(athlete)
+    recruiting_signals = generate_recruiting_signals(athlete, interventions, events)
+    playbook = None
+    if active_intervention:
+        playbook = get_intervention_playbook(active_intervention.get("category"))
+
     return {
         "athlete": {k: v for k, v in athlete.items() if k != "archetype"},
         "active_intervention": active_intervention,
@@ -75,6 +85,9 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         },
         "pod_health": pod_health,
         "upcoming_events": events,
+        "recruiting_timeline": recruiting_timeline,
+        "recruiting_signals": recruiting_signals,
+        "intervention_playbook": playbook,
     }
 
 

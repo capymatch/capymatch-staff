@@ -1,42 +1,40 @@
 import { useState, useMemo } from "react";
-import { FileText, UserPlus, MessageSquare, CheckCircle, Plus, ShieldAlert, ArrowRight, Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText, UserPlus, MessageSquare, CheckCircle, Plus, ShieldAlert, ArrowRight, Phone } from "lucide-react";
 
 const TYPE_META = {
-  note: { icon: FileText, color: "text-gray-500", bg: "bg-gray-100", label: "Note" },
-  assignment: { icon: UserPlus, color: "text-blue-500", bg: "bg-blue-100", label: "Reassignment" },
-  message: { icon: MessageSquare, color: "text-emerald-500", bg: "bg-emerald-100", label: "Message" },
-  resolution: { icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-100", label: "Resolved" },
-  action_created: { icon: Plus, color: "text-blue-500", bg: "bg-blue-100", label: "Action created" },
-  action_updated: { icon: CheckCircle, color: "text-emerald-500", bg: "bg-emerald-100", label: "Action updated" },
-  blocker_flagged: { icon: ShieldAlert, color: "text-red-500", bg: "bg-red-100", label: "Blocker" },
-  stage_change: { icon: ArrowRight, color: "text-purple-500", bg: "bg-purple-100", label: "Stage change" },
+  note: { icon: FileText, color: "#6b7280", bg: "bg-gray-100", borderColor: "#d1d5db", label: "Note" },
+  assignment: { icon: UserPlus, color: "#3b82f6", bg: "bg-blue-100", borderColor: "#93c5fd", label: "Reassignment" },
+  message: { icon: MessageSquare, color: "#10b981", bg: "bg-emerald-100", borderColor: "#6ee7b7", label: "Message" },
+  resolution: { icon: CheckCircle, color: "#059669", bg: "bg-emerald-100", borderColor: "#6ee7b7", label: "Resolved" },
+  action_created: { icon: Plus, color: "#3b82f6", bg: "bg-blue-100", borderColor: "#93c5fd", label: "Action" },
+  action_updated: { icon: CheckCircle, color: "#10b981", bg: "bg-emerald-100", borderColor: "#6ee7b7", label: "Updated" },
+  blocker_flagged: { icon: ShieldAlert, color: "#ef4444", bg: "bg-red-100", borderColor: "#fca5a5", label: "Blocker" },
+  stage_change: { icon: ArrowRight, color: "#8b5cf6", bg: "bg-purple-100", borderColor: "#c4b5fd", label: "Stage Change" },
+  call: { icon: Phone, color: "#f59e0b", bg: "bg-amber-100", borderColor: "#fcd34d", label: "Call" },
 };
 
 function TreatmentTimeline({ timeline }) {
   const [filter, setFilter] = useState("all");
 
-  // Flatten all timeline entries into a single sorted list
   const entries = useMemo(() => {
     if (!timeline) return [];
-
     const all = [];
 
-    (timeline.notes || []).forEach((n) => all.push({ ...n, type: "note", time: n.created_at }));
+    (timeline.notes || []).forEach((n) => {
+      const type = n.tag === "Call" ? "call" : n.tag === "Message" ? "message" : "note";
+      all.push({ ...n, type, time: n.created_at });
+    });
     (timeline.assignments || []).forEach((a) => all.push({ ...a, type: "assignment", time: a.created_at }));
     (timeline.messages || []).forEach((m) => all.push({ ...m, type: "message", time: m.created_at }));
     (timeline.resolutions || []).forEach((r) => all.push({ ...r, type: "resolution", time: r.created_at }));
     (timeline.action_events || []).forEach((e) => all.push({ ...e, time: e.created_at }));
 
-    // Sort newest first
     all.sort((a, b) => new Date(b.time) - new Date(a.time));
-
     return all;
   }, [timeline]);
 
   const filtered = filter === "all" ? entries : entries.filter((e) => e.type === filter);
 
-  // Group by date
   const grouped = useMemo(() => {
     const groups = {};
     const today = new Date().toDateString();
@@ -62,9 +60,9 @@ function TreatmentTimeline({ timeline }) {
     const time = new Date(entry.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
     return (
-      <div key={entry.id} className="flex gap-3 py-2.5" data-testid={`timeline-entry-${entry.id}`}>
-        <div className={`w-7 h-7 rounded-full ${meta.bg} flex items-center justify-center shrink-0 mt-0.5`}>
-          <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
+      <div key={entry.id} className="flex gap-3 py-2.5" style={{ borderLeft: `3px solid ${meta.borderColor}`, paddingLeft: 12 }} data-testid={`timeline-entry-${entry.id}`}>
+        <div className={`w-8 h-8 rounded-full ${meta.bg} flex items-center justify-center shrink-0 mt-0.5`}>
+          <Icon className={`w-4 h-4`} style={{ color: meta.color }} />
         </div>
         <div className="flex-1 min-w-0">
           {entry.type === "note" && (
@@ -74,12 +72,28 @@ function TreatmentTimeline({ timeline }) {
                 <span>{entry.created_by_name || entry.author || "Coach"}</span>
                 <span>·</span>
                 <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
                 {entry.category && entry.category !== "other" && (
                   <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-medium capitalize">{entry.category}</span>
                 )}
-                {entry.tag && (
+                {entry.tag && entry.tag !== "Call" && entry.tag !== "Message" && (
                   <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-medium">{entry.tag}</span>
                 )}
+              </div>
+            </>
+          )}
+          {entry.type === "call" && (
+            <>
+              <p className="text-sm text-gray-800">{entry.text}</p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <span>{entry.created_by_name || entry.author || "Coach"}</span>
+                <span>·</span>
+                <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
               </div>
             </>
           )}
@@ -89,27 +103,79 @@ function TreatmentTimeline({ timeline }) {
                 Reassigned to <span className="font-medium">{entry.new_owner}</span>
               </p>
               {entry.reason && <p className="text-xs text-gray-500 mt-0.5">{entry.reason}</p>}
-              <p className="text-xs text-gray-400 mt-0.5">{entry.previous_owner || "Coach Martinez"} · {time}</p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <span>{entry.previous_owner || "Coach Martinez"}</span>
+                <span>·</span>
+                <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
+              </div>
             </>
           )}
           {entry.type === "message" && (
             <>
               <p className="text-sm text-gray-800">{entry.text}</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {entry.sender || "Coach Martinez"} → {entry.recipient} · {time}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <span>{entry.sender || "Coach Martinez"} {entry.recipient ? `to ${entry.recipient}` : ""}</span>
+                <span>·</span>
+                <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
+              </div>
             </>
           )}
           {entry.type === "resolution" && (
             <>
               <p className="text-sm font-medium text-emerald-700">{entry.resolution_note}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{entry.resolved_by || "Coach Martinez"} · {time}</p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <span>{entry.resolved_by || "Coach Martinez"}</span>
+                <span>·</span>
+                <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
+              </div>
             </>
           )}
           {(entry.type === "action_created" || entry.type === "action_updated") && (
             <>
               <p className="text-sm text-gray-800">{entry.description}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{entry.actor || "Coach Martinez"} · {time}</p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <span>{entry.actor || "Coach Martinez"}</span>
+                <span>·</span>
+                <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
+              </div>
+            </>
+          )}
+          {entry.type === "blocker_flagged" && (
+            <>
+              <p className="text-sm text-red-700 font-medium">{entry.description || entry.text}</p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <span>{entry.actor || "Coach"}</span>
+                <span>·</span>
+                <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
+              </div>
+            </>
+          )}
+          {entry.type === "stage_change" && (
+            <>
+              <p className="text-sm text-purple-700 font-medium">{entry.description || entry.text}</p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                <span>{entry.actor || "System"}</span>
+                <span>·</span>
+                <span>{time}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: `${meta.color}15`, color: meta.color }}>
+                  {meta.label}
+                </span>
+              </div>
             </>
           )}
         </div>
@@ -120,16 +186,19 @@ function TreatmentTimeline({ timeline }) {
   const filterOptions = [
     { value: "all", label: "All" },
     { value: "note", label: "Notes" },
-    { value: "assignment", label: "Assignments" },
+    { value: "call", label: "Calls" },
     { value: "message", label: "Messages" },
+    { value: "assignment", label: "Assignments" },
     { value: "resolution", label: "Resolutions" },
+    { value: "blocker_flagged", label: "Blockers" },
+    { value: "stage_change", label: "Stage Changes" },
   ];
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm" data-testid="treatment-timeline">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Treatment History</h3>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           {filterOptions.map((opt) => (
             <button
               key={opt.value}
@@ -162,7 +231,7 @@ function TreatmentTimeline({ timeline }) {
               <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 border-b border-gray-50 pb-1">
                 {dateLabel}
               </p>
-              <div className="divide-y divide-gray-50">
+              <div className="space-y-1">
                 {dateEntries.map(renderEntry)}
               </div>
             </div>

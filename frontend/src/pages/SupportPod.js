@@ -3,17 +3,21 @@ import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@/AuthContext";
 import PodHeader from "@/components/support-pod/PodHeader";
+import QuickActionsBar from "@/components/support-pod/QuickActionsBar";
 import ActiveIssueBanner from "@/components/support-pod/ActiveIssueBanner";
 import AthleteSnapshot from "@/components/support-pod/AthleteSnapshot";
 import PodMembers from "@/components/support-pod/PodMembers";
 import NextActions from "@/components/support-pod/NextActions";
+import RecruitingIntelligence from "@/components/support-pod/RecruitingIntelligence";
+import InterventionPlaybooks from "@/components/support-pod/InterventionPlaybooks";
+import RecruitingTimeline from "@/components/support-pod/RecruitingTimeline";
 import TreatmentTimeline from "@/components/support-pod/TreatmentTimeline";
 import { toast } from "sonner";
-import { AiPodBrief, AiSuggestedActions } from "@/components/AiV2Components";
+import { AiSuggestedActions } from "@/components/AiV2Components";
 import QuickNote from "@/components/QuickNote";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const POLL_INTERVAL_MS = 30000; // 30 seconds
+const POLL_INTERVAL_MS = 30000;
 
 function SupportPod() {
   const { athleteId } = useParams();
@@ -28,7 +32,6 @@ function SupportPod() {
   const [isPolling, setIsPolling] = useState(false);
   const pollRef = useRef(null);
 
-  // Track onboarding steps for coaches
   useEffect(() => {
     if (user?.role !== "club_coach") return;
     const track = async () => {
@@ -60,10 +63,8 @@ function SupportPod() {
     }
   }, [athleteId, context]);
 
-  // Initial fetch
   useEffect(() => { fetchPodData(false); }, [fetchPodData]);
 
-  // Polling interval — silent background refresh
   useEffect(() => {
     pollRef.current = setInterval(() => fetchPodData(true), POLL_INTERVAL_MS);
     return () => clearInterval(pollRef.current);
@@ -88,10 +89,15 @@ function SupportPod() {
     );
   }
 
-  const { athlete, active_intervention, all_interventions, pod_members, actions, timeline, pod_health, upcoming_events, unassigned_count } = data;
+  const {
+    athlete, active_intervention, all_interventions, pod_members, actions,
+    timeline, pod_health, upcoming_events, unassigned_count,
+    recruiting_timeline, recruiting_signals, intervention_playbook,
+  } = data;
 
   return (
     <div data-testid="support-pod-page">
+      {/* Header */}
       <PodHeader
         athlete={athlete}
         podHealth={pod_health}
@@ -101,11 +107,15 @@ function SupportPod() {
         athleteId={athleteId}
       />
 
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* AI V2: Pod Brief */}
-        <AiPodBrief endpoint={`${API}/ai/pod-brief/${athleteId}`} />
+      {/* Quick Actions Bar */}
+      <QuickActionsBar
+        athleteId={athleteId}
+        athleteName={athlete?.full_name}
+        onRefresh={fetchPodData}
+      />
 
-        {/* Block 1: Active Issue Banner */}
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Active Issue Banner */}
         {!bannerDismissed && active_intervention && (
           <ActiveIssueBanner
             intervention={active_intervention}
@@ -115,34 +125,47 @@ function SupportPod() {
           />
         )}
 
-        {/* Blocks 2 + 3: Athlete Snapshot + Pod Members (side by side) */}
+        {/* Athlete Snapshot + Support Team */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-2">
             <AthleteSnapshot athlete={athlete} interventions={all_interventions} events={upcoming_events} />
           </div>
           <div className="lg:col-span-3">
-            <PodMembers members={pod_members} unassignedCount={unassigned_count} />
+            <PodMembers members={pod_members} unassignedCount={unassigned_count} athleteId={athleteId} onRefresh={fetchPodData} />
           </div>
         </div>
 
-        {/* Block 4: Next Actions */}
+        {/* Next Actions */}
         <NextActions actions={actions} athleteId={athleteId} onRefresh={fetchPodData} />
 
-        {/* AI V2: Pod Suggested Actions */}
-        <AiSuggestedActions
-          endpoint={`${API}/ai/pod-actions/${athleteId}`}
-          label="AI Suggested Actions"
-          buttonLabel="Suggest Actions for This Athlete"
+        {/* Recruiting Intelligence */}
+        <RecruitingIntelligence signals={recruiting_signals} />
+
+        {/* Intervention Playbook (single, based on active issue) */}
+        <InterventionPlaybooks
+          playbook={intervention_playbook}
+          interventionCategory={active_intervention?.category}
         />
 
-        {/* Quick Note + Treatment Timeline */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm" data-testid="pod-quick-note">
-            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Add Note</h3>
-            <QuickNote athleteId={athleteId} athleteName={athlete?.full_name} onSaved={fetchPodData} />
-          </div>
-          <TreatmentTimeline timeline={timeline} />
+        {/* Coaching Suggestions (AI) */}
+        <AiSuggestedActions
+          endpoint={`${API}/ai/pod-actions/${athleteId}`}
+          label="Coaching Suggestions"
+          buttonLabel="Get Coaching Suggestions"
+          helperText="AI will analyze this athlete's situation and suggest next steps"
+        />
+
+        {/* Recruiting Timeline */}
+        <RecruitingTimeline milestones={recruiting_timeline} />
+
+        {/* Quick Note */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm" data-testid="pod-quick-note">
+          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Add Note</h3>
+          <QuickNote athleteId={athleteId} athleteName={athlete?.full_name} onSaved={fetchPodData} />
         </div>
+
+        {/* Treatment History */}
+        <TreatmentTimeline timeline={timeline} />
       </main>
     </div>
   );

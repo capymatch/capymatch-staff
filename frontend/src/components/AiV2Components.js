@@ -90,7 +90,7 @@ function ActionCard({ action }) {
   );
 }
 
-export function AiSuggestedActions({ endpoint, label, buttonLabel, className = "" }) {
+export function AiSuggestedActions({ endpoint, label, buttonLabel, helperText, className = "" }) {
   const [actions, setActions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -118,14 +118,19 @@ export function AiSuggestedActions({ endpoint, label, buttonLabel, className = "
 
   if (!actions && !loading && !error) {
     return (
-      <button
-        onClick={generate}
-        className={`flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800 transition-all ${className}`}
-        data-testid="ai-actions-btn"
-      >
-        <Sparkles className="w-3.5 h-3.5" />
-        {buttonLabel || "Generate Suggestions"}
-      </button>
+      <div className={className}>
+        <button
+          onClick={generate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800 transition-all"
+          data-testid="ai-actions-btn"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          {buttonLabel || "Generate Suggestions"}
+        </button>
+        {helperText && (
+          <p className="text-[11px] mt-1.5 ml-1" style={{ color: "#94a3b8" }}>{helperText}</p>
+        )}
+      </div>
     );
   }
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, FileText, MessageSquare, CheckCircle, ArrowRight } from "lucide-react";
+import { X, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, FileText, MessageSquare, CheckCircle, ArrowRight, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
@@ -24,6 +24,7 @@ function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
 
   const meta = CATEGORY_META[intervention.category] || CATEGORY_META.momentum_drop;
   const Icon = meta.icon;
+  const isUrgent = intervention.score >= 70 || intervention.urgency >= 7;
 
   const handleResolve = async () => {
     setResolving(true);
@@ -56,17 +57,27 @@ function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${meta.border}`, backgroundColor: meta.bg }} data-testid="active-issue-banner">
       {/* Top accent bar */}
-      <div style={{ height: 3, backgroundColor: meta.color }} />
+      <div style={{ height: 4, backgroundColor: meta.color }} />
 
       <div className="p-5">
-        {/* Header: Issue type + dismiss */}
+        {/* Header: Issue type + urgency badge + dismiss */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: meta.color + "18" }}>
-              <Icon className="w-4 h-4" style={{ color: meta.color }} />
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: meta.color + "18" }}>
+              <Icon className="w-5 h-5" style={{ color: meta.color }} />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: meta.color }}>Active Issue</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: meta.color }}>Active Issue</span>
+                {isUrgent && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse"
+                    style={{ backgroundColor: "rgba(239,68,68,0.12)", color: "#ef4444" }}
+                    data-testid="urgency-badge">
+                    <Timer className="w-3 h-3" />
+                    Act Now
+                  </span>
+                )}
+              </div>
               <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>{meta.label}</p>
             </div>
           </div>
@@ -75,23 +86,25 @@ function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
           </button>
         </div>
 
-        {/* RECOMMENDED ACTION — the star element */}
-        <div className="rounded-lg p-4 mb-4" style={{ backgroundColor: "var(--cm-surface)", border: `1px solid ${meta.border}` }} data-testid="banner-recommended-action">
+        {/* RECOMMENDED ACTION — the star element, more prominent */}
+        <div className="rounded-lg p-5 mb-4" style={{ backgroundColor: "var(--cm-surface)", border: `2px solid ${meta.color}40` }} data-testid="banner-recommended-action">
           <div className="flex items-start gap-3">
-            <ArrowRight className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: meta.color }} />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: meta.color + "18" }}>
+              <ArrowRight className="w-5 h-5" style={{ color: meta.color }} />
+            </div>
             <div className="flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: meta.color }}>What to do now</p>
-              <p className="text-base font-bold" style={{ color: "var(--cm-text)" }} data-testid="banner-recommended-text">
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: meta.color }}>What to do now</p>
+              <p className="text-xl font-bold leading-snug" style={{ color: "var(--cm-text)" }} data-testid="banner-recommended-text">
                 {intervention.recommended_action}
               </p>
-              <p className="text-xs mt-1" style={{ color: "var(--cm-text-3)" }}>
-                Owner: <span className="font-medium" style={{ color: "var(--cm-text-2)" }}>{intervention.owner}</span>
+              <p className="text-xs mt-2" style={{ color: "var(--cm-text-3)" }}>
+                Owner: <span className="font-semibold" style={{ color: "var(--cm-text-2)" }}>{intervention.owner}</span>
               </p>
             </div>
           </div>
         </div>
 
-        {/* Context: Why + What Changed (compact two-column) */}
+        {/* Context: Why + What Changed */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div className="rounded-lg p-3" style={{ backgroundColor: "var(--cm-surface)" }}>
             <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--cm-text-3)" }}>What is wrong</p>

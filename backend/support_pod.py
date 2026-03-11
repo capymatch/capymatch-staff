@@ -173,6 +173,261 @@ def get_relevant_events(athlete):
     return [e for e in UPCOMING_EVENTS if e["daysAway"] <= 14][:3]
 
 
+def generate_recruiting_timeline(athlete):
+    """Generate compact recruiting milestones from athlete data."""
+    stage = athlete.get("recruiting_stage", "exploring")
+    targets = athlete.get("school_targets", 0)
+    interest = athlete.get("active_interest", 0)
+    days_inactive = athlete.get("days_since_activity", 0)
+    now = datetime.now(timezone.utc)
+
+    milestones = []
+
+    # Always: Profile Created
+    milestones.append({
+        "id": "ms_profile",
+        "type": "profile_created",
+        "label": "Profile Created",
+        "date": (now - timedelta(days=90)).isoformat(),
+        "school": None,
+        "detail": "Athlete profile set up on CapyMatch",
+    })
+
+    # If they have targets: First School Added
+    if targets > 0:
+        milestones.append({
+            "id": "ms_first_school",
+            "type": "school_added",
+            "label": f"Added {targets} Target Schools",
+            "date": (now - timedelta(days=75)).isoformat(),
+            "school": None,
+            "detail": f"{targets} schools added to pipeline",
+        })
+
+    # If actively recruiting: First Outreach
+    if stage in ("actively_recruiting", "narrowing"):
+        milestones.append({
+            "id": "ms_first_outreach",
+            "type": "outreach_sent",
+            "label": "First Outreach Sent",
+            "date": (now - timedelta(days=60)).isoformat(),
+            "school": "Multiple Programs",
+            "detail": "Initial contact emails sent to coaches",
+        })
+
+    # If they have interest: Coach Response
+    if interest > 0:
+        milestones.append({
+            "id": "ms_coach_response",
+            "type": "coach_responded",
+            "label": f"{interest} Coach{'es' if interest > 1 else ''} Responded",
+            "date": (now - timedelta(days=45)).isoformat(),
+            "school": None,
+            "detail": f"Received responses from {interest} programs",
+        })
+
+    # If narrowing: Visit Scheduled
+    if stage == "narrowing":
+        milestones.append({
+            "id": "ms_visit",
+            "type": "visit_scheduled",
+            "label": "Campus Visit Scheduled",
+            "date": (now - timedelta(days=20)).isoformat(),
+            "school": "Top Choice Program",
+            "detail": "Unofficial visit arranged",
+        })
+
+    # Last activity marker
+    if days_inactive > 0:
+        milestones.append({
+            "id": "ms_last_active",
+            "type": "last_activity",
+            "label": "Last Activity",
+            "date": athlete.get("last_activity", now.isoformat()),
+            "school": None,
+            "detail": f"{days_inactive} days ago" if days_inactive > 0 else "Today",
+        })
+
+    return milestones
+
+
+def generate_recruiting_signals(athlete, interventions, events):
+    """Rule-based signal detection — interprets recruiting patterns."""
+    signals = []
+    targets = athlete.get("school_targets", 0)
+    interest = athlete.get("active_interest", 0)
+    momentum = athlete.get("momentum_score", 50)
+    days_inactive = athlete.get("days_since_activity", 0)
+    divisions = athlete.get("recruiting_profile", {}).get("division", [])
+
+    # Signal: Low response rate
+    if targets > 3 and interest <= 1:
+        signals.append({
+            "id": "sig_low_response",
+            "type": "warning",
+            "title": "Low Coach Response Rate",
+            "description": f"Only {interest} of {targets} target schools have responded",
+            "recommendation": "Follow up with personalized video or updated stats",
+            "priority": "high",
+        })
+
+    # Signal: Division mismatch
+    if "D1" in divisions and interest == 0 and targets > 2:
+        signals.append({
+            "id": "sig_d1_silence",
+            "type": "insight",
+            "title": "No D1 Engagement Yet",
+            "description": "Targeting D1 programs but no responses received",
+            "recommendation": "Consider expanding to D2 programs or strengthening highlight reel",
+            "priority": "medium",
+        })
+
+    # Signal: Extended inactivity
+    if days_inactive > 14:
+        signals.append({
+            "id": "sig_inactive",
+            "type": "alert",
+            "title": "Extended Inactivity",
+            "description": f"No recruiting activity in {days_inactive} days",
+            "recommendation": "Schedule a check-in call to re-engage athlete and family",
+            "priority": "high",
+        })
+
+    # Signal: Momentum declining
+    if momentum < 30 and athlete.get("momentum_trend") == "declining":
+        signals.append({
+            "id": "sig_momentum",
+            "type": "alert",
+            "title": "Momentum Critically Low",
+            "description": f"Momentum score at {momentum} and declining",
+            "recommendation": "Activate the momentum recovery playbook immediately",
+            "priority": "critical",
+        })
+
+    # Signal: Upcoming event but no prep
+    upcoming_soon = [e for e in events if 0 < e.get("daysAway", 99) <= 3]
+    if upcoming_soon:
+        signals.append({
+            "id": "sig_event_prep",
+            "type": "warning",
+            "title": f"Event in {upcoming_soon[0]['daysAway']} Day{'s' if upcoming_soon[0]['daysAway'] > 1 else ''}",
+            "description": f"{upcoming_soon[0]['name']} is approaching — ensure prep is complete",
+            "recommendation": "Review target school list and complete prep checklist",
+            "priority": "high",
+        })
+
+    # Signal: Good engagement (positive)
+    if targets > 0 and interest / max(targets, 1) >= 0.5:
+        signals.append({
+            "id": "sig_good_engagement",
+            "type": "positive",
+            "title": "Strong Coach Engagement",
+            "description": f"{interest} of {targets} schools are engaging — above average",
+            "recommendation": "Focus on deepening relationships with responding programs",
+            "priority": "low",
+        })
+
+    # Signal: Profile incomplete
+    completeness = athlete.get("profile_completeness", 100)
+    if completeness < 70:
+        signals.append({
+            "id": "sig_profile",
+            "type": "warning",
+            "title": "Profile Incomplete",
+            "description": f"Profile is only {completeness}% complete — coaches may skip incomplete profiles",
+            "recommendation": "Complete missing profile sections to improve visibility",
+            "priority": "medium",
+        })
+
+    return signals
+
+
+INTERVENTION_PLAYBOOKS = {
+    "momentum_drop": {
+        "title": "Momentum Recovery Plan",
+        "description": "Re-engage an athlete whose recruiting activity has stalled",
+        "estimated_days": "3-5 days",
+        "success_criteria": "Athlete logs at least one recruiting activity within 5 days",
+        "steps": [
+            {"step": 1, "action": "Call athlete/family to check in on recruiting interest", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": "Review and update target school list together", "owner": "Coach + Athlete", "days": "Day 1-2"},
+            {"step": 3, "action": "Send follow-up emails to top 3 target schools", "owner": "Athlete", "days": "Day 2-3"},
+            {"step": 4, "action": "Log conversation summary and updated plan", "owner": "Coach", "days": "Day 3"},
+            {"step": 5, "action": "Schedule next check-in within 1 week", "owner": "Coach", "days": "Day 5"},
+        ],
+    },
+    "blocker": {
+        "title": "Blocker Resolution Playbook",
+        "description": "Clear a blocking issue that's preventing recruiting progress",
+        "estimated_days": "1-3 days",
+        "success_criteria": "Blocking issue is resolved or has a clear workaround",
+        "steps": [
+            {"step": 1, "action": "Identify the specific blocker and who can resolve it", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": "Contact the responsible party (parent, school, admin)", "owner": "Coach", "days": "Day 1"},
+            {"step": 3, "action": "Follow up if no response within 24 hours", "owner": "Coach", "days": "Day 2"},
+            {"step": 4, "action": "Implement resolution or establish workaround", "owner": "Shared", "days": "Day 2-3"},
+            {"step": 5, "action": "Verify blocker is cleared and update status", "owner": "Coach", "days": "Day 3"},
+        ],
+    },
+    "deadline_proximity": {
+        "title": "Event Prep Checklist",
+        "description": "Ensure the athlete is fully prepared for an upcoming event or deadline",
+        "estimated_days": "1-2 days",
+        "success_criteria": "All prep items completed before the event",
+        "steps": [
+            {"step": 1, "action": "Confirm target schools attending the event", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": "Prepare highlight reel and updated stats", "owner": "Athlete", "days": "Day 1"},
+            {"step": 3, "action": "Send pre-event emails to target coaches", "owner": "Athlete", "days": "Day 1"},
+            {"step": 4, "action": "Review game plan and talking points", "owner": "Coach + Athlete", "days": "Day 1"},
+            {"step": 5, "action": "Confirm logistics (travel, schedule, jersey number)", "owner": "Parent", "days": "Day 1"},
+        ],
+    },
+    "engagement_drop": {
+        "title": "Re-engagement Playbook",
+        "description": "Revive engagement with schools that have gone quiet",
+        "estimated_days": "5-7 days",
+        "success_criteria": "At least one previously-silent school re-engages",
+        "steps": [
+            {"step": 1, "action": "Identify which schools have gone silent and when", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": "Draft personalized follow-up messages with new content", "owner": "Coach + Athlete", "days": "Day 2"},
+            {"step": 3, "action": "Send follow-ups with updated highlights or stats", "owner": "Athlete", "days": "Day 3"},
+            {"step": 4, "action": "Consider expanding target list if pattern persists", "owner": "Coach", "days": "Day 5"},
+            {"step": 5, "action": "Log outcomes and adjust strategy", "owner": "Coach", "days": "Day 7"},
+        ],
+    },
+    "ownership_gap": {
+        "title": "Ownership Assignment Guide",
+        "description": "Assign clear ownership to unassigned recruiting tasks",
+        "estimated_days": "1 day",
+        "success_criteria": "All open actions have a clear owner",
+        "steps": [
+            {"step": 1, "action": "Review all unassigned actions in the pod", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": "Assign each action to the most appropriate person", "owner": "Coach", "days": "Day 1"},
+            {"step": 3, "action": "Notify assigned owners of their new tasks", "owner": "Coach", "days": "Day 1"},
+            {"step": 4, "action": "Set due dates for all newly-assigned actions", "owner": "Coach", "days": "Day 1"},
+        ],
+    },
+    "readiness_issue": {
+        "title": "Readiness Improvement Plan",
+        "description": "Address gaps in the athlete's recruiting readiness",
+        "estimated_days": "5-10 days",
+        "success_criteria": "Key readiness gaps are closed or have active plans",
+        "steps": [
+            {"step": 1, "action": "Identify specific readiness gaps (highlight reel, GPA, test scores)", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": "Create an action plan for each gap with the athlete", "owner": "Coach + Athlete", "days": "Day 2"},
+            {"step": 3, "action": "Begin working on the highest-priority gap", "owner": "Athlete", "days": "Day 3-5"},
+            {"step": 4, "action": "Check in on progress midway", "owner": "Coach", "days": "Day 5"},
+            {"step": 5, "action": "Update profile and notify target schools of improvements", "owner": "Athlete", "days": "Day 7-10"},
+        ],
+    },
+}
+
+
+def get_intervention_playbook(category):
+    """Return the playbook matching the active intervention category."""
+    return INTERVENTION_PLAYBOOKS.get(category)
+
+
 def enrich_members_with_tasks(members, actions):
     """Update task counts on pod members based on action ownership"""
     member_name_to_role = {}

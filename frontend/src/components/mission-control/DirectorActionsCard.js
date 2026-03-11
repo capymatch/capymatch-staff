@@ -166,10 +166,11 @@ export default function DirectorActionsCard({ role }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Acknowledged — you're on it");
-      fetchActions();
+      // Delay re-fetch so optimistic highlight animation completes
+      setTimeout(() => fetchActions(), 2500);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to acknowledge");
-      fetchActions(); // revert on error
+      fetchActions(); // revert immediately on error
     } finally { setAckingId(null); }
   };
 
@@ -188,10 +189,11 @@ export default function DirectorActionsCard({ role }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Resolved — nice work");
-      fetchActions();
+      // Delay re-fetch so optimistic highlight animation completes
+      setTimeout(() => fetchActions(), 2500);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to resolve");
-      fetchActions(); // revert on error
+      fetchActions(); // revert immediately on error
     } finally { setResolvingId(null); }
   };
 
