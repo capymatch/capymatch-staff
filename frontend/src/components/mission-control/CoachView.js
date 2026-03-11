@@ -70,7 +70,8 @@ function useLiveIndicators(data, directorRequestCount) {
     if (directorRequestCount !== prev.directorRequestCount) changed.add("DIRECTOR REQUESTS");
 
     // Quiet toasts for high-priority changes only
-    if (directorRequestCount > prev.directorRequestCount) {
+    // Only toast when prev had a real value (not initial 0) and count increased
+    if (prev.directorRequestCount > 0 && directorRequestCount > prev.directorRequestCount) {
       const diff = directorRequestCount - prev.directorRequestCount;
       toast.info(`${diff} new director request${diff > 1 ? "s" : ""}`, {
         description: "Tap to review",

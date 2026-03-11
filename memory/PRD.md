@@ -112,6 +112,14 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 ## P0 In Progress
 - (None — all P0 items completed)
 
+### Real-Time Notifications V1 (DONE - March 11, 2026)
+- **Background Polling:** MissionControl.js polls `/api/mission-control` every 45s (background fetch). Director count polled separately in sync.
+- **Live Indicators:** "Updated just now" / "Updated Xs ago" label with green pulse dot. 15s refresh for relative timestamp.
+- **KPI Pulse:** When a KPI value changes between polls, the number briefly scales up with an animated ping dot (3s).
+- **Quiet Toasts (high-priority only):** New Director Request, new Critical issue, major momentum drop (15+ points). No toast on initial load (isFirstLoad guard + prev.directorRequestCount > 0 check).
+- **Bug Fixed:** Director request toast was firing on first load (0→5 comparison). Fixed by requiring prev count > 0.
+- **Testing:** 100% backend (15/15), frontend bug fixed and self-verified (iteration_106)
+
 ### Coach Area Overhaul — Phases 3-5 (DONE - March 11, 2026)
 - **Phase 3 — Support Pod Refinement:**
   - ActiveIssueBanner: "WHAT TO DO NOW" is the star element (16px bold), "WHAT IS WRONG"/"WHAT CHANGED" as two-column context cards. Log Check-in, Send Message, Mark Resolved CTAs.
