@@ -173,3 +173,7 @@ async def run_startup(db):
         f"{len(mock_data.UPCOMING_EVENTS)} events, "
         f"{len(get_interventions())} interventions recomputed"
     )
+
+    # ── Schema V2: Structured signals migration ──
+    from migrations.schema_v2_signals import run_migration as run_v2_migration
+    await run_v2_migration()

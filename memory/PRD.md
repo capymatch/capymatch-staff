@@ -303,10 +303,24 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New files**: `intelligence/payload_builder.py`, `intelligence/agents/school_insight.py`, `intelligence/agents/timeline.py`, `components/intelligence/IntelligenceCards.js`
 - **Testing:** 100% pass rate (iteration_90: 20/20 backend, all frontend verified)
 
+### Schema V2: Structured Signals for Future Intelligence (DONE - March 11, 2026)
+- **Athletes**: Added `position_primary`, `position_secondary`, `sat_score`, `act_score`, `approach_touch`, `block_touch`, `standing_reach`, `wingspan`, `profile_completeness` (0-100), `measurables_updated_at`, `academic_profile_updated_at`. Backfilled `position_primary` from `position`, test scores from `recruiting_profile`.
+- **Programs**: Added `stage_entered_at`, `source_added`, `coach_contact_confidence`, `engagement_trend`, `last_meaningful_engagement_at`. Backfilled `stage_entered_at` from `created_at`.
+- **Interactions**: Added 11 structured signal fields: `is_meaningful`, `response_time_hours`, `initiated_by`, `coach_question_detected`, `request_type`, `invite_type`, `offer_signal`, `scholarship_signal`, `sentiment_signal`, `urgency_signal`, `confidence`.
+- **Universities**: Added `scorecard_updated_at`, `coach_scrape_updated_at`, `coach_data_freshness`, `scorecard_confidence`.
+- **New collection `program_stage_history`**: Records every stage transition with `from_stage`, `to_stage`, `changed_by_user_id`, `changed_by_role`, `reason_code`, `note`. Auto-populated when `recruiting_status` changes on program update.
+- **New collection `program_signals`**: For detected engagement signals (indexed by program_id, athlete_id, signal_type, is_active).
+- **New collection `program_outcomes`**: For final outcomes (indexed by program_id, athlete_id, outcome_type).
+- **Profile completeness**: Auto-computed on profile save. Tracks 14 field groups.
+- **Meaningful engagement**: `last_meaningful_engagement_at` auto-updated when interaction is meaningful or type is Coach Reply/Phone Call/Campus Visit/Video Call/Camp.
+- **Migration**: Idempotent startup migration in `/app/backend/migrations/schema_v2_signals.py`.
+- **Product caution**: Future "Coach Probability / Program Receptivity" feature MUST be framed supportively: "current engagement outlook", "where things stand", "what signals we're seeing", "what could improve this opportunity". Never show negative/uncertain signals without a constructive next step. Never use "low probability", "unlikely", "not realistic".
+
 ## P0 In Progress
 - User Onboarding Flow: DONE
 - Admin User & Subscription Management: DONE
 - Intelligence Pipeline Phase 1: DONE
+- Schema V2 Structured Signals: DONE
 
 ## P1 Upcoming
 - Smart Match recommendation history (timeline of past runs with score deltas)

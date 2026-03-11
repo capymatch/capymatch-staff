@@ -200,11 +200,31 @@ async def update_profile(body: dict, current_user: dict = get_current_user_dep()
     if not updates:
         return _athlete_to_profile(athlete)
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    # Track measurables and academic update timestamps
+    measurable_keys = {"height", "approach_touch", "block_touch", "standing_reach", "wingspan"}
+    academic_keys = {"gpa", "sat_score", "act_score"}
+    if measurable_keys & updates.keys():
+        updates["measurables_updated_at"] = updates["updated_at"]
+    if academic_keys & updates.keys():
+        updates["academic_profile_updated_at"] = updates["updated_at"]
+
     await db.athletes.update_one(
         {"id": athlete["id"]},
         {"$set": updates},
     )
     updated = await db.athletes.find_one({"id": athlete["id"]}, {"_id": 0})
+
+    # Recompute profile completeness
+    from migrations.schema_v2_signals import compute_profile_completeness
+    pct = compute_profile_completeness(updated)
+    if pct != updated.get("profile_completeness", 0):
+        await db.athletes.update_one(
+            {"id": athlete["id"]},
+            {"$set": {"profile_completeness": pct}},
+        )
+        updated["profile_completeness"] = pct
+
     return _athlete_to_profile(updated)
 
 

@@ -451,6 +451,11 @@ async def create_program(body: dict, current_user: dict = get_current_user_dep()
         "initial_contact_sent": body.get("initial_contact_sent", ""),
         "last_follow_up": body.get("last_follow_up", ""),
         "follow_up_days": body.get("follow_up_days", 14),
+        "stage_entered_at": now,
+        "source_added": body.get("source_added", "manual"),
+        "coach_contact_confidence": None,
+        "engagement_trend": None,
+        "last_meaningful_engagement_at": None,
         "created_at": now,
         "updated_at": now,
     }
@@ -462,15 +467,47 @@ async def create_program(body: dict, current_user: dict = get_current_user_dep()
 @router.put("/athlete/programs/{program_id}")
 async def update_program(program_id: str, body: dict, current_user: dict = get_current_user_dep()):
     tenant_id = await get_athlete_tenant(current_user)
+
+    # Snapshot old status for stage history tracking
+    old_program = await db.programs.find_one(
+        {"tenant_id": tenant_id, "program_id": program_id},
+        {"_id": 0, "recruiting_status": 1},
+    )
+    old_status = (old_program or {}).get("recruiting_status")
+
     for key in ("_id", "program_id", "tenant_id"):
         body.pop(key, None)
-    body["updated_at"] = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
+    body["updated_at"] = now
+
+    # If recruiting_status is changing, update stage_entered_at
+    new_status = body.get("recruiting_status")
+    if new_status and new_status != old_status:
+        body["stage_entered_at"] = now
+
     result = await db.programs.update_one(
         {"tenant_id": tenant_id, "program_id": program_id},
         {"$set": body},
     )
     if result.matched_count == 0:
         raise HTTPException(404, "Program not found")
+
+    # Record stage history if status changed
+    if new_status and new_status != old_status:
+        athlete = await db.athletes.find_one({"tenant_id": tenant_id}, {"_id": 0, "id": 1, "org_id": 1})
+        await db.program_stage_history.insert_one({
+            "program_id": program_id,
+            "athlete_id": (athlete or {}).get("id", ""),
+            "org_id": (athlete or {}).get("org_id"),
+            "from_stage": old_status,
+            "to_stage": new_status,
+            "changed_by_user_id": current_user["id"],
+            "changed_by_role": current_user.get("role", ""),
+            "reason_code": body.get("reason_code"),
+            "note": body.get("stage_change_note"),
+            "created_at": now,
+        })
+
     updated = await db.programs.find_one(
         {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
     )
@@ -607,9 +644,28 @@ async def create_interaction(body: dict, current_user: dict = get_current_user_d
         "notes": body.get("notes", ""),
         "date_time": body.get("date_time") or now.isoformat(),
         "created_at": now.isoformat(),
+        # V2 structured signal fields
+        "is_meaningful": body.get("is_meaningful"),
+        "response_time_hours": body.get("response_time_hours"),
+        "initiated_by": body.get("initiated_by"),
+        "coach_question_detected": body.get("coach_question_detected"),
+        "request_type": body.get("request_type"),
+        "invite_type": body.get("invite_type"),
+        "offer_signal": body.get("offer_signal"),
+        "scholarship_signal": body.get("scholarship_signal"),
+        "sentiment_signal": body.get("sentiment_signal"),
+        "urgency_signal": body.get("urgency_signal"),
+        "confidence": body.get("confidence"),
     }
     await db.interactions.insert_one(doc)
     doc.pop("_id", None)
+
+    # Update last_meaningful_engagement_at on program if meaningful
+    if body.get("is_meaningful") or doc["type"] in ("Coach Reply", "Phone Call", "Campus Visit", "Video Call", "Camp"):
+        await db.programs.update_one(
+            {"tenant_id": tenant_id, "program_id": program_id},
+            {"$set": {"last_meaningful_engagement_at": now.isoformat()}},
+        )
 
     # Auto-set follow-up on program based on interaction type
     event_type = (doc["type"]).lower().replace(" ", "_")
