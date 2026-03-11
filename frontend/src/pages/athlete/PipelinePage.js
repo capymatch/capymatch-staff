@@ -209,6 +209,12 @@ function generateActions(programs, matchScores, tasks, healthMap) {
 function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage, aiUsage }) {
   const [idx, setIdx] = useState(0);
   const [filter, setFilter] = useState("all");
+  const [seenCategories, setSeenCategories] = useState(new Set(["all"]));
+
+  const handleFilter = (key) => {
+    setFilter(key);
+    setSeenCategories(prev => new Set([...prev, key]));
+  };
 
   const filtered = useMemo(() => {
     if (filter === "all") return actions;
@@ -277,10 +283,14 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
         {/* Filter pills — only when there are multiple alert categories */}
         {FILTER_PILLS.length > 2 && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }} data-testid="hero-filter-pills">
-            {FILTER_PILLS.map(pill => (
+            {FILTER_PILLS.map(pill => {
+              const URGENT_CATS = new Set(["past_due", "due_today", "coach_flag"]);
+              const shouldPulse = pill.key !== "all" && URGENT_CATS.has(pill.key) && pill.count > 0 && !seenCategories.has(pill.key);
+              const pillCat = ALERT_CATEGORIES[pill.key];
+              return (
               <button
                 key={pill.key}
-                onClick={() => setFilter(pill.key)}
+                onClick={() => handleFilter(pill.key)}
                 data-testid={`hero-filter-${pill.key}`}
                 style={{
                   padding: "4px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700,
@@ -288,9 +298,22 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
                   background: filter === pill.key ? "rgba(13,148,136,0.15)" : "rgba(255,255,255,0.04)",
                   borderColor: filter === pill.key ? "rgba(13,148,136,0.35)" : "rgba(255,255,255,0.08)",
                   color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.4)",
-                  display: "flex", alignItems: "center", gap: 5,
+                  display: "flex", alignItems: "center", gap: 5, position: "relative",
                 }}
               >
+                {shouldPulse && (
+                  <span style={{ position: "relative", width: 6, height: 6, flexShrink: 0 }}>
+                    <span style={{
+                      position: "absolute", inset: 0, borderRadius: "50%",
+                      background: pillCat?.color || "#ef4444",
+                    }} />
+                    <span style={{
+                      position: "absolute", inset: -2, borderRadius: "50%",
+                      border: `1.5px solid ${pillCat?.color || "#ef4444"}`,
+                      animation: "pillPulse 2s ease-out infinite", pointerEvents: "none",
+                    }} data-testid={`pill-pulse-${pill.key}`} />
+                  </span>
+                )}
                 {pill.label}
                 <span style={{
                   fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 8,
@@ -298,7 +321,8 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
                   color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.3)",
                 }}>{pill.count}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -718,6 +742,7 @@ function PipelineStyles() {
   return (
     <style>{`
       @keyframes heroPulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
+      @keyframes pillPulse { 0%{opacity:0.8;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.8)} 100%{opacity:0;transform:scale(2.5)} }
       .kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
       .kanban-grid::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 4px; }

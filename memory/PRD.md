@@ -391,6 +391,12 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Files Modified**: `frontend/src/pages/athlete/PipelinePage.js` — rewrote `generateActions()`, `HeroActionsCarousel`, added `ALERT_CATEGORIES` config. Removed old `getHeroAdvice`, `getActionContext`, `getCTA` functions.
 - **Testing:** 100% (iteration_97: 13/13 frontend features verified)
 
+### Pulsing Alert Dots on Filter Pills (DONE - March 11, 2026)
+- Urgent category pills (Past Due, Due Today, Coach Flags) show a subtle pulsing dot when they have unseen alerts
+- Pulse stops once user clicks the pill (tracked via `seenCategories` state)
+- Custom `pillPulse` CSS animation with soft fade-out at 2s interval
+- **Files Modified**: `frontend/src/pages/athlete/PipelinePage.js`
+
 ### Engagement Outlook Card (DONE - March 11, 2026)
 - **Backend Endpoint** (`GET /api/intelligence/program/{program_id}/engagement-outlook`): Deterministic, no LLM. Returns freshness_label, freshness_color, pipeline_health_state, next_step (action/urgency/context), signals array, data_confidence.
 - **Next Step Logic** (`_build_next_step`): Priority-ordered action recommendations — unanswered coach questions > overdue follow-ups > stale engagement > declining trend > no contact yet > healthy relationship.
