@@ -86,6 +86,8 @@ async def recompute_metrics(program_id: str, tenant_id: str) -> dict:
     created_at = _parse_dt(program.get("created_at"))
     program_age_days = (now - created_at).days if created_at else None
     m["program_age_days"] = program_age_days
+    m["_recruiting_status"] = program.get("recruiting_status", "")
+    m["_journey_stage"] = program.get("journey_stage", "")
     m["pipeline_health_state"] = _compute_pipeline_health(m)
 
     # Data confidence
@@ -97,7 +99,7 @@ async def recompute_metrics(program_id: str, tenant_id: str) -> dict:
         "athlete_id": athlete_id,
         "org_id": org_id,
         "university_name": program.get("university_name", ""),
-        **m,
+        **{k: v for k, v in m.items() if not k.startswith("_")},
         "data_confidence": confidence,
         "computed_at": now.isoformat(),
     }
@@ -483,10 +485,17 @@ def _compute_pipeline_health(m: dict) -> str:
     elif score >= -3:
         raw_state = "cooling_off"
 
-    # Override for new programs: don't show discouraging states
+    # Override for new programs and outreach-stage programs
     age = m.get("program_age_days")
     meaningful_count = m.get("meaningful_interaction_count", 0)
-    if raw_state in ("cooling_off", "at_risk") and meaningful_count == 0:
+    recruiting_status = m.get("_recruiting_status", "").lower()
+    journey_stage = m.get("_journey_stage", "").lower()
+
+    has_sent_outreach = recruiting_status in ("contacted", "in conversation") or journey_stage not in ("", "added")
+
+    if meaningful_count == 0 and raw_state in ("cooling_off", "at_risk", "needs_follow_up"):
+        if has_sent_outreach:
+            return "awaiting_reply"
         if age is not None and age <= 14:
             return "still_early"
 

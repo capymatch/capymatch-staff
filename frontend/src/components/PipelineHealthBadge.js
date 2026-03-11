@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, TrendingUp, Clock, AlertCircle, Zap, Sprout } from "lucide-react";
+import { Activity, TrendingUp, Clock, AlertCircle, Zap, Sprout, Send } from "lucide-react";
 
 const HEALTH_CONFIG = {
   strong_momentum: { label: "Strong Momentum", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.2)", color: "#10b981", Icon: TrendingUp },
@@ -8,6 +8,7 @@ const HEALTH_CONFIG = {
   cooling_off:     { label: "Cooling Off",       bg: "rgba(251,146,60,0.06)", border: "rgba(251,146,60,0.18)", color: "#fb923c", Icon: Activity },
   at_risk:         { label: "At Risk",           bg: "rgba(239,68,68,0.06)",  border: "rgba(239,68,68,0.15)",  color: "#f87171", Icon: AlertCircle },
   still_early:     { label: "Still Early",       bg: "rgba(139,92,246,0.07)", border: "rgba(139,92,246,0.18)", color: "#a78bfa", Icon: Sprout },
+  awaiting_reply:  { label: "Awaiting Reply",    bg: "rgba(99,102,241,0.07)", border: "rgba(99,102,241,0.18)", color: "#818cf8", Icon: Send },
 };
 
 function getExplanation(metrics) {
@@ -15,6 +16,7 @@ function getExplanation(metrics) {
 
   const state = metrics.pipeline_health_state;
   if (state === "still_early") return "No signals yet";
+  if (state === "awaiting_reply") return "Waiting for coach response";
 
   const days = metrics.days_since_last_meaningful_engagement;
   const type = metrics.last_meaningful_engagement_type;
