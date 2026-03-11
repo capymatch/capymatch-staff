@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Calendar, Megaphone, BarChart3, Users,
   ChevronRight, Kanban, GraduationCap, Mail, Video,
-  Shield, Plug, Database,
+  Shield, Plug, Database, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
@@ -19,6 +19,8 @@ const DIRECTOR_EXTRA = [
 
 const ADMIN_NAV = [
   { id: "admin-dashboard", label: "Admin", icon: Shield, path: "/admin/dashboard" },
+  { id: "admin-users", label: "Users", icon: Users, path: "/admin/users" },
+  { id: "admin-subscriptions", label: "Subscriptions", icon: CreditCard, path: "/admin/subscriptions" },
   { id: "admin-integrations", label: "Integrations", icon: Plug, path: "/admin/integrations" },
   { id: "admin-universities", label: "Universities", icon: Database, path: "/admin/universities" },
 ];

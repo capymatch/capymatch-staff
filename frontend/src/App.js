@@ -24,6 +24,9 @@ import AdminStatus from "./pages/AdminStatus";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminIntegrationsPage from "./pages/admin/AdminIntegrationsPage";
 import AdminUniversitiesPage from "./pages/admin/AdminUniversitiesPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminUserDetailPage from "./pages/admin/AdminUserDetailPage";
+import AdminSubscriptionsPage from "./pages/admin/AdminSubscriptionsPage";
 import RosterPage from "./pages/RosterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
@@ -115,6 +118,9 @@ function AppRoutes() {
       <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminDashboardPage /></ProtectedRoute>} />
       <Route path="/admin/integrations" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminIntegrationsPage /></ProtectedRoute>} />
       <Route path="/admin/universities" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminUniversitiesPage /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminUsersPage /></ProtectedRoute>} />
+      <Route path="/admin/users/:userId" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminUserDetailPage /></ProtectedRoute>} />
+      <Route path="/admin/subscriptions" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminSubscriptionsPage /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SupportPod /></ProtectedRoute>} />
 
       {/* ── Athlete / Parent routes ── */}
