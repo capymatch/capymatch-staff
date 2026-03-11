@@ -101,7 +101,7 @@ export default function Sidebar({ open, onClose }) {
         </div>
 
         {/* Admin Section */}
-        {(isDirector || isAdmin) && (
+        {isAdmin && (
           <>
             <div className="mt-4 mb-2 px-3">
               <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--cm-text-4)" }}>Admin</span>
