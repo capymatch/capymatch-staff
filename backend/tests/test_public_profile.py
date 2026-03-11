@@ -141,7 +141,7 @@ class TestAuthenticatedSettings:
         
         # Validate settings structure
         settings = data["settings"]
-        assert "is_published" in settings, "Settings missing 'is_published'"
+        assert "profile_visible" in settings, "Settings missing 'profile_visible' (renamed from is_published)"
         assert "show_contact_email" in settings, "Settings missing 'show_contact_email'"
         assert "show_contact_phone" in settings, "Settings missing 'show_contact_phone'"
         assert "show_bio" in settings, "Settings missing 'show_bio'"
@@ -215,16 +215,16 @@ class TestAuthenticatedSettings:
         print("Restored original settings")
     
     def test_update_publish_toggle(self):
-        """PUT /api/athlete/public-profile/settings - updates is_published toggle"""
+        """PUT /api/athlete/public-profile/settings - updates profile_visible toggle (legacy is_published also works)"""
         if not self.authenticated:
             pytest.skip("Authentication failed")
         
         # Get current settings
         get_response = self.session.get(f"{BASE_URL}/api/athlete/public-profile/settings")
         original_settings = get_response.json().get("settings", {})
-        original_published = original_settings.get("is_published", False)
+        original_published = original_settings.get("profile_visible", False)
         
-        # Toggle is_published
+        # Toggle using legacy is_published key (backend converts it to profile_visible)
         new_published = not original_published
         update_response = self.session.put(
             f"{BASE_URL}/api/athlete/public-profile/settings",
@@ -233,14 +233,15 @@ class TestAuthenticatedSettings:
         
         assert update_response.status_code == 200
         data = update_response.json()
-        assert data["settings"]["is_published"] == new_published
+        # Response uses profile_visible (the new name)
+        assert data["settings"]["profile_visible"] == new_published
         
-        print(f"PASS: is_published toggled from {original_published} to {new_published}")
+        print(f"PASS: profile_visible toggled from {original_published} to {new_published}")
         
         # Restore original setting
         self.session.put(
             f"{BASE_URL}/api/athlete/public-profile/settings",
-            json={"is_published": original_published}
+            json={"profile_visible": original_published}
         )
         print("Restored original settings")
     
@@ -354,7 +355,7 @@ class TestPrivacyFiltering:
         # Set show_contact_email=false and ensure published
         self.session.put(
             f"{BASE_URL}/api/athlete/public-profile/settings",
-            json={"show_contact_email": False, "is_published": True}
+            json={"show_contact_email": False, "profile_visible": True}
         )
         
         # Check public profile
@@ -399,7 +400,7 @@ class TestPrivacyFiltering:
         # Set show_bio=false and ensure published
         self.session.put(
             f"{BASE_URL}/api/athlete/public-profile/settings",
-            json={"show_bio": False, "is_published": True}
+            json={"show_bio": False, "profile_visible": True}
         )
         
         # Check public profile
@@ -425,12 +426,12 @@ class TestPrivacyFiltering:
         # Get slug
         settings_resp = self.session.get(f"{BASE_URL}/api/athlete/public-profile/settings")
         slug = settings_resp.json().get("slug")
-        original = settings_resp.json().get("settings", {}).get("is_published", False)
+        original = settings_resp.json().get("settings", {}).get("profile_visible", False)
         
         # Unpublish profile
         self.session.put(
             f"{BASE_URL}/api/athlete/public-profile/settings",
-            json={"is_published": False}
+            json={"profile_visible": False}
         )
         
         # Check public profile - should return 404
@@ -443,7 +444,7 @@ class TestPrivacyFiltering:
         # Restore original
         self.session.put(
             f"{BASE_URL}/api/athlete/public-profile/settings",
-            json={"is_published": original}
+            json={"profile_visible": original}
         )
 
 

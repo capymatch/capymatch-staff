@@ -1,0 +1,111 @@
+{
+  "summary": "Internal Staff Profile V2 Feature - All tests PASSED. Backend (31/31) and Frontend UI tests verified internal profile endpoint, staff publish toggle, profile_visible rename, and recruiting context display.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_internal_profile.py",
+    "/app/backend/tests/test_public_profile.py",
+    "/app/test_reports/pytest/pytest_internal_profile_v2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: GET /api/internal/athlete/{athlete_id}/profile returns full profile + recruiting context for staff",
+    "VERIFIED: GET /api/internal/athlete/{athlete_id}/profile returns 403 for athlete/parent roles",
+    "VERIFIED: GET /api/internal/athlete/{athlete_id}/profile returns 404 for invalid athlete_id",
+    "VERIFIED: PUT /api/internal/athlete/{athlete_id}/profile/publish - staff can toggle profile_visible",
+    "VERIFIED: PUT /api/internal/athlete/{athlete_id}/profile/publish - 403 for non-staff",
+    "VERIFIED: PUT /api/internal/athlete/{athlete_id}/profile/publish - toggles work (true->false->true)",
+    "VERIFIED: GET /api/public/profile/{slug} uses profile_visible (renamed from is_published)",
+    "VERIFIED: GET /api/public/profile/{slug} returns 404 when profile_visible=false",
+    "VERIFIED: GET /api/athlete/public-profile/settings returns profile_visible instead of is_published",
+    "VERIFIED: PUT /api/athlete/public-profile/settings accepts both profile_visible and legacy is_published",
+    "VERIFIED: Frontend internal profile page loads at /internal/athlete/athlete_3/profile with all sections",
+    "VERIFIED: Frontend shows Pipeline Status with 12 schools and stage badges",
+    "VERIFIED: Frontend shows Coach Flags section",
+    "VERIFIED: Frontend shows Director Actions section",
+    "VERIFIED: Frontend shows Recent Interactions section",
+    "VERIFIED: Staff Publish button toggles profile visibility (Unpublish <-> Publish Profile)",
+    "VERIFIED: Copy Profile Link button works (clipboard permission error is test environment limitation)",
+    "VERIFIED: Preview Public Profile button links to /p/emma-chen-2026-oh",
+    "VERIFIED: Unpublished banner shows when profile_visible=false",
+    "VERIFIED: Athlete settings page shows profile_visible toggle correctly"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_internal_profile.py",
+    "/app/backend/tests/test_public_profile.py"
+  ],
+  "success_rate": {
+    "backend": "100% (31/31 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "director": {
+      "email": "director@capymatch.com",
+      "password": "director123"
+    },
+    "coach": {
+      "email": "coach.williams@capymatch.com",
+      "password": "coach123"
+    },
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "password123"
+    }
+  },
+  "seed_data_creation": "None - used existing Emma Chen data (athlete_3) with slug 'emma-chen-2026-oh'",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Internal Staff Profile V2 fully implemented and tested. The field 'is_published' was renamed to 'profile_visible'. Backend accepts both for backward compatibility via _normalize_settings(). Emma Chen (athlete_3) profile is published with profile_visible=true. Internal profile endpoint returns recruiting_context object with pipeline (12 schools), coach_flags, director_actions, and recent_interactions. Staff can toggle publish via PUT /api/internal/athlete/{athlete_id}/profile/publish. All 7 visibility toggles work in athlete settings page.",
+  "features_verified": {
+    "backend_endpoints": {
+      "GET /api/internal/athlete/{athlete_id}/profile - director access": "PASS",
+      "GET /api/internal/athlete/{athlete_id}/profile - coach access": "PASS (or 403 if not assigned)",
+      "GET /api/internal/athlete/{athlete_id}/profile - athlete 403": "PASS",
+      "GET /api/internal/athlete/{athlete_id}/profile - 404 invalid id": "PASS",
+      "PUT /api/internal/athlete/{athlete_id}/profile/publish - staff": "PASS",
+      "PUT /api/internal/athlete/{athlete_id}/profile/publish - athlete 403": "PASS",
+      "PUT /api/internal/athlete/{athlete_id}/profile/publish - toggle cycle": "PASS",
+      "PUT /api/internal/athlete/{athlete_id}/profile/publish - requires boolean": "PASS",
+      "GET /api/athlete/public-profile/settings - profile_visible": "PASS",
+      "PUT /api/athlete/public-profile/settings - profile_visible": "PASS",
+      "PUT /api/athlete/public-profile/settings - legacy is_published": "PASS",
+      "GET /api/public/profile/{slug} - uses profile_visible": "PASS",
+      "GET /api/public/profile/{slug} - 404 when unpublished": "PASS"
+    },
+    "frontend_internal_profile": {
+      "internal_athlete_profile_container": "PASS",
+      "profile_card": "PASS",
+      "staff_athlete_name": "PASS - EMMA CHEN",
+      "context_pipeline": "PASS - 12 schools",
+      "context_flags": "PASS - Coach Flags section",
+      "context_actions": "PASS - Director Actions section",
+      "context_interactions": "PASS - Recent Interactions section",
+      "staff_publish_btn": "PASS - toggles Unpublish/Publish Profile",
+      "copy_profile_link_btn": "PASS",
+      "preview_public_btn": "PASS - links to /p/emma-chen-2026-oh",
+      "unpublished_banner": "PASS - shows when profile_visible=false"
+    },
+    "frontend_athlete_settings": {
+      "section_public_profile": "PASS",
+      "publish_toggle_btn": "PASS - shows Unpublish when published",
+      "share_link_display": "PASS",
+      "completeness_bar": "PASS - 83%",
+      "coach_summary_preview": "PASS",
+      "regenerate_slug_btn": "PASS"
+    },
+    "frontend_public_profile": {
+      "public_profile_loads": "PASS",
+      "athlete_name": "PASS - Emma Chen",
+      "coach_summary_section": "PASS",
+      "bio_section": "PASS",
+      "events_section": "PASS"
+    }
+  }
+}

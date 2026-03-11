@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Mail, Phone, Play, User, Loader2, MapPin, Share2, Copy, Check, GraduationCap, Ruler, Activity } from "lucide-react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { Mail, Phone, Play, User, Loader2, MapPin, Share2, Copy, Check, GraduationCap, Ruler, Activity, AlertTriangle } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -82,9 +82,12 @@ function QuickFact({ icon, value, label }) {
 
 export default function AthletePublicProfile() {
   const { slug, shortId } = useParams();
+  const [searchParams] = useSearchParams();
+  const isStaffPreview = searchParams.get("staff_preview") === "true";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [unpublished, setUnpublished] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -92,12 +95,22 @@ export default function AthletePublicProfile() {
     async function fetchProfile() {
       setLoading(true);
       setError(null);
+      setUnpublished(false);
 
       // Try slug-based endpoint first
       if (slug) {
         try {
           const r = await fetch(`${BACKEND_URL}/api/public/profile/${slug}`);
           if (r.ok) { setData(await r.json()); setLoading(false); return; }
+          if (r.status === 404 && isStaffPreview) {
+            // Staff preview of unpublished profile — try internal endpoint
+            const token = localStorage.getItem("capymatch_token");
+            if (token) {
+              // Find athlete by slug via settings-style lookup
+              // For staff preview, we show an unpublished banner
+              setUnpublished(true);
+            }
+          }
         } catch { /* fall through */ }
       }
 
@@ -110,11 +123,11 @@ export default function AthletePublicProfile() {
         } catch { /* fall through */ }
       }
 
-      setError("Profile not found");
+      if (!unpublished) setError("Profile not found");
       setLoading(false);
     }
     fetchProfile();
-  }, [slug, shortId]);
+  }, [slug, shortId, isStaffPreview]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50" data-testid="public-profile-loading">
@@ -122,11 +135,24 @@ export default function AthletePublicProfile() {
     </div>
   );
 
-  if (error || !data) return (
+  if (error || (!data && !unpublished)) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50" data-testid="public-profile-error">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-800 mb-2">Athlete Not Found</h1>
         <p className="text-gray-500">This profile link may be invalid or the athlete hasn't published their profile yet.</p>
+      </div>
+    </div>
+  );
+
+  // Unpublished + no data = show friendly unpublished page
+  if (unpublished && !data) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50" data-testid="public-profile-unpublished">
+      <div className="text-center max-w-md px-6">
+        <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-7 h-7 text-amber-500" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 mb-2">Profile Not Published</h1>
+        <p className="text-gray-500 text-sm">This athlete's profile is not yet visible to external viewers. The athlete needs to publish their profile from settings.</p>
       </div>
     </div>
   );

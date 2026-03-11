@@ -58,9 +58,9 @@ export default function PublicProfileSettings() {
     try {
       const res = await axios.put(`${API}/athlete/public-profile/settings`, { [key]: value });
       setData(prev => ({ ...prev, settings: res.data.settings }));
-      if (key === "is_published" && value) {
+      if (key === "profile_visible" && value) {
         toast.success("Profile published! Your public profile is now live.");
-      } else if (key === "is_published" && !value) {
+      } else if (key === "profile_visible" && !value) {
         toast.success("Profile unpublished.");
       }
     } catch {
@@ -106,7 +106,7 @@ export default function PublicProfileSettings() {
   if (!data) return null;
 
   const { settings, slug, completeness, coach_summary_preview } = data;
-  const isPublished = settings?.is_published || false;
+  const isPublished = settings?.profile_visible || false;
   const shareUrl = slug ? `${window.location.origin}/p/${slug}` : "";
 
   return (
@@ -135,7 +135,7 @@ export default function PublicProfileSettings() {
             </p>
           </div>
           <Button
-            onClick={() => updateSetting("is_published", !isPublished)}
+            onClick={() => updateSetting("profile_visible", !isPublished)}
             disabled={saving}
             className={`text-xs h-8 px-4 font-bold ${isPublished ? "bg-slate-600 hover:bg-slate-700" : "bg-teal-700 hover:bg-teal-800"} text-white`}
             data-testid="publish-toggle-btn"
