@@ -38,6 +38,8 @@ from support_pod import (
     get_relevant_events,
 )
 from db_client import db
+from intelligence.payload_builder import build_payload
+from intelligence.agents import school_insight as school_insight_agent, timeline as timeline_agent
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -562,3 +564,88 @@ async def event_followups_ai(event_id: str, current_user: dict = get_current_use
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "confidence": {"signal": signal, "basis": basis},
     }
+
+
+
+# ── Intelligence Pipeline Phase 1 ────────────────────────────────────────────
+
+async def _get_tenant_id(current_user: dict) -> str:
+    """Resolve tenant_id from the current user's athlete record."""
+    athlete = await db.athletes.find_one(
+        {"user_id": current_user["id"]}, {"_id": 0, "tenant_id": 1}
+    )
+    return (athlete or {}).get("tenant_id", "")
+
+
+CARD_CACHE_TTL_HOURS = 24
+
+from datetime import timedelta
+
+
+async def _get_cached_card(card_type: str, program_id: str, tenant_id: str) -> dict | None:
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=CARD_CACHE_TTL_HOURS)).isoformat()
+    cached = await db.intelligence_cache.find_one(
+        {
+            "card_type": card_type,
+            "program_id": program_id,
+            "tenant_id": tenant_id,
+            "generated_at": {"$gte": cutoff},
+        },
+        {"_id": 0},
+    )
+    return cached
+
+
+async def _store_card(card: dict, program_id: str, tenant_id: str):
+    card_type = card.get("card_type", "unknown")
+    await db.intelligence_cache.update_one(
+        {"card_type": card_type, "program_id": program_id, "tenant_id": tenant_id},
+        {"$set": {**card, "program_id": program_id, "tenant_id": tenant_id}},
+        upsert=True,
+    )
+
+
+@router.get("/intelligence/program/{program_id}/school-insight")
+async def intelligence_school_insight(
+    program_id: str, force: bool = False, current_user: dict = get_current_user_dep()
+):
+    """School Insight intelligence card — Why This School / Why Not."""
+    tenant_id = await _get_tenant_id(current_user)
+    if not tenant_id:
+        raise HTTPException(status_code=404, detail="No athlete profile found")
+
+    if not force:
+        cached = await _get_cached_card("school_insight", program_id, tenant_id)
+        if cached:
+            cached["from_cache"] = True
+            return cached
+
+    payload = await build_payload(program_id, tenant_id, force=force)
+    card = await school_insight_agent.analyze(payload)
+    card["from_cache"] = False
+
+    await _store_card(card, program_id, tenant_id)
+    return card
+
+
+@router.get("/intelligence/program/{program_id}/timeline")
+async def intelligence_timeline(
+    program_id: str, force: bool = False, current_user: dict = get_current_user_dep()
+):
+    """Timeline intelligence card — recruiting timeline and urgency analysis."""
+    tenant_id = await _get_tenant_id(current_user)
+    if not tenant_id:
+        raise HTTPException(status_code=404, detail="No athlete profile found")
+
+    if not force:
+        cached = await _get_cached_card("timeline", program_id, tenant_id)
+        if cached:
+            cached["from_cache"] = True
+            return cached
+
+    payload = await build_payload(program_id, tenant_id, force=force)
+    card = await timeline_agent.analyze(payload)
+    card["from_cache"] = False
+
+    await _store_card(card, program_id, tenant_id)
+    return card

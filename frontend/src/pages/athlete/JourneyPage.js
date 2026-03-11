@@ -25,6 +25,7 @@ import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
 import NotesSidebar from "../../components/NotesSidebar";
+import { SchoolInsightCard, TimelineCard } from "../../components/intelligence/IntelligenceCards";
 import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -929,6 +930,17 @@ export default function JourneyPage() {
                     <p className="text-lg font-extrabold" style={{ color: "var(--cm-text)" }}>{stat.value}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Intelligence Section — Phase 1 */}
+            <div data-testid="intelligence-section">
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5" style={{ color: "var(--cm-text-3)" }}>
+                Intelligence
+              </h3>
+              <div className="space-y-2">
+                <SchoolInsightCard programId={program.program_id} isBasic={isBasic} />
+                <TimelineCard programId={program.program_id} isBasic={isBasic} />
               </div>
             </div>
 
