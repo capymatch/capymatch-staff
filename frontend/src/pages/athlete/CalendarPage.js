@@ -3,8 +3,9 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ChevronLeft, ChevronRight, Clock, Plus, X, MapPin,
-  Calendar, Trash2, Loader2,
+  Calendar, Trash2, Loader2, GraduationCap,
 } from "lucide-react";
+import NcaaTimeline from "../../components/calendar/NcaaTimeline";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -167,6 +168,7 @@ function EventModal({ onClose, onSaved, editEvent, programs }) {
 
 /* ── Main Calendar ── */
 export default function CalendarPage() {
+  const [tab, setTab] = useState("calendar");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [programs, setPrograms] = useState([]);
   const [events, setEvents] = useState([]);
@@ -247,6 +249,39 @@ export default function CalendarPage() {
 
   return (
     <div data-testid="calendar-page" className="space-y-6">
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-1 p-1 rounded-xl w-fit" style={{ backgroundColor: "var(--cm-surface-2)" }} data-testid="calendar-tabs">
+        <button
+          onClick={() => setTab("calendar")}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+          style={{
+            backgroundColor: tab === "calendar" ? "var(--cm-surface)" : "transparent",
+            color: tab === "calendar" ? "var(--cm-text)" : "var(--cm-text-3)",
+            boxShadow: tab === "calendar" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}
+          data-testid="tab-my-calendar"
+        >
+          <Calendar className="w-4 h-4" />
+          My Calendar
+        </button>
+        <button
+          onClick={() => setTab("ncaa")}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
+          style={{
+            backgroundColor: tab === "ncaa" ? "#1a8a80" : "transparent",
+            color: tab === "ncaa" ? "#fff" : "var(--cm-text-3)",
+          }}
+          data-testid="tab-ncaa-timeline"
+        >
+          <GraduationCap className="w-4 h-4" />
+          NCAA Timeline
+        </button>
+      </div>
+
+      {tab === "ncaa" ? (
+        <NcaaTimeline />
+      ) : (
+      <>
       <div className="flex items-center justify-end">
         <button data-testid="add-event-btn" onClick={() => { setEditEvent(null); setShowModal(true); }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
@@ -379,6 +414,8 @@ export default function CalendarPage() {
           editEvent={editEvent}
           programs={programs}
         />
+      )}
+      </>
       )}
     </div>
   );
