@@ -380,6 +380,17 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New field**: `program_age_days` in program_metrics for age-aware health computation
 - **Testing:** 100% (iteration_96: 10/10 backend, all frontend verified)
 
+### Hero Carousel Priority System (DONE - March 11, 2026)
+- **Priority-ordered alerts**: 1) Past Due 2) Due Today 3) Coach Flags 4) Engagement Cooling Off / Needs Follow-Up 5) Needs First Outreach
+- **No cap**: All schools with alert conditions appear in the carousel (was limited to 6)
+- **One alert per school**: Highest-priority signal wins (deduplication via `seen` set)
+- **Category labels**: Each hero card shows its alert type (PAST DUE, COACH FLAG, MOMENTUM SLOWING, FIRST OUTREACH) with color-coded accent bar and glow
+- **Filter pills**: Quick-navigation pills above carousel (All, Past Due, Due Today, Coach Flags, Cooling Off, First Outreach) with counts. Only categories with alerts are shown.
+- **Supportive framing**: Engagement nudges are action-oriented ("A short check-in can reignite momentum", "Timely responses show genuine interest")
+- **Carousel dots**: Colored per category for the active dot, with click-to-navigate
+- **Files Modified**: `frontend/src/pages/athlete/PipelinePage.js` — rewrote `generateActions()`, `HeroActionsCarousel`, added `ALERT_CATEGORIES` config. Removed old `getHeroAdvice`, `getActionContext`, `getCTA` functions.
+- **Testing:** 100% (iteration_97: 13/13 frontend features verified)
+
 ### Engagement Outlook Card (DONE - March 11, 2026)
 - **Backend Endpoint** (`GET /api/intelligence/program/{program_id}/engagement-outlook`): Deterministic, no LLM. Returns freshness_label, freshness_color, pipeline_health_state, next_step (action/urgency/context), signals array, data_confidence.
 - **Next Step Logic** (`_build_next_step`): Priority-ordered action recommendations — unanswered coach questions > overdue follow-ups > stale engagement > declining trend > no contact yet > healthy relationship.
