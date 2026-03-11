@@ -132,7 +132,8 @@ def _parse_dt(val) -> datetime | None:
     if isinstance(val, datetime):
         return val if val.tzinfo else val.replace(tzinfo=timezone.utc)
     try:
-        return datetime.fromisoformat(str(val).replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(str(val).replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
     except Exception:
         return None
 

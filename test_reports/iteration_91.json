@@ -1,0 +1,114 @@
+{
+  "summary": "Program Metrics derived layer API - All 22 backend tests PASSED (100%). Endpoints GET /metrics, POST /recompute-metrics (athlete-only), and POST /recompute-all (admin-only) are fully functional with proper auth/RBAC controls.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_program_metrics.py",
+    "/app/test_reports/pytest/pytest_program_metrics.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "VERIFIED: GET /api/internal/programs/{program_id}/metrics returns cached or recomputed metrics for athlete",
+    "VERIFIED: GET /api/internal/programs/{program_id}/metrics?force=true forces recompute",
+    "VERIFIED: POST /api/internal/programs/{program_id}/recompute-metrics forces recompute for specific program",
+    "VERIFIED: POST /api/internal/programs/recompute-all recomputes all active programs (admin-only)",
+    "VERIFIED: Metrics response includes all 17 required fields per ProgramMetricsResponse model",
+    "VERIFIED: 404 returned for non-existent program_id",
+    "VERIFIED: 403 returned for non-athlete users (admin, director, coach) on GET/POST single-program endpoints",
+    "VERIFIED: 401 returned for unauthenticated requests on all 3 endpoints",
+    "VERIFIED: Recompute-all is admin-only — athlete/coach tokens get 403, director allowed (admin role)",
+    "VERIFIED: Cached metrics returned on second GET call (same computed_at timestamp)",
+    "VERIFIED: Metrics stored in MongoDB program_metrics collection with unique index on (program_id, tenant_id)",
+    "VERIFIED: Numeric fields (meaningful_interaction_count, invite_count, etc.) are non-negative",
+    "VERIFIED: data_confidence is one of HIGH/MEDIUM/LOW",
+    "VERIFIED: engagement_trend is one of accelerating/steady/decelerating/stalled/inactive/insufficient_data"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_program_metrics.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 tests passed)",
+    "frontend": "N/A (backend-only testing)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "password123",
+      "role": "athlete",
+      "used_for": "GET/POST single-program endpoints"
+    },
+    "admin": {
+      "email": "douglas@capymatch.com",
+      "password": "1234",
+      "role": "platform_admin",
+      "used_for": "recompute-all and 403 tests"
+    },
+    "director": {
+      "email": "director@capymatch.com",
+      "password": "director123",
+      "role": "director",
+      "used_for": "recompute-all (allowed) and 403 tests for single-program"
+    },
+    "coach": {
+      "email": "coach.williams@capymatch.com",
+      "password": "coach123",
+      "role": "club_coach",
+      "used_for": "403 tests"
+    },
+    "program_ids": {
+      "UF": "15d08982-3c51-4761-9b83-67414484582e",
+      "Stanford": "a54a0014-0e83-4a16-b0c2-5e8f10401de2"
+    }
+  },
+  "seed_data_creation": "None - used existing Emma Chen data with programs UF and Stanford",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Program Metrics derived layer fully tested. Three endpoints under /api/internal/programs/: GET /{program_id}/metrics (athlete-only, returns cached or fresh metrics), POST /{program_id}/recompute-metrics (athlete-only, forces recompute), POST /recompute-all (admin-only, bulk recompute). Metrics stored in program_metrics MongoDB collection with unique index on (program_id, tenant_id). 6h staleness threshold for cache. Service at /app/backend/services/program_metrics.py computes 17 fields from interactions, program_stage_history, program_signals, coach_flags, director_actions collections. Test file: /app/backend/tests/test_program_metrics.py",
+  "features_verified": {
+    "authentication": {
+      "unauthenticated_get_metrics_401": "PASS",
+      "unauthenticated_recompute_metrics_401": "PASS",
+      "unauthenticated_recompute_all_401": "PASS"
+    },
+    "authorization": {
+      "admin_get_metrics_403": "PASS",
+      "director_get_metrics_403": "PASS",
+      "coach_get_metrics_403": "PASS",
+      "admin_recompute_metrics_403": "PASS",
+      "director_recompute_metrics_403": "PASS",
+      "coach_recompute_metrics_403": "PASS",
+      "athlete_recompute_all_403": "PASS",
+      "coach_recompute_all_403": "PASS"
+    },
+    "not_found": {
+      "get_metrics_program_not_found_404": "PASS",
+      "recompute_metrics_program_not_found_404": "PASS"
+    },
+    "get_metrics": {
+      "returns_valid_response": "PASS",
+      "returns_all_17_required_fields": "PASS",
+      "cached_response_same_computed_at": "PASS",
+      "force_true_recomputes": "PASS",
+      "works_for_different_programs": "PASS"
+    },
+    "recompute_metrics": {
+      "forces_recompute_new_computed_at": "PASS"
+    },
+    "recompute_all": {
+      "admin_success": "PASS",
+      "director_success": "PASS",
+      "returns_computed_errors_total": "PASS"
+    },
+    "metrics_fields": {
+      "numeric_fields_non_negative": "PASS",
+      "tenant_id_and_athlete_id_present": "PASS"
+    }
+  }
+}

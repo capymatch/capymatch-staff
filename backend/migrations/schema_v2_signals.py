@@ -208,4 +208,10 @@ async def run_migration():
     await db.intelligence_cache.create_index([("generated_at", -1)])
     log.info("  intelligence_cache: indexes created")
 
+    # program_metrics
+    await db.program_metrics.create_index([("program_id", 1), ("tenant_id", 1)], unique=True)
+    await db.program_metrics.create_index([("athlete_id", 1)])
+    await db.program_metrics.create_index([("computed_at", -1)])
+    log.info("  program_metrics: indexes created")
+
     log.info("Schema V2 migration: complete")

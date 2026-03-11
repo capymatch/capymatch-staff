@@ -303,3 +303,35 @@ class ReassignRequest(BaseModel):
 
 class UnassignRequest(BaseModel):
     reason: Optional[str] = "manually_unassigned"
+
+
+
+# ── Program Metrics ──
+
+class ProgramMetricsResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    program_id: str
+    tenant_id: str
+    athlete_id: str = ""
+    org_id: Optional[str] = None
+    university_name: str = ""
+    reply_rate: Optional[float] = None
+    median_response_time_hours: Optional[float] = None
+    meaningful_interaction_count: int = 0
+    days_since_last_engagement: Optional[int] = None
+    unanswered_coach_questions: int = 0
+    overdue_followups: int = 0
+    stage_velocity: Optional[float] = None
+    stage_stalled_days: Optional[int] = None
+    engagement_trend: str = "insufficient_data"
+    invite_count: int = 0
+    info_request_count: int = 0
+    coach_flag_count: int = 0
+    director_action_count: int = 0
+    data_confidence: str = "LOW"
+    computed_at: str = ""
+
+class RecomputeAllResponse(BaseModel):
+    computed: int
+    errors: int
+    total: int

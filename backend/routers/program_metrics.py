@@ -1,0 +1,73 @@
+"""Program Metrics — internal API for derived metrics layer.
+
+Exposes pre-computed recruiting metrics per athlete-school relationship.
+Intended for consumption by intelligence cards and internal services.
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from auth_middleware import _get_current_user
+from admin_guard import require_admin
+from models import ProgramMetricsResponse, RecomputeAllResponse
+from services.program_metrics import get_metrics, recompute_metrics, recompute_all
+from db_client import db
+
+router = APIRouter(prefix="/internal/programs", tags=["program-metrics"])
+
+
+async def _resolve_tenant(current_user: dict) -> str:
+    """Resolve tenant_id from the user's linked athlete record."""
+    if current_user["role"] not in ("athlete", "parent"):
+        raise HTTPException(403, "Only athletes/parents can access this")
+    athlete = await db.athletes.find_one(
+        {"user_id": current_user["id"]}, {"_id": 0, "tenant_id": 1}
+    )
+    if not athlete or not athlete.get("tenant_id"):
+        raise HTTPException(404, "No claimed athlete profile found")
+    return athlete["tenant_id"]
+
+
+@router.get("/{program_id}/metrics", response_model=ProgramMetricsResponse)
+async def get_program_metrics(
+    program_id: str,
+    force: bool = Query(False, description="Force recompute instead of returning cached"),
+    current_user: dict = Depends(_get_current_user),
+):
+    """Get derived metrics for a program. Returns cached unless stale or force=true."""
+    tenant_id = await _resolve_tenant(current_user)
+
+    program = await db.programs.find_one(
+        {"program_id": program_id, "tenant_id": tenant_id},
+        {"_id": 0, "program_id": 1},
+    )
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+
+    if force:
+        return await recompute_metrics(program_id, tenant_id)
+    return await get_metrics(program_id, tenant_id)
+
+
+@router.post("/{program_id}/recompute-metrics", response_model=ProgramMetricsResponse)
+async def recompute_program_metrics(
+    program_id: str,
+    current_user: dict = Depends(_get_current_user),
+):
+    """Force recompute metrics for a specific program."""
+    tenant_id = await _resolve_tenant(current_user)
+
+    program = await db.programs.find_one(
+        {"program_id": program_id, "tenant_id": tenant_id},
+        {"_id": 0, "program_id": 1},
+    )
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+
+    return await recompute_metrics(program_id, tenant_id)
+
+
+@router.post("/recompute-all", response_model=RecomputeAllResponse)
+async def recompute_all_metrics(
+    admin: dict = Depends(require_admin),
+):
+    """Recompute metrics for all active programs. Admin-only."""
+    return await recompute_all()
