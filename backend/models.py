@@ -320,6 +320,10 @@ class ProgramMetricsResponse(BaseModel):
     meaningful_interaction_count: int = 0
     days_since_last_engagement: Optional[int] = None
     unanswered_coach_questions: int = 0
+    last_meaningful_engagement_at: Optional[str] = None
+    last_meaningful_engagement_type: Optional[str] = None
+    days_since_last_meaningful_engagement: Optional[int] = None
+    engagement_freshness_label: str = "no_recent_engagement"
     overdue_followups: int = 0
     stage_velocity: Optional[float] = None
     stage_stalled_days: Optional[int] = None

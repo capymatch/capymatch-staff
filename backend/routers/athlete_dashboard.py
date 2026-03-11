@@ -661,10 +661,23 @@ async def create_interaction(body: dict, current_user: dict = get_current_user_d
     doc.pop("_id", None)
 
     # Update last_meaningful_engagement_at on program if meaningful
-    if body.get("is_meaningful") or doc["type"] in ("Coach Reply", "Phone Call", "Campus Visit", "Video Call", "Camp"):
+    _meaningful_types = {"Coach Reply", "Phone Call", "Campus Visit", "Video Call", "Camp"}
+    is_meaningful = (
+        body.get("is_meaningful")
+        or doc["type"] in _meaningful_types
+        or body.get("coach_question_detected")
+        or body.get("request_type")
+        or body.get("invite_type")
+        or body.get("offer_signal")
+        or body.get("scholarship_signal")
+    )
+    if is_meaningful:
         await db.programs.update_one(
             {"tenant_id": tenant_id, "program_id": program_id},
-            {"$set": {"last_meaningful_engagement_at": now.isoformat()}},
+            {"$set": {
+                "last_meaningful_engagement_at": now.isoformat(),
+                "last_meaningful_engagement_type": doc["type"],
+            }},
         )
 
     # Auto-set follow-up on program based on interaction type
@@ -744,6 +757,8 @@ async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_
             "priority": "Very High",
             "next_action_due": (now + timedelta(days=2)).strftime("%Y-%m-%d"),
             "updated_at": now.isoformat(),
+            "last_meaningful_engagement_at": now.isoformat(),
+            "last_meaningful_engagement_type": "coach_reply",
         }},
     )
 

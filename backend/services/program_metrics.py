@@ -75,6 +75,7 @@ async def recompute_metrics(program_id: str, tenant_id: str) -> dict:
 
     # ── Compute metrics ──────────────────────────────────────────────────
     m = _compute_interaction_metrics(interactions, now)
+    m.update(_compute_meaningful_engagement(interactions, now))
     m.update(_compute_stage_metrics(program, stage_history, now))
     m.update(_compute_flag_metrics(coach_flags, director_actions))
     m.update(_compute_signal_metrics(signals, interactions))
@@ -138,6 +139,124 @@ def _parse_dt(val) -> datetime | None:
         return None
 
 
+# ── Meaningful engagement ruleset ────────────────────────────────────────
+
+_MEANINGFUL_TYPES = {
+    "coach_reply", "coach reply",
+    "phone_call", "phone call",
+    "video_call", "video call",
+    "campus_visit", "campus visit",
+    "camp",
+}
+
+
+def _is_meaningful_engagement(ix: dict, interactions: list) -> bool:
+    """Determine if an interaction qualifies as meaningful engagement.
+
+    Rules:
+    1. Type is in _MEANINGFUL_TYPES (coach reply, call, visit, camp)
+    2. Any signal field is set: coach_question_detected, request_type,
+       invite_type, offer_signal, scholarship_signal
+    3. is_meaningful flag is True
+    4. Athlete outbound email that is a reply within 48h of a meaningful
+       coach interaction (advancing a live thread)
+    """
+    # Flag-based
+    if ix.get("is_meaningful"):
+        return True
+
+    # Type-based
+    ix_type = ix.get("type", "").lower().replace(" ", "_")
+    if ix_type in _MEANINGFUL_TYPES:
+        return True
+
+    # Signal-based
+    if ix.get("coach_question_detected"):
+        return True
+    if ix.get("request_type"):
+        return True
+    if ix.get("invite_type"):
+        return True
+    if ix.get("offer_signal"):
+        return True
+    if ix.get("scholarship_signal"):
+        return True
+
+    # Athlete outbound reply advancing a live meaningful thread
+    outbound_types = {"email_sent", "email sent", "text_message", "text message"}
+    if ix_type in outbound_types or ix.get("initiated_by") == "athlete":
+        ix_dt = _parse_dt(ix.get("date_time") or ix.get("created_at"))
+        if ix_dt:
+            window = ix_dt - timedelta(hours=48)
+            for prior in interactions:
+                prior_dt = _parse_dt(prior.get("date_time") or prior.get("created_at"))
+                if not prior_dt or prior_dt >= ix_dt or prior_dt < window:
+                    continue
+                # Prior interaction must be a meaningful coach-initiated one
+                prior_type = prior.get("type", "").lower().replace(" ", "_")
+                is_coach_meaningful = (
+                    prior_type in _MEANINGFUL_TYPES
+                    or prior.get("coach_question_detected")
+                    or prior.get("request_type")
+                    or prior.get("invite_type")
+                )
+                if is_coach_meaningful:
+                    return True
+
+    return False
+
+
+def _compute_meaningful_engagement(interactions: list, now: datetime) -> dict:
+    """Find last meaningful engagement and derive freshness label."""
+    if not interactions:
+        return {
+            "last_meaningful_engagement_at": None,
+            "last_meaningful_engagement_type": None,
+            "days_since_last_meaningful_engagement": None,
+            "engagement_freshness_label": "no_recent_engagement",
+        }
+
+    last_at = None
+    last_type = None
+
+    for ix in interactions:  # sorted newest-first
+        if _is_meaningful_engagement(ix, interactions):
+            dt = _parse_dt(ix.get("date_time") or ix.get("created_at"))
+            if dt:
+                last_at = dt
+                last_type = ix.get("type", "unknown")
+                break  # newest first, so first match is the most recent
+
+    if not last_at:
+        return {
+            "last_meaningful_engagement_at": None,
+            "last_meaningful_engagement_type": None,
+            "days_since_last_meaningful_engagement": None,
+            "engagement_freshness_label": "no_recent_engagement",
+        }
+
+    days = (now - last_at).days
+    label = _freshness_label(days)
+
+    return {
+        "last_meaningful_engagement_at": last_at.isoformat(),
+        "last_meaningful_engagement_type": last_type,
+        "days_since_last_meaningful_engagement": days,
+        "engagement_freshness_label": label,
+    }
+
+
+def _freshness_label(days: int) -> str:
+    """Map days since last meaningful engagement to a user-facing label."""
+    if days <= 7:
+        return "active_recently"
+    if days <= 14:
+        return "needs_follow_up"
+    if days <= 30:
+        return "momentum_slowing"
+    return "no_recent_engagement"
+
+
 def _compute_interaction_metrics(interactions: list, now: datetime) -> dict:
     """Derive reply rate, response times, engagement freshness from interactions."""
     total = len(interactions)
@@ -153,7 +272,6 @@ def _compute_interaction_metrics(interactions: list, now: datetime) -> dict:
     # Outbound interactions (athlete-initiated)
     outbound_types = {"email_sent", "email sent", "text_message", "text message", "video_call", "video call", "phone_call", "phone call"}
     inbound_types = {"coach_reply", "coach reply", "email_received", "email received"}
-    meaningful_types = {"coach_reply", "coach reply", "phone_call", "phone call", "campus_visit", "campus visit", "video_call", "video call", "camp"}
 
     outbound_count = sum(1 for ix in interactions if ix.get("type", "").lower().replace(" ", "_") in outbound_types or ix.get("initiated_by") == "athlete")
     inbound_count = sum(1 for ix in interactions if ix.get("type", "").lower().replace(" ", "_") in inbound_types or ix.get("initiated_by") == "coach")
@@ -168,7 +286,7 @@ def _compute_interaction_metrics(interactions: list, now: datetime) -> dict:
     # Meaningful interactions
     meaningful_count = sum(
         1 for ix in interactions
-        if ix.get("is_meaningful") or ix.get("type", "").lower().replace(" ", "_") in meaningful_types
+        if _is_meaningful_engagement(ix, interactions)
     )
 
     # Days since last engagement
@@ -284,7 +402,7 @@ def _compute_engagement_trend(interactions: list, now: datetime) -> dict:
 def _compute_data_confidence(metrics: dict, interactions: list, stage_history: list) -> str:
     """Assess how much data underpins these metrics: HIGH / MEDIUM / LOW."""
     score = 0
-    total = 7
+    total = 8
 
     if len(interactions) >= 5:
         score += 1
@@ -299,6 +417,8 @@ def _compute_data_confidence(metrics: dict, interactions: list, stage_history: l
     if metrics.get("median_response_time_hours") is not None:
         score += 1
     if metrics.get("engagement_trend") not in (None, "insufficient_data"):
+        score += 1
+    if metrics.get("last_meaningful_engagement_at") is not None:
         score += 1
 
     pct = round((score / total) * 100)
@@ -321,6 +441,10 @@ def _empty_metrics(program_id: str, tenant_id: str, reason: str) -> dict:
         "meaningful_interaction_count": 0,
         "days_since_last_engagement": None,
         "unanswered_coach_questions": 0,
+        "last_meaningful_engagement_at": None,
+        "last_meaningful_engagement_type": None,
+        "days_since_last_meaningful_engagement": None,
+        "engagement_freshness_label": "no_recent_engagement",
         "overdue_followups": 0,
         "stage_velocity": None,
         "stage_stalled_days": None,
