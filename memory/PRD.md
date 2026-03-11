@@ -282,18 +282,29 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Modified files**: `auth.py` (registration), `athlete_onboarding.py` (status endpoint), `PipelinePage.js`, `decision_engine.py`, `mock_data.py`, `support_pod.py`, `program_engine.py`, `advocacy_engine.py`
 - **Testing:** 8/8 backend, 1/1 E2E frontend (iteration_88)
 
+### Full Admin User & Subscription Management (DONE - March 11, 2026)
+- **Admin Users Page**: Searchable, filterable user table (name, email, plan badge, school count, interactions, status, joined). "New User" modal creates athlete accounts with plan selection.
+- **Admin User Detail Page**: Header card with avatar/plan/position/class, stats grid (schools, interactions, gmail, quiz), Manage Account section (plan + status dropdowns + save), plan features checklist, recent activity list, schools on board grid.
+- **Admin Subscriptions Page**: Revenue dashboard (MRR, total/paid/free users, conversion rate), plan distribution bars (Basic/Pro/Premium with percentages), user table with inline plan changers per row, subscription change audit log sidebar.
+- **Audit Logging**: Every plan change creates an audit entry with old_plan, new_plan, reason, timestamp. Visible in Recent Changes sidebar.
+- **Access Control**: All endpoints protected by `require_admin` (platform_admin only). Athlete/coach tokens get 403.
+- **Backend**: `/app/backend/routers/admin_user_management.py` — 7 endpoints: users CRUD, subscriptions list, plan change, audit logs, tier definitions.
+- **Frontend**: 3 new pages under `/app/frontend/src/pages/admin/` — `AdminUsersPage.js`, `AdminUserDetailPage.js`, `AdminSubscriptionsPage.js`.
+- **Sidebar**: Added "Users" and "Subscriptions" nav items for admin role.
+- **Routes**: `/admin/users`, `/admin/users/:userId`, `/admin/subscriptions`.
+- **Testing:** 100% pass rate (iteration_89: 33/33 backend, all frontend verified)
+
 ## P0 In Progress
 - User Onboarding Flow: DONE
+- Admin User & Subscription Management: DONE
 
 ## P1 Upcoming
 - Smart Match recommendation history (timeline of past runs with score deltas)
+- Club Billing (subscription billing and management for organizations)
 
 ## P2 Future/Backlog
 - Smart Match Later Phases (deeper LLM reasoning, roster/need intelligence, coach engagement signals)
-- Smart Match recommendation history (timeline of past runs with score deltas)
 - Coach Scraper Health Report V1 (dashboard health card, weekly digest, stale/missing/failure signals, one-click re-scrape)
-- Full Admin Users page (user management, plan changes)
-- Full Admin Subscriptions page (subscription management with audit log)
 - Advanced Features & Parent Experience (family experience)
 - Multi-agent intelligence pipeline (NIL readiness, roster stability, scholarship analysis)
 - Community contributions & import analytics
