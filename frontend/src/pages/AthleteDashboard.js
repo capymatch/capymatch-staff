@@ -15,10 +15,10 @@ import MatchDetailDrawer from "../components/MatchDetailDrawer";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 /* ── PulseStat ── */
-function PulseStat({ icon: Icon, iconBg, iconColor, value, label, sub, onClick }) {
+function PulseStat({ icon: Icon, iconBg, iconColor, value, label, sub, onClick, dark }) {
   return (
     <div className={`px-5 py-4 lg:px-6 lg:py-5 border-r last:border-r-0${onClick ? " cursor-pointer transition-opacity hover:opacity-80" : ""}`}
-      style={{ borderColor: "var(--cm-border)" }} onClick={onClick}
+      style={{ borderColor: dark ? "rgba(255,255,255,0.06)" : "var(--cm-border)" }} onClick={onClick}
       data-testid={`pulse-${label.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="flex items-center justify-between mb-1">
         <p className="text-2xl lg:text-3xl font-extrabold tracking-tight" style={{ color: iconColor }}>{value}</p>
@@ -26,8 +26,8 @@ function PulseStat({ icon: Icon, iconBg, iconColor, value, label, sub, onClick }
           <Icon className="w-4 h-4" style={{ color: iconColor }} strokeWidth={2} />
         </div>
       </div>
-      <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>{label}</p>
-      {sub && <p className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-4)" }}>{sub}</p>}
+      <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: dark ? "rgba(255,255,255,0.35)" : "var(--cm-text-3)" }}>{label}</p>
+      {sub && <p className="text-[11px] mt-0.5" style={{ color: dark ? "rgba(255,255,255,0.25)" : "var(--cm-text-4)" }}>{sub}</p>}
     </div>
   );
 }
@@ -730,26 +730,26 @@ export default function AthleteDashboard() {
   return (
     <div className="space-y-5" data-testid="athlete-dashboard">
       {/* ═══ Section 1: Greeting + Quick Pulse ═══ */}
-      <div className="rounded-xl overflow-hidden cm-surface cm-shadow" style={{ background: "var(--cm-surface)" }} data-testid="greeting-pulse">
-        <div style={{ height: 2, background: "linear-gradient(90deg, #1a8a80 0%, rgba(26,138,128,0.2) 100%)" }} />
+      <div className="rounded-xl overflow-hidden" style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", border: "1px solid rgba(255,255,255,0.04)" }} data-testid="greeting-pulse">
+        <div style={{ height: 3, background: "linear-gradient(90deg, #1a8a80 0%, rgba(26,138,128,0.2) 100%)" }} />
         <div className="flex items-start justify-between px-6 py-5 lg:px-7 lg:py-6">
           <div>
-            <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }} data-testid="dashboard-greeting">
-              {greeting}, <span style={{ color: "#1a8a80" }}>{firstName}</span>
+            <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight" style={{ color: "#fff" }} data-testid="dashboard-greeting">
+              {greeting}, <span style={{ color: "#5eead4" }}>{firstName}</span>
             </h2>
-            <p className="text-sm mt-1" style={{ color: "var(--cm-text-3)" }}>
+            <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
               Here's what's happening with {firstName}'s recruiting today
             </p>
           </div>
-          <div className="text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
+          <div className="text-xs font-semibold px-3 py-1.5 rounded-lg flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.06)" }}>
             {dateStr}
           </div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 border-t" style={{ borderColor: "var(--cm-border)" }}>
-          <PulseStat icon={Target} iconBg="rgba(26,138,128,0.15)" iconColor="#1a8a80" value={totalSchools} label="Schools Tracked" sub={needsOutreach.length > 0 ? `${needsOutreach.length} need outreach` : "All contacted"} onClick={() => navigate("/pipeline")} />
-          <PulseStat icon={MessageCircle} iconBg="rgba(59,130,246,0.15)" iconColor="#60a5fa" value={`${responseRate}%`} label="Response Rate" sub={`${replied.length} of ${contacted.length} contacted`} />
-          <PulseStat icon={Mail} iconBg="rgba(16,185,129,0.15)" iconColor="#34d399" value={repliesThisWeek.length} label="Replies This Week" sub={lastReply ? `Last: ${lastReply.university_name || ""}` : "\u2014"} />
-          <PulseStat icon={Clock} iconBg="rgba(245,158,11,0.15)" iconColor="#fbbf24" value={awaitingReply.length} label="Awaiting Reply" sub={awaitingReply.length > 0 ? `Oldest: ${getDaysAgo(awaitingReply[0]?.created_at?.split("T")[0] || "")}` : "\u2014"} />
+        <div className="grid grid-cols-2 lg:grid-cols-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <PulseStat icon={Target} iconBg="rgba(13,148,136,0.2)" iconColor="#5eead4" value={totalSchools} label="Schools Tracked" sub={needsOutreach.length > 0 ? `${needsOutreach.length} need outreach` : "All contacted"} onClick={() => navigate("/pipeline")} dark />
+          <PulseStat icon={MessageCircle} iconBg="rgba(59,130,246,0.2)" iconColor="#93c5fd" value={`${responseRate}%`} label="Response Rate" sub={`${replied.length} of ${contacted.length} contacted`} dark />
+          <PulseStat icon={Mail} iconBg="rgba(16,185,129,0.2)" iconColor="#6ee7b7" value={repliesThisWeek.length} label="Replies This Week" sub={lastReply ? `Last: ${lastReply.university_name || ""}` : "\u2014"} dark />
+          <PulseStat icon={Clock} iconBg="rgba(245,158,11,0.2)" iconColor="#fde68a" value={awaitingReply.length} label="Awaiting Reply" sub={awaitingReply.length > 0 ? `Oldest: ${getDaysAgo(awaitingReply[0]?.created_at?.split("T")[0] || "")}` : "\u2014"} dark />
         </div>
       </div>
 
