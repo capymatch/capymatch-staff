@@ -326,6 +326,27 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Pydantic Models**: `ProgramMetricsResponse`, `RecomputeAllResponse` in `models.py`.
 - **Testing:** 100% pass rate (iteration_91: 22/22 backend tests)
 
+### Meaningful Engagement Tracking (DONE - March 11, 2026)
+- **Structured Ruleset**: Defines what counts as "meaningful engagement" between athlete and school:
+  - Type-based: coach_reply, phone_call, video_call, campus_visit, camp
+  - Signal-based: coach_question_detected, request_type, invite_type, offer_signal, scholarship_signal
+  - Flag-based: is_meaningful = true
+  - Thread-aware: Athlete outbound email counts if it replies within 48h of a meaningful coach interaction
+  - Excluded: generic blast email, system updates, internal notes, standalone athlete outbound
+- **4 New Metrics Fields** in `program_metrics`:
+  - `last_meaningful_engagement_at` — timestamp of most recent meaningful interaction
+  - `last_meaningful_engagement_type` — type of that interaction (e.g., "Coach Reply")
+  - `days_since_last_meaningful_engagement` — days since that timestamp (separate from generic `days_since_last_engagement`)
+  - `engagement_freshness_label` — user-facing label derived from thresholds:
+    - 0-7 days = `active_recently` (green)
+    - 8-14 days = `needs_follow_up` (amber)
+    - 15-30 days = `momentum_slowing` (orange)
+    - 31+ days or never = `no_recent_engagement` (red/gray)
+- **Real-time Updates**: `create_interaction` and `mark_as_replied` now set `last_meaningful_engagement_type` alongside `last_meaningful_engagement_at` on the programs collection
+- **Data Confidence**: Updated scoring to include meaningful engagement signal (8-point scale)
+- **Files Modified**: `services/program_metrics.py`, `models.py`, `routers/athlete_dashboard.py`
+- **Testing:** 100% pass rate (iteration_92: 38/38 backend tests — 22 original + 16 new)
+
 ## P0 In Progress
 - (None — all P0 items completed)
 
