@@ -316,14 +316,21 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Migration**: Idempotent startup migration in `/app/backend/migrations/schema_v2_signals.py`.
 - **Product caution**: Future "Coach Probability / Program Receptivity" feature MUST be framed supportively: "current engagement outlook", "where things stand", "what signals we're seeing", "what could improve this opportunity". Never show negative/uncertain signals without a constructive next step. Never use "low probability", "unlikely", "not realistic".
 
+### Derived Program Metrics Layer (DONE - March 11, 2026)
+- **Service** (`/app/backend/services/program_metrics.py`): Computes 17 derived metrics per athlete-school relationship from raw collections (interactions, program_stage_history, program_signals, coach_flags, director_actions). Metrics include: `reply_rate`, `median_response_time_hours`, `meaningful_interaction_count`, `days_since_last_engagement`, `unanswered_coach_questions`, `overdue_followups`, `stage_velocity`, `stage_stalled_days`, `engagement_trend`, `invite_count`, `info_request_count`, `coach_flag_count`, `director_action_count`, `data_confidence`.
+- **API Endpoints** (`/app/backend/routers/program_metrics.py`):
+  - `GET /api/internal/programs/{program_id}/metrics` — Returns cached (6h) or recomputed metrics. Supports `?force=true`. Athlete-only.
+  - `POST /api/internal/programs/{program_id}/recompute-metrics` — Force recompute for a specific program. Athlete-only.
+  - `POST /api/internal/programs/recompute-all` — Bulk recompute all active programs. Admin-only.
+- **Data Storage**: `program_metrics` MongoDB collection with unique compound index on `(program_id, tenant_id)`.
+- **Pydantic Models**: `ProgramMetricsResponse`, `RecomputeAllResponse` in `models.py`.
+- **Testing:** 100% pass rate (iteration_91: 22/22 backend tests)
+
 ## P0 In Progress
-- User Onboarding Flow: DONE
-- Admin User & Subscription Management: DONE
-- Intelligence Pipeline Phase 1: DONE
-- Schema V2 Structured Signals: DONE
+- (None — all P0 items completed)
 
 ## P1 Upcoming
-- Smart Match recommendation history (timeline of past runs with score deltas)
+- Engagement Outlook Card (first intelligence card consuming `program_metrics`)
 - Club Billing (subscription billing and management for organizations)
 
 ## P2 Future/Backlog
