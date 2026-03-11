@@ -294,18 +294,29 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **Routes**: `/admin/users`, `/admin/users/:userId`, `/admin/subscriptions`.
 - **Testing:** 100% pass rate (iteration_89: 33/33 backend, all frontend verified)
 
+### Intelligence Pipeline Phase 1 (DONE - March 11, 2026)
+- **Payload Builder** (`/app/backend/intelligence/payload_builder.py`): Builds source-aware JSON for school+athlete pairs. Resolves fields from UKB, programs, athletes, interactions. 12h in-memory cache. Deterministic confidence calculation: HIGH >=70%, MEDIUM 40-69%, LOW <40%. Tracks 12 field groups. Produces known unknowns and source metadata.
+- **School Insight Agent** (`/app/backend/intelligence/agents/school_insight.py`): "Why This School / Why Not" card. Uses GPT-5.2 (Emergent Key) for strengths, concerns, unknowns with cited evidence. Deterministic fallback when confidence = LOW. Parent-safe language.
+- **Timeline Agent** (`/app/backend/intelligence/agents/timeline.py`): Labels (Fills Early / Standard Timeline / Late Opportunities / Unknown). Fully deterministic for most cases. LLM-enhanced narrative when 5+ interactions exist. Next-action recommendations. Urgency detection based on days since last interaction.
+- **API Endpoints**: `GET /api/intelligence/program/{program_id}/school-insight`, `GET /api/intelligence/program/{program_id}/timeline`. Both support `?force=true` for cache bypass. 24h MongoDB cache in `intelligence_cache` collection.
+- **Frontend**: Expandable intelligence cards on Journey page sidebar, between Engagement Stats and AI Insights sections. Load-on-demand (click to analyze). Confidence badges (HIGH/MEDIUM/LOW with percentage). Gated behind Pro plan (basic users see "Upgrade to Pro").
+- **New files**: `intelligence/payload_builder.py`, `intelligence/agents/school_insight.py`, `intelligence/agents/timeline.py`, `components/intelligence/IntelligenceCards.js`
+- **Testing:** 100% pass rate (iteration_90: 20/20 backend, all frontend verified)
+
 ## P0 In Progress
 - User Onboarding Flow: DONE
 - Admin User & Subscription Management: DONE
+- Intelligence Pipeline Phase 1: DONE
 
 ## P1 Upcoming
 - Smart Match recommendation history (timeline of past runs with score deltas)
 - Club Billing (subscription billing and management for organizations)
 
 ## P2 Future/Backlog
-- Smart Match Later Phases (deeper LLM reasoning, roster/need intelligence, coach engagement signals)
+- Intelligence Pipeline Phase 2: Roster Stability agent, Scholarship Structure agent, NIL Readiness agent
+- Schema Mapper (auto-contract generation for intelligence pipeline)
+- Smart Match Later Phases (deeper LLM reasoning, coach engagement signals)
 - Coach Scraper Health Report V1 (dashboard health card, weekly digest, stale/missing/failure signals, one-click re-scrape)
 - Advanced Features & Parent Experience (family experience)
-- Multi-agent intelligence pipeline (NIL readiness, roster stability, scholarship analysis)
-- Community contributions & import analytics
+- Community contributions & import analytics ("Improve this card" nudges)
 - Engagement analytics
