@@ -69,6 +69,11 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New files:** `InternalAthleteProfile.js`, updated `public_profile.py`
 - **Testing:** 100% pass (iteration_99: 31/31 backend, all frontend verified)
 
+### Roster "View Profile" Quick Action (DONE - March 11, 2026)
+- Added teal "Profile" button to athlete rows on the Roster page (both desktop hover and mobile)
+- Navigates directly to `/internal/athlete/:athleteId/profile` for quick staff access
+- Stands out from other gray action buttons with teal accent color
+
 ## Key API Endpoints
 - `GET /api/subscription` — Current user's tier
 - `GET /api/public/profile/{slug}` — Public athlete profile (no auth)

@@ -7,7 +7,7 @@ import {
   AlertTriangle, ChevronDown, ChevronUp,
   ExternalLink, UserPlus, FileText, TrendingUp, TrendingDown, Minus,
   Search, LayoutGrid, UserCircle, GraduationCap,
-  ArrowRightLeft, Sparkles, Bell, CheckSquare, Square, X,
+  ArrowRightLeft, Sparkles, Bell, CheckSquare, Square, X, User,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -218,6 +218,10 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
 
           {/* Mobile-only actions row */}
           <div className="flex items-center gap-1.5 mt-2 sm:hidden">
+            <button onClick={(e) => { e.stopPropagation(); navigate(`/internal/athlete/${athlete.id}/profile`); }}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-md" data-testid={`view-profile-${athlete.id}`}>
+              <User className="w-3 h-3" />Profile
+            </button>
             <button onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
               className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md" data-testid={`open-profile-${athlete.id}`}>
               <ExternalLink className="w-3 h-3" />Open
@@ -235,6 +239,11 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
 
         {/* Desktop-only quick actions (hover) */}
         <div className="hidden sm:flex items-center gap-1 shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={(e) => { e.stopPropagation(); navigate(`/internal/athlete/${athlete.id}/profile`); }}
+            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-md transition-colors"
+            data-testid={`desktop-view-profile-${athlete.id}`}>
+            <User className="w-3 h-3" />Profile
+          </button>
           <button onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
             className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors">
             <ExternalLink className="w-3 h-3" />Open
