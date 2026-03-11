@@ -69,6 +69,13 @@ Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app
 - **New files:** `InternalAthleteProfile.js`, updated `public_profile.py`
 - **Testing:** 100% pass (iteration_99: 31/31 backend, all frontend verified)
 
+### Public Profile V2 — Coach Scan Mode + Dynamic Recruiting Snapshot (DONE - March 11, 2026)
+- **Coach Scan Mode:** Redesigned hero for 10-second coach comprehension — name + class year badge + position, key facts grid (Height/Weight/GPA), measurables row, prominent CTAs (Watch Highlights / Contact).
+- **Dynamic Recruiting Snapshot:** Privacy-safe signal pills below hero — "Actively exploring D1, D2, and D3 opportunities", "Academic information available", "Profile updated this season". Deterministic, no LLM.
+- **Backend:** New `recruiting_signals` field in public profile response. Computed from pipeline divisions/states, athlete data (video, GPA, coach), profile freshness.
+- **Design:** Premium, clean, mobile-first. Dark slate photo placeholder, tight info-dense layout, no form-dump feel.
+- **Testing:** 100% (iteration_100: 14/14 backend, all frontend verified)
+
 ### Roster "View Profile" Quick Action (DONE - March 11, 2026)
 - Added teal "Profile" button to athlete rows on the Roster page (both desktop hover and mobile)
 - Navigates directly to `/internal/athlete/:athleteId/profile` for quick staff access
