@@ -81,6 +81,9 @@ async def recompute_metrics(program_id: str, tenant_id: str) -> dict:
     m.update(_compute_signal_metrics(signals, interactions))
     m.update(_compute_engagement_trend(interactions, now))
 
+    # Pipeline health (depends on all previous metrics)
+    m["pipeline_health_state"] = _compute_pipeline_health(m)
+
     # Data confidence
     confidence = _compute_data_confidence(m, interactions, stage_history)
 
@@ -399,6 +402,84 @@ def _compute_engagement_trend(interactions: list, now: datetime) -> dict:
     return {"engagement_trend": trend}
 
 
+def _compute_pipeline_health(m: dict) -> str:
+    """Derive pipeline_health_state from pre-computed metrics.
+
+    Scoring approach: accumulate positive and negative signals, then map
+    the net score to one of five supportive, action-oriented states.
+
+    States (best → needs attention):
+        strong_momentum  — relationship is thriving
+        active           — healthy engagement, keep going
+        needs_follow_up  — time to reach out
+        cooling_off      — engagement is fading, act soon
+        at_risk          — relationship needs immediate attention
+    """
+    score = 0  # higher = healthier
+
+    # ── Meaningful engagement recency (strongest signal) ──
+    days_meaningful = m.get("days_since_last_meaningful_engagement")
+    if days_meaningful is not None:
+        if days_meaningful <= 7:
+            score += 3
+        elif days_meaningful <= 14:
+            score += 1
+        elif days_meaningful <= 30:
+            score -= 1
+        else:
+            score -= 3
+    else:
+        # Never had meaningful engagement
+        score -= 2
+
+    # ── Engagement trend ──
+    trend = m.get("engagement_trend", "insufficient_data")
+    if trend == "accelerating":
+        score += 2
+    elif trend == "steady":
+        score += 1
+    elif trend == "decelerating":
+        score -= 1
+    elif trend in ("stalled", "inactive"):
+        score -= 2
+
+    # ── Meaningful interaction depth ──
+    meaningful_count = m.get("meaningful_interaction_count", 0)
+    if meaningful_count >= 5:
+        score += 2
+    elif meaningful_count >= 2:
+        score += 1
+    elif meaningful_count == 0:
+        score -= 1
+
+    # ── Overdue follow-ups (negative signal) ──
+    if m.get("overdue_followups", 0) > 0:
+        score -= 2
+
+    # ── Unanswered coach questions (urgent negative signal) ──
+    if m.get("unanswered_coach_questions", 0) > 0:
+        score -= 2
+
+    # ── Stage velocity (if available) ──
+    velocity = m.get("stage_velocity")
+    if velocity is not None:
+        if velocity <= 14:
+            score += 1  # fast progression
+        elif velocity >= 45:
+            score -= 1  # slow progression
+
+    # ── Map score to state ──
+    if score >= 5:
+        return "strong_momentum"
+    if score >= 2:
+        return "active"
+    if score >= 0:
+        return "needs_follow_up"
+    if score >= -3:
+        return "cooling_off"
+    return "at_risk"
+
+
 def _compute_data_confidence(metrics: dict, interactions: list, stage_history: list) -> str:
     """Assess how much data underpins these metrics: HIGH / MEDIUM / LOW."""
     score = 0
@@ -449,6 +530,7 @@ def _empty_metrics(program_id: str, tenant_id: str, reason: str) -> dict:
         "stage_velocity": None,
         "stage_stalled_days": None,
         "engagement_trend": "insufficient_data",
+        "pipeline_health_state": "at_risk",
         "invite_count": 0,
         "info_request_count": 0,
         "coach_flag_count": 0,

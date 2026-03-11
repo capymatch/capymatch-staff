@@ -328,6 +328,7 @@ class ProgramMetricsResponse(BaseModel):
     stage_velocity: Optional[float] = None
     stage_stalled_days: Optional[int] = None
     engagement_trend: str = "insufficient_data"
+    pipeline_health_state: str = "at_risk"
     invite_count: int = 0
     info_request_count: int = 0
     coach_flag_count: int = 0
