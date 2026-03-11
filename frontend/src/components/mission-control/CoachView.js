@@ -218,7 +218,7 @@ export default function CoachView({ data, userName }) {
       {/* ── Events + Activity ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
-          <UpcomingEventsCard events={data.upcomingEvents || []} />
+          <UpcomingEventsCard events={data.upcomingEvents || []} roster={data.myRoster || []} />
         </div>
         <div className="lg:col-span-2">
           <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />

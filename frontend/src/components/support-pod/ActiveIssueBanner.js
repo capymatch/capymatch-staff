@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, ArrowLeft, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, FileText, MessageSquare, CheckCircle } from "lucide-react";
+import { X, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, FileText, MessageSquare, CheckCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
@@ -7,12 +7,12 @@ import axios from "axios";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CATEGORY_META = {
-  momentum_drop: { label: "Momentum Drop", icon: Zap, bar: "border-l-amber-500 bg-amber-50/60" },
-  blocker: { label: "Blocker", icon: ShieldAlert, bar: "border-l-red-500 bg-red-50/60" },
-  deadline_proximity: { label: "Deadline", icon: Clock, bar: "border-l-red-500 bg-red-50/60" },
-  engagement_drop: { label: "Engagement Drop", icon: AlertTriangle, bar: "border-l-amber-500 bg-amber-50/60" },
-  ownership_gap: { label: "Unassigned", icon: Users, bar: "border-l-blue-500 bg-blue-50/60" },
-  readiness_issue: { label: "Readiness", icon: Target, bar: "border-l-purple-500 bg-purple-50/60" },
+  momentum_drop: { label: "Momentum Drop", icon: Zap, color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
+  blocker: { label: "Blocker", icon: ShieldAlert, color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)" },
+  deadline_proximity: { label: "Deadline", icon: Clock, color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)" },
+  engagement_drop: { label: "Engagement Drop", icon: AlertTriangle, color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
+  ownership_gap: { label: "Unassigned", icon: Users, color: "#3b82f6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.2)" },
+  readiness_issue: { label: "Readiness Issue", icon: Target, color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)" },
 };
 
 function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
@@ -54,65 +54,93 @@ function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
   };
 
   return (
-    <div className={`rounded-xl border-l-4 p-5 shadow-sm ${meta.bar}`} data-testid="active-issue-banner">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2.5">
-          <Icon className="w-5 h-5 text-gray-600" />
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Active Issue: {meta.label}</span>
-        </div>
-        <button onClick={onDismiss} className="text-gray-400 hover:text-gray-600" data-testid="banner-dismiss">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+    <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${meta.border}`, backgroundColor: meta.bg }} data-testid="active-issue-banner">
+      {/* Top accent bar */}
+      <div style={{ height: 3, backgroundColor: meta.color }} />
 
-      <div className="space-y-2 mb-4">
-        <div>
-          <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Why</span>
-          <p className="text-sm font-medium text-gray-800" data-testid="banner-why">{intervention.why_this_surfaced}</p>
+      <div className="p-5">
+        {/* Header: Issue type + dismiss */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: meta.color + "18" }}>
+              <Icon className="w-4 h-4" style={{ color: meta.color }} />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: meta.color }}>Active Issue</span>
+              <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>{meta.label}</p>
+            </div>
+          </div>
+          <button onClick={onDismiss} className="text-gray-400 hover:text-gray-600 p-1" data-testid="banner-dismiss">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <div>
-          <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">What changed</span>
-          <p className="text-sm text-gray-700" data-testid="banner-what-changed">{intervention.what_changed}</p>
-        </div>
-        <div>
-          <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Recommended</span>
-          <p className="text-sm font-medium text-gray-800">{intervention.recommended_action}</p>
-        </div>
-        <p className="text-xs text-gray-500">Owner: <span className="font-medium text-gray-700">{intervention.owner}</span></p>
-      </div>
 
-      {showNoteForm && (
-        <div className="mb-3 flex gap-2">
-          <input
-            value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
-            placeholder="Quick note..."
-            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
-            autoFocus
-            data-testid="banner-note-input"
-            onKeyDown={(e) => e.key === "Enter" && handleLogCall()}
-          />
-          <Button size="sm" onClick={handleLogCall} className="rounded-full text-xs" data-testid="banner-note-submit">Save</Button>
-          <Button size="sm" variant="ghost" onClick={() => setShowNoteForm(false)} className="text-xs">Cancel</Button>
+        {/* RECOMMENDED ACTION — the star element */}
+        <div className="rounded-lg p-4 mb-4" style={{ backgroundColor: "var(--cm-surface)", border: `1px solid ${meta.border}` }} data-testid="banner-recommended-action">
+          <div className="flex items-start gap-3">
+            <ArrowRight className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: meta.color }} />
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: meta.color }}>What to do now</p>
+              <p className="text-base font-bold" style={{ color: "var(--cm-text)" }} data-testid="banner-recommended-text">
+                {intervention.recommended_action}
+              </p>
+              <p className="text-xs mt-1" style={{ color: "var(--cm-text-3)" }}>
+                Owner: <span className="font-medium" style={{ color: "var(--cm-text-2)" }}>{intervention.owner}</span>
+              </p>
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" onClick={handleLogCall} data-testid="banner-log-call">
-          <FileText className="w-3.5 h-3.5" /> Log Call
-        </Button>
-        <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" data-testid="banner-send-message">
-          <MessageSquare className="w-3.5 h-3.5" /> Send Message
-        </Button>
-        <Button
-          size="sm"
-          className="rounded-full text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-          onClick={handleResolve}
-          disabled={resolving}
-          data-testid="banner-resolve"
-        >
-          <CheckCircle className="w-3.5 h-3.5" /> {resolving ? "Resolving..." : "Mark Resolved"}
-        </Button>
+        {/* Context: Why + What Changed (compact two-column) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div className="rounded-lg p-3" style={{ backgroundColor: "var(--cm-surface)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--cm-text-3)" }}>What is wrong</p>
+            <p className="text-sm font-medium" style={{ color: "var(--cm-text)" }} data-testid="banner-why">{intervention.why_this_surfaced}</p>
+          </div>
+          <div className="rounded-lg p-3" style={{ backgroundColor: "var(--cm-surface)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--cm-text-3)" }}>What changed</p>
+            <p className="text-sm" style={{ color: "var(--cm-text-2)" }} data-testid="banner-what-changed">{intervention.what_changed}</p>
+          </div>
+        </div>
+
+        {/* Note form */}
+        {showNoteForm && (
+          <div className="mb-3 flex gap-2">
+            <input
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Quick note about this check-in..."
+              className="flex-1 text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              style={{ borderColor: "var(--cm-border)" }}
+              autoFocus
+              data-testid="banner-note-input"
+              onKeyDown={(e) => e.key === "Enter" && handleLogCall()}
+            />
+            <Button size="sm" onClick={handleLogCall} className="rounded-full text-xs" data-testid="banner-note-submit">Save</Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowNoteForm(false)} className="text-xs">Cancel</Button>
+          </div>
+        )}
+
+        {/* Actions row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" onClick={handleLogCall} data-testid="banner-log-call">
+            <FileText className="w-3.5 h-3.5" /> Log Check-in
+          </Button>
+          <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" data-testid="banner-send-message">
+            <MessageSquare className="w-3.5 h-3.5" /> Send Message
+          </Button>
+          <div className="flex-1" />
+          <Button
+            size="sm"
+            className="rounded-full text-xs gap-1.5"
+            style={{ backgroundColor: "#10b981", color: "#fff" }}
+            onClick={handleResolve}
+            disabled={resolving}
+            data-testid="banner-resolve"
+          >
+            <CheckCircle className="w-3.5 h-3.5" /> {resolving ? "Resolving..." : "Mark Resolved"}
+          </Button>
+        </div>
       </div>
     </div>
   );

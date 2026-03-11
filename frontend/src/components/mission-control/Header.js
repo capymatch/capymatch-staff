@@ -90,10 +90,10 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
               <>
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                  {stats.alertCount || 0} alerts
+                  {stats.needingAction || stats.alertCount || 0} need action
                 </span>
                 <span className="text-white/20">|</span>
-                <span>{stats.athleteCount || 0} athletes monitoring</span>
+                <span>{stats.athleteCount || 0} athletes</span>
                 <span className="text-white/20">|</span>
                 <span>{stats.eventCount || 0} events ahead</span>
               </>

@@ -40,10 +40,10 @@ export default function ActivityFeed({ items = [], title = "Recent Activity" }) 
     return (
       <section data-testid="activity-feed">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{title}</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>{title}</span>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-          <p className="text-sm text-slate-400">No recent activity</p>
+        <div className="rounded-xl border p-8 text-center" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+          <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>No recent activity</p>
         </div>
       </section>
     );
@@ -52,11 +52,11 @@ export default function ActivityFeed({ items = [], title = "Recent Activity" }) 
   return (
     <section data-testid="activity-feed">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{title}</span>
-        <span className="text-xs text-slate-400">{Math.min(items.length, 6)} most recent</span>
+        <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>{title}</span>
+        <span className="text-xs" style={{ color: "var(--cm-text-3)" }}>{Math.min(items.length, 6)} most recent</span>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
         {items.slice(0, 6).map((item, idx) => {
           const type = detectType(item);
           const config = TYPE_ICONS[type];
@@ -66,23 +66,22 @@ export default function ActivityFeed({ items = [], title = "Recent Activity" }) 
             <div
               key={item.id || idx}
               data-testid={`activity-item-${item.id || idx}`}
-              className={`flex items-center gap-3.5 px-5 py-3.5 hover:bg-slate-50/40 transition-colors ${
-                idx < Math.min(items.length, 6) - 1 ? "border-b border-gray-50" : ""
-              }`}
+              className="flex items-center gap-3.5 px-5 py-3.5 hover:bg-slate-50/40 transition-colors"
+              style={{ borderBottom: idx < Math.min(items.length, 6) - 1 ? "1px solid var(--cm-border)" : "none" }}
             >
               <div className={`w-7 h-7 rounded-full ${config.bg} flex items-center justify-center shrink-0`}>
                 <Icon className={`w-3.5 h-3.5 ${config.color}`} />
               </div>
 
               <div className="flex-1 min-w-0">
-                <span className="text-[13px] text-slate-700">
+                <span className="text-[13px]" style={{ color: "var(--cm-text)" }}>
                   <span className="font-semibold">{item.athleteName}</span>
-                  <span className="text-slate-400 mx-1.5">&mdash;</span>
-                  <span className="text-slate-500">{formatDescription(item.description)}</span>
+                  <span className="mx-1.5" style={{ color: "var(--cm-text-3)" }}>&mdash;</span>
+                  <span style={{ color: "var(--cm-text-2)" }}>{formatDescription(item.description)}</span>
                 </span>
               </div>
 
-              <span className="text-[10px] text-slate-300 font-medium shrink-0 tabular-nums">
+              <span className="text-[10px] font-medium shrink-0 tabular-nums" style={{ color: "var(--cm-text-3)" }}>
                 {getTimeLabel(item.hoursAgo)}
               </span>
             </div>

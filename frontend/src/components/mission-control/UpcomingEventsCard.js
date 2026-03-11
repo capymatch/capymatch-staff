@@ -1,47 +1,49 @@
-import { Calendar, MapPin, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, ChevronRight, Users, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 function getDateLabel(daysAway) {
   if (daysAway === 0) return "Today";
   if (daysAway === 1) return "Tomorrow";
-  if (daysAway < 7) return `${daysAway} days`;
-  return `${Math.floor(daysAway / 7)} week${daysAway >= 14 ? "s" : ""}`;
+  if (daysAway < 0) return "Past";
+  if (daysAway < 7) return `In ${daysAway} days`;
+  return `In ${Math.floor(daysAway / 7)} week${daysAway >= 14 ? "s" : ""}`;
 }
 
 function getReadiness(event) {
   const checklist = event.checklist || [];
   if (!checklist.length) return null;
-  const done = checklist.filter((c) => c.completed).length;
-  const pct = Math.round((done / checklist.length) * 100);
-  return pct;
+  const done = checklist.filter(c => c.completed).length;
+  return Math.round((done / checklist.length) * 100);
 }
 
 function ProgressBar({ pct }) {
-  const color = pct < 50 ? "bg-amber-400" : pct < 80 ? "bg-blue-400" : "bg-emerald-500";
+  const color = pct < 50 ? "#f59e0b" : pct < 80 ? "#3b82f6" : "#10b981";
   return (
     <div className="flex items-center gap-2 shrink-0">
-      <div className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      <div className="w-16 h-1.5 rounded-full" style={{ backgroundColor: "var(--cm-surface-2)" }}>
+        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
-      <span className={`text-[11px] font-semibold ${pct < 50 ? "text-amber-500" : pct < 80 ? "text-blue-500" : "text-emerald-500"}`}>
-        {pct}%
-      </span>
+      <span className="text-[10px] font-semibold" style={{ color }}>{pct}%</span>
     </div>
   );
 }
 
-export default function UpcomingEventsCard({ events = [] }) {
+export default function UpcomingEventsCard({ events = [], roster = [] }) {
   const navigate = useNavigate();
+
+  // Build a lookup: athlete_id -> roster item
+  const rosterMap = {};
+  for (const a of roster) { rosterMap[a.id] = a; }
 
   if (!events.length) {
     return (
       <section data-testid="upcoming-events-card">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Upcoming Events</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>Upcoming Events</span>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-          <Calendar className="w-5 h-5 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-400">No upcoming events</p>
+        <div className="rounded-xl border p-8 text-center" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+          <Calendar className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+          <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>No upcoming events</p>
         </div>
       </section>
     );
@@ -50,45 +52,103 @@ export default function UpcomingEventsCard({ events = [] }) {
   return (
     <section data-testid="upcoming-events-card">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Upcoming Events</span>
+        <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>Upcoming Events</span>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
-        {events.map((event, idx) => {
+      <div className="space-y-3">
+        {events.map(event => {
           const readiness = getReadiness(event);
           const timeLabel = getDateLabel(event.daysAway);
-          const urgent = event.daysAway <= 2;
-          const isFirst = idx === 0;
+          const urgent = event.daysAway >= 0 && event.daysAway <= 2;
+          const isPast = event.daysAway < 0;
+
+          // Cross-reference athletes attending with roster
+          const attendingAthletes = (event.athlete_ids || []).map(id => rosterMap[id]).filter(Boolean);
+          const athletesWithIssues = attendingAthletes.filter(a => a.category);
+          const needsOutreach = attendingAthletes.filter(a =>
+            a.category === "momentum_drop" || a.category === "engagement_drop" ||
+            (a.days_since_activity && a.days_since_activity > 14)
+          );
+
+          // Checklist items not done
+          const checklistTotal = (event.checklist || []).length;
+          const checklistDone = (event.checklist || []).filter(c => c.completed).length;
+          const checklistRemaining = checklistTotal - checklistDone;
 
           return (
             <div
               key={event.id}
               data-testid={`event-row-${event.id}`}
+              className="rounded-xl border overflow-hidden cursor-pointer hover:shadow-sm transition-shadow group"
+              style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", opacity: isPast ? 0.6 : 1 }}
               onClick={() => navigate(`/events/${event.id}/prep`)}
-              className={`flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group ${isFirst ? "bg-slate-50/40" : ""}`}
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-semibold text-slate-800 group-hover:text-slate-900 transition-colors truncate">
-                    {event.name}
-                  </span>
-                  <span className={`text-xs font-semibold ${urgent ? "text-red-500" : "text-slate-400"}`}>
-                    — {timeLabel}
-                  </span>
+              {/* Event header */}
+              <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: "1px solid var(--cm-border)" }}>
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className={`w-2 h-8 rounded-full flex-shrink-0 ${urgent ? "bg-red-500 animate-pulse" : isPast ? "bg-gray-300" : "bg-emerald-500"}`} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold truncate" style={{ color: "var(--cm-text)" }}>{event.name}</span>
+                      <span className={`text-xs font-semibold ${urgent ? "text-red-500" : "text-slate-400"}`}>{timeLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px]" style={{ color: "var(--cm-text-3)" }}>
+                      <span className="flex items-center gap-0.5">
+                        <MapPin className="w-3 h-3" />{event.location}
+                      </span>
+                      <span>{event.expectedSchools} schools</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-slate-400">
-                  <span className="flex items-center gap-0.5">
-                    <MapPin className="w-3 h-3" />
-                    {event.location}
-                  </span>
-                  <span>{event.athleteCount || event.athlete_ids?.length || 0} athletes</span>
-                  <span>{event.expectedSchools} schools</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  {readiness != null && <ProgressBar pct={readiness} />}
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" style={{ color: "var(--cm-text-3)" }} />
                 </div>
               </div>
 
-              {readiness != null && <ProgressBar pct={readiness} />}
+              {/* Athlete readiness details */}
+              {attendingAthletes.length > 0 && !isPast && (
+                <div className="px-5 py-3 space-y-2">
+                  {/* Athletes summary row */}
+                  <div className="flex items-center gap-4 text-[11px]" style={{ color: "var(--cm-text-3)" }}>
+                    <span className="flex items-center gap-1.5">
+                      <Users className="w-3 h-3" />
+                      <span className="font-semibold" style={{ color: "var(--cm-text-2)" }}>
+                        {attendingAthletes.length} athletes attending
+                      </span>
+                    </span>
+                    {athletesWithIssues.length > 0 && (
+                      <span className="flex items-center gap-1 text-amber-600 font-medium">
+                        <AlertTriangle className="w-3 h-3" />
+                        {athletesWithIssues.length} need attention
+                      </span>
+                    )}
+                    {checklistRemaining > 0 && (
+                      <span className="flex items-center gap-1 font-medium" style={{ color: "var(--cm-text-3)" }}>
+                        <CheckCircle2 className="w-3 h-3" />
+                        {checklistRemaining} prep steps left
+                      </span>
+                    )}
+                  </div>
 
-              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
+                  {/* Athletes with issues — show names */}
+                  {needsOutreach.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {needsOutreach.slice(0, 4).map(a => (
+                        <span key={a.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium"
+                          style={{ backgroundColor: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.15)" }}>
+                          {a.name.split(" ")[0]} — {a.category ? a.category.replace(/_/g, " ") : "inactive " + a.days_since_activity + "d"}
+                        </span>
+                      ))}
+                      {needsOutreach.length > 4 && (
+                        <span className="text-[10px] px-2 py-0.5 font-medium" style={{ color: "var(--cm-text-3)" }}>
+                          +{needsOutreach.length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
