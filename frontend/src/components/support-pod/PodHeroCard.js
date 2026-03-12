@@ -41,24 +41,46 @@ function HealthyHero({ onAddNote, onLogInteraction }) {
       style={{ backgroundColor: "rgba(16,185,129,0.03)", borderColor: "rgba(16,185,129,0.15)" }}
     >
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: "#10b981" }} />
-      <div className="px-5 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: "#10b981" }} />
-          <div>
-            <h2 className="text-sm font-bold" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="pod-hero-title">
-              On Track
-            </h2>
-            <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }} data-testid="pod-hero-description">
-              No urgent intervention needed. Athlete momentum is healthy.
-            </p>
+      <div className="px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex items-center gap-2.5 mb-2 sm:mb-0 sm:flex-row sm:justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: "#10b981" }} />
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="pod-hero-title">
+                On Track
+              </h2>
+              <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }} data-testid="pod-hero-description">
+                No urgent intervention needed. Athlete momentum is healthy.
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
+            <button
+              onClick={onLogInteraction}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
+              style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
+              data-testid="pod-hero-log-interaction"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              Log Interaction
+            </button>
+            <button
+              onClick={onAddNote}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
+              style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
+              data-testid="pod-hero-add-note"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Add Note
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex sm:hidden gap-2 mt-2 pl-7">
           <button
             onClick={onLogInteraction}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
             style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
-            data-testid="pod-hero-log-interaction"
+            data-testid="pod-hero-log-interaction-mobile"
           >
             <Phone className="w-3.5 h-3.5" />
             Log Interaction
@@ -67,7 +89,7 @@ function HealthyHero({ onAddNote, onLogInteraction }) {
             onClick={onAddNote}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
             style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
-            data-testid="pod-hero-add-note"
+            data-testid="pod-hero-add-note-mobile"
           >
             <FileText className="w-3.5 h-3.5" />
             Add Note
@@ -126,9 +148,9 @@ function ActiveIssueHero({ issue, athleteId, onLogCheckin, onSendMessage, onEsca
       style={{ backgroundColor: cfg.bg, borderColor: cfg.border }}
     >
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: cfg.barColor }} />
-      <div className="px-5 py-4">
+      <div className="px-4 py-3 sm:px-5 sm:py-4">
         {/* Urgency line */}
-        <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {cfg.dot && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: cfg.color }} />}
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: cfg.color }}>
             {cfg.label}
@@ -146,48 +168,47 @@ function ActiveIssueHero({ issue, athleteId, onLogCheckin, onSendMessage, onEsca
           )}
         </div>
 
-        {/* Title + Description + Actions */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold leading-snug" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="pod-hero-title">
-              {issue.title}
-            </h2>
-            <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }} data-testid="pod-hero-description">
-              {issue.description}
-            </p>
-          </div>
+        {/* Title + Description */}
+        <div>
+          <h2 className="text-sm sm:text-base font-bold leading-snug" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="pod-hero-title">
+            {issue.title}
+          </h2>
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }} data-testid="pod-hero-description">
+            {issue.description}
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2 shrink-0 pt-0.5">
+        {/* Actions — stacked on mobile, inline on desktop */}
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <button
+            onClick={cta.action}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
+            style={{ backgroundColor: cfg.color }}
+            data-testid="pod-hero-cta"
+          >
+            <cta.icon className="w-3.5 h-3.5" />
+            {cta.label}
+          </button>
+          {issue.severity === "critical" && (
             <button
-              onClick={cta.action}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
-              style={{ backgroundColor: cfg.color }}
-              data-testid="pod-hero-cta"
+              onClick={onEscalate}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors border"
+              style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
+              data-testid="pod-hero-escalate"
             >
-              <cta.icon className="w-3.5 h-3.5" />
-              {cta.label}
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              Escalate
             </button>
-            {issue.severity === "critical" && (
-              <button
-                onClick={onEscalate}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors border"
-                style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
-                data-testid="pod-hero-escalate"
-              >
-                <ArrowUpRight className="w-3.5 h-3.5" />
-                Escalate
-              </button>
-            )}
-            <button
-              onClick={handleManualResolve}
-              disabled={resolving}
-              className="px-3 py-2 rounded-lg text-xs font-medium transition-colors border disabled:opacity-50"
-              style={{ color: "var(--cm-text-3, #94a3b8)", backgroundColor: "transparent", borderColor: "var(--cm-border, #e2e8f0)" }}
-              data-testid="pod-hero-resolve"
-            >
-              {resolving ? "Resolving..." : "Resolve"}
-            </button>
-          </div>
+          )}
+          <button
+            onClick={handleManualResolve}
+            disabled={resolving}
+            className="px-3 py-2 rounded-lg text-xs font-medium transition-colors border disabled:opacity-50"
+            style={{ color: "var(--cm-text-3, #94a3b8)", backgroundColor: "transparent", borderColor: "var(--cm-border, #e2e8f0)" }}
+            data-testid="pod-hero-resolve"
+          >
+            {resolving ? "Resolving..." : "Resolve"}
+          </button>
         </div>
       </div>
     </div>
