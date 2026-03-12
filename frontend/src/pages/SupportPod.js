@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@/AuthContext";
-import { Radar, ClipboardList, GitBranch, FileText } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import PodHeader from "@/components/support-pod/PodHeader";
 import PodHeroCard from "@/components/support-pod/PodHeroCard";
 import NextActions from "@/components/support-pod/NextActions";
@@ -88,11 +88,11 @@ function SupportPod() {
   }
 
   const {
-    athlete, active_intervention, all_interventions, pod_members, actions,
-    timeline, pod_health, upcoming_events, unassigned_count,
-    recruiting_timeline, recruiting_signals, intervention_playbook,
-    pod_top_action,
+    athlete, pod_members, actions, timeline, pod_health, upcoming_events,
+    recruiting_timeline, recruiting_signals, intervention_playbook, pod_top_action,
   } = data;
+
+  const completedActions = (actions || []).filter(a => a.status === "completed").slice(0, 8);
 
   return (
     <div data-testid="support-pod-page" className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen">
@@ -106,9 +106,9 @@ function SupportPod() {
         athleteId={athleteId}
       />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5 sm:space-y-6 pb-28">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-28">
 
-        {/* 1. Hero Card — expanded, the single source of truth */}
+        {/* ─── 1. Problem: Critical Banner (reduced dominance) ─── */}
         <PodHeroCard
           topAction={pod_top_action}
           athleteId={athleteId}
@@ -118,17 +118,14 @@ function SupportPod() {
           onRefresh={fetchPodData}
         />
 
-        {/* 2. Next Actions — expanded */}
-        <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
-
-        {/* 3. Quick Summary + 4. Pod Members — side by side on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
+        {/* ─── 2. Context: Snapshot + Pod Members ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
           <div className="lg:col-span-2">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Quick Summary</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Athlete Snapshot</h3>
             <QuickSummary athlete={athlete} events={upcoming_events} />
           </div>
           <div className="lg:col-span-3">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Pod Members</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Pod Members</h3>
             <PodMembers
               members={pod_members}
               onMessage={() => toggleAction("email")}
@@ -137,51 +134,50 @@ function SupportPod() {
           </div>
         </div>
 
-        {/* ─── Collapsed sections below ─── */}
+        {/* ─── 3. Actions: Next Actions (main operational section) ─── */}
+        <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
 
-        {/* 5. Key Signals */}
+        {/* ─── 4. Insights: Collapsible reference panels ─── */}
+
         {recruiting_signals && recruiting_signals.length > 0 && (
-          <CollapsibleSection
-            title="Key Signals"
-            count={`${recruiting_signals.length}`}
-            testId="section-key-signals"
-          >
+          <CollapsibleSection title="Key Signals" count={`${recruiting_signals.length}`} testId="section-key-signals">
             <KeySignals signals={recruiting_signals} />
           </CollapsibleSection>
         )}
 
-        {/* 6. Action Plan */}
         {intervention_playbook && (
-          <CollapsibleSection
-            title="Action Plan"
-            testId="section-action-plan"
-          >
+          <CollapsibleSection title="Action Plan" testId="section-action-plan">
             <ActionPlan playbook={intervention_playbook} />
           </CollapsibleSection>
         )}
 
-        {/* 7. Recruiting Timeline */}
         {recruiting_timeline && recruiting_timeline.length > 0 && (
-          <CollapsibleSection
-            title="Recruiting Timeline"
-            count={`${recruiting_timeline.length}`}
-            testId="section-recruiting-timeline"
-          >
+          <CollapsibleSection title="Recruiting Timeline" count={`${recruiting_timeline.length}`} testId="section-recruiting-timeline">
             <RecruitingTimeline milestones={recruiting_timeline} />
           </CollapsibleSection>
         )}
 
-        {/* 8. Activity History */}
-        <CollapsibleSection
-          title="Activity History"
-          testId="section-activity-history"
-        >
+        <CollapsibleSection title="Activity History" testId="section-activity-history">
           <ActivityHistory timeline={timeline} />
         </CollapsibleSection>
 
+        {/* ─── 5. Bottom: Completed Actions (collapsed by default) ─── */}
+        {completedActions.length > 0 && (
+          <CollapsibleSection title="Completed Actions" count={`${completedActions.length}`} testId="section-completed-actions">
+            <div className="space-y-1 px-1">
+              {completedActions.map(a => (
+                <div key={a.id} className="flex items-center gap-2 text-[11px] py-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--cm-text-3, #cbd5e1)" }} />
+                  <span className="line-through">{a.title}</span>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+
       </main>
 
-      {/* Floating Action Bar */}
+      {/* Floating Action Bar: Log | Email | Follow-up | Notes | Escalate */}
       <CoachActionBar
         activeAction={activeAction}
         onToggle={toggleAction}

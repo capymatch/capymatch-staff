@@ -137,21 +137,6 @@ function NextActions({ actions, athleteId, podMembers, currentUser, onRefresh })
         )}
       </div>
 
-      {/* Completed (subtle) */}
-      {completedActions.length > 0 && (
-        <div className="mt-3 px-1">
-          <p className="text-[11px] text-slate-300 font-medium mb-1.5">Completed</p>
-          <div className="space-y-1">
-            {completedActions.map(a => (
-              <div key={a.id} className="flex items-center gap-2 text-[11px] text-slate-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-slate-200" />
-                <span className="line-through">{a.title}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Add Action Modal */}
       {showModal && (
         <AddActionModal
