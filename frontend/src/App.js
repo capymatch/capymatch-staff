@@ -31,6 +31,7 @@ import RosterPage from "./pages/RosterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
 import AthleteSettingsPage from "./pages/athlete/SettingsPage";
+import AthleteAccountPage from "./pages/athlete/AccountPage";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import AthleteProfilePage from "./pages/athlete/ProfilePage";
 import AthleteCalendarPage from "./pages/athlete/CalendarPage";
@@ -138,6 +139,7 @@ function AppRoutes() {
       <Route path="/analytics" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteOutreachPage /></ProtectedRoute>} />
       <Route path="/highlights" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteHighlightPage /></ProtectedRoute>} />
       <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSettingsPage /></ProtectedRoute>} />
+      <Route path="/account" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteAccountPage /></ProtectedRoute>} />
 
       {/* ── Public routes (no auth) ── */}
       <Route path="/p/:slug" element={<AthletePublicProfile />} />
