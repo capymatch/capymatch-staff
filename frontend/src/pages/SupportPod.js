@@ -106,7 +106,7 @@ function SupportPod() {
         athleteId={athleteId}
       />
 
-      <main className="max-w-2xl mx-auto px-4 py-5 space-y-5 pb-28">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-5 sm:space-y-6 pb-28">
 
         {/* 1. Hero Card — expanded, the single source of truth */}
         <PodHeroCard
@@ -121,20 +121,20 @@ function SupportPod() {
         {/* 2. Next Actions — expanded */}
         <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
 
-        {/* 3. Quick Summary — expanded */}
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Quick Summary</h3>
-          <QuickSummary athlete={athlete} events={upcoming_events} />
-        </div>
-
-        {/* 4. Pod Members — expanded */}
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Pod Members</h3>
-          <PodMembers
-            members={pod_members}
-            onMessage={() => toggleAction("email")}
-            onLogCall={() => toggleAction("log")}
-          />
+        {/* 3. Quick Summary + 4. Pod Members — side by side on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
+          <div className="lg:col-span-2">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Quick Summary</h3>
+            <QuickSummary athlete={athlete} events={upcoming_events} />
+          </div>
+          <div className="lg:col-span-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Pod Members</h3>
+            <PodMembers
+              members={pod_members}
+              onMessage={() => toggleAction("email")}
+              onLogCall={() => toggleAction("log")}
+            />
+          </div>
         </div>
 
         {/* ─── Collapsed sections below ─── */}

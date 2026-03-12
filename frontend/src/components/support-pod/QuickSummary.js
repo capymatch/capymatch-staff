@@ -21,9 +21,9 @@ function QuickSummary({ athlete, events }) {
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-white" data-testid="quick-summary">
-      <div className="grid grid-cols-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2">
         {/* Activity */}
-        <div className="px-4 py-3.5 border-b sm:border-b-0 sm:border-r border-slate-100">
+        <div className="px-4 py-3.5 border-b border-r border-slate-100">
           <p className="text-[11px] text-slate-400 font-medium mb-0.5">Activity</p>
           <p className={`text-base font-bold ${activityColor}`} data-testid="qs-activity">
             {daysInactive === 0 ? "Today" : `${daysInactive}d ago`}
@@ -31,7 +31,7 @@ function QuickSummary({ athlete, events }) {
         </div>
 
         {/* Responses */}
-        <div className="px-4 py-3.5 border-b sm:border-b-0 sm:border-r border-slate-100">
+        <div className="px-4 py-3.5 border-b border-slate-100">
           <p className="text-[11px] text-slate-400 font-medium mb-0.5">Responses</p>
           <p className="text-base font-bold text-slate-900" data-testid="qs-responses">
             {responding} of {targets}
@@ -39,7 +39,7 @@ function QuickSummary({ athlete, events }) {
         </div>
 
         {/* Stage */}
-        <div className="px-4 py-3.5 sm:border-r border-slate-100">
+        <div className="px-4 py-3.5 border-r border-slate-100">
           <p className="text-[11px] text-slate-400 font-medium mb-0.5">Stage</p>
           <p className="text-base font-bold text-slate-900" data-testid="qs-stage">
             {stageLabel}
