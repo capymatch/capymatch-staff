@@ -106,9 +106,9 @@ function SupportPod() {
         athleteId={athleteId}
       />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-28">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-36 sm:pb-28">
 
-        {/* ─── 1. Problem: Critical Banner (reduced dominance) ─── */}
+        {/* ─── 1. DIAGNOSE: Critical Banner ─── */}
         <PodHeroCard
           topAction={pod_top_action}
           athleteId={athleteId}
@@ -118,50 +118,52 @@ function SupportPod() {
           onRefresh={fetchPodData}
         />
 
-        {/* ─── 2. Context: Snapshot + Pod Members ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-          <div className="lg:col-span-2">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Athlete Snapshot</h3>
-            <QuickSummary athlete={athlete} events={upcoming_events} />
-          </div>
-          <div className="lg:col-span-3">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Pod Members</h3>
-            <PodMembers
-              members={pod_members}
-              onMessage={() => toggleAction("email")}
-              onLogCall={() => toggleAction("log")}
-            />
-          </div>
-        </div>
-
-        {/* ─── 3. Actions: Next Actions (main operational section) ─── */}
-        <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
-
-        {/* ─── 4. Insights: Collapsible reference panels ─── */}
-
+        {/* ─── 2. DIAGNOSE: Key Signals (always open) ─── */}
         {recruiting_signals && recruiting_signals.length > 0 && (
-          <CollapsibleSection title="Key Signals" count={`${recruiting_signals.length}`} testId="section-key-signals">
+          <CollapsibleSection title="Key Signals" count={`${recruiting_signals.length}`} defaultOpen={true} testId="section-key-signals">
             <KeySignals signals={recruiting_signals} />
           </CollapsibleSection>
         )}
 
+        {/* ─── 3. PLAN: Action Plan / Playbook (always open) ─── */}
         {intervention_playbook && (
-          <CollapsibleSection title="Action Plan" testId="section-action-plan">
+          <CollapsibleSection title="Action Plan" defaultOpen={true} testId="section-action-plan">
             <ActionPlan playbook={intervention_playbook} />
           </CollapsibleSection>
         )}
 
+        {/* ─── 4. ACT: Next Actions (always open) ─── */}
+        <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
+
+        {/* ─── 5. RECORD: Timeline (always open) ─── */}
+        <CollapsibleSection title="Timeline" defaultOpen={true} testId="section-timeline">
+          <ActivityHistory timeline={timeline} />
+        </CollapsibleSection>
+
+        {/* ─── Reference: Athlete Context (collapsed) ─── */}
+        <CollapsibleSection title="Athlete Context" testId="section-athlete-context">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
+            <div className="lg:col-span-2">
+              <QuickSummary athlete={athlete} events={upcoming_events} />
+            </div>
+            <div className="lg:col-span-3">
+              <PodMembers
+                members={pod_members}
+                onMessage={() => toggleAction("email")}
+                onLogCall={() => toggleAction("log")}
+              />
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* ─── 6. Recruiting Timeline (collapsed) ─── */}
         {recruiting_timeline && recruiting_timeline.length > 0 && (
           <CollapsibleSection title="Recruiting Timeline" count={`${recruiting_timeline.length}`} testId="section-recruiting-timeline">
             <RecruitingTimeline milestones={recruiting_timeline} />
           </CollapsibleSection>
         )}
 
-        <CollapsibleSection title="Activity History" testId="section-activity-history">
-          <ActivityHistory timeline={timeline} />
-        </CollapsibleSection>
-
-        {/* ─── 5. Bottom: Completed Actions (collapsed by default) ─── */}
+        {/* ─── 7. Completed Actions (collapsed) ─── */}
         {completedActions.length > 0 && (
           <CollapsibleSection title="Completed Actions" count={`${completedActions.length}`} testId="section-completed-actions">
             <div className="space-y-1 px-1">
