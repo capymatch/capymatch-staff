@@ -603,90 +603,335 @@ def generate_recruiting_signals(athlete, interventions, events):
     return signals
 
 
-INTERVENTION_PLAYBOOKS = {
-    "momentum_drop": {
+# ═══════════════════════════════════════════════════════════════
+# Parameterized Deterministic Playbooks
+#
+# Each playbook adapts wording and includes/excludes steps based on
+# athlete context. Structure is fixed; content is templated.
+# ═══════════════════════════════════════════════════════════════
+
+def _build_playbook_context(athlete, interventions, events):
+    """Aggregate athlete state into a flat context dict for playbook templates."""
+    days = athlete.get("days_since_activity", 0)
+    targets = athlete.get("school_targets", 0)
+    interest = athlete.get("active_interest", 0)
+    completeness = athlete.get("profile_completeness", 100)
+    name = athlete.get("first_name", "the athlete")
+    full = athlete.get("full_name", "the athlete")
+    last = athlete.get("last_name", "")
+    position = athlete.get("position", "")
+    grad = athlete.get("grad_year", "")
+    video = bool(athlete.get("video_link"))
+    video_age_days = 0
+    if athlete.get("video_updated_at"):
+        try:
+            from datetime import datetime, timezone
+            vid_dt = datetime.fromisoformat(athlete["video_updated_at"].replace("Z", "+00:00"))
+            video_age_days = max(0, (datetime.now(timezone.utc) - vid_dt).days)
+        except (ValueError, TypeError):
+            pass
+
+    response_rate = round(interest / max(targets, 1) * 100)
+    momentum = athlete.get("momentum_score", 50)
+
+    # Intervention details
+    int_details = {}
+    for i in interventions:
+        if i.get("details"):
+            int_details[i["category"]] = i["details"]
+
+    # Event proximity
+    upcoming = [e for e in events if 0 < e.get("daysAway", 99) <= 7]
+    next_event = upcoming[0] if upcoming else None
+
+    # Profile gaps
+    missing_assets = []
+    if not video:
+        missing_assets.append("highlight video")
+    if completeness < 80:
+        missing_assets.append("profile sections")
+    if not athlete.get("gpa"):
+        missing_assets.append("GPA / academics")
+    if video_age_days > 90:
+        missing_assets.append("updated video (current is old)")
+
+    # Blocker detail
+    blocker_detail = int_details.get("blocker", {}).get("problem", "an unresolved blocker")
+
+    return {
+        "name": name,
+        "full_name": full,
+        "last_name": last,
+        "position": position,
+        "grad_year": grad,
+        "days_inactive": days,
+        "school_targets": targets,
+        "active_interest": interest,
+        "response_rate": response_rate,
+        "profile_completeness": completeness,
+        "momentum_score": momentum,
+        "momentum_trend": athlete.get("momentum_trend", "stable"),
+        "has_video": video,
+        "video_age_days": video_age_days,
+        "next_event": next_event,
+        "event_name": next_event["name"] if next_event else None,
+        "event_days_away": next_event["daysAway"] if next_event else None,
+        "missing_assets": missing_assets,
+        "blocker_detail": blocker_detail,
+        "recruiting_stage": athlete.get("recruiting_stage", "unknown"),
+        "family_name": f"{last} Family" if last else "the family",
+        "int_details": int_details,
+    }
+
+
+def _playbook_momentum_recovery(ctx):
+    """Momentum Recovery Plan — adapts to inactivity duration and pipeline state."""
+    days = ctx["days_inactive"]
+    name = ctx["name"]
+    family = ctx["family_name"]
+    targets = ctx["school_targets"]
+    interest = ctx["active_interest"]
+    has_video = ctx["has_video"]
+
+    # Severity-adjusted wording
+    if days > 28:
+        urgency = "critical"
+        call_action = f"Call {name} and {family} — no activity in {days} days. Establish what's blocking progress and agree on immediate next steps"
+    elif days > 14:
+        urgency = "high"
+        call_action = f"Call {name} to check in — inactive for {days} days. Understand if interest has changed or if there's a practical blocker"
+    else:
+        urgency = "standard"
+        call_action = f"Check in with {name} — activity has slowed. Confirm recruiting interest and identify any blockers"
+
+    steps = [
+        {"step": 1, "action": call_action, "owner": "Coach", "days": "Day 1"},
+        {"step": 2, "action": f"Review and update {name}'s target school list together ({targets} schools currently targeted, {interest} responding)", "owner": "Coach + Athlete", "days": "Day 1-2"},
+    ]
+
+    # Conditional: outreach step adapts to pipeline
+    if interest == 0 and targets > 0:
+        steps.append({"step": 3, "action": f"Send personalized follow-up emails to all {targets} target schools — no responses yet", "owner": "Athlete", "days": "Day 2-3"})
+    elif targets > 0:
+        steps.append({"step": 3, "action": f"Send follow-up emails to top 3 target schools with updated content", "owner": "Athlete", "days": "Day 2-3"})
+    else:
+        steps.append({"step": 3, "action": f"Build an initial target school list and send first outreach", "owner": "Coach + Athlete", "days": "Day 2-3"})
+
+    # Conditional: video refresh if old or missing
+    if not has_video:
+        steps.append({"step": len(steps) + 1, "action": f"Record and upload a highlight video — {name} has no video on profile", "owner": "Athlete", "days": "Day 3-4"})
+    elif ctx["video_age_days"] > 60:
+        steps.append({"step": len(steps) + 1, "action": f"Update highlight video — current one is {ctx['video_age_days']} days old", "owner": "Athlete", "days": "Day 3-4"})
+
+    steps.append({"step": len(steps) + 1, "action": "Log conversation summary and updated recruiting plan", "owner": "Coach", "days": f"Day {3 if len(steps) <= 4 else 4}"})
+    steps.append({"step": len(steps) + 1, "action": "Schedule next check-in within 1 week", "owner": "Coach", "days": f"Day {5 if len(steps) <= 5 else 5}"})
+
+    criteria = f"{name} logs at least one recruiting activity within 5 days"
+    if days > 28:
+        criteria = f"{name} re-engages with at least one target school or logs meaningful activity within 5 days"
+
+    return {
         "title": "Momentum Recovery Plan",
-        "description": "Re-engage an athlete whose recruiting activity has stalled",
+        "description": f"Re-engage {name} whose recruiting activity has stalled ({days} days inactive, momentum {ctx['momentum_score']})",
         "estimated_days": "3-5 days",
-        "success_criteria": "Athlete logs at least one recruiting activity within 5 days",
-        "steps": [
-            {"step": 1, "action": "Call athlete/family to check in on recruiting interest", "owner": "Coach", "days": "Day 1"},
-            {"step": 2, "action": "Review and update target school list together", "owner": "Coach + Athlete", "days": "Day 1-2"},
-            {"step": 3, "action": "Send follow-up emails to top 3 target schools", "owner": "Athlete", "days": "Day 2-3"},
-            {"step": 4, "action": "Log conversation summary and updated plan", "owner": "Coach", "days": "Day 3"},
-            {"step": 5, "action": "Schedule next check-in within 1 week", "owner": "Coach", "days": "Day 5"},
-        ],
-    },
-    "blocker": {
+        "success_criteria": criteria,
+        "steps": steps,
+    }
+
+
+def _playbook_blocker_resolution(ctx):
+    """Blocker Resolution Playbook — adapts to blocker type."""
+    name = ctx["name"]
+    blocker = ctx["blocker_detail"]
+
+    steps = [
+        {"step": 1, "action": f"Identify the specific blocker for {name}: {blocker}", "owner": "Coach", "days": "Day 1"},
+        {"step": 2, "action": "Contact the responsible party (parent, school admin, or registrar) to begin resolution", "owner": "Coach", "days": "Day 1"},
+        {"step": 3, "action": "Follow up if no response within 24 hours — escalate if needed", "owner": "Coach", "days": "Day 2"},
+        {"step": 4, "action": "Implement resolution or establish a workaround so recruiting can continue", "owner": "Shared", "days": "Day 2-3"},
+        {"step": 5, "action": f"Verify blocker is cleared and update {name}'s status", "owner": "Coach", "days": "Day 3"},
+    ]
+
+    # Conditional: if athlete has been inactive while blocked
+    if ctx["days_inactive"] > 14:
+        steps.append({"step": 6, "action": f"Schedule a check-in with {name} — {ctx['days_inactive']} days inactive while blocked. Re-engage on recruiting plan", "owner": "Coach", "days": "Day 3"})
+
+    return {
         "title": "Blocker Resolution Playbook",
-        "description": "Clear a blocking issue that's preventing recruiting progress",
+        "description": f"Clear the blocker preventing {name}'s recruiting progress: {blocker}",
         "estimated_days": "1-3 days",
-        "success_criteria": "Blocking issue is resolved or has a clear workaround",
-        "steps": [
-            {"step": 1, "action": "Identify the specific blocker and who can resolve it", "owner": "Coach", "days": "Day 1"},
-            {"step": 2, "action": "Contact the responsible party (parent, school, admin)", "owner": "Coach", "days": "Day 1"},
-            {"step": 3, "action": "Follow up if no response within 24 hours", "owner": "Coach", "days": "Day 2"},
-            {"step": 4, "action": "Implement resolution or establish workaround", "owner": "Shared", "days": "Day 2-3"},
-            {"step": 5, "action": "Verify blocker is cleared and update status", "owner": "Coach", "days": "Day 3"},
-        ],
-    },
-    "deadline_proximity": {
+        "success_criteria": f"Blocker is resolved or has a clear workaround — {name} can resume recruiting",
+        "steps": steps,
+    }
+
+
+def _playbook_event_prep(ctx):
+    """Event / Deadline Prep Playbook — adapts to event proximity and profile state."""
+    name = ctx["name"]
+    event = ctx["event_name"] or "upcoming event"
+    days_away = ctx["event_days_away"] or 3
+    targets = ctx["school_targets"]
+    missing = ctx["missing_assets"]
+
+    steps = [
+        {"step": 1, "action": f"Confirm which target schools are attending {event}", "owner": "Coach", "days": "Day 1"},
+    ]
+
+    # Conditional: only if missing assets
+    if missing:
+        steps.append({"step": len(steps) + 1, "action": f"Address profile gaps before the event: {', '.join(missing)}", "owner": "Athlete", "days": "Day 1"})
+    elif ctx["has_video"]:
+        steps.append({"step": len(steps) + 1, "action": f"Prepare updated highlight reel and latest stats for {event}", "owner": "Athlete", "days": "Day 1"})
+
+    steps.append({"step": len(steps) + 1, "action": f"Send pre-event intro emails to target coaches attending {event}", "owner": "Athlete", "days": "Day 1"})
+    steps.append({"step": len(steps) + 1, "action": f"Review game plan, talking points, and key matchups for {event}", "owner": "Coach + Athlete", "days": "Day 1"})
+
+    # Conditional: parent logistics if event is soon
+    if days_away <= 2:
+        steps.append({"step": len(steps) + 1, "action": "Confirm logistics now — travel, schedule, jersey number. Event is imminent", "owner": "Parent", "days": "Today"})
+    else:
+        steps.append({"step": len(steps) + 1, "action": "Confirm logistics (travel, schedule, jersey number)", "owner": "Parent", "days": "Day 1"})
+
+    est = "1 day" if days_away <= 1 else f"1-{min(days_away, 2)} days"
+
+    return {
         "title": "Event Prep Checklist",
-        "description": "Ensure the athlete is fully prepared for an upcoming event or deadline",
-        "estimated_days": "1-2 days",
-        "success_criteria": "All prep items completed before the event",
-        "steps": [
-            {"step": 1, "action": "Confirm target schools attending the event", "owner": "Coach", "days": "Day 1"},
-            {"step": 2, "action": "Prepare highlight reel and updated stats", "owner": "Athlete", "days": "Day 1"},
-            {"step": 3, "action": "Send pre-event emails to target coaches", "owner": "Athlete", "days": "Day 1"},
-            {"step": 4, "action": "Review game plan and talking points", "owner": "Coach + Athlete", "days": "Day 1"},
-            {"step": 5, "action": "Confirm logistics (travel, schedule, jersey number)", "owner": "Parent", "days": "Day 1"},
-        ],
-    },
-    "engagement_drop": {
+        "description": f"Ensure {name} is fully prepared for {event} ({days_away} day{'s' if days_away != 1 else ''} away)",
+        "estimated_days": est,
+        "success_criteria": f"All prep items completed before {event}",
+        "steps": steps,
+    }
+
+
+def _playbook_reengagement(ctx):
+    """Re-engagement Playbook — adapts to pipeline size and response rate."""
+    name = ctx["name"]
+    targets = ctx["school_targets"]
+    interest = ctx["active_interest"]
+    rate = ctx["response_rate"]
+    has_video = ctx["has_video"]
+
+    silent_count = max(0, targets - interest)
+
+    steps = [
+        {"step": 1, "action": f"Identify which {silent_count} of {targets} target schools have gone silent and when contact was last made", "owner": "Coach", "days": "Day 1"},
+        {"step": 2, "action": f"Draft personalized follow-up messages for each silent school — include new content or a specific reason to re-engage", "owner": "Coach + Athlete", "days": "Day 2"},
+    ]
+
+    # Conditional: what to send depends on available assets
+    if has_video and ctx["video_age_days"] <= 30:
+        steps.append({"step": 3, "action": f"Send follow-ups with {name}'s recent highlight video and updated stats", "owner": "Athlete", "days": "Day 3"})
+    elif has_video:
+        steps.append({"step": 3, "action": f"Send follow-ups — consider updating the highlight video first (current is {ctx['video_age_days']} days old)", "owner": "Athlete", "days": "Day 3"})
+    else:
+        steps.append({"step": 3, "action": f"Send follow-ups with updated stats and academic info — {name} has no highlight video yet", "owner": "Athlete", "days": "Day 3"})
+
+    # Conditional: expand target list if response rate is very low
+    if rate < 25 and targets < 10:
+        steps.append({"step": 4, "action": f"Expand target school list — only {targets} schools targeted with {rate}% response rate. Consider adding D2/D3 programs or new regions", "owner": "Coach", "days": "Day 5"})
+    elif rate < 25:
+        steps.append({"step": 4, "action": f"Review targeting strategy — {rate}% response rate across {targets} schools may indicate a positioning issue", "owner": "Coach", "days": "Day 5"})
+
+    steps.append({"step": len(steps) + 1, "action": "Log outcomes for each follow-up and adjust strategy based on responses", "owner": "Coach", "days": "Day 7"})
+
+    return {
         "title": "Re-engagement Playbook",
-        "description": "Revive engagement with schools that have gone quiet",
+        "description": f"Revive engagement with {silent_count} silent school{'s' if silent_count != 1 else ''} ({rate}% response rate across {targets} targets)",
         "estimated_days": "5-7 days",
-        "success_criteria": "At least one previously-silent school re-engages",
-        "steps": [
-            {"step": 1, "action": "Identify which schools have gone silent and when", "owner": "Coach", "days": "Day 1"},
-            {"step": 2, "action": "Draft personalized follow-up messages with new content", "owner": "Coach + Athlete", "days": "Day 2"},
-            {"step": 3, "action": "Send follow-ups with updated highlights or stats", "owner": "Athlete", "days": "Day 3"},
-            {"step": 4, "action": "Consider expanding target list if pattern persists", "owner": "Coach", "days": "Day 5"},
-            {"step": 5, "action": "Log outcomes and adjust strategy", "owner": "Coach", "days": "Day 7"},
-        ],
-    },
-    "ownership_gap": {
+        "success_criteria": f"At least one previously-silent school re-engages with {name}",
+        "steps": steps,
+    }
+
+
+def _playbook_ownership_assignment(ctx):
+    """Ownership Assignment Playbook — adapts to team composition."""
+    name = ctx["name"]
+
+    steps = [
+        {"step": 1, "action": f"Review all unassigned actions in {name}'s pod", "owner": "Coach", "days": "Day 1"},
+        {"step": 2, "action": "Assign each action to the most appropriate person — coach, athlete, or parent", "owner": "Coach", "days": "Day 1"},
+        {"step": 3, "action": "Notify assigned owners of their new tasks via email or message", "owner": "Coach", "days": "Day 1"},
+        {"step": 4, "action": "Set due dates for all newly-assigned actions", "owner": "Coach", "days": "Day 1"},
+    ]
+
+    # Conditional: if athlete has been inactive, flag that assigning tasks to them may not work
+    if ctx["days_inactive"] > 14:
+        steps.append({"step": 5, "action": f"Note: {name} has been inactive for {ctx['days_inactive']} days — consider assigning athlete tasks to coach until re-engaged", "owner": "Coach", "days": "Day 1"})
+
+    return {
         "title": "Ownership Assignment Guide",
-        "description": "Assign clear ownership to unassigned recruiting tasks",
+        "description": f"Assign clear ownership to unassigned recruiting tasks for {name}",
         "estimated_days": "1 day",
-        "success_criteria": "All open actions have a clear owner",
-        "steps": [
-            {"step": 1, "action": "Review all unassigned actions in the pod", "owner": "Coach", "days": "Day 1"},
-            {"step": 2, "action": "Assign each action to the most appropriate person", "owner": "Coach", "days": "Day 1"},
-            {"step": 3, "action": "Notify assigned owners of their new tasks", "owner": "Coach", "days": "Day 1"},
-            {"step": 4, "action": "Set due dates for all newly-assigned actions", "owner": "Coach", "days": "Day 1"},
-        ],
-    },
-    "readiness_issue": {
+        "success_criteria": "All open actions have a clear owner and due date",
+        "steps": steps,
+    }
+
+
+def _playbook_readiness(ctx):
+    """Readiness Improvement Plan — adapts to specific profile gaps."""
+    name = ctx["name"]
+    completeness = ctx["profile_completeness"]
+    missing = ctx["missing_assets"]
+    has_video = ctx["has_video"]
+
+    steps = []
+
+    # Step 1 always: identify gaps
+    if missing:
+        gap_list = ", ".join(missing)
+        steps.append({"step": 1, "action": f"Address these specific gaps for {name}: {gap_list}", "owner": "Coach + Athlete", "days": "Day 1-2"})
+    else:
+        steps.append({"step": 1, "action": f"Review {name}'s profile ({completeness}% complete) and identify which sections need strengthening", "owner": "Coach", "days": "Day 1"})
+
+    steps.append({"step": 2, "action": f"Create an action plan for each gap with {name} — prioritize what coaches see first", "owner": "Coach + Athlete", "days": "Day 2"})
+
+    # Conditional steps based on what's missing
+    if not has_video:
+        steps.append({"step": len(steps) + 1, "action": f"Record and upload a highlight video — this is the most impactful missing asset", "owner": "Athlete", "days": "Day 3-5"})
+    if ctx["video_age_days"] > 90 and has_video:
+        steps.append({"step": len(steps) + 1, "action": f"Re-record highlight video — current one is {ctx['video_age_days']} days old and may not reflect current ability", "owner": "Athlete", "days": "Day 3-5"})
+
+    steps.append({"step": len(steps) + 1, "action": f"Check in on progress — have the highest-priority gaps been addressed?", "owner": "Coach", "days": "Day 5"})
+    steps.append({"step": len(steps) + 1, "action": f"Update {name}'s profile and notify target schools of improvements", "owner": "Athlete", "days": "Day 7-10"})
+
+    return {
         "title": "Readiness Improvement Plan",
-        "description": "Address gaps in the athlete's recruiting readiness",
+        "description": f"Address profile and recruiting readiness gaps for {name} (currently {completeness}% complete)",
         "estimated_days": "5-10 days",
-        "success_criteria": "Key readiness gaps are closed or have active plans",
-        "steps": [
-            {"step": 1, "action": "Identify specific readiness gaps (highlight reel, GPA, test scores)", "owner": "Coach", "days": "Day 1"},
-            {"step": 2, "action": "Create an action plan for each gap with the athlete", "owner": "Coach + Athlete", "days": "Day 2"},
-            {"step": 3, "action": "Begin working on the highest-priority gap", "owner": "Athlete", "days": "Day 3-5"},
-            {"step": 4, "action": "Check in on progress midway", "owner": "Coach", "days": "Day 5"},
-            {"step": 5, "action": "Update profile and notify target schools of improvements", "owner": "Athlete", "days": "Day 7-10"},
-        ],
-    },
+        "success_criteria": f"Key readiness gaps are closed — {name}'s profile is coach-ready",
+        "steps": steps,
+    }
+
+
+_PLAYBOOK_BUILDERS = {
+    "momentum_drop": _playbook_momentum_recovery,
+    "blocker": _playbook_blocker_resolution,
+    "deadline_proximity": _playbook_event_prep,
+    "engagement_drop": _playbook_reengagement,
+    "ownership_gap": _playbook_ownership_assignment,
+    "readiness_issue": _playbook_readiness,
 }
 
 
-def get_intervention_playbook(category):
-    """Return the playbook matching the active intervention category."""
-    return INTERVENTION_PLAYBOOKS.get(category)
+def get_intervention_playbook(category, athlete=None, interventions=None, events=None):
+    """Return a parameterized playbook for the given intervention category.
+    Falls back to a generic version if no athlete context is provided."""
+    builder = _PLAYBOOK_BUILDERS.get(category)
+    if not builder:
+        return None
+
+    if athlete:
+        ctx = _build_playbook_context(athlete, interventions or [], events or [])
+        return builder(ctx)
+
+    # Fallback: build with minimal defaults
+    ctx = _build_playbook_context(
+        {"first_name": "the athlete", "full_name": "the athlete", "last_name": "Athlete",
+         "days_since_activity": 0, "school_targets": 0, "active_interest": 0,
+         "profile_completeness": 100},
+        interventions or [], events or [],
+    )
+    return builder(ctx)
 
 
 def enrich_members_with_tasks(members, actions):

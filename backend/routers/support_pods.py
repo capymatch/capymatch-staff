@@ -68,7 +68,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
     recruiting_signals = generate_recruiting_signals(athlete, interventions, events)
     playbook = None
     if active_intervention:
-        playbook = get_intervention_playbook(active_intervention.get("category"))
+        playbook = get_intervention_playbook(active_intervention.get("category"), athlete, interventions, events)
 
     # Pod Top Action — reuses same decision pattern as Top Action Engine
     # REPLACED: now using issue lifecycle system
