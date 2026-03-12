@@ -313,7 +313,7 @@ export default function BillingPage() {
                   </div>
                   <div className="col-span-3">
                     <span className="text-sm font-medium" style={{ color: "var(--cm-text)" }}>
-                      {txn.metadata?.plan_label || txn.plan?.charAt(0).toUpperCase() + txn.plan?.slice(1)}
+                      {txn.metadata?.plan_label || (txn.plan ? txn.plan.charAt(0).toUpperCase() + txn.plan.slice(1) : "\u2014")}
                     </span>
                   </div>
                   <div className="col-span-2">
