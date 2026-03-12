@@ -100,3 +100,38 @@ async def get_athlete_timeline(athlete_id: str, current_user: dict = get_current
     assignments = await db.assignments.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
     messages = await db.messages.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
     return {"notes": notes, "assignments": assignments, "messages": messages}
+
+
+@router.get("/athletes/{athlete_id}/notes")
+async def get_athlete_notes(athlete_id: str, current_user: dict = get_current_user_dep()):
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+    notes = await db.athlete_notes.find(
+        {"athlete_id": athlete_id}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    return {"notes": notes}
+
+
+@router.delete("/athletes/{athlete_id}/notes/{note_id}")
+async def delete_athlete_note(athlete_id: str, note_id: str, current_user: dict = get_current_user_dep()):
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+    result = await db.athlete_notes.delete_one({"id": note_id, "athlete_id": athlete_id})
+    if result.deleted_count == 0:
+        raise HTTPException(404, "Note not found")
+    return {"deleted": True}
+
+
+@router.patch("/athletes/{athlete_id}/notes/{note_id}")
+async def update_athlete_note(athlete_id: str, note_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+    update = {}
+    if "text" in body:
+        update["text"] = body["text"][:500]
+    if not update:
+        raise HTTPException(400, "Nothing to update")
+    result = await db.athlete_notes.update_one({"id": note_id, "athlete_id": athlete_id}, {"$set": update})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Note not found")
+    return {"updated": True}

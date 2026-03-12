@@ -195,3 +195,38 @@ async def resolve_issue(athlete_id: str, body: ResolveIssue, current_user: dict 
     await db.pod_resolutions.insert_one(doc)
     doc.pop("_id", None)
     return doc
+
+
+
+@router.post("/support-pods/{athlete_id}/escalate")
+async def escalate_to_director(athlete_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Coach escalation — creates a director action item."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+
+    now = datetime.now(timezone.utc).isoformat()
+    action_id = f"da_{uuid.uuid4().hex[:12]}"
+    athlete = sp_get_athlete(athlete_id) or {}
+    athlete_name = body.get("athlete_name") or athlete.get("full_name", "Unknown")
+
+    doc = {
+        "action_id": action_id,
+        "type": "coach_escalation",
+        "status": "open",
+        "coach_id": current_user.get("id"),
+        "coach_name": current_user.get("name", "Coach"),
+        "athlete_id": athlete_id,
+        "athlete_name": athlete_name,
+        "org_id": current_user.get("org_id"),
+        "reason": body.get("reason", "other"),
+        "reason_label": body.get("title", "Coach escalation"),
+        "note": (body.get("description", "") or "")[:500],
+        "urgency": body.get("urgency", "medium"),
+        "source": "coach_escalation",
+        "created_at": now,
+        "acknowledged_at": None,
+        "resolved_at": None,
+    }
+    await db.director_actions.insert_one(doc)
+    doc.pop("_id", None)
+    return doc

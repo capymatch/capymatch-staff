@@ -3,7 +3,6 @@ import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@/AuthContext";
 import PodHeader from "@/components/support-pod/PodHeader";
-import QuickActionsBar from "@/components/support-pod/QuickActionsBar";
 import ActiveIssueBanner from "@/components/support-pod/ActiveIssueBanner";
 import AthleteSnapshot from "@/components/support-pod/AthleteSnapshot";
 import PodMembers from "@/components/support-pod/PodMembers";
@@ -12,9 +11,14 @@ import RecruitingIntelligence from "@/components/support-pod/RecruitingIntellige
 import InterventionPlaybooks from "@/components/support-pod/InterventionPlaybooks";
 import RecruitingTimeline from "@/components/support-pod/RecruitingTimeline";
 import TreatmentTimeline from "@/components/support-pod/TreatmentTimeline";
+import { CoachActionBar } from "@/components/support-pod/CoachActionBar";
+import { CoachEmailComposer } from "@/components/support-pod/CoachEmailComposer";
+import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteraction";
+import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpScheduler";
+import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
+import { CoachNotesSidebar } from "@/components/support-pod/CoachNotesSidebar";
 import { toast } from "sonner";
 import { AiSuggestedActions } from "@/components/AiV2Components";
-import QuickNote from "@/components/QuickNote";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const POLL_INTERVAL_MS = 30000;
@@ -30,6 +34,8 @@ function SupportPod() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [activeAction, setActiveAction] = useState(null);
+  const [notesOpen, setNotesOpen] = useState(false);
   const pollRef = useRef(null);
 
   useEffect(() => {
@@ -70,6 +76,19 @@ function SupportPod() {
     return () => clearInterval(pollRef.current);
   }, [fetchPodData]);
 
+  const closeAction = () => setActiveAction(null);
+  const handleActionDone = () => { closeAction(); fetchPodData(); };
+
+  const toggleAction = (action) => {
+    if (action === "notes") {
+      setNotesOpen(prev => !prev);
+      setActiveAction(prev => prev === "notes" ? null : "notes");
+    } else {
+      setNotesOpen(false);
+      setActiveAction(prev => prev === action ? null : action);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -107,14 +126,7 @@ function SupportPod() {
         athleteId={athleteId}
       />
 
-      {/* Quick Actions Bar */}
-      <QuickActionsBar
-        athleteId={athleteId}
-        athleteName={athlete?.full_name}
-        onRefresh={fetchPodData}
-      />
-
-      <main className="max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <main className="max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24">
         {/* Active Issue Banner */}
         {!bannerDismissed && active_intervention && (
           <ActiveIssueBanner
@@ -126,7 +138,7 @@ function SupportPod() {
         )}
 
         {/* Athlete Snapshot + Support Team */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
           <div className="lg:col-span-2">
             <AthleteSnapshot athlete={athlete} interventions={all_interventions} events={upcoming_events} />
           </div>
@@ -158,15 +170,65 @@ function SupportPod() {
         {/* Recruiting Timeline */}
         <RecruitingTimeline milestones={recruiting_timeline} />
 
-        {/* Quick Note */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm" data-testid="pod-quick-note">
-          <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Add Note</h3>
-          <QuickNote athleteId={athleteId} athleteName={athlete?.full_name} onSaved={fetchPodData} />
-        </div>
-
         {/* Treatment History */}
         <TreatmentTimeline timeline={timeline} />
       </main>
+
+      {/* ── Floating Action Bar ── */}
+      <CoachActionBar
+        activeAction={activeAction}
+        onEmail={() => toggleAction("email")}
+        onLog={() => toggleAction("log")}
+        onFollowup={() => toggleAction("followup")}
+        onNotes={() => toggleAction("notes")}
+        onEscalate={() => toggleAction("escalate")}
+      />
+
+      {/* ── Modals ── */}
+      {activeAction === "email" && (
+        <CoachEmailComposer
+          athleteId={athleteId}
+          athleteName={athlete?.full_name}
+          podMembers={pod_members}
+          onSent={handleActionDone}
+          onCancel={closeAction}
+        />
+      )}
+
+      {activeAction === "log" && (
+        <CoachLogInteraction
+          athleteId={athleteId}
+          athleteName={athlete?.full_name}
+          onSaved={handleActionDone}
+          onCancel={closeAction}
+        />
+      )}
+
+      {activeAction === "followup" && (
+        <CoachFollowUpScheduler
+          athleteId={athleteId}
+          athleteName={athlete?.full_name}
+          onSaved={handleActionDone}
+          onCancel={closeAction}
+        />
+      )}
+
+      {activeAction === "escalate" && (
+        <EscalateToDirector
+          athleteId={athleteId}
+          athleteName={athlete?.full_name}
+          onSaved={handleActionDone}
+          onCancel={closeAction}
+        />
+      )}
+
+      {/* ── Notes Sidebar ── */}
+      <CoachNotesSidebar
+        athleteId={athleteId}
+        athleteName={athlete?.full_name}
+        open={notesOpen}
+        onClose={() => { setNotesOpen(false); setActiveAction(null); }}
+      />
     </div>
   );
 }
