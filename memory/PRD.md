@@ -39,6 +39,9 @@ Completed the "Next Actions" component upgrade: dark-themed AddActionModal with 
 ### Pod Hero Card — Decision Center (March 12, 2026)
 Restructured Support Pod to be driven by a Pod Top Action Engine (same decision pattern as pipeline Top Action Engine). New layout: Pod Hero Card at top showing issue type, top action, explanation, owner, CTA buttons. Sections below: Next Actions, Athlete Snapshot, then collapsible sections (Recruiting Intelligence, Intervention Playbook, Recruiting Timeline, Treatment History). Old ActiveIssueBanner replaced by Pod Hero Card.
 
+### Quick-Resolve Actions (March 12, 2026)
+Added issue-specific quick-resolve buttons to the Pod Hero Card for simple mechanical issues only (ownership gaps → "Assign Owner"). Complex issues (momentum drop, blockers, family disengagement) show normal CTA instead. Backend endpoint POST /support-pods/{athlete_id}/quick-resolve bulk-assigns unowned actions to the coach.
+
 ## P1 Upcoming
 - In-App Messaging + Email Notifications (coach-to-athlete messaging from Support Pod)
 - Club Billing (subscription billing and management for organizations)
