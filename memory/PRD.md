@@ -6,78 +6,70 @@ CapyMatch is a full-stack sports recruiting platform connecting athletes, coache
 ## Architecture
 ```
 /app/
-├── backend/          (FastAPI, MongoDB)
-│   ├── routers/      (API endpoints)
-│   ├── services/     (Business logic)
-│   └── tests/        (Pytest test suites)
-└── frontend/         (React, Shadcn UI)
-    ├── src/pages/    (Page components)
-    ├── src/components/ (Reusable UI)
-    └── src/lib/      (Utilities, context)
+├── backend/
+│   ├── routers/          (API endpoints)
+│   ├── services/         (Business logic)
+│   ├── pod_issues.py     (Issue lifecycle management)
+│   ├── support_pod.py    (Pod data aggregation)
+│   └── tests/
+└── frontend/
+    ├── src/pages/
+    ├── src/components/
+    │   ├── support-pod/  (PodHeroCard, NextActions, etc.)
+    │   ├── coach/
+    │   ├── athlete/
+    │   └── layout/
+    └── src/lib/
 ```
 
-## Athlete-Side Page Structure
+## Issue Lifecycle System (Implemented — Mar 2026)
 
-### Sidebar Navigation (core features)
-Dashboard, My Schools, Find Schools, Calendar, Inbox, Highlights, Analytics
+### Mental Model
+Issues are discrete **incidents/episodes**, not static labels. Each issue has a lifecycle: created → active → resolved. If a problem recurs, a NEW issue instance is created.
 
-### TopBar Dropdown (account/settings)
-- Athlete Profile (`/athlete-profile`)
-- Settings (`/athlete-settings`) — Theme, Gmail, Team Management, Privacy, Guided Tour
-- Account (`/account`) — Personal Info, Password, Notifications, Privacy, Danger Zone
-- Billing (`/billing`) — Current Plan, Usage, Plan Features, Billing History
-- Sign Out
+### Issue Types
+| Type | Severity | Auto-Resolve Trigger |
+|---|---|---|
+| missing_blocker | critical | Manual only |
+| momentum_drop | critical | Check-in or interaction logged |
+| overdue_actions | critical | Overdue count drops to 0 |
+| deadline_proximity | high | Prep task completed |
+| engagement_drop | high | Interaction or outreach sent |
+| follow_up_overdue | high | Outreach or follow-up logged |
+| ownership_gap | medium | Actions assigned |
+| readiness_issue | medium | Manual only |
 
-## Coach Mission Control (Refined — Mar 2026)
+### Pod Hero States
+1. **Active Issue (Critical)** — Red bar, urgency badge, title, description, Log Check-In / Escalate / Resolve
+2. **Active Issue (High/Medium)** — Amber/blue bar, softer urgency, same layout
+3. **Healthy / On Track** — Green check, "No urgent intervention needed", Log Interaction / Add Note
 
-### Hero KPIs
-- MY ATHLETES (count)
-- NEED ATTENTION (renamed from "Need Action")
-- EVENTS THIS WEEK
-- DIRECTOR REQUESTS
-
-### Section Order
-1. Athletes Requiring Attention — action-needed athletes with prominent NEXT action pills
-2. On Track (collapsed by default) — healthy athletes
-3. Events Requiring Prep
-4. Assigned Actions — with severity badges (Critical/Needs Review/Request)
-5. Upcoming Events + Recent Activity (hidden in Focus Mode)
-
-### Focus Mode
-- Toggle hides Events + Activity sections
-- Shows only Athletes Requiring Attention + Assigned Actions
-
-## Support Pod Task Lifecycle (Implemented — Mar 2026)
-
-### Task States
-- **Open/Ready**: Active tasks in "Next Actions" list
-- **Completed**: Moved to "Completed & Resolved" section with completed_by/completed_at audit trail
-- **Escalated**: Converted to Director Action, logged in activity history
-- **Cancelled**: Moved to "Completed & Resolved" section with cancelled_by/cancelled_at
+### Key Behaviors
+- **Idempotent creation**: One active issue per athlete + type (unique partial index)
+- **24h cooldown**: Resolved issues don't re-create for 24 hours
+- **Source context**: Each issue stores trigger details (days_inactive, count, etc.)
+- **Resolution timeline**: Every resolution logs an event with how it was resolved
 
 ### Key Endpoints
-- `PATCH /api/support-pods/{athlete_id}/actions/{action_id}` — Complete/cancel tasks
-- `POST /api/support-pods/{athlete_id}/actions/{action_id}/escalate` — Escalate to Director Action
-- `POST /api/support-pods/{athlete_id}/actions` — Create new task
-- `GET /api/support-pods/{athlete_id}` — Full pod data with actions, timeline, events
+- `GET /api/support-pods/{athlete_id}` — Returns `current_issue` and `all_active_issues`
+- `POST /api/support-pods/{athlete_id}/issues/{issue_id}/resolve` — Manual resolution
+- Auto-resolution hooks in `POST /api/athletes/{id}/notes` and `POST /api/athletes/{id}/messages`
 
-### Frontend Components
-- `NextActions.js` — Active tasks list + "Completed & Resolved" section + EscalateTaskModal
-- `SupportPod.js` — Parent page with full layout (Problem → Context → Actions → Insights)
+## Support Pod Structure (Journey Model)
+1. **Pod Hero** — Current active issue or healthy state
+2. **Key Signals** — Compact diagnostic section (always expanded)
+3. **Action Plan** — Playbook for active intervention (always expanded)
+4. **Next Actions** — Pending tasks only (coach, system, playbook)
+5. **Timeline** — All historical events (always expanded)
+6. **Athlete Context** — Snapshot + Pod Members (collapsed)
+7. **Recruiting Timeline** — Milestones (collapsed)
+8. **Completed Actions** — Done tasks (collapsed)
 
-## Core Features Implemented
-
-### Coach Side
-- Mission Control with refined intervention console design
-- Support Pod with mobile-first redesign and full task lifecycle
-- Director Actions with acknowledge/resolve workflow
-- Events, Advocacy, Program Intelligence
-
-### Athlete Side
-- Dashboard, Pipeline, Find Schools, Calendar, Inbox, Highlights, Analytics
-- Profile, Account, Settings, Billing (separated, no duplication)
-- Team Management (Invite Someone)
-- Gmail Integration with consent modal
+## Task Lifecycle
+- **Open/Ready** → **Completed** (moves to timeline, logged)
+- **Open/Ready** → **Escalated** (creates Director Action, logged)
+- **Open/Ready** → **Cancelled** (logged)
+- System tasks auto-resolve when coach logs interaction
 
 ## 3rd Party Integrations
 MongoDB, Resend, Stripe, Emergent LLM Key, Gmail API
@@ -88,7 +80,6 @@ MongoDB, Resend, Stripe, Emergent LLM Key, Gmail API
 - **Test Athlete ID:** athlete_3 (Emma Chen)
 
 ## Backlog
-
 ### P1 — In-App Messaging & Notifications
 ### P2 — Club Billing (org subscriptions)
 ### P3 — AI Coach Summary, Intelligence Pipeline Phase 2, Parent/Family Experience
