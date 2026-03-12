@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support Pod — Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --text: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
+    --text-4: #cbd5e1;
+    --teal: #0d9488;
+    --teal-light: rgba(13,148,136,0.08);
+    --red: #ef4444;
+    --red-light: rgba(239,68,68,0.06);
+    --amber: #f59e0b;
+    --amber-light: rgba(245,158,11,0.06);
+    --violet: #8b5cf6;
+    --violet-light: rgba(139,92,246,0.08);
+    --green: #10b981;
+    --green-light: rgba(16,185,129,0.06);
+    --blue: #3b82f6;
+    --blue-light: rgba(59,130,246,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+  .mockup-badge {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #94a3b8; text-align: center; padding: 8px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .mockup-badge span { color: #f59e0b; }
+
+  /* Layout */
+  .pod-container { max-width: 860px; margin: 56px auto 120px; padding: 0 20px; }
+
+  /* ══════════════════════════════════════════════════════════════
+     HEADER BAR
+     ══════════════════════════════════════════════════════════════ */
+  .pod-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--border-light); margin-bottom: 20px;
+  }
+  .pod-header-left { display: flex; align-items: center; gap: 12px; }
+  .pod-header-back { color: var(--text-3); font-size: 13px; font-weight: 500; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+  .pod-header-back:hover { color: var(--text-2); }
+  .pod-header-name { font-size: 16px; font-weight: 700; color: var(--text); }
+  .pod-header-meta { font-size: 12px; color: var(--text-3); }
+  .pod-header-right { display: flex; align-items: center; gap: 10px; }
+  .health-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 5px; }
+  .health-badge.red { background: var(--red-light); color: var(--red); }
+
+  /* ══════════════════════════════════════════════════════════════
+     1. POD HERO
+     ══════════════════════════════════════════════════════════════ */
+  .pod-hero {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden;
+  }
+  .pod-hero::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--red); border-radius: 16px 0 0 16px;
+  }
+  .hero-urgency { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .urgency-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+  .urgency-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--red); }
+  .urgency-context { font-size: 11px; color: var(--text-3); }
+  .hero-title { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; letter-spacing: -0.3px; }
+  .hero-desc { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-bottom: 16px; }
+  .hero-owner { font-size: 11px; color: var(--teal); font-weight: 600; }
+  .hero-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .hero-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px;
+    border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .hero-btn.primary { background: var(--red); color: white; }
+  .hero-btn.primary:hover { filter: brightness(1.1); }
+  .hero-btn.secondary { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
+  .hero-btn.secondary:hover { background: var(--border-light); }
+
+  /* ══════════════════════════════════════════════════════════════
+     KEY SIGNALS — compact strip
+     ══════════════════════════════════════════════════════════════ */
+  .signals-strip {
+    display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .signal-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600;
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .signal-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .signal-dot.red { background: var(--red); }
+  .signal-dot.amber { background: var(--amber); }
+  .signal-dot.blue { background: var(--blue); }
+
+  /* ══════════════════════════════════════════════════════════════
+     SECTION HEADERS
+     ══════════════════════════════════════════════════════════════ */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px; padding-bottom: 0;
+  }
+  .section-title {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-3);
+  }
+  .section-count {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+    background: var(--teal-light); color: var(--teal); margin-left: 8px;
+  }
+  .section-action {
+    font-size: 11px; font-weight: 600; color: var(--teal); cursor: pointer;
+    display: flex; align-items: center; gap: 4px; padding: 4px 10px;
+    border-radius: 8px; background: var(--teal-light); border: 1px solid rgba(13,148,136,0.12);
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     2. NEXT ACTIONS
+     ══════════════════════════════════════════════════════════════ */
+  .actions-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; margin-bottom: 20px;
+  }
+  .action-item {
+    display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px;
+    border-bottom: 1px solid var(--border-light); transition: background 0.1s;
+  }
+  .action-item:last-child { border-bottom: none; }
+  .action-item:hover { background: rgba(0,0,0,0.01); }
+  .action-circle {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--text-4);
+    flex-shrink: 0; margin-top: 1px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .action-circle:hover { border-color: var(--green); }
+  .action-circle.overdue { border-color: #fca5a5; }
+  .action-content { flex: 1; min-width: 0; }
+  .action-title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .action-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .action-badge {
+    font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+    padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px;
+  }
+  .action-badge.system { background: var(--violet-light); color: var(--violet); }
+  .action-badge.coach { background: var(--teal-light); color: var(--teal); }
+  .action-badge.playbook { background: var(--blue-light); color: var(--blue); }
+  .action-meta { font-size: 11px; color: var(--text-3); margin-top: 3px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .action-meta .overdue { color: var(--red); font-weight: 600; }
+  .action-meta .dot { color: var(--text-4); }
+  .action-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+  .action-item:hover .action-right { opacity: 1; }
+  .action-icon-btn {
+    width: 28px; height: 28px; border-radius: 8px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-3); background: transparent; font-size: 14px;
+  }
+  .action-icon-btn:hover { background: var(--surface-2); }
+
+  /* ══════════════════════════════════════════════════════════════
+     3. TIMELINE
+     ══════════════════════════════════════════════════════════════ */
+  .timeline-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; margin-bottom: 20px;
+  }
+  .timeline-filters {
+    display: flex; gap: 2px; padding: 12px 18px; border-bottom: 1px solid var(--border-light);
+    overflow-x: auto;
+  }
+  .timeline-filter {
+    font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 20px;
+    cursor: pointer; border: none; background: transparent; color: var(--text-3); white-space: nowrap;
+  }
+  .timeline-filter.active { background: var(--teal-light); color: var(--teal); }
+  .timeline-filter:hover:not(.active) { background: var(--surface-2); }
+  .timeline-date-group { padding: 6px 18px 2px; }
+  .timeline-date-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-3); }
+  .timeline-item {
+    display: flex; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border-light);
+  }
+  .timeline-item:last-child { border-bottom: none; }
+  .tl-icon {
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .tl-icon.check-in { background: var(--green-light); color: var(--green); }
+  .tl-icon.note { background: var(--blue-light); color: var(--blue); }
+  .tl-icon.email { background: var(--teal-light); color: var(--teal); }
+  .tl-icon.escalation { background: var(--amber-light); color: var(--amber); }
+  .tl-icon.completed { background: var(--green-light); color: var(--green); }
+  .tl-icon.system { background: var(--violet-light); color: var(--violet); }
+  .tl-icon.call { background: rgba(99,102,241,0.08); color: #6366f1; }
+  .tl-content { flex: 1; min-width: 0; }
+  .tl-title { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; }
+  .tl-title .completed-task { text-decoration: line-through; color: var(--text-2); }
+  .tl-detail { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .tl-tag {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;
+  }
+  .tl-tag.positive { background: var(--green-light); color: var(--green); }
+  .tl-tag.escalated { background: var(--amber-light); color: var(--amber); }
+  .tl-tag.auto { background: var(--violet-light); color: var(--violet); }
+  .tl-time { font-size: 10px; color: var(--text-3); flex-shrink: 0; margin-top: 2px; }
+
+  /* ══════════════════════════════════════════════════════════════
+     COLLAPSIBLE SECTIONS
+     ══════════════════════════════════════════════════════════════ */
+  .collapsible-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; cursor: pointer; user-select: none;
+  }
+  .collapsible-header:hover .section-title { color: var(--text-2); }
+  .collapse-chevron { font-size: 12px; color: var(--text-3); transition: transform 0.2s; }
+
+  /* ══════════════════════════════════════════════════════════════
+     FLOATING ACTION BAR
+     ══════════════════════════════════════════════════════════════ */
+  .action-bar {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50;
+    display: flex; align-items: center; gap: 2px; padding: 6px 10px;
+    background: rgba(22,27,37,0.94); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  }
+  .bar-btn {
+    display: flex; align-items: center; gap: 5px; padding: 10px 14px;
+    border-radius: 10px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 500; color: #94a3b8; background: transparent; transition: all 0.15s;
+  }
+  .bar-btn:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+  .bar-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.08); flex-shrink: 0; }
+
+  /* ══════════════════════════════════════════════════════════════
+     ANNOTATIONS (mockup only)
+     ══════════════════════════════════════════════════════════════ */
+  .annotation {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
+    color: #d97706; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .annotation::before {
+    content: ''; width: 16px; height: 1px; background: #d97706;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .pod-container { padding: 0 12px; margin-bottom: 140px; }
+    .hero-actions { flex-direction: column; }
+    .hero-btn { justify-content: center; }
+    .signals-strip { gap: 6px; }
+    .action-right { opacity: 1; }
+    .bar-btn span { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-badge">Mockup — <span>Support Pod Redesign</span> — Not Live</div>
+
+<div class="pod-container">
+
+  <!-- ═══════ HEADER BAR ═══════ -->
+  <div class="pod-header">
+    <div class="pod-header-left">
+      <a class="pod-header-back" href="#">← Mission Control</a>
+      <div>
+        <div class="pod-header-name">Emma Chen</div>
+        <div class="pod-header-meta">2026 · Outside Hitter · U17 Premier</div>
+      </div>
+    </div>
+    <div class="pod-header-right">
+      <span style="font-size:12px;color:var(--teal);font-weight:600;cursor:pointer;">View Profile</span>
+      <div class="health-badge red">● At Risk</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       1. POD HERO — What matters now
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="annotation">1 · Pod Hero</div>
+  <div class="pod-hero">
+    <div class="hero-urgency">
+      <div class="urgency-dot"></div>
+      <span class="urgency-label">Critical</span>
+      <span class="urgency-context">· No activity in 33 days</span>
+    </div>
+    <div class="hero-title">Check In With Athlete</div>
+    <div class="hero-desc">Athlete has gone dark — 33 days without activity. Immediate check-in needed to prevent further momentum loss.</div>
+    <div class="hero-owner">Owner: Coach Williams</div>
+    <div class="hero-actions">
+      <button class="hero-btn primary">📞 Log Check-In</button>
+      <button class="hero-btn secondary">✉️ Send Message</button>
+      <button class="hero-btn secondary">↗ Escalate</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       KEY SIGNALS — Compact diagnostic strip
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="annotation">Key Signals</div>
+  <div class="signals-strip">
+    <div class="signal-chip"><div class="signal-dot red"></div>Momentum critically low</div>
+    <div class="signal-chip"><div class="signal-dot red"></div>33d inactive</div>
+    <div class="signal-chip"><div class="signal-dot amber"></div>0 of 4 schools responded</div>
+    <div class="signal-chip"><div class="signal-dot amber"></div>Event in 1 day</div>
+    <div class="signal-chip"><div class="signal-dot blue"></div>No D1 engagement</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       2. NEXT ACTIONS — What still needs to happen
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="annotation">2 · Next Actions</div>
+  <div class="section-header">
+    <div style="display:flex;align-items:center;">
+      <span class="section-title">Next Actions</span>
+      <span class="section-count">7</span>
+    </div>
+    <div class="section-action">+ Add Task</div>
+  </div>
+
+  <div class="actions-card">
+    <!-- Overdue system task -->
+    <div class="action-item">
+      <div class="action-circle overdue"></div>
+      <div class="action-content">
+        <div class="action-title-row">
+          <span class="action-title">Check in with athlete — no activity in 33 days</span>
+          <span class="action-badge system">⚡ System</span>
+        </div>
+        <div class="action-meta">
+          <span>Coach Williams</span>
+          <span class="dot">·</span>
+          <span class="overdue">2d overdue</span>
+          <span class="dot">·</span>
+          <span>Momentum Drop</span>
+        </div>
+      </div>
+      <div class="action-right">
+        <button class="action-icon-btn" title="Escalate">↗</button>
+        <button class="action-icon-btn" title="Cancel">✕</button>
+      </div>
+    </div>
+
+    <!-- Playbook-derived task -->
+    <div class="action-item">
+      <div class="action-circle"></div>
+      <div class="action-content">
+        <div class="action-title-row">
+          <span class="action-title">Review and update target school list together</span>
+          <span class="action-badge playbook">📋 Playbook</span>
+        </div>
+        <div class="action-meta">
+          <span>Coach + Athlete</span>
+          <span class="dot">·</span>
+          <span>Day 1-2</span>
+        </div>
+      </div>
+      <div class="action-right">
+        <button class="action-icon-btn" title="Escalate">↗</button>
+        <button class="action-icon-btn" title="Cancel">✕</button>
+      </div>
+    </div>
+
+    <!-- Coach task -->
+    <div class="action-item">
+      <div class="action-circle"></div>
+      <div class="action-content">
+        <div class="action-title-row">
+          <span class="action-title">Schedule follow-up call with Michigan</span>
+          <span class="action-badge coach">👤 Coach</span>
+        </div>
+        <div class="action-meta">
+          <span>Coach Martinez</span>
+          <span class="dot">·</span>
+          <span>Tomorrow</span>
+          <span class="dot">·</span>
+          <span>Event Follow Up</span>
+        </div>
+      </div>
+      <div class="action-right">
+        <button class="action-icon-btn" title="Escalate">↗</button>
+        <button class="action-icon-btn" title="Cancel">✕</button>
+      </div>
+    </div>
+
+    <!-- Playbook task -->
+    <div class="action-item">
+      <div class="action-circle"></div>
+      <div class="action-content">
+        <div class="action-title-row">
+          <span class="action-title">Send follow-up emails to top 3 target schools</span>
+          <span class="action-badge playbook">📋 Playbook</span>
+        </div>
+        <div class="action-meta">
+          <span>Athlete</span>
+          <span class="dot">·</span>
+          <span>Day 2-3</span>
+        </div>
+      </div>
+      <div class="action-right">
+        <button class="action-icon-btn" title="Escalate">↗</button>
+        <button class="action-icon-btn" title="Cancel">✕</button>
+      </div>
+    </div>
+
+    <!-- System task -->
+    <div class="action-item">
+      <div class="action-circle"></div>
+      <div class="action-content">
+        <div class="action-title-row">
+          <span class="action-title">Re-engage after momentum drop — review outreach strategy</span>
+          <span class="action-badge system">⚡ System</span>
+        </div>
+        <div class="action-meta">
+          <span>Coach Williams</span>
+          <span class="dot">·</span>
+          <span>3d</span>
+          <span class="dot">·</span>
+          <span>Engagement Drop</span>
+        </div>
+      </div>
+      <div class="action-right">
+        <button class="action-icon-btn" title="Escalate">↗</button>
+        <button class="action-icon-btn" title="Cancel">✕</button>
+      </div>
+    </div>
+
+    <!-- Coach task -->
+    <div class="action-item">
+      <div class="action-circle"></div>
+      <div class="action-content">
+        <div class="action-title-row">
+          <span class="action-title">Prepare athlete for upcoming showcase event</span>
+          <span class="action-badge coach">👤 Coach</span>
+        </div>
+        <div class="action-meta">
+          <span>Coach Williams</span>
+          <span class="dot">·</span>
+          <span>4d</span>
+          <span class="dot">·</span>
+          <span>Deadline Proximity</span>
+        </div>
+      </div>
+      <div class="action-right">
+        <button class="action-icon-btn" title="Escalate">↗</button>
+        <button class="action-icon-btn" title="Cancel">✕</button>
+      </div>
+    </div>
+
+    <!-- Playbook task -->
+    <div class="action-item">
+      <div class="action-circle"></div>
+      <div class="action-content">
+        <div class="action-title-row">
+          <span class="action-title">Schedule next check-in within 1 week</span>
+          <span class="action-badge playbook">📋 Playbook</span>
+        </div>
+        <div class="action-meta">
+          <span>Coach</span>
+          <span class="dot">·</span>
+          <span>Day 5</span>
+        </div>
+      </div>
+      <div class="action-right">
+        <button class="action-icon-btn" title="Escalate">↗</button>
+        <button class="action-icon-btn" title="Cancel">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       3. TIMELINE — What already happened
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="annotation">3 · Timeline</div>
+  <div class="section-header">
+    <span class="section-title">Timeline</span>
+  </div>
+
+  <div class="timeline-card">
+    <div class="timeline-filters">
+      <button class="timeline-filter active">All</button>
+      <button class="timeline-filter">Notes</button>
+      <button class="timeline-filter">Check-ins</button>
+      <button class="timeline-filter">Messages</button>
+      <button class="timeline-filter">Calls</button>
+      <button class="timeline-filter">Tasks</button>
+      <button class="timeline-filter">System</button>
+    </div>
+
+    <!-- Today -->
+    <div class="timeline-date-group"><span class="timeline-date-label">Today</span></div>
+
+    <div class="timeline-item">
+      <div class="tl-icon check-in">📞</div>
+      <div class="tl-content">
+        <div class="tl-title">Athlete Check-in — Spoke with Emma about recruiting progress</div>
+        <div class="tl-detail">Coach Williams</div>
+        <span class="tl-tag positive">Positive</span>
+      </div>
+      <div class="tl-time">2:30 PM</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-icon completed">✓</div>
+      <div class="tl-content">
+        <div class="tl-title"><span class="completed-task">Check in with athlete — no activity in 33 days</span></div>
+        <div class="tl-detail">Auto-resolved — coach logged interaction</div>
+        <span class="tl-tag auto">Auto-resolved</span>
+      </div>
+      <div class="tl-time">2:30 PM</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-icon completed">✓</div>
+      <div class="tl-content">
+        <div class="tl-title"><span class="completed-task">Re-engage after momentum drop — review outreach strategy</span></div>
+        <div class="tl-detail">Auto-resolved — coach logged interaction</div>
+        <span class="tl-tag auto">Auto-resolved</span>
+      </div>
+      <div class="tl-time">2:30 PM</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-icon note">📝</div>
+      <div class="tl-content">
+        <div class="tl-title">Coach note — Emma seems motivated but confused about next steps for Michigan outreach</div>
+        <div class="tl-detail">Coach Williams</div>
+      </div>
+      <div class="tl-time">10:15 AM</div>
+    </div>
+
+    <!-- Yesterday -->
+    <div class="timeline-date-group"><span class="timeline-date-label">Yesterday</span></div>
+
+    <div class="timeline-item">
+      <div class="tl-icon escalation">↗</div>
+      <div class="tl-content">
+        <div class="tl-title">Escalated task "Review scholarship timeline" to director</div>
+        <div class="tl-detail">Coach Williams — Need director input on engagement strategy</div>
+        <span class="tl-tag escalated">Escalated</span>
+      </div>
+      <div class="tl-time">7:41 PM</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-icon completed">✓</div>
+      <div class="tl-content">
+        <div class="tl-title"><span class="completed-task">Send highlight reel to Michigan coach</span></div>
+        <div class="tl-detail">Completed by Coach Williams</div>
+      </div>
+      <div class="tl-time">4:22 PM</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-icon system">⚡</div>
+      <div class="tl-content">
+        <div class="tl-title">System detected momentum drop — intervention triggered</div>
+        <div class="tl-detail">Automated signal</div>
+      </div>
+      <div class="tl-time">9:00 AM</div>
+    </div>
+
+    <!-- Mar 8 -->
+    <div class="timeline-date-group"><span class="timeline-date-label">Mar 8</span></div>
+
+    <div class="timeline-item">
+      <div class="tl-icon email">✉</div>
+      <div class="tl-content">
+        <div class="tl-title">Email to Emma Chen — Subject: Recruiting status update</div>
+        <div class="tl-detail">Coach Martinez</div>
+      </div>
+      <div class="tl-time">10:33 PM</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-icon call">📱</div>
+      <div class="tl-content">
+        <div class="tl-title">Phone call with Chen Family</div>
+        <div class="tl-detail">Coach Martinez · 12 min</div>
+      </div>
+      <div class="tl-time">3:50 PM</div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-icon email">✉</div>
+      <div class="tl-content">
+        <div class="tl-title">Recommendation sent to Virginia</div>
+        <div class="tl-detail">Coach Martinez</div>
+      </div>
+      <div class="tl-time">2:15 PM</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECONDARY: Collapsible sections
+       ═══════════════════════════════════════════════════════════ -->
+  <div style="margin-top: 8px;">
+    <div class="collapsible-header">
+      <div style="display:flex;align-items:center;">
+        <span class="section-title">Athlete Context</span>
+        <span style="font-size:11px;color:var(--text-3);margin-left:8px;">Snapshot + Pod Members</span>
+      </div>
+      <span class="collapse-chevron">›</span>
+    </div>
+  </div>
+
+  <div>
+    <div class="collapsible-header">
+      <div style="display:flex;align-items:center;">
+        <span class="section-title">Recruiting Timeline</span>
+        <span style="font-size:11px;color:var(--text-3);margin-left:8px;">4</span>
+      </div>
+      <span class="collapse-chevron">›</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════ FLOATING ACTION BAR ═══════ -->
+<div class="action-bar">
+  <button class="bar-btn">📋 <span>Log</span></button>
+  <div class="bar-divider"></div>
+  <button class="bar-btn">✉️ <span>Email</span></button>
+  <div class="bar-divider"></div>
+  <button class="bar-btn">⏰ <span>Follow-up</span></button>
+  <div class="bar-divider"></div>
+  <button class="bar-btn">✏️ <span>Notes</span></button>
+  <div class="bar-divider"></div>
+  <button class="bar-btn">↗️ <span>Escalate</span></button>
+</div>
+
+</body>
+</html>
