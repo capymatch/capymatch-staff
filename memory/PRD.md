@@ -45,6 +45,9 @@ Added issue-specific quick-resolve buttons to the Pod Hero Card for simple mecha
 ### Mobile Pod Page Redesign (March 12, 2026)
 Full redesign of Coach Pod Page. Reduced cognitive overload: one story, one top action, supporting context underneath. Renamed sections: Athlete Snapshot → Quick Summary (4-cell bento), Support Team → Pod Members (compact rows), Recruiting Intelligence → Key Signals (list), Intervention Playbook → Action Plan (checklist), Treatment History → Activity History (filtered log). Progressive disclosure: first 4 sections expanded, last 4 collapsed. Mobile-first, Apple-level restraint. New components: QuickSummary.js, KeySignals.js, ActionPlan.js, ActivityHistory.js.
 
+### Resolve Action Workflow + "From undefined" Fix (March 12, 2026)
+Replaced direct-resolve with a Resolve Action modal: resolution summary (required), notify director checkbox, add to athlete timeline checkbox, optional follow-up task creation. Backend logs resolution to pod timeline, creates follow-up task with 7-day due date, conditionally notifies director. Fixed "From undefined" bug: coach escalations now show "Escalated by [coach_name]".
+
 ## P1 Upcoming
 - In-App Messaging + Email Notifications (coach-to-athlete messaging from Support Pod)
 - Club Billing (subscription billing and management for organizations)
