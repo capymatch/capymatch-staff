@@ -4,7 +4,6 @@ import { Target, AlertTriangle, Calendar, MessageCircle, Focus } from "lucide-re
 import { toast } from "sonner";
 import RosterSection from "./RosterSection";
 import UpcomingEventsCard from "./UpcomingEventsCard";
-import ActivityFeed from "./ActivityFeed";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import AthletePipelinePanel from "./AthletePipelinePanel";
 import DirectorActionsCard from "./DirectorActionsCard";
@@ -305,16 +304,9 @@ export default function CoachView({ data, userName }) {
       {/* ── Assigned Actions ── */}
       <DirectorActionsCard role="club_coach" />
 
-      {/* ── Events + Activity (hidden in focus mode) ── */}
+      {/* ── Upcoming Events (hidden in focus mode) ── */}
       {!focusMode && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-          <div className="lg:col-span-3">
-            <UpcomingEventsCard events={data.upcomingEvents || []} roster={data.myRoster || []} />
-          </div>
-          <div className="lg:col-span-2">
-            <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />
-          </div>
-        </div>
+        <UpcomingEventsCard events={data.upcomingEvents || []} roster={data.myRoster || []} />
       )}
 
       {/* Pipeline Panel */}
