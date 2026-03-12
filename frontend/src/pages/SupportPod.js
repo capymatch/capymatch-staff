@@ -95,7 +95,7 @@ function SupportPod() {
   const completedActions = (actions || []).filter(a => a.status === "completed").slice(0, 8);
 
   return (
-    <div data-testid="support-pod-page" className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen">
+    <div data-testid="support-pod-page" className={`-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen transition-[margin] duration-300 ease-out ${notesOpen ? "mr-[340px] sm:mr-[380px]" : ""}`}>
       {/* Header */}
       <PodHeader
         athlete={athlete}
