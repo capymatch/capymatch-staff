@@ -119,7 +119,7 @@ export function AddActionModal({ athleteId, podMembers, currentUser, onCreated, 
       style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
       onClick={onCancel} data-testid="add-action-overlay">
 
-      <div className="w-full max-w-[540px] rounded-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+      <div className="w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
         onClick={e => e.stopPropagation()}
         style={{ background: "#161b25", border: "1px solid rgba(46,196,182,0.12)", boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(26,138,128,0.06)", maxHeight: "90vh" }}
         data-testid="add-action-modal">

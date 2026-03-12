@@ -38,7 +38,7 @@ function EscalateTaskModal({ task, athleteId, onClose, onEscalated }) {
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}
       data-testid="escalate-task-modal-overlay">
-      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+      <div className="w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
         style={{ backgroundColor: "var(--cm-surface)", border: "1px solid var(--cm-border)" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div className="flex items-center gap-2.5">

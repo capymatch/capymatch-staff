@@ -58,7 +58,7 @@ export function EscalateToDirector({ athleteId, athleteName, onSaved, onCancel }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} data-testid="escalate-overlay" onClick={onCancel}>
-      <div className="w-full max-w-[520px] rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+      <div className="w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
         onClick={e => e.stopPropagation()}
         style={{ background: "#161b25", border: "1px solid rgba(245,158,11,0.2)", boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(245,158,11,0.08)" }}
         data-testid="escalate-form">
