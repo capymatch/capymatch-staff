@@ -267,15 +267,34 @@ async def acknowledge_action(
         raise HTTPException(400, f"Action is already {action['status']}.")
 
     now = datetime.now(timezone.utc).isoformat()
+    coach_name = current_user.get("name", "Coach")
+
     await db.director_actions.update_one(
         {"action_id": action_id},
-        {"$set": {"status": "acknowledged", "acknowledged_at": now}},
+        {"$set": {
+            "status": "acknowledged",
+            "acknowledged_at": now,
+            "acknowledged_by": coach_name,
+        }},
     )
+
+    # Audit entry in pod timeline
+    athlete_id = action.get("athlete_id", "")
+    if athlete_id:
+        type_label = "Review Request" if action["type"] == "review_request" else "Escalation"
+        await db.pod_action_events.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": athlete_id,
+            "type": "action_updated",
+            "description": f"Acknowledged: {action.get('reason_label', type_label)}",
+            "actor": coach_name,
+            "action_id": action_id,
+            "created_at": now,
+        })
 
     # Notify director
     tenant_id = action.get("org_id") or ""
     if tenant_id and action.get("director_id"):
-        coach_name = current_user.get("name", "Coach")
         type_label = "Review Request" if action["type"] == "review_request" else "Escalation"
         await create_notification(
             tenant_id,

@@ -48,6 +48,9 @@ Full redesign of Coach Pod Page. Reduced cognitive overload: one story, one top 
 ### Resolve Action Workflow + "From undefined" Fix (March 12, 2026)
 Replaced direct-resolve with a Resolve Action modal: resolution summary (required), notify director checkbox, add to athlete timeline checkbox, optional follow-up task creation. Backend logs resolution to pod timeline, creates follow-up task with 7-day due date, conditionally notifies director. Fixed "From undefined" bug: coach escalations now show "Escalated by [coach_name]".
 
+### Acknowledge Workflow Enhancement (March 12, 2026)
+Acknowledge now stores acknowledged_by name, creates audit entry in pod timeline, and displays "Acknowledged by [Coach Name] · [date]" on acknowledged items. Resolve modal copy updated: "How was this resolved?" and "Add follow-up task (optional)".
+
 ## P1 Upcoming
 - In-App Messaging + Email Notifications (coach-to-athlete messaging from Support Pod)
 - Club Billing (subscription billing and management for organizations)

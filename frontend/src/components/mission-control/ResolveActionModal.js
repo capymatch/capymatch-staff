@@ -56,7 +56,7 @@ export function ResolveActionModal({ action, onResolve, onCancel }) {
           {/* Resolution notes */}
           <div>
             <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
-              Resolution summary <span className="text-red-400">*</span>
+              How was this resolved? <span className="text-red-400">*</span>
             </label>
             <textarea
               value={notes}
@@ -104,7 +104,7 @@ export function ResolveActionModal({ action, onResolve, onCancel }) {
           <div>
             <label className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
               <Plus className="w-3.5 h-3.5 text-slate-400" />
-              Create follow-up task
+              Add follow-up task
               <span className="text-[10px] text-slate-400 font-normal">(optional)</span>
             </label>
             <input

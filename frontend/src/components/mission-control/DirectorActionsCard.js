@@ -121,6 +121,12 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
               )}
             </div>
           )}
+          {/* Acknowledged info */}
+          {action.status === "acknowledged" && action.acknowledged_at && (
+            <p className="text-[10px] mt-1.5" style={{ color: "var(--cm-text-3)" }}>
+              Acknowledged by {action.acknowledged_by || "Coach"} · {new Date(action.acknowledged_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </p>
+          )}
           {/* Resolved info */}
           {action.status === "resolved" && action.resolved_note && (
             <p className="text-[10px] mt-1.5 italic" style={{ color: "var(--cm-text-3)" }}>
@@ -162,7 +168,7 @@ export default function DirectorActionsCard({ role }) {
     setAckingId(actionId);
     // Optimistic update: change status locally first
     setActions(prev => prev.map(a =>
-      a.action_id === actionId ? { ...a, status: "acknowledged" } : a
+      a.action_id === actionId ? { ...a, status: "acknowledged", acknowledged_at: new Date().toISOString(), acknowledged_by: "You" } : a
     ));
     setJustChangedId(actionId);
     setTimeout(() => setJustChangedId(null), 2500);
