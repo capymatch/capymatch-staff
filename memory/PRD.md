@@ -1,66 +1,85 @@
 # CapyMatch — Product Requirements Document
 
-## Original Problem Statement
-Unify `capymatch-staff` and `capymatch` into a single platform with shared backend, data model, and auth. Role-based experiences for Directors, Coaches, Athletes, Parents.
+## Overview
+CapyMatch is a full-stack sports recruiting platform connecting athletes, coaches, and club directors. Built with React (frontend) + FastAPI (backend) + MongoDB.
 
-## Core Architecture
-- **Backend:** FastAPI + MongoDB (Motor)
-- **Frontend:** React + Tailwind + Shadcn/UI
-- **Auth:** JWT-based, multi-role
-- **AI:** Emergent LLM Key (Claude Sonnet) for Gmail intelligence
+## User Personas
+- **Athletes** — Manage recruiting pipeline, track schools, build profile, invite helpers
+- **Coaches** — Monitor athletes via Mission Control, manage support pods, run events
+- **Directors** — Oversee roster, handle director-level actions, manage invites
+- **Platform Admins** — Manage users, subscriptions, integrations, universities
 
-## Recent Completions
+## Architecture
+```
+/app/
+├── backend/          (FastAPI, MongoDB)
+│   ├── routers/      (API endpoints)
+│   ├── services/     (Business logic)
+│   └── tests/        (Pytest test suites)
+└── frontend/         (React, Shadcn UI)
+    ├── src/pages/    (Page components)
+    ├── src/components/ (Reusable UI)
+    └── src/lib/      (Utilities, context)
+```
 
-### Support Pod V2 — Intervention Console (March 11, 2026)
-10-point upgrade: Quick Actions Bar, Active Issue Banner with ACT NOW badge, Athlete Snapshot (Recruiting Progress + Coach Engagement), Support Team (Message/Call), Top-3 Next Actions, Recruiting Intelligence (rule-based signals), Intervention Playbooks (checkable recovery plans), Coaching Suggestions (renamed), compact Recruiting Timeline, enhanced Treatment History.
+## Core Features — Implemented
 
-### Mobile Responsive — Dashboard + Pod (March 11, 2026)
-Full mobile responsiveness for Coach Dashboard and Support Pod.
+### Coach Side (Complete)
+- Mission Control dashboard with unified athlete attention list
+- Support Pod with mobile-first redesign (Pod Hero Card, collapsible sections)
+- Director Actions (acknowledge/resolve with modal notes and follow-ups)
+- Events, Advocacy, Program Intelligence
 
-### Coach Action Bar — Journey-Style Interactions (March 12, 2026)
-Replaced QuickActionsBar with Journey-style floating action bar. 5 dark-themed modals: Email, Log Interaction, Follow-up, Notes (sidebar), Escalate to Director.
+### Athlete Side (Complete)
+- **Dashboard** — Recruiting overview at `/board`
+- **Pipeline** — School tracking kanban at `/pipeline`
+- **Find Schools** — School discovery at `/schools`
+- **Calendar** — Events calendar at `/calendar`
+- **Inbox** — Email management at `/inbox`
+- **Highlights** — Video highlights at `/highlights`
+- **Analytics** — Outreach analytics at `/analytics`
+- **Profile** — Athlete profile editing at `/athlete-profile`
+- **Account** (NEW - Mar 2026) — Personal info, subscription, change password, notifications, privacy, danger zone at `/account`
+- **Settings** (REFACTORED - Mar 2026) — Appearance/theme, Gmail integration, Team Management (Invite Someone), data & privacy, guided tour at `/athlete-settings`
+- **Team Management** (NEW - Mar 2026) — Invite helpers/parents to collaborate on recruiting. Backend API at `/api/team/*`
+
+### Admin Side
+- User management, subscriptions, integrations, universities dashboard
 
 ## Key API Endpoints
-- `GET /api/coach/mission-control` — Dashboard data
-- `GET /api/support-pods/:athleteId` — Support Pod V2
-- `POST /api/support-pods/:athleteId/actions` — Create action
-- `POST /api/support-pods/:athleteId/escalate` — Coach escalation
-- `GET/POST/PATCH/DELETE /api/athletes/:id/notes` — CRUD notes
+- `GET/POST /api/team` — Team info and auto-creation
+- `POST /api/team/invite` — Invite team member by email
+- `DELETE /api/team/invitations/{id}` — Cancel pending invite
+- `DELETE /api/team/members/{id}` — Remove team member
+- `POST /api/team/leave` — Leave team
+- `POST /api/team/accept/{id}` — Accept team invite
+- `GET/PUT /api/athlete/settings` — Athlete preferences
+- `POST /api/athlete/settings/change-password` — Password change
+- `GET /api/athlete/settings/export-data` — Data export
+- `DELETE /api/athlete/settings/delete-account` — Account deletion
 
-## Credentials
-- **Admin:** douglas@capymatch.com / 1234
-- **Director:** director@capymatch.com / director123
-- **Coach:** coach.williams@capymatch.com / coach123
+## 3rd Party Integrations
+- **MongoDB** — Primary database
+- **Resend** — Transactional emails
+- **Stripe** — Payment processing
+- **Emergent LLM Key** — AI features
+- **Gmail API** — Email integration for athletes
+
+## Test Credentials
+- **Coach:** coach.williams@capymatch.com / (check DB)
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
 
-### Add Action Modal — Premium Flow (March 12, 2026)
-Completed the "Next Actions" component upgrade: dark-themed AddActionModal with real pod members in assignee dropdown, category chips, due date picker, notes. Auto-selects current user. Creates in-app notification + fires Resend email on submit. Deleted deprecated QuickActionsBar.js.
+## Backlog
 
-### Pod Hero Card — Decision Center (March 12, 2026)
-Restructured Support Pod to be driven by a Pod Top Action Engine (same decision pattern as pipeline Top Action Engine). New layout: Pod Hero Card at top showing issue type, top action, explanation, owner, CTA buttons. Sections below: Next Actions, Athlete Snapshot, then collapsible sections (Recruiting Intelligence, Intervention Playbook, Recruiting Timeline, Treatment History). Old ActiveIssueBanner replaced by Pod Hero Card.
+### P1 — In-App Messaging & Notifications
+- Coach-to-athlete messaging system
+- Real-time notifications
 
-### Quick-Resolve Actions (March 12, 2026)
-Added issue-specific quick-resolve buttons to the Pod Hero Card for simple mechanical issues only (ownership gaps → "Assign Owner"). Complex issues (momentum drop, blockers, family disengagement) show normal CTA instead. Backend endpoint POST /support-pods/{athlete_id}/quick-resolve bulk-assigns unowned actions to the coach.
+### P2 — Club Billing
+- Subscription billing for organizations
 
-### Mobile Pod Page Redesign (March 12, 2026)
-Full redesign of Coach Pod Page. Reduced cognitive overload: one story, one top action, supporting context underneath. Renamed sections: Athlete Snapshot → Quick Summary (4-cell bento), Support Team → Pod Members (compact rows), Recruiting Intelligence → Key Signals (list), Intervention Playbook → Action Plan (checklist), Treatment History → Activity History (filtered log). Progressive disclosure: first 4 sections expanded, last 4 collapsed. Mobile-first, Apple-level restraint. New components: QuickSummary.js, KeySignals.js, ActionPlan.js, ActivityHistory.js.
-
-### Resolve Action Workflow + "From undefined" Fix (March 12, 2026)
-Replaced direct-resolve with a Resolve Action modal: resolution summary (required), notify director checkbox, add to athlete timeline checkbox, optional follow-up task creation. Backend logs resolution to pod timeline, creates follow-up task with 7-day due date, conditionally notifies director. Fixed "From undefined" bug: coach escalations now show "Escalated by [coach_name]".
-
-### Merge Dashboard Roster (March 12, 2026)
-Merged "Today's Priorities" and "My Roster" into a single "Athletes Requiring Attention" section with issue badges, reason, NEXT action, and Open Pod CTA. Below: "On Track Athletes" collapsed by default. Removed duplicate information entirely.
-
-## P1 Upcoming
-- In-App Messaging + Email Notifications (coach-to-athlete messaging from Support Pod)
-- Club Billing (subscription billing and management for organizations)
-
-## P1 Backlog (Added March 12, 2026)
-- **In-App Messaging + Email Notifications:** When a coach sends a message from the Support Pod: (1) create in-app message in athlete area, (2) optionally create for parent, (3) log in pod timeline, (4) send email notification from CapyMatch Notifications <noreply@capymatch.com> via Resend. Email is notification only, links back to app. Requires: `messages` collection, inbox enhancement, Resend domain verification for custom sender.
-
-## P2 Future/Backlog
-- AI-powered coach summary (LLM recruiting pitch)
-- Intelligence Pipeline Phase 2 (Roster Stability, Scholarship, NIL agents)
-- Coach Scraper Health Report V1
-- Parent/Family Experience
+### P3 — Future
+- Multi-Agent Intelligence Pipeline (Phase 2+): Roster Stability, Scholarship, NIL Readiness agents
+- AI-Powered Coach Summary (LLM-generated recruiting pitches)
+- Parent/Family Experience (dedicated UX for parents/helpers)
 - Coach Probability / Program Receptivity Feature
