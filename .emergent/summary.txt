@@ -1,59 +1,81 @@
 <analysis>**original_problem_statement:**
-The user's initial goal was to build CapyMatch, a unified platform for college sports recruiting. After a major overhaul of the Athlete Support Pod, the most recent user request is to redesign and implement the Add Next Action flow. The goal is to replace the current basic inline form with a premium, dark-themed modal that is consistent with the rest of the application's UX. This upgrade should use real support pod members for assignment, include fields for due date and task type, and trigger in-app and email notifications upon task creation.
+The user initiated a series of phased requests to overhaul and refine the CapyMatch application.
+1.  **Athlete UI Overhaul:** The initial request was to completely redesign the athlete-facing Profile and Settings pages to exactly match the layout and functionality of a reference GitHub repository (). This involved breaking down a monolithic settings page into separate, dedicated pages for Profile, Account, Billing, and Settings, and implementing new features like team invitations.
+2.  **Coach Dashboard Refinements:** The user then requested multiple, iterative improvements to the Coach Mission Control dashboard. The goals were to improve scannability, clarify next actions, reduce visual noise, and re-prioritize sections to create a more effective intervention console.
+3.  **Athlete Support Pod UX Polish:** Following the dashboard work, the user requested a layout and hierarchy adjustment for the Athlete Support Pod page to make it flow like a coaching intervention (Problem → Context → Actions → Insights).
+4.  **Task Workflow Enhancement:** Most recently, the user requested a change to the task management workflow within the Support Pod. Instead of tasks disappearing upon completion, they should be moved to a Completed section with a corresponding audit log entry in the activity history. The user also requested an Escalate option to convert a coach task into a formal Director Action.
 
 **PRODUCT REQUIREMENTS:**
-1.  **Replace Inline Form with Modal:** The + Add button in the Next Actions component should open a dark-themed modal.
-2.  **Use Real Pod Members for Assignment:** The Assign to field must be a select dropdown populated with the actual members of the athlete's support pod (e.g., Coach, Parent, Athlete, Director), not a hardcoded list.
-3.  **Modern Modal Fields:** The modal must include an action title, the Assign to dropdown, a due date picker, and optional fields for type/category and notes.
-4.  **Smart UX Defaults:** Implement sensible defaults, such as pre-selecting the current user as the assignee.
-5.  **Notifications:** When an action is assigned, the system should be able to send an in-app notification and trigger an email notification to the assignee from .
-6.  **Preserve Existing Functionality:** Do not break the existing logic for sorting, completing, or viewing actions.
+1.  **Deconstruct Monolithic Settings:** Replace the single athlete settings page with distinct pages for Account, Billing, and general Settings.
+2.  **Match Reference Repository:** Ensure the new athlete-facing pages, navigation, and features mirror the  repository.
+3.  **Refine Coach UI for Clarity:** Systematically improve the Coach Dashboard and Athlete Support Pod to be more action-oriented, scannable, and hierarchically logical.
+4.  **Implement Robust Task Lifecycle:** Create a full task workflow that includes Open, Completed, and Escalated states, with a clear audit trail for all actions. System-generated tasks should auto-resolve based on coach activity.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application (React, FastAPI, MongoDB) with a Coach Mission Control dashboard and a recently overhauled Athlete Support Pod. This pod now functions as an intervention console with new data sections (, , ). A key UX pattern is a floating action bar at the bottom of the page that opens dark, glass-morphism modals for actions like , , , , and . The app has also been enhanced for mobile responsiveness.
+The application is a full-stack sports recruiting platform.
+- The **athlete-facing UI** has been successfully refactored. It now features separate, well-defined pages for , , and . Navigation has been moved from the sidebar to a user dropdown in the top bar. A Team Management section with invite functionality is live, supported by a new backend API.
+- The **Coach Mission Control dashboard** has been significantly refined through multiple iterations. It now features better labeling (Athletes Requiring Attention), a collapsible section for On Track athletes, a prominent NEXT action UI, a Focus Mode, and an improved layout for Assigned Actions.
+- The **Athlete Support Pod** page layout has been restructured for a better coaching workflow. It now features collapsible panels for reference information and a logical flow from problem to action. The Next Actions component correctly displays both system-generated and coach-created tasks with distinct UI treatments.
 
 **Last working item**:
-    - Last item agent was working: The agent was implementing the user's request to upgrade the Next Actions component. This involved creating a new  component, updating the backend  endpoint to accept new fields (assignee, due date, type) and to trigger an email notification via Resend. The agent had started rewriting the main  component to integrate this new modal but did not complete the work.
+    - Last item agent was working: The agent was in the middle of implementing the enhanced task workflow for the Athlete Support Pod. This involves changing the completion logic to move tasks to a Completed list instead of deleting them, logging the completion activity, and adding a new Escalate feature. The agent had started both backend and frontend work.
     - Status: IN PROGRESS
     - Agent Testing Done: N
     - Which testing method agent to use? both
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - No pending issues.
+  - Issue 1:  (P0) Complete the enhanced task workflow in the Athlete Support Pod.
+  
+  Issues Detail:
+  - Issue 1: 
+     - Attempted fixes: The agent successfully updated the backend  endpoint to log who completed a task. It also began rewriting the frontend  component to handle the new state logic and added auto-resolve logic to the backend notes endpoint.
+     - Next debug checklist: 
+        1. **Backend:** Implement the  endpoint in  to create a Director Action from a task.
+        2. **Frontend:** Create a new  component.
+        3. **Frontend:** Integrate the new modal with an Escalate option on each task item in .
+        4. **Testing:** Conduct end-to-end testing of the full task lifecycle: completion (task moves to completed list, activity is logged), escalation (modal opens, director action is created), and auto-resolution of system tasks (e.g., logging a note resolves a check-in task).
+     - Why fix this issue and what will be achieved with the fix? This will deliver a complete and auditable task management system for coaches, fulfilling a key user requirement for a more robust operational workflow.
+     - Status:  IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1: (P0) Complete the Next Actions Component Upgrade
-
- Task Detail:
-  - Task 1: 
-     - Where to resume: . The component needs to be fully rewritten to remove the old inline form and instead manage the state to open the new . This includes passing the necessary props (, ) to the modal and implementing the callback to refresh the action list upon successful creation.
-     - What will be achieved with this? The Add Next Action flow will be elevated to a polished, modal-based experience consistent with the app's premium design. It will enable assigning tasks to actual support pod members and will notify them, making the feature significantly more robust and user-friendly.
+  - Task 1: Implement Enhanced Task Workflow in Athlete Support Pod
+     - Where to resume: 
+        - Backend:  to add the  endpoint.
+        - Frontend: Create the  and update  to trigger it.
+     - What will be achieved with this? A full task lifecycle (Open, Completed, Escalated) with an audit trail, matching the user's requirements.
      - Status:  IN PROGRESS
-     - Should Test frontend/backend/both after fix? both
-     - Blocked on something: None.
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on something: No
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
-- (P1) **Implement In-App Messaging & Notifications:** Build the backend and frontend for a full in-app messaging system, triggered when a coach sends a message from the Support Pod. This was approved by the user and moved to the backlog.
-- (P2) **Club Billing:** Implement the subscription billing and management flow for organizations/clubs.
+- (P1) **Implement In-App Messaging & Notifications:** A previously approved task to build a full coach-to-athlete messaging system.
 
 **Future Tasks:**
-- **Multi-Agent Intelligence Pipeline (Phase 2+):** Implement the remaining agents: , , and .
-- **AI-Powered Coach Summary:** Use an LLM to generate an enhanced recruiting pitch for the public profile using pipeline data.
-- **Coach Scraper Health Report (V1):** Build a dashboard card and admin digest to monitor data freshness.
-- **Parent/Family Experience:** Build out the dedicated user experience for parents, including login and task management.
+- (P2) **Club Billing:** Implement full subscription billing for organizations.
+- **Multi-Agent Intelligence Pipeline (Phase 2+):** Implement , , and  agents.
+- **AI-Powered Coach Summary:** Use an LLM to generate recruiting pitches.
+- **Parent/Family Experience:** Build out the dedicated user experience for parents/helpers.
 
 **Completed work in this session**
-- **Athlete Support Pod Overhaul:** Successfully implemented the user's 10-point plan, transforming the pod into an intervention console.
-    - **New Components:** , , .
-    - **Enhanced Components:** , , , .
-- **Journey-Style Quick Actions:** Replaced the static top action bar with a floating action bar at the bottom, launching a new suite of dark-themed modal components (, , , , ).
-- **Component Refactoring:** Updated  and  to use the new centralized modal system instead of their own inline forms, improving consistency and maintainability.
-- **Mobile Responsiveness:** Refactored the Coach Dashboard and Support Pod layouts and components to ensure a clean and usable experience on mobile devices.
-- **Bug Fix:** Resolved a critical bug in  where items would disappear upon interaction by implementing an optimistic UI update.
+- **Athlete UI Overhaul:**
+  - Deconstructed the monolithic  into distinct , , and a refactored .
+  - Implemented a backend team management API () and a corresponding Invite Someone UI.
+  - Reorganized athlete navigation into a  user dropdown menu.
+- **Coach Mission Control Refinements:**
+  - Improved UI/UX across the dashboard, including better labeling, section reordering, a Focus Mode, and refined layouts for Athletes Requiring Attention and Assigned Actions.
+  - Removed the Recent Activity section to reduce noise.
+- **Athlete Support Pod Enhancements:**
+  - Reworked the page layout into a Problem → Context → Actions → Insights hierarchy with collapsible sections.
+  - Fixed the Next Actions component to correctly display and handle both system and coach-created tasks.
+- **Program Insights Page:**
+  - Renamed and restyled the Program page to function as a dark-theme analytics dashboard named Program Insights.
 
 **Earlier issues found/mentioned but not fixed**
    - None.
@@ -65,66 +87,73 @@ A full-stack application (React, FastAPI, MongoDB) with a Coach Mission Control 
 
 
 **Key Technical Concepts**
-- **Modal-First UX:** Standardized on a dark, glass-morphism modal pattern for all user actions, moving away from inconsistent inline forms.
-- **Callback-Driven Components:** Refactored child components (, ) to emit events via callbacks (), with the parent page () handling the logic to open the correct modal.
-- **Backend Data Enrichment:** The  endpoint was enhanced to provide pre-processed data for new UI sections like  and .
-- **Transactional Email Notifications:** Integrated  via a dedicated  to send email notifications for key events, such as new action assignments.
+- **UI Refactoring & Componentization:** Extensive work was done to break down large, complex pages into smaller, more manageable components, particularly on the coach and athlete UIs.
+- **API Design & Enhancement:** New endpoints were created (e.g., ) and existing ones were enhanced () to support new user-requested features.
+- **Conditional Rendering & UI Logic:** The frontend was updated with more complex logic to handle different task types (System vs. Coach), task states (Open, Completed), and feature toggles (Focus Mode).
+- **State Management & Data Flow:** Standardized on an  instance with auth interceptors for consistent and secure API communication from the frontend.
 
 **key DB schema**
-  - : The collection schema was updated to support the new Add Next Action flow. It now includes , , , , and .
+  - : Schema was enhanced to support a richer task lifecycle.
+    - : Now supports Open, Completed, Escalated, Cancelled.
+    - : Stores the identifier of the user who completed the task.
+    - : Differentiates between 'coach' (manual) and 'system' (automated) actions.
+  -  (new collection): Stores team members, roles, and invitation status for the athlete's support team.
 
 **changes in tech stack**
-  - **Resend:** Formally integrated as the email provider, with a new service file () created to manage sending emails.
+  - None.
 
 **All files of reference**
-- **For current task (Next Actions Upgrade):**
-  -  (this is the file to resume work on)
-  -  (the new modal component)
-  -  (parent component that will pass props)
-  -  (contains the updated  endpoint)
-  -  (contains the email notification logic)
+- : Core file for the current task. Requires implementation of the  endpoint and verification of auto-resolve logic.
+- : The main frontend component for the current task. Requires integration with the new escalation modal.
+- : The parent page containing the  component.
+- : Main coach dashboard.
+- : Contains the new user dropdown menu.
+- : The new API for team management.
 
 **Areas that need refactoring**:
-- The old  component is now deprecated after being replaced by the  and should be deleted to avoid confusion.
+- None. A major refactoring effort has just been completed.
 
 **key api endpoints**
-- : **MODIFIED**. Now accepts additional fields (, , ) and triggers an email notification upon successful creation.
-- : **NEW**. Allows coaches to create a director action from the Support Pod.
-- : **NEW**. Fetches all notes for a specific athlete.
-- : **NEW**. Deletes a specific note.
+- : Handles task status updates (e.g., to Completed).
+- : **NEEDS TO BE CREATED.**
+- : Updated to include logic for auto-resolving system tasks.
+- : Provides all data for the Athlete Support Pod view.
+- : A new set of CRUD endpoints for managing an athlete's team.
 
 **Critical Info for New Agent**
-- Your immediate and top priority is to **complete the Next Actions component upgrade**.
-- **Resume your work in **. You must finish replacing the old inline form logic with the functionality to open the new . This involves managing the modal's open/close state and passing the  and  data as props.
-- After implementing the frontend, perform an end-to-end test to ensure that creating a new action correctly closes the modal, refreshes the list, and triggers the backend email notification.
-- Once this task is complete and verified, the next item in the user's backlog is to implement a full in-app messaging system.
+- Your immediate priority (P0) is to **complete the implementation of the enhanced task workflow** in the Athlete Support Pod.
+- **Backend:** You must create the  API endpoint in . This endpoint should create a new Director Action based on the escalated task.
+- **Frontend:** You need to create an  component and integrate it with an Escalate option within the  component.
+- **Workflow:** The goal is a complete task lifecycle. Completing a task moves it to a Completed list and logs an activity. Escalating a task opens a modal and creates a Director Action.
+- **Testing:** After implementation, perform thorough end-to-end testing of the entire flow: completion, escalation, and auto-resolution of system-generated tasks.
 
 **documents and test reports created in this job**
--  was updated after major features were completed.
-- Multiple test reports were generated in , showing successful verification of the Support Pod overhaul and mobile responsiveness fixes.
+- 
+- 
+- 
+- 
 
-**Last 10 User Messages and any pending HUMAN messages**
-1.  **LATEST:** User provided a detailed 10-point specification to upgrade the Next Actions component to a premium modal-based flow.
-2.  User asked for clarification on how the Next Actions component currently works.
-3.  User identified that buttons in the  were not using the new modals and requested a fix.
-4.  User approved the plan for an in-app messaging system but requested it be added to the backlog for later.
-5.  User requested a plan for a full coach-to-athlete messaging and notification system.
-6.  User asked if the quick action buttons were only logging messages.
-7.  User reported a mobile layout issue with a screenshot.
-8.  User requested that the dashboard and support pod be made mobile responsive.
-9.  User approved the plan for the Support Pod overhaul with minor adjustments.
-10. User asked for the full, detailed plan for the Support Pod overhaul.
+**Last 10 User Messages and any pending HUMAN messages** 
+1.  **LATEST:** Requested an enhanced task workflow where completed tasks are logged and moved (not deleted), and an Escalate option is added. (STATUS: In Progress)
+2.  Requested seed data to see system-generated actions in the UI. (STATUS: Completed)
+3.  Reported that Next Actions in the pod was broken. (STATUS: Completed)
+4.  Clarified that Next Actions should show both system and coach tasks. (STATUS: Completed)
+5.  Requested a layout hierarchy improvement for the Athlete Support Pod. (STATUS: Completed)
+6.  Requested that the Program page be reframed as an analytics dashboard. (STATUS: Completed)
+7.  Requested a UX polish pass on the Assigned Actions component. (STATUS: Completed)
+8.  Requested moving Resolve/Acknowledge buttons to the top-right. (STATUS: Completed)
+9.  Requested removing the background color from the NEXT action text. (STATUS: Completed)
+10. Requested removing the background color from Athletes Requiring Attention rows. (STATUS: Completed)
 
 **Project Health Check:**
-- **Broken:** The Add Next Action feature is currently non-functional as its parent component () is in a partially refactored state.
-- **Mocked:** N/A
+- **Broken:** The task escalation workflow is incomplete.
+- **Mocked:** Core athlete performance metrics are still based on simple seed data.
 
 **3rd Party Integrations**
-- **Resend:** Used for sending transactional emails (e.g., new task notifications) from .
-- **MongoDB:** Primary database.
-- **Google (Gmail API):** Used in other parts of the application.
-- **Stripe:** Used for payments.
-- **Emergent LLM Key:** Available for LLM features.
+- Resend
+- MongoDB
+- Stripe
+- Emergent LLM Key
 
 **Testing status**
   - Testing agent used after significant changes: YES
@@ -133,8 +162,8 @@ A full-stack application (React, FastAPI, MongoDB) with a Coach Mission Control 
   - Known regressions: None
 
 **Credentials to test flow:**
-- **Coach:**  /  (primary for testing all Support Pod features)
-- **Athlete (Pro Plan):**  / 
+- **Coach:**  / 
+- **Athlete:**  / 
 
 **What agent forgot to execute**
-- The agent was in the middle of implementing the Next Actions component upgrade and did not complete the task. The work needs to be finished and tested.</analysis>
+- The agent was in the middle of an implementation and had not forgotten any steps. The remaining parts of the plan (creating the escalate endpoint and modal) are the immediate next actions.</analysis>

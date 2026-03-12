@@ -51,6 +51,35 @@ async def create_note(athlete_id: str, note: NoteCreate, current_user: dict = ge
     }
     await db.athlete_notes.insert_one(doc)
     doc.pop("_id", None)
+
+    # Auto-resolve system-generated tasks when coach logs an interaction
+    auto_resolve_categories = {"momentum_drop", "engagement_drop"}
+    system_tasks = await db.pod_actions.find({
+        "athlete_id": athlete_id,
+        "source": "system",
+        "status": {"$in": ["ready", "open", "overdue"]},
+        "source_category": {"$in": list(auto_resolve_categories)},
+    }).to_list(50)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    for task in system_tasks:
+        await db.pod_actions.update_one(
+            {"id": task["id"]},
+            {"$set": {
+                "status": "completed",
+                "completed_at": now_iso,
+                "completed_by": "System (auto-resolved)",
+            }},
+        )
+        await db.pod_action_events.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": athlete_id,
+            "type": "action_completed",
+            "description": f'Auto-resolved "{task.get("title", "")}" — coach logged interaction',
+            "actor": "System",
+            "action_id": task["id"],
+            "created_at": now_iso,
+        })
+
     return doc
 
 

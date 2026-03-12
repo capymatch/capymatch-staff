@@ -230,30 +230,34 @@ async def quick_resolve(athlete_id: str, body: dict, current_user: dict = get_cu
 async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdate, current_user: dict = get_current_user_dep()):
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
-    """Update an action (complete, reassign, change status)"""
+    """Update an action (complete, reassign, escalate, cancel)"""
     update_dict = {}
     event_desc = ""
+    now = datetime.now(timezone.utc).isoformat()
 
     if update.status:
         update_dict["status"] = update.status
         if update.status == "completed":
-            update_dict["completed_at"] = datetime.now(timezone.utc).isoformat()
-            event_desc = "Completed action"
-        else:
-            event_desc = f"Status changed to {update.status}"
+            update_dict["completed_at"] = now
+            update_dict["completed_by"] = current_user.get("name", "Unknown")
+        elif update.status == "cancelled":
+            update_dict["cancelled_at"] = now
+            update_dict["cancelled_by"] = current_user.get("name", "Unknown")
 
     if update.owner:
         update_dict["owner"] = update.owner
-        event_desc = f"Reassigned to {update.owner}"
 
     existing = await db.pod_actions.find_one({"id": action_id, "athlete_id": athlete_id})
+    action_title = ""
 
     if existing:
+        action_title = existing.get("title", "")
         await db.pod_actions.update_one({"id": action_id}, {"$set": update_dict})
     else:
         from support_pod import get_athlete_interventions, generate_suggested_actions
         suggested = generate_suggested_actions(athlete_id, get_athlete_interventions(athlete_id))
         original = next((s for s in suggested if s["id"] == action_id), {})
+        action_title = original.get("title", "")
         doc = {
             **original,
             "id": action_id,
@@ -263,20 +267,110 @@ async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdat
         }
         await db.pod_actions.insert_one(doc)
 
+    # Build descriptive event log
+    if update.status == "completed":
+        event_desc = f'{current_user.get("name", "Coach")} completed task "{action_title}"'
+    elif update.status == "cancelled":
+        event_desc = f'{current_user.get("name", "Coach")} cancelled task "{action_title}"'
+    elif update.owner:
+        event_desc = f'Reassigned "{action_title}" to {update.owner}'
+    elif update.status:
+        event_desc = f'Status of "{action_title}" changed to {update.status}'
+
     if event_desc:
         event = {
             "id": str(uuid.uuid4()),
             "athlete_id": athlete_id,
-            "type": "action_updated",
+            "type": "action_completed" if update.status == "completed" else "action_updated",
             "description": event_desc,
             "actor": current_user["name"],
             "action_id": action_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": now,
         }
         await db.pod_action_events.insert_one(event)
 
     result = await db.pod_actions.find_one({"id": action_id}, {"_id": 0})
     return result or {"id": action_id, **update_dict}
+
+
+@router.post("/support-pods/{athlete_id}/actions/{action_id}/escalate")
+async def escalate_task(athlete_id: str, action_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Escalate a pod task to a director action."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+
+    now = datetime.now(timezone.utc).isoformat()
+    reason = body.get("reason", "").strip()
+    if not reason:
+        raise HTTPException(400, "Escalation reason is required")
+
+    # Get the task
+    task = await db.pod_actions.find_one({"id": action_id, "athlete_id": athlete_id}, {"_id": 0})
+    if not task:
+        # Check suggested actions
+        from support_pod import get_athlete_interventions, generate_suggested_actions
+        suggested = generate_suggested_actions(athlete_id, get_athlete_interventions(athlete_id))
+        task = next((s for s in suggested if s["id"] == action_id), None)
+
+    task_title = task.get("title", "Unknown task") if task else "Unknown task"
+    athlete = sp_get_athlete(athlete_id) or {}
+    athlete_name = athlete.get("full_name", "Unknown")
+
+    # Mark the task as escalated
+    await db.pod_actions.update_one(
+        {"id": action_id, "athlete_id": athlete_id},
+        {"$set": {
+            "status": "escalated",
+            "escalated_at": now,
+            "escalated_by": current_user.get("name"),
+            "escalation_reason": reason,
+        }},
+        upsert=False,
+    )
+    # If task was suggested (not in DB), materialize it
+    if not await db.pod_actions.find_one({"id": action_id}):
+        doc = {**(task or {}), "id": action_id, "athlete_id": athlete_id,
+               "status": "escalated", "escalated_at": now,
+               "escalated_by": current_user.get("name"), "escalation_reason": reason,
+               "is_suggested": False}
+        await db.pod_actions.insert_one(doc)
+
+    # Create a Director Action
+    da_id = f"da_{uuid.uuid4().hex[:12]}"
+    director_action = {
+        "action_id": da_id,
+        "type": "coach_escalation",
+        "status": "open",
+        "coach_id": current_user.get("id"),
+        "coach_name": current_user.get("name", "Coach"),
+        "athlete_id": athlete_id,
+        "athlete_name": athlete_name,
+        "org_id": current_user.get("org_id"),
+        "reason": "task_escalation",
+        "reason_label": f"Escalated: {task_title}",
+        "note": reason,
+        "urgency": "medium",
+        "source": "coach_escalation",
+        "source_task_id": action_id,
+        "created_at": now,
+        "acknowledged_at": None,
+        "resolved_at": None,
+    }
+    await db.director_actions.insert_one(director_action)
+
+    # Log activity
+    await db.pod_action_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "type": "action_escalated",
+        "description": f'{current_user.get("name")} escalated task "{task_title}" to director — {reason}',
+        "actor": current_user.get("name"),
+        "action_id": action_id,
+        "created_at": now,
+    })
+
+    director_action.pop("_id", None)
+    return {"ok": True, "director_action_id": da_id, "task_status": "escalated"}
 
 
 @router.post("/support-pods/{athlete_id}/resolve")
