@@ -71,10 +71,18 @@ CapyMatch is a full-stack sports recruiting platform connecting athletes, coache
 ## 3rd Party Integrations
 MongoDB, Resend (noreply@capymatch.com), Stripe, Emergent LLM Key, Gmail API
 
+## Completed (Mar 2026)
+- V1 In-App Messaging: Full stack coach↔athlete messaging with threads, inbox, unread badges, timeline integration
+- Bug fixes: athlete_id now included in JWT via _safe_user + Pydantic models (UserOut, MeResponse)
+- Messaging events (support_message_sent, support_message_reply) render correctly in Support Pod timeline
+- All 8 backend tests + full frontend flow verified passing
+
 ## Test Credentials
 - **Coach:** coach.williams@capymatch.com / coach123
+- **Athlete (Emma):** emma.chen@athlete.capymatch.com / athlete123
 - **Test Athlete ID:** athlete_3 (Emma Chen)
 
 ## Backlog
 ### P2 — Club Billing (org subscriptions)
+### P2 — Refactor user-athlete linking (currently uses email fallback; should be set during onboarding)
 ### P3 — AI Coach Summary, Intelligence Pipeline Phase 2, Parent/Family Experience
