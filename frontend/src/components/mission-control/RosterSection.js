@@ -46,9 +46,7 @@ function AthleteRow({ athlete, isLast }) {
         </div>
       ) : (
         <div className="w-8 sm:w-10 shrink-0 text-center pt-1">
-          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-50">
-            <CheckCircle className="w-3 h-3 text-emerald-500" />
-          </span>
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
         </div>
       )}
 
