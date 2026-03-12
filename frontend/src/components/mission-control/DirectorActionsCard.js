@@ -82,7 +82,6 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
           <TypeIcon className="w-3.5 h-3.5" style={{ color: type.color }} />
         </div>
         <div className="flex-1 min-w-0">
-          {/* Row 1: Athlete name + severity + status */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>{action.athlete_name}</span>
             <SeverityBadge riskLevel={action.risk_level} />
@@ -120,30 +119,6 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
             )}
           </div>
 
-          {/* Coach action buttons */}
-          {(canAcknowledge || canResolve) && (
-            <div className="flex items-center gap-2 mt-1.5">
-              {canAcknowledge && (
-                <Button size="sm" onClick={() => onAcknowledge(action.action_id)}
-                  disabled={acknowledging}
-                  className="text-[10px] h-6 px-2.5 bg-blue-600/80 hover:bg-blue-600 text-white"
-                  data-testid={`ack-action-${action.action_id}`}>
-                  {acknowledging ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
-                  Acknowledge
-                </Button>
-              )}
-              {canResolve && (
-                <Button size="sm" onClick={() => onResolve(action.action_id)}
-                  disabled={resolving}
-                  className="text-[10px] h-6 px-2.5 bg-emerald-600/80 hover:bg-emerald-600 text-white"
-                  data-testid={`resolve-action-${action.action_id}`}>
-                  {resolving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle2 className="w-3 h-3 mr-1" />}
-                  Resolve
-                </Button>
-              )}
-            </div>
-          )}
-
           {/* Acknowledged info */}
           {action.status === "acknowledged" && action.acknowledged_at && (
             <p className="text-[10px] mt-1" style={{ color: "var(--cm-text-3)" }}>
@@ -157,6 +132,30 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
             </p>
           )}
         </div>
+
+        {/* Action buttons — top right */}
+        {(canAcknowledge || canResolve) && (
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {canAcknowledge && (
+              <Button size="sm" onClick={() => onAcknowledge(action.action_id)}
+                disabled={acknowledging}
+                className="text-[10px] h-6 px-2.5 bg-blue-600/80 hover:bg-blue-600 text-white"
+                data-testid={`ack-action-${action.action_id}`}>
+                {acknowledging ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Eye className="w-3 h-3 mr-1" />}
+                Acknowledge
+              </Button>
+            )}
+            {canResolve && (
+              <Button size="sm" onClick={() => onResolve(action.action_id)}
+                disabled={resolving}
+                className="text-[10px] h-6 px-2.5 bg-emerald-600/80 hover:bg-emerald-600 text-white"
+                data-testid={`resolve-action-${action.action_id}`}>
+                {resolving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle2 className="w-3 h-3 mr-1" />}
+                Resolve
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
