@@ -299,47 +299,6 @@ export default function CoachView({ data, userName }) {
         </div>
       </section>
 
-      {/* ── Quick Summary Card ── */}
-      {summaryLines.length > 0 && (
-        <section
-          className="rounded-xl border p-5"
-          style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
-          data-testid="coach-summary-card"
-        >
-          <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3">
-            <div className="space-y-1.5 flex-1">
-              {summaryLines.map((line, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{
-                      backgroundColor: line.includes("momentum") || line.includes("blocker")
-                        ? "#ef4444"
-                        : line.includes("event") || line.includes("prep")
-                        ? "#8b5cf6"
-                        : line.includes("on track")
-                        ? "#10b981"
-                        : "#f59e0b",
-                    }}
-                  />
-                  <span className="text-xs sm:text-sm" style={{ color: "var(--cm-text-2)" }}>{line}</span>
-                </div>
-              ))}
-            </div>
-            {priorities.length > 0 && (
-              <button
-                onClick={scrollToPriorities}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all hover:opacity-90 flex-shrink-0 w-full sm:w-auto justify-center sm:justify-start"
-                style={{ backgroundColor: "#1E213A", color: "#30C5BE" }}
-                data-testid="review-priorities-btn"
-              >
-                Review Priorities
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </section>
-      )}
-
       {/* ── Athletes Requiring Attention + On Track (merged) ── */}
       <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} />
 
