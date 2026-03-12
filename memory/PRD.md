@@ -1,106 +1,59 @@
 # CapyMatch — Product Requirements Document
 
 ## Original Problem Statement
-Unify `capymatch-staff` (coach/director app) and `capymatch` (athlete/parent app) into a single platform with shared backend, data model, and auth. Provide role-based experiences for Directors, Coaches, Athletes, and Parents.
+Unify `capymatch-staff` and `capymatch` into a single platform with shared backend, data model, and auth. Role-based experiences for Directors, Coaches, Athletes, Parents.
 
 ## Core Architecture
 - **Backend:** FastAPI + MongoDB (Motor)
 - **Frontend:** React + Tailwind + Shadcn/UI
-- **Auth:** JWT-based, multi-role (director, coach, athlete, parent)
+- **Auth:** JWT-based, multi-role
 - **AI:** Emergent LLM Key (Claude Sonnet) for Gmail intelligence
 
-## Completed Phases
+## Recent Completions
 
-### Phase 1-6 — Foundation & Staff Features (DONE)
-### Phase 7 — Athlete Experience (DONE)
-### Phase 8 — Match Scoring V2 (DONE)
-### Phase 9 — AI Gmail Intelligence (DONE)
-### Phase 10 — My Schools Page Redesign V3 (DONE)
-### Phase 11 — Subscription Tiers & Drag-and-Drop Kanban (DONE)
-### Phase 12 — Upcoming Tasks Feature (DONE)
-### Journey Page Features J1-J4 (DONE)
-### Unmocking Sprint + Settings + Smart Match + Multi-Tenant + Director Actions (DONE)
-### User Onboarding + Admin Management + Intelligence Pipeline Phase 1 (DONE)
-### Schema V2 + Derived Metrics + Hero Carousel + Performance Fix (DONE)
-### Public Athlete Profile V1, V2, Dual-Mode Profiles (DONE)
-### Pipeline Command Center — Phase A+B+C (DONE)
-### Coach Dashboard Restructure — Phase 1-5 (DONE)
-### Real-Time Notifications V1 (DONE)
-### NCAA Timeline on Calendar Page (DONE)
-### Support Pod V2 — Intervention Console (DONE - March 11, 2026)
-### Mobile Responsive — Dashboard + Support Pod (DONE - March 11, 2026)
+### Support Pod V2 — Intervention Console (March 11, 2026)
+10-point upgrade: Quick Actions Bar, Active Issue Banner with ACT NOW badge, Athlete Snapshot (Recruiting Progress + Coach Engagement), Support Team (Message/Call), Top-3 Next Actions, Recruiting Intelligence (rule-based signals), Intervention Playbooks (checkable recovery plans), Coaching Suggestions (renamed), compact Recruiting Timeline, enhanced Treatment History.
 
-**Changes made:**
+### Mobile Responsive — Dashboard + Pod (March 11, 2026)
+Full mobile responsiveness for Coach Dashboard and Support Pod. 2-col KPI grid, compact priority rows, scrollable filters, icon-only buttons on mobile.
 
-**Dashboard (CoachView.js):**
-- Hero KPIs: `grid-cols-2 sm:grid-cols-4` for 2-column mobile, 4-column desktop
-- KPI values: `text-2xl sm:text-4xl` for smaller mobile numbers
-- Greeting: `text-xl sm:text-[28px]` for compact mobile heading
-- Date badge: Hidden on mobile via `hidden sm:inline-block`
-- KPI subtitles: Hidden on mobile via `hidden sm:block`
-- KPI icon circles: Hidden on mobile via `hidden sm:flex`
-- Summary card: `flex-col sm:flex-row` with full-width button on mobile
-- Summary text: `text-xs sm:text-sm`
+### Coach Action Bar — Journey-Style Interactions (March 12, 2026)
+Replaced simple QuickActionsBar with a Journey-style floating action bar at the bottom of the Support Pod. 5 dark-themed modal actions adapted for coach support workflow:
 
-**TodaysPrioritiesCard:**
-- Priority rows: Compact padding `px-3 sm:px-4`, smaller icons, text
-- CTA button: Icon-only on mobile (text `hidden sm:inline`)
-- Action badges: Hidden on mobile
+1. **Email** — Dark modal (teal accents) with recipient dropdown defaulting to athlete/parent/pod members. Logs to timeline with "Email" tag.
+2. **Log Interaction** — Coach-support types: Athlete Check-in, Parent Call, Event Prep Conversation, Pod Discussion, Director Update, Video Call, In-Person Meeting. Outcomes: Positive, Neutral, Needs Follow-up, Concern Raised.
+3. **Follow-up** — Creates a pod action item with due date AND logs a timeline note. Types: athlete check-in call, parent follow-up, event prep review, pod sync, director update, recruiting progress review.
+4. **Notes** — Right-side sliding panel (dark theme, amber accent) for coach/pod notes. CRUD: create, read, edit, delete via GET/POST/PATCH/DELETE `/api/athletes/{id}/notes`.
+5. **Escalate to Director** — Amber-themed modal. Reason dropdown, urgency toggles (Low/Medium/High), details textarea. Creates a `director_actions` document via `POST /api/support-pods/{id}/escalate`.
 
-**MyRosterCard:**
-- Roster rows: Compact gaps `gap-2 sm:gap-4`, smaller text `text-xs sm:text-sm`
-- Year/position: Hidden on mobile
-- Category labels: Icon-only on mobile
-- CTA button: Always visible on mobile, hover-reveal on desktop
-- QuickNote: Hidden on mobile
+**Design:** Same glass-morphism dark modal system as Journey page (#161b25 bg, blur overlays, teal/amber accents). Click-outside-to-close on all overlays.
 
-**UpcomingEventsCard:**
-- Event rows: Compact padding, smaller text
-- Progress bar: Hidden on mobile
-- School count: Hidden on mobile
+**Backend endpoints added:**
+- `GET /api/athletes/{id}/notes` — List notes
+- `DELETE /api/athletes/{id}/notes/{note_id}` — Delete note
+- `PATCH /api/athletes/{id}/notes/{note_id}` — Update note text
+- `POST /api/support-pods/{id}/escalate` — Coach escalation to director
 
-**Support Pod (PodHeader):**
-- "Mission Control" text: `hidden sm:inline`
-- "View Profile" text: `hidden sm:inline`
-- Health label text: `hidden sm:inline` (only dot + icon visible)
-- Health badge: Compact padding
-
-**QuickActionsBar:**
-- Button labels: `hidden sm:inline` (icon-only on mobile)
-- Already has `overflow-x-auto` for horizontal scrolling
-
-**ActiveIssueBanner:**
-- Recommended action: `text-base sm:text-xl`
-
-**TreatmentTimeline:**
-- Filter row: `flex-col sm:flex-row` + `overflow-x-auto`
-
-**SupportPod page:**
-- Page wrapper: `-mx-4 -mt-4 sm:-mx-6 sm:-mt-6` to negate AppLayout padding for full-width sticky bars
-
-**Testing:** iteration_108 — 100% (11/11 responsive features verified via DOM class inspection)
+**Testing:** iteration_109 — Backend 14/14 (100%), Frontend all modals verified.
 
 ## Key API Endpoints
-- `GET /api/coach/mission-control` — Coach dashboard data
-- `GET /api/support-pods/:athleteId` — Support Pod with V2 fields
+- `GET /api/coach/mission-control` — Dashboard data
+- `GET /api/support-pods/:athleteId` — Support Pod V2
 - `POST /api/support-pods/:athleteId/actions` — Create action
-- `PATCH /api/support-pods/:athleteId/actions/:actionId` — Update action
-- `POST /api/support-pods/:athleteId/resolve` — Resolve active issue
+- `POST /api/support-pods/:athleteId/escalate` — Coach escalation
+- `GET/POST/PATCH/DELETE /api/athletes/:id/notes` — CRUD notes
 
 ## Credentials
-- **Platform Admin:** douglas@capymatch.com / 1234
+- **Admin:** douglas@capymatch.com / 1234
 - **Director:** director@capymatch.com / director123
-- **Club Coach:** coach.williams@capymatch.com / coach123
+- **Coach:** coach.williams@capymatch.com / coach123
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
-
-## P0 In Progress
-- (None)
 
 ## P1 Upcoming
 - Club Billing (subscription billing and management for organizations)
 
 ## P2 Future/Backlog
-- AI-powered coach summary (LLM-enhanced recruiting pitch)
+- AI-powered coach summary (LLM recruiting pitch)
 - Intelligence Pipeline Phase 2 (Roster Stability, Scholarship, NIL agents)
 - Coach Scraper Health Report V1
 - Parent/Family Experience
