@@ -68,7 +68,7 @@ function AthleteRow({ athlete, isLast }) {
 
         {/* Row 3: Next action - visually prominent */}
         {athlete.next_step && hasIssue && (
-          <div className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.1)" }}>
+          <div className="flex items-center gap-1.5 mt-1">
             <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider" style={{ color: "#0d9488" }}>Next:</span>
             <span className="text-[10px] sm:text-[11px] font-semibold truncate" style={{ color: "#0d9488" }}>{athlete.next_step}</span>
           </div>
