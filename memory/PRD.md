@@ -15,26 +15,10 @@ Unify `capymatch-staff` and `capymatch` into a single platform with shared backe
 10-point upgrade: Quick Actions Bar, Active Issue Banner with ACT NOW badge, Athlete Snapshot (Recruiting Progress + Coach Engagement), Support Team (Message/Call), Top-3 Next Actions, Recruiting Intelligence (rule-based signals), Intervention Playbooks (checkable recovery plans), Coaching Suggestions (renamed), compact Recruiting Timeline, enhanced Treatment History.
 
 ### Mobile Responsive — Dashboard + Pod (March 11, 2026)
-Full mobile responsiveness for Coach Dashboard and Support Pod. 2-col KPI grid, compact priority rows, scrollable filters, icon-only buttons on mobile.
+Full mobile responsiveness for Coach Dashboard and Support Pod.
 
 ### Coach Action Bar — Journey-Style Interactions (March 12, 2026)
-Replaced simple QuickActionsBar with a Journey-style floating action bar at the bottom of the Support Pod. 5 dark-themed modal actions adapted for coach support workflow:
-
-1. **Email** — Dark modal (teal accents) with recipient dropdown defaulting to athlete/parent/pod members. Logs to timeline with "Email" tag.
-2. **Log Interaction** — Coach-support types: Athlete Check-in, Parent Call, Event Prep Conversation, Pod Discussion, Director Update, Video Call, In-Person Meeting. Outcomes: Positive, Neutral, Needs Follow-up, Concern Raised.
-3. **Follow-up** — Creates a pod action item with due date AND logs a timeline note. Types: athlete check-in call, parent follow-up, event prep review, pod sync, director update, recruiting progress review.
-4. **Notes** — Right-side sliding panel (dark theme, amber accent) for coach/pod notes. CRUD: create, read, edit, delete via GET/POST/PATCH/DELETE `/api/athletes/{id}/notes`.
-5. **Escalate to Director** — Amber-themed modal. Reason dropdown, urgency toggles (Low/Medium/High), details textarea. Creates a `director_actions` document via `POST /api/support-pods/{id}/escalate`.
-
-**Design:** Same glass-morphism dark modal system as Journey page (#161b25 bg, blur overlays, teal/amber accents). Click-outside-to-close on all overlays.
-
-**Backend endpoints added:**
-- `GET /api/athletes/{id}/notes` — List notes
-- `DELETE /api/athletes/{id}/notes/{note_id}` — Delete note
-- `PATCH /api/athletes/{id}/notes/{note_id}` — Update note text
-- `POST /api/support-pods/{id}/escalate` — Coach escalation to director
-
-**Testing:** iteration_109 — Backend 14/14 (100%), Frontend all modals verified.
+Replaced QuickActionsBar with Journey-style floating action bar. 5 dark-themed modals: Email, Log Interaction, Follow-up, Notes (sidebar), Escalate to Director.
 
 ## Key API Endpoints
 - `GET /api/coach/mission-control` — Dashboard data
@@ -51,6 +35,9 @@ Replaced simple QuickActionsBar with a Journey-style floating action bar at the 
 
 ## P1 Upcoming
 - Club Billing (subscription billing and management for organizations)
+
+## P1 Backlog (Added March 12, 2026)
+- **In-App Messaging + Email Notifications:** When a coach sends a message from the Support Pod: (1) create in-app message in athlete area, (2) optionally create for parent, (3) log in pod timeline, (4) send email notification from CapyMatch Notifications <noreply@capymatch.com> via Resend. Email is notification only, links back to app. Requires: `messages` collection, inbox enhancement, Resend domain verification for custom sender.
 
 ## P2 Future/Backlog
 - AI-powered coach summary (LLM recruiting pitch)
