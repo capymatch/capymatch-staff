@@ -24,7 +24,7 @@ SELF_REGISTER_ROLES = {"club_coach", "athlete", "parent"}
 
 def _safe_user(doc):
     """Return user dict without password or _id."""
-    return {
+    safe = {
         "id": doc["id"],
         "email": doc["email"],
         "name": doc["name"],
@@ -32,6 +32,9 @@ def _safe_user(doc):
         "org_id": doc.get("org_id"),
         "created_at": doc.get("created_at", ""),
     }
+    if doc.get("athlete_id"):
+        safe["athlete_id"] = doc["athlete_id"]
+    return safe
 
 
 async def _try_claim_athlete(user_doc: dict) -> dict | None:

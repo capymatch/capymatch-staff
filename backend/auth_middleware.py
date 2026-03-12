@@ -24,6 +24,7 @@ def create_token(user: dict) -> str:
         "name": user["name"],
         "role": user["role"],
         "org_id": user.get("org_id"),
+        "athlete_id": user.get("athlete_id"),
         "exp": datetime.now(timezone.utc) + timedelta(hours=EXPIRY_HOURS),
     }
     return jwt.encode(payload, SECRET, algorithm=ALGORITHM)
@@ -50,6 +51,7 @@ async def _get_current_user(
         "name": payload["name"],
         "role": payload["role"],
         "org_id": payload.get("org_id"),
+        "athlete_id": payload.get("athlete_id"),
     }
 
 

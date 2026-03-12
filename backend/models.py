@@ -132,6 +132,7 @@ class UserOut(BaseModel):
     role: str
     org_id: Optional[str] = None
     created_at: str = ""
+    athlete_id: Optional[str] = None
 
 class TokenResponse(BaseModel):
     token: str
@@ -144,6 +145,7 @@ class MeResponse(BaseModel):
     name: str
     role: str
     org_id: Optional[str] = None
+    athlete_id: Optional[str] = None
 
 
 # ── Athlete Self / Dashboard ──

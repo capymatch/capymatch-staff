@@ -268,6 +268,22 @@ async def get_inbox(current_user: dict = get_current_user_dep()):
     if athlete_id:
         lookup_ids.append(athlete_id)
 
+    # For athlete users without athlete_id set, find their linked athlete by email
+    if not athlete_id and current_user.get("role") in ("athlete", "parent"):
+        from services.athlete_store import get_all as get_all_athletes
+        user_email = current_user.get("email", "")
+        for ath in get_all_athletes():
+            if ath.get("email") == user_email or ath.get("id") in user_email:
+                lookup_ids.append(ath["id"])
+                break
+        # Also check athlete name match
+        if len(lookup_ids) == 1:
+            user_name = current_user.get("name", "")
+            for ath in get_all_athletes():
+                if ath.get("full_name") == user_name:
+                    lookup_ids.append(ath["id"])
+                    break
+
     threads = await db.support_threads.find(
         {"$or": [
             {"participant_ids": {"$in": lookup_ids}},
@@ -300,6 +316,16 @@ async def get_unread_count(current_user: dict = get_current_user_dep()):
     lookup_ids = [user_id]
     if athlete_id:
         lookup_ids.append(athlete_id)
+
+    # For athlete users without athlete_id set, find their linked athlete
+    if not athlete_id and current_user.get("role") in ("athlete", "parent"):
+        from services.athlete_store import get_all as get_all_athletes
+        user_email = current_user.get("email", "")
+        user_name = current_user.get("name", "")
+        for ath in get_all_athletes():
+            if ath.get("email") == user_email or ath.get("full_name") == user_name:
+                lookup_ids.append(ath["id"])
+                break
 
     count = await db.support_messages.count_documents({
         "read_by": {"$nin": lookup_ids},

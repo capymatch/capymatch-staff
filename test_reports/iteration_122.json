@@ -1,0 +1,75 @@
+{
+  "summary": "Verified and FIXED two critical bugs in V1 In-App Messaging: 1) Messages now appear in athlete's inbox (root cause: UserOut Pydantic model missing athlete_id field), 2) Message-sent events now display in Support Pod timeline (was already working after previous fix). All 8 backend tests pass. All frontend flows verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_messaging_bug_fixes.py",
+    "/app/test_reports/pytest/pytest_messaging_bug_fixes.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed UserOut model in /app/backend/models.py to include athlete_id: Optional[str] = None",
+    "Fixed MeResponse model in /app/backend/models.py to include athlete_id: Optional[str] = None"
+  ],
+  "updated_files": [
+    "/app/backend/models.py",
+    "/app/backend/tests/test_messaging_bug_fixes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "coach": "coach.williams@capymatch.com / coach123",
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123"
+  },
+  "seed_data_creation": "Created TEST_BugFix_ prefixed message threads during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "In-App Messaging V1 fully working. Root cause of bug #1: Pydantic UserOut model did not include athlete_id field, so even though _safe_user() added it, Pydantic stripped it from response. Fix: Added athlete_id: Optional[str] = None to UserOut and MeResponse models. Bug #2 (timeline events) was already working - ActivityHistory.js has TYPE_META for support_message_sent and support_message_reply.",
+  "bugs_fixed": {
+    "bug_1_athlete_inbox": {
+      "issue": "Messages sent by coach not appearing in athlete inbox",
+      "root_cause": "UserOut Pydantic model in /app/backend/models.py did not include athlete_id field. The _safe_user() function correctly added athlete_id to the dict, but Pydantic filtered it out during serialization",
+      "fix": "Added 'athlete_id: Optional[str] = None' to UserOut and MeResponse models",
+      "verification": "GET /api/auth/login now returns athlete_id in user object, GET /api/support-messages/inbox returns threads for athlete"
+    },
+    "bug_2_timeline_events": {
+      "issue": "Message-sent events not appearing in Support Pod timeline",
+      "status": "Already working - ActivityHistory.js has support_message_sent and support_message_reply in TYPE_META",
+      "verification": "Timeline shows 'Coach Williams sent message: ...' entries when filtered to Messages"
+    }
+  },
+  "tests_passed": {
+    "backend_api": [
+      "test_01_coach_login - Coach login returns valid token",
+      "test_02_athlete_login - Athlete login returns token WITH athlete_id=athlete_3",
+      "test_03_coach_sends_message - POST /api/support-messages returns message_id, thread_id, status=sent",
+      "test_04_pod_timeline_has_message_event - GET /api/support-pods/athlete_3 timeline.action_events contains support_message_sent",
+      "test_05_athlete_inbox_has_thread - GET /api/support-messages/inbox contains thread just created",
+      "test_06_athlete_unread_count - GET /api/support-messages/unread-count returns count > 0",
+      "test_07_athlete_thread_detail - GET /api/support-messages/thread/{id} returns messages",
+      "test_support_message_types_in_timeline - Timeline action_events include support_message types"
+    ],
+    "frontend_ui": [
+      "Coach login and dashboard loads",
+      "Emma Chen athlete card visible in Athletes Requiring Attention",
+      "Support Pod page loads with action bar (Log, Email, Follow-up, Notes, Escalate)",
+      "Athlete login as Emma Chen successful",
+      "Messages sidebar nav item shows unread badge (17)",
+      "Messages page loads with 13 threads",
+      "Thread list shows unread indicators (teal dots and count badges)",
+      "Thread detail view opens with conversation",
+      "Reply input and send button present",
+      "Timeline shows support_message_sent and support_message_reply events",
+      "Messages filter in timeline works"
+    ]
+  }
+}

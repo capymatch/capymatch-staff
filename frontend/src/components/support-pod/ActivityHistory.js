@@ -8,9 +8,13 @@ const TYPE_META = {
   resolution: { icon: CheckCircle, color: "text-emerald-600", label: "Resolved" },
   action_created: { icon: Plus, color: "text-blue-500", label: "Action" },
   action_updated: { icon: CheckCircle, color: "text-emerald-500", label: "Updated" },
+  action_completed: { icon: CheckCircle, color: "text-emerald-600", label: "Completed" },
   blocker_flagged: { icon: ShieldAlert, color: "text-red-500", label: "Blocker" },
   stage_change: { icon: ArrowRight, color: "text-purple-500", label: "Stage Change" },
   call: { icon: Phone, color: "text-amber-500", label: "Call" },
+  support_message_sent: { icon: MessageSquare, color: "text-teal-500", label: "Message Sent" },
+  support_message_reply: { icon: MessageSquare, color: "text-teal-500", label: "Reply" },
+  issue_resolved: { icon: CheckCircle, color: "text-emerald-600", label: "Issue Resolved" },
 };
 
 function ActivityHistory({ timeline }) {
@@ -31,7 +35,10 @@ function ActivityHistory({ timeline }) {
     return all;
   }, [timeline]);
 
-  const filtered = filter === "all" ? entries : entries.filter(e => e.type === filter);
+  const filtered = filter === "all" ? entries : entries.filter(e => {
+    if (filter === "message") return e.type === "message" || e.type === "support_message_sent" || e.type === "support_message_reply";
+    return e.type === filter;
+  });
 
   const grouped = useMemo(() => {
     const groups = {};
@@ -59,7 +66,11 @@ function ActivityHistory({ timeline }) {
       case "assignment": return `Reassigned to ${entry.new_owner || "—"}`;
       case "resolution": return entry.resolution_note || "Resolved";
       case "action_created":
-      case "action_updated": return entry.description || "Action updated";
+      case "action_updated":
+      case "action_completed": return entry.description || "Action updated";
+      case "support_message_sent":
+      case "support_message_reply":
+      case "issue_resolved": return entry.description || entry.text || "";
       case "blocker_flagged": return entry.description || entry.text || "Blocker";
       case "stage_change": return entry.description || "Stage changed";
       default: return entry.text || "";
