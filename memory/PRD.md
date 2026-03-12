@@ -33,7 +33,11 @@ Replaced QuickActionsBar with Journey-style floating action bar. 5 dark-themed m
 - **Coach:** coach.williams@capymatch.com / coach123
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
 
+### Add Action Modal — Premium Flow (March 12, 2026)
+Completed the "Next Actions" component upgrade: dark-themed AddActionModal with real pod members in assignee dropdown, category chips, due date picker, notes. Auto-selects current user. Creates in-app notification + fires Resend email on submit. Deleted deprecated QuickActionsBar.js.
+
 ## P1 Upcoming
+- In-App Messaging + Email Notifications (coach-to-athlete messaging from Support Pod)
 - Club Billing (subscription billing and management for organizations)
 
 ## P1 Backlog (Added March 12, 2026)
