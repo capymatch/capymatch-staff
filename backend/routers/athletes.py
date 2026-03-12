@@ -53,14 +53,14 @@ async def create_note(athlete_id: str, note: NoteCreate, current_user: dict = ge
     doc.pop("_id", None)
 
     # Auto-resolve system-generated tasks when coach logs an interaction
-    auto_resolve_categories = {"momentum_drop", "engagement_drop"}
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    # 1. Resolve DB-persisted system tasks
     system_tasks = await db.pod_actions.find({
         "athlete_id": athlete_id,
-        "source": "system",
         "status": {"$in": ["ready", "open", "overdue"]},
-        "source_category": {"$in": list(auto_resolve_categories)},
+        "source": {"$in": ["system", "intervention"]},
     }).to_list(50)
-    now_iso = datetime.now(timezone.utc).isoformat()
     for task in system_tasks:
         await db.pod_actions.update_one(
             {"id": task["id"]},
@@ -79,6 +79,35 @@ async def create_note(athlete_id: str, note: NoteCreate, current_user: dict = ge
             "action_id": task["id"],
             "created_at": now_iso,
         })
+
+    # 2. Materialize and resolve suggested (non-persisted) system actions
+    from support_pod import get_athlete_interventions, generate_suggested_actions
+    interventions = get_athlete_interventions(athlete_id)
+    suggested = generate_suggested_actions(athlete_id, interventions)
+    saved_ids = {t["id"] for t in system_tasks}
+    all_saved = await db.pod_actions.find({"athlete_id": athlete_id}, {"_id": 0, "id": 1}).to_list(200)
+    all_saved_ids = {a["id"] for a in all_saved}
+
+    for s_action in suggested:
+        if s_action["id"] not in all_saved_ids and s_action.get("status") in ("ready", "open", "overdue"):
+            completed_doc = {
+                **s_action,
+                "status": "completed",
+                "completed_at": now_iso,
+                "completed_by": "System (auto-resolved)",
+                "is_suggested": False,
+            }
+            await db.pod_actions.insert_one(completed_doc)
+            completed_doc.pop("_id", None)
+            await db.pod_action_events.insert_one({
+                "id": str(uuid.uuid4()),
+                "athlete_id": athlete_id,
+                "type": "action_completed",
+                "description": f'Auto-resolved "{s_action.get("title", "")}" — coach logged interaction',
+                "actor": "System",
+                "action_id": s_action["id"],
+                "created_at": now_iso,
+            })
 
     return doc
 
