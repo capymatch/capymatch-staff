@@ -1,17 +1,8 @@
-import { useState } from "react";
 import { MessageSquare, Phone, UserPlus, AlertTriangle, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import axios from "axios";
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const ROLE_ORDER = { club_coach: 0, parent: 1, athlete: 2, assistant_coach: 3, advisor: 4 };
 
-function PodMembers({ members, unassignedCount, athleteId, onRefresh }) {
-  const [messageTarget, setMessageTarget] = useState(null);
-  const [messageText, setMessageText] = useState("");
-  const [sending, setSending] = useState(false);
-
+function PodMembers({ members, unassignedCount, athleteId, onRefresh, onMessage, onLogCall }) {
   if (!members || members.length === 0) return null;
 
   const sorted = [...members].sort((a, b) => (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9));
@@ -31,41 +22,6 @@ function PodMembers({ members, unassignedCount, athleteId, onRefresh }) {
     if (days === 0) return "Active today";
     if (days === 1) return "Active yesterday";
     return `${days} days ago`;
-  };
-
-  const handleMessage = async (member) => {
-    if (messageTarget === member.id) {
-      // Submit
-      if (!messageText.trim()) return;
-      setSending(true);
-      try {
-        if (athleteId) {
-          await axios.post(`${API}/athletes/${athleteId}/notes`, { text: `Message to ${member.name}: ${messageText.trim()}`, tag: "Message" });
-        }
-        toast.success(`Message to ${member.name} logged`);
-        setMessageTarget(null);
-        setMessageText("");
-        onRefresh?.();
-      } catch {
-        toast.error("Failed to send message");
-      }
-      setSending(false);
-    } else {
-      setMessageTarget(member.id);
-      setMessageText("");
-    }
-  };
-
-  const handleCall = async (member) => {
-    try {
-      if (athleteId) {
-        await axios.post(`${API}/athletes/${athleteId}/notes`, { text: `Phone call with ${member.name}`, tag: "Call" });
-      }
-      toast.success(`Call with ${member.name} logged`);
-      onRefresh?.();
-    } catch {
-      toast.error("Failed to log call");
-    }
   };
 
   const renderMember = (member, isPrimary = false) => (
@@ -112,7 +68,7 @@ function PodMembers({ members, unassignedCount, athleteId, onRefresh }) {
               variant={isPrimary ? "default" : "outline"}
               className="text-[11px] h-7 px-2.5 rounded-full gap-1"
               style={isPrimary ? { backgroundColor: "#0d9488", color: "#fff" } : {}}
-              onClick={() => handleMessage(member)}
+              onClick={() => onMessage?.()}
               data-testid={`message-member-${member.role}`}
             >
               <MessageSquare className="w-3 h-3" />
@@ -122,7 +78,7 @@ function PodMembers({ members, unassignedCount, athleteId, onRefresh }) {
               size="sm"
               variant="outline"
               className="text-[11px] h-7 px-2.5 rounded-full gap-1"
-              onClick={() => handleCall(member)}
+              onClick={() => onLogCall?.()}
               data-testid={`call-member-${member.role}`}
             >
               <Phone className="w-3 h-3" />
@@ -131,25 +87,6 @@ function PodMembers({ members, unassignedCount, athleteId, onRefresh }) {
           </div>
         </div>
       </div>
-
-      {/* Inline message form */}
-      {messageTarget === member.id && (
-        <div className="ml-11 mt-2 flex gap-2" data-testid={`message-form-${member.role}`}>
-          <input
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder={`Message to ${member.name}...`}
-            className="flex-1 text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
-            style={{ borderColor: "var(--cm-border, #e2e8f0)" }}
-            autoFocus
-            onKeyDown={(e) => e.key === "Enter" && handleMessage(member)}
-          />
-          <Button size="sm" onClick={() => handleMessage(member)} disabled={!messageText.trim() || sending} className="rounded-full text-xs h-8">
-            Send
-          </Button>
-          <button onClick={() => setMessageTarget(null)} className="text-xs px-2" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Cancel</button>
-        </div>
-      )}
     </div>
   );
 

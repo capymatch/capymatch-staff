@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
-const CATEGORY_META = {
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;const CATEGORY_META = {
   momentum_drop: { label: "Momentum Drop", icon: Zap, color: "#f59e0b", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
   blocker: { label: "Blocker", icon: ShieldAlert, color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)" },
   deadline_proximity: { label: "Deadline", icon: Clock, color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.2)" },
@@ -15,10 +13,8 @@ const CATEGORY_META = {
   readiness_issue: { label: "Readiness Issue", icon: Target, color: "#8b5cf6", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.2)" },
 };
 
-function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
+function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss, onLogCheckin, onSendMessage }) {
   const [resolving, setResolving] = useState(false);
-  const [showNoteForm, setShowNoteForm] = useState(false);
-  const [noteText, setNoteText] = useState("");
 
   if (!intervention) return null;
 
@@ -39,19 +35,6 @@ function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
       toast.error("Failed to resolve");
     }
     setResolving(false);
-  };
-
-  const handleLogCall = async () => {
-    if (!showNoteForm) { setShowNoteForm(true); return; }
-    if (!noteText.trim()) return;
-    try {
-      await axios.post(`${API}/athletes/${athleteId}/notes`, { text: noteText.trim(), tag: "Check-in" });
-      toast.success("Note logged");
-      setNoteText("");
-      setShowNoteForm(false);
-    } catch {
-      toast.error("Failed to log note");
-    }
   };
 
   return (
@@ -116,30 +99,12 @@ function ActiveIssueBanner({ intervention, athleteId, onResolve, onDismiss }) {
           </div>
         </div>
 
-        {/* Note form */}
-        {showNoteForm && (
-          <div className="mb-3 flex gap-2">
-            <input
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              placeholder="Quick note about this check-in..."
-              className="flex-1 text-sm border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
-              style={{ borderColor: "var(--cm-border)" }}
-              autoFocus
-              data-testid="banner-note-input"
-              onKeyDown={(e) => e.key === "Enter" && handleLogCall()}
-            />
-            <Button size="sm" onClick={handleLogCall} className="rounded-full text-xs" data-testid="banner-note-submit">Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowNoteForm(false)} className="text-xs">Cancel</Button>
-          </div>
-        )}
-
         {/* Actions row */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" onClick={handleLogCall} data-testid="banner-log-call">
+          <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" onClick={onLogCheckin} data-testid="banner-log-call">
             <FileText className="w-3.5 h-3.5" /> Log Check-in
           </Button>
-          <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" data-testid="banner-send-message">
+          <Button size="sm" variant="outline" className="rounded-full text-xs gap-1.5" onClick={onSendMessage} data-testid="banner-send-message">
             <MessageSquare className="w-3.5 h-3.5" /> Send Message
           </Button>
           <div className="flex-1" />

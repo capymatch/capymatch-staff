@@ -134,6 +134,8 @@ function SupportPod() {
             athleteId={athleteId}
             onResolve={() => { setBannerDismissed(true); fetchPodData(); }}
             onDismiss={() => setBannerDismissed(true)}
+            onLogCheckin={() => toggleAction("log")}
+            onSendMessage={() => toggleAction("email")}
           />
         )}
 
@@ -143,7 +145,8 @@ function SupportPod() {
             <AthleteSnapshot athlete={athlete} interventions={all_interventions} events={upcoming_events} />
           </div>
           <div className="lg:col-span-3">
-            <PodMembers members={pod_members} unassignedCount={unassigned_count} athleteId={athleteId} onRefresh={fetchPodData} />
+            <PodMembers members={pod_members} unassignedCount={unassigned_count} athleteId={athleteId} onRefresh={fetchPodData}
+              onMessage={() => toggleAction("email")} onLogCall={() => toggleAction("log")} />
           </div>
         </div>
 
