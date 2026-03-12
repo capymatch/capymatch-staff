@@ -60,14 +60,6 @@ def _build_athlete_roster_item(athlete: dict) -> dict:
             why = item.get("why_this_surfaced")
             break
 
-    # If no intervention, check for family inactivity (parent inactive > 7 days)
-    if not category:
-        days = athlete.get("days_since_activity", 0)
-        parent_inactive_days = max(0, days - 3)
-        if parent_inactive_days > 7:
-            category = "family_inactive"
-            why = f"Family hasn't been active in {parent_inactive_days} days"
-
     # Compute human-friendly next step based on category
     next_step = _compute_next_step(category, athlete)
 
@@ -103,7 +95,6 @@ def _compute_next_step(category: str | None, athlete: dict) -> str:
         "engagement_drop": f"Re-engage {name_first} with a check-in",
         "ownership_gap": f"Assign a primary coach for {name_first}",
         "readiness_issue": f"Review {name_first}'s readiness gaps",
-        "family_inactive": f"Re-engage {name_first}'s family",
     }
     if category and category in step_map:
         return step_map[category]

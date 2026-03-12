@@ -168,16 +168,6 @@ POD_ACTION_MAP = {
         "cta_label": "Assign Actions",
         "category": "ownership_gap",
     },
-    # Priority 7: Family/parent inactive
-    "family_inactive": {
-        "priority": 7,
-        "urgency": "follow_up",
-        "label": "Re-engage Family",
-        "owner": "coach",
-        "explanation_template": "Family hasn't been active in {days} days — loop them in",
-        "cta_label": "Message Family",
-        "category": "family_inactive",
-    },
     # Priority 8: Readiness issue
     "readiness_issue": {
         "priority": 8,
@@ -310,21 +300,7 @@ def compute_pod_top_action(athlete, interventions, actions, members):
             resolve_target_ids=action_ids,
         )
 
-    # ── Priority 7: Family inactive ──
-    parent = next((m for m in members if m["role"] == "parent"), None)
-    if parent and parent.get("status") == "inactive":
-        parent_days = 0
-        try:
-            last = datetime.fromisoformat(parent["last_active"].replace("Z", "+00:00"))
-            parent_days = (now - last).days
-        except (ValueError, TypeError):
-            pass
-        return _make_pod_action(
-            "family_inactive",
-            f"family_inactive:days={parent_days}",
-            template_vars={"days": str(parent_days)},
-            issue_type="Family not engaged",
-        )
+    # Priority 7 removed — family_inactive not applicable without parent accounts
 
     # ── Priority 8: Readiness issue ──
     if "readiness_issue" in categories:

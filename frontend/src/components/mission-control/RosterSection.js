@@ -9,7 +9,6 @@ const CATEGORY_CONFIG = {
   engagement_drop: { icon: AlertTriangle, label: "Engagement Drop", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
   ownership_gap: { icon: Users, label: "Unassigned", color: "#3b82f6", bg: "rgba(59,130,246,0.08)" },
   readiness_issue: { icon: Target, label: "Readiness Issue", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)" },
-  family_inactive: { icon: Users, label: "Family Inactive", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
 };
 
 const HEALTH_DOT = {

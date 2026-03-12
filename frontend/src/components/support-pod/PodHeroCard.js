@@ -21,9 +21,8 @@ export default function PodHeroCard({ topAction, athleteId, onLogCheckin, onSend
   const isOnTrack = topAction.urgency === "on_track";
 
   const handleCta = () => {
-    const c = topAction.category;
-    if (c === "momentum_drop" || c === "family_inactive") onSendMessage?.();
-    else if (c === "past_due") document.querySelector('[data-testid="next-actions"]')?.scrollIntoView({ behavior: "smooth" });
+    if (topAction.category === "momentum_drop") onSendMessage?.();
+    else if (topAction.category === "past_due") document.querySelector('[data-testid="next-actions"]')?.scrollIntoView({ behavior: "smooth" });
     else onLogCheckin?.();
   };
 
