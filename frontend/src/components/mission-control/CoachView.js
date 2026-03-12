@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Target, AlertTriangle, Calendar, MessageCircle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import TodaysPrioritiesCard from "./TodaysPrioritiesCard";
-import MyRosterCard from "./MyRosterCard";
+import RosterSection from "./RosterSection";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import ActivityFeed from "./ActivityFeed";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
@@ -185,7 +185,7 @@ export default function CoachView({ data, userName }) {
   ];
 
   const scrollToPriorities = () => {
-    const el = document.querySelector('[data-testid="todays-priorities-card"]');
+    const el = document.querySelector('[data-testid="roster-section"]');
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -341,14 +341,11 @@ export default function CoachView({ data, userName }) {
         </section>
       )}
 
-      {/* ── Today's Priorities (main work queue) ── */}
-      <TodaysPrioritiesCard priorities={priorities} />
+      {/* ── Athletes Requiring Attention + On Track (merged) ── */}
+      <RosterSection athletes={data.myRoster || []} />
 
       {/* ── Director Actions (assigned to this coach) ── */}
       <DirectorActionsCard role="club_coach" />
-
-      {/* ── My Roster ── */}
-      <MyRosterCard athletes={data.myRoster || []} onViewPipeline={setPipelineAthleteId} />
 
       {/* ── Events + Activity ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
