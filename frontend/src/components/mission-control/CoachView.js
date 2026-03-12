@@ -248,6 +248,7 @@ export default function CoachView({ data, userName }) {
                 className="sm:flex-1 sm:min-w-0"
                 style={{
                   paddingRight: idx < kpis.length - 1 ? "clamp(8px, 2vw, 24px)" : 0,
+                  paddingLeft: idx > 0 ? "clamp(8px, 2vw, 24px)" : 0,
                   borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none",
                   marginTop: 12,
                   marginBottom: 12,
