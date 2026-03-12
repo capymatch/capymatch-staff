@@ -95,7 +95,7 @@ export default function NotificationBell() {
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-80 rounded-xl border overflow-hidden z-50"
+          className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto top-14 sm:top-full sm:mt-2 sm:w-80 rounded-xl border overflow-hidden z-50"
           style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
           data-testid="notification-dropdown"
         >
