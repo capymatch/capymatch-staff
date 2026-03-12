@@ -118,8 +118,12 @@ export function CoachNotesSidebar({ athleteId, athleteName, open, onClose }) {
 
   return (
     <>
-      {/* Panel — no overlay since main content shifts to accommodate */}
-      <div className={`fixed right-0 top-0 bottom-0 w-[340px] sm:w-[380px] z-40 flex flex-col transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+      {/* Backdrop overlay on mobile */}
+      {open && (
+        <div className="fixed inset-0 z-[59] bg-black/50 sm:hidden" onClick={onClose} data-testid="pod-notes-backdrop" />
+      )}
+      {/* Panel */}
+      <div className={`fixed right-0 top-0 bottom-0 w-full sm:w-[380px] z-[60] flex flex-col transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
         style={{ backgroundColor: "#161b25", borderLeft: "1px solid rgba(255,255,255,0.06)", boxShadow: open ? "-4px 0 24px rgba(0,0,0,0.25)" : "none" }}
         data-testid="pod-notes-panel">
         {/* Header */}
