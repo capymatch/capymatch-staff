@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, ChevronRight, ChevronDown, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronRight, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, Calendar } from "lucide-react";
 import QuickNote from "@/components/QuickNote";
 
 const CATEGORY_CONFIG = {
@@ -34,7 +33,10 @@ function AthleteRow({ athlete, isLast }) {
     <div
       data-testid={`roster-athlete-${athlete.id}`}
       className="flex items-start gap-2 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 cursor-pointer hover:bg-slate-50/60 transition-colors group"
-      style={{ borderBottom: isLast ? "none" : "1px solid var(--cm-border)" }}
+      style={{
+        borderBottom: isLast ? "none" : "1px solid var(--cm-border)",
+        backgroundColor: hasIssue ? "rgba(239,68,68,0.03)" : "transparent",
+      }}
       onClick={() => navigate(`/support-pods/${athlete.id}`)}
     >
       {/* Momentum */}
@@ -94,60 +96,49 @@ function AthleteRow({ athlete, isLast }) {
 }
 
 export default function RosterSection({ athletes = [], eventPrep = [] }) {
-  const [showOnTrack, setShowOnTrack] = useState(false);
   const navigate = useNavigate();
 
-  if (!athletes.length) {
-    return (
-      <section data-testid="roster-section">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
-            Athletes Requiring Attention
-          </span>
-        </div>
-        <div className="rounded-xl border p-8 text-center" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-          <Users className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
-          <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>No athletes assigned yet.</p>
-        </div>
-      </section>
-    );
-  }
-
   const needsAction = athletes.filter(a => a.category);
-  const onTrack = athletes.filter(a => !a.category);
+
+  // Sort: needs-attention first, then on-track
+  const sorted = [...athletes].sort((a, b) => {
+    if (a.category && !b.category) return -1;
+    if (!a.category && b.category) return 1;
+    return 0;
+  });
 
   return (
     <section data-testid="roster-section">
-      {/* ── Athletes Requiring Attention ── */}
+      {/* ── Roster header ── */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           {needsAction.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
           <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
-            Athletes Requiring Attention
+            My Athletes
+          </span>
+          <span className="text-xs font-medium" style={{ color: "var(--cm-text-3)" }}>
+            {athletes.length}
           </span>
           {needsAction.length > 0 && (
-            <span className="text-xs font-medium" style={{ color: "var(--cm-text-3)" }}>
-              {needsAction.length}
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
+              {needsAction.length} need attention
             </span>
           )}
         </div>
       </div>
 
-      {needsAction.length === 0 ? (
-        <div className="rounded-xl border px-6 py-6 text-center mb-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-          <div className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2.5" style={{ backgroundColor: "rgba(16,185,129,0.1)" }}>
-            <Target className="w-4 h-4" style={{ color: "#10b981" }} />
+      {/* ── Unified roster list ── */}
+      <div className="rounded-xl border overflow-hidden mb-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+        {sorted.map((athlete, idx) => (
+          <AthleteRow key={athlete.id} athlete={athlete} isLast={idx === sorted.length - 1} />
+        ))}
+        {sorted.length === 0 && (
+          <div className="px-5 py-8 text-center">
+            <Users className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
+            <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>No athletes assigned yet.</p>
           </div>
-          <p className="text-sm font-medium" style={{ color: "var(--cm-text-2)" }}>All clear</p>
-          <p className="text-xs mt-1" style={{ color: "var(--cm-text-3)" }}>No athletes need immediate attention right now.</p>
-        </div>
-      ) : (
-        <div className="rounded-xl border overflow-hidden mb-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-          {needsAction.map((athlete, idx) => (
-            <AthleteRow key={athlete.id} athlete={athlete} isLast={idx === needsAction.length - 1} />
-          ))}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Event Prep ── */}
       {eventPrep.length > 0 && (
@@ -189,36 +180,6 @@ export default function RosterSection({ athletes = [], eventPrep = [] }) {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* ── On Track Athletes ── */}
-      {onTrack.length > 0 && (
-        <div>
-          <button
-            onClick={() => setShowOnTrack(o => !o)}
-            className="flex items-center gap-2 mb-3 group"
-            data-testid="on-track-toggle"
-          >
-            {showOnTrack
-              ? <ChevronDown className="w-3.5 h-3.5 text-slate-300" />
-              : <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-            }
-            <span className="text-[11px] font-bold uppercase tracking-widest group-hover:text-slate-500 transition-colors" style={{ color: "var(--cm-text-3)" }}>
-              On Track Athletes
-            </span>
-            <span className="text-xs font-medium" style={{ color: "var(--cm-text-3)" }}>
-              {onTrack.length}
-            </span>
-          </button>
-
-          {showOnTrack && (
-            <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-              {onTrack.map((athlete, idx) => (
-                <AthleteRow key={athlete.id} athlete={athlete} isLast={idx === onTrack.length - 1} />
-              ))}
-            </div>
-          )}
         </div>
       )}
     </section>
