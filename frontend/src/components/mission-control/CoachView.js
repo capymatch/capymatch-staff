@@ -341,7 +341,7 @@ export default function CoachView({ data, userName }) {
       )}
 
       {/* ── Athletes Requiring Attention + On Track (merged) ── */}
-      <RosterSection athletes={data.myRoster || []} />
+      <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} />
 
       {/* ── Director Actions (assigned to this coach) ── */}
       <DirectorActionsCard role="club_coach" />
