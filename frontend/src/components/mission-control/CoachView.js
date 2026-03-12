@@ -249,6 +249,8 @@ export default function CoachView({ data, userName }) {
                 style={{
                   paddingRight: idx < kpis.length - 1 ? "clamp(8px, 2vw, 24px)" : 0,
                   borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none",
+                  marginTop: 12,
+                  marginBottom: 12,
                 }}
               >
                 <div className="flex items-start justify-between w-full">
