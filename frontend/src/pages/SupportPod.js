@@ -192,19 +192,19 @@ function SupportPod() {
       {/* Action Modals */}
       {activeAction === "email" && (
         <CoachEmailComposer athleteId={athleteId} athlete={athlete} podMembers={pod_members}
-          onClose={() => setActiveAction(null)} onSent={() => { setActiveAction(null); fetchPodData(); }} />
+          onCancel={() => setActiveAction(null)} onSent={() => { setActiveAction(null); fetchPodData(); }} />
       )}
       {activeAction === "log" && (
         <CoachLogInteraction athleteId={athleteId} athlete={athlete}
-          onClose={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
+          onCancel={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
       )}
       {activeAction === "followup" && (
         <CoachFollowUpScheduler athleteId={athleteId} athlete={athlete}
-          onClose={() => setActiveAction(null)} onScheduled={() => { setActiveAction(null); fetchPodData(); }} />
+          onCancel={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
       )}
       {activeAction === "escalate" && (
         <EscalateToDirector athleteId={athleteId} athlete={athlete}
-          onClose={() => setActiveAction(null)} onEscalated={() => { setActiveAction(null); fetchPodData(); }} />
+          onCancel={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
       )}
       {notesOpen && (
         <CoachNotesSidebar athleteId={athleteId} onClose={() => setNotesOpen(false)} />
