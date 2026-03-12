@@ -1,76 +1,120 @@
-import { Shield, Mail, Lock, Eye, X } from "lucide-react";
-import { Button } from "./ui/button";
+import { useState } from "react";
+import { Shield, CheckCircle2, X, Mail } from "lucide-react";
 
 export default function GmailConsentModal({ onAccept, onCancel }) {
+  const [agreed, setAgreed] = useState(false);
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} data-testid="gmail-consent-overlay">
-      <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200"
-        style={{ background: "#161b25", border: "1px solid rgba(46, 196, 182, 0.15)" }}
+      <div className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+        style={{ backgroundColor: "var(--cm-surface)", border: "1px solid var(--cm-border)" }}
         data-testid="gmail-consent-modal">
-        <div className="p-5 pb-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <Shield className="w-4 h-4 text-teal-600" />Connect Gmail
-            </h2>
-            <button onClick={onCancel} className="p-1 rounded-lg hover:bg-white/10 transition-colors" data-testid="consent-close-btn">
-              <X className="w-4 h-4 text-white/40" />
-            </button>
+
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(26,138,128,0.15)" }}>
+              <Shield className="w-5 h-5" style={{ color: "#1a8a80" }} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold" style={{ color: "var(--cm-text)" }}>Before You Connect Gmail</h2>
+              <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>Your privacy matters to us</p>
+            </div>
           </div>
+          <button onClick={onCancel} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors mt-0.5" data-testid="consent-close-btn">
+            <X className="w-4.5 h-4.5" style={{ color: "var(--cm-text-3)" }} />
+          </button>
         </div>
 
-        <div className="p-5 space-y-4">
-          <p className="text-xs text-slate-300 leading-relaxed">
-            CapyMatch needs access to your Gmail to help you manage your recruiting communications.
-            Here's exactly what we'll do with your data:
-          </p>
+        <div className="px-6 pb-6 space-y-5">
+          {/* Pro Tip Box */}
+          <div className="rounded-xl p-4" style={{ backgroundColor: "rgba(26,138,128,0.06)", borderLeft: "3px solid #1a8a80" }} data-testid="pro-tip-box">
+            <p className="text-sm font-semibold mb-1" style={{ color: "#1a8a80" }}>Pro Tip: Use a Recruiting Email</p>
+            <p className="text-xs leading-relaxed" style={{ color: "var(--cm-text-3)" }}>
+              We recommend creating a dedicated email for recruiting (e.g., <span className="font-medium" style={{ color: "var(--cm-text-2)" }}>firstname.lastname.recruiting@gmail.com</span>). This keeps your personal inbox private and your recruiting communication organized.
+            </p>
+          </div>
 
-          <div className="space-y-3">
-            {[
-              {
-                icon: Mail, title: "Send emails on your behalf",
-                desc: "Compose and send recruiting emails directly from the app"
-              },
-              {
-                icon: Eye, title: "Read email headers",
-                desc: "Scan subject lines and sender info to identify schools — we never read email body content"
-              },
-              {
-                icon: Lock, title: "Your data stays private",
-                desc: "Tokens are encrypted. We never share your data with third parties."
-              },
-            ].map((item, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/40">
-                <div className="w-8 h-8 rounded-lg bg-teal-700/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <item.icon className="w-4 h-4 text-teal-600" />
-                </div>
+          {/* WHAT WE ACCESS */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--cm-text-2)" }}>What We Access</p>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: "#1a8a80" }} />
                 <div>
-                  <p className="text-xs font-semibold text-white">{item.title}</p>
-                  <p className="text-[10px] text-slate-400 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>Send emails to coaches on your behalf</p>
+                  <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>Only when you compose an email and click Send</p>
                 </div>
               </div>
-            ))}
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: "#1a8a80" }} />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>Read recruiting-related emails you choose to sync</p>
+                  <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>We access messages and threads so we can organize conversations by school and timeline</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: "#1a8a80" }} />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>Detect inbound coach responses and activity</p>
+                  <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>Used to update your recruiting journey automatically (You can turn this off anytime in Settings)</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <p className="text-[10px] text-slate-500 leading-relaxed">
-            You can disconnect Gmail and revoke access at any time from Settings.
-            By connecting, you agree to our{" "}
-            <a href="/privacy" className="text-teal-600 underline">Privacy Policy</a>.
-          </p>
+          {/* WHAT WE NEVER DO */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--cm-text-2)" }}>What We Never Do</p>
+            <div className="space-y-2.5">
+              {[
+                "Read or analyze emails unrelated to recruiting",
+                "Send emails without your explicit action",
+                "Sell or share your email data with third parties",
+                "Use your Gmail content for advertising",
+              ].map((text, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <X className="w-4.5 h-4.5 flex-shrink-0 text-red-500" />
+                  <p className="text-sm" style={{ color: "var(--cm-text-2)" }}>{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Security Note */}
+          <div className="flex items-start gap-3 rounded-xl p-3.5" style={{ backgroundColor: "rgba(26,138,128,0.06)" }} data-testid="security-note">
+            <Shield className="w-4.5 h-4.5 mt-0.5 flex-shrink-0" style={{ color: "#1a8a80" }} />
+            <p className="text-xs leading-relaxed" style={{ color: "var(--cm-text-3)" }}>
+              Your Gmail access is encrypted and secure. You can disconnect Gmail at any time from Settings or your Google account.
+            </p>
+          </div>
+
+          {/* Consent Checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer select-none" data-testid="consent-checkbox-label">
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-1 w-4 h-4 rounded border-2 accent-teal-600 flex-shrink-0 cursor-pointer"
+              style={{ borderColor: "var(--cm-border)" }}
+              data-testid="consent-checkbox" />
+            <span className="text-sm" style={{ color: "var(--cm-text-2)" }}>
+              I understand what data is accessed and consent to connecting my Gmail account.
+            </span>
+          </label>
         </div>
 
-        <div className="p-4 flex items-center justify-between gap-3" style={{ background: "rgba(15,18,25,0.5)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <button onClick={onCancel}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-all hover:bg-white/5"
-            style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
-            data-testid="consent-cancel-btn">
-            Cancel
-          </button>
-          <Button onClick={onAccept}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition-all hover:shadow-[0_0_20px_rgba(26,138,128,0.4)]"
-            style={{ background: "linear-gradient(135deg, #1a8a80, #25a99e)" }}
+        {/* Buttons */}
+        <div className="px-6 pb-6 flex items-center gap-3">
+          <button onClick={onAccept} disabled={!agreed}
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: agreed ? "#1a8a80" : "rgba(26,138,128,0.5)" }}
             data-testid="consent-accept-btn">
-            <Mail className="w-4 h-4" />Connect Gmail
-          </Button>
+            <Mail className="w-4 h-4" /> Connect Gmail
+          </button>
+          <button onClick={onCancel}
+            className="px-6 py-3 rounded-xl text-sm font-medium transition-colors"
+            style={{ color: "var(--cm-text-2)", backgroundColor: "var(--cm-surface-2)", border: "1px solid var(--cm-border)" }}
+            data-testid="consent-cancel-btn">
+            Not Now
+          </button>
         </div>
       </div>
     </div>
