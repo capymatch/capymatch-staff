@@ -1,0 +1,52 @@
+{
+  "summary": "Tested Coach Mission Control dashboard refinements. All requested features working correctly: KPI cards showing 'NEED ATTENTION' (renamed from 'NEED ACTION'), 'Athletes Requiring Attention' section header (renamed from 'MY ATHLETES'), teal NEXT action pills in athlete rows, On Track section collapsed by default with count badge, Events Requiring Prep appears BEFORE Assigned Actions, severity badges on actions (REQUEST/ACKNOWLEDGED visible), Focus Mode toggle hides Events + Activity sections, Acknowledge/Resolve buttons functional.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "coach": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Coach Mission Control refinements tested at iteration 118. Key test-ids: coach-mission-control, kpi-value-my-athletes, kpi-value-need-attention, kpi-value-events-this-week, kpi-value-director-requests, roster-section, roster-athlete-{id}, toggle-on-track, director-actions-card, director-action-{id}, severity-{level}, ack-action-{id}, resolve-action-{id}, focus-mode-toggle. Login requires keyboard.press('Enter') to submit - button click may not work. Section order verified: Roster -> On Track -> Events Requiring Prep -> Assigned Actions.",
+  "feature_coverage": {
+    "dashboard_loads_at_mission_control": "PASS - Coach redirected to /mission-control after login",
+    "kpi_my_athletes": "PASS - Shows 6 athletes assigned",
+    "kpi_need_attention": "PASS - Renamed from 'NEED ACTION' to 'NEED ATTENTION', shows 5",
+    "kpi_events_this_week": "PASS - Shows 2 events",
+    "kpi_director_requests": "PASS - Shows 6 requests",
+    "athletes_requiring_attention_header": "PASS - Renamed from 'MY ATHLETES'",
+    "athlete_row_structure": "PASS - Shows name, issue badge (MOMENTUM DROP, BLOCKER, ENGAGEMENT DROP), reason, NEXT action",
+    "teal_next_action_pill": "PASS - Visually confirmed teal background on NEXT actions",
+    "on_track_collapsed_default": "PASS - Collapsed by default with count badge (1)",
+    "on_track_expandable": "PASS - Expands on click showing healthy athletes",
+    "events_requiring_prep_before_actions": "PASS - Section order: Roster > On Track > Events Prep > Assigned Actions",
+    "assigned_actions_severity_badges": "PASS - REQUEST badges visible with data-testid='severity-request'",
+    "action_row_structure": "PASS - Shows athlete name, severity + status badges, bold title, explanation, source/date",
+    "acknowledge_button": "PASS - Clicking shows toast 'Acknowledged — you're on it'",
+    "resolve_button": "PASS - Opens modal with resolution form (note field, notify director checkbox, add follow-up option)",
+    "focus_mode_toggle": "PASS - Toggle changes text from 'Focus Mode' to 'Focus Mode On'",
+    "focus_mode_hides_sections": "PASS - Events + Activity sections hidden when Focus Mode enabled",
+    "reduced_row_padding": "PASS - Visually confirmed compact row styling"
+  },
+  "test_notes": {
+    "login_method": "Use keyboard.type() and keyboard.press('Enter') - direct button.click() may fail",
+    "severity_badges_observed": "Only 'Request' severity visible in current test data - Critical/Needs Review badges exist in code (SEVERITY_CONFIG) but no test data triggered them",
+    "next_pill_detection": "Code detection returned false but visually confirmed teal styling in screenshots - detection issue only"
+  }
+}

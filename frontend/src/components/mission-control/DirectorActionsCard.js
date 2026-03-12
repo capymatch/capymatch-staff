@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   ClipboardCheck, AlertTriangle, Loader2, ChevronDown, ChevronUp,
-  CheckCircle2, Eye, Clock, Shield, X
+  CheckCircle2, Eye, Clock, Shield, X, Flame, FileSearch, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -35,15 +35,30 @@ const STATUS_CONFIG = {
   resolved: { label: "Resolved", color: "#10b981", bgColor: "rgba(16,185,129,0.12)" },
 };
 
-const RISK_CONFIG = {
-  critical: { label: "Critical", color: "#ef4444", bgColor: "rgba(239,68,68,0.12)" },
-  warning: { label: "Warning", color: "#f59e0b", bgColor: "rgba(245,158,11,0.12)" },
+const SEVERITY_CONFIG = {
+  critical: { label: "Critical", icon: Flame, color: "#ef4444", bgColor: "rgba(239,68,68,0.1)" },
+  warning: { label: "Needs Review", icon: FileSearch, color: "#f59e0b", bgColor: "rgba(245,158,11,0.1)" },
+  request: { label: "Request", icon: MessageSquare, color: "#3b82f6", bgColor: "rgba(59,130,246,0.1)" },
 };
+
+function SeverityBadge({ riskLevel }) {
+  const sev = riskLevel === "critical" ? SEVERITY_CONFIG.critical
+    : riskLevel === "warning" ? SEVERITY_CONFIG.warning
+    : SEVERITY_CONFIG.request;
+  const SevIcon = sev.icon;
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+      style={{ backgroundColor: sev.bgColor, color: sev.color }}
+      data-testid={`severity-${riskLevel || "request"}`}>
+      <SevIcon className="w-2.5 h-2.5" />
+      {sev.label}
+    </span>
+  );
+}
 
 function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, resolving, justChanged }) {
   const type = TYPE_CONFIG[action.type] || TYPE_CONFIG.review_request;
   const status = STATUS_CONFIG[action.status] || STATUS_CONFIG.open;
-  const risk = action.risk_level ? RISK_CONFIG[action.risk_level] : null;
   const TypeIcon = type.icon;
   const created = action.created_at ? new Date(action.created_at) : null;
 
@@ -53,7 +68,7 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
 
   return (
     <div
-      className="px-4 py-3 transition-all hover:bg-white/3"
+      className="px-3 sm:px-4 py-2.5 transition-all hover:bg-white/3"
       style={{
         borderBottom: "1px solid var(--cm-border)",
         backgroundColor: justChanged ? (action.status === "resolved" ? "rgba(16,185,129,0.06)" : "rgba(59,130,246,0.06)") : "transparent",
@@ -61,29 +76,35 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
       }}
       data-testid={`director-action-${action.action_id}`}
     >
-      <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+      <div className="flex items-start gap-2.5">
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
           style={{ backgroundColor: type.bgColor }}>
-          <TypeIcon className="w-4 h-4" style={{ color: type.color }} />
+          <TypeIcon className="w-3.5 h-3.5" style={{ color: type.color }} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Row 1: Athlete name + severity + status */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>{action.athlete_name}</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+            <SeverityBadge riskLevel={action.risk_level} />
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
               style={{ backgroundColor: status.bgColor, color: status.color }}>
               {status.label}
             </span>
-            {risk && (
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: risk.bgColor, color: risk.color }}>
-                {risk.label}
-              </span>
-            )}
           </div>
-          <p className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-2)" }}>
+
+          {/* Row 2: Action title (reason_label) — bold, like a task title */}
+          <p className="text-[11px] sm:text-xs font-semibold mt-1" style={{ color: "var(--cm-text-2)" }}>
             {action.reason_label}
-            {action.note ? ` — ${action.note}` : ""}
           </p>
+
+          {/* Row 3: Note / explanation — lighter */}
+          {action.note && (
+            <p className="text-[10px] sm:text-[11px] mt-0.5 leading-relaxed" style={{ color: "var(--cm-text-3)" }}>
+              {action.note}
+            </p>
+          )}
+
+          {/* Meta: source + date */}
           <div className="flex items-center gap-3 mt-1">
             <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
               {action.source === "coach_escalation"
@@ -98,9 +119,10 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
               </span>
             )}
           </div>
+
           {/* Coach action buttons */}
           {(canAcknowledge || canResolve) && (
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 mt-1.5">
               {canAcknowledge && (
                 <Button size="sm" onClick={() => onAcknowledge(action.action_id)}
                   disabled={acknowledging}
@@ -121,15 +143,16 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
               )}
             </div>
           )}
+
           {/* Acknowledged info */}
           {action.status === "acknowledged" && action.acknowledged_at && (
-            <p className="text-[10px] mt-1.5" style={{ color: "var(--cm-text-3)" }}>
+            <p className="text-[10px] mt-1" style={{ color: "var(--cm-text-3)" }}>
               Acknowledged by {action.acknowledged_by || "Coach"} · {new Date(action.acknowledged_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </p>
           )}
           {/* Resolved info */}
           {action.status === "resolved" && action.resolved_note && (
-            <p className="text-[10px] mt-1.5 italic" style={{ color: "var(--cm-text-3)" }}>
+            <p className="text-[10px] mt-1 italic" style={{ color: "var(--cm-text-3)" }}>
               Resolution: {action.resolved_note}
             </p>
           )}
@@ -166,7 +189,6 @@ export default function DirectorActionsCard({ role }) {
 
   const handleAcknowledge = async (actionId) => {
     setAckingId(actionId);
-    // Optimistic update: change status locally first
     setActions(prev => prev.map(a =>
       a.action_id === actionId ? { ...a, status: "acknowledged", acknowledged_at: new Date().toISOString(), acknowledged_by: "You" } : a
     ));
@@ -177,12 +199,11 @@ export default function DirectorActionsCard({ role }) {
       await axios.post(`${API}/director/actions/${actionId}/acknowledge`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Acknowledged — you're on it");
-      // Delay re-fetch so optimistic highlight animation completes
+      toast.success("Acknowledged \u2014 you're on it");
       setTimeout(() => fetchActions(), 2500);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to acknowledge");
-      fetchActions(); // revert immediately on error
+      fetchActions();
     } finally { setAckingId(null); }
   };
 
@@ -194,7 +215,6 @@ export default function DirectorActionsCard({ role }) {
   const handleResolveSubmit = async (actionId, resolveData) => {
     setResolveModalAction(null);
     setResolvingId(actionId);
-    // Optimistic update
     setActions(prev => prev.map(a =>
       a.action_id === actionId ? { ...a, status: "resolved", resolved_note: resolveData.note } : a
     ));
@@ -206,7 +226,7 @@ export default function DirectorActionsCard({ role }) {
       await axios.post(`${API}/director/actions/${actionId}/resolve`, resolveData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const msg = resolveData.follow_up_title ? "Resolved with follow-up created" : "Resolved — nice work";
+      const msg = resolveData.follow_up_title ? "Resolved with follow-up created" : "Resolved \u2014 nice work";
       toast.success(msg);
       setTimeout(() => fetchActions(), 2500);
     } catch (err) {
@@ -215,13 +235,13 @@ export default function DirectorActionsCard({ role }) {
     } finally { setResolvingId(null); }
   };
 
+  const sectionLabel = role === "club_coach" ? "Assigned Actions" : "Director Actions";
+
   if (loading) {
     return (
       <section data-testid="director-actions-card">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
-            {role === "club_coach" ? "Assigned Actions" : "Director Actions"}
-          </span>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>{sectionLabel}</span>
         </div>
         <div className="rounded-xl border p-6 flex items-center justify-center" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
           <Loader2 className="w-5 h-5 animate-spin text-teal-600" />
@@ -236,17 +256,15 @@ export default function DirectorActionsCard({ role }) {
   if (openAck.length === 0 && resolved.length === 0) {
     return (
       <section data-testid="director-actions-card">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
-            {role === "club_coach" ? "Assigned Actions" : "Director Actions"}
-          </span>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>{sectionLabel}</span>
         </div>
-        <div className="rounded-xl border px-6 py-8 text-center" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-          <div className="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2.5" style={{ backgroundColor: "rgba(16,185,129,0.1)" }}>
+        <div className="rounded-xl border px-6 py-6 text-center" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: "rgba(16,185,129,0.1)" }}>
             <CheckCircle2 className="w-4 h-4" style={{ color: "#10b981" }} />
           </div>
           <p className="text-sm font-medium" style={{ color: "var(--cm-text-2)" }}>No open actions</p>
-          <p className="text-xs mt-1" style={{ color: "var(--cm-text-3)" }}>
+          <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3)" }}>
             {role === "club_coach" ? "No review requests or escalations right now." : "Create actions from athlete pipeline views."}
           </p>
         </div>
@@ -257,22 +275,23 @@ export default function DirectorActionsCard({ role }) {
   return (
     <section data-testid="director-actions-card">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           {summary && summary.total_open > 0 && <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />}
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
-            {role === "club_coach" ? "Assigned Actions" : "Director Actions"}
+          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>{sectionLabel}</span>
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(245,158,11,0.08)", color: "#f59e0b" }}>
+            {openAck.length}
           </span>
         </div>
         {summary && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {summary.open_critical > 0 && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
-                {summary.open_critical} Critical
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded inline-flex items-center gap-1" style={{ backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                <Flame className="w-2.5 h-2.5" /> {summary.open_critical} Critical
               </span>
             )}
-            <span className="text-xs" style={{ color: "var(--cm-text-3)" }}>
-              {summary.total_open} open · {summary.acknowledged} ack
+            <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+              {summary.acknowledged} ack
             </span>
           </div>
         )}
@@ -293,12 +312,12 @@ export default function DirectorActionsCard({ role }) {
           />
         ))}
 
-        {/* Resolved section (collapsible) */}
+        {/* Resolved section */}
         {resolved.length > 0 && (
           <>
             <button
               onClick={() => setShowResolved(!showResolved)}
-              className="w-full flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-white/3"
+              className="w-full flex items-center justify-between px-3 sm:px-4 py-2 transition-colors hover:bg-white/3"
               style={{ borderTop: openAck.length > 0 ? "1px solid var(--cm-border)" : "none" }}
               data-testid="toggle-resolved-actions"
             >

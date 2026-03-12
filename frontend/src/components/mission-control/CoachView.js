@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Target, AlertTriangle, Calendar, MessageCircle, ArrowRight } from "lucide-react";
+import { Target, AlertTriangle, Calendar, MessageCircle, Focus } from "lucide-react";
 import { toast } from "sonner";
 import RosterSection from "./RosterSection";
 import UpcomingEventsCard from "./UpcomingEventsCard";
@@ -41,14 +41,12 @@ function useLiveIndicators(data, directorRequestCount) {
   const [lastUpdated, setLastUpdated] = useState(Date.now());
   const [, forceRender] = useState(0);
 
-  // Tick every 15s to update "Xs ago" label
   useEffect(() => {
     const t = setInterval(() => forceRender(n => n + 1), 15_000);
     return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
-    // Skip first load — no comparisons on initial data
     if (isFirstLoad.current) {
       isFirstLoad.current = false;
       prevRef.current = { data, directorRequestCount };
@@ -62,14 +60,11 @@ function useLiveIndicators(data, directorRequestCount) {
     const currSummary = data.todays_summary || {};
     const changed = new Set();
 
-    // Detect KPI changes
-    if (currSummary.needingAction !== prevSummary.needingAction) changed.add("NEED ACTION");
+    if (currSummary.needingAction !== prevSummary.needingAction) changed.add("NEED ATTENTION");
     if (currSummary.upcomingEvents !== prevSummary.upcomingEvents) changed.add("EVENTS THIS WEEK");
     if (currSummary.athleteCount !== prevSummary.athleteCount) changed.add("MY ATHLETES");
     if (directorRequestCount !== prev.directorRequestCount) changed.add("DIRECTOR REQUESTS");
 
-    // Quiet toasts for high-priority changes only
-    // Only toast when prev had a real value (not initial 0) and count increased
     if (prev.directorRequestCount > 0 && directorRequestCount > prev.directorRequestCount) {
       const diff = directorRequestCount - prev.directorRequestCount;
       toast.info(`${diff} new director request${diff > 1 ? "s" : ""}`, {
@@ -87,17 +82,16 @@ function useLiveIndicators(data, directorRequestCount) {
       });
     }
 
-    // Detect major momentum drops
     const prevRoster = prev.data?.myRoster || [];
     const currRoster = data.myRoster || [];
     for (const curr of currRoster) {
       const old = prevRoster.find(a => a.id === curr.id);
       if (old && old.momentum_score - curr.momentum_score >= 15 && curr.momentum_trend === "declining") {
         toast.info(`${curr.name.split(" ")[0]}'s momentum dropped significantly`, {
-          description: `Score: ${old.momentum_score} → ${curr.momentum_score}`,
+          description: `Score: ${old.momentum_score} \u2192 ${curr.momentum_score}`,
           duration: 5000,
         });
-        break; // Only one toast per poll
+        break;
       }
     }
 
@@ -116,13 +110,12 @@ function useLiveIndicators(data, directorRequestCount) {
 export default function CoachView({ data, userName }) {
   const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
   const [directorRequestCount, setDirectorRequestCount] = useState(0);
+  const [focusMode, setFocusMode] = useState(false);
   const navigate = useNavigate();
   const firstName = userName?.split(" ")[0] || "Coach";
   const summary = data.todays_summary || {};
-  const summaryLines = data.summary_lines || [];
   const priorities = data.priorities || [];
 
-  // Fetch director actions count (also polled)
   const fetchDirectorCount = useCallback(async () => {
     try {
       const token = localStorage.getItem("capymatch_token");
@@ -132,20 +125,15 @@ export default function CoachView({ data, userName }) {
       const actions = res.data.actions || [];
       const openCount = actions.filter(a => a.status === "open" || a.status === "acknowledged").length;
       setDirectorRequestCount(openCount);
-    } catch {
-      // silently fail
-    }
+    } catch {}
   }, []);
 
   useEffect(() => { fetchDirectorCount(); }, [fetchDirectorCount]);
-
-  // Poll director count in sync with main data
   useEffect(() => {
     const t = setInterval(fetchDirectorCount, 45_000);
     return () => clearInterval(t);
   }, [fetchDirectorCount]);
 
-  // Live change detection
   const { pulseKeys, timeSinceLabel } = useLiveIndicators(data, directorRequestCount);
 
   const kpis = [
@@ -159,8 +147,8 @@ export default function CoachView({ data, userName }) {
     },
     {
       value: summary.needingAction || 0,
-      label: "NEED ACTION",
-      subtitle: "Require follow-up",
+      label: "NEED ATTENTION",
+      subtitle: "Athletes need attention",
       color: summary.needingAction > 0 ? "#FFC649" : "#30C5BE",
       icon: AlertTriangle,
       iconBg: summary.needingAction > 0 ? "#4A3C36" : "#363D59",
@@ -183,30 +171,23 @@ export default function CoachView({ data, userName }) {
     },
   ];
 
-  const scrollToPriorities = () => {
-    const el = document.querySelector('[data-testid="roster-section"]');
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   return (
-    <div className="space-y-6" data-testid="coach-mission-control">
-      {/* Coach Onboarding (dismissible) */}
+    <div className="space-y-5" data-testid="coach-mission-control">
       <OnboardingChecklist />
 
       {/* ── Hero Card ── */}
       <section
         className="relative rounded-[10px] overflow-hidden"
-        style={{ backgroundColor: "#1E213A", padding: "24px" }}
+        style={{ backgroundColor: "#1E213A", padding: "20px 24px" }}
         data-testid="coach-hero"
       >
-        {/* Top row: greeting + date + live indicator */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
           <div>
-            <h2 className="text-xl sm:text-[28px] font-semibold text-white leading-tight">
+            <h2 className="text-xl sm:text-[26px] font-semibold text-white leading-tight">
               {getGreeting()},{" "}
               <span style={{ color: "#30C5BE" }}>{firstName}</span>
             </h2>
-            <p className="text-sm sm:text-base mt-0.5" style={{ color: "#8A92A3" }}>
+            <p className="text-sm mt-0.5" style={{ color: "#8A92A3" }}>
               Here's what's happening with your athletes today
             </p>
           </div>
@@ -224,8 +205,8 @@ export default function CoachView({ data, userName }) {
               style={{
                 backgroundColor: "#363D59",
                 color: "#E5E5E5",
-                fontSize: 14,
-                padding: "8px 16px",
+                fontSize: 13,
+                padding: "6px 14px",
                 borderRadius: 6,
               }}
             >
@@ -234,11 +215,10 @@ export default function CoachView({ data, userName }) {
           </div>
         </div>
 
-        {/* Separator */}
-        <div style={{ borderTop: "1px solid #363D59", margin: "0 0 20px 0" }} />
+        <div style={{ borderTop: "1px solid #363D59", margin: "0 0 16px 0" }} />
 
-        {/* KPIs — 2-col on mobile, 4-col on desktop */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-0">
+        {/* KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-0">
           {kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
             const isPulsing = pulseKeys.has(kpi.label);
@@ -247,18 +227,18 @@ export default function CoachView({ data, userName }) {
                 key={kpi.label}
                 className="sm:flex-1 sm:min-w-0"
                 style={{
-                  paddingRight: idx < kpis.length - 1 ? "clamp(8px, 2vw, 24px)" : 0,
-                  paddingLeft: idx > 0 ? "clamp(8px, 2vw, 24px)" : 0,
+                  paddingRight: idx < kpis.length - 1 ? "clamp(8px, 2vw, 20px)" : 0,
+                  paddingLeft: idx > 0 ? "clamp(8px, 2vw, 20px)" : 0,
                   borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none",
-                  marginTop: 12,
-                  marginBottom: 12,
+                  marginTop: 8,
+                  marginBottom: 8,
                 }}
               >
                 <div className="flex items-start justify-between w-full">
                   <div>
                     <div className="flex items-center gap-2">
                       <p
-                        className="text-2xl sm:text-4xl font-bold leading-none mb-2"
+                        className="text-2xl sm:text-3xl font-bold leading-none mb-1.5"
                         style={{
                           color: kpi.color,
                           transition: "transform 0.3s ease",
@@ -271,29 +251,29 @@ export default function CoachView({ data, userName }) {
                       {isPulsing && (
                         <span
                           className="w-2 h-2 rounded-full animate-ping"
-                          style={{ backgroundColor: kpi.color, marginBottom: 8 }}
+                          style={{ backgroundColor: kpi.color, marginBottom: 6 }}
                           data-testid={`kpi-pulse-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
                         />
                       )}
                     </div>
-                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#8A92A3" }}>
+                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "#8A92A3" }}>
                       {kpi.label}
                     </p>
-                    <p className="text-xs sm:text-sm hidden sm:block" style={{ color: "#8A92A3" }}>
+                    <p className="text-[11px] hidden sm:block" style={{ color: "#8A92A3" }}>
                       {kpi.subtitle}
                     </p>
                   </div>
                   <div
                     className="hidden sm:flex items-center justify-center shrink-0"
                     style={{
-                      width: 40,
-                      height: 40,
+                      width: 36,
+                      height: 36,
                       borderRadius: "50%",
                       backgroundColor: kpi.iconBg,
-                      marginTop: 4,
+                      marginTop: 2,
                     }}
                   >
-                    <Icon style={{ width: 18, height: 18, color: kpi.color }} />
+                    <Icon style={{ width: 16, height: 16, color: kpi.color }} />
                   </div>
                 </div>
               </div>
@@ -302,21 +282,40 @@ export default function CoachView({ data, userName }) {
         </div>
       </section>
 
-      {/* ── Athletes Requiring Attention + On Track (merged) ── */}
+      {/* Focus Mode Toggle */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setFocusMode(!focusMode)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+          style={{
+            backgroundColor: focusMode ? "rgba(13,148,136,0.12)" : "transparent",
+            color: focusMode ? "#0d9488" : "var(--cm-text-3)",
+            border: focusMode ? "1px solid rgba(13,148,136,0.25)" : "1px solid var(--cm-border)",
+          }}
+          data-testid="focus-mode-toggle"
+        >
+          <Focus className="w-3.5 h-3.5" />
+          {focusMode ? "Focus Mode On" : "Focus Mode"}
+        </button>
+      </div>
+
+      {/* ── Athletes Requiring Attention + On Track + Event Prep ── */}
       <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} />
 
-      {/* ── Director Actions (assigned to this coach) ── */}
+      {/* ── Assigned Actions ── */}
       <DirectorActionsCard role="club_coach" />
 
-      {/* ── Events + Activity ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
-          <UpcomingEventsCard events={data.upcomingEvents || []} roster={data.myRoster || []} />
+      {/* ── Events + Activity (hidden in focus mode) ── */}
+      {!focusMode && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div className="lg:col-span-3">
+            <UpcomingEventsCard events={data.upcomingEvents || []} roster={data.myRoster || []} />
+          </div>
+          <div className="lg:col-span-2">
+            <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />
+          </div>
         </div>
-        <div className="lg:col-span-2">
-          <ActivityFeed items={data.recentActivity || []} title="Recent Activity" />
-        </div>
-      </div>
+      )}
 
       {/* Pipeline Panel */}
       {pipelineAthleteId && (
