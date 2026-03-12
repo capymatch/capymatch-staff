@@ -30,7 +30,7 @@ function AthleteRow({ athlete, isLast }) {
       className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-slate-50/60 transition-colors group"
       style={{
         borderBottom: isLast ? "none" : "1px solid var(--cm-border)",
-        backgroundColor: hasIssue ? "rgba(239,68,68,0.03)" : "transparent",
+        backgroundColor: "transparent",
       }}
       onClick={() => navigate(`/support-pods/${athlete.id}`)}
     >
