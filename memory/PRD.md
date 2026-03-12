@@ -3,12 +3,6 @@
 ## Overview
 CapyMatch is a full-stack sports recruiting platform connecting athletes, coaches, and club directors. Built with React (frontend) + FastAPI (backend) + MongoDB.
 
-## User Personas
-- **Athletes** — Manage recruiting pipeline, track schools, build profile, invite helpers
-- **Coaches** — Monitor athletes via Mission Control, manage support pods, run events
-- **Directors** — Oversee roster, handle director-level actions, manage invites
-- **Platform Admins** — Manage users, subscriptions, integrations, universities
-
 ## Architecture
 ```
 /app/
@@ -22,60 +16,60 @@ CapyMatch is a full-stack sports recruiting platform connecting athletes, coache
     └── src/lib/      (Utilities, context)
 ```
 
-## Athlete-Side Page Structure (Matches capymatch/capymatch repo)
+## Athlete-Side Page Structure
 
 ### Sidebar Navigation (core features)
-- Dashboard (`/board`), My Schools (`/pipeline`), Find Schools (`/schools`), Calendar, Inbox, Highlights, Analytics
+Dashboard, My Schools, Find Schools, Calendar, Inbox, Highlights, Analytics
 
 ### TopBar Dropdown (account/settings)
 - Athlete Profile (`/athlete-profile`)
 - Settings (`/athlete-settings`) — Theme, Gmail, Team Management, Privacy, Guided Tour
-- Account (`/account`) — Personal Info, Change Password, Notifications, Privacy, Danger Zone
-- Billing (`/billing`) — Current Plan, Usage, Plan Features, Billing History, Cancel/Reactivate
+- Account (`/account`) — Personal Info, Password, Notifications, Privacy, Danger Zone
+- Billing (`/billing`) — Current Plan, Usage, Plan Features, Billing History
 - Sign Out
 
-## Core Features — Implemented
+## Coach Mission Control (Refined — Mar 2026)
 
-### Coach Side (Complete)
-- Mission Control dashboard with unified athlete attention list
+### Hero KPIs
+- MY ATHLETES (count)
+- NEED ATTENTION (renamed from "Need Action") — athletes needing attention
+- EVENTS THIS WEEK
+- DIRECTOR REQUESTS
+
+### Section Order
+1. Athletes Requiring Attention (renamed from "My Athletes") — action-needed athletes with prominent NEXT action pills
+2. On Track (collapsed by default) — healthy athletes
+3. Events Requiring Prep
+4. Assigned Actions — with severity badges (Critical/Needs Review/Request), restructured for scannability
+5. Upcoming Events + Recent Activity (hidden in Focus Mode)
+
+### Focus Mode
+- Toggle hides Events + Activity sections
+- Shows only Athletes Requiring Attention + Assigned Actions
+
+## Core Features Implemented
+
+### Coach Side
+- Mission Control with refined intervention console design
 - Support Pod with mobile-first redesign
-- Director Actions (acknowledge/resolve with modal notes)
+- Director Actions with acknowledge/resolve workflow
 - Events, Advocacy, Program Intelligence
 
-### Athlete Side (Complete)
+### Athlete Side
 - Dashboard, Pipeline, Find Schools, Calendar, Inbox, Highlights, Analytics
-- **Profile** — Athlete profile editing
-- **Account** — Personal info, change password, notifications, privacy, data export, delete account
-- **Settings** — Appearance/theme, Gmail integration, Team Management (Invite Someone), data & privacy, guided tour
-- **Billing** — Current plan details, usage bars, plan features checklist, billing history with transaction table, cancel/reactivate subscription
-- **Gmail Consent Modal** — Matches reference: Pro Tip box, What We Access (3 items), What We Never Do (4 items), security note, consent checkbox
-- **Team Management** — Invite helpers/parents by email, manage members, "How it works" accordion
-
-## Key API Endpoints
-- `GET/POST /api/team` — Team management
-- `POST /api/team/invite` — Invite member by email
-- `GET /api/stripe/billing-history` — Billing history
-- `POST /api/stripe/cancel` — Cancel subscription
-- `POST /api/stripe/reactivate` — Reactivate subscription
-- `GET/PUT /api/athlete/settings` — Preferences
-- `POST /api/athlete/settings/change-password` — Password change
-- `DELETE /api/athlete/settings/delete-account` — Account deletion
+- Profile, Account, Settings, Billing (separated, no duplication)
+- Team Management (Invite Someone)
+- Gmail Integration with consent modal
 
 ## 3rd Party Integrations
-- MongoDB, Resend, Stripe, Emergent LLM Key, Gmail API
+MongoDB, Resend, Stripe, Emergent LLM Key, Gmail API
 
 ## Test Credentials
+- **Coach:** coach.williams@capymatch.com / coach123
 - **Athlete:** emma.chen@athlete.capymatch.com / password123
 
 ## Backlog
 
 ### P1 — In-App Messaging & Notifications
-- Coach-to-athlete messaging system
-
-### P2 — Club Billing
-- Subscription billing for organizations
-
-### P3 — Future
-- Multi-Agent Intelligence Pipeline Phase 2
-- AI-Powered Coach Summary
-- Parent/Family Experience
+### P2 — Club Billing (org subscriptions)
+### P3 — AI Coach Summary, Intelligence Pipeline Phase 2, Parent/Family Experience
