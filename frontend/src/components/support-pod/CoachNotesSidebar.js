@@ -118,12 +118,9 @@ export function CoachNotesSidebar({ athleteId, athleteName, open, onClose }) {
 
   return (
     <>
-      {/* Overlay */}
-      {open && <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} data-testid="pod-notes-overlay" />}
-
-      {/* Panel */}
-      <div className={`fixed right-0 top-0 bottom-0 w-[340px] sm:w-[380px] z-50 flex flex-col transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
-        style={{ backgroundColor: "#161b25", borderLeft: "1px solid rgba(255,255,255,0.06)", boxShadow: open ? "-8px 0 40px rgba(0,0,0,0.4)" : "none" }}
+      {/* Panel — no overlay since main content shifts to accommodate */}
+      <div className={`fixed right-0 top-0 bottom-0 w-[340px] sm:w-[380px] z-40 flex flex-col transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        style={{ backgroundColor: "#161b25", borderLeft: "1px solid rgba(255,255,255,0.06)", boxShadow: open ? "-4px 0 24px rgba(0,0,0,0.25)" : "none" }}
         data-testid="pod-notes-panel">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
