@@ -17,10 +17,10 @@ const HEALTH_DOT = {
   red: "bg-red-500",
 };
 
-function MomentumIndicator({ score, trend }) {
-  if (trend === "rising") return <span className="inline-flex items-center gap-0.5 text-emerald-600 text-xs font-semibold"><TrendingUp className="w-3 h-3" />+{score}</span>;
-  if (trend === "declining") return <span className="inline-flex items-center gap-0.5 text-red-600 text-xs font-semibold"><TrendingDown className="w-3 h-3" />{score}</span>;
-  return <span className="inline-flex items-center gap-0.5 text-slate-400 text-xs font-semibold"><Minus className="w-3 h-3" />{score}</span>;
+function MomentumIndicator({ trend }) {
+  if (trend === "rising") return <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />;
+  if (trend === "declining") return <TrendingDown className="w-3.5 h-3.5 text-red-500" />;
+  return <Minus className="w-3.5 h-3.5 text-slate-300" />;
 }
 
 function AthleteRow({ athlete, isLast }) {
@@ -42,7 +42,7 @@ function AthleteRow({ athlete, isLast }) {
       {/* Momentum — only show for athletes with issues */}
       {hasIssue && (
         <div className="w-8 sm:w-10 shrink-0 text-center pt-1">
-          <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
+          <MomentumIndicator trend={athlete.momentum_trend} />
         </div>
       )}
 
