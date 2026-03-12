@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, ChevronRight, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronRight, Zap, ShieldAlert, Clock, AlertTriangle, Users, Target, Calendar, CheckCircle } from "lucide-react";
 import QuickNote from "@/components/QuickNote";
 
 const CATEGORY_CONFIG = {
@@ -39,10 +39,14 @@ function AthleteRow({ athlete, isLast }) {
       }}
       onClick={() => navigate(`/support-pods/${athlete.id}`)}
     >
-      {/* Momentum — only show for athletes with issues */}
-      {hasIssue && (
+      {/* Status indicator */}
+      {hasIssue ? (
         <div className="w-8 sm:w-10 shrink-0 text-center pt-1">
           <MomentumIndicator trend={athlete.momentum_trend} />
+        </div>
+      ) : (
+        <div className="w-8 sm:w-10 shrink-0 text-center pt-1">
+          <CheckCircle className="w-3.5 h-3.5 text-emerald-500 mx-auto" />
         </div>
       )}
 
