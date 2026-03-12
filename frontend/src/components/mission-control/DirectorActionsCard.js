@@ -57,14 +57,18 @@ function SeverityBadge({ riskLevel }) {
 }
 
 function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, resolving, justChanged }) {
-  const type = TYPE_CONFIG[action.type] || TYPE_CONFIG.review_request;
   const status = STATUS_CONFIG[action.status] || STATUS_CONFIG.open;
-  const TypeIcon = type.icon;
   const created = action.created_at ? new Date(action.created_at) : null;
 
   const isCoach = role === "club_coach";
   const canAcknowledge = isCoach && action.status === "open";
   const canResolve = isCoach && (action.status === "open" || action.status === "acknowledged");
+  const isOpen = action.status === "open";
+
+  // Split reason_label into title + subtitle at " — "
+  const parts = (action.reason_label || "").split(" — ");
+  const actionTitle = parts[0];
+  const actionSubtitle = parts.length > 1 ? parts.slice(1).join(" — ") : null;
 
   return (
     <div
@@ -77,57 +81,66 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
       data-testid={`director-action-${action.action_id}`}
     >
       <div className="flex items-start gap-2.5">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-          style={{ backgroundColor: type.bgColor }}>
-          <TypeIcon className="w-3.5 h-3.5" style={{ color: type.color }} />
-        </div>
+        {/* Status dot */}
+        <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
+          style={{ backgroundColor: status.color }} />
+
         <div className="flex-1 min-w-0">
+          {/* Row 1: Athlete name + current state badge */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>{action.athlete_name}</span>
-            <SeverityBadge riskLevel={action.risk_level} />
             <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-              style={{ backgroundColor: status.bgColor, color: status.color }}>
+              style={{ backgroundColor: status.bgColor, color: status.color }}
+              data-testid={`action-status-${action.action_id}`}>
               {status.label}
             </span>
           </div>
 
-          {/* Row 2: Action title (reason_label) — bold, like a task title */}
-          <p className="text-[11px] sm:text-xs font-semibold mt-1" style={{ color: "var(--cm-text-2)" }}>
-            {action.reason_label}
+          {/* Row 2: Action title — strong hierarchy */}
+          <p className="text-[12px] sm:text-[13px] font-bold mt-1" style={{ color: "var(--cm-text)" }}>
+            {actionTitle}
           </p>
+          {actionSubtitle && (
+            <p className="text-[10px] sm:text-[11px] font-medium" style={{ color: "var(--cm-text-2)" }}>
+              {actionSubtitle}
+            </p>
+          )}
 
-          {/* Row 3: Note / explanation — lighter */}
+          {/* Row 3: Note — concise */}
           {action.note && (
-            <p className="text-[10px] sm:text-[11px] mt-0.5 leading-relaxed" style={{ color: "var(--cm-text-3)" }}>
+            <p className="text-[10px] sm:text-[11px] mt-1 leading-relaxed" style={{ color: "var(--cm-text-3)" }}>
               {action.note}
             </p>
           )}
 
-          {/* Meta: source + date */}
-          <div className="flex items-center gap-3 mt-1">
+          {/* Meta: requester + date */}
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
               {action.source === "coach_escalation"
                 ? `Escalated by ${action.coach_name || "Coach"}`
                 : isCoach
-                  ? `From ${action.director_name || "Director"}`
-                  : `To ${action.coach_name || "Coach"}`}
+                  ? `Requested by ${action.director_name || "Director"}`
+                  : `Assigned to ${action.coach_name || "Coach"}`}
             </span>
             {created && (
-              <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
-                {created.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              </span>
+              <>
+                <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>&middot;</span>
+                <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+                  {created.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+              </>
             )}
           </div>
 
-          {/* Acknowledged info */}
+          {/* Acknowledged audit line */}
           {action.status === "acknowledged" && action.acknowledged_at && (
-            <p className="text-[10px] mt-1" style={{ color: "var(--cm-text-3)" }}>
-              Acknowledged by {action.acknowledged_by || "Coach"} · {new Date(action.acknowledged_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            <p className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-3)" }}>
+              Acknowledged by {action.acknowledged_by || "Coach"} &middot; {new Date(action.acknowledged_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </p>
           )}
-          {/* Resolved info */}
+          {/* Resolved audit line */}
           {action.status === "resolved" && action.resolved_note && (
-            <p className="text-[10px] mt-1 italic" style={{ color: "var(--cm-text-3)" }}>
+            <p className="text-[10px] mt-0.5 italic" style={{ color: "var(--cm-text-3)" }}>
               Resolution: {action.resolved_note}
             </p>
           )}
@@ -148,7 +161,7 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
             {canResolve && (
               <Button size="sm" onClick={() => onResolve(action.action_id)}
                 disabled={resolving}
-                className="text-[10px] h-6 px-2.5 bg-emerald-600/80 hover:bg-emerald-600 text-white"
+                className={`text-[10px] h-6 px-2.5 text-white ${isOpen ? "bg-emerald-600 hover:bg-emerald-700" : "bg-emerald-600/70 hover:bg-emerald-600"}`}
                 data-testid={`resolve-action-${action.action_id}`}>
                 {resolving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle2 className="w-3 h-3 mr-1" />}
                 Resolve
