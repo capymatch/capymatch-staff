@@ -65,3 +65,65 @@ async def send_invite_email(
     except Exception as e:
         log.error(f"Failed to send invite email to {to_email}: {e}")
         return {"success": False, "email_id": None, "error": str(e)}
+
+
+APP_URL = os.environ.get("APP_URL", "https://app.capymatch.com")
+
+
+def _build_action_notification_html(assignee_name: str, athlete_name: str, action_title: str, due_date: str, assigned_by: str) -> str:
+    try:
+        from datetime import datetime as dt
+        due = dt.fromisoformat(due_date.replace("Z", "+00:00")).strftime("%B %d, %Y")
+    except Exception:
+        due = due_date or "No date set"
+
+    return f"""
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:32px 0;">
+      <div style="background:#0f172a;border-radius:12px 12px 0 0;padding:24px 28px;text-align:center;">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,0.1);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
+          <span style="color:#fff;font-weight:700;font-size:13px;">CM</span>
+        </div>
+        <h1 style="margin:0;color:#fff;font-size:18px;font-weight:600;">New Action Assigned</h1>
+      </div>
+      <div style="background:#ffffff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:28px;">
+        <p style="margin:0 0 4px;font-size:15px;color:#111827;">Hi {assignee_name},</p>
+        <p style="margin:0 0 20px;font-size:13px;color:#6b7280;"><strong>{assigned_by}</strong> assigned you a new action for <strong>{athlete_name}</strong>.</p>
+        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:0 0 20px;">
+          <p style="margin:0 0 8px;font-size:14px;font-weight:600;color:#111827;">{action_title}</p>
+          <p style="margin:0;font-size:12px;color:#6b7280;">Due: {due}</p>
+        </div>
+        <a href="{APP_URL}" style="display:block;text-align:center;background:#0f172a;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;margin:20px 0;">View in CapyMatch</a>
+        <p style="margin:16px 0 0;font-size:11px;color:#9ca3af;text-align:center;">This is a notification only. Please do not reply to this email.</p>
+      </div>
+    </div>
+    """
+
+
+async def send_action_notification_email(
+    assignee_name: str,
+    athlete_name: str,
+    action_title: str,
+    due_date: str,
+    assigned_by: str,
+) -> dict:
+    """Send action assignment notification via Resend. Best-effort."""
+    if not resend.api_key:
+        return {"success": False, "error": "RESEND_API_KEY not configured"}
+
+    html = _build_action_notification_html(assignee_name, athlete_name, action_title, due_date, assigned_by)
+
+    params = {
+        "from": f"CapyMatch Notifications <{FROM_EMAIL}>",
+        "to": [FROM_EMAIL],  # Placeholder — in production, resolve assignee email
+        "subject": f"New action assigned: {action_title}",
+        "html": html,
+    }
+
+    try:
+        result = await asyncio.to_thread(resend.Emails.send, params)
+        email_id = result.get("id") if isinstance(result, dict) else getattr(result, "id", None)
+        log.info(f"Action notification sent for '{action_title}', id={email_id}")
+        return {"success": True, "email_id": email_id}
+    except Exception as e:
+        log.error(f"Failed to send action notification: {e}")
+        return {"success": False, "error": str(e)}

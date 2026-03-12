@@ -40,8 +40,10 @@ class MessageCreate(BaseModel):
 class ActionCreate(BaseModel):
     title: str
     owner: str
+    owner_role: Optional[str] = None
     due_date: Optional[str] = None
     source_category: Optional[str] = None
+    notes: Optional[str] = None
 
 class ActionUpdate(BaseModel):
     status: Optional[str] = None

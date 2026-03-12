@@ -96,17 +96,22 @@ async def create_pod_action(athlete_id: str, action: ActionCreate, current_user:
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
     """Create a new action item in the pod"""
+    now = datetime.now(timezone.utc).isoformat()
+    athlete = sp_get_athlete(athlete_id) or {}
+    athlete_name = athlete.get("full_name", "Unknown Athlete")
     doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
         "title": action.title,
         "owner": action.owner,
+        "owner_role": action.owner_role,
         "status": "ready",
         "due_date": action.due_date or (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
         "source": "manual",
         "source_category": action.source_category,
+        "notes": action.notes,
         "created_by": current_user["name"],
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": now,
         "is_suggested": False,
         "completed_at": None,
     }
@@ -119,9 +124,39 @@ async def create_pod_action(athlete_id: str, action: ActionCreate, current_user:
         "type": "action_created",
         "description": f"Created action: {action.title}",
         "actor": current_user["name"],
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": now,
     }
     await db.pod_action_events.insert_one(event)
+
+    # In-app notification for the assigned person
+    notif = {
+        "id": str(uuid.uuid4()),
+        "type": "action_assigned",
+        "recipient_name": action.owner,
+        "recipient_role": action.owner_role,
+        "athlete_id": athlete_id,
+        "athlete_name": athlete_name,
+        "action_title": action.title,
+        "due_date": doc["due_date"],
+        "assigned_by": current_user["name"],
+        "read": False,
+        "created_at": now,
+    }
+    await db.notifications.insert_one(notif)
+
+    # Fire email notification (non-blocking)
+    try:
+        from services.email import send_action_notification_email
+        import asyncio
+        asyncio.create_task(send_action_notification_email(
+            assignee_name=action.owner,
+            athlete_name=athlete_name,
+            action_title=action.title,
+            due_date=doc["due_date"],
+            assigned_by=current_user["name"],
+        ))
+    except Exception:
+        pass  # Email is best-effort
 
     return doc
 

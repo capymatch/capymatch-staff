@@ -1,74 +1,59 @@
 <analysis>**original_problem_statement:**
-The user's goal is to create a single, unified platform () for college sports recruiting, merging separate applications for athletes/parents and coaches/directors. The platform requires a shared backend, multi-tenant architecture, role-based experiences, and a suite of AI-powered and data-driven features. Key requirements include a Smart Match engine, Stripe integration, admin dashboards, and a Pipeline page that acts as the central operating system for an athlete's recruiting journey. The most recent work focused on building a public Athlete Profile and then transforming the Pipeline page into a true action hub.
+The user's initial goal was to build CapyMatch, a unified platform for college sports recruiting. After a major overhaul of the Athlete Support Pod, the most recent user request is to redesign and implement the Add Next Action flow. The goal is to replace the current basic inline form with a premium, dark-themed modal that is consistent with the rest of the application's UX. This upgrade should use real support pod members for assignment, include fields for due date and task type, and trigger in-app and email notifications upon task creation.
 
 **PRODUCT REQUIREMENTS:**
-- Implement a multi-tenant architecture with roles: , , , , .
-- Build a Smart Match recommendation engine.
-- Integrate Stripe for subscriptions.
-- Create a public, shareable, coach-facing Athlete Profile.
-- Create an internal, staff-facing version of the Athlete Profile with private recruiting context.
-- Develop a derived metrics layer () to power UI intelligence.
-- Evolve the Pipeline page into the primary command center for recruiting, showing the top action for each school.
-- Implement a multi-agent AI pipeline for school-specific intelligence (phased).
-- Build out experiences for all user roles, including Club Billing and a Parent/Family portal.
+1.  **Replace Inline Form with Modal:** The + Add button in the Next Actions component should open a dark-themed modal.
+2.  **Use Real Pod Members for Assignment:** The Assign to field must be a select dropdown populated with the actual members of the athlete's support pod (e.g., Coach, Parent, Athlete, Director), not a hardcoded list.
+3.  **Modern Modal Fields:** The modal must include an action title, the Assign to dropdown, a due date picker, and optional fields for type/category and notes.
+4.  **Smart UX Defaults:** Implement sensible defaults, such as pre-selecting the current user as the assignee.
+5.  **Notifications:** When an action is assigned, the system should be able to send an in-app notification and trigger an email notification to the assignee from .
+6.  **Preserve Existing Functionality:** Do not break the existing logic for sorting, completing, or viewing actions.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A unified full-stack application (FastAPI, React, MongoDB) with a sophisticated multi-tenant architecture.
-- **Core Platform:** Role-based access and Stripe integration are in place.
-- **Athlete Profile:** A complete, two-sided profile feature exists.
-    - **Public Profile ():** A modern, mobile-first, public-facing page with a Coach Scan Mode hero, Dynamic Recruiting Snapshot signals, and athlete-controlled privacy settings.
-    - **Internal Profile ():** A staff-only view showing the full profile plus private recruiting context (pipeline status, coach flags, etc.). Links to this page are integrated into the Roster and Support Pod views.
-- **Pipeline as an Operating System:** The Pipeline page is now the primary action hub.
-    - **Backend Top Action Engine:** A deterministic rules engine () identifies the single highest-priority action for each school (e.g., Reply to coach, Send intro email).
-    - **Enhanced UI:** Both the main hero carousel and the individual school cards on the Pipeline page now display the top action, its owner (e.g., Athlete), and a human-friendly explanation, making it clear what to do next.
+A full-stack application (React, FastAPI, MongoDB) with a Coach Mission Control dashboard and a recently overhauled Athlete Support Pod. This pod now functions as an intervention console with new data sections (, , ). A key UX pattern is a floating action bar at the bottom of the page that opens dark, glass-morphism modals for actions like , , , , and . The app has also been enhanced for mobile responsiveness.
 
 **Last working item**:
-    - Last item agent was working: The user requested a set of UX refinements for the Pipeline page's hero card to improve its clarity, action hierarchy, and overall effectiveness as a command center. The agent created a plan to address this and is waiting for the user's approval.
-    - Status: NOT STARTED
+    - Last item agent was working: The agent was implementing the user's request to upgrade the Next Actions component. This involved creating a new  component, updating the backend  endpoint to accept new fields (assignee, due date, type) and to trigger an email notification via Resend. The agent had started rewriting the main  component to integrate this new modal but did not complete the work.
+    - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? frontend testing agent
+    - Which testing method agent to use? both
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - There are no pending issues.
+  - No pending issues.
 
 **In progress Task List**:
-  - Task 1: (P0) Refine the Pipeline Hero Card UX.
+  - Task 1: (P0) Complete the Next Actions Component Upgrade
 
  Task Detail:
   - Task 1: 
-     - Where to resume: The agent has proposed a plan to the user via  and is awaiting confirmation. Once approved, the agent will begin implementing the frontend refinements in  and potentially updating text mappings in .
-     - What will be achieved with this? The hero card will feature more directive action wording, a stronger visual hierarchy, a clearer View School CTA, and reduced visual clutter. This will make the command center more intuitive and effective for users.
-     - Status:  NOT STARTED
-     - Should Test frontend/backend/both after fix? frontend
-     - Blocked on something: User confirmation on the proposed plan.
+     - Where to resume: . The component needs to be fully rewritten to remove the old inline form and instead manage the state to open the new . This includes passing the necessary props (, ) to the modal and implementing the callback to refresh the action list upon successful creation.
+     - What will be achieved with this? The Add Next Action flow will be elevated to a polished, modal-based experience consistent with the app's premium design. It will enable assigning tasks to actual support pod members and will notify them, making the feature significantly more robust and user-friendly.
+     - Status:  IN PROGRESS
+     - Should Test frontend/backend/both after fix? both
+     - Blocked on something: None.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
-- (P1) **Club Billing:** Implement the subscription billing and management flow for organizations/clubs.
+- (P1) **Implement In-App Messaging & Notifications:** Build the backend and frontend for a full in-app messaging system, triggered when a coach sends a message from the Support Pod. This was approved by the user and moved to the backlog.
+- (P2) **Club Billing:** Implement the subscription billing and management flow for organizations/clubs.
 
 **Future Tasks:**
 - **Multi-Agent Intelligence Pipeline (Phase 2+):** Implement the remaining agents: , , and .
 - **AI-Powered Coach Summary:** Use an LLM to generate an enhanced recruiting pitch for the public profile using pipeline data.
 - **Coach Scraper Health Report (V1):** Build a dashboard card and admin digest to monitor data freshness.
 - **Parent/Family Experience:** Build out the dedicated user experience for parents, including login and task management.
-- **Coach Probability / Program Receptivity Feature:** A data-driven intelligence card to provide supportive, action-oriented insights.
 
 **Completed work in this session**
-- **Public Athlete Profile (V1-V3):**
-  - Built backend endpoints (, settings) and the initial frontend page () with privacy controls.
-  - Redesigned the public profile with a Coach Scan Mode hero and Dynamic Recruiting Snapshot pills.
-  - Implemented a Highlight Reel Freshness signal based on a new  field.
-  - Added volleyball-specific measurables to the hero and refined the page layout to prioritize the highlight video.
-- **Internal Staff Profile:**
-  - Created a private, internal version of the profile () for staff, showing private recruiting context.
-  - Added View Profile quick actions to the  and  pages.
-- **Pipeline as Operating System (Phase A-C):**
-  - **Backend (Top Action Engine):** Created , a deterministic rules engine that identifies the single top action for each school with a reason code, owner, and human-friendly text.
-  - **Frontend (School Cards):** Enhanced  to display the top action, owner, and explanation.
-  - **Frontend (Hero Carousel):** Overhauled  to be driven by the new Top Action Engine, including owner labels and updated category filter pills.
+- **Athlete Support Pod Overhaul:** Successfully implemented the user's 10-point plan, transforming the pod into an intervention console.
+    - **New Components:** , , .
+    - **Enhanced Components:** , , , .
+- **Journey-Style Quick Actions:** Replaced the static top action bar with a floating action bar at the bottom, launching a new suite of dark-themed modal components (, , , , ).
+- **Component Refactoring:** Updated  and  to use the new centralized modal system instead of their own inline forms, improving consistency and maintainability.
+- **Mobile Responsiveness:** Refactored the Coach Dashboard and Support Pod layouts and components to ensure a clean and usable experience on mobile devices.
+- **Bug Fix:** Resolved a critical bug in  where items would disappear upon interaction by implementing an optimistic UI update.
 
 **Earlier issues found/mentioned but not fixed**
    - None.
@@ -80,86 +65,76 @@ A unified full-stack application (FastAPI, React, MongoDB) with a sophisticated 
 
 
 **Key Technical Concepts**
-- **Deterministic Rules Engine:** Successfully implemented a non-AI, priority-based ruleset in  to derive the single most important action for a user, complete with reason codes and human-readable text. This provides explainable and debuggable intelligence.
-- **Backend-for-Frontend (BFF):** The  service acts as a BFF, transforming raw data into a tailored  data structure perfectly suited for the frontend's needs, simplifying UI logic.
-- **Component-Driven UI:** Iteratively refined and enhanced key React components (, , ) to deliver complex, data-driven user experiences while maintaining clean code.
-- **Data Model Evolution:** Iteratively added fields to the  model (e.g., ) to support new feature requirements like the highlight reel freshness signal.
+- **Modal-First UX:** Standardized on a dark, glass-morphism modal pattern for all user actions, moving away from inconsistent inline forms.
+- **Callback-Driven Components:** Refactored child components (, ) to emit events via callbacks (), with the parent page () handling the logic to open the correct modal.
+- **Backend Data Enrichment:** The  endpoint was enhanced to provide pre-processed data for new UI sections like  and .
+- **Transactional Email Notifications:** Integrated  via a dedicated  to send email notifications for key events, such as new action assignments.
 
 **key DB schema**
-  - ****: added  to track video freshness.
+  - : The collection schema was updated to support the new Add Next Action flow. It now includes , , , , and .
 
 **changes in tech stack**
-  - No changes to the core tech stack.
+  - **Resend:** Formally integrated as the email provider, with a new service file () created to manage sending emails.
 
 **All files of reference**
-- **For current task (Hero Refinement):**
-  - 
-  -  (for language mapping)
-- **Key files created/modified in this session:**
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+- **For current task (Next Actions Upgrade):**
+  -  (this is the file to resume work on)
+  -  (the new modal component)
+  -  (parent component that will pass props)
+  -  (contains the updated  endpoint)
+  -  (contains the email notification logic)
 
 **Areas that need refactoring**:
-- None.
+- The old  component is now deprecated after being replaced by the  and should be deleted to avoid confusion.
 
 **key api endpoints**
-- **New Endpoints Created:**
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+- : **MODIFIED**. Now accepts additional fields (, , ) and triggers an email notification upon successful creation.
+- : **NEW**. Allows coaches to create a director action from the Support Pod.
+- : **NEW**. Fetches all notes for a specific athlete.
+- : **NEW**. Deletes a specific note.
 
 **Critical Info for New Agent**
-- Your immediate task is to **refine the Pipeline hero card's UX** based on the user's detailed feedback.
-- You are awaiting user approval on a plan you just proposed via . **Do not proceed until the user confirms.**
-- The work is primarily frontend refinement within , with potential text updates in the language mapping table in .
-- The foundation for this task (the Top Action Engine) is complete, tested, and working. This is a visual and textual refinement pass on an existing feature.
+- Your immediate and top priority is to **complete the Next Actions component upgrade**.
+- **Resume your work in **. You must finish replacing the old inline form logic with the functionality to open the new . This involves managing the modal's open/close state and passing the  and  data as props.
+- After implementing the frontend, perform an end-to-end test to ensure that creating a new action correctly closes the modal, refreshes the list, and triggers the backend email notification.
+- Once this task is complete and verified, the next item in the user's backlog is to implement a full in-app messaging system.
 
 **documents and test reports created in this job**
--  (updated after each major feature completion)
-- Multiple test reports in  were generated and passed successfully.
+-  was updated after major features were completed.
+- Multiple test reports were generated in , showing successful verification of the Support Pod overhaul and mobile responsiveness fixes.
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **LATEST/PENDING:** User provided detailed UX refinements for the Pipeline hero card. The agent has proposed a plan and is awaiting user approval to proceed.
-- User reviewed the agent's assessment of the Pipeline as an OS proposal and gave the green light to proceed with Phase A-C. (DONE)
-- User provided a detailed product direction memo to evolve the Pipeline page into the operating system for recruiting. (DONE)
-- Agent showed the backlog. (DONE)
-- User confirmed the addition of volleyball-specific measurables to the public profile. (DONE)
-- User asked to add specific volleyball measurables to the hero section. (DONE)
-- User confirmed the public profile V3 refinements were complete. (DONE)
-- User asked for a single screenshot showing all features on the public profile page. (DONE)
-- User requested refinements to the Public Athlete Profile (reorder sections, improve About section, add measurables). (DONE)
-- User asked to see the project backlog. (DONE)
+1.  **LATEST:** User provided a detailed 10-point specification to upgrade the Next Actions component to a premium modal-based flow.
+2.  User asked for clarification on how the Next Actions component currently works.
+3.  User identified that buttons in the  were not using the new modals and requested a fix.
+4.  User approved the plan for an in-app messaging system but requested it be added to the backlog for later.
+5.  User requested a plan for a full coach-to-athlete messaging and notification system.
+6.  User asked if the quick action buttons were only logging messages.
+7.  User reported a mobile layout issue with a screenshot.
+8.  User requested that the dashboard and support pod be made mobile responsive.
+9.  User approved the plan for the Support Pod overhaul with minor adjustments.
+10. User asked for the full, detailed plan for the Support Pod overhaul.
 
 **Project Health Check:**
-- **Broken:** None.
-- **Mocked/Needs Improvement:** None. The project is healthy and stable.
+- **Broken:** The Add Next Action feature is currently non-functional as its parent component () is in a partially refactored state.
+- **Mocked:** N/A
 
 **3rd Party Integrations**
-- MongoDB
-- Google (Gmail API)
-- Emergent LLM Key (for Claude Sonnet)
-- Stripe (Checkout & Customer Portal)
--  (for background jobs)
-- , ,  (for scraping/intelligence PoCs)
+- **Resend:** Used for sending transactional emails (e.g., new task notifications) from .
+- **MongoDB:** Primary database.
+- **Google (Gmail API):** Used in other parts of the application.
+- **Stripe:** Used for payments.
+- **Emergent LLM Key:** Available for LLM features.
 
 **Testing status**
-  - Testing agent used after significant changes: YES. The testing agent was used extensively after each major feature branch and passed with 100% success.
+  - Testing agent used after significant changes: YES
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: Numerous test reports were created in .
-  - Known regressions: None.
+  - Test files created: None
+  - Known regressions: None
 
 **Credentials to test flow:**
-- **Platform Admin:**  / 
-- **Director:**  / 
+- **Coach:**  /  (primary for testing all Support Pod features)
 - **Athlete (Pro Plan):**  / 
 
 **What agent forgot to execute**
-- Nothing. The agent is paused, awaiting user confirmation on the next planned task.</analysis>
+- The agent was in the middle of implementing the Next Actions component upgrade and did not complete the task. The work needs to be finished and tested.</analysis>

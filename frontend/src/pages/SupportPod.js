@@ -151,7 +151,7 @@ function SupportPod() {
         </div>
 
         {/* Next Actions */}
-        <NextActions actions={actions} athleteId={athleteId} onRefresh={fetchPodData} />
+        <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
 
         {/* Recruiting Intelligence */}
         <RecruitingIntelligence signals={recruiting_signals} />
