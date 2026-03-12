@@ -1,0 +1,66 @@
+{
+  "summary": "Tested Account/Billing separation and TopBar dropdown redesign. All main features working correctly. TopBar dropdown shows user card + 5 menu items (Athlete Profile, Settings, Account, Billing, Sign Out) - all navigating correctly. Sidebar cleaned up - no Profile/Account/Settings links for athletes. Account page has Personal Info, Password, Notifications, Privacy, Danger Zone without subscription content. Billing page has Current Plan, usage bars, plan features, billing history. Minor bug found: Billing History PLAN column shows 'NaN' instead of plan name.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "BillingPage - Billing History",
+        "issue": "PLAN column shows 'NaN' instead of actual plan name for transactions",
+        "selector": "[data-testid^='txn-row-'] .col-span-3:nth-child(2)",
+        "priority": "LOW",
+        "root_cause": "Line 316 in BillingPage.js: when txn.plan is undefined, the expression 'txn.plan?.charAt(0).toUpperCase() + txn.plan?.slice(1)' returns NaN because undefined + undefined = NaN",
+        "fix_suggestion": "Change to: txn.metadata?.plan_label || (txn.plan ? txn.plan.charAt(0).toUpperCase() + txn.plan.slice(1) : '—')"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix BillingPage.js line 316 NaN display for plan name in billing history"
+  ],
+  "critical_code_review_comments": [
+    "BillingPage.js line 316: null-coalescing issue causing NaN - needs ternary check for txn.plan before string operations"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "95% (all features work except minor NaN display bug)"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / password123"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Account/Billing separation tested and verified. TopBar dropdown has data-testids: user-menu-trigger, user-menu-dropdown, menu-athlete-profile-link, menu-athlete-settings-link, menu-account-link, menu-billing-link, menu-logout-link. Sidebar nav items for athletes: nav-board, nav-pipeline, nav-schools, nav-calendar, nav-inbox, nav-highlights, nav-analytics. No nav-profile, nav-account, nav-settings in sidebar (moved to dropdown). Account page sections: personal-info-card, password-section, notifications-section, privacy-section, danger-zone. Billing page sections: billing-page, current-plan-card, billing-upgrade-btn, billing-history-card. Note: plan-features-card testid exists but may not render for all tiers.",
+  "feature_coverage": {
+    "topbar_dropdown_trigger": "PASS - avatar + name + chevron, data-testid='user-menu-trigger'",
+    "topbar_dropdown_user_card": "PASS - shows Emma Chen + email",
+    "dropdown_athlete_profile_link": "PASS - navigates to /athlete-profile",
+    "dropdown_settings_link": "PASS - navigates to /athlete-settings",
+    "dropdown_account_link": "PASS - navigates to /account",
+    "dropdown_billing_link": "PASS - navigates to /billing",
+    "dropdown_signout_link": "PASS - logs out and redirects to /login",
+    "sidebar_no_profile_link": "PASS - nav-profile NOT in sidebar for athletes",
+    "sidebar_no_account_link": "PASS - nav-account NOT in sidebar for athletes",
+    "sidebar_no_settings_link": "PASS - nav-settings NOT in sidebar for athletes",
+    "billing_page_loads": "PASS - /billing route works",
+    "billing_current_plan_card": "PASS - shows Pro Plan $29/month with Upgrade button",
+    "billing_usage_bars": "PASS - Schools on board 12/25, AI drafts 0/10",
+    "billing_plan_features": "PASS - Your plan includes section with 7 features",
+    "billing_history": "PASS - shows transaction table with 11 rows",
+    "billing_history_nan_bug": "FAIL - PLAN column shows NaN instead of plan name",
+    "account_page_loads": "PASS - /account route works",
+    "account_personal_info": "PASS - Edit button, name/email display",
+    "account_password_section": "PASS - 3 password fields + Update Password button",
+    "account_notifications": "PASS - Follow-up Reminders + Email Notifications toggles",
+    "account_privacy": "PASS - Data Export button",
+    "account_danger_zone": "PASS - Delete Account with confirmation",
+    "account_no_subscription": "PASS - No subscription content on Account page",
+    "settings_page_works": "PASS - Appearance, Gmail, Team, Privacy sections present"
+  }
+}

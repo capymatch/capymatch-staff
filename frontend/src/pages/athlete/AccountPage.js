@@ -1,19 +1,14 @@
 import { useState, useEffect } from "react";
-import { useSubscription } from "../../lib/subscription";
 import {
-  CreditCard, ChevronRight, Sparkles, Zap, Crown, Lock,
-  Trash2, Loader2, Shield, Bell, Download, Check,
-  X as XIcon, User, Pencil,
+  Lock, Trash2, Loader2, Shield, Bell, Download, Check,
+  User, Pencil,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
-import UpgradeModal from "../../components/UpgradeModal";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function AccountPage() {
-  const { subscription } = useSubscription();
-  const [showUpgrade, setShowUpgrade] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -97,9 +92,6 @@ export default function AccountPage() {
     }
   };
 
-  const sub = subscription || {};
-  const tier = sub.tier || "basic";
-
   return (
     <div data-testid="account-page" className="max-w-3xl mx-auto space-y-8">
       {/* Personal Info Card */}
@@ -175,115 +167,16 @@ export default function AccountPage() {
             <div className="space-y-3">
               <div className="p-3 rounded-xl" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                 <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Name</p>
-                <p className="text-sm font-medium mt-0.5" style={{ color: "var(--cm-text)" }} data-testid="account-name-display">{originalName || "—"}</p>
+                <p className="text-sm font-medium mt-0.5" style={{ color: "var(--cm-text)" }} data-testid="account-name-display">{originalName || "\u2014"}</p>
               </div>
               <div className="p-3 rounded-xl" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                 <p className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Email</p>
-                <p className="text-sm font-medium mt-0.5" style={{ color: "var(--cm-text)" }} data-testid="account-email-display">{originalEmail || "—"}</p>
+                <p className="text-sm font-medium mt-0.5" style={{ color: "var(--cm-text)" }} data-testid="account-email-display">{originalEmail || "\u2014"}</p>
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* Subscription Plan Card */}
-      {subscription && (
-        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="subscription-card">
-          <div className="flex items-center gap-3 px-6 pt-6 pb-2">
-            <div className="w-10 h-10 rounded-lg bg-teal-600/20 flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-teal-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-lg" style={{ color: "var(--cm-text)" }}>Subscription</h2>
-              <p className="text-sm" style={{ color: "var(--cm-text-3)" }}>Manage your plan and usage</p>
-            </div>
-          </div>
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between p-4 rounded-xl" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-              <div className="flex items-center gap-3">
-                {tier === "premium" ? <Crown className="w-5 h-5 text-amber-400" /> :
-                 tier === "pro" ? <Sparkles className="w-5 h-5 text-teal-600" /> :
-                 <Zap className="w-5 h-5 text-zinc-400" />}
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>{sub.label || "Starter"} Plan</p>
-                  <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>
-                    {tier === "basic" ? "Free" : tier === "pro" ? "$29/month" : "$49/month"}
-                  </p>
-                </div>
-              </div>
-              {tier !== "premium" && (
-                <button onClick={() => setShowUpgrade(true)}
-                  className="flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg text-white bg-teal-600 hover:bg-teal-700 transition-colors"
-                  data-testid="account-upgrade-btn">
-                  Upgrade <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Usage Bars */}
-            {sub.usage && (
-              <div className="grid grid-cols-2 gap-6 mt-5">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium" style={{ color: "var(--cm-text-3)" }}>Schools on board</span>
-                    <span className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>
-                      {sub.usage.schools || 0}/{sub.usage.schools_limit === -1 ? "\u221e" : sub.usage.schools_limit || 5}
-                    </span>
-                  </div>
-                  <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-                    <div className="h-full rounded-full transition-all duration-500" style={{
-                      width: sub.usage.schools_limit === -1 ? "15%" : `${Math.min(100, ((sub.usage.schools || 0) / (sub.usage.schools_limit || 5)) * 100)}%`,
-                      backgroundColor: "#1a8a80",
-                    }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium" style={{ color: "var(--cm-text-3)" }}>AI drafts this month</span>
-                    <span className="text-xs font-semibold" style={{ color: "var(--cm-text)" }}>
-                      {sub.usage.ai_drafts_used || 0}/{sub.usage.ai_drafts_limit === -1 ? "\u221e" : sub.usage.ai_drafts_limit || 0}
-                    </span>
-                  </div>
-                  <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-                    <div className="h-full rounded-full transition-all duration-500" style={{
-                      width: sub.usage.ai_drafts_limit <= 0 ? "0%" : sub.usage.ai_drafts_limit === -1 ? "15%" : `${Math.min(100, ((sub.usage.ai_drafts_used || 0) / sub.usage.ai_drafts_limit) * 100)}%`,
-                      backgroundColor: "#8b5cf6",
-                    }} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Plan Features */}
-            {tier !== "premium" && (
-              <div className="mt-5 pt-5 border-t" style={{ borderColor: "var(--cm-border)" }}>
-                <p className="text-xs font-semibold mb-3" style={{ color: "var(--cm-text-3)" }}>Your plan includes</p>
-                <div className="space-y-2">
-                  {[
-                    { label: "School tracking", included: true },
-                    { label: "Gmail integration", included: sub.limits?.gmail_integration },
-                    { label: "Recruiting analytics", included: sub.limits?.analytics },
-                    { label: "Follow-up reminders", included: sub.limits?.follow_up_reminders },
-                    { label: "Public athlete profile", included: sub.limits?.public_profile },
-                    { label: "AI email drafts", included: sub.limits?.auto_reply_detection, premiumOnly: true },
-                    { label: "Engagement AI", included: sub.limits?.auto_reply_detection, premiumOnly: true },
-                  ].map((feat, i) => (
-                    <div key={i} className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-2">
-                        {feat.included ? <Check className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" /> : <XIcon className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />}
-                        <span className={`text-xs ${feat.included ? "" : "opacity-50"}`} style={{ color: "var(--cm-text-2)" }}>{feat.label}</span>
-                        {!feat.included && feat.premiumOnly && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-400">PREMIUM</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Change Password */}
       <div className="rounded-xl p-6 border" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="password-section">
@@ -440,8 +333,6 @@ export default function AccountPage() {
           )}
         </div>
       </div>
-
-      <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} currentTier={tier} />
     </div>
   );
 }

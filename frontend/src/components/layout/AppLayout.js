@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Megaphone, BarChart3, Users, UserPlus, User, Shield, Sparkles, Kanban, GraduationCap, Mail, Video, CreditCard, Settings } from "lucide-react";
+import { LayoutDashboard, Calendar, Megaphone, BarChart3, Users, UserPlus, User, Shield, Sparkles, Kanban, GraduationCap, Mail, Video, CreditCard, Settings, Receipt } from "lucide-react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { useAuth } from "@/AuthContext";
@@ -27,6 +27,7 @@ const ROUTE_META = {
   "/analytics": { title: "Analytics", icon: BarChart3 },
   "/athlete-profile": { title: "Profile", icon: User },
   "/account": { title: "Account", icon: CreditCard },
+  "/billing": { title: "Billing", icon: Receipt },
   "/athlete-settings": { title: "Settings", icon: Settings },
 };
 

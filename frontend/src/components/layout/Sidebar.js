@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Calendar, Megaphone, BarChart3, Users,
   ChevronRight, Kanban, GraduationCap, Mail, Video,
-  Shield, Plug, Database, CreditCard, User, Settings,
+  Shield, Plug, Database, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
@@ -33,9 +33,6 @@ const ATHLETE_NAV = [
   { id: "inbox", label: "Inbox", icon: Mail, path: "/inbox" },
   { id: "highlights", label: "Highlights", icon: Video, path: "/highlights" },
   { id: "analytics", label: "Analytics", icon: BarChart3, path: "/analytics" },
-  { id: "profile", label: "Profile", icon: User, path: "/athlete-profile" },
-  { id: "account", label: "Account", icon: CreditCard, path: "/account" },
-  { id: "settings", label: "Settings", icon: Settings, path: "/athlete-settings" },
 ];
 
 export default function Sidebar({ open, onClose }) {
