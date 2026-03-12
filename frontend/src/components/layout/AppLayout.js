@@ -10,7 +10,7 @@ const ROUTE_META = {
   "/mission-control": { title: "Mission Control", icon: LayoutDashboard },
   "/events": { title: "Events", icon: Calendar },
   "/advocacy": { title: "Advocacy", icon: Megaphone },
-  "/program": { title: "Program", icon: BarChart3 },
+  "/program": { title: "Program Insights", icon: BarChart3 },
   "/roster": { title: "Roster", icon: Users },
   "/profile": { title: "Profile", icon: User },
   "/invite": { title: "Invite", icon: UserPlus },
