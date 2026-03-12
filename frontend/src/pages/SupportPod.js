@@ -202,9 +202,7 @@ function SupportPod() {
         <EscalateToDirector athleteId={athleteId} athlete={athlete}
           onCancel={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
       )}
-      {notesOpen && (
-        <CoachNotesSidebar athleteId={athleteId} onClose={() => setNotesOpen(false)} />
-      )}
+      <CoachNotesSidebar athleteId={athleteId} open={notesOpen} onClose={() => setNotesOpen(false)} />
     </div>
   );
 }
