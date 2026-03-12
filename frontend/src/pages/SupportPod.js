@@ -89,7 +89,7 @@ function SupportPod() {
 
   const {
     athlete, pod_members, actions, timeline, pod_health, upcoming_events,
-    recruiting_timeline, recruiting_signals, intervention_playbook, pod_top_action,
+    recruiting_timeline, recruiting_signals, intervention_playbook, current_issue,
   } = data;
 
   const completedActions = (actions || []).filter(a => a.status === "completed").slice(0, 8);
@@ -110,11 +110,12 @@ function SupportPod() {
 
         {/* ─── 1. DIAGNOSE: Critical Banner ─── */}
         <PodHeroCard
-          topAction={pod_top_action}
+          currentIssue={current_issue}
           athleteId={athleteId}
           onLogCheckin={() => toggleAction("log")}
           onSendMessage={() => toggleAction("email")}
           onEscalate={() => toggleAction("escalate")}
+          onOpenNotes={() => setNotesOpen(true)}
           onRefresh={fetchPodData}
         />
 

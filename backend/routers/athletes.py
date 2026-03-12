@@ -109,6 +109,10 @@ async def create_note(athlete_id: str, note: NoteCreate, current_user: dict = ge
                 "created_at": now_iso,
             })
 
+    # 3. Auto-resolve pod issues (issue lifecycle)
+    from pod_issues import auto_resolve_on_interaction
+    await auto_resolve_on_interaction(athlete_id, current_user.get("name", "Coach"))
+
     return doc
 
 
@@ -146,6 +150,11 @@ async def send_message(athlete_id: str, message: MessageCreate, current_user: di
     }
     await db.messages.insert_one(doc)
     doc.pop("_id", None)
+
+    # Auto-resolve follow-up/engagement issues when outreach is sent
+    from pod_issues import auto_resolve_on_outreach
+    await auto_resolve_on_outreach(athlete_id, current_user.get("name", "Coach"))
+
     return doc
 
 

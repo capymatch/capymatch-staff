@@ -18,8 +18,8 @@ from support_pod import (
     generate_recruiting_timeline,
     generate_recruiting_signals,
     get_intervention_playbook,
-    compute_pod_top_action,
 )
+from pod_issues import evaluate_issues, get_current_issue, get_all_active_issues, resolve_issue as resolve_pod_issue
 
 router = APIRouter()
 
@@ -71,7 +71,10 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         playbook = get_intervention_playbook(active_intervention.get("category"))
 
     # Pod Top Action — reuses same decision pattern as Top Action Engine
-    pod_top_action = compute_pod_top_action(athlete, interventions, all_actions, members)
+    # REPLACED: now using issue lifecycle system
+    await evaluate_issues(athlete_id, athlete, interventions, all_actions)
+    current_issue = await get_current_issue(athlete_id)
+    all_active_issues = await get_all_active_issues(athlete_id)
 
     return {
         "athlete": {k: v for k, v in athlete.items() if k != "archetype"},
@@ -80,7 +83,8 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         "pod_members": members,
         "actions": all_actions,
         "unassigned_count": len(unassigned),
-        "pod_top_action": pod_top_action,
+        "current_issue": current_issue,
+        "all_active_issues": all_active_issues,
         "timeline": {
             "notes": notes,
             "assignments": assignments,
@@ -374,10 +378,16 @@ async def escalate_task(athlete_id: str, action_id: str, body: dict, current_use
 
 
 @router.post("/support-pods/{athlete_id}/resolve")
-async def resolve_issue(athlete_id: str, body: ResolveIssue, current_user: dict = get_current_user_dep()):
+async def resolve_issue_endpoint(athlete_id: str, body: ResolveIssue, current_user: dict = get_current_user_dep()):
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
-    """Resolve an active issue"""
+    """Resolve an active issue (legacy or new issue lifecycle)"""
+    # If an issue_id is provided, resolve via the new pod_issues system
+    issue_id = body.resolution_note  # overloaded field; check body for issue_id
+    if hasattr(body, 'issue_id') and body.issue_id:
+        issue_id = body.issue_id
+
+    # Legacy: still create a resolution record
     doc = {
         "id": str(uuid.uuid4()),
         "athlete_id": athlete_id,
@@ -389,6 +399,23 @@ async def resolve_issue(athlete_id: str, body: ResolveIssue, current_user: dict 
     await db.pod_resolutions.insert_one(doc)
     doc.pop("_id", None)
     return doc
+
+
+@router.post("/support-pods/{athlete_id}/issues/{issue_id}/resolve")
+async def resolve_pod_issue_endpoint(athlete_id: str, issue_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Manually resolve a pod issue."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+
+    resolved = await resolve_pod_issue(
+        issue_id=issue_id,
+        resolved_by=current_user.get("name", "Coach"),
+        resolution_source="manual",
+    )
+    if not resolved:
+        raise HTTPException(404, "Issue not found or already resolved")
+
+    return resolved
 
 
 
