@@ -36,6 +36,9 @@ Replaced QuickActionsBar with Journey-style floating action bar. 5 dark-themed m
 ### Add Action Modal — Premium Flow (March 12, 2026)
 Completed the "Next Actions" component upgrade: dark-themed AddActionModal with real pod members in assignee dropdown, category chips, due date picker, notes. Auto-selects current user. Creates in-app notification + fires Resend email on submit. Deleted deprecated QuickActionsBar.js.
 
+### Pod Hero Card — Decision Center (March 12, 2026)
+Restructured Support Pod to be driven by a Pod Top Action Engine (same decision pattern as pipeline Top Action Engine). New layout: Pod Hero Card at top showing issue type, top action, explanation, owner, CTA buttons. Sections below: Next Actions, Athlete Snapshot, then collapsible sections (Recruiting Intelligence, Intervention Playbook, Recruiting Timeline, Treatment History). Old ActiveIssueBanner replaced by Pod Hero Card.
+
 ## P1 Upcoming
 - In-App Messaging + Email Notifications (coach-to-athlete messaging from Support Pod)
 - Club Billing (subscription billing and management for organizations)
