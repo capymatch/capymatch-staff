@@ -102,6 +102,266 @@ def generate_suggested_actions(athlete_id, interventions):
     return actions
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# POD TOP ACTION ENGINE — reuses same decision pattern as Top Action Engine
+# Fields: top_action, explanation, owner, urgency, reason_code, cta_label, category
+# ═══════════════════════════════════════════════════════════════════════
+
+POD_ACTION_MAP = {
+    # Priority 1: Blockers (critical)
+    "blocker_active": {
+        "priority": 1,
+        "urgency": "critical",
+        "label": "Remove Blocker",
+        "owner": "coach",
+        "explanation_template": "A blocker is preventing recruiting progress — resolve it now",
+        "cta_label": "Resolve Blocker",
+        "category": "blocker",
+    },
+    # Priority 2: Momentum drop (critical)
+    "momentum_drop": {
+        "priority": 2,
+        "urgency": "critical",
+        "label": "Check In With Athlete",
+        "owner": "coach",
+        "explanation_template": "Athlete has gone dark — {days} days without activity. Immediate check-in needed",
+        "cta_label": "Log Check-In",
+        "category": "momentum_drop",
+    },
+    # Priority 3: Overdue actions
+    "overdue_actions": {
+        "priority": 3,
+        "urgency": "critical",
+        "label": "Clear Overdue Actions",
+        "owner": "coach",
+        "explanation_template": "{count} action{s} overdue — the oldest is {days_old} day{s2} late",
+        "cta_label": "View Actions",
+        "category": "past_due",
+    },
+    # Priority 4: Deadline proximity
+    "deadline_approaching": {
+        "priority": 4,
+        "urgency": "follow_up",
+        "label": "Prepare for Upcoming Deadline",
+        "owner": "shared",
+        "explanation_template": "An event or deadline is approaching — ensure the athlete is prepared",
+        "cta_label": "Prep Now",
+        "category": "deadline_proximity",
+    },
+    # Priority 5: Engagement dropping
+    "engagement_drop": {
+        "priority": 5,
+        "urgency": "follow_up",
+        "label": "Re-engage Athlete",
+        "owner": "coach",
+        "explanation_template": "School engagement is dropping — follow up to keep momentum",
+        "cta_label": "Send Follow-Up",
+        "category": "engagement_drop",
+    },
+    # Priority 6: Ownership gap
+    "ownership_gap": {
+        "priority": 6,
+        "urgency": "follow_up",
+        "label": "Assign Unowned Actions",
+        "owner": "coach",
+        "explanation_template": "{count} action{s} have no owner — assign them to keep progress moving",
+        "cta_label": "Assign Actions",
+        "category": "ownership_gap",
+    },
+    # Priority 7: Family/parent inactive
+    "family_inactive": {
+        "priority": 7,
+        "urgency": "follow_up",
+        "label": "Re-engage Family",
+        "owner": "coach",
+        "explanation_template": "Family hasn't been active in {days} days — loop them in",
+        "cta_label": "Message Family",
+        "category": "family_inactive",
+    },
+    # Priority 8: Readiness issue
+    "readiness_issue": {
+        "priority": 8,
+        "urgency": "follow_up",
+        "label": "Address Readiness Gaps",
+        "owner": "shared",
+        "explanation_template": "Profile gaps may be limiting recruiting visibility",
+        "cta_label": "Review Profile",
+        "category": "readiness_issue",
+    },
+    # Priority 9: On track
+    "on_track": {
+        "priority": 9,
+        "urgency": "on_track",
+        "label": "On Track",
+        "owner": "athlete",
+        "explanation_template": "Everything looks good — keep the momentum going",
+        "cta_label": "View Details",
+        "category": "on_track",
+    },
+}
+
+
+def compute_pod_top_action(athlete, interventions, actions, members):
+    """Deterministic rules engine for the pod — returns the single most important action.
+    Reuses the same output shape as the Top Action Engine:
+    top_action, explanation, owner, urgency, reason_code, cta_label, category, priority."""
+    now = datetime.now(timezone.utc)
+    days_inactive = athlete.get("days_since_activity", 0)
+
+    # Enrich action statuses
+    active_actions = []
+    for a in actions:
+        if a.get("status") == "completed":
+            continue
+        if a.get("due_date"):
+            try:
+                due = datetime.fromisoformat(a["due_date"].replace("Z", "+00:00"))
+                if due < now:
+                    a = {**a, "status": "overdue"}
+            except (ValueError, TypeError):
+                pass
+        active_actions.append(a)
+
+    overdue = [a for a in active_actions if a.get("status") == "overdue"]
+    unassigned = [a for a in active_actions if a.get("owner") in ("Unassigned", None, "")]
+
+    # Build intervention category set
+    categories = {i.get("category") for i in interventions}
+
+    # ── Priority 1: Active blocker ──
+    if "blocker" in categories:
+        blocker = next((i for i in interventions if i["category"] == "blocker"), None)
+        detail = ""
+        if blocker:
+            detail = blocker.get("details", {}).get("problem", blocker.get("reason", ""))
+        return _make_pod_action(
+            "blocker_active",
+            f"blocker:{blocker.get('id', '') if blocker else 'unknown'}",
+            issue_type=blocker.get("details", {}).get("problem", "Active blocker") if blocker else "Active blocker",
+            detail=detail,
+        )
+
+    # ── Priority 2: Momentum drop (athlete gone dark) ──
+    if days_inactive > 14 or "momentum_drop" in categories:
+        return _make_pod_action(
+            "momentum_drop",
+            f"momentum_drop:days={days_inactive}",
+            template_vars={"days": str(days_inactive)},
+            issue_type=f"No activity in {days_inactive} days",
+        )
+
+    # ── Priority 3: Overdue actions ──
+    if overdue:
+        oldest_days = 0
+        for a in overdue:
+            try:
+                due = datetime.fromisoformat(a["due_date"].replace("Z", "+00:00"))
+                diff = (now - due).days
+                oldest_days = max(oldest_days, diff)
+            except (ValueError, TypeError):
+                pass
+        return _make_pod_action(
+            "overdue_actions",
+            f"overdue:count={len(overdue)}:oldest={oldest_days}d",
+            template_vars={
+                "count": str(len(overdue)),
+                "s": "s" if len(overdue) != 1 else "",
+                "days_old": str(oldest_days),
+                "s2": "s" if oldest_days != 1 else "",
+            },
+            issue_type=f"{len(overdue)} overdue action{'s' if len(overdue) != 1 else ''}",
+        )
+
+    # ── Priority 4: Deadline approaching ──
+    if "deadline_proximity" in categories:
+        return _make_pod_action(
+            "deadline_approaching",
+            "deadline_proximity",
+            issue_type="Upcoming deadline",
+        )
+
+    # ── Priority 5: Engagement drop ──
+    if "engagement_drop" in categories:
+        return _make_pod_action(
+            "engagement_drop",
+            "engagement_drop",
+            issue_type="Engagement dropping",
+        )
+
+    # ── Priority 6: Ownership gap ──
+    if unassigned:
+        return _make_pod_action(
+            "ownership_gap",
+            f"ownership_gap:count={len(unassigned)}",
+            template_vars={"count": str(len(unassigned)), "s": "s" if len(unassigned) != 1 else ""},
+            issue_type=f"{len(unassigned)} unassigned action{'s' if len(unassigned) != 1 else ''}",
+        )
+
+    # ── Priority 7: Family inactive ──
+    parent = next((m for m in members if m["role"] == "parent"), None)
+    if parent and parent.get("status") == "inactive":
+        parent_days = 0
+        try:
+            last = datetime.fromisoformat(parent["last_active"].replace("Z", "+00:00"))
+            parent_days = (now - last).days
+        except (ValueError, TypeError):
+            pass
+        return _make_pod_action(
+            "family_inactive",
+            f"family_inactive:days={parent_days}",
+            template_vars={"days": str(parent_days)},
+            issue_type="Family not engaged",
+        )
+
+    # ── Priority 8: Readiness issue ──
+    if "readiness_issue" in categories:
+        return _make_pod_action(
+            "readiness_issue",
+            "readiness_issue",
+            issue_type="Profile readiness gaps",
+        )
+
+    # ── Priority 9: All clear ──
+    return _make_pod_action(
+        "on_track",
+        "on_track:health=green",
+        issue_type="No issues detected",
+    )
+
+
+def _make_pod_action(action_key, reason_code, *, template_vars=None, issue_type="", detail=""):
+    """Build a structured pod action dict from POD_ACTION_MAP."""
+    definition = POD_ACTION_MAP.get(action_key, POD_ACTION_MAP["on_track"])
+
+    explanation = definition["explanation_template"]
+    label = definition["label"]
+    if template_vars:
+        try:
+            explanation = explanation.format(**template_vars)
+        except (KeyError, IndexError):
+            pass
+        try:
+            label = label.format(**template_vars)
+        except (KeyError, IndexError):
+            pass
+
+    return {
+        "action_key": action_key,
+        "reason_code": reason_code,
+        "priority": definition["priority"],
+        "urgency": definition["urgency"],
+        "category": definition["category"],
+        "top_action": label,
+        "explanation": explanation,
+        "owner": definition["owner"],
+        "cta_label": definition["cta_label"],
+        "issue_type": issue_type,
+        "detail": detail,
+    }
+
+
+
+
 def calculate_pod_health(athlete, members, actions):
     non_coach_inactive = any(
         m["status"] == "inactive" and m["role"] != "club_coach" for m in members

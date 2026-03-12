@@ -2,15 +2,17 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@/AuthContext";
+import { Radar, BookOpen, GitBranch, ClipboardList } from "lucide-react";
 import PodHeader from "@/components/support-pod/PodHeader";
-import ActiveIssueBanner from "@/components/support-pod/ActiveIssueBanner";
+import PodHeroCard from "@/components/support-pod/PodHeroCard";
+import NextActions from "@/components/support-pod/NextActions";
 import AthleteSnapshot from "@/components/support-pod/AthleteSnapshot";
 import PodMembers from "@/components/support-pod/PodMembers";
-import NextActions from "@/components/support-pod/NextActions";
 import RecruitingIntelligence from "@/components/support-pod/RecruitingIntelligence";
 import InterventionPlaybooks from "@/components/support-pod/InterventionPlaybooks";
 import RecruitingTimeline from "@/components/support-pod/RecruitingTimeline";
 import TreatmentTimeline from "@/components/support-pod/TreatmentTimeline";
+import { CollapsibleSection } from "@/components/support-pod/CollapsibleSection";
 import { CoachActionBar } from "@/components/support-pod/CoachActionBar";
 import { CoachEmailComposer } from "@/components/support-pod/CoachEmailComposer";
 import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteraction";
@@ -18,7 +20,6 @@ import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpSc
 import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
 import { CoachNotesSidebar } from "@/components/support-pod/CoachNotesSidebar";
 import { toast } from "sonner";
-import { AiSuggestedActions } from "@/components/AiV2Components";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const POLL_INTERVAL_MS = 30000;
@@ -31,7 +32,6 @@ function SupportPod() {
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
@@ -112,6 +112,7 @@ function SupportPod() {
     athlete, active_intervention, all_interventions, pod_members, actions,
     timeline, pod_health, upcoming_events, unassigned_count,
     recruiting_timeline, recruiting_signals, intervention_playbook,
+    pod_top_action,
   } = data;
 
   return (
@@ -127,19 +128,18 @@ function SupportPod() {
       />
 
       <main className="max-w-[1400px] mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24">
-        {/* Active Issue Banner */}
-        {!bannerDismissed && active_intervention && (
-          <ActiveIssueBanner
-            intervention={active_intervention}
-            athleteId={athleteId}
-            onResolve={() => { setBannerDismissed(true); fetchPodData(); }}
-            onDismiss={() => setBannerDismissed(true)}
-            onLogCheckin={() => toggleAction("log")}
-            onSendMessage={() => toggleAction("email")}
-          />
-        )}
+        {/* 1. Pod Hero Card — decision center */}
+        <PodHeroCard
+          topAction={pod_top_action}
+          onLogCheckin={() => toggleAction("log")}
+          onSendMessage={() => toggleAction("email")}
+          onEscalate={() => toggleAction("escalate")}
+        />
 
-        {/* Athlete Snapshot + Support Team */}
+        {/* 2. Next Actions */}
+        <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
+
+        {/* 3. Athlete Snapshot + Support Team */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
           <div className="lg:col-span-2">
             <AthleteSnapshot athlete={athlete} interventions={all_interventions} events={upcoming_events} />
@@ -150,31 +150,53 @@ function SupportPod() {
           </div>
         </div>
 
-        {/* Next Actions */}
-        <NextActions actions={actions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
+        {/* 4. Recruiting Intelligence (collapsed by default) */}
+        {recruiting_signals && recruiting_signals.length > 0 && (
+          <CollapsibleSection
+            title="Recruiting Intelligence"
+            icon={Radar}
+            badge={`${recruiting_signals.length} signal${recruiting_signals.length !== 1 ? "s" : ""}`}
+            testId="section-recruiting-intelligence"
+          >
+            <RecruitingIntelligence signals={recruiting_signals} />
+          </CollapsibleSection>
+        )}
 
-        {/* Recruiting Intelligence */}
-        <RecruitingIntelligence signals={recruiting_signals} />
+        {/* 5. Intervention Playbook (collapsed by default) */}
+        {intervention_playbook && (
+          <CollapsibleSection
+            title="Intervention Playbook"
+            icon={BookOpen}
+            badge={active_intervention?.category?.replace(/_/g, " ")}
+            testId="section-intervention-playbook"
+          >
+            <InterventionPlaybooks
+              playbook={intervention_playbook}
+              interventionCategory={active_intervention?.category}
+            />
+          </CollapsibleSection>
+        )}
 
-        {/* Intervention Playbook (single, based on active issue) */}
-        <InterventionPlaybooks
-          playbook={intervention_playbook}
-          interventionCategory={active_intervention?.category}
-        />
+        {/* 6. Recruiting Timeline (collapsed by default) */}
+        {recruiting_timeline && recruiting_timeline.length > 0 && (
+          <CollapsibleSection
+            title="Recruiting Timeline"
+            icon={GitBranch}
+            badge={`${recruiting_timeline.length} milestones`}
+            testId="section-recruiting-timeline"
+          >
+            <RecruitingTimeline milestones={recruiting_timeline} />
+          </CollapsibleSection>
+        )}
 
-        {/* Coaching Suggestions (AI) */}
-        <AiSuggestedActions
-          endpoint={`${API}/ai/pod-actions/${athleteId}`}
-          label="Coaching Suggestions"
-          buttonLabel="Get Coaching Suggestions"
-          helperText="AI will analyze this athlete's situation and suggest next steps"
-        />
-
-        {/* Recruiting Timeline */}
-        <RecruitingTimeline milestones={recruiting_timeline} />
-
-        {/* Treatment History */}
-        <TreatmentTimeline timeline={timeline} />
+        {/* 7. Treatment History */}
+        <CollapsibleSection
+          title="Treatment History"
+          icon={ClipboardList}
+          testId="section-treatment-history"
+        >
+          <TreatmentTimeline timeline={timeline} />
+        </CollapsibleSection>
       </main>
 
       {/* ── Floating Action Bar ── */}

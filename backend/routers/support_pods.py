@@ -18,6 +18,7 @@ from support_pod import (
     generate_recruiting_timeline,
     generate_recruiting_signals,
     get_intervention_playbook,
+    compute_pod_top_action,
 )
 
 router = APIRouter()
@@ -69,6 +70,9 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
     if active_intervention:
         playbook = get_intervention_playbook(active_intervention.get("category"))
 
+    # Pod Top Action — reuses same decision pattern as Top Action Engine
+    pod_top_action = compute_pod_top_action(athlete, interventions, all_actions, members)
+
     return {
         "athlete": {k: v for k, v in athlete.items() if k != "archetype"},
         "active_intervention": active_intervention,
@@ -76,6 +80,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         "pod_members": members,
         "actions": all_actions,
         "unassigned_count": len(unassigned),
+        "pod_top_action": pod_top_action,
         "timeline": {
             "notes": notes,
             "assignments": assignments,
