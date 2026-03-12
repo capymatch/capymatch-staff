@@ -201,6 +201,17 @@ POD_ACTION_MAP = {
 }
 
 
+# Quick-resolve config — only for simple mechanical issues
+# Complex issues (blocker, momentum_drop, engagement_drop, family_inactive) are excluded
+QUICK_RESOLVE_CONFIG = {
+    "ownership_gap": {
+        "label": "Assign Owner",
+        "action": "assign_owner",
+        "description": "Assign all unowned actions to you",
+    },
+}
+
+
 def compute_pod_top_action(athlete, interventions, actions, members):
     """Deterministic rules engine for the pod — returns the single most important action.
     Reuses the same output shape as the Top Action Engine:
@@ -290,11 +301,13 @@ def compute_pod_top_action(athlete, interventions, actions, members):
 
     # ── Priority 6: Ownership gap ──
     if unassigned:
+        action_ids = [a["id"] for a in unassigned]
         return _make_pod_action(
             "ownership_gap",
             f"ownership_gap:count={len(unassigned)}",
             template_vars={"count": str(len(unassigned)), "s": "s" if len(unassigned) != 1 else ""},
             issue_type=f"{len(unassigned)} unassigned action{'s' if len(unassigned) != 1 else ''}",
+            resolve_target_ids=action_ids,
         )
 
     # ── Priority 7: Family inactive ──
@@ -329,7 +342,7 @@ def compute_pod_top_action(athlete, interventions, actions, members):
     )
 
 
-def _make_pod_action(action_key, reason_code, *, template_vars=None, issue_type="", detail=""):
+def _make_pod_action(action_key, reason_code, *, template_vars=None, issue_type="", detail="", resolve_target_ids=None):
     """Build a structured pod action dict from POD_ACTION_MAP."""
     definition = POD_ACTION_MAP.get(action_key, POD_ACTION_MAP["on_track"])
 
@@ -345,7 +358,7 @@ def _make_pod_action(action_key, reason_code, *, template_vars=None, issue_type=
         except (KeyError, IndexError):
             pass
 
-    return {
+    result = {
         "action_key": action_key,
         "reason_code": reason_code,
         "priority": definition["priority"],
@@ -357,7 +370,19 @@ def _make_pod_action(action_key, reason_code, *, template_vars=None, issue_type=
         "cta_label": definition["cta_label"],
         "issue_type": issue_type,
         "detail": detail,
+        "quick_resolve": None,
     }
+
+    # Attach quick_resolve only for simple mechanical issues
+    qr = QUICK_RESOLVE_CONFIG.get(action_key)
+    if qr:
+        result["quick_resolve"] = {
+            "label": qr["label"],
+            "action": qr["action"],
+            "target_ids": resolve_target_ids or [],
+        }
+
+    return result
 
 
 

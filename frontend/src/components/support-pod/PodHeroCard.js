@@ -1,4 +1,9 @@
-import { AlertTriangle, ShieldAlert, Clock, Zap, Users, Target, CheckCircle, MessageSquare, ClipboardCheck, Send, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ShieldAlert, Clock, Zap, Users, Target, CheckCircle, MessageSquare, ClipboardCheck, Send, ArrowRight, UserPlus, Loader2 } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const URGENCY_STYLE = {
   critical: {
@@ -48,13 +53,23 @@ const CTA_ICON = {
   "View Details": ArrowRight,
 };
 
-export default function PodHeroCard({ topAction, onLogCheckin, onSendMessage, onEscalate }) {
+const QUICK_RESOLVE_ICON = {
+  "Assign Owner": UserPlus,
+  "Assign Coach": UserPlus,
+  "Assign Follow-up": UserPlus,
+  "Mark Fixed": CheckCircle,
+};
+
+export default function PodHeroCard({ topAction, athleteId, onLogCheckin, onSendMessage, onEscalate, onRefresh }) {
+  const [resolving, setResolving] = useState(false);
+
   if (!topAction) return null;
 
   const style = URGENCY_STYLE[topAction.urgency] || URGENCY_STYLE.follow_up;
   const CategoryIcon = CATEGORY_ICON[topAction.category] || AlertTriangle;
   const CtaIcon = CTA_ICON[topAction.cta_label] || ArrowRight;
   const isOnTrack = topAction.urgency === "on_track";
+  const qr = topAction.quick_resolve;
 
   const handleCta = () => {
     if (topAction.category === "momentum_drop" || topAction.category === "family_inactive") {
@@ -64,6 +79,24 @@ export default function PodHeroCard({ topAction, onLogCheckin, onSendMessage, on
       el?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
       onLogCheckin?.();
+    }
+  };
+
+  const handleQuickResolve = async () => {
+    if (!qr || resolving) return;
+    setResolving(true);
+    try {
+      const res = await axios.post(`${API}/support-pods/${athleteId}/quick-resolve`, {
+        action: qr.action,
+        target_ids: qr.target_ids,
+      });
+      const data = res.data;
+      toast.success(`Done — ${data.updated_count} action${data.updated_count !== 1 ? "s" : ""} assigned to ${data.assigned_to}`);
+      onRefresh?.();
+    } catch {
+      toast.error("Quick resolve failed");
+    } finally {
+      setResolving(false);
     }
   };
 
@@ -129,15 +162,31 @@ export default function PodHeroCard({ topAction, onLogCheckin, onSendMessage, on
         {/* CTA buttons */}
         {!isOnTrack && (
           <div className="flex items-center gap-2 mt-4 flex-wrap">
-            <button
-              onClick={handleCta}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg"
-              style={{ backgroundColor: style.accent }}
-              data-testid="pod-hero-cta"
-            >
-              <CtaIcon className="w-4 h-4" />
-              {topAction.cta_label}
-            </button>
+            {qr ? (
+              <button
+                onClick={handleQuickResolve}
+                disabled={resolving}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg disabled:opacity-50"
+                style={{ backgroundColor: style.accent }}
+                data-testid="pod-hero-quick-resolve"
+              >
+                {resolving
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : (() => { const QrIcon = QUICK_RESOLVE_ICON[qr.label] || CheckCircle; return <QrIcon className="w-4 h-4" />; })()
+                }
+                {resolving ? "Resolving..." : qr.label}
+              </button>
+            ) : (
+              <button
+                onClick={handleCta}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:shadow-lg"
+                style={{ backgroundColor: style.accent }}
+                data-testid="pod-hero-cta"
+              >
+                <CtaIcon className="w-4 h-4" />
+                {topAction.cta_label}
+              </button>
+            )}
 
             {topAction.urgency === "critical" && (
               <button

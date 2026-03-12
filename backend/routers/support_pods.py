@@ -166,6 +166,66 @@ async def create_pod_action(athlete_id: str, action: ActionCreate, current_user:
     return doc
 
 
+@router.post("/support-pods/{athlete_id}/quick-resolve")
+async def quick_resolve(athlete_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Quick-resolve simple mechanical issues from the Pod Hero Card.
+    Only supports low-risk, obvious actions like assigning unowned tasks."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+
+    action = body.get("action")
+    target_ids = body.get("target_ids", [])
+    coach_name = current_user.get("name", "Coach")
+    now = datetime.now(timezone.utc).isoformat()
+
+    if action == "assign_owner":
+        if not target_ids:
+            raise HTTPException(400, "No target action IDs provided")
+
+        updated = 0
+        for action_id in target_ids:
+            # Try DB-persisted actions first
+            existing = await db.pod_actions.find_one({"id": action_id, "athlete_id": athlete_id})
+            if existing:
+                await db.pod_actions.update_one(
+                    {"id": action_id},
+                    {"$set": {"owner": coach_name}},
+                )
+            else:
+                # Suggested action — materialize it
+                suggested = generate_suggested_actions(athlete_id, get_athlete_interventions(athlete_id))
+                original = next((s for s in suggested if s["id"] == action_id), {})
+                doc = {
+                    **original,
+                    "id": action_id,
+                    "athlete_id": athlete_id,
+                    "owner": coach_name,
+                    "is_suggested": False,
+                }
+                await db.pod_actions.insert_one(doc)
+            updated += 1
+
+            # Log the assignment event
+            await db.pod_action_events.insert_one({
+                "id": str(uuid.uuid4()),
+                "athlete_id": athlete_id,
+                "type": "action_updated",
+                "description": f"Quick-assigned to {coach_name}",
+                "actor": coach_name,
+                "action_id": action_id,
+                "created_at": now,
+            })
+
+        return {
+            "resolved": True,
+            "action": action,
+            "updated_count": updated,
+            "assigned_to": coach_name,
+        }
+
+    raise HTTPException(400, f"Unknown quick-resolve action: {action}")
+
+
 @router.patch("/support-pods/{athlete_id}/actions/{action_id}")
 async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdate, current_user: dict = get_current_user_dep()):
     if not can_access_athlete(current_user, athlete_id):

@@ -131,9 +131,11 @@ function SupportPod() {
         {/* 1. Pod Hero Card — decision center */}
         <PodHeroCard
           topAction={pod_top_action}
+          athleteId={athleteId}
           onLogCheckin={() => toggleAction("log")}
           onSendMessage={() => toggleAction("email")}
           onEscalate={() => toggleAction("escalate")}
+          onRefresh={fetchPodData}
         />
 
         {/* 2. Next Actions */}
