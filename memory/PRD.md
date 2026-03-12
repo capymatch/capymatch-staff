@@ -7,79 +7,74 @@ CapyMatch is a full-stack sports recruiting platform connecting athletes, coache
 ```
 /app/
 ├── backend/
-│   ├── routers/          (API endpoints)
-│   ├── services/         (Business logic)
-│   ├── pod_issues.py     (Issue lifecycle management)
-│   ├── support_pod.py    (Pod data aggregation)
-│   └── tests/
+│   ├── routers/
+│   │   ├── support_messages.py  # NEW: Internal messaging system
+│   │   ├── support_pods.py      # Support Pod + issue lifecycle
+│   │   ├── athletes.py          # Athlete CRUD + notes
+│   │   └── ...
+│   ├── pod_issues.py            # Issue lifecycle management
+│   ├── support_pod.py           # Pod data + parameterized playbooks
+│   └── services/
 └── frontend/
     ├── src/pages/
-    ├── src/components/
-    │   ├── support-pod/  (PodHeroCard, NextActions, etc.)
-    │   ├── coach/
     │   ├── athlete/
-    │   └── layout/
+    │   │   ├── MessagesPage.js  # NEW: Support messages inbox
+    │   │   └── InboxPage.js     # School/recruiting emails (separate lane)
+    │   └── coach/
+    ├── src/components/
+    │   └── support-pod/
+    │       ├── CoachEmailComposer.js  # REWRITTEN: Uses support messages API
+    │       ├── PodHeroCard.js         # 3-state issue hero
+    │       └── ...
     └── src/lib/
 ```
 
-## Issue Lifecycle System (Implemented — Mar 2026)
+## Two Communication Lanes
 
-### Mental Model
-Issues are discrete **incidents/episodes**, not static labels. Each issue has a lifecycle: created → active → resolved. If a problem recurs, a NEW issue instance is created.
+### Lane 1: School Communication (existing, unchanged)
+- Athlete ↔ college coach email/outreach
+- External, recruiting-facing
+- Lives in InboxPage.js + school detail pages
 
-### Issue Types
-| Type | Severity | Auto-Resolve Trigger |
-|---|---|---|
-| missing_blocker | critical | Manual only |
-| momentum_drop | critical | Check-in or interaction logged |
-| overdue_actions | critical | Overdue count drops to 0 |
-| deadline_proximity | high | Prep task completed |
-| engagement_drop | high | Interaction or outreach sent |
-| follow_up_overdue | high | Outreach or follow-up logged |
-| ownership_gap | medium | Actions assigned |
-| readiness_issue | medium | Manual only |
+### Lane 2: Support Messages (V1 — implemented Mar 2026)
+- Club coach ↔ athlete/helper internal messaging
+- CapyMatch is source of truth; replies happen in-app
+- Email notification via Resend (noreply@capymatch.com) is ping only
 
-### Pod Hero States
-1. **Active Issue (Critical)** — Red bar, urgency badge, title, description, Log Check-In / Escalate / Resolve
-2. **Active Issue (High/Medium)** — Amber/blue bar, softer urgency, same layout
-3. **Healthy / On Track** — Green check, "No urgent intervention needed", Log Interaction / Add Note
+#### Data Model: `support_messages` + `support_threads`
+- Messages stored per-message with thread_id grouping
+- Threads track last_message_at, participant_ids, unread tracking
+- read_by array on each message for per-user read status
 
-### Key Behaviors
-- **Idempotent creation**: One active issue per athlete + type (unique partial index)
-- **24h cooldown**: Resolved issues don't re-create for 24 hours
-- **Source context**: Each issue stores trigger details (days_inactive, count, etc.)
-- **Resolution timeline**: Every resolution logs an event with how it was resolved
+#### Key Endpoints
+- `POST /api/support-messages` — Coach sends message (creates thread)
+- `POST /api/support-messages/{thread_id}/reply` — In-app reply
+- `GET /api/support-messages/inbox` — Threads with unread counts
+- `GET /api/support-messages/thread/{thread_id}` — Full conversation
+- `GET /api/support-messages/unread-count` — Badge count
 
-### Key Endpoints
-- `GET /api/support-pods/{athlete_id}` — Returns `current_issue` and `all_active_issues`
-- `POST /api/support-pods/{athlete_id}/issues/{issue_id}/resolve` — Manual resolution
-- Auto-resolution hooks in `POST /api/athletes/{id}/notes` and `POST /api/athletes/{id}/messages`
+#### Frontend
+- Coach: "Send Message" modal in Support Pod action bar → selects recipients → writes message
+- All roles: /messages page with thread list + conversation view + reply
+- Sidebar: "Messages" item with unread badge (polls every 60s)
 
-## Support Pod Structure (Journey Model)
-1. **Pod Hero** — Current active issue or healthy state
-2. **Key Signals** — Compact diagnostic section (always expanded)
-3. **Action Plan** — Playbook for active intervention (always expanded)
-4. **Next Actions** — Pending tasks only (coach, system, playbook)
-5. **Timeline** — All historical events (always expanded)
-6. **Athlete Context** — Snapshot + Pod Members (collapsed)
-7. **Recruiting Timeline** — Milestones (collapsed)
-8. **Completed Actions** — Done tasks (collapsed)
+## Issue Lifecycle System
+- Issues are discrete incidents (created → active → resolved)
+- 3 Pod Hero states: Active Critical, Active High/Medium, Healthy/On Track
+- Idempotent creation, 24h cooldown, auto-resolution on interactions
 
-## Task Lifecycle
-- **Open/Ready** → **Completed** (moves to timeline, logged)
-- **Open/Ready** → **Escalated** (creates Director Action, logged)
-- **Open/Ready** → **Cancelled** (logged)
-- System tasks auto-resolve when coach logs interaction
+## Parameterized Deterministic Playbooks
+- 6 playbooks adapt wording and steps based on athlete context
+- Templates use days_inactive, pipeline size, response rate, profile gaps, video age, etc.
+- Conditional steps appear/disappear based on relevance
 
 ## 3rd Party Integrations
-MongoDB, Resend, Stripe, Emergent LLM Key, Gmail API
+MongoDB, Resend (noreply@capymatch.com), Stripe, Emergent LLM Key, Gmail API
 
 ## Test Credentials
 - **Coach:** coach.williams@capymatch.com / coach123
-- **Athlete:** emma.chen@athlete.capymatch.com / password123
 - **Test Athlete ID:** athlete_3 (Emma Chen)
 
 ## Backlog
-### P1 — In-App Messaging & Notifications
 ### P2 — Club Billing (org subscriptions)
 ### P3 — AI Coach Summary, Intelligence Pipeline Phase 2, Parent/Family Experience
