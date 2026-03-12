@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Target, AlertTriangle, Calendar, MessageCircle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import TodaysPrioritiesCard from "./TodaysPrioritiesCard";
 import RosterSection from "./RosterSection";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import ActivityFeed from "./ActivityFeed";
