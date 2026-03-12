@@ -39,10 +39,12 @@ function AthleteRow({ athlete, isLast }) {
       }}
       onClick={() => navigate(`/support-pods/${athlete.id}`)}
     >
-      {/* Momentum */}
-      <div className="w-8 sm:w-10 shrink-0 text-center pt-1">
-        <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
-      </div>
+      {/* Momentum — only show for athletes with issues */}
+      {hasIssue && (
+        <div className="w-8 sm:w-10 shrink-0 text-center pt-1">
+          <MomentumIndicator score={athlete.momentum_score} trend={athlete.momentum_trend} />
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">
