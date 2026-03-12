@@ -44,6 +44,7 @@ import AthleteOnboardingQuiz from "./pages/athlete/OnboardingQuiz";
 import AthletePublicProfile from "./pages/public/AthletePublicProfile";
 import InternalAthleteProfile from "./pages/staff/InternalAthleteProfile";
 import AthleteInboxPage from "./pages/athlete/InboxPage";
+import AthleteMessagesPage from "./pages/athlete/MessagesPage";
 import AthleteOutreachPage from "./pages/athlete/OutreachAnalysisPage";
 import AthleteHighlightPage from "./pages/athlete/HighlightAdvisorPage";
 
@@ -136,6 +137,7 @@ function AppRoutes() {
       <Route path="/schools/:domain" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSchoolDetailPage /></ProtectedRoute>} />
       <Route path="/calendar" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteCalendarPage /></ProtectedRoute>} />
       <Route path="/inbox" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteInboxPage /></ProtectedRoute>} />
+      <Route path="/messages" element={<ProtectedRoute allowedRoles={["athlete","parent","club_coach","director"]}><AthleteMessagesPage /></ProtectedRoute>} />
       <Route path="/athlete-profile" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteProfilePage /></ProtectedRoute>} />
       <Route path="/analytics" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteOutreachPage /></ProtectedRoute>} />
       <Route path="/highlights" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteHighlightPage /></ProtectedRoute>} />

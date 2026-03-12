@@ -35,6 +35,7 @@ from routers.profile import router as profile_router
 from routers.digest import router as digest_router
 from routers.athlete_self import router as athlete_self_router
 from routers.athlete_dashboard import router as athlete_dashboard_router
+from routers.support_messages import router as support_messages_router
 from routers.athlete_profile import router as athlete_profile_router
 from routers.athlete_knowledge import router as athlete_knowledge_router
 from routers.athlete_onboarding import router as athlete_onboarding_router
@@ -226,6 +227,7 @@ async def get_status_checks():
 api_router.include_router(mission_control_router)
 api_router.include_router(athletes_router)
 api_router.include_router(support_pods_router)
+api_router.include_router(support_messages_router)
 api_router.include_router(events_router)
 api_router.include_router(advocacy_router)
 api_router.include_router(program_router)

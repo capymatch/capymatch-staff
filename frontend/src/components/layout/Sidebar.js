@@ -1,8 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   LayoutDashboard, Calendar, Megaphone, BarChart3, Users,
   ChevronRight, Kanban, GraduationCap, Mail, Video,
-  Shield, Plug, Database, CreditCard,
+  Shield, Plug, Database, CreditCard, MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
@@ -31,6 +33,7 @@ const ATHLETE_NAV = [
   { id: "schools", label: "Find Schools", icon: GraduationCap, path: "/schools" },
   { id: "calendar", label: "Calendar", icon: Calendar, path: "/calendar" },
   { id: "inbox", label: "Inbox", icon: Mail, path: "/inbox" },
+  { id: "messages", label: "Messages", icon: MessageSquare, path: "/messages" },
   { id: "highlights", label: "Highlights", icon: Video, path: "/highlights" },
   { id: "analytics", label: "Analytics", icon: BarChart3, path: "/analytics" },
 ];
@@ -43,6 +46,21 @@ export default function Sidebar({ open, onClose }) {
   const isDirector = user?.role === "director";
   const isAdmin = user?.role === "platform_admin";
   const isStaff = isDirector || user?.role === "club_coach" || isAdmin;
+
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchUnread = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/support-messages/unread-count`);
+        setUnreadMessages(res.data.unread_count || 0);
+      } catch { /* ignore */ }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   let navItems = isAthlete ? ATHLETE_NAV : [...STAFF_NAV, ...(isDirector ? DIRECTOR_EXTRA : [])];
 
@@ -94,6 +112,11 @@ export default function Sidebar({ open, onClose }) {
               >
                 <item.icon className="w-[18px] h-[18px]" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
                 <span className="flex-1 text-left">{item.label}</span>
+                {item.id === "messages" && unreadMessages > 0 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-500 text-white leading-none" data-testid="messages-badge">
+                    {unreadMessages}
+                  </span>
+                )}
                 {active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
               </button>
             );

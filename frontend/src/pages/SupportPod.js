@@ -190,7 +190,7 @@ function SupportPod() {
 
       {/* Action Modals */}
       {activeAction === "email" && (
-        <CoachEmailComposer athleteId={athleteId} athlete={athlete} podMembers={pod_members}
+        <CoachEmailComposer athleteId={athleteId} athleteName={athlete?.full_name || athlete?.first_name || "Athlete"} podMembers={pod_members}
           onCancel={() => setActiveAction(null)} onSent={() => { setActiveAction(null); fetchPodData(); }} />
       )}
       {activeAction === "log" && (
