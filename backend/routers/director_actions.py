@@ -60,6 +60,9 @@ class CreateActionRequest(BaseModel):
 
 class ResolveRequest(BaseModel):
     note: Optional[str] = ""
+    notify_director: bool = True
+    add_to_timeline: bool = True
+    follow_up_title: Optional[str] = None
 
 
 # ── Helpers ──────────────────────────────────────
@@ -310,29 +313,71 @@ async def resolve_action(
         raise HTTPException(400, "Action is already resolved.")
 
     now = datetime.now(timezone.utc).isoformat()
+    resolved_note = (body.note or "").strip()[:500]
+
     await db.director_actions.update_one(
         {"action_id": action_id},
         {"$set": {
             "status": "resolved",
             "resolved_at": now,
-            "resolved_note": (body.note or "").strip()[:300],
+            "resolved_note": resolved_note,
+            "resolved_by": current_user.get("name", "Unknown"),
         }},
     )
 
+    athlete_id = action.get("athlete_id", "")
+    coach_name = current_user.get("name", "Coach")
+    type_label = "Review Request" if action["type"] == "review_request" else "Escalation"
+
+    # Log resolution in athlete's pod timeline
+    if body.add_to_timeline and athlete_id:
+        await db.pod_action_events.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": athlete_id,
+            "type": "resolution",
+            "description": f"Resolved: {action.get('reason_label', type_label)}",
+            "resolution_note": resolved_note,
+            "resolved_by": coach_name,
+            "actor": coach_name,
+            "action_id": action_id,
+            "created_at": now,
+        })
+
     # Notify director
     tenant_id = action.get("org_id") or ""
-    if tenant_id and action.get("director_id"):
-        coach_name = current_user.get("name", "Coach")
-        type_label = "Review Request" if action["type"] == "review_request" else "Escalation"
+    if body.notify_director and tenant_id and action.get("director_id"):
         await create_notification(
             tenant_id,
             action["director_id"],
             "action_resolved",
             f"{coach_name} resolved {type_label}",
             f"Re: {action['athlete_name']} — {action['reason_label']}"
-            + (f"\nNote: {body.note.strip()}" if body.note and body.note.strip() else ""),
+            + (f"\nNote: {resolved_note}" if resolved_note else ""),
             "",
         )
 
+    # Create follow-up task (optional)
+    follow_up_id = None
+    if body.follow_up_title and athlete_id:
+        follow_up_id = str(uuid.uuid4())
+        seven_days = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        await db.pod_actions.insert_one({
+            "id": follow_up_id,
+            "athlete_id": athlete_id,
+            "title": body.follow_up_title.strip()[:200],
+            "owner": coach_name,
+            "status": "ready",
+            "due_date": seven_days,
+            "source_category": "follow_up",
+            "is_suggested": False,
+            "created_at": now,
+            "completed_at": None,
+        })
+
     log.info(f"Action {action_id} resolved by {current_user['id']}")
-    return {"message": "Action resolved", "action_id": action_id, "status": "resolved"}
+    return {
+        "message": "Action resolved",
+        "action_id": action_id,
+        "status": "resolved",
+        "follow_up_id": follow_up_id,
+    }

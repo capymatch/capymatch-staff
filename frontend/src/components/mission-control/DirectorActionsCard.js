@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ResolveActionModal } from "./ResolveActionModal";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -85,7 +86,11 @@ function ActionRow({ action, role, onAcknowledge, onResolve, acknowledging, reso
           </p>
           <div className="flex items-center gap-3 mt-1">
             <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
-              {isCoach ? `From ${action.director_name}` : `To ${action.coach_name}`}
+              {action.source === "coach_escalation"
+                ? `Escalated by ${action.coach_name || "Coach"}`
+                : isCoach
+                  ? `From ${action.director_name || "Director"}`
+                  : `To ${action.coach_name || "Coach"}`}
             </span>
             {created && (
               <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
@@ -136,6 +141,7 @@ export default function DirectorActionsCard({ role }) {
   const [ackingId, setAckingId] = useState(null);
   const [resolvingId, setResolvingId] = useState(null);
   const [justChangedId, setJustChangedId] = useState(null);
+  const [resolveModalAction, setResolveModalAction] = useState(null);
 
   const fetchActions = useCallback(async () => {
     try {
@@ -174,26 +180,32 @@ export default function DirectorActionsCard({ role }) {
     } finally { setAckingId(null); }
   };
 
-  const handleResolve = async (actionId) => {
+  const handleResolve = (actionId) => {
+    const action = actions.find(a => a.action_id === actionId);
+    if (action) setResolveModalAction(action);
+  };
+
+  const handleResolveSubmit = async (actionId, resolveData) => {
+    setResolveModalAction(null);
     setResolvingId(actionId);
-    // Optimistic update: change status locally first
+    // Optimistic update
     setActions(prev => prev.map(a =>
-      a.action_id === actionId ? { ...a, status: "resolved" } : a
+      a.action_id === actionId ? { ...a, status: "resolved", resolved_note: resolveData.note } : a
     ));
     setJustChangedId(actionId);
-    setShowResolved(true); // Auto-expand resolved section
+    setShowResolved(true);
     setTimeout(() => setJustChangedId(null), 2500);
     try {
       const token = localStorage.getItem("capymatch_token");
-      await axios.post(`${API}/director/actions/${actionId}/resolve`, {}, {
+      await axios.post(`${API}/director/actions/${actionId}/resolve`, resolveData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Resolved — nice work");
-      // Delay re-fetch so optimistic highlight animation completes
+      const msg = resolveData.follow_up_title ? "Resolved with follow-up created" : "Resolved — nice work";
+      toast.success(msg);
       setTimeout(() => fetchActions(), 2500);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to resolve");
-      fetchActions(); // revert immediately on error
+      fetchActions();
     } finally { setResolvingId(null); }
   };
 
@@ -307,6 +319,15 @@ export default function DirectorActionsCard({ role }) {
           </>
         )}
       </div>
+
+      {/* Resolve Modal */}
+      {resolveModalAction && (
+        <ResolveActionModal
+          action={resolveModalAction}
+          onResolve={handleResolveSubmit}
+          onCancel={() => setResolveModalAction(null)}
+        />
+      )}
     </section>
   );
 }
