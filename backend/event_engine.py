@@ -39,6 +39,11 @@ def get_all_events(team_filter=None, type_filter=None):
         e["prepProgress"] = {"completed": completed, "total": len(checklist)}
         e["capturedNotesCount"] = len(event.get("capturedNotes", []))
 
+        # Override expectedSchools with actual school_ids count
+        e["expectedSchools"] = len(event.get("school_ids", []))
+        # Override athleteCount with actual athlete_ids count
+        e["athleteCount"] = len(event.get("athlete_ids", []))
+
         # Athlete readiness summary for card display
         athlete_ids = event.get("athlete_ids", [])
         all_athletes = get_athletes()
