@@ -1,88 +1,124 @@
 # CapyMatch — Product Requirements Document
 
-## Overview
-CapyMatch is a full-stack sports recruiting platform connecting athletes, coaches, and club directors. Built with React (frontend) + FastAPI (backend) + MongoDB.
+## Vision
+Sports recruiting platform connecting athletes, coaches, and schools with intelligent workflow management.
 
-## Architecture
+## Core Architecture
+- **Frontend**: React + Tailwind + Shadcn/UI
+- **Backend**: FastAPI + MongoDB
+- **Auth**: JWT-based with role-based access (athlete, parent, club_coach, director, platform_admin)
+
+## Coach Workflow (Updated Mar 2026)
 ```
-/app/
-├── backend/
-│   ├── routers/
-│   │   ├── support_messages.py  # NEW: Internal messaging system
-│   │   ├── support_pods.py      # Support Pod + issue lifecycle
-│   │   ├── athletes.py          # Athlete CRUD + notes
-│   │   └── ...
-│   ├── pod_issues.py            # Issue lifecycle management
-│   ├── support_pod.py           # Pod data + parameterized playbooks
-│   └── services/
-└── frontend/
-    ├── src/pages/
-    │   ├── athlete/
-    │   │   ├── MessagesPage.js  # NEW: Support messages inbox
-    │   │   └── InboxPage.js     # School/recruiting emails (separate lane)
-    │   └── coach/
-    ├── src/components/
-    │   └── support-pod/
-    │       ├── CoachEmailComposer.js  # REWRITTEN: Uses support messages API
-    │       ├── PodHeroCard.js         # 3-state issue hero
-    │       └── ...
-    └── src/lib/
+Mission Control (Roster) → Click Athlete → Athlete Overview + School List → Click School → School Pod
 ```
 
-## Two Communication Lanes
+### Mission Control (Coach Dashboard)
+Shows only:
+- Roster (which athletes need attention)
+- Events Requiring Prep
+- Upcoming Events
+- ~~Assigned Actions~~ (removed — actions now live in School Pods)
 
-### Lane 1: School Communication (existing, unchanged)
-- Athlete ↔ college coach email/outreach
-- External, recruiting-facing
-- Lives in InboxPage.js + school detail pages
+### Athlete Pod (`/support-pods/:athleteId`)
+- Athlete-level hero (athlete-level issues: inactivity, profile incomplete)
+- **Target Schools list** sorted by urgency (at_risk → needs_attention → active → strong → early)
+- Athlete-level actions (non-school-specific)
+- Athlete signals overview (collapsed)
+- Action plan / playbook (collapsed)
+- Timeline (collapsed)
+- Athlete context (collapsed)
 
-### Lane 2: Support Messages (V1 — implemented Mar 2026)
-- Club coach ↔ athlete/helper internal messaging
-- CapyMatch is source of truth; replies happen in-app
-- Email notification via Resend (noreply@capymatch.com) is ping only
+### School Pod (`/support-pods/:athleteId/school/:programId`)
+Same layout as athlete pod but ALL data scoped to one school:
+- School header (name, division, conference, stage, health badge)
+- School hero (worst signal or current issue)
+- School contact info (coach name, email, website from knowledge base)
+- School-level signals (overdue follow-ups, no reply, stale engagement, stalled stage)
+- School-level actions (create, complete, track)
+- School-level notes
+- School-level timeline
+- Stage history
 
-#### Data Model: `support_messages` + `support_threads`
-- Messages stored per-message with thread_id grouping
-- Threads track last_message_at, participant_ids, unread tracking
-- read_by array on each message for per-user read status
+### Issue Lifecycle
+- Issues auto-created when conditions detected (e.g., `days_since_activity > 14`)
+- 2-hour cooldown after legitimate auto-resolution (prevents flapping)
+- Manual resolves don't trigger cooldown
+- Signal-derived warning state when no DB issue but signals are bad
 
-#### Key Endpoints
-- `POST /api/support-messages` — Coach sends message (creates thread)
-- `POST /api/support-messages/{thread_id}/reply` — In-app reply
-- `GET /api/support-messages/inbox` — Threads with unread counts
-- `GET /api/support-messages/thread/{thread_id}` — Full conversation
-- `GET /api/support-messages/unread-count` — Badge count
+### Signal-Aware Hero Card (3 states)
+1. **Active Issue** (from DB) → red hero with resolve/escalate
+2. **Signal Warning** (no DB issue, but critical/high signals) → red/amber hero
+3. **Healthy** → green "On Track" (only when truly no problems)
 
-#### Frontend
-- Coach: "Send Message" modal in Support Pod action bar → selects recipients → writes message
-- All roles: /messages page with thread list + conversation view + reply
-- Sidebar: "Messages" item with unread badge (polls every 60s)
+## Data Model
 
-## Issue Lifecycle System
-- Issues are discrete incidents (created → active → resolved)
-- 3 Pod Hero states: Active Critical, Active High/Medium, Healthy/On Track
-- Idempotent creation, 24h cooldown, auto-resolution on interactions
+### Key Collections
+- `programs`: Per school-athlete records (university_name, stage, reply_status, priority, next_action)
+- `program_metrics`: Per school-athlete computed metrics (health_state, engagement_trend, reply_rate, overdue_followups)
+- `university_knowledge_base`: School directory (953 schools, coach contacts, division, conference)
+- `pod_actions`: Actions with optional `program_id` (null = athlete-level, set = school-scoped)
+- `pod_action_events`: Timeline events with optional `program_id`
+- `athlete_notes`: Notes with optional `program_id`
+- `pod_issues`: Issues with optional `program_id` for school-level issues
+- `support_message_threads` / `support_messages`: In-app messaging
+- `users`: User accounts with optional `athlete_id` link
 
-## Parameterized Deterministic Playbooks
-- 6 playbooks adapt wording and steps based on athlete context
-- Templates use days_inactive, pipeline size, response rate, profile gaps, video age, etc.
-- Conditional steps appear/disappear based on relevance
+### School Health Classification
+```
+at_risk          → overdue + stale engagement
+needs_attention  → overdue OR no reply + stale
+awaiting_reply   → waiting for school response
+active           → engaged, progressing
+strong_momentum  → high reply rate + accelerating
+still_early      → not contacted yet
+```
 
-## 3rd Party Integrations
-MongoDB, Resend (noreply@capymatch.com), Stripe, Emergent LLM Key, Gmail API
+## API Endpoints
 
-## Completed (Mar 2026)
-- V1 In-App Messaging: Full stack coach↔athlete messaging with threads, inbox, unread badges, timeline integration
-- Bug fixes: athlete_id now included in JWT via _safe_user + Pydantic models (UserOut, MeResponse)
-- Messaging events (support_message_sent, support_message_reply) render correctly in Support Pod timeline
-- All 8 backend tests + full frontend flow verified passing
+### School Pod (NEW)
+- `GET /api/support-pods/:athleteId/schools` — List all target schools sorted by urgency
+- `GET /api/support-pods/:athleteId/school/:programId` — Full school pod data
+- `POST /api/support-pods/:athleteId/school/:programId/actions` — Create school-scoped action
+- `POST /api/support-pods/:athleteId/school/:programId/notes` — Create school-scoped note
+- `PATCH /api/support-pods/:athleteId/school/:programId/actions/:actionId` — Update/complete action
+
+### Existing
+- `GET /api/support-pods/:athleteId` — Athlete pod data
+- `POST /api/support-messages/threads` — Send in-app message
+- `GET /api/support-messages/inbox` — Athlete message inbox
+- `GET /api/support-messages/unread-count` — Unread message count
 
 ## Test Credentials
 - **Coach:** coach.williams@capymatch.com / coach123
 - **Athlete (Emma):** emma.chen@athlete.capymatch.com / athlete123
-- **Test Athlete ID:** athlete_3 (Emma Chen)
+- **Test Athlete ID:** athlete_3
+- **Test Program ID (Emory):** ae7647cc-affc-44ef-8977-244309ac3a30
+
+## Completed (Mar 2026)
+- V1 In-App Messaging (coach → athlete, with timeline logging)
+- Messaging bug fixes (athlete_id in JWT, timeline event rendering)
+- Signal-aware hero card (3 states: DB issue / signal warning / healthy)
+- Issue lifecycle cooldown fix (2h instead of 24h, condition-aware)
+- **School Pod architecture** — full restructuring of coach workflow to school-level
+- Coach dashboard cleanup (removed Assigned Actions)
+- Mobile responsiveness fixes (PodHeader, NotificationBell, CoachNotesSidebar)
 
 ## Backlog
-### P2 — Club Billing (org subscriptions)
-### P2 — Refactor user-athlete linking (currently uses email fallback; should be set during onboarding)
-### P3 — AI Coach Summary, Intelligence Pipeline Phase 2, Parent/Family Experience
+### P1 — Close the Action Loop
+Coach actions in School Pod should update `programs` and `program_metrics` so signals recompute in real-time.
+
+### P2 — Club Billing
+Org subscription management.
+
+### P2 — Refactor User-Athlete Linking
+Replace email fallback with proper onboarding flow.
+
+### P3 — AI Coach Summary
+LLM-generated recruiting pitches.
+
+### P3 — Intelligence Pipeline Phase 2
+Roster Stability, Scholarship, NIL Readiness agents.
+
+### P3 — Parent/Family Experience
+Dedicated parent/helper UX.
