@@ -1,56 +1,85 @@
 # CapyMatch — Product Requirements Document
 
-## Vision
-Sports recruiting platform connecting athletes, coaches, and schools with intelligent workflow management.
+## Overview
+CapyMatch is a full-stack recruiting platform for volleyball coaches and athletes. Built with React + FastAPI + MongoDB.
 
-## Core Architecture
-- **Frontend**: React + Tailwind + Shadcn/UI
-- **Backend**: FastAPI + MongoDB
-- **Auth**: JWT-based with role-based access
+## Core Users
+- **Coaches**: Manage athletes, track school engagement, prepare for events, handle blockers
+- **Athletes**: Manage profiles, respond to coach actions
+- **Directors**: Organizational oversight (future)
+- **Parents/Family**: Family experience (future)
 
-## Coach Workflow
-```
-Mission Control → Athlete Overview → School Pod
-Events: Event Home → Event Prep → Live Mode → Post-Event Summary
-```
+## Architecture
+- **Frontend**: React (port 3000) with Shadcn UI components
+- **Backend**: FastAPI (port 8001) with MongoDB
+- **Auth**: JWT-based authentication
 
-## Events System (Refined Mar 2026)
-### Event Home Cards (Phase 1 ✅)
-- Action-oriented cards with athlete count, school count, readiness pills, prep progress
-- Dynamic CTA: Go Live / Start Prep / Finish Prep / Review Summary / View Summary
-- Backend computes athlete readiness (blockers/needs_attention/ready) per event
+## Current Features (Implemented)
 
-### Event Prep (Phase 2 - NEXT)
-- Prioritize not-ready athletes, highest-value schools, blockers at top
+### Dashboard / Mission Control
+- Coach overview with athlete counts, attention flags, event prep alerts
+- Athletes grouped by "Need Attention" and "On Track"
+- Event prep reminders
 
-### Live Mode (Phase 3)
-- Speed optimization: fewer taps, likely athletes first, save confirmation, repeat shortcuts
+### Athlete Support Pod (Overview)
+- Profile completeness scoring
+- Active issue detection (blockers, momentum drops, overdue actions)
+- Target school list with health classifications
+- Profile alert card with "Send Reminder" button
 
-### Post-Event Summary (Phase 4)
-- Structured follow-ups: athlete × school, recommended next step, owner, due date
+### School Pod (Detail)
+- School-specific health signals and engagement metrics
+- Dynamic playbooks based on school stage/health
+- School-scoped notes and actions
+- Timeline events and coach contact info
 
-### System Integration (Phase 5)
-- Event outcomes influence School Pod actions, pipeline, support messages, athlete priorities
+### Events System
+- Event cards with prep status, athlete counts, school counts
+- Event Prep page with checklists, athlete profiles, blockers, and target schools
+- Event Summary page with captured notes, interest levels, follow-up tracking
+- "Route to Pod" functionality for event notes → School Pod actions
 
-## School Pod
-- Auto-generated playbooks from signals (4 types), step persistence
-- School-scoped actions, notes, timeline
-- Event-routed actions with correct program_id
+### Profile Completeness
+- Computed from 12 fields: full_name, photo_url, position, grad_year, height, bio, video_link, email, team, city, state, gpa
+- Alert card on athlete overview when profile < 100%
 
-## Profile Completeness
-- Unified 12-field formula, coach-visible alert with "Send Reminder"
+## Data Seeder
+**Status: COMPLETE (March 2026)**
 
-## Test Credentials
-- **Coach:** coach.williams@capymatch.com / coach123
-- **Athlete:** emma.chen@athlete.capymatch.com / athlete123
+`backend/seed_fresh.py` creates a clean, interconnected dataset:
+- 5 athlete personas with distinct archetypes:
+  - Emma Chen (hot_prospect) - 5 schools, strong pipeline
+  - Olivia Anderson (blocked_docs) - missing transcript blocker
+  - Marcus Johnson (gone_dark) - 22 days inactive
+  - Sarah Martinez (narrow_list) - exploring, 3 schools
+  - Lucas Rodriguez (healthy) - has USC offer, 100% profile
+- 20 programs (target schools) with varied statuses
+- 11 pod actions, 9 school-scoped notes, 8 timeline events
+- 3 events (1 past, 2 upcoming) with 6 event notes
+- 4 message threads
 
-## Completed
-- School Pod architecture, notes, playbooks, step persistence
-- Profile completeness alignment & coach visibility
-- Event Route-to-Pod fix (program_id scoping)
-- **Event Home Cards redesign** (Phase 1, Mar 13, 2026)
+Test credentials:
+- Coach: coach.williams@capymatch.com / coach123
+- Athletes: [first].[last]@athlete.capymatch.com / athlete123
 
-## Backlog
-- P1: Event Prep (Phase 2), Live Mode (Phase 3), Post-Event Summary (Phase 4), System Integration (Phase 5)
-- P2: Club Billing
-- P3: AI Coach Summary, Intelligence Pipeline Phase 2, Parent/Family Experience
+## Test Status
+- Full regression: 25/25 backend tests PASS, all frontend flows PASS (March 2026)
+
+## Pending Issues
+- P1: Hero Card on Athlete Overview page lacks action buttons (Resolve, Escalate, Message)
+
+## Upcoming Tasks (P1)
+- Event "Live Mode" refinement (Phase 3)
+- Event "Post-Event Summary" enhancement (Phase 4)
+
+## Future/Backlog
+- Close the Action Loop (athlete actions → program_metrics updates)
+- Club Billing (Stripe subscriptions)
+- Multi-Agent Intelligence Pipeline (Roster Stability, Scholarship, NIL Readiness)
+- AI-Powered Coach Summary (LLM-generated recruiting pitches)
+- Parent/Family Experience
+
+## 3rd Party Integrations
+- MongoDB
+- Resend (email)
+- Stripe (payments)
