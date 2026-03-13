@@ -15,15 +15,20 @@ Mission Control (Roster) → Click Athlete → Athlete Overview + School List �
 
 ### Athlete Overview (`/support-pods/:athleteId`)
 - Hero card (critical issues like Momentum Drop)
-- **Profile Completeness Alert** (shows when <80%, displays missing fields, **"Send Reminder" button** sends in-app message to athlete)
+- **Profile Completeness Alert** (<80%, "Send Reminder" button sends in-app message)
 - Target Schools list sorted by urgency
 
 ### School Pod (`/support-pods/:athleteId/school/:programId`)
 - School header, hero, contact info, signals
-- **Action Plan** (auto-generated from school signals, **step completion persists to database**)
-- Manual Actions (coach-created, with "+ Add")
+- **Action Plan** (auto-generated from signals, step completion persists to DB)
+- **Actions** (manual + event-routed, school-scoped via `program_id`)
 - Notes (inline + sidebar, school-scoped)
 - Timeline, Stage history
+
+### Events (`/events`)
+- Event Home → Prep → Live Mode → Post-Event Summary
+- **Route to Pod** maps event notes to correct School Pod via `_find_program_id()`
+- Actions created with `program_id` so they appear in the right School Pod
 
 ## School-Specific Playbooks
 | Signal | Playbook Type | Timeline |
@@ -34,19 +39,17 @@ Mission Control (Roster) → Click Athlete → Athlete Overview + School List �
 | No Response (not contacted) | First Outreach Plan | 1-2 days |
 | Stage Stalled | Stage Advancement Plan | 3-5 days |
 
-Playbooks reference real coach names and athlete names. Step completion saves to `playbook_progress` collection.
-
 ## Profile Completeness (Unified 12-Field Formula)
 Fields: full_name, photo_url, position, grad_year, height, bio, video_link, email, team, city, state, gpa
 
 ## Key API Endpoints
 - `GET /api/support-pods/:athleteId` — Athlete overview (includes `profile_completeness`)
 - `GET /api/support-pods/:athleteId/schools` — Target schools sorted by urgency
-- `GET /api/support-pods/:athleteId/school/:programId` — Full school pod (includes `playbook`, `playbook_checked_steps`)
-- `PATCH /api/support-pods/:athleteId/school/:programId/playbook-progress` — Save playbook step completion
-- `GET /api/support-pods/:athleteId/school/:programId/playbook-progress` — Get saved step completion
-- `POST /api/support-pods/:athleteId/school/:programId/notes` — Create school-scoped note
-- `POST /api/support-messages` — Send in-app message (used by profile reminder)
+- `GET /api/support-pods/:athleteId/school/:programId` — Full school pod
+- `PATCH /api/support-pods/:athleteId/school/:programId/playbook-progress` — Save playbook progress
+- `POST /api/events/:eventId/notes/:noteId/route` — Route event note to School Pod (returns `program_id`)
+- `POST /api/events/:eventId/route-to-pods` — Bulk route eligible notes
+- `POST /api/support-messages` — Send in-app message
 
 ## Test Credentials
 - **Coach:** coach.williams@capymatch.com / coach123
@@ -61,8 +64,9 @@ Fields: full_name, photo_url, position, grad_year, height, bio, video_link, emai
 - Profile completeness alignment & coach visibility (Mar 13, 2026)
 - Emma login fix (Mar 13, 2026)
 - School-Specific Action Plan Playbooks (Mar 13, 2026)
-- **Playbook Step Persistence** (Mar 13, 2026) — Steps save to DB, survive page reloads, per-school progress
-- **Profile Reminder** (Mar 13, 2026) — Coach can send in-app message to athlete about completing profile
+- Playbook Step Persistence (Mar 13, 2026)
+- Profile Reminder (Mar 13, 2026)
+- **Event Route-to-Pod Fix** (Mar 13, 2026) — Actions now correctly scoped to School Pod via program_id lookup + auth headers fixed on EventSummary
 
 ## Important Constraints
 - Program status should only change when the athlete acts, NOT from coach actions
