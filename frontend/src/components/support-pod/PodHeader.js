@@ -23,7 +23,6 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="pod-header">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3">
-        {/* Mobile: 2-row layout. Desktop: single row */}
         <div className="flex items-center justify-between gap-2">
           {/* Left: back + name */}
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -33,9 +32,9 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
               data-testid="back-to-mc"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Mission Control</span>
+              <span className="hidden md:inline">Mission Control</span>
             </button>
-            <div className="h-5 w-px bg-gray-200 hidden sm:block" />
+            <div className="h-5 w-px bg-gray-200 hidden md:block" />
             <div className="min-w-0">
               <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="pod-athlete-name">
                 {athlete?.full_name}
@@ -48,7 +47,6 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
 
           {/* Right: actions */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Refresh - always visible */}
             <button
               onClick={onManualRefresh}
               disabled={isPolling}
@@ -59,7 +57,6 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
               <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${isPolling ? "animate-spin" : ""}`} />
             </button>
 
-            {/* View Profile */}
             {athleteId && (
               <button
                 onClick={() => navigate(`/internal/athlete/${athleteId}/profile`)}
@@ -67,15 +64,14 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
                 data-testid="pod-view-profile-btn"
               >
                 <User className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">View Profile</span>
+                <span className="hidden md:inline">View Profile</span>
               </button>
             )}
 
-            {/* Health badge */}
             <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
               <div className={`w-2 h-2 rounded-full ${health.dot}`} />
-              <Activity className={`w-3.5 h-3.5 ${health.text}`} />
-              <span className={`text-xs font-medium ${health.text} hidden sm:inline`}>{health.label}</span>
+              <Activity className={`w-3.5 h-3.5 ${health.text} hidden sm:block`} />
+              <span className={`text-xs font-medium ${health.text} hidden md:inline`}>{health.label}</span>
             </div>
           </div>
         </div>
