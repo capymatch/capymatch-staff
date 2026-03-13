@@ -13,6 +13,7 @@ import { CoachEmailComposer } from "@/components/support-pod/CoachEmailComposer"
 import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteraction";
 import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpScheduler";
 import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
+import { CoachNotesSidebar } from "@/components/support-pod/CoachNotesSidebar";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
@@ -147,9 +148,10 @@ export default function SchoolPod() {
   const [showAddAction, setShowAddAction] = useState(false);
   const [showAddNote, setShowAddNote] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   const toggleAction = (action) => {
-    if (action === "notes") { setShowAddNote(true); return; }
+    if (action === "notes") { setNotesOpen(true); return; }
     setActiveAction(prev => prev === action ? null : action);
   };
 
@@ -211,7 +213,7 @@ export default function SchoolPod() {
   ].sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
 
   return (
-    <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen overflow-x-hidden" data-testid="school-pod-page">
+    <div className={`-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen overflow-x-hidden transition-[margin] duration-300 ease-out ${notesOpen ? "mr-[340px] sm:mr-[380px]" : ""}`} data-testid="school-pod-page">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="school-pod-header">
         <div className="px-3 sm:px-6 py-3">
@@ -409,8 +411,8 @@ export default function SchoolPod() {
       <CoachActionBar
         activeAction={activeAction}
         onToggle={toggleAction}
-        notesOpen={showAddNote}
-        onToggleNotes={() => setShowAddNote(!showAddNote)}
+        notesOpen={notesOpen}
+        onToggleNotes={() => setNotesOpen(!notesOpen)}
       />
 
       {/* Modals */}
@@ -455,6 +457,15 @@ export default function SchoolPod() {
           onSaved={() => { setActiveAction(null); fetchData(); }}
         />
       )}
+
+      {/* Notes Sidebar */}
+      <CoachNotesSidebar
+        athleteId={athleteId}
+        athleteName={program.university_name}
+        programId={programId}
+        open={notesOpen}
+        onClose={() => setNotesOpen(false)}
+      />
     </div>
   );
 }

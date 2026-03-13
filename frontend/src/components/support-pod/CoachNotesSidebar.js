@@ -66,21 +66,32 @@ function NoteItem({ note, onPin, onEdit, onDelete }) {
   );
 }
 
-export function CoachNotesSidebar({ athleteId, athleteName, open, onClose }) {
+export function CoachNotesSidebar({ athleteId, athleteName, programId, open, onClose }) {
   const [notes, setNotes] = useState([]);
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef(null);
 
+  const authHeaders = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("capymatch_token")}` } });
+  const notesBase = programId
+    ? `${API}/support-pods/${athleteId}/school/${programId}/notes`
+    : `${API}/athletes/${athleteId}/notes`;
+
   const fetchNotes = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/athletes/${athleteId}/notes`);
-      setNotes(res.data?.notes || res.data || []);
+      if (programId) {
+        // School pod notes come from the school pod data
+        const res = await axios.get(`${API}/support-pods/${athleteId}/school/${programId}`, authHeaders());
+        setNotes(res.data?.notes || []);
+      } else {
+        const res = await axios.get(`${API}/athletes/${athleteId}/notes`);
+        setNotes(res.data?.notes || res.data || []);
+      }
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, [athleteId]);
+  }, [athleteId, programId]);
 
   useEffect(() => { if (open) fetchNotes(); }, [open, fetchNotes]);
 
@@ -92,7 +103,11 @@ export function CoachNotesSidebar({ athleteId, athleteName, open, onClose }) {
     if (!content.trim()) return;
     setSaving(true);
     try {
-      await axios.post(`${API}/athletes/${athleteId}/notes`, { text: content.trim(), tag: "Coach Note" });
+      if (programId) {
+        await axios.post(notesBase, { text: content.trim(), tag: "Coach Note" }, authHeaders());
+      } else {
+        await axios.post(notesBase, { text: content.trim(), tag: "Coach Note" });
+      }
       setContent("");
       toast.success("Note saved");
       fetchNotes();

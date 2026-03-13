@@ -1,91 +1,81 @@
 <analysis>**original_problem_statement:**
-The user initiated a series of phased requests to build and refine the CapyMatch application.
-1.  **Athlete UI Overhaul:** Redesigned athlete-facing pages (Profile, Settings) to match a reference repository, breaking down a monolithic page into dedicated sections for Profile, Account, Billing, and Settings.
-2.  **Coach Dashboard Refinements:** Iteratively improved the Coach Mission Control dashboard for better scannability and action-oriented design.
-3.  **Athlete Support Pod UX Polish:** Adjusted the Athlete Support Pod layout for a more logical coaching workflow (Problem → Context → Actions → Insights).
-4.  **Task Workflow Enhancement:** Changed task completion logic to move tasks to a Completed list instead of deleting them and added an Escalate feature.
-5.  **Pod Hero & Issue Lifecycle:** Implemented a stateful Pod Hero to display the current active issue for an athlete, with a full backend lifecycle (Active, Resolved, Healthy).
-6.  **Parameterized Playbooks:** Evolved the 6 hardcoded intervention playbooks into deterministic but parameterized plans that adapt to the athlete's specific context.
-7.  **In-App Messaging:** Build a V1 in-app messaging system for coaches to communicate with athletes directly from the Support Pod.
+The user has directed a multi-phase project to build and refactor the CapyMatch recruiting application. The core of the recent work was a fundamental shift in the coaching workflow. The original, monolithic Athlete Support Pod has been deconstructed and replaced with a new, two-tiered structure:
+1.  **Athlete Overview Page:** A high-level dashboard showing athlete-level issues (e.g., Momentum Drop) and a list of all target schools for that athlete, sorted by urgency.
+2.  **School Pod Page:** A detailed workspace for a specific athlete-school relationship. This page reuses the layout of the old pod (hero, signals, action plan, timeline) but scopes all data and actions to a single school.
+
+This refactor required significant backend changes to create new school-scoped endpoints, frontend work to build the new pages, and migrating all action modals (Log, Email, Escalate, etc.) to be school-aware. The user also requested numerous UI/UX fixes for responsiveness and layout consistency.
 
 **PRODUCT REQUIREMENTS:**
-1.  **Deconstruct Monolithic Settings:** Replace the single athlete settings page with distinct pages for Account, Billing, and general Settings.
-2.  **Refine Coach UI for Clarity:** Systematically improve the Coach Dashboard and Athlete Support Pod to be more action-oriented and scannable.
-3.  **Implement Robust Task Lifecycle:** Create a full task workflow that includes Open, Completed, and Escalated states with a clear audit trail.
-4.  **Stateful Issue Management:** The Support Pod must display the current highest-priority issue for an athlete, which resolves automatically based on coach actions or manually.
-5.  **Dynamic Playbooks:** Intervention plans must remain deterministic but adapt their content based on the athlete's real-time data.
-6.  **In-App Coach/Athlete Communication:** Enable coaches to send messages from the Support Pod, which appear as in-app messages for the athlete and are logged in the pod's history.
+1.  **Deconstruct Athlete Pod:** Replace the single, all-encompassing athlete pod with a new flow: .
+2.  **School-Scoped Data:** All data within the School Pod (signals, actions, notes, timeline) must be specific to that athlete-school relationship.
+3.  **Action Parity:** The School Pod must have the same action capabilities as the old athlete pod (Log Interaction, Send Email, Add Note, Escalate, etc.), with all actions properly scoped.
+4.  **Athlete-Level Issues:** Broader issues not specific to a school (e.g., profile incompleteness, general inactivity) should remain at the athlete level and be visible on the Athlete Overview page.
+5.  **Data Freshness:** The School Pod must always display the most up-to-date information, bypassing stale caches.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack sports recruiting platform using React, FastAPI, and MongoDB.
--   The **athlete UI** has been fully refactored with separate pages for Account, Billing, and Settings.
--   The **Coach Mission Control** dashboard and **Athlete Support Pod** have undergone significant UI/UX and structural enhancements.
--   A new **issue lifecycle service** on the backend manages athlete-specific problems (e.g., inactivity), which are displayed in a responsive, multi-state **Pod Hero** component on the frontend.
--   The intervention **playbooks** shown in the Support Pod are now parameterized, dynamically generating steps based on athlete data.
--   A new **in-app messaging system** has been built, allowing coaches to send messages to athletes from the Support Pod. This includes backend API endpoints, database collections (, ), and a new Messages page for athletes with an unread count badge.
--   Fixes for bugs related to messaging (user-athlete account linking, timeline event rendering) have been implemented.
+The application is a full-stack platform using React, FastAPI, and MongoDB. The major refactoring of the coach's workflow is largely complete. The navigation flow from the coach's roster to the Athlete Overview page and then into a specific School Pod is functional. Backend endpoints have been created to provide sorted school lists and detailed, freshly computed data for each School Pod. All action modals and the floating action bar have been integrated into the School Pod page. The last piece of this migration was adding the full-featured notes sidebar.
 
 **Last working item**:
-    - Last item agent was working: The agent was fixing two critical bugs reported by the user immediately after the in-app messaging feature was deployed:
-        1.  Messages sent by a coach were not appearing in the athlete's inbox.
-        2.  The message-sent event was not being logged in the Support Pod's timeline.
-    The agent identified the root causes (missing user-to-athlete DB link and an unrecognized event type in the UI) and implemented fixes for both.
+    - Last item agent was working: The user pointed out that the Notes feature was missing from the new School Pod. The agent re-integrated the  component, making it school-aware. This involved updating the component to accept a , using school-scoped API endpoints, and adding the necessary state management and UI toggles to the School Pod page.
     - Status: IN PROGRESS
     - Agent Testing Done: N
     - Which testing method agent to use? both
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1:  (P0) Verify the fixes for the in-app messaging bugs.
+  - Issue 1:  (P0) Verify the Notes feature in the School Pod.
   
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: 
-        1. **Backend:** The agent updated the user record in the DB to link the athlete's user account to their athlete profile. The login endpoint was updated to include  in the JWT. Message queries were made more robust to find threads even without a direct link, using email as a fallback.
-        2. **Frontend:** The  component was updated to recognize and render the  event type with a proper icon and description.
+     - Attempted fixes: The agent has added the  to , passing  and  to scope its context. The sidebar component itself was updated to use school-specific endpoints when these props are present.
      - Next debug checklist: 
-        1.  Log in as the coach and navigate to the Support Pod for Emma Chen.
-        2.  Send a new message to Emma.
-        3.  Confirm the message sent event appears correctly in the pod's Timeline section.
-        4.  Log in as the athlete (Emma Chen).
-        5.  Navigate to the Messages page.
-        6.  Confirm the new message is visible and that the unread count badge on the sidebar works.
-     - Why fix this issue and what will be achieved with the fix? This will confirm that the core functionality of the newly built messaging feature is working as expected, closing the loop on the user's latest feature request.
+        1. Navigate to a School Pod page.
+        2. Click the Notes button in the floating action bar.
+        3. Confirm the notes sidebar opens correctly on the right.
+        4. Confirm the sidebar title is school-specific (e.g., Notes · University of Florida).
+        5. Create a new note and verify it appears.
+        6. Navigate to a different school's pod and open its notes sidebar to ensure the previous note is not visible.
+     - Why fix this issue and what will be achieved with the fix? This is the final step to achieve feature parity between the old athlete pod and the new School Pod, completing the major UI refactoring task.
      - Status:  TESTING PENDING
-     - Is recurring issue? Y
+     - Is recurring issue? N
      - Should Test frontend/backend/both after fix? Both
      - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1:  Finalize V1 of In-App Messaging
-     - Where to resume: Perform end-to-end testing of the messaging flow to validate the recent bug fixes.
-     - What will be achieved with this? A stable, working communication channel between coaches and athletes, with all associated actions correctly logged.
-     - Status:  TESTING PENDING
+  - Task 1:  Finalize School Pod Feature Parity
+     - Where to resume: Perform end-to-end testing of the newly added Notes feature within the School Pod.
+     - What will be achieved with this? A stable, fully functional School Pod that contains all the necessary tools for a coach to manage an athlete's relationship with a specific school.
+     - Status:  IN PROGRESS
      - Should Test frontend/backend/both after fix? Both
-     - Blocked on something: No
+     - Blocked on something: Blocked on the verification of Issue 1.
 
 **Upcoming and Future Tasks**
+
 **Upcoming Tasks:**
--   None. The current priority is to stabilize and complete the messaging feature.
+*   (P1) **Close the Action Loop:** Implement the logic where coach actions (e.g., Log Interaction) update the underlying  and  data. This will make the signals and health statuses change in real-time based on the coach's work, making the system dynamic rather than just a logging tool.
 
 **Future Tasks:**
--   (P2) **Club Billing:** Implement full subscription billing for organizations.
--   **Multi-Agent Intelligence Pipeline (Phase 2+):** Implement , , and  agents.
--   **AI-Powered Coach Summary:** Use an LLM to generate recruiting pitches.
--   **Parent/Family Experience:** Build out the dedicated user experience for parents/helpers.
+*   (P2) **Club Billing:** Implement full subscription billing for organizations.
+*   **Multi-Agent Intelligence Pipeline (Phase 2+):** Implement , , and  agents.
+*   **AI-Powered Coach Summary:** Use an LLM to generate recruiting pitches.
+*   **Parent/Family Experience:** Build out the dedicated user experience for parents/helpers.
 
 **Completed work in this session**
-- **UI/UX Bug Fixes:**
-  - Fixed non-functional Notes button and associated layout/overlay issues in the Support Pod.
-  - Increased the width of all modals for better readability.
-- **Core Logic Fix:** Ensured Log Interaction correctly records a historical event and auto-resolves tasks, instead of creating new ones.
-- **Support Pod Restructuring:** Reordered the page hierarchy to a  flow and made the layout responsive.
-- **Implemented Full Issue Lifecycle:** Created a backend service and frontend  to manage and display the current active athlete issue through its entire lifecycle (Active, Resolved, Healthy).
-- **Parameterized Intervention Playbooks:** Converted static playbooks into dynamic, template-based plans that adapt to athlete-specific data.
-- **Implemented V1 In-App Messaging:** Built the full stack for coach-to-athlete messaging, including backend APIs, DB schemas, email notifications (via Resend), and frontend components for both coach and athlete.
-- **Fixed Messaging Bugs:** Addressed critical bugs related to user-athlete account linking and timeline event rendering.
+- **Major Refactor: Athlete Pod to School Pod:**
+  - Architected and implemented the new  workflow.
+  - Created a new  page and refactored  into the Athlete Overview.
+  - Built new backend endpoints (, ) to support the new UI.
+  - Migrated all action modals (Log, Email, Follow-up, Escalate) to the School Pod and made them school-context-aware.
+- **Data Integrity and Freshness:**
+  - Implemented on-demand re-computation of metrics for the School Pod to ensure coaches always see real-time data, fixing a potential 6-hour cache staleness issue.
+  - Fixed a critical bug in the  service where a blind 24-hour cooldown prevented the system from re-flagging persistent problems.
+- **UI/UX and Responsiveness:**
+  - Resolved numerous layout, spacing, and z-index bugs across the application, particularly on mobile and notebook viewports, based on user feedback and screenshots.
+  - Cleaned up the Athlete Overview page by removing redundant sections, creating a clean and focused dashboard.
+- **Bug Investigation and Fixes:**
+  - Investigated and corrected the logic inconsistency where the Hero Card would show On Track while Key Signals indicated critical issues.
 
 **Earlier issues found/mentioned but not fixed**
    - None.
@@ -97,87 +87,73 @@ The application is a full-stack sports recruiting platform using React, FastAPI,
 
 
 **Key Technical Concepts**
-- **Stateful Issue Management:** A backend service tracks the lifecycle of athlete issues (, , , ) in the database, with idempotency enforced by a unique index.
-- **Dynamic Templating (Backend):** Python f-strings and conditional logic are used to parameterize static playbooks, making them responsive to athlete data without using an LLM.
-- **Component-driven UI States:** The frontend  has distinct, responsive visual states (Active, Healthy) driven by data from the backend API.
-- **Asynchronous Communication:** A full-stack in-app messaging system was built using FastAPI and React, coupled with email notifications via the Resend API.
-- **Robust Data Association:** Enhanced database queries to link user accounts with athlete profiles by cross-referencing emails, making the system resilient to missing direct foreign key links.
-- **JWT Enhancement:** The login endpoint was modified to include  in the JWT payload, simplifying frontend-backend context management.
+- **UI/Workflow Refactoring:** The core coaching interface was fundamentally changed from a single-page athlete-centric model to a two-level hierarchy (Athlete Overview -> School Pod) to better represent the recruiting process.
+- **Component Scoping:** Existing React components (modals, sidebars) were made reusable in different contexts by adding props (, ) that conditionally change their behavior and API endpoints.
+- **On-Demand vs. Cached Data:** A hybrid approach to data fetching was implemented. High-focus views (like a single School Pod) trigger a fresh re-computation of metrics, while list views read from a cache for performance, with a manual refresh option.
+- **Root Cause Analysis:** Successfully diagnosed and fixed bugs deep in the backend business logic (e.g., the issue lifecycle cooldown) that were causing inconsistent UI states.
 
 **key DB schema**
-  -  (new): Stores athlete issue records. Includes , , , , , and . A unique index on  prevents duplicate active issues.
-  -  (new): Defines a conversation, linking .
-  -  (new): Stores individual messages within a thread.
-  - : The schema was updated to include an optional  field.
-  - : The schema now recognizes the  event type.
+  - , : These collections do not have a  field yet. The application currently handles scoping at the API level. Adding  to these schemas is a key part of the upcoming Close the Action Loop task.
 
 **changes in tech stack**
   - None.
 
 **All files of reference**
--   : Core API for the new messaging feature.
--   : Manages the state of athlete issues.
--   : Generates dynamic intervention plans.
--   : The main page for the coach workflow, which has been significantly refactored.
--   : The new, stateful component for displaying the primary athlete issue.
--   : The new inbox and thread view for athletes.
--   : Updated to render new event types.
--   : Updated to include  in the JWT during login.
+-   : The new, primary workspace for coaches.
+-   : The refactored athlete overview page.
+-   : The most recently modified component to complete feature parity.
+-   : The new backend router powering the entire school-centric workflow.
+-   : Contains the critical bug fix for the issue cooldown logic.
 
 **Areas that need refactoring**:
-- The logic for associating  accounts with  profiles is a temporary patch. A more robust solution should be implemented during the user registration/onboarding flow to ensure the  is always set correctly on the user object.
+- The Close the Action Loop task will require refactoring the backend services. Currently, coach actions are logged but do not change the underlying athlete/program data that drives signals. This task will involve creating helper functions to update athlete/program metrics and calling them from the appropriate action endpoints.
 
 **key api endpoints**
--   : Creates a new message thread and sends the first message.
--   : Adds a reply to an existing thread.
--   : Fetches all message threads for the logged-in user.
--   : Gets the count of unread messages.
--   : Manually resolves an active issue.
--   : Now includes a hook to auto-resolve related issues.
+-   : Fetches the list of target schools for an athlete, sorted by urgency. Supports  for a manual refresh.
+-   : Fetches all data for a specific School Pod, always returning freshly recomputed metrics.
+-   : Creates a school-scoped note (handled implicitly by the notes sidebar).
+-   : Creates a school-scoped action (handled implicitly by the follow-up modal).
 
 **Critical Info for New Agent**
--   Your immediate priority (P0) is to **verify the recent bug fixes** for the in-app messaging feature.
--   The previous agent has already implemented the code changes to fix two critical bugs: messages not appearing in the athlete's inbox and not being logged in the pod timeline.
--   You must perform a full end-to-end test of the messaging flow as described in the Next debug checklist to confirm the fixes are working correctly.
--   Once verification is complete and successful, the In-App Messaging feature can be considered complete for V1. You should then finish the task with a summary of the completed work.
+-   Your immediate priority is to test the Notes feature in the  page. This is the last step in a major refactor. Follow the Next debug checklist for Issue 1.
+-   The user is highly focused on UI/UX, responsiveness, and layout. Be prepared to address visual feedback with precision.
+-   The next major feature, Close the Action Loop (P1), has been discussed and defined but is NOT the current priority. Do not begin work on it until the current refactor is fully verified and the user gives the go-ahead.
 
 **documents and test reports created in this job**
--  (Updated throughout the session)
--  (HTML mockup for the new pod layout)
-- 
-- 
+- /app/memory/PRD.md (updated with refactor details)
+- Test reports were generated for the messaging feature and the main school pod refactor.
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- **LATEST:** Sent a message from coach. The message was neither logged in the timeline nor appeared in emma’s message box. (Status: Fix Implemented, Verification Pending)
-- This outcome is correct. The parameterized deterministic playbooks are the right approach. Next priority should be In-App Messaging & Notifications. (Status: Completed)
-- We want to evolve the 6 intervention playbooks from fully static playbooks into parameterized deterministic playbooks. (Status: Completed)
-- How is this plan created? (Status: Answered & Actioned)
-- Make it responsive. (Status: Completed)
-- Do not add a resolution streak to the Pod Hero right now. (Status: Acknowledged & Actioned)
-- All tests passed. (Agent message, followed by user rejecting the agent's enhancement suggestion).
-- Yes — proceed with this plan. [for issue lifecycle] (Status: Completed)
-- Before implementing more Pod Hero behavior, we need to define the issue lifecycle clearly. (Status: Completed)
-- Before implementing! I want you to create an html mockup page so I can see exactly how it will look like. (Status: Completed)
+- **LATEST:** It’s missing the note feature (Status: Implementation complete, verification pending)
+- When I click on the athlete in the dashboard... That page should only shows the schools and the athlete level issues, right? (Status: Completed; agent cleaned up the athlete overview page)
+-  button and  discussion. (Status: Completed; agent implemented on-demand metric re-computation)
+- Are we still gonna need the program_metrics? (Status: Answered; agent explained the caching strategy, which was approved)
+- Tell me what you are planning (re: fixing stale data) (Status: Completed; agent proposed and implemented the on-demand recompute plan)
+- please review the athlete’s journey (Status: Completed; agent audited the existing email integration and confirmed it works as expected)
+- the status of a school should only change with the athlete actions, right? (Status: Acknowledged; user clarified business logic, agent confirmed understanding)
+- For Phase 2, we should keep the structure and layout the same... (Status: Acknowledged; user provided design constraints for the School Pod)
+- User provided detailed requirements for the Athlete-to-School-Pod refactor. (Status: Implemented)
+- it looks like the problem is that the way it currently works, it checks all the schools... (Status: Acknowledged; this message initiated the major refactor)
 
 **Project Health Check:**
-- **Broken:** The in-app messaging feature has just been patched for two critical bugs; its stability is unverified end-to-end.
-- **Mocked:** Core athlete performance metrics are still based on simple seed data. User accounts and athlete profiles are loosely coupled.
+- **Broken:** The Notes functionality within the School Pod is newly implemented and has not been tested.
+- **Mocked:** The core feedback loop is incomplete. Coach actions are logged for record-keeping but do not yet dynamically update the athlete/program metrics that drive the UI's health signals. This is the subject of the P1 - Close the Action Loop task.
 
 **3rd Party Integrations**
-- **Resend:** Used for sending email notifications for in-app messages. The  is in the environment, and the sender is .
+- Resend
 - MongoDB
 - Stripe
 - Emergent LLM Key
 
 **Testing status**
-  - Testing agent used after significant changes: YES
+  - Testing agent used after significant changes: YES (Used for the main School Pod refactor, passed 100%)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None
-  - Known regressions: The in-app messaging feature had two critical regressions immediately after initial implementation. The fixes are pending verification.
+  - Test files created: None in this session.
+  - Known regressions: None.
 
 **Credentials to test flow:**
-- **Coach:**  / 
-- **Athlete:**  / 
+-   **Coach:**  / 
+-   **Athlete:**  / 
 
 **What agent forgot to execute**
-- The agent has not forgotten any steps. The immediate next action is to verify the implemented bug fixes for the messaging feature, which was the final step before concluding the task.</analysis>
+- The agent has not yet tested the final implementation step: adding the full-featured, school-scoped  to the  page. This verification is the immediate next action.</analysis>
