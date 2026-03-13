@@ -22,7 +22,7 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="pod-header">
-      <div className="px-3 sm:px-6 py-2.5 sm:py-3">
+      <div className="px-2 sm:px-4 py-2.5 sm:py-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           {/* Back button */}
           <button

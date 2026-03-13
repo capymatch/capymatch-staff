@@ -106,7 +106,7 @@ function SupportPod() {
         athleteId={athleteId}
       />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-36 sm:pb-28">
+      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-36 sm:pb-28">
 
         {/* ─── 1. DIAGNOSE: Critical Banner ─── */}
         <PodHeroCard
