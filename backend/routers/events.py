@@ -23,6 +23,32 @@ from event_engine import (
 router = APIRouter()
 
 
+async def _find_program_id(athlete_id: str, school_name: str):
+    """Look up the program_id for an athlete+school combo."""
+    if not school_name:
+        return None
+    # athlete_id → user → tenant_id → programs
+    user = await db.users.find_one({"athlete_id": athlete_id}, {"_id": 0, "id": 1})
+    if user:
+        tenant_id = f"tenant-{user['id']}"
+        program = await db.programs.find_one(
+            {"tenant_id": tenant_id, "university_name": {"$regex": school_name, "$options": "i"}},
+            {"_id": 0, "program_id": 1}
+        )
+        if program:
+            return program["program_id"]
+    # Fallback: try program_metrics which has athlete_id directly
+    metric = await db.program_metrics.find_one({"athlete_id": athlete_id}, {"_id": 0, "program_id": 1})
+    if metric:
+        program = await db.programs.find_one(
+            {"program_id": metric["program_id"]},
+            {"_id": 0, "program_id": 1, "university_name": 1}
+        )
+        if program and school_name.lower() in program.get("university_name", "").lower():
+            return program["program_id"]
+    return None
+
+
 @router.get("/events")
 async def list_events(team: str = None, type: str = None, current_user: dict = get_current_user_dep()):
     """Get all events, filtered by coach's athletes."""
@@ -213,10 +239,17 @@ async def route_single_note(event_id: str, note_id: str, current_user: dict = ge
         {"$set": {"routed_to_pod": True}}
     )
 
+    # Look up program_id from athlete + school_name
+    note = result["note"]
+    school_name = note.get("school_name", "")
+    athlete_id = result["athlete_id"]
+    program_id = await _find_program_id(athlete_id, school_name)
+
     for action_data in result["actions_to_create"]:
         doc = {
             "id": str(uuid.uuid4()),
-            "athlete_id": result["athlete_id"],
+            "athlete_id": athlete_id,
+            "program_id": program_id,
             "title": action_data["title"],
             "owner": current_user["name"],
             "status": "ready",
@@ -232,7 +265,8 @@ async def route_single_note(event_id: str, note_id: str, current_user: dict = ge
 
     timeline_doc = {
         "id": str(uuid.uuid4()),
-        "athlete_id": result["athlete_id"],
+        "athlete_id": athlete_id,
+        "program_id": program_id,
         "author": current_user["name"],
         "text": result["timeline_text"],
         "tag": "event_routed",
@@ -240,7 +274,7 @@ async def route_single_note(event_id: str, note_id: str, current_user: dict = ge
     }
     await db.athlete_notes.insert_one(timeline_doc)
 
-    return {"routed": True, "note": result["note"], "actions_created": len(result["actions_to_create"])}
+    return {"routed": True, "note": result["note"], "actions_created": len(result["actions_to_create"]), "program_id": program_id}
 
 
 @router.post("/events/{event_id}/route-to-pods")
@@ -257,10 +291,17 @@ async def bulk_route_notes(event_id: str, current_user: dict = get_current_user_
             {"$set": {"routed_to_pod": True}}
         )
 
+        # Look up program_id from athlete + school_name
+        note = result["note"]
+        school_name = note.get("school_name", "")
+        athlete_id = result["athlete_id"]
+        program_id = await _find_program_id(athlete_id, school_name)
+
         for action_data in result["actions_to_create"]:
             doc = {
                 "id": str(uuid.uuid4()),
-                "athlete_id": result["athlete_id"],
+                "athlete_id": athlete_id,
+                "program_id": program_id,
                 "title": action_data["title"],
                 "owner": current_user["name"],
                 "status": "ready",
@@ -277,14 +318,15 @@ async def bulk_route_notes(event_id: str, current_user: dict = get_current_user_
 
         timeline_doc = {
             "id": str(uuid.uuid4()),
-            "athlete_id": result["athlete_id"],
+            "athlete_id": athlete_id,
+            "program_id": program_id,
             "author": current_user["name"],
             "text": result["timeline_text"],
             "tag": "event_routed",
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         await db.athlete_notes.insert_one(timeline_doc)
-        athletes_routed.add(result["athlete_id"])
+        athletes_routed.add(athlete_id)
 
     return {
         "routed_notes": len(results),

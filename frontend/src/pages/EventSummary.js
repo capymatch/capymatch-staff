@@ -7,6 +7,8 @@ import { AiBriefing } from "@/components/AiBriefing";
 import { AiEventFollowups } from "@/components/AiV2Components";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const token = () => localStorage.getItem("capymatch_token");
+const authHeaders = () => ({ headers: { Authorization: `Bearer ${token()}` } });
 
 const INTEREST_BADGE = {
   hot: { cls: "bg-red-100 text-red-700", label: "Hot" },
@@ -24,7 +26,7 @@ function EventSummary() {
 
   const fetchSummary = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/events/${eventId}/summary`);
+      const res = await axios.get(`${API}/events/${eventId}/summary`, authHeaders());
       setData(res.data);
     } catch {
       toast.error("Failed to load summary");
@@ -37,7 +39,7 @@ function EventSummary() {
 
   const routeNote = async (noteId) => {
     try {
-      await axios.post(`${API}/events/${eventId}/notes/${noteId}/route`);
+      await axios.post(`${API}/events/${eventId}/notes/${noteId}/route`, {}, authHeaders());
       toast.success("Routed to Support Pod — synced");
       fetchSummary();
     } catch {
@@ -48,7 +50,7 @@ function EventSummary() {
   const routeAll = async () => {
     setRouting(true);
     try {
-      const res = await axios.post(`${API}/events/${eventId}/route-to-pods`);
+      const res = await axios.post(`${API}/events/${eventId}/route-to-pods`, {}, authHeaders());
       toast.success(`Routed ${res.data.routed_notes} notes — synced to ${res.data.athletes_affected} Support Pods`);
       fetchSummary();
     } catch {

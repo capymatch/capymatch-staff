@@ -1,0 +1,88 @@
+{
+  "summary": "Tested Event Routing Fix: (1) Event summary loads with auth headers, (2) Route single note creates actions with correct program_id, (3) Routed actions appear in School Pod. All 15 backend tests passed (100%). All frontend UI tests passed. The fix correctly looks up program_id from athlete+school name and creates school-scoped actions.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_event_routing_fix.py",
+    "/app/test_reports/pytest/pytest_event_routing_fix.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "_find_program_id helper correctly looks up program_id via athlete_id → user → tenant_id → programs (events.py lines 26-49)",
+    "route_single_note now includes program_id in response (line 277)",
+    "Actions and timeline notes created with program_id set (lines 249-275, 300-328)",
+    "EventSummary.js correctly adds authHeaders() to all axios calls (lines 29, 42, 53)",
+    "school_pod.py filters actions by program_id (line 371)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_event_routing_fix.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+  "test_credentials": {
+    "coach": "coach.williams@capymatch.com / coach123",
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123",
+    "test_athlete_id": "athlete_3",
+    "test_event_id": "event_0 (Winter Showcase)",
+    "stanford_program_id": "a54a0014-0e83-4a16-b0c2-5e8f10401de2",
+    "emory_program_id": "ae7647cc-affc-44ef-8977-244309ac3a30"
+  },
+  "seed_data_creation": "Created TEST_ROUTING_ notes for Emma Chen × Stanford during testing. Routed actions created with correct program_id.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Event routing fix verified. _find_program_id helper looks up program_id from athlete+school. Route to Pod buttons change to 'Routed' after clicking. Toast notification shows 'Routed to Support Pod — synced'. School Pod shows event-sourced actions with correct program_id. Playbook persistence regression tests also passed.",
+  "tests_executed": {
+    "backend_api": [
+      "TestEventSummaryWithAuth::test_01_event_summary_loads_with_auth - PASS",
+      "TestEventSummaryWithAuth::test_02_event_summary_has_correct_stats - PASS",
+      "TestEventSummaryWithAuth::test_03_notes_have_interest_badges - PASS",
+      "TestRouteSingleNote::test_01_create_test_note_for_emma_stanford - PASS",
+      "TestRouteSingleNote::test_02_route_note_returns_program_id - PASS",
+      "TestRouteSingleNote::test_03_routed_actions_appear_in_school_pod - PASS",
+      "TestRouteSingleNote::test_04_timeline_note_created_with_program_id - PASS",
+      "TestBulkRoute::test_01_bulk_route_endpoint_works - PASS",
+      "TestRegressionSchoolPodPlaybooks::test_01_emory_school_pod_has_playbook - PASS",
+      "TestRegressionSchoolPodPlaybooks::test_02_stanford_school_pod_has_playbook - PASS",
+      "TestRegressionPlaybookPersistence::test_01_get_playbook_progress_endpoint - PASS",
+      "TestRegressionPlaybookPersistence::test_02_patch_playbook_progress_saves - PASS",
+      "TestRegressionPlaybookPersistence::test_03_school_pod_includes_playbook_checked_steps - PASS",
+      "TestEventSummaryNotesRouteStatus::test_01_notes_show_routed_status - PASS",
+      "TestFollowUpActionsStructure::test_01_follow_up_actions_have_required_fields - PASS"
+    ],
+    "frontend_ui": [
+      "Coach login via demo account - PASS",
+      "Navigate to Event Summary page (event_0) - PASS",
+      "Event name shows 'Winter Showcase — Summary' - PASS",
+      "Event stats (11 notes, 4 schools, 6 athletes, 11 follow-ups) - PASS",
+      "Generate AI Recap button present - PASS",
+      "Generate Follow-Up Suggestions button present - PASS",
+      "Hottest Interest section with interest badges - PASS",
+      "Route to Pod button click → changes to Routed - PASS",
+      "Toast notification 'Routed to Support Pod — synced' - PASS",
+      "Follow-Up Actions section (11 actions) - PASS",
+      "Schools Seen section visible - PASS",
+      "All Notes section visible - PASS"
+    ]
+  },
+  "verified_requirements": {
+    "event_summary_with_auth": "PASS - GET /api/events/event_0/summary returns 200 with auth headers",
+    "route_note_returns_program_id": "PASS - Response includes program_id matching Stanford (a54a0014-0e83-4a16-b0c2-5e8f10401de2)",
+    "actions_in_school_pod": "PASS - Stanford School Pod shows event-sourced actions with program_id",
+    "timeline_note_with_program_id": "PASS - Timeline note created with program_id field",
+    "bulk_route_works": "PASS - POST /api/events/event_0/route-to-pods returns routed_notes count",
+    "route_button_changes_to_routed": "PASS - Button changes to 'Routed' after click",
+    "toast_notification": "PASS - Toast shows 'Routed to Support Pod — synced'",
+    "interest_badges": "PASS - Hot/Warm/Cool badges displayed correctly",
+    "regression_playbook": "PASS - School Pod playbooks still render correctly",
+    "regression_playbook_persistence": "PASS - Playbook step persistence still works"
+  }
+}
