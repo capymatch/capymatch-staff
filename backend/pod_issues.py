@@ -25,7 +25,7 @@ ISSUE_TYPES = {
     "missing_blocker": {
         "severity": "critical",
         "title_template": "Active Blocker — {detail}",
-        "description_template": "A blocker is preventing recruiting progress. Resolve it to unblock the pipeline.",
+        "description_template": "{detail}. Resolve it to unblock the recruiting pipeline.",
         "auto_resolve": False,
     },
     "momentum_drop": {
@@ -113,11 +113,23 @@ async def ensure_issue(athlete_id: str, issue_type: str, source_context: dict = 
     if existing:
         # Update source_context if it changed (e.g. days_inactive increased)
         if source_context and source_context != existing.get("source_context"):
+            defn = ISSUE_TYPES[issue_type]
+            ctx = source_context or {}
+            try:
+                new_title = defn["title_template"].format(**ctx)
+            except (KeyError, IndexError):
+                new_title = existing.get("title", "")
+            try:
+                new_desc = defn["description_template"].format(**ctx)
+            except (KeyError, IndexError):
+                new_desc = existing.get("description", "")
             await db.pod_issues.update_one(
                 {"id": existing["id"]},
-                {"$set": {"source_context": source_context}},
+                {"$set": {"source_context": source_context, "title": new_title, "description": new_desc}},
             )
             existing["source_context"] = source_context
+            existing["title"] = new_title
+            existing["description"] = new_desc
         return existing
 
     # Cooldown: don't re-create if same type was resolved in the last 24 hours
@@ -217,7 +229,7 @@ async def evaluate_issues(athlete_id: str, athlete: dict, interventions: list, a
         blocker = next((i for i in interventions if i["category"] == "blocker"), None)
         detail = ""
         if blocker:
-            detail = blocker.get("details", {}).get("problem", blocker.get("reason", "Unresolved blocker"))
+            detail = blocker.get("why_this_surfaced") or blocker.get("details", {}).get("problem", blocker.get("reason", "Unresolved blocker"))
         await ensure_issue(athlete_id, "missing_blocker", {"detail": detail})
 
     # Momentum drop
