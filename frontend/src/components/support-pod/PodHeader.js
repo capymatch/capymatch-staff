@@ -25,16 +25,16 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3">
         <div className="flex items-center justify-between gap-2">
           {/* Left: back + name */}
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2 lg:gap-4 min-w-0">
             <button
               onClick={() => navigate("/mission-control")}
               className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors shrink-0"
               data-testid="back-to-mc"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden md:inline">Mission Control</span>
+              <span className="hidden lg:inline">Mission Control</span>
             </button>
-            <div className="h-5 w-px bg-gray-200 hidden md:block" />
+            <div className="h-5 w-px bg-gray-200 hidden lg:block" />
             <div className="min-w-0">
               <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="pod-athlete-name">
                 {athlete?.full_name}
@@ -46,7 +46,7 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
           </div>
 
           {/* Right: actions */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={onManualRefresh}
               disabled={isPolling}
@@ -60,18 +60,18 @@ function PodHeader({ athlete, podHealth, lastRefreshed, isPolling, onManualRefre
             {athleteId && (
               <button
                 onClick={() => navigate(`/internal/athlete/${athleteId}/profile`)}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-full transition-colors"
+                className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-full transition-colors"
                 data-testid="pod-view-profile-btn"
               >
                 <User className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">View Profile</span>
+                <span className="hidden xl:inline">View Profile</span>
               </button>
             )}
 
-            <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
+            <div className={`flex items-center gap-1 lg:gap-2 px-2 lg:px-3 py-1 lg:py-1.5 rounded-full ${health.bg}`} data-testid="pod-health-badge">
               <div className={`w-2 h-2 rounded-full ${health.dot}`} />
-              <Activity className={`w-3.5 h-3.5 ${health.text} hidden sm:block`} />
-              <span className={`text-xs font-medium ${health.text} hidden md:inline`}>{health.label}</span>
+              <Activity className={`w-3.5 h-3.5 ${health.text} hidden lg:block`} />
+              <span className={`text-xs font-medium ${health.text} hidden xl:inline`}>{health.label}</span>
             </div>
           </div>
         </div>
