@@ -1,42 +1,59 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useAuth } from "@/AuthContext";
 import {
-  CheckCircle2, School, ChevronRight, AlertTriangle, Clock,
-  TrendingUp, ArrowRight, Loader2
+  School, ChevronRight, Loader2, ArrowLeft, RefreshCw,
+  AlertTriangle, Activity, User
 } from "lucide-react";
-import PodHeader from "@/components/support-pod/PodHeader";
-import PodHeroCard from "@/components/support-pod/PodHeroCard";
-import NextActions from "@/components/support-pod/NextActions";
-import QuickSummary from "@/components/support-pod/QuickSummary";
-import PodMembers from "@/components/support-pod/PodMembers";
-import KeySignals from "@/components/support-pod/KeySignals";
-import ActionPlan from "@/components/support-pod/ActionPlan";
-import RecruitingTimeline from "@/components/support-pod/RecruitingTimeline";
-import ActivityHistory from "@/components/support-pod/ActivityHistory";
-import { CollapsibleSection } from "@/components/support-pod/CollapsibleSection";
-import { CoachActionBar } from "@/components/support-pod/CoachActionBar";
-import { CoachEmailComposer } from "@/components/support-pod/CoachEmailComposer";
-import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteraction";
-import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpScheduler";
-import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
-import { CoachNotesSidebar } from "@/components/support-pod/CoachNotesSidebar";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const POLL_INTERVAL = 60000;
+
+// ─── Athlete-Level Hero (only for athlete-level issues) ─────
+function AthleteHero({ currentIssue, signals }) {
+  // No issue and no critical signals → don't show hero at all
+  const hasCriticalSignals = (signals || []).some(s => s.priority === "critical" || s.priority === "high");
+  if (!currentIssue && !hasCriticalSignals) return null;
+
+  const issue = currentIssue;
+  const worst = !issue ? (signals || []).find(s => s.priority === "critical") || (signals || []).find(s => s.priority === "high") : null;
+  const isCritical = issue?.severity === "critical" || worst?.priority === "critical";
+  const color = isCritical ? "#dc2626" : "#d97706";
+
+  return (
+    <div className="rounded-xl border relative overflow-hidden" style={{
+      backgroundColor: isCritical ? "rgba(239,68,68,0.04)" : "rgba(245,158,11,0.04)",
+      borderColor: isCritical ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
+    }} data-testid="athlete-hero">
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: color }} />
+      <div className="px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex items-center gap-2 mb-1">
+          {isCritical && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />}
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>
+            {issue ? `${issue.severity}` : "Athlete-Level Alert"}
+          </span>
+        </div>
+        <h2 className="text-sm sm:text-base font-bold" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="athlete-hero-title">
+          {issue?.title || worst?.title || "Needs Attention"}
+        </h2>
+        <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+          {issue?.description || worst?.description || "Review the signals and take action."}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // ─── School Row ─────────────────────────────────────
 function SchoolRow({ school, athleteId }) {
   const navigate = useNavigate();
   const healthColors = {
-    at_risk: { bg: "rgba(239,68,68,0.08)", text: "#ef4444", dot: "bg-red-500" },
-    needs_attention: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b", dot: "bg-amber-500" },
-    awaiting_reply: { bg: "rgba(59,130,246,0.08)", text: "#3b82f6", dot: "bg-blue-500" },
-    active: { bg: "rgba(13,148,136,0.08)", text: "#0d9488", dot: "bg-teal-500" },
-    strong_momentum: { bg: "rgba(16,185,129,0.08)", text: "#10b981", dot: "bg-emerald-500" },
-    still_early: { bg: "rgba(100,116,139,0.08)", text: "#64748b", dot: "bg-slate-400" },
+    at_risk: { bg: "rgba(239,68,68,0.08)", text: "#ef4444" },
+    needs_attention: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b" },
+    awaiting_reply: { bg: "rgba(59,130,246,0.08)", text: "#3b82f6" },
+    active: { bg: "rgba(13,148,136,0.08)", text: "#0d9488" },
+    strong_momentum: { bg: "rgba(16,185,129,0.08)", text: "#10b981" },
+    still_early: { bg: "rgba(100,116,139,0.08)", text: "#64748b" },
   };
   const c = healthColors[school.health] || healthColors.still_early;
 
@@ -46,12 +63,9 @@ function SchoolRow({ school, athleteId }) {
       className="w-full flex items-center gap-3 px-4 py-3 text-left group hover:bg-slate-50/80 transition-colors"
       data-testid={`school-row-${school.program_id}`}
     >
-      {/* Health indicator */}
       <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: c.bg }}>
         <School className="w-4 h-4" style={{ color: c.text }} />
       </div>
-
-      {/* Main content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-xs sm:text-sm font-semibold truncate" style={{ color: "var(--cm-text, #1e293b)" }}>
@@ -73,8 +87,6 @@ function SchoolRow({ school, athleteId }) {
           )}
         </div>
       </div>
-
-      {/* Right: next action + arrow */}
       <div className="flex items-center gap-2 shrink-0">
         {school.next_action && (
           <span className="hidden sm:block text-[10px] max-w-[160px] truncate px-2 py-1 rounded-lg border" style={{ color: "var(--cm-text-2, #64748b)", borderColor: "var(--cm-border, #e2e8f0)" }}>
@@ -92,61 +104,15 @@ function SchoolRow({ school, athleteId }) {
   );
 }
 
-// ─── School List Section ────────────────────────────
-function SchoolListSection({ schools, athleteId, loading }) {
-  const needsAttention = schools.filter(s => s.health === "at_risk" || s.health === "needs_attention");
-  const others = schools.filter(s => s.health !== "at_risk" && s.health !== "needs_attention");
-
-  if (loading) {
-    return (
-      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}>
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--cm-text-3)" }} />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="school-list-section">
-      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-        <div className="flex items-center gap-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Target Schools</h3>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: "var(--cm-surface-2, #f1f5f9)", color: "var(--cm-text-3)" }}>{schools.length}</span>
-          {needsAttention.length > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-50 text-red-600">
-              {needsAttention.length} need attention
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-        {needsAttention.map(s => <SchoolRow key={s.program_id} school={s} athleteId={athleteId} />)}
-        {others.map(s => <SchoolRow key={s.program_id} school={s} athleteId={athleteId} />)}
-      </div>
-
-      {schools.length === 0 && (
-        <p className="text-xs py-6 text-center" style={{ color: "var(--cm-text-3)" }}>No target schools found</p>
-      )}
-    </div>
-  );
-}
-
-// ─── Main SupportPod Page ───────────────────────────
+// ─── Main Page ──────────────────────────────────────
 function SupportPod() {
   const { athleteId } = useParams();
-  const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [schools, setSchools] = useState([]);
   const [schoolsLoading, setSchoolsLoading] = useState(true);
-  const [lastRefreshed, setLastRefreshed] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
-  const [activeAction, setActiveAction] = useState(null);
-  const [notesOpen, setNotesOpen] = useState(false);
   const pollRef = useRef(null);
 
   const fetchPodData = useCallback(async (showRefresh = false) => {
@@ -154,8 +120,7 @@ function SupportPod() {
     try {
       const res = await axios.get(`${API}/support-pods/${athleteId}`);
       setData(res.data);
-      setLastRefreshed(new Date());
-    } catch (err) {
+    } catch {
       toast.error("Failed to load pod data");
     } finally {
       setLoading(false);
@@ -170,8 +135,8 @@ function SupportPod() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSchools(res.data.schools || []);
-    } catch (err) {
-      console.error("Failed to load schools", err);
+    } catch {
+      console.error("Failed to load schools");
     } finally {
       setSchoolsLoading(false);
     }
@@ -180,22 +145,9 @@ function SupportPod() {
   useEffect(() => {
     fetchPodData();
     fetchSchools();
-    pollRef.current = setInterval(() => fetchPodData(), POLL_INTERVAL);
+    pollRef.current = setInterval(() => fetchPodData(), 60000);
     return () => clearInterval(pollRef.current);
   }, [fetchPodData, fetchSchools]);
-
-  useEffect(() => {
-    const action = searchParams.get("action");
-    if (action && ["email", "log", "followup", "notes", "escalate"].includes(action)) {
-      if (action === "notes") setNotesOpen(true);
-      else setActiveAction(action);
-    }
-  }, [searchParams]);
-
-  const toggleAction = (action) => {
-    if (action === "notes") { setNotesOpen(true); return; }
-    setActiveAction(prev => prev === action ? null : action);
-  };
 
   if (loading) {
     return (
@@ -214,132 +166,101 @@ function SupportPod() {
     );
   }
 
-  const {
-    athlete, pod_members, actions, timeline, pod_health, upcoming_events,
-    recruiting_timeline, recruiting_signals, intervention_playbook, current_issue,
-  } = data;
+  const { athlete, current_issue, recruiting_signals, pod_health } = data;
+  const needsAttention = schools.filter(s => s.health === "at_risk" || s.health === "needs_attention");
 
-  // Filter athlete-level actions (no program_id)
-  const athleteLevelActions = (actions || []).filter(a => !a.program_id);
-  const completedActions = athleteLevelActions.filter(a => a.status === "completed").slice(0, 8);
+  // Health badge config
+  const healthMap = {
+    healthy: { label: "On Track", dot: "bg-emerald-400", text: "text-emerald-600", bg: "bg-emerald-50" },
+    monitor: { label: "Monitor", dot: "bg-amber-400", text: "text-amber-600", bg: "bg-amber-50" },
+    at_risk: { label: "At Risk", dot: "bg-red-500", text: "text-red-600", bg: "bg-red-50" },
+  };
+  const health = healthMap[pod_health] || healthMap.monitor;
 
   return (
-    <div data-testid="support-pod-page" className={`-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen overflow-x-hidden transition-[margin] duration-300 ease-out ${notesOpen ? "mr-[340px] sm:mr-[380px]" : ""}`}>
-      <PodHeader
-        athlete={athlete}
-        podHealth={pod_health}
-        lastRefreshed={lastRefreshed}
-        isPolling={isPolling}
-        onManualRefresh={() => { fetchPodData(true); fetchSchools(true); }}
-        athleteId={athleteId}
-      />
-
-      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5 pb-36 sm:pb-28">
-
-        {/* ─── 1. Athlete-Level Hero ─── */}
-        <PodHeroCard
-          currentIssue={current_issue}
-          recruitingSignals={recruiting_signals}
-          athleteId={athleteId}
-          onLogCheckin={() => toggleAction("log")}
-          onSendMessage={() => toggleAction("email")}
-          onEscalate={() => toggleAction("escalate")}
-          onOpenNotes={() => setNotesOpen(true)}
-          onRefresh={fetchPodData}
-        />
-
-        {/* ─── 2. TARGET SCHOOLS (primary content) ─── */}
-        <SchoolListSection schools={schools} athleteId={athleteId} loading={schoolsLoading} />
-
-        {/* ─── 3. Athlete-Level Actions (non-school-specific) ─── */}
-        {athleteLevelActions.filter(a => a.status !== "completed").length > 0 && (
-          <CollapsibleSection title="Athlete-Level Actions" count={`${athleteLevelActions.filter(a => a.status !== "completed").length}`} defaultOpen={true} testId="section-athlete-actions">
-            <NextActions actions={athleteLevelActions} athleteId={athleteId} podMembers={pod_members} currentUser={user} onRefresh={fetchPodData} />
-          </CollapsibleSection>
-        )}
-
-        {/* ─── 4. Key Signals (athlete-level overview) ─── */}
-        {recruiting_signals && recruiting_signals.length > 0 && (
-          <CollapsibleSection title="Athlete Signals Overview" count={`${recruiting_signals.length}`} testId="section-key-signals">
-            <KeySignals signals={recruiting_signals} />
-          </CollapsibleSection>
-        )}
-
-        {/* ─── 5. Action Plan / Playbook (athlete-level) ─── */}
-        {intervention_playbook && (
-          <CollapsibleSection title="Action Plan" testId="section-action-plan">
-            <ActionPlan playbook={intervention_playbook} />
-          </CollapsibleSection>
-        )}
-
-        {/* ─── 6. Timeline ─── */}
-        <CollapsibleSection title="Timeline" testId="section-timeline">
-          <ActivityHistory timeline={timeline} />
-        </CollapsibleSection>
-
-        {/* ─── 7. Athlete Context ─── */}
-        <CollapsibleSection title="Athlete Context" testId="section-athlete-context">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5">
-            <div className="lg:col-span-2">
-              <QuickSummary athlete={athlete} events={upcoming_events} />
+    <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen overflow-x-hidden" data-testid="support-pod-page">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="pod-header">
+        <div className="px-2 sm:px-4 py-2.5 sm:py-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <button
+              onClick={() => navigate("/mission-control")}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors shrink-0"
+              data-testid="back-to-mc"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Mission Control</span>
+            </button>
+            <div className="h-5 w-px bg-gray-200 hidden sm:block" />
+            <div className="min-w-0 flex-1">
+              <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="pod-athlete-name">
+                {athlete?.full_name}
+              </h1>
+              <p className="text-[11px] sm:text-xs text-gray-500 truncate">
+                {athlete?.grad_year} · {athlete?.position} · {athlete?.team}
+              </p>
             </div>
-            <div className="lg:col-span-3">
-              <PodMembers
-                members={pod_members}
-                onMessage={() => toggleAction("email")}
-                onLogCall={() => toggleAction("log")}
-              />
+            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+              <button
+                onClick={() => { fetchPodData(true); fetchSchools(true); }}
+                disabled={isPolling}
+                className="p-1.5 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
+                title="Refresh"
+                data-testid="manual-refresh-btn"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${isPolling ? "animate-spin" : ""}`} />
+              </button>
+              {athleteId && (
+                <button
+                  onClick={() => navigate(`/internal/athlete/${athleteId}/profile`)}
+                  className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-full transition-colors"
+                  data-testid="pod-view-profile-btn"
+                  title="View Profile"
+                >
+                  <User className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${health.bg}`} data-testid="pod-health-badge" title={health.label}>
+                <div className={`w-2 h-2 rounded-full ${health.dot}`} />
+                <Activity className={`w-3.5 h-3.5 ${health.text}`} />
+              </div>
             </div>
           </div>
-        </CollapsibleSection>
+        </div>
+      </header>
 
-        {/* ─── 8. Recruiting Timeline ─── */}
-        {recruiting_timeline && recruiting_timeline.length > 0 && (
-          <CollapsibleSection title="Recruiting Timeline" count={`${recruiting_timeline.length}`} testId="section-recruiting-timeline">
-            <RecruitingTimeline milestones={recruiting_timeline} />
-          </CollapsibleSection>
-        )}
+      {/* Content — just hero + schools */}
+      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4">
+        {/* Athlete-level hero (only shows if there's an issue or critical signals) */}
+        <AthleteHero currentIssue={current_issue} signals={recruiting_signals} />
 
-        {/* ─── 9. Completed Actions ─── */}
-        {completedActions.length > 0 && (
-          <CollapsibleSection title="Completed Actions" count={`${completedActions.length}`} testId="section-completed-actions">
-            <div className="space-y-1 px-1">
-              {completedActions.map(a => (
-                <div key={a.id} className="flex items-center gap-2 text-[11px] py-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--cm-text-3, #cbd5e1)" }} />
-                  <span className="line-through">{a.title}</span>
-                </div>
-              ))}
+        {/* Target Schools */}
+        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="school-list-section">
+          <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Target Schools</h3>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: "var(--cm-surface-2, #f1f5f9)", color: "var(--cm-text-3)" }}>{schools.length}</span>
+              {needsAttention.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-50 text-red-600">
+                  {needsAttention.length} need attention
+                </span>
+              )}
             </div>
-          </CollapsibleSection>
-        )}
+          </div>
 
+          {schoolsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--cm-text-3)" }} />
+            </div>
+          ) : schools.length > 0 ? (
+            <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+              {schools.map(s => <SchoolRow key={s.program_id} school={s} athleteId={athleteId} />)}
+            </div>
+          ) : (
+            <p className="text-xs py-6 text-center" style={{ color: "var(--cm-text-3)" }}>No target schools found</p>
+          )}
+        </div>
       </main>
-
-      <CoachActionBar
-        activeAction={activeAction}
-        onToggle={toggleAction}
-        notesOpen={notesOpen}
-        onToggleNotes={() => setNotesOpen(!notesOpen)}
-      />
-
-      {activeAction === "email" && (
-        <CoachEmailComposer athleteId={athleteId} athleteName={athlete?.full_name || athlete?.first_name || "Athlete"} podMembers={pod_members}
-          onCancel={() => setActiveAction(null)} onSent={() => { setActiveAction(null); fetchPodData(); }} />
-      )}
-      {activeAction === "log" && (
-        <CoachLogInteraction athleteId={athleteId} athlete={athlete}
-          onCancel={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
-      )}
-      {activeAction === "followup" && (
-        <CoachFollowUpScheduler athleteId={athleteId} athlete={athlete}
-          onCancel={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
-      )}
-      {activeAction === "escalate" && (
-        <EscalateToDirector athleteId={athleteId} athlete={athlete}
-          onCancel={() => setActiveAction(null)} onSaved={() => { setActiveAction(null); fetchPodData(); }} />
-      )}
-      <CoachNotesSidebar athleteId={athleteId} open={notesOpen} onClose={() => setNotesOpen(false)} />
     </div>
   );
 }
