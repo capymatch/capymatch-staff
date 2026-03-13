@@ -86,7 +86,7 @@ export function CoachNotesSidebar({ athleteId, athleteName, programId, open, onC
         const res = await axios.get(`${API}/support-pods/${athleteId}/school/${programId}`, authHeaders());
         setNotes(res.data?.notes || []);
       } else {
-        const res = await axios.get(`${API}/athletes/${athleteId}/notes`);
+        const res = await axios.get(`${API}/athletes/${athleteId}/notes`, authHeaders());
         setNotes(res.data?.notes || res.data || []);
       }
     } catch { /* silent */ }
@@ -106,7 +106,7 @@ export function CoachNotesSidebar({ athleteId, athleteName, programId, open, onC
       if (programId) {
         await axios.post(notesBase, { text: content.trim(), tag: "Coach Note" }, authHeaders());
       } else {
-        await axios.post(notesBase, { text: content.trim(), tag: "Coach Note" });
+        await axios.post(notesBase, { text: content.trim(), tag: "Coach Note" }, authHeaders());
       }
       setContent("");
       toast.success("Note saved");
@@ -117,7 +117,7 @@ export function CoachNotesSidebar({ athleteId, athleteName, programId, open, onC
 
   const deleteNote = async (noteId) => {
     try {
-      await axios.delete(`${API}/athletes/${athleteId}/notes/${noteId}`);
+      await axios.delete(`${API}/athletes/${athleteId}/notes/${noteId}`, authHeaders());
       toast.success("Note deleted");
       fetchNotes();
     } catch { toast.error("Failed to delete"); }
@@ -125,7 +125,7 @@ export function CoachNotesSidebar({ athleteId, athleteName, programId, open, onC
 
   const editNote = async (noteId, newContent) => {
     try {
-      await axios.patch(`${API}/athletes/${athleteId}/notes/${noteId}`, { text: newContent });
+      await axios.patch(`${API}/athletes/${athleteId}/notes/${noteId}`, { text: newContent }, authHeaders());
       toast.success("Note updated");
       fetchNotes();
     } catch { toast.error("Failed to update"); }
@@ -145,8 +145,8 @@ export function CoachNotesSidebar({ athleteId, athleteName, programId, open, onC
         <div className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
           <h3 className="text-sm font-bold flex items-center gap-2 text-white">
             <PenLine className="w-4 h-4 text-amber-400" />
-            Pod Notes
-            <span className="text-[11px] font-normal text-slate-500">{athleteName}</span>
+            {programId ? "Notes" : "Pod Notes"}
+            <span className="text-[11px] font-normal text-slate-500 truncate max-w-[180px]">{programId ? `· ${athleteName}` : athleteName}</span>
           </h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-white/30" data-testid="pod-notes-close">
             <X className="w-4 h-4" />
