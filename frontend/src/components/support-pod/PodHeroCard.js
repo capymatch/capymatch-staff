@@ -215,20 +215,103 @@ function ActiveIssueHero({ issue, athleteId, onLogCheckin, onSendMessage, onEsca
   );
 }
 
-// ─── Main Export ────────────────────────────────────
-export default function PodHeroCard({ currentIssue, athleteId, onLogCheckin, onSendMessage, onEscalate, onOpenNotes, onRefresh }) {
-  if (!currentIssue) {
-    return <HealthyHero onLogInteraction={onLogCheckin} onAddNote={onOpenNotes} />;
-  }
+// ─── Signal-Derived Warning State ──────────────────────────────────
+
+function SignalWarningHero({ signals, onLogInteraction, onAddNote, onSendMessage }) {
+  const criticalSignals = signals.filter(s => s.priority === "critical");
+  const highSignals = signals.filter(s => s.priority === "high");
+  const worst = criticalSignals[0] || highSignals[0];
+  const isCritical = criticalSignals.length > 0;
 
   return (
-    <ActiveIssueHero
-      issue={currentIssue}
-      athleteId={athleteId}
-      onLogCheckin={onLogCheckin}
-      onSendMessage={onSendMessage}
-      onEscalate={onEscalate}
-      onRefresh={onRefresh}
-    />
+    <div
+      data-testid="pod-hero-card"
+      className="rounded-xl border relative overflow-hidden"
+      style={{
+        backgroundColor: isCritical ? "rgba(239,68,68,0.04)" : "rgba(245,158,11,0.04)",
+        borderColor: isCritical ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
+      }}
+    >
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: isCritical ? "#dc2626" : "#d97706" }} />
+      <div className="px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex items-center gap-2 mb-1.5">
+          {isCritical && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />}
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: isCritical ? "#dc2626" : "#d97706" }}>
+            {isCritical ? `${criticalSignals.length} Critical Signal${criticalSignals.length > 1 ? "s" : ""}` : "Needs Attention"}
+          </span>
+          <span className="text-[10px]" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>·</span>
+          <span className="text-[10px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+            {criticalSignals.length + highSignals.length} signal{criticalSignals.length + highSignals.length !== 1 ? "s" : ""} detected
+          </span>
+        </div>
+        <div>
+          <h2 className="text-sm sm:text-base font-bold leading-snug" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="pod-hero-title">
+            {worst?.title || "Attention Needed"}
+          </h2>
+          <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }} data-testid="pod-hero-description">
+            {worst?.description || worst?.recommendation || "Review the key signals below and take action."}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <button
+            onClick={onLogInteraction}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
+            style={{ backgroundColor: isCritical ? "#dc2626" : "#d97706" }}
+            data-testid="pod-hero-cta"
+          >
+            <Phone className="w-3.5 h-3.5" />
+            Log Check-In
+          </button>
+          <button
+            onClick={onSendMessage}
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors border"
+            style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
+            data-testid="pod-hero-send-message"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            Send Message
+          </button>
+          <button
+            onClick={onAddNote}
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors border"
+            style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
+            data-testid="pod-hero-add-note"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Add Note
+          </button>
+        </div>
+      </div>
+    </div>
   );
+}
+
+// ─── Main Export ────────────────────────────────────
+export default function PodHeroCard({ currentIssue, recruitingSignals, athleteId, onLogCheckin, onSendMessage, onEscalate, onOpenNotes, onRefresh }) {
+  if (currentIssue) {
+    return (
+      <ActiveIssueHero
+        issue={currentIssue}
+        athleteId={athleteId}
+        onLogCheckin={onLogCheckin}
+        onSendMessage={onSendMessage}
+        onEscalate={onEscalate}
+        onRefresh={onRefresh}
+      />
+    );
+  }
+
+  const hasWarningSignals = (recruitingSignals || []).some(s => s.priority === "critical" || s.priority === "high");
+  if (hasWarningSignals) {
+    return (
+      <SignalWarningHero
+        signals={recruitingSignals}
+        onLogInteraction={onLogCheckin}
+        onAddNote={onOpenNotes}
+        onSendMessage={onSendMessage}
+      />
+    );
+  }
+
+  return <HealthyHero onLogInteraction={onLogCheckin} onAddNote={onOpenNotes} />;
 }

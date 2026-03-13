@@ -111,6 +111,7 @@ function SupportPod() {
         {/* ─── 1. DIAGNOSE: Critical Banner ─── */}
         <PodHeroCard
           currentIssue={current_issue}
+          recruitingSignals={recruiting_signals}
           athleteId={athleteId}
           onLogCheckin={() => toggleAction("log")}
           onSendMessage={() => toggleAction("email")}
