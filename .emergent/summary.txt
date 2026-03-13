@@ -1,159 +1,158 @@
 <analysis>**original_problem_statement:**
-The user has directed a multi-phase project to build and refactor the CapyMatch recruiting application. The core of the recent work was a fundamental shift in the coaching workflow. The original, monolithic Athlete Support Pod has been deconstructed and replaced with a new, two-tiered structure:
-1.  **Athlete Overview Page:** A high-level dashboard showing athlete-level issues (e.g., Momentum Drop) and a list of all target schools for that athlete, sorted by urgency.
-2.  **School Pod Page:** A detailed workspace for a specific athlete-school relationship. This page reuses the layout of the old pod (hero, signals, action plan, timeline) but scopes all data and actions to a single school.
+The user is building a full-stack recruiting application, CapyMatch. The project has involved major refactoring and feature implementation. Recently, the user has grown frustrated with pervasive data inconsistencies across the application, stemming from a mix of hardcoded mock data and partial database records. These inconsistencies have caused numerous bugs, such as mismatched statistics, broken navigation, and features appearing to work for one test user but not others.
 
-This refactor required significant backend changes to create new school-scoped endpoints, frontend work to build the new pages, and migrating all action modals (Log, Email, Escalate, etc.) to be school-aware. The user also requested numerous UI/UX fixes for responsiveness and layout consistency.
+The user has given a clear and critical directive: delete all existing athlete-related data and create a new, comprehensive, and reliable seed dataset from scratch. This seeder must populate the database with realistic data that covers all application scenarios, including athletes with profile blockers, various school engagement statuses, events needing follow-ups, and more. This data reset is the prerequisite for any future development.
 
 **PRODUCT REQUIREMENTS:**
-1.  **Deconstruct Athlete Pod:** Replace the single, all-encompassing athlete pod with a new flow: .
-2.  **School-Scoped Data:** All data within the School Pod (signals, actions, notes, timeline) must be specific to that athlete-school relationship.
-3.  **Action Parity:** The School Pod must have the same action capabilities as the old athlete pod (Log Interaction, Send Email, Add Note, Escalate, etc.), with all actions properly scoped.
-4.  **Athlete-Level Issues:** Broader issues not specific to a school (e.g., profile incompleteness, general inactivity) should remain at the athlete level and be visible on the Athlete Overview page.
-5.  **Data Freshness:** The School Pod must always display the most up-to-date information, bypassing stale caches.
+1.  **Fix Data Inconsistency:** Erase all unreliable mock and partial data for athletes, programs, events, and related collections.
+2.  **Create a Comprehensive Seeder:** Build a script that populates the database with a clean, interconnected, and realistic dataset covering all key application features and user journeys.
+3.  **Refine Events Feature:** A multi-phase enhancement of the Events section to make it more action-oriented and better integrated with the rest of the platform. Phases 1 and 2 were completed, but progress is blocked by the data issue.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack platform using React, FastAPI, and MongoDB. The major refactoring of the coach's workflow is largely complete. The navigation flow from the coach's roster to the Athlete Overview page and then into a specific School Pod is functional. Backend endpoints have been created to provide sorted school lists and detailed, freshly computed data for each School Pod. All action modals and the floating action bar have been integrated into the School Pod page. The last piece of this migration was adding the full-featured notes sidebar.
+The application is a full-stack platform using React, FastAPI, and MongoDB. The core coaching workflow, refactored from a monolithic Athlete Pod to a two-tiered Athlete Overview - Pod system, is functionally complete. Key features like school-scoped notes, dynamic action-plan playbooks, and a profile completeness alert have been implemented and tested.
+
+However, the application is plagued by data integrity issues. The agent discovered that most test athletes exist only in in-memory mock data within the Events system and lack proper user accounts, programs, and other records in the database. This causes discrepancies between what is shown on the Event pages versus the School/Athlete Pods. The user has mandated a full data wipe and the creation of a robust seeder script to fix this foundationally.
 
 **Last working item**:
-    - Last item agent was working: The user pointed out that the Notes feature was missing from the new School Pod. The agent re-integrated the  component, making it school-aware. This involved updating the component to accept a , using school-scoped API endpoints, and adding the necessary state management and UI toggles to the School Pod page.
+    - Last item agent was working: The user mandated a complete data reset and the creation of a new, comprehensive seed dataset. The agent was in the planning phase, analyzing all relevant database collections (, , , , etc.) and the existing  file to understand the full data landscape before writing the seeder script.
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? both
+    - Which testing method agent to use? After the seeder script is created and executed, the agent must use the **both** (frontend and backend) testing agent for a full regression test to validate that the new, consistent data works correctly across the entire application.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1:  (P0) Verify the Notes feature in the School Pod.
+  - Issue 1:  (P0) The application's data is unreliable, inconsistent, and disconnected.
+  - Issue 2:  (P1) Hero Card on Athlete Overview page lacks action buttons.
   
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: The agent has added the  to , passing  and  to scope its context. The sidebar component itself was updated to use school-specific endpoints when these props are present.
-     - Next debug checklist: 
-        1. Navigate to a School Pod page.
-        2. Click the Notes button in the floating action bar.
-        3. Confirm the notes sidebar opens correctly on the right.
-        4. Confirm the sidebar title is school-specific (e.g., Notes · University of Florida).
-        5. Create a new note and verify it appears.
-        6. Navigate to a different school's pod and open its notes sidebar to ensure the previous note is not visible.
-     - Why fix this issue and what will be achieved with the fix? This is the final step to achieve feature parity between the old athlete pod and the new School Pod, completing the major UI refactoring task.
-     - Status:  TESTING PENDING
-     - Is recurring issue? N
+     - Attempted fixes: The agent has previously applied several band-aid fixes for symptoms of this problem (e.g., aligning calculation logic, fixing blocker descriptions). However, the user recognized these were insufficient and ordered a full data reset.
+     - Next debug checklist: This is now an implementation task, not a debugging one. The agent must create and run a seeder script. See In progress Task List below.
+     - Why fix this issue and what will be achieved with the fix? To establish a stable, reliable, and realistic data foundation for the entire application. This will eliminate a whole class of data-discrepancy bugs and enable accurate testing and development of all features.
+     - Status:  NOT STARTED
+     - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? Both
-     - Blocked on other issue: None
+     - Blocked on other issue: None. This is the primary blocker for all other work.
+  - Issue 2: 
+     - Attempted fixes: None. The issue was discovered during the investigation of data discrepancies for athlete Olivia.
+     - Next debug checklist: 
+        1. Locate the  component in  or a related file.
+        2. Add action buttons (e.g., Resolve, Escalate, Message) to the component, visible when there is an active issue.
+        3. Wire these buttons to the appropriate modal-opening or API-calling logic.
+     - Why fix this issue and what will be achieved with the fix? Coaches currently have no way to act on athlete-level blockers directly from the Athlete Overview page, creating a dead end in the workflow. This fix will make the hero card actionable.
+     - Status:  NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Frontend
+     - Blocked on other issue: Issue 1 (Data inconsistency). This fix should be implemented after the new seed data is in place.
 
 **In progress Task List**:
-  - Task 1:  Finalize School Pod Feature Parity
-     - Where to resume: Perform end-to-end testing of the newly added Notes feature within the School Pod.
-     - What will be achieved with this? A stable, fully functional School Pod that contains all the necessary tools for a coach to manage an athlete's relationship with a specific school.
+  - Task 1:  (P0) Create and Run Comprehensive Database Seeder
+     - Where to resume: The agent has finished exploring the data schemas. The next step is to create a new script (e.g., ) that implements the following logic:
+        1. **Wipe Data:** A function to clear all documents from relevant collections (, , , , , , , , ).
+        2. **Create Personas:** Define 4-5 distinct athlete personas (e.g., a top recruit with many interactions, a new athlete with a sparse profile, an athlete with an active blocker, an athlete with event follow-ups).
+        3. **Seed Data:** For each persona, create interconnected documents across all collections, ensuring  accounts,  assignments (target schools), , and historical / are all consistent.
+        4. **Run Seeder:** Execute the script to populate the database.
+     - What will be achieved with this? A clean, consistent, and realistic dataset that enables reliable testing and accurately reflects all application scenarios.
      - Status:  IN PROGRESS
      - Should Test frontend/backend/both after fix? Both
-     - Blocked on something: Blocked on the verification of Issue 1.
+     - Blocked on something: Nothing. This is the highest priority task.
 
 **Upcoming and Future Tasks**
 
 **Upcoming Tasks:**
-*   (P1) **Close the Action Loop:** Implement the logic where coach actions (e.g., Log Interaction) update the underlying  and  data. This will make the signals and health statuses change in real-time based on the coach's work, making the system dynamic rather than just a logging tool.
+*   (P1) **Refine Event Live Mode (Phase 3):** Continue with the user's plan to enhance the Events feature by optimizing the live speed-capture workflow.
+*   (P1) **Refine Event Post-Event Summary (Phase 4):** Make the post-event follow-ups more structured and actionable.
 
 **Future Tasks:**
-*   (P2) **Club Billing:** Implement full subscription billing for organizations.
-*   **Multi-Agent Intelligence Pipeline (Phase 2+):** Implement , , and  agents.
+*   **Close the Action Loop:** Implement logic where coach actions update . The user has explicitly stated this should only happen when the *athlete* acts, so this is on hold.
+*   **Club Billing:** Implement subscription billing for organizations.
+*   **Multi-Agent Intelligence Pipeline:** Build , , and  agents.
 *   **AI-Powered Coach Summary:** Use an LLM to generate recruiting pitches.
-*   **Parent/Family Experience:** Build out the dedicated user experience for parents/helpers.
+*   **Parent/Family Experience:** Build out the dedicated UI/UX for parents and helpers.
 
 **Completed work in this session**
-- **Major Refactor: Athlete Pod to School Pod:**
-  - Architected and implemented the new  workflow.
-  - Created a new  page and refactored  into the Athlete Overview.
-  - Built new backend endpoints (, ) to support the new UI.
-  - Migrated all action modals (Log, Email, Follow-up, Escalate) to the School Pod and made them school-context-aware.
-- **Data Integrity and Freshness:**
-  - Implemented on-demand re-computation of metrics for the School Pod to ensure coaches always see real-time data, fixing a potential 6-hour cache staleness issue.
-  - Fixed a critical bug in the  service where a blind 24-hour cooldown prevented the system from re-flagging persistent problems.
-- **UI/UX and Responsiveness:**
-  - Resolved numerous layout, spacing, and z-index bugs across the application, particularly on mobile and notebook viewports, based on user feedback and screenshots.
-  - Cleaned up the Athlete Overview page by removing redundant sections, creating a clean and focused dashboard.
-- **Bug Investigation and Fixes:**
-  - Investigated and corrected the logic inconsistency where the Hero Card would show On Track while Key Signals indicated critical issues.
-
-**Earlier issues found/mentioned but not fixed**
-   - None.
-
-**Known issue recurrence from previous fork**
-  - None.
+- **Data Integrity Fixes (Pre-Seeder):**
+  - Fixed inconsistent profile completeness percentages between different pages.
+  - Aligned blocker descriptions to be consistent between the Event Prep and Athlete Overview pages.
+  - Fixed a critical bug in the Route to Pod feature, ensuring event-sourced actions are correctly assigned to the specific School Pod with a .
+- **Feature Implementation & Enhancement:**
+  - **Notes Feature:** Fixed and verified the school-scoped Notes feature in the School Pod.
+  - **Profile Alert:** Added a Profile Needs Attention card to the Athlete Overview page, including a Send Reminder button to message the athlete.
+  - **Action Plan Playbooks:** Successfully integrated dynamic, school-specific playbooks into the School Pod. Implemented persistence for playbook step completion.
+  - **Events UI Refinement (Phase 1 & 2):** Redesigned the Event Home cards and the Event Prep page to be more data-rich, decision-oriented, and actionable.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **UI/Workflow Refactoring:** The core coaching interface was fundamentally changed from a single-page athlete-centric model to a two-level hierarchy (Athlete Overview -> School Pod) to better represent the recruiting process.
-- **Component Scoping:** Existing React components (modals, sidebars) were made reusable in different contexts by adding props (, ) that conditionally change their behavior and API endpoints.
-- **On-Demand vs. Cached Data:** A hybrid approach to data fetching was implemented. High-focus views (like a single School Pod) trigger a fresh re-computation of metrics, while list views read from a cache for performance, with a manual refresh option.
-- **Root Cause Analysis:** Successfully diagnosed and fixed bugs deep in the backend business logic (e.g., the issue lifecycle cooldown) that were causing inconsistent UI states.
+- **Data Seeding:** The current core task involves creating a script to programmatically populate a database with a large, interconnected, and realistic dataset, which is crucial for stable application development and testing.
+- **Data Integrity:** A recurring theme of identifying and fixing discrepancies between different data sources (in-memory mocks vs. DB) and ensuring a single source of truth for all user-facing information.
+- **End-to-End Debugging:** Tracing bugs from the UI (e.g., 0 target schools) through the frontend components, API calls, backend routers, service logic, and finally to the database schema to find the root cause (e.g., a missing  account).
+- **Component Refactoring:** Iteratively improving UI components (, ) based on user feedback to make them more decision-oriented and actionable.
 
 **key DB schema**
-  - , : These collections do not have a  field yet. The application currently handles scoping at the API level. Adding  to these schemas is a key part of the upcoming Close the Action Loop task.
-
-**changes in tech stack**
-  - None.
+The seeder script will wipe and repopulate the following key collections:
+  - : Stores user accounts, including . The link to other data.
+  - : An athlete's target schools, linked via a  derived from the user ID.
+  - : Manual and routed actions, now correctly scoped with .
+  - : General and school-scoped notes.
+  - , : Data for the events subsystem.
+  - , : Backend-computed health signals and blockers.
+  - : Stores completion status of playbook steps.
 
 **All files of reference**
--   : The new, primary workspace for coaches.
--   : The refactored athlete overview page.
--   : The most recently modified component to complete feature parity.
--   : The new backend router powering the entire school-centric workflow.
--   : Contains the critical bug fix for the issue cooldown logic.
-
-**Areas that need refactoring**:
-- The Close the Action Loop task will require refactoring the backend services. Currently, coach actions are logged but do not change the underlying athlete/program data that drives signals. This task will involve creating helper functions to update athlete/program metrics and calling them from the appropriate action endpoints.
-
-**key api endpoints**
--   : Fetches the list of target schools for an athlete, sorted by urgency. Supports  for a manual refresh.
--   : Fetches all data for a specific School Pod, always returning freshly recomputed metrics.
--   : Creates a school-scoped note (handled implicitly by the notes sidebar).
--   : Creates a school-scoped action (handled implicitly by the follow-up modal).
+-   : **To be created.** This will be the most critical file for the next step.
+-   : Contains the recently fixed Route to Pod logic.
+-   : Endpoint for the Athlete Overview page.
+-   : The recently redesigned event prep screen.
+-   : The recently redesigned event card component.
+-   : The source of the inconsistent data; will be superseded by the new seeder.
 
 **Critical Info for New Agent**
--   Your immediate priority is to test the Notes feature in the  page. This is the last step in a major refactor. Follow the Next debug checklist for Issue 1.
--   The user is highly focused on UI/UX, responsiveness, and layout. Be prepared to address visual feedback with precision.
--   The next major feature, Close the Action Loop (P1), has been discussed and defined but is NOT the current priority. Do not begin work on it until the current refactor is fully verified and the user gives the go-ahead.
+- **Your absolute, number one priority is to create and run the database seeder.** The user is highly frustrated with the unreliable data, and no other task should be started until this is complete.
+- Follow the plan outlined in the In progress Task List to create the  script.
+- The goal is to eliminate all dependencies on  and have a single source of truth in the MongoDB database.
+- After seeding, perform a full regression test to confirm the application is stable and data is consistent everywhere.
 
 **documents and test reports created in this job**
-- /app/memory/PRD.md (updated with refactor details)
-- Test reports were generated for the messaging feature and the main school pod refactor.
+- /app/test_reports/iteration_2.json
+- /app/test_reports/iteration_3.json
+- /app/test_reports/iteration_4.json
+- /app/test_reports/iteration_5.json
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- **LATEST:** It’s missing the note feature (Status: Implementation complete, verification pending)
-- When I click on the athlete in the dashboard... That page should only shows the schools and the athlete level issues, right? (Status: Completed; agent cleaned up the athlete overview page)
--  button and  discussion. (Status: Completed; agent implemented on-demand metric re-computation)
-- Are we still gonna need the program_metrics? (Status: Answered; agent explained the caching strategy, which was approved)
-- Tell me what you are planning (re: fixing stale data) (Status: Completed; agent proposed and implemented the on-demand recompute plan)
-- please review the athlete’s journey (Status: Completed; agent audited the existing email integration and confirmed it works as expected)
-- the status of a school should only change with the athlete actions, right? (Status: Acknowledged; user clarified business logic, agent confirmed understanding)
-- For Phase 2, we should keep the structure and layout the same... (Status: Acknowledged; user provided design constraints for the School Pod)
-- User provided detailed requirements for the Athlete-to-School-Pod refactor. (Status: Implemented)
-- it looks like the problem is that the way it currently works, it checks all the schools... (Status: Acknowledged; this message initiated the major refactor)
+- **LATEST:** please delete all the data from all the athletes and create a new one that makes complete sense so we can test it. The data is not reliable at all!!! - User directive to start the data seeding task.
+- User identified that the Active Blocker card on the School Pod was generic and had no action button or school info. (Status: Partially fixed description, but root cause is data).
+- User approved the redesigned Event Prep page (Phase 2).
+- User identified a data mismatch on Event cards (e.g., card showed 14 schools, prep page showed 5). (Status: Fixed).
+- User approved the redesigned Event Home cards (Phase 1).
+- User requested to refine the Events architecture in a multi-phase approach.
+- User asked to check if the Route to Pod buttons on the Event Summary page were working correctly. (Status: Investigated and fixed).
+- User asked for an explanation of the Events area. (Status: Provided).
+- User confirmed to proceed with wiring the Action Plan Playbooks into the School Pod.
+- User clarified that program status should only change when the athlete acts, putting the Close the Action Loop feature on hold.
 
 **Project Health Check:**
-- **Broken:** The Notes functionality within the School Pod is newly implemented and has not been tested.
-- **Mocked:** The core feedback loop is incomplete. Coach actions are logged for record-keeping but do not yet dynamically update the athlete/program metrics that drive the UI's health signals. This is the subject of the P1 - Close the Action Loop task.
+- **Broken:** The entire application's data layer is fundamentally unreliable due to a dependency on disconnected mock data. This manifests as bugs, incorrect stats, and inconsistent UI across different pages.
+- **Mocked:** The Events system heavily relies on in-memory mock data that is not properly linked to the main database, which is the root cause of the Broken state. The seeder script will fix this.
 
 **3rd Party Integrations**
 - Resend
 - MongoDB
 - Stripe
-- Emergent LLM Key
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Used for the main School Pod refactor, passed 100%)
+  - Testing agent used after significant changes: YES
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None in this session.
-  - Known regressions: None.
+  - Test files created: []
+  - Known regressions: The application is in an unstable state due to the data inconsistency, so many regressions are likely present when testing with any user other than the one fully-wired test user.
 
 **Credentials to test flow:**
--   **Coach:**  / 
--   **Athlete:**  / 
+- **Coach:**  / 
+- **Athlete (Old):**  / 
+- **NOTE:** The seeder script will create new, reliable credentials. The old ones should be considered deprecated.
 
 **What agent forgot to execute**
-- The agent has not yet tested the final implementation step: adding the full-featured, school-scoped  to the  page. This verification is the immediate next action.</analysis>
+- The agent identified that the  component on the Athlete Overview page is missing action buttons but has not yet created an issue or implemented the fix. This is captured as Issue 2 in the pending list.</analysis>
