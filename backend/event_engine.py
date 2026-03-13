@@ -124,6 +124,8 @@ def get_event_prep(event_id):
                     "category": b["category"],
                     "trigger": b["trigger"],
                     "impact": b["why_this_surfaced"],
+                    "recommended_action": b.get("recommended_action", ""),
+                    "owner": b.get("owner", ""),
                 })
         elif any(i["category"] == "readiness_issue" for i in athlete_interventions):
             prep_status = "needs_attention"

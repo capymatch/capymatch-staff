@@ -2,14 +2,19 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { ArrowLeft, Check, AlertTriangle, ExternalLink, ChevronRight, MapPin, GraduationCap, Users } from "lucide-react";
+import {
+  ArrowLeft, Check, AlertTriangle, ExternalLink, ChevronRight,
+  MapPin, GraduationCap, Users, Zap, Clock, CheckCircle2, Shield,
+  Target
+} from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const PREP_STATUS = {
-  ready: { label: "Ready", cls: "text-emerald-600", icon: Check },
-  needs_attention: { label: "Needs Attention", cls: "text-amber-600", icon: AlertTriangle },
-  blocker: { label: "Blocker", cls: "text-red-600", icon: AlertTriangle },
+const PREP_ORDER = { blocker: 0, needs_attention: 1, ready: 2 };
+const PREP_CONFIG = {
+  blocker: { label: "Blocker", bg: "bg-red-50", border: "border-red-100", text: "text-red-700", dot: "bg-red-500" },
+  needs_attention: { label: "Needs Attention", bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
+  ready: { label: "Ready", bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500" },
 };
 
 function EventPrep() {
@@ -22,7 +27,7 @@ function EventPrep() {
     try {
       const res = await axios.get(`${API}/events/${eventId}/prep`);
       setData(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load prep data");
     } finally {
       setLoading(false);
@@ -44,24 +49,15 @@ function EventPrep() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" />
-      </div>
-    );
-  }
-
-  if (!data || data.error) {
-    return (
-      <div className="flex items-center justify-center py-32">
-        <p className="text-gray-500">Event not found</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex items-center justify-center py-32"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" /></div>;
+  if (!data || data.error) return <div className="flex items-center justify-center py-32"><p className="text-gray-500">Event not found</p></div>;
 
   const { event, athletes, targetSchools, checklist, blockers } = data;
   const completed = checklist.filter((c) => c.completed).length;
+  const sortedAthletes = [...athletes].sort((a, b) => (PREP_ORDER[a.prepStatus] ?? 2) - (PREP_ORDER[b.prepStatus] ?? 2));
+  const sortedSchools = [...targetSchools].sort((a, b) => b.athleteOverlap - a.athleteOverlap);
+  const readyCt = athletes.filter(a => a.prepStatus === "ready").length;
+  const notReadyCt = athletes.length - readyCt;
 
   return (
     <div data-testid="event-prep-page">
@@ -74,127 +70,85 @@ function EventPrep() {
             </button>
             <div className="h-5 w-px bg-gray-200" />
             <div>
-              <h1 className="font-semibold text-gray-900 text-base leading-tight" data-testid="prep-event-name">{event.name}</h1>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <h1 className="font-semibold text-gray-900 text-base leading-tight" data-testid="prep-event-name">{event.name} — Prep</h1>
+              <div className="flex items-center gap-3 text-xs text-gray-500">
                 <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{event.location}</span>
-                <span>{event.daysAway <= 1 ? "TOMORROW" : `IN ${event.daysAway} DAYS`}</span>
-                <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3" />{event.expectedSchools} schools expected</span>
+                <span className="font-medium">{event.daysAway <= 1 ? "TOMORROW" : `IN ${event.daysAway} DAYS`}</span>
               </div>
             </div>
           </div>
           <button
             onClick={() => navigate(`/events/${eventId}/live`)}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             data-testid="go-live-btn"
           >
-            Go Live <ChevronRight className="w-3 h-3" />
+            <Zap className="w-3.5 h-3.5" /> Go Live <ChevronRight className="w-3 h-3" />
           </button>
         </div>
       </header>
 
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Athletes Attending */}
-        <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="prep-athletes-section">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Athletes Attending ({athletes.length})</h2>
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 space-y-5">
+
+        {/* ─── Quick Summary Bar ─── */}
+        <div className="flex items-center gap-3 flex-wrap" data-testid="prep-summary-bar">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+            <Users className="w-3.5 h-3.5 text-slate-500" />
+            <span className="font-semibold text-slate-800">{athletes.length}</span>
+            <span className="text-slate-500">athletes</span>
           </div>
-          <div className="space-y-2">
-            {athletes.map((a) => {
-              const ps = PREP_STATUS[a.prepStatus] || PREP_STATUS.ready;
-              const Icon = ps.icon;
-              return (
-                <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0" data-testid={`prep-athlete-${a.id}`}>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+            <GraduationCap className="w-3.5 h-3.5 text-slate-500" />
+            <span className="font-semibold text-slate-800">{targetSchools.length}</span>
+            <span className="text-slate-500">schools</span>
+          </div>
+          {readyCt > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100 text-xs">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="font-semibold text-emerald-700">{readyCt}</span>
+              <span className="text-emerald-600">ready</span>
+            </div>
+          )}
+          {notReadyCt > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-100 text-xs">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span className="font-semibold text-amber-700">{notReadyCt}</span>
+              <span className="text-amber-600">need{notReadyCt > 1 ? "" : "s"} attention</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+            <Check className="w-3.5 h-3.5 text-slate-500" />
+            <span className="font-semibold text-slate-800">{completed}/{checklist.length}</span>
+            <span className="text-slate-500">prep done</span>
+          </div>
+        </div>
+
+        {/* ─── Blockers — Promoted to Top ─── */}
+        {blockers.length > 0 && (
+          <section className="rounded-xl border-2 border-red-200 bg-red-50/50 overflow-hidden" data-testid="prep-blockers-section">
+            <div className="px-4 py-3 border-b border-red-100 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-red-600" />
+              <h2 className="text-xs font-bold text-red-700 uppercase tracking-wider">Blockers — Resolve Before Event</h2>
+            </div>
+            <div className="divide-y divide-red-100">
+              {blockers.map((b, i) => (
+                <div key={i} className="px-4 py-3 flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-gray-900">{a.full_name}</span>
-                      <span className="text-xs text-gray-400">{a.grad_year} · {a.position}</span>
-                      <span className={`flex items-center gap-1 text-[10px] font-medium ${ps.cls}`}>
-                        <Icon className="w-3 h-3" /> {ps.label}
-                      </span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                      <span className="text-sm font-semibold text-gray-900">{b.athleteName}</span>
                     </div>
-                    {a.targetSchoolsAtEvent.length > 0 && (
-                      <p className="text-[11px] text-gray-400 mt-0.5">Targets: {a.targetSchoolsAtEvent.join(", ")}</p>
+                    <p className="text-xs text-gray-700 ml-5.5">{b.impact}</p>
+                    {b.recommended_action && (
+                      <p className="text-[11px] text-red-600 font-medium mt-1 ml-5.5">Next: {b.recommended_action}</p>
+                    )}
+                    {b.owner && (
+                      <p className="text-[10px] text-gray-400 mt-0.5 ml-5.5">Owner: {b.owner}</p>
                     )}
                   </div>
                   <button
-                    onClick={() => navigate(`/support-pods/${a.id}`)}
-                    className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors"
-                  >
-                    Open Pod <ExternalLink className="w-3 h-3" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Target Schools + Prep Checklist side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Target Schools */}
-          <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="prep-schools-section">
-            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Target Schools ({targetSchools.length})</h2>
-            <div className="space-y-2">
-              {targetSchools.slice(0, 8).map((s) => (
-                <div key={s.id} className="flex items-center justify-between py-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">{s.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">{s.division}</span>
-                  </div>
-                  <span className="text-[11px] text-gray-400">
-                    {s.athleteOverlap > 0 ? `${s.athleteOverlap} of your athletes targeting` : "No overlap"}
-                  </span>
-                </div>
-              ))}
-              {targetSchools.length > 8 && (
-                <p className="text-[11px] text-gray-400">+ {targetSchools.length - 8} more schools expected</p>
-              )}
-            </div>
-          </section>
-
-          {/* Prep Checklist */}
-          <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="prep-checklist-section">
-            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">
-              Prep Checklist ({completed}/{checklist.length})
-            </h2>
-            <div className="space-y-2 mb-4">
-              {checklist.map((item) => (
-                <label key={item.id} className="flex items-center gap-3 py-1.5 cursor-pointer group" data-testid={`checklist-${item.id}`}>
-                  <button
-                    onClick={() => toggleCheck(item.id)}
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                      item.completed ? "bg-emerald-500 border-emerald-500" : "border-gray-300 group-hover:border-emerald-400"
-                    }`}
-                  >
-                    {item.completed && <Check className="w-3 h-3 text-white" />}
-                  </button>
-                  <span className={`text-sm ${item.completed ? "text-gray-400 line-through" : "text-gray-700"}`}>{item.label}</span>
-                </label>
-              ))}
-            </div>
-            {/* Progress bar */}
-            <div className="w-full bg-gray-100 rounded-full h-1.5">
-              <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${(completed / checklist.length) * 100}%` }} />
-            </div>
-          </section>
-        </div>
-
-        {/* Blockers */}
-        {blockers.length > 0 && (
-          <section className="bg-red-50 border border-red-100 rounded-lg p-5" data-testid="prep-blockers-section">
-            <h2 className="text-[11px] font-bold text-red-400 uppercase tracking-wider mb-3">Blockers ({blockers.length})</h2>
-            <div className="space-y-3">
-              {blockers.map((b, i) => (
-                <div key={i} className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-                      <span className="text-sm font-medium text-gray-900">{b.athleteName}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-0.5 ml-5.5">{b.impact}</p>
-                  </div>
-                  <button
                     onClick={() => navigate(`/support-pods/${b.athleteId}`)}
-                    className="text-[10px] text-red-600 hover:text-red-800 flex items-center gap-0.5 shrink-0"
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md transition-colors shrink-0"
+                    data-testid={`blocker-pod-${b.athleteId}`}
                   >
                     Open Pod <ExternalLink className="w-3 h-3" />
                   </button>
@@ -203,6 +157,108 @@ function EventPrep() {
             </div>
           </section>
         )}
+
+        {/* ─── Athletes — Sorted by Readiness ─── */}
+        <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-athletes-section">
+          <div className="px-4 py-3 border-b border-gray-50">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Athletes ({athletes.length})</h2>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {sortedAthletes.map((a) => {
+              const cfg = PREP_CONFIG[a.prepStatus] || PREP_CONFIG.ready;
+              return (
+                <div key={a.id} className="px-4 py-3 flex items-center justify-between gap-3" data-testid={`prep-athlete-${a.id}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                      <span className="font-medium text-sm text-gray-900">{a.full_name}</span>
+                      <span className="text-[10px] text-gray-400">{a.grad_year} · {a.position}</span>
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
+                    </div>
+                    {a.targetSchoolsAtEvent.length > 0 && (
+                      <div className="flex items-center gap-1 ml-4 mt-1 flex-wrap">
+                        <Target className="w-3 h-3 text-gray-300 shrink-0" />
+                        {a.targetSchoolsAtEvent.map((s, i) => (
+                          <span key={i} className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded border border-gray-100">{s}</span>
+                        ))}
+                      </div>
+                    )}
+                    {a.blockers?.length > 0 && (
+                      <p className="text-[11px] text-red-600 mt-1 ml-4">{a.blockers[0].impact}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => navigate(`/support-pods/${a.id}`)}
+                    className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors shrink-0"
+                  >
+                    Pod <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ─── Target Schools + Checklist side by side ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Schools — Ranked by athlete overlap */}
+          <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-schools-section">
+            <div className="px-4 py-3 border-b border-gray-50">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Target Schools ({targetSchools.length})</h2>
+              <p className="text-[10px] text-gray-400 mt-0.5">Ranked by how many of your athletes target them</p>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {sortedSchools.map((s, i) => (
+                <div key={s.id} className="px-4 py-2.5 flex items-center justify-between" data-testid={`prep-school-${s.id}`}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-[10px] text-gray-300 font-mono w-4 text-right">{i + 1}</span>
+                    <div>
+                      <span className="text-sm font-medium text-gray-900">{s.name}</span>
+                      <span className="text-[10px] text-gray-400 ml-1.5">{s.division}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3 h-3 text-gray-300" />
+                    <span className={`text-[11px] font-semibold ${s.athleteOverlap > 0 ? "text-slate-700" : "text-gray-300"}`}>
+                      {s.athleteOverlap}
+                    </span>
+                    <span className="text-[10px] text-gray-400">athlete{s.athleteOverlap !== 1 ? "s" : ""}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Prep Checklist */}
+          <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-checklist-section">
+            <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Prep Checklist</h2>
+              <span className="text-[11px] font-semibold text-gray-500">{completed}/{checklist.length}</span>
+            </div>
+            <div className="px-4 py-2 divide-y divide-gray-50">
+              {checklist.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => toggleCheck(item.id)}
+                  className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-gray-50/50 transition-colors rounded"
+                  data-testid={`checklist-${item.id}`}
+                >
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                    item.completed ? "bg-emerald-500 border-emerald-500" : "border-gray-300 hover:border-emerald-400"
+                  }`}>
+                    {item.completed && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className={`text-sm ${item.completed ? "text-gray-400 line-through" : "text-gray-700"}`}>{item.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="px-4 pb-3">
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${checklist.length > 0 ? (completed / checklist.length) * 100 : 0}%` }} />
+              </div>
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   );
