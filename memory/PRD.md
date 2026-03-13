@@ -6,80 +6,51 @@ Sports recruiting platform connecting athletes, coaches, and schools with intell
 ## Core Architecture
 - **Frontend**: React + Tailwind + Shadcn/UI
 - **Backend**: FastAPI + MongoDB
-- **Auth**: JWT-based with role-based access (athlete, parent, club_coach, director, platform_admin)
+- **Auth**: JWT-based with role-based access
 
 ## Coach Workflow
 ```
-Mission Control (Roster) → Click Athlete → Athlete Overview + School List → Click School → School Pod
+Mission Control → Athlete Overview → School Pod
+Events: Event Home → Event Prep → Live Mode → Post-Event Summary
 ```
 
-### Athlete Overview (`/support-pods/:athleteId`)
-- Hero card (critical issues like Momentum Drop)
-- **Profile Completeness Alert** (<80%, "Send Reminder" button sends in-app message)
-- Target Schools list sorted by urgency
+## Events System (Refined Mar 2026)
+### Event Home Cards (Phase 1 ✅)
+- Action-oriented cards with athlete count, school count, readiness pills, prep progress
+- Dynamic CTA: Go Live / Start Prep / Finish Prep / Review Summary / View Summary
+- Backend computes athlete readiness (blockers/needs_attention/ready) per event
 
-### School Pod (`/support-pods/:athleteId/school/:programId`)
-- School header, hero, contact info, signals
-- **Action Plan** (auto-generated from signals, step completion persists to DB)
-- **Actions** (manual + event-routed, school-scoped via `program_id`)
-- Notes (inline + sidebar, school-scoped)
-- Timeline, Stage history
+### Event Prep (Phase 2 - NEXT)
+- Prioritize not-ready athletes, highest-value schools, blockers at top
 
-### Events (`/events`)
-- Event Home → Prep → Live Mode → Post-Event Summary
-- **Route to Pod** maps event notes to correct School Pod via `_find_program_id()`
-- Actions created with `program_id` so they appear in the right School Pod
+### Live Mode (Phase 3)
+- Speed optimization: fewer taps, likely athletes first, save confirmation, repeat shortcuts
 
-## School-Specific Playbooks
-| Signal | Playbook Type | Timeline |
-|--------|--------------|----------|
-| Overdue Follow-up | Follow-Up Required | 3-5 days |
-| Engagement Gone Stale | Re-engagement Plan | 5-7 days |
-| No Response (contacted) | Outreach Strategy | 7-10 days |
-| No Response (not contacted) | First Outreach Plan | 1-2 days |
-| Stage Stalled | Stage Advancement Plan | 3-5 days |
+### Post-Event Summary (Phase 4)
+- Structured follow-ups: athlete × school, recommended next step, owner, due date
 
-## Profile Completeness (Unified 12-Field Formula)
-Fields: full_name, photo_url, position, grad_year, height, bio, video_link, email, team, city, state, gpa
+### System Integration (Phase 5)
+- Event outcomes influence School Pod actions, pipeline, support messages, athlete priorities
 
-## Key API Endpoints
-- `GET /api/support-pods/:athleteId` — Athlete overview (includes `profile_completeness`)
-- `GET /api/support-pods/:athleteId/schools` — Target schools sorted by urgency
-- `GET /api/support-pods/:athleteId/school/:programId` — Full school pod
-- `PATCH /api/support-pods/:athleteId/school/:programId/playbook-progress` — Save playbook progress
-- `POST /api/events/:eventId/notes/:noteId/route` — Route event note to School Pod (returns `program_id`)
-- `POST /api/events/:eventId/route-to-pods` — Bulk route eligible notes
-- `POST /api/support-messages` — Send in-app message
+## School Pod
+- Auto-generated playbooks from signals (4 types), step persistence
+- School-scoped actions, notes, timeline
+- Event-routed actions with correct program_id
+
+## Profile Completeness
+- Unified 12-field formula, coach-visible alert with "Send Reminder"
 
 ## Test Credentials
 - **Coach:** coach.williams@capymatch.com / coach123
-- **Athlete (Emma):** emma.chen@athlete.capymatch.com / athlete123
+- **Athlete:** emma.chen@athlete.capymatch.com / athlete123
 
 ## Completed
-- V1 In-App Messaging
-- Signal-aware hero card (3 states)
-- Issue lifecycle cooldown fix
-- School Pod architecture (full restructure)
-- School Pod Notes Feature (Mar 13, 2026)
-- Profile completeness alignment & coach visibility (Mar 13, 2026)
-- Emma login fix (Mar 13, 2026)
-- School-Specific Action Plan Playbooks (Mar 13, 2026)
-- Playbook Step Persistence (Mar 13, 2026)
-- Profile Reminder (Mar 13, 2026)
-- **Event Route-to-Pod Fix** (Mar 13, 2026) — Actions now correctly scoped to School Pod via program_id lookup + auth headers fixed on EventSummary
-
-## Important Constraints
-- Program status should only change when the athlete acts, NOT from coach actions
+- School Pod architecture, notes, playbooks, step persistence
+- Profile completeness alignment & coach visibility
+- Event Route-to-Pod fix (program_id scoping)
+- **Event Home Cards redesign** (Phase 1, Mar 13, 2026)
 
 ## Backlog
-### P2 — Club Billing
-Org subscription management.
-
-### P3 — AI Coach Summary
-LLM-generated recruiting pitches.
-
-### P3 — Intelligence Pipeline Phase 2
-Roster Stability, Scholarship, NIL Readiness agents.
-
-### P3 — Parent/Family Experience
-Dedicated parent/helper UX.
+- P1: Event Prep (Phase 2), Live Mode (Phase 3), Post-Event Summary (Phase 4), System Integration (Phase 5)
+- P2: Club Billing
+- P3: AI Coach Summary, Intelligence Pipeline Phase 2, Parent/Family Experience

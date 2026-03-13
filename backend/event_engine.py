@@ -39,6 +39,33 @@ def get_all_events(team_filter=None, type_filter=None):
         e["prepProgress"] = {"completed": completed, "total": len(checklist)}
         e["capturedNotesCount"] = len(event.get("capturedNotes", []))
 
+        # Athlete readiness summary for card display
+        athlete_ids = event.get("athlete_ids", [])
+        all_athletes = get_athletes()
+        all_interventions = get_interventions()
+        blockers_count = 0
+        needs_attention_count = 0
+        ready_count = 0
+        for aid in athlete_ids:
+            athlete_intv = [i for i in all_interventions if i["athlete_id"] == aid]
+            if any(i["category"] == "blocker" for i in athlete_intv):
+                blockers_count += 1
+            elif any(i["category"] == "readiness_issue" for i in athlete_intv):
+                needs_attention_count += 1
+            else:
+                ready_count += 1
+        e["readiness"] = {
+            "ready": ready_count,
+            "needs_attention": needs_attention_count,
+            "blockers": blockers_count,
+        }
+        # Follow-ups pending (for past events)
+        if event.get("status") == "past" or event["daysAway"] < 0:
+            notes = event.get("capturedNotes", [])
+            e["followUpsPending"] = sum(1 for n in notes if n.get("follow_ups") and not n.get("routed_to_pod"))
+        else:
+            e["followUpsPending"] = 0
+
         # Apply filters
         if team_filter:
             roster_athletes = [a for a in get_athletes() if a["id"] in event.get("athlete_ids", [])]
