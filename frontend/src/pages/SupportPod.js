@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   School, ChevronRight, Loader2, ArrowLeft, RefreshCw,
-  AlertTriangle, Activity, User
+  AlertTriangle, Activity, User, UserCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,6 +39,53 @@ function AthleteHero({ currentIssue, signals }) {
         <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
           {issue?.description || worst?.description || "Review the signals and take action."}
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Profile Completeness Alert ─────────────────────
+function ProfileAlert({ completeness }) {
+  if (!completeness || completeness.score >= 80) return null;
+  const isCritical = completeness.score < 50;
+  const color = isCritical ? "#ef4444" : "#f59e0b";
+  const bg = isCritical ? "rgba(239,68,68,0.04)" : "rgba(245,158,11,0.04)";
+  const border = isCritical ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)";
+  const top3 = (completeness.missing || []).slice(0, 3);
+
+  return (
+    <div className="rounded-xl border relative overflow-hidden" style={{ backgroundColor: bg, borderColor: border }} data-testid="profile-alert">
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: color }} />
+      <div className="px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}12` }}>
+              <UserCircle className="w-4.5 h-4.5" style={{ color }} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>
+                  Profile {isCritical ? "Incomplete" : "Needs Attention"}
+                </span>
+              </div>
+              <p className="text-sm font-bold mt-0.5" style={{ color: "var(--cm-text, #1e293b)" }}>
+                {completeness.score}% complete — {completeness.filled} of {completeness.total} fields
+              </p>
+              {top3.length > 0 && (
+                <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                  Missing: {top3.join(", ")}{completeness.missing.length > 3 ? ` +${completeness.missing.length - 3} more` : ""}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0 ml-3">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: `conic-gradient(${color} ${completeness.score * 3.6}deg, ${color}15 0deg)` }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white">
+                <span className="text-[11px] font-bold" style={{ color }}>{completeness.score}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -166,7 +213,7 @@ function SupportPod() {
     );
   }
 
-  const { athlete, current_issue, recruiting_signals, pod_health } = data;
+  const { athlete, current_issue, recruiting_signals, pod_health, profile_completeness } = data;
   const needsAttention = schools.filter(s => s.health === "at_risk" || s.health === "needs_attention");
 
   // Health badge config
@@ -233,6 +280,9 @@ function SupportPod() {
       <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4">
         {/* Athlete-level hero (only shows if there's an issue or critical signals) */}
         <AthleteHero currentIssue={current_issue} signals={recruiting_signals} />
+
+        {/* Profile Completeness Alert */}
+        <ProfileAlert completeness={profile_completeness} />
 
         {/* Target Schools */}
         <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="school-list-section">

@@ -20,6 +20,7 @@ from support_pod import (
     get_intervention_playbook,
 )
 from pod_issues import evaluate_issues, get_current_issue, get_all_active_issues, resolve_issue as resolve_pod_issue
+from migrations.schema_v2_signals import compute_profile_completeness_detail
 
 router = APIRouter()
 
@@ -76,6 +77,10 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
     current_issue = await get_current_issue(athlete_id)
     all_active_issues = await get_all_active_issues(athlete_id)
 
+    # Profile completeness from real DB athlete data
+    db_athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0})
+    profile_completeness = compute_profile_completeness_detail(db_athlete) if db_athlete else None
+
     return {
         "athlete": {k: v for k, v in athlete.items() if k != "archetype"},
         "active_intervention": active_intervention,
@@ -97,6 +102,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         "recruiting_timeline": recruiting_timeline,
         "recruiting_signals": recruiting_signals,
         "intervention_playbook": playbook,
+        "profile_completeness": profile_completeness,
     }
 
 

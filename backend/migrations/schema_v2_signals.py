@@ -14,18 +14,20 @@ log = logging.getLogger(__name__)
 
 # ── Profile completeness calculation ─────────────────────────────────────────
 
-COMPLETENESS_FIELDS = [
-    "full_name",
-    "position",           # -> position_primary
-    "grad_year",
-    "gpa",
-    "height",
-    "city",
-    "state",
-    "high_school",
-    "team",               # club_team
-    "email",
-]
+COMPLETENESS_FIELDS = {
+    "full_name": "Full Name",
+    "photo_url": "Profile Photo",
+    "position": "Position",
+    "grad_year": "Graduation Year",
+    "height": "Height",
+    "bio": "Bio",
+    "video_link": "Highlight Video",
+    "email": "Contact Email",
+    "team": "Club Team",
+    "city": "City",
+    "state": "State",
+    "gpa": "GPA",
+}
 
 MEASURABLE_FIELDS = [
     "height",
@@ -44,18 +46,27 @@ ACADEMIC_FIELDS = [
 
 def compute_profile_completeness(athlete: dict) -> int:
     """Return 0-100 completeness percentage for an athlete doc."""
-    all_fields = COMPLETENESS_FIELDS + ["sat_score", "act_score", "approach_touch", "block_touch"]
     filled = 0
-    for f in all_fields:
+    for f in COMPLETENESS_FIELDS:
         val = athlete.get(f)
-        if val is not None and val != "" and val != 0:
+        if val is not None and str(val).strip() and str(val).lower() != "none":
             filled += 1
+    return round((filled / len(COMPLETENESS_FIELDS)) * 100)
+
+
+def compute_profile_completeness_detail(athlete: dict) -> dict:
+    """Return completeness score + list of missing field labels."""
+    filled_count = 0
+    missing = []
+    for field, label in COMPLETENESS_FIELDS.items():
+        val = athlete.get(field)
+        if val is not None and str(val).strip() and str(val).lower() != "none":
+            filled_count += 1
         else:
-            # Check recruiting_profile fallback
-            rp = athlete.get("recruiting_profile") or {}
-            if rp.get(f):
-                filled += 1
-    return round((filled / len(all_fields)) * 100)
+            missing.append(label)
+    total = len(COMPLETENESS_FIELDS)
+    score = round((filled_count / total) * 100) if total else 0
+    return {"score": score, "filled": filled_count, "total": total, "missing": missing}
 
 
 async def run_migration():
