@@ -14,6 +14,7 @@ import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteractio
 import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpScheduler";
 import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
 import { CoachNotesSidebar } from "@/components/support-pod/CoachNotesSidebar";
+import ActionPlan from "@/components/support-pod/ActionPlan";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
@@ -204,7 +205,7 @@ export default function SchoolPod() {
 
   if (!data) return null;
 
-  const { program, metrics, health, health_display, signals, actions, notes, timeline_events, stage_history, school_info, current_issue } = data;
+  const { program, metrics, health, health_display, signals, actions, notes, timeline_events, stage_history, school_info, current_issue, playbook } = data;
   const openActions = actions.filter(a => a.status === "ready" || a.status === "open");
   const completedActions = actions.filter(a => a.status === "completed");
   const allTimeline = [
@@ -313,6 +314,13 @@ export default function SchoolPod() {
             <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
               {signals.map(s => <SignalCard key={s.id} signal={s} />)}
             </div>
+          </Section>
+        )}
+
+        {/* ─── Action Plan (auto-generated from signals) ─── */}
+        {playbook && (
+          <Section title="Action Plan" testId="school-action-plan">
+            <ActionPlan playbook={playbook} />
           </Section>
         )}
 

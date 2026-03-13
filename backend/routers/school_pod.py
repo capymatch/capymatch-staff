@@ -69,9 +69,9 @@ def compute_school_signals(program, metrics):
     overdue = metrics.get("overdue_followups", 0)
     freshness = metrics.get("engagement_freshness_label", "")
     reply_rate = metrics.get("reply_rate")
-    stalled = metrics.get("stage_stalled_days", 0)
+    stalled = metrics.get("stage_stalled_days") or 0
     trend = metrics.get("engagement_trend", "")
-    days_since = metrics.get("days_since_last_engagement", 0)
+    days_since = metrics.get("days_since_last_engagement") or 0
 
     if overdue > 0:
         signals.append({
@@ -125,6 +125,127 @@ def compute_school_signals(program, metrics):
         })
 
     return signals
+
+
+# ─── School-Specific Playbook Generator ───────────────────────
+def _get_school_playbook(program, metrics, signals, school_info, athlete):
+    """Generate a school-specific action plan based on the school's current signals."""
+    if not signals:
+        return None
+
+    school = program.get("university_name", "this school")
+    coach_name = (school_info or {}).get("primary_coach", "")
+    coach_label = coach_name or f"the coach at {school}"
+    status = program.get("recruiting_status", "")
+    reply = program.get("reply_status", "")
+    days_since = (metrics or {}).get("days_since_last_engagement") or 0
+    overdue = (metrics or {}).get("overdue_followups", 0)
+    stalled = (metrics or {}).get("stage_stalled_days", 0)
+    athlete_name = athlete.get("full_name", "the athlete") if athlete else "the athlete"
+
+    # Determine the primary signal to build the playbook around
+    sig_ids = [s["id"] for s in signals if s["type"] != "insight"]
+    if not sig_ids:
+        return None
+
+    # Priority: overdue > stale > no_reply > stalled_stage
+    if "sig_overdue" in sig_ids:
+        return _school_playbook_followup(school, coach_label, athlete_name, days_since, overdue, status)
+    if "sig_stale" in sig_ids:
+        return _school_playbook_reengage(school, coach_label, athlete_name, days_since, reply)
+    if "sig_no_reply" in sig_ids:
+        return _school_playbook_outreach(school, coach_label, athlete_name, reply, status)
+    if "sig_stalled_stage" in sig_ids:
+        return _school_playbook_advance(school, coach_label, athlete_name, status, stalled)
+
+    return None
+
+
+def _school_playbook_followup(school, coach, athlete, days_since, overdue, status):
+    steps = [
+        {"step": 1, "action": f"Review last interaction with {school} — what was discussed and what was promised", "owner": "Coach", "days": "Day 1"},
+        {"step": 2, "action": f"Send a follow-up email to {coach} referencing the last conversation", "owner": "Athlete", "days": "Day 1"},
+        {"step": 3, "action": f"If no response in 48h, try a different channel (phone call or social media)", "owner": "Coach", "days": "Day 3"},
+        {"step": 4, "action": f"Log the outcome and update {school}'s status", "owner": "Coach", "days": "Day 3-5"},
+    ]
+    if overdue > 1:
+        steps.insert(2, {"step": 3, "action": f"Prioritize the most time-sensitive follow-up — {overdue} are overdue", "owner": "Coach", "days": "Day 1"})
+        for i, s in enumerate(steps):
+            s["step"] = i + 1
+
+    return {
+        "title": "Follow-Up Required",
+        "description": f"{overdue} overdue follow-up{'s' if overdue > 1 else ''} with {school}. Last engagement was {days_since} days ago.",
+        "estimated_days": "3-5 days",
+        "success_criteria": f"{coach} responds or {athlete} has a confirmed next step with {school}",
+        "steps": steps,
+    }
+
+
+def _school_playbook_reengage(school, coach, athlete, days_since, reply):
+    steps = [
+        {"step": 1, "action": f"Review the full interaction history with {school} — identify what went cold", "owner": "Coach", "days": "Day 1"},
+        {"step": 2, "action": f"Prepare new content to share (updated stats, recent highlights, or tournament results)", "owner": "Athlete", "days": "Day 1-2"},
+        {"step": 3, "action": f"Send a re-engagement email to {coach} with fresh content and a specific ask", "owner": "Athlete", "days": "Day 2"},
+        {"step": 4, "action": f"If no response after 3 days, evaluate whether {school} is still a realistic target", "owner": "Coach", "days": "Day 5"},
+        {"step": 5, "action": f"Log outcome and adjust {school}'s priority if needed", "owner": "Coach", "days": "Day 5-7"},
+    ]
+    return {
+        "title": "Re-engagement Plan",
+        "description": f"Engagement with {school} has gone stale — no activity in {days_since} days.",
+        "estimated_days": "5-7 days",
+        "success_criteria": f"Re-establish contact with {school} or make a clear keep/drop decision",
+        "steps": steps,
+    }
+
+
+def _school_playbook_outreach(school, coach, athlete, reply, status):
+    if status in ("Not Contacted", ""):
+        # First contact playbook
+        steps = [
+            {"step": 1, "action": f"Research {school}'s program — roster needs, recruiting class, and coaching staff", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": f"Draft a personalized introduction email to {coach}", "owner": "Coach + Athlete", "days": "Day 1"},
+            {"step": 3, "action": f"Send the introduction email with {athlete}'s highlights and profile link", "owner": "Athlete", "days": "Day 2"},
+            {"step": 4, "action": f"Follow up if no response within 5 days", "owner": "Coach", "days": "Day 7"},
+        ]
+        return {
+            "title": "First Outreach Plan",
+            "description": f"{school} has not been contacted yet. Time to make a strong first impression.",
+            "estimated_days": "1-2 days",
+            "success_criteria": f"Introduction email sent to {coach} at {school}",
+            "steps": steps,
+        }
+    else:
+        steps = [
+            {"step": 1, "action": f"Review what was sent to {school} and when — assess if the approach needs changing", "owner": "Coach", "days": "Day 1"},
+            {"step": 2, "action": f"Try a different angle — reference a specific event, mutual connection, or new achievement", "owner": "Coach + Athlete", "days": "Day 2"},
+            {"step": 3, "action": f"Send the revised outreach to {coach}", "owner": "Athlete", "days": "Day 2"},
+            {"step": 4, "action": f"If still no reply after 5 more days, consider reaching the recruiting coordinator or assistant coach", "owner": "Coach", "days": "Day 7"},
+            {"step": 5, "action": f"Evaluate whether to continue pursuing {school} or redirect effort", "owner": "Coach", "days": "Day 10"},
+        ]
+        return {
+            "title": "Outreach Strategy",
+            "description": f"No response from {school} despite contact. A different approach may be needed.",
+            "estimated_days": "7-10 days",
+            "success_criteria": f"Receive a response from {school} or make a clear decision on next steps",
+            "steps": steps,
+        }
+
+
+def _school_playbook_advance(school, coach, athlete, status, stalled):
+    steps = [
+        {"step": 1, "action": f"Assess why {school} has been at '{status}' for {stalled} days — is it the school or {athlete}?", "owner": "Coach", "days": "Day 1"},
+        {"step": 2, "action": f"Identify the specific next step needed to move forward (visit, application, commitment talk)", "owner": "Coach", "days": "Day 1"},
+        {"step": 3, "action": f"Communicate the next step to {coach} at {school} with a clear timeline", "owner": "Athlete", "days": "Day 2"},
+        {"step": 4, "action": f"Follow up and confirm the stage has advanced", "owner": "Coach", "days": "Day 5"},
+    ]
+    return {
+        "title": "Stage Advancement Plan",
+        "description": f"Recruiting status with {school} has been '{status}' for {stalled} days. Time to move forward.",
+        "estimated_days": "3-5 days",
+        "success_criteria": f"Clear next step agreed with {school} and stage updated",
+        "steps": steps,
+    }
 
 
 # ─── GET /api/support-pods/:athleteId/schools ─────────────────
@@ -276,6 +397,20 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     ).sort("severity", 1).to_list(10)
     current_issue = school_issues[0] if school_issues else None
 
+    # Athlete data for playbook context
+    athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0})
+
+    # Generate school-specific action plan playbook
+    school_info_dict = {
+        "primary_coach": (kb or {}).get("primary_coach", ""),
+        "coach_email": (kb or {}).get("coach_email", ""),
+        "recruiting_coordinator": (kb or {}).get("recruiting_coordinator", ""),
+        "coordinator_email": (kb or {}).get("coordinator_email", ""),
+        "website": (kb or {}).get("website", ""),
+        "scholarship_type": (kb or {}).get("scholarship_type", ""),
+    } if kb else None
+    playbook = _get_school_playbook(program, metrics, signals, school_info_dict, athlete)
+
     return {
         "program": {
             "program_id": program_id,
@@ -307,17 +442,11 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         "signals": signals,
         "current_issue": current_issue,
         "actions": actions,
+        "playbook": playbook,
         "notes": notes,
         "timeline_events": events,
         "stage_history": stage_history,
-        "school_info": {
-            "primary_coach": (kb or {}).get("primary_coach", ""),
-            "coach_email": (kb or {}).get("coach_email", ""),
-            "recruiting_coordinator": (kb or {}).get("recruiting_coordinator", ""),
-            "coordinator_email": (kb or {}).get("coordinator_email", ""),
-            "website": (kb or {}).get("website", ""),
-            "scholarship_type": (kb or {}).get("scholarship_type", ""),
-        } if kb else None,
+        "school_info": school_info_dict,
     }
 
 
