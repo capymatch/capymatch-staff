@@ -121,6 +121,8 @@ async def ensure_issue(athlete_id: str, issue_type: str, source_context: dict = 
         return existing
 
     # Cooldown: don't re-create if same type was resolved in the last 24 hours
+    # BUT only if the condition has actually improved (resolution_source != manual)
+    # If the caller is still detecting the same condition, the issue should be re-created
     recently_resolved = await db.pod_issues.find_one(
         {"athlete_id": athlete_id, "type": issue_type, "status": "resolved"},
         {"_id": 0},
@@ -129,8 +131,12 @@ async def ensure_issue(athlete_id: str, issue_type: str, source_context: dict = 
     if recently_resolved and recently_resolved.get("resolved_at"):
         try:
             resolved_dt = datetime.fromisoformat(recently_resolved["resolved_at"].replace("Z", "+00:00"))
-            if (datetime.now(timezone.utc) - resolved_dt).total_seconds() < 86400:
-                return None  # Too soon to re-create
+            cooldown_secs = (datetime.now(timezone.utc) - resolved_dt).total_seconds()
+            # Only enforce cooldown if resolution was triggered by a real action
+            # (auto-resolve, check-in, etc.), not a manual resolve from UI
+            # Short 2-hour cooldown for action-based resolutions to prevent flapping
+            if cooldown_secs < 7200 and recently_resolved.get("resolution_source") not in ("manual", "Manual", None):
+                return None  # Short cooldown after legitimate resolution
         except (ValueError, TypeError):
             pass
 
