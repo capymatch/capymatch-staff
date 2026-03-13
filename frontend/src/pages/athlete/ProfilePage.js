@@ -11,19 +11,17 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 /* ── Profile Completeness ── */
 const PROFILE_FIELDS = [
   { key: "athlete_name", label: "Full Name" },
-  { key: "graduation_year", label: "Graduation Year" },
+  { key: "photo_url", label: "Profile Photo" },
   { key: "position", label: "Position" },
+  { key: "graduation_year", label: "Graduation Year" },
   { key: "height", label: "Height" },
-  { key: "jersey_number", label: "Jersey #" },
-  { key: "standing_reach", label: "Standing Reach" },
-  { key: "approach_touch", label: "Approach Touch" },
-  { key: "club_team", label: "Club Team" },
-  { key: "high_school", label: "High School" },
-  { key: "city", label: "City" },
   { key: "bio", label: "Bio" },
   { key: "video_link", label: "Highlights Video" },
   { key: "contact_email", label: "Email" },
-  { key: "parent_name", label: "Club Coach Name" },
+  { key: "club_team", label: "Club Team" },
+  { key: "city", label: "City" },
+  { key: "state", label: "State" },
+  { key: "gpa", label: "GPA" },
 ];
 
 function getCompleteness(profile) {

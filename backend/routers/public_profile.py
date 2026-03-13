@@ -95,7 +95,7 @@ def _compute_completeness(athlete: dict) -> dict:
         else:
             missing.append(label)
     total = len(COMPLETENESS_FIELDS)
-    score = int((len(filled) / total) * 100) if total else 0
+    score = round((len(filled) / total) * 100) if total else 0
     return {"score": score, "filled": filled, "missing": missing}
 
 
