@@ -36,7 +36,7 @@ Same layout as athlete pod but ALL data scoped to one school:
 - School contact info (coach name, email, website from knowledge base)
 - School-level signals (overdue follow-ups, no reply, stale engagement, stalled stage)
 - School-level actions (create, complete, track)
-- School-level notes
+- School-level notes (inline + sidebar)
 - School-level timeline
 - Stage history
 
@@ -76,7 +76,7 @@ still_early      → not contacted yet
 
 ## API Endpoints
 
-### School Pod (NEW)
+### School Pod
 - `GET /api/support-pods/:athleteId/schools` — List all target schools sorted by urgency
 - `GET /api/support-pods/:athleteId/school/:programId` — Full school pod data
 - `POST /api/support-pods/:athleteId/school/:programId/actions` — Create school-scoped action
@@ -103,6 +103,7 @@ still_early      → not contacted yet
 - **School Pod architecture** — full restructuring of coach workflow to school-level
 - Coach dashboard cleanup (removed Assigned Actions)
 - Mobile responsiveness fixes (PodHeader, NotificationBell, CoachNotesSidebar)
+- **School Pod Notes Feature** — Full notes sidebar with school-scoping, auth headers fix for CRUD operations (Mar 13, 2026)
 
 ## Backlog
 ### P1 — Close the Action Loop
