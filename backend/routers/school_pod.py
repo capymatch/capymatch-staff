@@ -1,0 +1,437 @@
+"""School Pod — per-school workspace for coaches.
+
+Provides school-level data scoped to a specific athlete-school relationship.
+"""
+
+from datetime import datetime, timezone, timedelta
+from fastapi import APIRouter, HTTPException
+from auth_middleware import get_current_user_dep
+from services.ownership import can_access_athlete
+from db_client import db
+import uuid
+
+router = APIRouter()
+
+
+# ─── Health classification for a school ───────────────────────
+HEALTH_ORDER = {
+    "at_risk": 0,
+    "needs_attention": 1,
+    "awaiting_reply": 2,
+    "active": 3,
+    "strong_momentum": 4,
+    "still_early": 5,
+}
+
+HEALTH_DISPLAY = {
+    "at_risk": {"label": "At Risk", "color": "#ef4444", "bg": "rgba(239,68,68,0.08)"},
+    "needs_attention": {"label": "Needs Attention", "color": "#f59e0b", "bg": "rgba(245,158,11,0.08)"},
+    "awaiting_reply": {"label": "Awaiting Reply", "color": "#3b82f6", "bg": "rgba(59,130,246,0.08)"},
+    "active": {"label": "Active", "color": "#0d9488", "bg": "rgba(13,148,136,0.08)"},
+    "strong_momentum": {"label": "Strong", "color": "#10b981", "bg": "rgba(16,185,129,0.08)"},
+    "still_early": {"label": "Early Stage", "color": "#64748b", "bg": "rgba(100,116,139,0.08)"},
+}
+
+
+def classify_school_health(program, metrics):
+    """Derive a health state from program + metrics data."""
+    if not metrics:
+        return "still_early"
+
+    health = metrics.get("pipeline_health_state", "still_early")
+    overdue = metrics.get("overdue_followups", 0)
+    freshness = metrics.get("engagement_freshness_label", "")
+    trend = metrics.get("engagement_trend", "")
+
+    # Override: overdue follow-ups → needs_attention or at_risk
+    if overdue > 0 and freshness in ("no_recent_engagement", "needs_follow_up"):
+        return "at_risk"
+    if overdue > 0:
+        return "needs_attention"
+
+    # Override: stale + no reply
+    reply = program.get("reply_status", "")
+    if reply in ("No Reply", "Awaiting Reply") and freshness == "no_recent_engagement":
+        stage = program.get("recruiting_status", "")
+        if stage in ("Contacted", "In Conversation"):
+            return "needs_attention"
+
+    return health
+
+
+def compute_school_signals(program, metrics):
+    """Generate school-specific signals from program_metrics."""
+    signals = []
+    if not metrics:
+        return signals
+
+    overdue = metrics.get("overdue_followups", 0)
+    freshness = metrics.get("engagement_freshness_label", "")
+    reply_rate = metrics.get("reply_rate")
+    stalled = metrics.get("stage_stalled_days", 0)
+    trend = metrics.get("engagement_trend", "")
+    days_since = metrics.get("days_since_last_engagement", 0)
+
+    if overdue > 0:
+        signals.append({
+            "id": "sig_overdue",
+            "type": "alert",
+            "priority": "critical",
+            "title": f"{overdue} Overdue Follow-up{'s' if overdue > 1 else ''}",
+            "description": f"Follow-up actions are overdue. Last engagement was {days_since} day{'s' if days_since != 1 else ''} ago.",
+            "recommendation": "Send a follow-up message or log a recent interaction.",
+        })
+
+    reply = program.get("reply_status", "")
+    if reply in ("No Reply", "Awaiting Reply") and program.get("recruiting_status") in ("Contacted", "In Conversation"):
+        signals.append({
+            "id": "sig_no_reply",
+            "type": "warning",
+            "priority": "high",
+            "title": "No Response from School",
+            "description": f"Status: {reply}. Initial contact was sent {program.get('initial_contact_sent', 'unknown')}.",
+            "recommendation": "Consider a different outreach approach or escalate to director.",
+        })
+
+    if freshness == "no_recent_engagement" and days_since > 7:
+        signals.append({
+            "id": "sig_stale",
+            "type": "warning",
+            "priority": "high",
+            "title": "Engagement Gone Stale",
+            "description": f"No engagement in {days_since} days. Trend: {trend}.",
+            "recommendation": "Re-engage with this school or reassess priority.",
+        })
+
+    if stalled > 14:
+        signals.append({
+            "id": "sig_stalled_stage",
+            "type": "warning",
+            "priority": "medium",
+            "title": f"Stage Stalled ({stalled} days)",
+            "description": f"Recruiting status has been '{program.get('recruiting_status')}' for {stalled} days.",
+            "recommendation": "Evaluate if this school is still a viable target.",
+        })
+
+    if reply_rate is not None and reply_rate > 0.7 and trend == "accelerating":
+        signals.append({
+            "id": "sig_momentum",
+            "type": "insight",
+            "priority": "info",
+            "title": "Strong Momentum",
+            "description": f"Reply rate: {int(reply_rate * 100)}%. Engagement is accelerating.",
+            "recommendation": "Capitalize on this momentum — push toward next stage.",
+        })
+
+    return signals
+
+
+# ─── GET /api/support-pods/:athleteId/schools ─────────────────
+@router.get("/support-pods/{athlete_id}/schools")
+async def get_athlete_schools(athlete_id: str, current_user: dict = get_current_user_dep()):
+    """Return all target schools for an athlete, sorted by urgency."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Find athlete's user to get tenant_id
+    user = await db.users.find_one({"athlete_id": athlete_id}, {"_id": 0, "id": 1})
+    if not user:
+        # Fallback: check program_metrics which has athlete_id directly
+        metrics_list = await db.program_metrics.find(
+            {"athlete_id": athlete_id}, {"_id": 0}
+        ).to_list(50)
+        program_ids = [m["program_id"] for m in metrics_list]
+        programs = []
+        for pid in program_ids:
+            p = await db.programs.find_one({"program_id": pid}, {"_id": 0})
+            if p:
+                programs.append(p)
+    else:
+        tenant_id = f"tenant-{user['id']}"
+        programs = await db.programs.find(
+            {"tenant_id": tenant_id}, {"_id": 0}
+        ).to_list(50)
+
+    # Fetch all metrics for this athlete
+    metrics_map = {}
+    metrics_list = await db.program_metrics.find(
+        {"athlete_id": athlete_id}, {"_id": 0}
+    ).to_list(50)
+    for m in metrics_list:
+        metrics_map[m["program_id"]] = m
+
+    # Count school-scoped actions per program
+    action_counts = {}
+    pipeline = [
+        {"$match": {"athlete_id": athlete_id, "program_id": {"$exists": True, "$ne": None}, "status": {"$in": ["ready", "open", "overdue"]}}},
+        {"$group": {"_id": "$program_id", "count": {"$sum": 1}}},
+    ]
+    async for doc in db.pod_actions.aggregate(pipeline):
+        action_counts[doc["_id"]] = doc["count"]
+
+    # Build school list
+    schools = []
+    for p in programs:
+        pid = p["program_id"]
+        m = metrics_map.get(pid, {})
+        health = classify_school_health(p, m)
+        health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
+
+        schools.append({
+            "program_id": pid,
+            "university_name": p.get("university_name", ""),
+            "division": p.get("division", ""),
+            "conference": p.get("conference", ""),
+            "recruiting_status": p.get("recruiting_status", ""),
+            "reply_status": p.get("reply_status", ""),
+            "priority": p.get("priority", ""),
+            "next_action": p.get("next_action", ""),
+            "next_action_due": p.get("next_action_due", ""),
+            "initial_contact_sent": p.get("initial_contact_sent", ""),
+            "last_follow_up": p.get("last_follow_up", ""),
+            "health": health,
+            "health_label": health_display["label"],
+            "health_color": health_display["color"],
+            "health_bg": health_display["bg"],
+            "engagement_trend": m.get("engagement_trend", ""),
+            "days_since_last_engagement": m.get("days_since_last_engagement"),
+            "reply_rate": m.get("reply_rate"),
+            "overdue_followups": m.get("overdue_followups", 0),
+            "open_actions": action_counts.get(pid, 0),
+        })
+
+    # Sort: at_risk first, then needs_attention, etc.
+    schools.sort(key=lambda s: (HEALTH_ORDER.get(s["health"], 99), -(s.get("overdue_followups") or 0)))
+
+    return {"athlete_id": athlete_id, "schools": schools, "total": len(schools)}
+
+
+# ─── GET /api/support-pods/:athleteId/school/:programId ───────
+@router.get("/support-pods/{athlete_id}/school/{program_id}")
+async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = get_current_user_dep()):
+    """Return full school pod data for a specific athlete-school relationship."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    program = await db.programs.find_one({"program_id": program_id}, {"_id": 0})
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+
+    metrics = await db.program_metrics.find_one(
+        {"program_id": program_id, "athlete_id": athlete_id}, {"_id": 0}
+    )
+
+    # School coach info from knowledge base
+    kb = await db.university_knowledge_base.find_one(
+        {"university_name": program.get("university_name")}, {"_id": 0}
+    )
+
+    # Health and signals
+    health = classify_school_health(program, metrics)
+    health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
+    signals = compute_school_signals(program, metrics)
+
+    # School-scoped actions (have program_id set)
+    actions = await db.pod_actions.find(
+        {"athlete_id": athlete_id, "program_id": program_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    # School-scoped notes
+    notes = await db.athlete_notes.find(
+        {"athlete_id": athlete_id, "program_id": program_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    # School-scoped timeline events
+    events = await db.pod_action_events.find(
+        {"athlete_id": athlete_id, "program_id": program_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    # Stage history for this program
+    stage_history = await db.program_stage_history.find(
+        {"program_id": program_id, "athlete_id": athlete_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(20)
+
+    # School-level issues
+    school_issues = await db.pod_issues.find(
+        {"athlete_id": athlete_id, "program_id": program_id, "status": "active"},
+        {"_id": 0}
+    ).sort("severity", 1).to_list(10)
+    current_issue = school_issues[0] if school_issues else None
+
+    return {
+        "program": {
+            "program_id": program_id,
+            "university_name": program.get("university_name", ""),
+            "division": program.get("division", ""),
+            "conference": program.get("conference", ""),
+            "region": program.get("region", ""),
+            "recruiting_status": program.get("recruiting_status", ""),
+            "reply_status": program.get("reply_status", ""),
+            "priority": program.get("priority", ""),
+            "next_action": program.get("next_action", ""),
+            "next_action_due": program.get("next_action_due", ""),
+            "initial_contact_sent": program.get("initial_contact_sent", ""),
+            "last_follow_up": program.get("last_follow_up", ""),
+            "notes": program.get("notes", ""),
+        },
+        "metrics": {
+            "engagement_trend": (metrics or {}).get("engagement_trend", ""),
+            "reply_rate": (metrics or {}).get("reply_rate"),
+            "overdue_followups": (metrics or {}).get("overdue_followups", 0),
+            "stage_stalled_days": (metrics or {}).get("stage_stalled_days", 0),
+            "days_since_last_engagement": (metrics or {}).get("days_since_last_engagement"),
+            "engagement_freshness_label": (metrics or {}).get("engagement_freshness_label", ""),
+            "meaningful_interaction_count": (metrics or {}).get("meaningful_interaction_count", 0),
+            "pipeline_health_state": (metrics or {}).get("pipeline_health_state", ""),
+        },
+        "health": health,
+        "health_display": health_display,
+        "signals": signals,
+        "current_issue": current_issue,
+        "actions": actions,
+        "notes": notes,
+        "timeline_events": events,
+        "stage_history": stage_history,
+        "school_info": {
+            "primary_coach": (kb or {}).get("primary_coach", ""),
+            "coach_email": (kb or {}).get("coach_email", ""),
+            "recruiting_coordinator": (kb or {}).get("recruiting_coordinator", ""),
+            "coordinator_email": (kb or {}).get("coordinator_email", ""),
+            "website": (kb or {}).get("website", ""),
+            "scholarship_type": (kb or {}).get("scholarship_type", ""),
+        } if kb else None,
+    }
+
+
+# ─── POST: School-scoped actions ─────────────────────────────
+@router.post("/support-pods/{athlete_id}/school/{program_id}/actions")
+async def create_school_action(athlete_id: str, program_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Create an action scoped to a specific school."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    program = await db.programs.find_one({"program_id": program_id}, {"_id": 0, "university_name": 1})
+    school_name = program.get("university_name", "") if program else ""
+    now = datetime.now(timezone.utc).isoformat()
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "program_id": program_id,
+        "school_name": school_name,
+        "title": body.get("title", ""),
+        "owner": body.get("owner", current_user.get("name", "")),
+        "status": "ready",
+        "due_date": body.get("due_date", (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()),
+        "source": "manual",
+        "notes": body.get("notes", ""),
+        "created_by": current_user["name"],
+        "created_at": now,
+        "completed_at": None,
+    }
+    await db.pod_actions.insert_one(doc)
+    doc.pop("_id", None)
+
+    # Timeline event
+    await db.pod_action_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "program_id": program_id,
+        "type": "action_created",
+        "description": f"[{school_name}] Created action: {doc['title']}",
+        "actor": current_user["name"],
+        "created_at": now,
+    })
+
+    return doc
+
+
+# ─── POST: School-scoped note ────────────────────────────────
+@router.post("/support-pods/{athlete_id}/school/{program_id}/notes")
+async def create_school_note(athlete_id: str, program_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Create a note scoped to a specific school."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    program = await db.programs.find_one({"program_id": program_id}, {"_id": 0, "university_name": 1})
+    school_name = program.get("university_name", "") if program else ""
+    now = datetime.now(timezone.utc).isoformat()
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "program_id": program_id,
+        "school_name": school_name,
+        "author": current_user["name"],
+        "text": body.get("text", ""),
+        "tag": body.get("tag", ""),
+        "category": body.get("category", "recruiting"),
+        "created_at": now,
+    }
+    await db.athlete_notes.insert_one(doc)
+    doc.pop("_id", None)
+
+    # Timeline event
+    await db.pod_action_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "program_id": program_id,
+        "type": "note_added",
+        "description": f"[{school_name}] Note: {doc['text'][:80]}",
+        "actor": current_user["name"],
+        "created_at": now,
+    })
+
+    return doc
+
+
+# ─── PATCH: Complete/update school-scoped action ─────────────
+@router.patch("/support-pods/{athlete_id}/school/{program_id}/actions/{action_id}")
+async def update_school_action(athlete_id: str, program_id: str, action_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Update a school-scoped action (complete, reassign, etc.)."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    now = datetime.now(timezone.utc).isoformat()
+    update_dict = {}
+    status = body.get("status")
+    if status:
+        update_dict["status"] = status
+        if status == "completed":
+            update_dict["completed_at"] = now
+            update_dict["completed_by"] = current_user.get("name", "")
+    if body.get("owner"):
+        update_dict["owner"] = body["owner"]
+
+    existing = await db.pod_actions.find_one({"id": action_id, "athlete_id": athlete_id})
+    if not existing:
+        raise HTTPException(404, "Action not found")
+
+    await db.pod_actions.update_one({"id": action_id}, {"$set": update_dict})
+
+    action_title = existing.get("title", "")
+    school_name = existing.get("school_name", "")
+    event_desc = f"[{school_name}] "
+    if status == "completed":
+        event_desc += f'Completed: "{action_title}"'
+    elif body.get("owner"):
+        event_desc += f'Reassigned "{action_title}" to {body["owner"]}'
+    else:
+        event_desc += f'Updated "{action_title}"'
+
+    await db.pod_action_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "program_id": program_id,
+        "type": "action_completed" if status == "completed" else "action_updated",
+        "description": event_desc,
+        "actor": current_user["name"],
+        "action_id": action_id,
+        "created_at": now,
+    })
+
+    return {"updated": True, "action_id": action_id}

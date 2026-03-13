@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import MissionControl from "./pages/MissionControl";
 import SupportPod from "./pages/SupportPod";
+import SchoolPod from "./pages/SchoolPod";
 import EventHome from "./pages/EventHome";
 import EventPrep from "./pages/EventPrep";
 import LiveEvent from "./pages/LiveEvent";
@@ -126,6 +127,7 @@ function AppRoutes() {
       <Route path="/admin/users/:userId" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminUserDetailPage /></ProtectedRoute>} />
       <Route path="/admin/subscriptions" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminSubscriptionsPage /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SupportPod /></ProtectedRoute>} />
+      <Route path="/support-pods/:athleteId/school/:programId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SchoolPod /></ProtectedRoute>} />
       <Route path="/internal/athlete/:athleteId/profile" element={<ProtectedRoute allowedRoles={["director","club_coach","platform_admin"]}><InternalAthleteProfile /></ProtectedRoute>} />
 
       {/* ── Athlete / Parent routes ── */}

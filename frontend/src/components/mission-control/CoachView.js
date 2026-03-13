@@ -301,9 +301,6 @@ export default function CoachView({ data, userName }) {
       {/* ── Athletes Requiring Attention + On Track + Event Prep ── */}
       <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} />
 
-      {/* ── Assigned Actions ── */}
-      <DirectorActionsCard role="club_coach" />
-
       {/* ── Upcoming Events (hidden in focus mode) ── */}
       {!focusMode && (
         <UpcomingEventsCard events={data.upcomingEvents || []} roster={data.myRoster || []} />
