@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-export function CoachEmailComposer({ athleteId, athleteName, podMembers, onSent, onCancel }) {
+export function CoachEmailComposer({ athleteId, athleteName, podMembers, programId, schoolName, onSent, onCancel }) {
   const seenIds = new Set();
   const allRecipients = [];
   // Add athlete first
@@ -21,7 +21,7 @@ export function CoachEmailComposer({ athleteId, athleteName, podMembers, onSent,
   }
 
   const [selectedIds, setSelectedIds] = useState([athleteId]);
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState(schoolName ? `Re: ${schoolName}` : "");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
 

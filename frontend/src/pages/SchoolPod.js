@@ -8,6 +8,11 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CoachActionBar } from "@/components/support-pod/CoachActionBar";
+import { CoachEmailComposer } from "@/components/support-pod/CoachEmailComposer";
+import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteraction";
+import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpScheduler";
+import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
@@ -141,6 +146,12 @@ export default function SchoolPod() {
   const [loading, setLoading] = useState(true);
   const [showAddAction, setShowAddAction] = useState(false);
   const [showAddNote, setShowAddNote] = useState(false);
+  const [activeAction, setActiveAction] = useState(null);
+
+  const toggleAction = (action) => {
+    if (action === "notes") { setShowAddNote(true); return; }
+    setActiveAction(prev => prev === action ? null : action);
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -393,6 +404,57 @@ export default function SchoolPod() {
           </Section>
         )}
       </main>
+
+      {/* Action Bar */}
+      <CoachActionBar
+        activeAction={activeAction}
+        onToggle={toggleAction}
+        notesOpen={showAddNote}
+        onToggleNotes={() => setShowAddNote(!showAddNote)}
+      />
+
+      {/* Modals */}
+      {activeAction === "email" && (
+        <CoachEmailComposer
+          athleteId={athleteId}
+          athleteName=""
+          programId={programId}
+          schoolName={program.university_name}
+          podMembers={[]}
+          onCancel={() => setActiveAction(null)}
+          onSent={() => { setActiveAction(null); fetchData(); }}
+        />
+      )}
+      {activeAction === "log" && (
+        <CoachLogInteraction
+          athleteId={athleteId}
+          athleteName=""
+          programId={programId}
+          schoolName={program.university_name}
+          onCancel={() => setActiveAction(null)}
+          onSaved={() => { setActiveAction(null); fetchData(); }}
+        />
+      )}
+      {activeAction === "followup" && (
+        <CoachFollowUpScheduler
+          athleteId={athleteId}
+          athleteName=""
+          programId={programId}
+          schoolName={program.university_name}
+          onCancel={() => setActiveAction(null)}
+          onSaved={() => { setActiveAction(null); fetchData(); }}
+        />
+      )}
+      {activeAction === "escalate" && (
+        <EscalateToDirector
+          athleteId={athleteId}
+          athleteName=""
+          programId={programId}
+          schoolName={program.university_name}
+          onCancel={() => setActiveAction(null)}
+          onSaved={() => { setActiveAction(null); fetchData(); }}
+        />
+      )}
     </div>
   );
 }

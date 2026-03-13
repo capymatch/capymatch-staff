@@ -21,7 +21,7 @@ const URGENCY_LEVELS = [
   { id: "high", label: "High — needs attention today", color: "#ef4444" },
 ];
 
-export function EscalateToDirector({ athleteId, athleteName, onSaved, onCancel }) {
+export function EscalateToDirector({ athleteId, athleteName, programId, schoolName, onSaved, onCancel }) {
   const [reason, setReason] = useState(ESCALATION_REASONS[0].id);
   const [urgency, setUrgency] = useState("medium");
   const [details, setDetails] = useState("");
@@ -35,21 +35,27 @@ export function EscalateToDirector({ athleteId, athleteName, onSaved, onCancel }
     setSaving(true);
     try {
       const reasonLabel = ESCALATION_REASONS.find(r => r.id === reason)?.label || reason;
-      // Create a director action via coach escalation endpoint
+      const contextLabel = schoolName ? `[${schoolName}] ` : "";
       await axios.post(`${API}/support-pods/${athleteId}/escalate`, {
         athlete_name: athleteName,
         type: "escalation",
-        title: `Escalation: ${reasonLabel}`,
+        title: `${contextLabel}Escalation: ${reasonLabel}`,
         reason,
         description: details.trim(),
         urgency,
         source: "coach_escalation",
+        program_id: programId || undefined,
       });
-      // Log to timeline
-      await axios.post(`${API}/athletes/${athleteId}/notes`, {
-        text: `Escalated to Director: ${reasonLabel}\n${details.trim()}`,
-        tag: "Escalation",
-      });
+      const noteText = `${contextLabel}Escalated to Director: ${reasonLabel}\n${details.trim()}`;
+      if (programId) {
+        await axios.post(`${API}/support-pods/${athleteId}/school/${programId}/notes`, {
+          text: noteText, tag: "Escalation",
+        }, { headers: { Authorization: `Bearer ${localStorage.getItem("capymatch_token")}` } });
+      } else {
+        await axios.post(`${API}/athletes/${athleteId}/notes`, {
+          text: noteText, tag: "Escalation",
+        });
+      }
       toast.success("Escalated to Director");
       onSaved();
     } catch { toast.error("Failed to escalate"); }

@@ -16,7 +16,7 @@ const FOLLOWUP_TYPES = [
   "Custom",
 ];
 
-export function CoachFollowUpScheduler({ athleteId, athleteName, onSaved, onCancel }) {
+export function CoachFollowUpScheduler({ athleteId, athleteName, programId, schoolName, onSaved, onCancel }) {
   const [date, setDate] = useState("");
   const [type, setType] = useState(FOLLOWUP_TYPES[0]);
   const [notes, setNotes] = useState("");
@@ -29,17 +29,25 @@ export function CoachFollowUpScheduler({ athleteId, athleteName, onSaved, onCanc
     if (!date) { toast.error("Pick a date"); return; }
     setSaving(true);
     try {
-      // Create as a pod action item with a due date
-      await axios.post(`${API}/support-pods/${athleteId}/actions`, {
-        title: type === "Custom" && notes.trim() ? notes.trim() : type,
-        owner: "Coach Martinez",
-        due_date: new Date(date).toISOString(),
-      });
-      // Also log a timeline note
-      await axios.post(`${API}/athletes/${athleteId}/notes`, {
-        text: `Follow-up scheduled for ${new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${type}${notes ? ` — ${notes}` : ""}`,
-        tag: "Follow-up",
-      });
+      const actionTitle = type === "Custom" && notes.trim() ? notes.trim() : type;
+      const noteText = `Follow-up scheduled for ${new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}: ${type}${notes ? ` — ${notes}` : ""}`;
+
+      if (programId) {
+        const authHeaders = { headers: { Authorization: `Bearer ${localStorage.getItem("capymatch_token")}` } };
+        await axios.post(`${API}/support-pods/${athleteId}/school/${programId}/actions`, {
+          title: actionTitle, due_date: new Date(date).toISOString(),
+        }, authHeaders);
+        await axios.post(`${API}/support-pods/${athleteId}/school/${programId}/notes`, {
+          text: noteText, tag: "Follow-up",
+        }, authHeaders);
+      } else {
+        await axios.post(`${API}/support-pods/${athleteId}/actions`, {
+          title: actionTitle, owner: "Coach Martinez", due_date: new Date(date).toISOString(),
+        });
+        await axios.post(`${API}/athletes/${athleteId}/notes`, {
+          text: noteText, tag: "Follow-up",
+        });
+      }
       toast.success("Follow-up scheduled");
       onSaved();
     } catch { toast.error("Failed to schedule"); }
@@ -61,7 +69,7 @@ export function CoachFollowUpScheduler({ athleteId, athleteName, onSaved, onCanc
               <X className="w-4 h-4 text-white/40" />
             </button>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">{athleteName} — creates a task in Next Actions</p>
+          <p className="text-[11px] text-slate-500 mt-1">{schoolName ? `${athleteName} · ${schoolName}` : athleteName} — creates a task in Actions</p>
         </div>
 
         <div className="p-5 space-y-3">

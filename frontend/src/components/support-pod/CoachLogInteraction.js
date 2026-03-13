@@ -19,7 +19,7 @@ const INTERACTION_TYPES = [
 
 const OUTCOMES = ["Positive", "Neutral", "Needs Follow-up", "Concern Raised"];
 
-export function CoachLogInteraction({ athleteId, athleteName, onSaved, onCancel }) {
+export function CoachLogInteraction({ athleteId, athleteName, programId, schoolName, onSaved, onCancel }) {
   const [form, setForm] = useState({
     type: "Athlete Check-in",
     notes: "",
@@ -36,10 +36,16 @@ export function CoachLogInteraction({ athleteId, athleteName, onSaved, onCancel 
     if (!form.notes.trim()) { toast.error("Add a note about this interaction"); return; }
     setSaving(true);
     try {
-      await axios.post(`${API}/athletes/${athleteId}/notes`, {
-        text: `[${form.type}] ${form.notes}\nOutcome: ${form.outcome}`,
-        tag: form.type,
-      });
+      const noteText = `[${form.type}] ${form.notes}\nOutcome: ${form.outcome}`;
+      if (programId) {
+        await axios.post(`${API}/support-pods/${athleteId}/school/${programId}/notes`, {
+          text: noteText, tag: form.type,
+        }, { headers: { Authorization: `Bearer ${localStorage.getItem("capymatch_token")}` } });
+      } else {
+        await axios.post(`${API}/athletes/${athleteId}/notes`, {
+          text: noteText, tag: form.type,
+        });
+      }
       toast.success("Interaction logged");
       onSaved();
     } catch { toast.error("Failed to log interaction"); }
@@ -61,7 +67,7 @@ export function CoachLogInteraction({ athleteId, athleteName, onSaved, onCancel 
               <X className="w-4 h-4 text-white/40" />
             </button>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">{athleteName}</p>
+          <p className="text-[11px] text-slate-500 mt-1">{schoolName ? `${athleteName} · ${schoolName}` : athleteName}</p>
         </div>
 
         <div className="p-5 space-y-3">
