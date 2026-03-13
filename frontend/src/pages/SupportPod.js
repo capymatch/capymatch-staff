@@ -3,11 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   School, ChevronRight, Loader2, ArrowLeft, RefreshCw,
-  AlertTriangle, Activity, User, UserCircle
+  AlertTriangle, Activity, User, UserCircle, Send
 } from "lucide-react";
 import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const token = () => localStorage.getItem("capymatch_token");
+const authHeaders = () => ({ headers: { Authorization: `Bearer ${token()}` } });
 
 // ─── Athlete-Level Hero (only for athlete-level issues) ─────
 function AthleteHero({ currentIssue, signals }) {
@@ -45,13 +47,34 @@ function AthleteHero({ currentIssue, signals }) {
 }
 
 // ─── Profile Completeness Alert ─────────────────────
-function ProfileAlert({ completeness }) {
+function ProfileAlert({ completeness, athleteId, athleteName }) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
   if (!completeness || completeness.score >= 80) return null;
   const isCritical = completeness.score < 50;
   const color = isCritical ? "#ef4444" : "#f59e0b";
   const bg = isCritical ? "rgba(239,68,68,0.04)" : "rgba(245,158,11,0.04)";
   const border = isCritical ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)";
   const top3 = (completeness.missing || []).slice(0, 3);
+
+  const sendReminder = async () => {
+    setSending(true);
+    try {
+      const missingList = completeness.missing.join(", ");
+      await axios.post(`${API}/support-messages`, {
+        athlete_id: athleteId,
+        subject: "Complete Your Profile",
+        body: `Hi ${athleteName || "there"},\n\nYour recruiting profile is ${completeness.score}% complete. To improve your visibility with college coaches, please update the following: ${missingList}.\n\nA complete profile makes a strong first impression. Log in and update your profile when you get a chance!`,
+      }, authHeaders());
+      setSent(true);
+      toast.success("Reminder sent to " + (athleteName || "athlete"));
+    } catch {
+      toast.error("Failed to send reminder");
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="rounded-xl border relative overflow-hidden" style={{ backgroundColor: bg, borderColor: border }} data-testid="profile-alert">
@@ -78,7 +101,21 @@ function ProfileAlert({ completeness }) {
               )}
             </div>
           </div>
-          <div className="shrink-0 ml-3">
+          <div className="flex items-center gap-3 shrink-0 ml-3">
+            <button
+              onClick={sendReminder}
+              disabled={sending || sent}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+              style={{
+                backgroundColor: sent ? "rgba(16,185,129,0.1)" : `${color}12`,
+                color: sent ? "#10b981" : color,
+                opacity: sending ? 0.6 : 1,
+              }}
+              data-testid="profile-send-reminder"
+            >
+              <Send className="w-3 h-3" />
+              {sent ? "Sent" : sending ? "Sending..." : "Send Reminder"}
+            </button>
             <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: `conic-gradient(${color} ${completeness.score * 3.6}deg, ${color}15 0deg)` }}>
               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white">
                 <span className="text-[11px] font-bold" style={{ color }}>{completeness.score}%</span>
@@ -282,7 +319,7 @@ function SupportPod() {
         <AthleteHero currentIssue={current_issue} signals={recruiting_signals} />
 
         {/* Profile Completeness Alert */}
-        <ProfileAlert completeness={profile_completeness} />
+        <ProfileAlert completeness={profile_completeness} athleteId={athleteId} athleteName={athlete?.full_name} />
 
         {/* Target Schools */}
         <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="school-list-section">

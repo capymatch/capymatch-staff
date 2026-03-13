@@ -1,19 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CheckCircle, Circle, Clock, User, Users } from "lucide-react";
 
-function ActionPlan({ playbook }) {
-  const [checkedSteps, setCheckedSteps] = useState(new Set());
+function ActionPlan({ playbook, initialChecked = [], onSave }) {
+  const [checkedSteps, setCheckedSteps] = useState(new Set(initialChecked));
 
-  if (!playbook) return null;
+  useEffect(() => {
+    setCheckedSteps(new Set(initialChecked));
+  }, [initialChecked]);
 
-  const toggleStep = (stepNum) => {
+  const toggleStep = useCallback((stepNum) => {
     setCheckedSteps(prev => {
       const next = new Set(prev);
       if (next.has(stepNum)) next.delete(stepNum);
       else next.add(stepNum);
+      if (onSave) onSave([...next]);
       return next;
     });
-  };
+  }, [onSave]);
+
+  if (!playbook) return null;
 
   const completedCount = checkedSteps.size;
   const totalSteps = playbook.steps.length;

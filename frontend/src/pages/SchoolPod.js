@@ -195,6 +195,12 @@ export default function SchoolPod() {
     } catch { toast.error("Failed"); }
   };
 
+  const savePlaybookProgress = async (checkedSteps) => {
+    try {
+      await axios.patch(`${API}/support-pods/${athleteId}/school/${programId}/playbook-progress`, { checked_steps: checkedSteps }, { headers: headers() });
+    } catch { /* silent — don't disrupt UX for save failures */ }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -205,7 +211,7 @@ export default function SchoolPod() {
 
   if (!data) return null;
 
-  const { program, metrics, health, health_display, signals, actions, notes, timeline_events, stage_history, school_info, current_issue, playbook } = data;
+  const { program, metrics, health, health_display, signals, actions, notes, timeline_events, stage_history, school_info, current_issue, playbook, playbook_checked_steps } = data;
   const openActions = actions.filter(a => a.status === "ready" || a.status === "open");
   const completedActions = actions.filter(a => a.status === "completed");
   const allTimeline = [
@@ -320,7 +326,7 @@ export default function SchoolPod() {
         {/* ─── Action Plan (auto-generated from signals) ─── */}
         {playbook && (
           <Section title="Action Plan" testId="school-action-plan">
-            <ActionPlan playbook={playbook} />
+            <ActionPlan playbook={playbook} initialChecked={playbook_checked_steps || []} onSave={savePlaybookProgress} />
           </Section>
         )}
 

@@ -411,6 +411,12 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     } if kb else None
     playbook = _get_school_playbook(program, metrics, signals, school_info_dict, athlete)
 
+    # Load saved playbook progress
+    progress_doc = await db.playbook_progress.find_one(
+        {"athlete_id": athlete_id, "program_id": program_id}, {"_id": 0}
+    )
+    playbook_checked_steps = progress_doc.get("checked_steps", []) if progress_doc else []
+
     return {
         "program": {
             "program_id": program_id,
@@ -443,6 +449,7 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         "current_issue": current_issue,
         "actions": actions,
         "playbook": playbook,
+        "playbook_checked_steps": playbook_checked_steps,
         "notes": notes,
         "timeline_events": events,
         "stage_history": stage_history,
@@ -578,3 +585,36 @@ async def update_school_action(athlete_id: str, program_id: str, action_id: str,
     })
 
     return {"updated": True, "action_id": action_id}
+
+
+
+# ─── Playbook progress persistence ───────────────────────────
+@router.get("/support-pods/{athlete_id}/school/{program_id}/playbook-progress")
+async def get_playbook_progress(athlete_id: str, program_id: str, current_user: dict = get_current_user_dep()):
+    """Get the saved playbook step completion state."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    doc = await db.playbook_progress.find_one(
+        {"athlete_id": athlete_id, "program_id": program_id}, {"_id": 0}
+    )
+    return {"checked_steps": doc.get("checked_steps", []) if doc else []}
+
+
+@router.patch("/support-pods/{athlete_id}/school/{program_id}/playbook-progress")
+async def save_playbook_progress(athlete_id: str, program_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Save playbook step completion state (upsert)."""
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    checked = body.get("checked_steps", [])
+    await db.playbook_progress.update_one(
+        {"athlete_id": athlete_id, "program_id": program_id},
+        {"$set": {
+            "athlete_id": athlete_id,
+            "program_id": program_id,
+            "checked_steps": checked,
+            "updated_by": current_user.get("name", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True,
+    )
+    return {"saved": True, "checked_steps": checked}
