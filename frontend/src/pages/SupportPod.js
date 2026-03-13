@@ -163,10 +163,10 @@ function SupportPod() {
     }
   }, [athleteId]);
 
-  const fetchSchools = useCallback(async () => {
+  const fetchSchools = useCallback(async (refresh = false) => {
     try {
       const token = localStorage.getItem("capymatch_token");
-      const res = await axios.get(`${API}/support-pods/${athleteId}/schools`, {
+      const res = await axios.get(`${API}/support-pods/${athleteId}/schools${refresh ? "?refresh=true" : ""}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSchools(res.data.schools || []);
@@ -230,7 +230,7 @@ function SupportPod() {
         podHealth={pod_health}
         lastRefreshed={lastRefreshed}
         isPolling={isPolling}
-        onManualRefresh={() => { fetchPodData(true); fetchSchools(); }}
+        onManualRefresh={() => { fetchPodData(true); fetchSchools(true); }}
         athleteId={athleteId}
       />
 

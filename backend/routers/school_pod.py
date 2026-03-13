@@ -4,9 +4,10 @@ Provides school-level data scoped to a specific athlete-school relationship.
 """
 
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from auth_middleware import get_current_user_dep
 from services.ownership import can_access_athlete
+from services.program_metrics import recompute_metrics
 from db_client import db
 import uuid
 
@@ -128,7 +129,7 @@ def compute_school_signals(program, metrics):
 
 # ─── GET /api/support-pods/:athleteId/schools ─────────────────
 @router.get("/support-pods/{athlete_id}/schools")
-async def get_athlete_schools(athlete_id: str, current_user: dict = get_current_user_dep()):
+async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), current_user: dict = get_current_user_dep()):
     """Return all target schools for an athlete, sorted by urgency."""
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -153,6 +154,14 @@ async def get_athlete_schools(athlete_id: str, current_user: dict = get_current_
         ).to_list(50)
 
     # Fetch all metrics for this athlete
+    # If refresh requested, recompute all program metrics first
+    if refresh:
+        for p in programs:
+            try:
+                await recompute_metrics(p["program_id"], p.get("tenant_id", ""))
+            except Exception:
+                pass
+
     metrics_map = {}
     metrics_list = await db.program_metrics.find(
         {"athlete_id": athlete_id}, {"_id": 0}
@@ -217,9 +226,14 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     if not program:
         raise HTTPException(status_code=404, detail="Program not found")
 
-    metrics = await db.program_metrics.find_one(
-        {"program_id": program_id, "athlete_id": athlete_id}, {"_id": 0}
-    )
+    # Always recompute fresh metrics for the School Pod (single school = fast)
+    tenant_id = program.get("tenant_id", "")
+    try:
+        metrics = await recompute_metrics(program_id, tenant_id)
+    except Exception:
+        metrics = await db.program_metrics.find_one(
+            {"program_id": program_id, "athlete_id": athlete_id}, {"_id": 0}
+        )
 
     # School coach info from knowledge base
     kb = await db.university_knowledge_base.find_one(
