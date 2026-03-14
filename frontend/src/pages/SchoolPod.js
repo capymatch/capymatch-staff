@@ -83,9 +83,25 @@ function TimelineItem({ event }) {
   );
 }
 
+const ACTION_TYPES = [
+  { value: "general", label: "General Task" },
+  { value: "send_email", label: "Send Email" },
+  { value: "log_visit", label: "Log Visit" },
+  { value: "log_interaction", label: "Log Interaction" },
+  { value: "preparation", label: "Preparation" },
+  { value: "profile_update", label: "Profile Update" },
+  { value: "research", label: "Research" },
+  { value: "reply", label: "Reply to Message" },
+];
+
 function AddActionForm({ onSubmit, onCancel }) {
   const [title, setTitle] = useState("");
   const [assignToAthlete, setAssignToAthlete] = useState(false);
+  const [actionType, setActionType] = useState("general");
+  const handleSubmit = () => {
+    if (!title.trim()) return;
+    onSubmit(title.trim(), assignToAthlete, assignToAthlete ? actionType : null);
+  };
   return (
     <div className="py-2 space-y-2">
       <div className="flex items-center gap-2">
@@ -93,28 +109,41 @@ function AddActionForm({ onSubmit, onCancel }) {
           autoFocus
           value={title}
           onChange={e => setTitle(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && title.trim() && onSubmit(title.trim(), assignToAthlete)}
+          onKeyDown={e => e.key === "Enter" && handleSubmit()}
           placeholder="New action..."
           className="flex-1 text-xs px-3 py-2 rounded-lg border outline-none focus:ring-1 focus:ring-teal-500"
           style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)", color: "var(--cm-text, #1e293b)" }}
           data-testid="new-action-input"
         />
-        <Button size="sm" onClick={() => title.trim() && onSubmit(title.trim(), assignToAthlete)} disabled={!title.trim()} data-testid="save-action-btn">Add</Button>
+        <Button size="sm" onClick={handleSubmit} disabled={!title.trim()} data-testid="save-action-btn">Add</Button>
         <button onClick={onCancel} className="p-1.5 rounded hover:bg-slate-100"><X className="w-3.5 h-3.5" /></button>
       </div>
-      <label className="flex items-center gap-2 cursor-pointer select-none" data-testid="assign-to-athlete-toggle">
-        <div
-          onClick={() => setAssignToAthlete(!assignToAthlete)}
-          className="relative w-8 h-[18px] rounded-full transition-colors"
-          style={{ background: assignToAthlete ? "#0d9488" : "#d1d5db" }}
-        >
-          <div className="absolute top-[2px] rounded-full w-[14px] h-[14px] bg-white transition-transform shadow-sm"
-            style={{ left: assignToAthlete ? 15 : 2 }} />
-        </div>
-        <span className="text-xs font-medium" style={{ color: assignToAthlete ? "#0d9488" : "var(--cm-text-3, #94a3b8)" }}>
-          Assign to Athlete
-        </span>
-      </label>
+      <div className="flex items-center gap-4">
+        <label className="flex items-center gap-2 cursor-pointer select-none" data-testid="assign-to-athlete-toggle">
+          <div
+            onClick={() => setAssignToAthlete(!assignToAthlete)}
+            className="relative w-8 h-[18px] rounded-full transition-colors"
+            style={{ background: assignToAthlete ? "#0d9488" : "#d1d5db" }}
+          >
+            <div className="absolute top-[2px] rounded-full w-[14px] h-[14px] bg-white transition-transform shadow-sm"
+              style={{ left: assignToAthlete ? 15 : 2 }} />
+          </div>
+          <span className="text-xs font-medium" style={{ color: assignToAthlete ? "#0d9488" : "var(--cm-text-3, #94a3b8)" }}>
+            Assign to Athlete
+          </span>
+        </label>
+        {assignToAthlete && (
+          <select
+            value={actionType}
+            onChange={e => setActionType(e.target.value)}
+            className="text-xs px-2 py-1 rounded-md border outline-none"
+            style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)", color: "var(--cm-text, #1e293b)" }}
+            data-testid="action-type-select"
+          >
+            {ACTION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        )}
+      </div>
     </div>
   );
 }
@@ -194,9 +223,11 @@ export default function SchoolPod() {
     } catch { toast.error("Failed"); }
   };
 
-  const addAction = async (title, assignToAthlete = false) => {
+  const addAction = async (title, assignToAthlete = false, actionType = null) => {
     try {
-      await axios.post(`${API}/support-pods/${athleteId}/school/${programId}/actions`, { title, assigned_to_athlete: assignToAthlete }, { headers: headers() });
+      const payload = { title, assigned_to_athlete: assignToAthlete };
+      if (actionType) payload.action_type = actionType;
+      await axios.post(`${API}/support-pods/${athleteId}/school/${programId}/actions`, payload, { headers: headers() });
       toast.success(assignToAthlete ? "Action assigned to athlete" : "Action created");
       setShowAddAction(false);
       fetchData();

@@ -476,6 +476,7 @@ async def create_school_action(athlete_id: str, program_id: str, body: dict, cur
         "title": body.get("title", ""),
         "owner": body.get("owner", current_user.get("name", "")),
         "assigned_to_athlete": body.get("assigned_to_athlete", False),
+        "action_type": body.get("action_type", "general"),
         "status": "ready",
         "due_date": body.get("due_date", (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()),
         "source": "manual",
@@ -635,6 +636,21 @@ async def get_my_assigned_actions(current_user: dict = get_current_user_dep()):
         {"_id": 0},
     ).sort("created_at", -1).to_list(50)
     return {"actions": actions}
+
+
+@router.patch("/athletes/me/assigned-actions/{action_id}/complete")
+async def complete_my_assigned_action(action_id: str, current_user: dict = get_current_user_dep()):
+    """Athlete marks a coach-assigned action as completed."""
+    athlete_id = current_user.get("athlete_id", current_user.get("id", ""))
+    now = datetime.now(timezone.utc).isoformat()
+    result = await db.pod_actions.update_one(
+        {"id": action_id, "athlete_id": athlete_id, "assigned_to_athlete": True},
+        {"$set": {"status": "completed", "completed_at": now, "completed_by": "athlete"}},
+    )
+    if result.modified_count == 0:
+        raise HTTPException(404, "Action not found")
+    return {"status": "completed", "completed_at": now}
+
 
 
 @router.get("/athletes/me/school/{program_id}/assigned-actions")

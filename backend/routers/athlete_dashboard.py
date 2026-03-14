@@ -418,6 +418,43 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
 
     # Sort by date descending
     timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
+
+    # Include coach support messages related to this athlete
+    athlete_id = current_user.get("athlete_id", current_user.get("id", ""))
+    lookup_ids = [current_user.get("id", ""), athlete_id]
+    support_threads = await db.support_threads.find(
+        {"$or": [
+            {"participant_ids": {"$in": lookup_ids}},
+            {"athlete_id": {"$in": lookup_ids}},
+        ]},
+        {"_id": 0},
+    ).to_list(50)
+
+    for t in support_threads:
+        tid = t.get("thread_id") or t.get("id")
+        if not tid:
+            continue
+        # Check if this thread relates to the current program (by school name in subject)
+        uni_name = program.get("university_name", "")
+        subject = t.get("subject", "")
+        # Include all coach messages in the timeline (they provide context)
+        timeline.append({
+            "id": f"msg-{tid}",
+            "event_type": "coach_message",
+            "type": "Coach Message",
+            "title": f"Coach message: {subject}",
+            "date": t.get("last_message_at") or t.get("created_at"),
+            "date_time": t.get("last_message_at") or t.get("created_at"),
+            "content": t.get("last_snippet", ""),
+            "notes": t.get("last_snippet", ""),
+            "outcome": "",
+            "coach_name": t.get("created_by", "Coach"),
+            "thread_id": tid,
+        })
+
+    # Re-sort after adding messages
+    timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
+
     return {"timeline": timeline}
 
 

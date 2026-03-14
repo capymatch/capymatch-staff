@@ -35,6 +35,7 @@ export const CONV_CONFIG = {
   ai_gmail_insight: { label: "AI Detected", color: "violet", side: "left" },
   coach_directive: { label: "Coach Directive", color: "amber", side: "center" },
   flag_completed: { label: "Flag Completed", color: "emerald", side: "center" },
+  coach_message:  { label: "Coach Message", color: "teal", side: "left" },
   interaction:    { label: "Interaction", color: "slate", side: "right" },
 };
 
