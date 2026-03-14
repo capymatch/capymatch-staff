@@ -36,6 +36,7 @@ export const CONV_CONFIG = {
   coach_directive: { label: "Coach Directive", color: "amber", side: "center" },
   flag_completed: { label: "Flag Completed", color: "emerald", side: "center" },
   coach_message:  { label: "Coach Message", color: "teal", side: "left" },
+  athlete_message: { label: "Your Message", color: "slate", side: "right" },
   interaction:    { label: "Interaction", color: "slate", side: "right" },
 };
 
