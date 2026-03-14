@@ -267,7 +267,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
       {/* Ambient glow — stronger for urgent */}
       <div style={{ position: "absolute", top: "-30%", right: "-5%", width: 350, height: 350, background: `radial-gradient(circle, ${cat.color}${isUrgent ? "18" : "0a"} 0%, transparent 70%)`, pointerEvents: "none" }} />
 
-      <div style={{ padding: "20px 24px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
+      <div style={{ padding: "14px 20px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
         {/* Filter pills + carousel arrows */}
         <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 16 }} data-testid="hero-filter-pills">
           {FILTER_PILLS.length > 1 && FILTER_PILLS.map(pill => {
@@ -331,12 +331,12 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
 
         {/* ── School-First Layout (matching reference design) ── */}
         {/* Row 1: Logo + School Name (left) | Progress Rail (right) */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
             {isSchool && p && (
-              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={52} className="rounded-[10px] flex-shrink-0" />
+              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={40} className="rounded-[10px] flex-shrink-0" />
             )}
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -0.5, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} data-testid="hero-school-name">
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.5, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} data-testid="hero-school-name">
               {isSchool && p ? p.university_name : (action.cta?.label || "Take Action")}
             </h2>
           </div>
@@ -368,7 +368,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
         </div>
 
         {/* Row 2: Metadata badges + social */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
           <PulseIndicator pulse={stages?.find(s => s.state === "active")?.pulse || "neutral"} />
           {isSchool && p?.division && (
             <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>
@@ -397,19 +397,19 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
 
         {/* Row 3: "What to do next" advice box + CTA */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 4 }}>
-          <div style={{ flex: 1, padding: "14px 18px", borderRadius: 10, border: "1px solid rgba(13,148,136,0.35)", background: "rgba(13,148,136,0.08)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 14 }}>💡</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#5eead4", letterSpacing: "0.03em" }}>What to do next</span>
+          <div style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(13,148,136,0.35)", background: "rgba(13,148,136,0.08)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+              <span style={{ fontSize: 12 }}>💡</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#5eead4", letterSpacing: "0.03em" }}>What to do next</span>
             </div>
-            <p style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.5, margin: 0 }} data-testid="hero-advice-text">
+            <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, margin: 0 }} data-testid="hero-advice-text">
               {advice || "Keep the momentum going with this program."}
             </p>
           </div>
           <button onClick={handleCTA} style={{
-            padding: "10px 24px", borderRadius: 10, border: "none",
+            padding: "8px 20px", borderRadius: 8, border: "none",
             background: "#0d9488", color: "#fff",
-            fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex",
+            fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex",
             alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit",
             transition: "all 0.2s", flexShrink: 0, minWidth: 130,
             boxShadow: "0 4px 16px rgba(13,148,136,0.3)",
