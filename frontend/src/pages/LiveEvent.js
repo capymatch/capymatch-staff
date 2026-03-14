@@ -66,6 +66,9 @@ function LiveEvent() {
   const [newSchoolName, setNewSchoolName] = useState("");
   const [addingSchool, setAddingSchool] = useState(false);
 
+  // Signals filter
+  const [showAllSignals, setShowAllSignals] = useState(false);
+
   // Timer
   const [sessionStart] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
@@ -458,12 +461,35 @@ function LiveEvent() {
 
           {/* Right: Grouped Recent Signals */}
           <div className="lg:col-span-2" data-testid="recent-signals-feed">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3 block">Signals ({notes.length})</label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                Signals ({(selectedAthlete && !showAllSignals ? groupedNotes.filter(g => g.athleteId === selectedAthlete) : groupedNotes).reduce((s, g) => s + g.signals.length, 0)})
+              </label>
+              {selectedAthlete && (
+                <button
+                  onClick={() => setShowAllSignals(!showAllSignals)}
+                  className={`text-[10px] font-medium px-2 py-1 rounded transition-colors ${
+                    showAllSignals
+                      ? "bg-gray-700 text-gray-200"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                  data-testid="toggle-all-signals"
+                >
+                  {showAllSignals ? "All Athletes" : "Show All"}
+                </button>
+              )}
+            </div>
             <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
-              {groupedNotes.length === 0 ? (
-                <p className="text-xs text-gray-500 text-center py-8">No signals yet. Start capturing.</p>
-              ) : (
-                groupedNotes.map((g, gi) => (
+              {(() => {
+                const filtered = selectedAthlete && !showAllSignals
+                  ? groupedNotes.filter(g => g.athleteId === selectedAthlete)
+                  : groupedNotes;
+                return filtered.length === 0 ? (
+                  <p className="text-xs text-gray-500 text-center py-8">
+                    {selectedAthlete && !showAllSignals ? "No signals for this athlete yet." : "No signals yet. Start capturing."}
+                  </p>
+                ) : (
+                  filtered.map((g, gi) => (
                   <div key={gi} className="bg-gray-800 border border-gray-700/50 rounded-lg overflow-hidden" data-testid={`signal-group-${gi}`}>
                     {/* Group header */}
                     <div className="px-3 py-2 bg-gray-800/80 border-b border-gray-700/40 flex items-center gap-2">
@@ -515,7 +541,8 @@ function LiveEvent() {
                     </div>
                   </div>
                 ))
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
