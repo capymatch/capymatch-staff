@@ -844,3 +844,15 @@ async def mark_debrief_complete(event_id: str, current_user: dict = get_current_
 @router.get("/schools")
 async def list_schools(current_user: dict = get_current_user_dep()):
     return SCHOOLS
+
+
+@router.get("/schools/search")
+async def search_schools(q: str = "", limit: int = 10, current_user: dict = get_current_user_dep()):
+    """Search university knowledge base for autocomplete."""
+    if not q or len(q) < 2:
+        return {"schools": []}
+    results = await db.university_knowledge_base.find(
+        {"university_name": {"$regex": q, "$options": "i"}},
+        {"_id": 0, "university_name": 1, "division": 1, "conference": 1, "logo_url": 1, "domain": 1},
+    ).limit(limit).to_list(limit)
+    return {"schools": results}

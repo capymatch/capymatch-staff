@@ -55,6 +55,7 @@ function LiveEvent() {
   // Add school
   const [showAddSchool, setShowAddSchool] = useState(false);
   const [newSchoolName, setNewSchoolName] = useState("");
+  const [schoolSuggestions, setSchoolSuggestions] = useState([]);
   const [addingSchool, setAddingSchool] = useState(false);
 
   // Signals filter + mobile tab
@@ -353,22 +354,50 @@ function LiveEvent() {
           )}
         </div>
         {showAddSchool && (
-          <div className="flex items-center gap-2 mt-2" data-testid="add-school-form">
-            <input
-              type="text"
-              value={newSchoolName}
-              onChange={(e) => setNewSchoolName(e.target.value)}
-              placeholder="University name..."
-              className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-gray-400"
-              data-testid="add-school-input"
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSchool(); } }}
-            />
-            <button onClick={addSchool} disabled={addingSchool || !newSchoolName.trim()} className="px-3 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg disabled:opacity-50" data-testid="add-school-confirm">
-              {addingSchool ? "..." : "Add"}
-            </button>
-            <button onClick={() => { setShowAddSchool(false); setNewSchoolName(""); }} className="p-2 text-gray-500 hover:text-gray-300">
-              <X className="w-3.5 h-3.5" />
-            </button>
+          <div className="relative mt-2" data-testid="add-school-form">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newSchoolName}
+                onChange={(e) => {
+                  setNewSchoolName(e.target.value);
+                  if (e.target.value.length >= 2) {
+                    axios.get(`${API}/schools/search?q=${encodeURIComponent(e.target.value)}&limit=8`)
+                      .then(r => setSchoolSuggestions(r.data.schools || []))
+                      .catch(() => setSchoolSuggestions([]));
+                  } else {
+                    setSchoolSuggestions([]);
+                  }
+                }}
+                placeholder="Search university..."
+                className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-gray-400"
+                data-testid="add-school-input"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSchool(); } }}
+              />
+              <button onClick={addSchool} disabled={addingSchool || !newSchoolName.trim()} className="px-3 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg disabled:opacity-50" data-testid="add-school-confirm">
+                {addingSchool ? "..." : "Add"}
+              </button>
+              <button onClick={() => { setShowAddSchool(false); setNewSchoolName(""); setSchoolSuggestions([]); }} className="p-2 text-gray-500 hover:text-gray-300">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {schoolSuggestions.length > 0 && (
+              <div className="absolute left-0 right-12 top-full mt-1 bg-gray-800 border border-gray-600 rounded-lg overflow-hidden z-50 shadow-xl max-h-48 overflow-y-auto" data-testid="school-suggestions">
+                {schoolSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setNewSchoolName(s.university_name); setSchoolSuggestions([]); }}
+                    className="w-full text-left px-3 py-2 text-xs text-white hover:bg-gray-700 transition-colors flex items-center gap-2 border-b border-gray-700 last:border-0"
+                    data-testid={`school-suggestion-${i}`}
+                  >
+                    <span className="font-medium">{s.university_name}</span>
+                    {s.division && <span className="text-[10px] text-gray-400">{s.division}</span>}
+                    {s.conference && <span className="text-[10px] text-gray-500">{s.conference}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
