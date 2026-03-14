@@ -10,7 +10,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RAIL_STAGES } from "../../components/journey/constants";
-import { PulseIndicator } from "../../components/journey";
+import { PulseIndicator, ProgressRail } from "../../components/journey";
 import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
@@ -325,33 +325,10 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
               {isSchool && p ? p.university_name : (action.cta?.label || "Take Action")}
             </h2>
           </div>
-          {/* Progress Rail — large, with labels */}
+          {/* Progress Rail — matching Journey hero card exactly */}
           {isSchool && stages && (
-            <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }} className="hidden sm:flex" data-testid="hero-progress-rail">
-              {stages.map((s, i) => {
-                const isActive = s.state === "active";
-                const isPast = s.state === "past";
-                const dotColor = isActive ? "#0d9488" : isPast ? "#94a3b8" : "transparent";
-                const lineActive = isPast || (stages[i - 1]?.state === "past" && isActive);
-                return (
-                  <React.Fragment key={s.key}>
-                    {i > 0 && <div style={{ width: 28, height: 2, background: lineActive ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.08)" }} />}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                      <div style={{
-                        width: isActive ? 10 : 7,
-                        height: isActive ? 10 : 7,
-                        borderRadius: "50%",
-                        background: s.state === "future" ? "transparent" : dotColor,
-                        border: s.state === "future" ? "1.5px solid rgba(255,255,255,0.15)" : isActive ? "2px solid rgba(13,148,136,0.4)" : "none",
-                        boxShadow: isActive ? "0 0 6px rgba(13,148,136,0.4)" : "none",
-                      }} />
-                      <span style={{ fontSize: 9, fontWeight: isActive ? 700 : 500, color: isActive ? "#5eead4" : "rgba(255,255,255,0.3)", textTransform: "capitalize", whiteSpace: "nowrap" }}>
-                        {stageLabels[s.key] || s.label}
-                      </span>
-                    </div>
-                  </React.Fragment>
-                );
-              })}
+            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ flexShrink: 0, width: 340 }}>
+              <ProgressRail rail={{ stages: Object.fromEntries(stages.map(s => [s.key, s.state === "past" || s.state === "active"])), active: stages.find(s => s.state === "active")?.key, line_fill: stages.find(s => s.state === "active")?.key }} onStageClick={() => {}} />
             </div>
           )}
         </div>
