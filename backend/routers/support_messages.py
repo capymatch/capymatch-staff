@@ -294,6 +294,7 @@ async def get_inbox(current_user: dict = get_current_user_dep()):
         {"$or": [
             {"participant_ids": {"$in": lookup_ids}},
             {"athlete_id": {"$in": lookup_ids}},
+            {"created_by": {"$in": lookup_ids}},
         ]},
         {"_id": 0},
     ).sort("last_message_at", -1).to_list(100)
