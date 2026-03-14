@@ -21,8 +21,7 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - Athletes grouped by "Need Attention" and "On Track" with photos and status overlays
 
 ### Athlete Support Pod (Overview)
-- Athlete photo in header
-- Profile completeness scoring
+- Athlete photo in header, profile completeness scoring
 - Hero card with contextual action buttons (Send Message, Log Check-In, Escalate, Resolve)
 - Target school list with health classifications
 
@@ -31,10 +30,11 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - Dynamic playbooks, school-scoped notes, actions, timeline
 
 ### Events System
-- **Create Event**: Dialog modal with name, type, date, location, expected schools. Auto-generates prep checklist.
+- **Create Event**: Dialog modal with name, type, date, location, expected schools count
+- **Manage Athletes**: Dialog on Prep page to add/remove athletes from events. Shows full roster with photos, toggle Add/Remove. Persists to MongoDB.
 - Event cards with athlete photo stacks and school counts
-- Event Prep with athlete photos + status dot overlays
-- **Live Signal Capture**: Structured recruiting signals with 6 types. Auto pipeline updates, auto school pod routing.
+- Event Prep with athlete photos + status dot overlays + prep checklist
+- **Live Signal Capture**: Structured recruiting signals with 6 types. Auto pipeline updates.
 - **Post-Event Summary**: Dual action paths, athlete-centric grouping, routing progress tracker.
 - **Responsive Live Event Page**: Mobile-friendly with tabbed interface. VERIFIED.
 
@@ -46,16 +46,12 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 
 ## Test Status
 - Full regression: 25/25 PASS
-- Hero card buttons: 12/12 PASS
-- Live Mode Phase 3: 12/12 PASS
-- Post-Event Summary Phase 4: 15/15 PASS
-- Live Signal Capture Phase 5: 23/23 PASS
-- Responsive Live Event Desktop: VERIFIED
-- Create Event: Backend 12/12 PASS, Frontend 100% PASS (iteration_133)
+- Create Event: Backend 12/12, Frontend 100% (iteration_133)
+- Manage Athletes: Backend 15/15, Frontend 11/11 (iteration_134)
 - Codebase Cleanup: No regressions
 
 ## Codebase Cleanup (Mar 14, 2026)
-Removed 30 unused frontend components, 26 stale planning docs, 42MB old codebase copy, and misc empty files.
+Removed 30 unused frontend components, 26 stale planning docs, 42MB old codebase copy.
 
 ## Future/Backlog
 - Parent/Family Experience (P1)
