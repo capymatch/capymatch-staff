@@ -21,7 +21,7 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - Athletes grouped by "Need Attention" and "On Track" with photos and status overlays
 
 ### Athlete Pipeline (My Schools)
-- **Hero Card Carousel**: School-first layout — large logo + name, progress rail with labels, metadata badges (Neutral, D1, Match%, Conference, social), "What to do next" advice box, large CTA button. Carousel with filter pills, arrows, dots.
+- **Hero Card Carousel**: Compact card with filter pills (top-left), carousel arrows + counter (top-right, same line). School-first layout with logo, progress rail dots (no labels), metadata badges, "What to do next" advice box, CTA button.
 - Kanban board with drag-and-drop (Added, Outreach, Talking, Visit, Offered)
 - School cards with status badges, action items
 
@@ -43,13 +43,14 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 
 ## Bug Fixes
 - Journey profile checklist: Fixed to read actual profile API data
-- Hero card layout: Restored school-first design with progress rail, "What to do next" section
+- Hero card layout: Fixed filter pills + carousel controls on same line, compact card design
+- Filter count: Fixed "All" filter showing total schools count
 
 ## Test Status
 - Create Event: Backend 12/12, Frontend 100% (iteration_133)
 - Manage Athletes: Backend 15/15, Frontend 100% (iteration_134)
 - Manage Schools: Backend 20/20, Frontend 100% (iteration_135)
-- Hero card carousel: Screenshot verified across 3 cards
+- Hero card carousel: Verified - filters top-left, arrows top-right (same line), navigation working, filter switching working
 
 ## Future/Backlog
 - Parent/Family Experience (P1)

@@ -267,81 +267,67 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
       {/* Ambient glow — stronger for urgent */}
       <div style={{ position: "absolute", top: "-30%", right: "-5%", width: 350, height: 350, background: `radial-gradient(circle, ${cat.color}${isUrgent ? "18" : "0a"} 0%, transparent 70%)`, pointerEvents: "none" }} />
 
-      <div style={{ padding: "14px 20px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
-        {/* Filter pills + carousel arrows */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 16 }} data-testid="hero-filter-pills">
-          {FILTER_PILLS.length > 1 && FILTER_PILLS.map(pill => {
+      <div style={{ padding: "10px 16px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
+        {/* Top row: Filter pills (left) + Carousel controls (right) — same line */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }} data-testid="hero-filter-pills">
+          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+            {FILTER_PILLS.length > 1 && FILTER_PILLS.map(pill => {
               const URGENT_CATS = new Set(["past_due", "due_today", "coach_flag"]);
               const shouldPulse = pill.key !== "all" && URGENT_CATS.has(pill.key) && pill.count > 0 && !seenCategories.has(pill.key);
               const pillCat = ALERT_CATEGORIES[pill.key];
               return (
-              <button
-                key={pill.key}
-                onClick={() => handleFilter(pill.key)}
-                data-testid={`hero-filter-${pill.key}`}
-                style={{
-                  padding: "4px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700,
-                  cursor: "pointer", transition: "all 0.15s", border: "1px solid", fontFamily: "inherit",
-                  background: filter === pill.key ? "rgba(13,148,136,0.15)" : "rgba(255,255,255,0.04)",
-                  borderColor: filter === pill.key ? "rgba(13,148,136,0.35)" : "rgba(255,255,255,0.08)",
-                  color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.4)",
-                  display: "flex", alignItems: "center", gap: 5, position: "relative",
-                }}
-              >
-                {shouldPulse && (
-                  <span style={{ position: "relative", width: 6, height: 6, flexShrink: 0 }}>
-                    <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: pillCat?.color || "#ef4444" }} />
-                    <span style={{ position: "absolute", inset: -2, borderRadius: "50%", border: `1.5px solid ${pillCat?.color || "#ef4444"}`, animation: "pillPulse 2s ease-out infinite", pointerEvents: "none" }} data-testid={`pill-pulse-${pill.key}`} />
-                  </span>
-                )}
-                {pill.label}
-                <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 8, background: filter === pill.key ? "rgba(13,148,136,0.25)" : "rgba(255,255,255,0.06)", color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.3)" }}>{pill.count}</span>
-              </button>
+                <button
+                  key={pill.key}
+                  onClick={() => handleFilter(pill.key)}
+                  data-testid={`hero-filter-${pill.key}`}
+                  style={{
+                    padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700,
+                    cursor: "pointer", transition: "all 0.15s", border: "1px solid", fontFamily: "inherit",
+                    background: filter === pill.key ? "rgba(13,148,136,0.15)" : "rgba(255,255,255,0.04)",
+                    borderColor: filter === pill.key ? "rgba(13,148,136,0.35)" : "rgba(255,255,255,0.08)",
+                    color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.4)",
+                    display: "flex", alignItems: "center", gap: 5, position: "relative",
+                  }}
+                >
+                  {shouldPulse && (
+                    <span style={{ position: "relative", width: 6, height: 6, flexShrink: 0 }}>
+                      <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: pillCat?.color || "#ef4444" }} />
+                      <span style={{ position: "absolute", inset: -2, borderRadius: "50%", border: `1.5px solid ${pillCat?.color || "#ef4444"}`, animation: "pillPulse 2s ease-out infinite", pointerEvents: "none" }} data-testid={`pill-pulse-${pill.key}`} />
+                    </span>
+                  )}
+                  {pill.label}
+                  <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 8, background: filter === pill.key ? "rgba(13,148,136,0.25)" : "rgba(255,255,255,0.06)", color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.3)" }}>{pill.count}</span>
+                </button>
               );
             })}
           </div>
-
-        {/* ── Category label + Carousel arrows ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
-          </div>
           {displayTotal > 1 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
-              <div style={{ display: "flex", gap: 3 }}>
-                {displayActions.slice(0, 12).map((a, i) => {
-                  const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
-                  return (
-                    <div key={i} onClick={() => setIdx(i)} style={{
-                      width: i === safeIdx ? 16 : 5, height: 5,
-                      borderRadius: i === safeIdx ? 3 : "50%",
-                      background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
-                      cursor: "pointer", transition: "all 0.2s",
-                    }} data-testid={`carousel-dot-${i}`} />
-                  );
-                })}
-              </div>
-              <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
-              <span style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.35)", marginLeft: 2 }}>{safeIdx + 1}/{displayTotal}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <button onClick={prev} style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.5)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 12, height: 12 }} /></button>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", fontVariantNumeric: "tabular-nums", minWidth: 24, textAlign: "center" }} data-testid="carousel-counter">{safeIdx + 1}/{displayTotal}</span>
+              <button onClick={next} style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.5)" }} data-testid="carousel-next"><ChevronRight style={{ width: 12, height: 12 }} /></button>
             </div>
           )}
         </div>
 
-        {/* ── School-First Layout (matching reference design) ── */}
+        {/* Category label */}
+        <div style={{ marginBottom: 6 }}>
+          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
+        </div>
+
         {/* Row 1: Logo + School Name (left) | Progress Rail (right) */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
             {isSchool && p && (
-              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={40} className="rounded-[10px] flex-shrink-0" />
+              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={34} className="rounded-[8px] flex-shrink-0" />
             )}
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: -0.5, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} data-testid="hero-school-name">
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: -0.3, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} data-testid="hero-school-name">
               {isSchool && p ? p.university_name : (action.cta?.label || "Take Action")}
             </h2>
           </div>
           {/* Progress Rail — inline dots, no labels */}
           {isSchool && stages && (
-            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0, width: 420 }}>
+            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0, width: 320 }}>
               {stages.map((s, i) => {
                 const isActive = s.state === "active";
                 const isPast = s.state === "past";
@@ -351,12 +337,12 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
                   <React.Fragment key={s.key}>
                     {i > 0 && <div style={{ flex: 1, height: 2, background: lineActive ? "rgba(13,148,136,0.5)" : "rgba(255,255,255,0.08)", borderRadius: 1 }} />}
                     <div style={{
-                      width: isActive ? 14 : isPast ? 10 : 10,
-                      height: isActive ? 14 : isPast ? 10 : 10,
+                      width: isActive ? 12 : 8,
+                      height: isActive ? 12 : 8,
                       borderRadius: "50%",
                       background: isActive ? "#0d9488" : isPast ? "rgba(148,163,184,0.6)" : "#1e1e2e",
                       border: isFuture ? "1.5px solid rgba(255,255,255,0.12)" : isActive ? "2px solid rgba(13,148,136,0.3)" : "none",
-                      boxShadow: isActive ? "0 0 8px rgba(13,148,136,0.4)" : "none",
+                      boxShadow: isActive ? "0 0 6px rgba(13,148,136,0.4)" : "none",
                       flexShrink: 0,
                     }} />
                   </React.Fragment>
@@ -367,7 +353,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
         </div>
 
         {/* Row 2: Metadata badges + social */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
           <PulseIndicator pulse={stages?.find(s => s.state === "active")?.pulse || "neutral"} />
           {isSchool && p?.division && (
             <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>
@@ -395,32 +381,32 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
         </div>
 
         {/* Row 3: "What to do next" advice box + CTA */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 4 }}>
-          <div style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(13,148,136,0.35)", background: "rgba(13,148,136,0.08)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-              <span style={{ fontSize: 12 }}>💡</span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#5eead4", letterSpacing: "0.03em" }}>What to do next</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 2 }}>
+          <div style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(13,148,136,0.35)", background: "rgba(13,148,136,0.08)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+              <span style={{ fontSize: 11 }}>💡</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: "#5eead4", letterSpacing: "0.03em" }}>What to do next</span>
             </div>
-            <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, margin: 0 }} data-testid="hero-advice-text">
+            <p style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, margin: 0 }} data-testid="hero-advice-text">
               {advice || "Keep the momentum going with this program."}
             </p>
           </div>
           <button onClick={handleCTA} style={{
-            padding: "8px 20px", borderRadius: 8, border: "none",
+            padding: "7px 16px", borderRadius: 8, border: "none",
             background: "#0d9488", color: "#fff",
-            fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex",
-            alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit",
-            transition: "all 0.2s", flexShrink: 0, minWidth: 130,
+            fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "inherit",
+            transition: "all 0.2s", flexShrink: 0, minWidth: 110,
             boxShadow: "0 4px 16px rgba(13,148,136,0.3)",
           }} data-testid="hero-cta-btn">
-            <ArrowRight style={{ width: 16, height: 16 }} />
+            <ArrowRight style={{ width: 14, height: 14 }} />
             {action.cta.label}
           </button>
         </div>
       </div>
 
       {/* Usage bar */}
-      <div style={{ padding: "8px 24px 12px", display: "flex", alignItems: "center", gap: 10, position: "relative", zIndex: 1 }} className="pipeline-hero-card" data-testid="hero-usage-bar">
+      <div style={{ padding: "6px 18px 10px", display: "flex", alignItems: "center", gap: 10, position: "relative", zIndex: 1 }} className="pipeline-hero-card" data-testid="hero-usage-bar">
         <span style={{ fontSize: 10, fontWeight: 600, color: schoolPct >= 1 ? "rgba(245,158,11,0.8)" : "rgba(255,255,255,0.25)" }} data-testid="hero-school-usage">
           {usage.unlimited ? `${usage.used} schools` : `${usage.used}/${usage.limit} schools`}
         </span>
