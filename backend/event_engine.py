@@ -145,6 +145,7 @@ def get_event_prep(event_id):
         athletes_attending.append({
             "id": aid,
             "full_name": athlete["full_name"],
+            "photo_url": athlete.get("photo_url", ""),
             "grad_year": athlete["grad_year"],
             "position": athlete["position"],
             "team": athlete["team"],

@@ -168,13 +168,21 @@ function EventPrep() {
               const cfg = PREP_CONFIG[a.prepStatus] || PREP_CONFIG.ready;
               return (
                 <div key={a.id} className="px-4 py-3 flex items-center justify-between gap-3" data-testid={`prep-athlete-${a.id}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
-                      <span className="font-medium text-sm text-gray-900">{a.full_name}</span>
-                      <span className="text-[10px] text-gray-400">{a.grad_year} · {a.position}</span>
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
-                    </div>
+                  <div className="flex-1 min-w-0 flex items-start gap-3">
+                    {a.photo_url ? (
+                      <img src={a.photo_url} alt={a.full_name} className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" data-testid={`prep-avatar-${a.id}`} />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-bold text-gray-500" data-testid={`prep-avatar-${a.id}`}>
+                        {(a.full_name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                        <span className="font-medium text-sm text-gray-900">{a.full_name}</span>
+                        <span className="text-[10px] text-gray-400">{a.grad_year} · {a.position}</span>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
+                      </div>
                     {a.targetSchoolsAtEvent.length > 0 && (
                       <div className="flex items-center gap-1 ml-4 mt-1 flex-wrap">
                         <Target className="w-3 h-3 text-gray-300 shrink-0" />
@@ -186,6 +194,7 @@ function EventPrep() {
                     {a.blockers?.length > 0 && (
                       <p className="text-[11px] text-red-600 mt-1 ml-4">{a.blockers[0].impact}</p>
                     )}
+                    </div>
                   </div>
                   <button
                     onClick={() => navigate(`/support-pods/${a.id}`)}
