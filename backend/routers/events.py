@@ -61,6 +61,12 @@ async def list_events(team: str = None, type: str = None, current_user: dict = g
     return result
 
 
+@router.get("/events/schools/available")
+async def list_available_schools(current_user: dict = get_current_user_dep()):
+    """List all available schools that can be added to events"""
+    return [{"id": s["id"], "name": s["name"], "division": s.get("division", "")} for s in SCHOOLS]
+
+
 @router.get("/events/{event_id}")
 async def get_event_detail(event_id: str, current_user: dict = get_current_user_dep()):
     """Get single event detail"""
@@ -174,6 +180,54 @@ async def remove_event_athlete(event_id: str, athlete_id: str, current_user: dic
         {"$set": {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}}
     )
     return {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}
+
+
+@router.post("/events/{event_id}/schools")
+async def add_event_school(event_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Add a school to an event. Accepts either a known school_id or a custom school name."""
+    event = get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    school_id = body.get("school_id", "")
+    school_name = body.get("school_name", "").strip()
+
+    if school_id:
+        # Known school from SCHOOLS list
+        existing = next((s for s in SCHOOLS if s["id"] == school_id), None)
+        if existing and school_id not in event.get("school_ids", []):
+            event.setdefault("school_ids", []).append(school_id)
+    elif school_name:
+        # Custom school — generate an ID and add to SCHOOLS if not already there
+        slug = school_name.lower().replace(" ", "-")
+        existing = next((s for s in SCHOOLS if s["id"] == slug), None)
+        if not existing:
+            SCHOOLS.append({"id": slug, "name": school_name, "division": body.get("division", "")})
+        if slug not in event.get("school_ids", []):
+            event.setdefault("school_ids", []).append(slug)
+    else:
+        raise HTTPException(status_code=400, detail="Provide school_id or school_name")
+
+    await db.events.update_one(
+        {"id": event_id},
+        {"$set": {"school_ids": event.get("school_ids", [])}}
+    )
+    return {"school_ids": event.get("school_ids", [])}
+
+
+@router.delete("/events/{event_id}/schools/{school_id}")
+async def remove_event_school(event_id: str, school_id: str, current_user: dict = get_current_user_dep()):
+    """Remove a school from an event"""
+    event = get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    if school_id in event.get("school_ids", []):
+        event["school_ids"].remove(school_id)
+    await db.events.update_one(
+        {"id": event_id},
+        {"$set": {"school_ids": event.get("school_ids", [])}}
+    )
+    return {"school_ids": event.get("school_ids", [])}
 
 
 @router.get("/events/{event_id}/notes")
