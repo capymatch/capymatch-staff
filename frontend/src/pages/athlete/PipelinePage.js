@@ -302,11 +302,9 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
           </div>
 
         {/* ── Category label + Carousel arrows ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }}>{action.owner}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>{safeIdx + 1}/{displayTotal}</span>
           </div>
           {displayTotal > 1 && (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -325,6 +323,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
                 })}
               </div>
               <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
+              <span style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.35)", marginLeft: 2 }}>{safeIdx + 1}/{displayTotal}</span>
             </div>
           )}
         </div>
