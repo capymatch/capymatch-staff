@@ -318,6 +318,8 @@ def get_event_summary(event_id):
                 "owner": "Coach Martinez",
                 "due_date": (datetime.now(timezone.utc) + timedelta(days=due_map.get(fu, 2))).isoformat(),
                 "routed": n.get("routed_to_pod", False),
+                "sent_to_athlete": n.get("sent_to_athlete", False),
+                "interest_level": n.get("interest_level", "none"),
             })
 
     # Schools seen

@@ -1,28 +1,273 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { ArrowLeft, FileText, GraduationCap, Users, ListChecks, ExternalLink, Check, ArrowRight } from "lucide-react";
-import { AiBriefing } from "@/components/AiBriefing";
-import { AiEventFollowups } from "@/components/AiV2Components";
+import {
+  ArrowLeft, FileText, GraduationCap, Users, ListChecks,
+  ExternalLink, Check, ArrowRight, Send, CheckCircle2,
+  ChevronDown, ChevronUp
+} from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${token()}` } });
 
 const INTEREST_BADGE = {
-  hot: { cls: "bg-red-100 text-red-700", label: "Hot" },
-  warm: { cls: "bg-amber-100 text-amber-700", label: "Warm" },
-  cool: { cls: "bg-sky-100 text-sky-700", label: "Cool" },
-  none: { cls: "bg-gray-100 text-gray-500", label: "—" },
+  hot: { cls: "bg-red-100 text-red-700 border-red-200", label: "Hot", dot: "bg-red-500" },
+  warm: { cls: "bg-amber-100 text-amber-700 border-amber-200", label: "Warm", dot: "bg-amber-400" },
+  cool: { cls: "bg-sky-100 text-sky-700 border-sky-200", label: "Cool", dot: "bg-sky-400" },
+  none: { cls: "bg-gray-100 text-gray-500 border-gray-200", label: "—", dot: "bg-gray-300" },
 };
 
+const INTEREST_ORDER = { hot: 0, warm: 1, cool: 2, none: 3 };
+
+// ─── Routing Progress Bar ──────────────────────────────
+function RoutingProgress({ allNotes, followUpActions }) {
+  const total = allNotes.length;
+  const routed = allNotes.filter(n => n.routed_to_pod).length;
+  const sentToAthlete = allNotes.filter(n => n.sent_to_athlete).length;
+  const actioned = new Set([
+    ...allNotes.filter(n => n.routed_to_pod).map(n => n.id),
+    ...allNotes.filter(n => n.sent_to_athlete).map(n => n.id),
+  ]).size;
+  const pending = total - actioned;
+  const pct = total > 0 ? Math.round((actioned / total) * 100) : 0;
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl p-4" data-testid="routing-progress">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Debrief Progress</span>
+        <span className="text-xs font-semibold text-gray-700">{actioned}/{total} notes actioned</span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
+        <div
+          className="h-2 rounded-full transition-all"
+          style={{
+            width: `${pct}%`,
+            backgroundColor: pct === 100 ? "#10b981" : pct > 50 ? "#3b82f6" : "#f59e0b",
+          }}
+        />
+      </div>
+      <div className="flex items-center gap-4 text-[11px] text-gray-500">
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-blue-500" /> {routed} routed to pod
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-violet-500" /> {sentToAthlete} sent to athlete
+        </span>
+        {pending > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-gray-300" /> {pending} pending
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Note Action Buttons ───────────────────────────────
+function NoteActions({ note, eventId, onRefresh }) {
+  const [sendingToAthlete, setSendingToAthlete] = useState(false);
+  const [routingToPod, setRoutingToPod] = useState(false);
+
+  const sendToAthlete = async () => {
+    setSendingToAthlete(true);
+    try {
+      await axios.post(`${API}/events/${eventId}/notes/${note.id}/send-to-athlete`, {}, authHeaders());
+      toast.success(`Sent to ${note.athlete_name?.split(" ")[0] || "athlete"}`);
+      onRefresh();
+    } catch {
+      toast.error("Failed to send to athlete");
+    } finally {
+      setSendingToAthlete(false);
+    }
+  };
+
+  const routeToPod = async () => {
+    setRoutingToPod(true);
+    try {
+      await axios.post(`${API}/events/${eventId}/notes/${note.id}/route`, {}, authHeaders());
+      toast.success(`Routed to ${note.school_name || "School"} Pod`);
+      onRefresh();
+    } catch {
+      toast.error("Failed to route to pod");
+    } finally {
+      setRoutingToPod(false);
+    }
+  };
+
+  const isSent = note.sent_to_athlete;
+  const isRouted = note.routed_to_pod;
+
+  return (
+    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+      {isSent ? (
+        <span className="flex items-center gap-0.5 text-[10px] text-violet-600 font-medium px-2 py-1 bg-violet-50 rounded-md border border-violet-100" data-testid={`sent-badge-${note.id}`}>
+          <Check className="w-3 h-3" /> Sent
+        </span>
+      ) : (
+        <button
+          onClick={(e) => { e.stopPropagation(); sendToAthlete(); }}
+          disabled={sendingToAthlete}
+          className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-md transition-colors border border-violet-100 disabled:opacity-50"
+          data-testid={`send-to-athlete-${note.id}`}
+          title="Send action to athlete via message"
+        >
+          <Send className="w-3 h-3" />
+          {sendingToAthlete ? "..." : "To Athlete"}
+        </button>
+      )}
+      {isRouted ? (
+        <span className="flex items-center gap-0.5 text-[10px] text-blue-600 font-medium px-2 py-1 bg-blue-50 rounded-md border border-blue-100" data-testid={`routed-badge-${note.id}`}>
+          <Check className="w-3 h-3" /> In Pod
+        </span>
+      ) : note.school_name ? (
+        <button
+          onClick={(e) => { e.stopPropagation(); routeToPod(); }}
+          disabled={routingToPod}
+          className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-100 disabled:opacity-50"
+          data-testid={`route-to-pod-${note.id}`}
+          title="Add to School Pod"
+        >
+          <ArrowRight className="w-3 h-3" />
+          {routingToPod ? "..." : "To Pod"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Athlete Card ──────────────────────────────────────
+function AthleteCard({ athleteId, athleteName, notes, eventId, onRefresh, navigate }) {
+  const [expanded, setExpanded] = useState(true);
+
+  const sortedNotes = useMemo(() =>
+    [...notes].sort((a, b) => INTEREST_ORDER[a.interest_level || "none"] - INTEREST_ORDER[b.interest_level || "none"]),
+    [notes]
+  );
+
+  const hotCount = notes.filter(n => n.interest_level === "hot").length;
+  const warmCount = notes.filter(n => n.interest_level === "warm").length;
+  const followUpCount = notes.reduce((sum, n) => sum + (n.follow_ups?.length || 0), 0);
+  const allActioned = notes.every(n => n.routed_to_pod || n.sent_to_athlete);
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid={`athlete-card-${athleteId}`}>
+      {/* Athlete header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+        data-testid={`athlete-card-toggle-${athleteId}`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm text-gray-900">{athleteName}</span>
+            {allActioned && (
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            {hotCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">{hotCount} hot</span>}
+            {warmCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{warmCount} warm</span>}
+            <span className="text-[10px] text-gray-400">{notes.length} notes</span>
+            {followUpCount > 0 && <span className="text-[10px] text-gray-400">· {followUpCount} follow-ups</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athleteId}`); }}
+            className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors"
+            data-testid={`open-pod-${athleteId}`}
+          >
+            Pod <ExternalLink className="w-3 h-3" />
+          </button>
+          {expanded ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
+        </div>
+      </button>
+
+      {/* Notes list */}
+      {expanded && (
+        <div className="border-t border-gray-50 divide-y divide-gray-50">
+          {sortedNotes.map((n) => {
+            const badge = INTEREST_BADGE[n.interest_level] || INTEREST_BADGE.none;
+            return (
+              <div key={n.id} className="px-4 py-2.5 flex items-start justify-between gap-2" data-testid={`summary-note-${n.id}`}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    {n.school_name && (
+                      <span className="text-xs font-medium text-gray-700">{n.school_name}</span>
+                    )}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${badge.cls}`}>{badge.label}</span>
+                    {n.follow_ups?.length > 0 && (
+                      <div className="flex gap-1">
+                        {n.follow_ups.map((f) => (
+                          <span key={f} className="text-[9px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">{f.replace(/_/g, " ")}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {n.note_text && <p className="text-[11px] text-gray-500 line-clamp-2">"{n.note_text}"</p>}
+                </div>
+                <NoteActions note={n} eventId={eventId} onRefresh={onRefresh} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── School Engagement Summary ─────────────────────────
+function SchoolHeatmap({ schoolsSeen }) {
+  if (schoolsSeen.length === 0) return null;
+  const maxInteractions = Math.max(...schoolsSeen.map(s => s.interactions), 1);
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-xl p-4" data-testid="school-heatmap">
+      <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">School Engagement</h2>
+      <div className="space-y-2">
+        {schoolsSeen.map((s) => {
+          const pct = Math.round((s.interactions / maxInteractions) * 100);
+          return (
+            <div key={s.name} className="flex items-center gap-3" data-testid={`school-bar-${s.name.toLowerCase().replace(/\s+/g, "-")}`}>
+              <span className="text-xs font-medium text-gray-700 w-28 truncate shrink-0">{s.name}</span>
+              <div className="flex-1 flex items-center gap-1.5">
+                <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden flex">
+                  {s.hot > 0 && <div className="h-full bg-red-400" style={{ width: `${(s.hot / s.interactions) * pct}%` }} />}
+                  {s.warm > 0 && <div className="h-full bg-amber-300" style={{ width: `${(s.warm / s.interactions) * pct}%` }} />}
+                  {s.cool > 0 && <div className="h-full bg-sky-300" style={{ width: `${(s.cool / s.interactions) * pct}%` }} />}
+                  {(s.interactions - s.hot - s.warm - s.cool) > 0 && (
+                    <div className="h-full bg-gray-300" style={{ width: `${((s.interactions - s.hot - s.warm - s.cool) / s.interactions) * pct}%` }} />
+                  )}
+                </div>
+                <span className="text-[10px] text-gray-400 w-3 text-right shrink-0">{s.interactions}</span>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                {s.hot > 0 && <span className="w-2 h-2 rounded-full bg-red-400" title={`${s.hot} hot`} />}
+                {s.warm > 0 && <span className="w-2 h-2 rounded-full bg-amber-400" title={`${s.warm} warm`} />}
+                {s.cool > 0 && <span className="w-2 h-2 rounded-full bg-sky-400" title={`${s.cool} cool`} />}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-3 mt-3 text-[10px] text-gray-400">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400" /> Hot</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> Warm</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400" /> Cool</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────
 function EventSummary() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
-  const [routing, setRouting] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -37,28 +282,37 @@ function EventSummary() {
 
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
 
-  const routeNote = async (noteId) => {
+  const completeDebrief = async () => {
+    setCompleting(true);
     try {
-      await axios.post(`${API}/events/${eventId}/notes/${noteId}/route`, {}, authHeaders());
-      toast.success("Routed to Support Pod — synced");
+      await axios.post(`${API}/events/${eventId}/debrief-complete`, {}, authHeaders());
+      toast.success("Debrief marked as complete");
       fetchSummary();
     } catch {
-      toast.error("Failed to route");
+      toast.error("Failed to complete debrief");
+    } finally {
+      setCompleting(false);
     }
   };
 
-  const routeAll = async () => {
-    setRouting(true);
-    try {
-      const res = await axios.post(`${API}/events/${eventId}/route-to-pods`, {}, authHeaders());
-      toast.success(`Routed ${res.data.routed_notes} notes — synced to ${res.data.athletes_affected} Support Pods`);
-      fetchSummary();
-    } catch {
-      toast.error("Failed to bulk route");
-    } finally {
-      setRouting(false);
+  // Group notes by athlete
+  const athleteGroups = useMemo(() => {
+    if (!data?.allNotes) return [];
+    const groups = {};
+    for (const n of data.allNotes) {
+      const key = n.athlete_id;
+      if (!groups[key]) {
+        groups[key] = { athleteId: key, athleteName: n.athlete_name || "Unknown", notes: [] };
+      }
+      groups[key].notes.push(n);
     }
-  };
+    // Sort by priority: most hot/warm notes first
+    return Object.values(groups).sort((a, b) => {
+      const scoreA = a.notes.filter(n => n.interest_level === "hot").length * 10 + a.notes.filter(n => n.interest_level === "warm").length * 5;
+      const scoreB = b.notes.filter(n => n.interest_level === "hot").length * 10 + b.notes.filter(n => n.interest_level === "warm").length * 5;
+      return scoreB - scoreA;
+    });
+  }, [data?.allNotes]);
 
   if (loading) {
     return (
@@ -76,8 +330,8 @@ function EventSummary() {
     );
   }
 
-  const { event, stats, hottestInterest, followUpActions, schoolsSeen, allNotes } = data;
-  const unroutedActions = followUpActions.filter((a) => !a.routed);
+  const { event, stats, schoolsSeen, allNotes } = data;
+  const isDebriefed = event?.summaryStatus === "complete";
 
   return (
     <div data-testid="event-summary-page">
@@ -90,27 +344,33 @@ function EventSummary() {
             </button>
             <div className="h-5 w-px bg-gray-200" />
             <div>
-              <h1 className="font-semibold text-gray-900 text-base leading-tight" data-testid="summary-event-name">{event?.name} — Summary</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-semibold text-gray-900 text-base leading-tight" data-testid="summary-event-name">{event?.name} — Summary</h1>
+                {isDebriefed && (
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full" data-testid="debriefed-badge">
+                    <CheckCircle2 className="w-3 h-3" /> Debriefed
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-gray-500">{event?.location} · {stats.totalNotes} notes captured</p>
             </div>
           </div>
+          {!isDebriefed && (
+            <button
+              onClick={completeDebrief}
+              disabled={completing}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              data-testid="complete-debrief-btn"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {completing ? "Completing..." : "Complete Debrief"}
+            </button>
+          )}
         </div>
       </header>
 
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* AI Event Recap */}
-        <AiBriefing
-          endpoint={`${API}/ai/event-recap/${eventId}`}
-          label="Event Recap"
-          buttonLabel="Generate AI Recap"
-        />
-
-        {/* AI V2: Event Follow-Up Suggestions */}
-        <AiEventFollowups
-          endpoint={`${API}/ai/event-followups/${eventId}`}
-        />
-
-        {/* Event Stats */}
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 space-y-5">
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-testid="event-stats">
           {[
             { label: "Notes Captured", value: stats.totalNotes, icon: FileText },
@@ -118,7 +378,7 @@ function EventSummary() {
             { label: "Athletes Seen", value: stats.athletesSeen, icon: Users },
             { label: "Follow-ups Needed", value: stats.followUpsNeeded, icon: ListChecks },
           ].map((s) => (
-            <div key={s.label} className="bg-white border border-gray-100 rounded-lg p-4 text-center">
+            <div key={s.label} className="bg-white border border-gray-100 rounded-xl p-4 text-center">
               <s.icon className="w-4 h-4 text-gray-400 mx-auto mb-1" />
               <div className="text-xl font-bold text-gray-900">{s.value}</div>
               <div className="text-[10px] text-gray-400 uppercase tracking-wider">{s.label}</div>
@@ -126,130 +386,64 @@ function EventSummary() {
           ))}
         </div>
 
-        {/* Hottest Interest */}
-        {hottestInterest.length > 0 && (
-          <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="hottest-interest-section">
-            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Hottest Interest</h2>
-            <div className="space-y-3">
-              {hottestInterest.map((n) => {
-                const badge = INTEREST_BADGE[n.interest_level] || INTEREST_BADGE.none;
-                return (
-                  <div key={n.id} className="flex items-start justify-between py-2 border-b border-gray-50 last:border-0" data-testid={`hot-note-${n.id}`}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-medium text-sm text-gray-900">{n.athlete_name}</span>
-                        {n.school_name && (
-                          <>
-                            <span className="text-gray-400">×</span>
-                            <span className="text-sm text-gray-600">{n.school_name}</span>
-                          </>
-                        )}
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
-                      </div>
-                      {n.note_text && <p className="text-xs text-gray-500 mb-1">"{n.note_text}"</p>}
-                      {n.follow_ups?.length > 0 && (
-                        <div className="flex gap-1">
-                          {n.follow_ups.map((f) => (
-                            <span key={f} className="text-[9px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">{f.replace(/_/g, " ")}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {!n.routed_to_pod ? (
-                      <button
-                        onClick={() => routeNote(n.id)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors shrink-0 ml-3"
-                        data-testid={`route-note-${n.id}`}
-                      >
-                        Route to Pod <ArrowRight className="w-3 h-3" />
-                      </button>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[10px] text-emerald-600 shrink-0 ml-3">
-                        <Check className="w-3 h-3" /> Routed
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        {/* Routing Progress */}
+        <RoutingProgress allNotes={allNotes} followUpActions={data.followUpActions} />
 
-        {/* Follow-Up Actions */}
-        {followUpActions.length > 0 && (
-          <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="follow-up-actions-section">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Follow-Up Actions ({followUpActions.length})</h2>
-              {unroutedActions.length > 0 && (
-                <button
-                  onClick={routeAll}
-                  disabled={routing}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-slate-900 text-white rounded-md hover:bg-slate-800 transition-colors disabled:opacity-50"
-                  data-testid="route-all-btn"
-                >
-                  {routing ? "Routing..." : "Route All to Support Pods"} <ArrowRight className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-            <div className="space-y-2">
-              {followUpActions.map((a) => (
-                <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0" data-testid={`followup-action-${a.id}`}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-800">{a.title}</p>
-                    <p className="text-[11px] text-gray-400">Owner: {a.owner} · {a.athlete_name}</p>
-                  </div>
-                  {a.routed ? (
-                    <span className="text-[10px] text-emerald-600 flex items-center gap-0.5"><Check className="w-3 h-3" /> Routed</span>
-                  ) : (
-                    <span className="text-[10px] text-gray-400">Pending</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Two-column: Athletes + Schools */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Athletes — Main Column */}
+          <div className="lg:col-span-2 space-y-3">
+            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              Athletes ({athleteGroups.length})
+              <span className="ml-2 text-gray-300 normal-case font-normal">sorted by interest priority</span>
+            </h2>
+            {athleteGroups.map((g) => (
+              <AthleteCard
+                key={g.athleteId}
+                athleteId={g.athleteId}
+                athleteName={g.athleteName}
+                notes={g.notes}
+                eventId={eventId}
+                onRefresh={fetchSummary}
+                navigate={navigate}
+              />
+            ))}
+          </div>
 
-        {/* Schools Seen */}
-        {schoolsSeen.length > 0 && (
-          <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="schools-seen-section">
-            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Schools Seen</h2>
-            <div className="space-y-2">
-              {schoolsSeen.map((s) => (
-                <div key={s.name} className="flex items-center justify-between py-1.5">
-                  <span className="text-sm font-medium text-gray-900">{s.name}</span>
-                  <div className="flex items-center gap-3 text-[11px] text-gray-500">
-                    <span>{s.interactions} interaction{s.interactions > 1 ? "s" : ""}</span>
-                    {s.hot > 0 && <span className="text-red-600 font-medium">Hot: {s.hot}</span>}
-                    {s.warm > 0 && <span className="text-amber-600 font-medium">Warm: {s.warm}</span>}
-                    {s.cool > 0 && <span className="text-sky-600">Cool: {s.cool}</span>}
+          {/* Right Sidebar — Schools + Actions Legend */}
+          <div className="space-y-4">
+            <SchoolHeatmap schoolsSeen={schoolsSeen} />
+
+            {/* Action Paths Legend */}
+            <div className="bg-white border border-gray-100 rounded-xl p-4" data-testid="action-paths-legend">
+              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Action Paths</h2>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-6 h-6 rounded-md bg-violet-50 border border-violet-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <Send className="w-3 h-3 text-violet-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">Send to Athlete</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      For urgent, athlete-owned actions. Creates a message to the athlete with action items.
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* All Notes */}
-        {allNotes.length > 0 && (
-          <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="all-notes-section">
-            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">All Notes ({allNotes.length})</h2>
-            <div className="space-y-2">
-              {allNotes.map((n) => {
-                const badge = INTEREST_BADGE[n.interest_level] || INTEREST_BADGE.none;
-                return (
-                  <div key={n.id} className="py-2 border-b border-gray-50 last:border-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm font-medium text-gray-800">{n.athlete_name}</span>
-                      {n.school_name && <><span className="text-gray-400">×</span><span className="text-sm text-gray-500">{n.school_name}</span></>}
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
-                    </div>
-                    {n.note_text && <p className="text-xs text-gray-500">{n.note_text}</p>}
+                <div className="flex items-start gap-2.5">
+                  <div className="w-6 h-6 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <ArrowRight className="w-3 h-3 text-blue-600" />
                   </div>
-                );
-              })}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">Add to School Pod</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      For school-specific follow-ups. Creates a pod action with school context.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </section>
-        )}
+          </div>
+        </div>
       </main>
     </div>
   );

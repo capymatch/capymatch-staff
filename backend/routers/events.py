@@ -335,6 +335,138 @@ async def bulk_route_notes(event_id: str, current_user: dict = get_current_user_
     }
 
 
+@router.post("/events/{event_id}/notes/{note_id}/send-to-athlete")
+async def send_note_to_athlete(event_id: str, note_id: str, current_user: dict = get_current_user_dep()):
+    """Send a follow-up directly to the athlete as a support message + timeline entry."""
+    from event_engine import get_event
+
+    event = get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Find the note in DB
+    note = await db.event_notes.find_one({"id": note_id, "event_id": event_id}, {"_id": 0})
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    athlete_id = note["athlete_id"]
+    athlete_name = note.get("athlete_name", "Athlete")
+    school_name = note.get("school_name", "")
+    interest = note.get("interest_level", "").capitalize()
+    note_text = note.get("note_text", "")
+
+    # Build message body from the follow-ups
+    follow_up_labels = {
+        "send_film": "Please update and send your highlight reel",
+        "schedule_call": "A coach wants to schedule a call — please be available",
+        "add_to_targets": "Consider adding this school to your target list",
+        "route_to_pod": "Review the interaction details in your Support Pod",
+    }
+    follow_ups = note.get("follow_ups", [])
+    action_lines = [follow_up_labels.get(fu, fu) for fu in follow_ups]
+    action_block = "\n".join(f"- {a}" for a in action_lines) if action_lines else "Review your notes from the event."
+
+    subject = f"Action Needed — {event['name']}"
+    if school_name:
+        subject += f" ({school_name})"
+
+    body = (
+        f"Hi {athlete_name.split(' ')[0]},\n\n"
+        f"After {event['name']}, here's what you need to do:\n\n"
+        f"{action_block}\n\n"
+    )
+    if note_text:
+        body += f"Coach's note: \"{note_text}\"\n\n"
+    if school_name and interest:
+        body += f"School: {school_name} — Interest: {interest}\n\n"
+    body += "Log in and take action as soon as you can. Let me know if you need help!"
+
+    # 1. Create support message thread + message
+    thread_id = str(uuid.uuid4())
+    msg_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+
+    await db.support_threads.insert_one({
+        "id": thread_id,
+        "athlete_id": athlete_id,
+        "subject": subject,
+        "last_message_at": now,
+        "created_by": current_user["id"],
+        "created_at": now,
+    })
+    await db.support_messages.insert_one({
+        "id": msg_id,
+        "thread_id": thread_id,
+        "athlete_id": athlete_id,
+        "sender_id": current_user["id"],
+        "sender_name": current_user["name"],
+        "body": body,
+        "created_at": now,
+    })
+
+    # 2. Create timeline entry
+    await db.athlete_notes.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "author": current_user["name"],
+        "text": f"[{event['name']}] Sent action to athlete: {', '.join(follow_ups) if follow_ups else 'review event notes'}",
+        "tag": "event_athlete_action",
+        "created_at": now,
+    })
+
+    # 3. Create notification record (for future email integration)
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "type": "event_followup_athlete",
+        "athlete_id": athlete_id,
+        "event_id": event_id,
+        "note_id": note_id,
+        "subject": subject,
+        "body": body,
+        "status": "sent",
+        "created_by": current_user["id"],
+        "created_at": now,
+    })
+
+    # 4. Mark note as sent_to_athlete in DB
+    await db.event_notes.update_one(
+        {"id": note_id},
+        {"$set": {"sent_to_athlete": True}}
+    )
+
+    # Also update in-memory
+    in_mem_notes = event.get("capturedNotes", [])
+    for n in in_mem_notes:
+        if n["id"] == note_id:
+            n["sent_to_athlete"] = True
+            break
+
+    return {
+        "sent": True,
+        "athlete_id": athlete_id,
+        "athlete_name": athlete_name,
+        "thread_id": thread_id,
+        "message_id": msg_id,
+    }
+
+
+@router.post("/events/{event_id}/debrief-complete")
+async def mark_debrief_complete(event_id: str, current_user: dict = get_current_user_dep()):
+    """Mark an event's debrief as complete."""
+    from event_engine import get_event
+
+    event = get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    event["summaryStatus"] = "complete"
+    await db.events.update_one(
+        {"id": event_id},
+        {"$set": {"summaryStatus": "complete"}}
+    )
+    return {"status": "complete", "event_id": event_id}
+
+
 @router.get("/schools")
 async def list_schools(current_user: dict = get_current_user_dep()):
     return SCHOOLS
