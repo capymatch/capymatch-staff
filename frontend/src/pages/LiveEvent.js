@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ArrowLeft, Radio, Send, Clock, Check, Zap, Users, FileText, X,
-  Plus, ArrowRight, Eye, Film, Phone, MessageSquare, Star
+  Plus, ArrowRight, Eye, Film, MessageSquare, Star
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -30,15 +30,6 @@ function timeAgo(iso) {
   if (diff < 60) return "just now";
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   return `${Math.floor(diff / 3600)}h ago`;
-}
-
-function formatElapsed(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${String(s).padStart(2, "0")}s`;
-  return `${s}s`;
 }
 
 function LiveEvent() {
@@ -68,15 +59,6 @@ function LiveEvent() {
 
   // Signals filter
   const [showAllSignals, setShowAllSignals] = useState(false);
-
-  // Timer
-  const [sessionStart] = useState(() => Date.now());
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - sessionStart) / 1000)), 1000);
-    return () => clearInterval(timer);
-  }, [sessionStart]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -235,31 +217,21 @@ function LiveEvent() {
 
       {/* Stats Bar */}
       <div className="bg-gray-800/60 border-b border-gray-700/30" data-testid="live-stats-bar">
-        <div className="max-w-[960px] mx-auto px-4 py-2 flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <Clock className="w-3 h-3 text-gray-500" />
-            <span className="font-mono font-medium text-gray-200" data-testid="session-timer">{formatElapsed(elapsed)}</span>
+        <div className="max-w-[960px] mx-auto px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 text-[11px]">
+              <FileText className="w-3 h-3 text-gray-500" />
+              <span className="font-medium text-gray-200" data-testid="stat-notes-count">{notes.length}</span>
+              <span className="text-gray-400">signals captured</span>
+            </div>
+            <div className="w-px h-3 bg-gray-700" />
+            <div className="flex items-center gap-1.5 text-[11px]">
+              <Users className="w-3 h-3 text-gray-500" />
+              <span className="font-medium text-gray-200" data-testid="stat-athletes-covered">{athletesCovered.size}/{athletes.length}</span>
+              <span className="text-gray-400">athletes</span>
+            </div>
           </div>
-          <div className="w-px h-3 bg-gray-700" />
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <FileText className="w-3 h-3 text-gray-500" />
-            <span className="font-medium text-gray-200" data-testid="stat-notes-count">{notes.length}</span>
-            <span className="text-gray-400">signals</span>
-          </div>
-          <div className="w-px h-3 bg-gray-700" />
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <Users className="w-3 h-3 text-gray-500" />
-            <span className="font-medium text-gray-200" data-testid="stat-athletes-covered">{athletesCovered.size}/{athletes.length}</span>
-            <span className="text-gray-400">covered</span>
-          </div>
-          <div className="w-px h-3 bg-gray-700" />
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <Zap className="w-3 h-3 text-gray-500" />
-            <span className="font-medium text-gray-200" data-testid="stat-rate">
-              {elapsed > 60 ? `${(notes.length / (elapsed / 60)).toFixed(1)}/min` : "—"}
-            </span>
-          </div>
-          <div className="ml-auto text-[10px] text-gray-500 hidden sm:block">
+          <div className="text-[10px] text-gray-500 hidden sm:block">
             <kbd className="px-1 py-0.5 bg-gray-700 rounded text-gray-400 font-mono">Ctrl+Enter</kbd> log · <kbd className="px-1 py-0.5 bg-gray-700 rounded text-gray-400 font-mono">Esc</kbd> clear
           </div>
         </div>
