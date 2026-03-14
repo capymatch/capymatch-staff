@@ -58,8 +58,8 @@ def filter_by_athlete_id(items: list, user: dict, athlete_id_key: str = "athlete
 
 
 def filter_events_by_ownership(events: list, user: dict) -> list:
-    """Filter events to those with at least one of the coach's athletes attending."""
+    """Filter events to those with at least one of the coach's athletes attending, or newly created events with no athletes."""
     if user["role"] == "director":
         return events
     visible = get_visible_athlete_ids(user)
-    return [e for e in events if visible & set(e.get("athlete_ids", []))]
+    return [e for e in events if not e.get("athlete_ids") or visible & set(e.get("athlete_ids", []))]

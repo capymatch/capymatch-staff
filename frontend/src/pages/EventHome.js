@@ -5,8 +5,9 @@ import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import {
   Calendar, MapPin, Users, GraduationCap, ChevronRight,
-  AlertTriangle, Clock, CheckCircle2, Zap, FileText, ArrowRight
+  AlertTriangle, Clock, CheckCircle2, Zap, FileText, ArrowRight, Plus
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -171,12 +172,150 @@ function EventCard({ event }) {
   );
 }
 
+function CreateEventDialog({ open, onOpenChange, onCreated }) {
+  const [form, setForm] = useState({ name: "", type: "showcase", date: "", location: "", expectedSchools: 5 });
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.date || !form.location.trim()) {
+      toast.error("Please fill in name, date, and location");
+      return;
+    }
+    setSaving(true);
+    try {
+      await axios.post(`${API}/events`, {
+        ...form,
+        name: form.name.trim(),
+        location: form.location.trim(),
+        expectedSchools: Number(form.expectedSchools) || 0,
+      });
+      toast.success("Event created");
+      setForm({ name: "", type: "showcase", date: "", location: "", expectedSchools: 5 });
+      onOpenChange(false);
+      onCreated();
+    } catch {
+      toast.error("Failed to create event");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputCls = "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-colors";
+  const labelCls = "block text-xs font-semibold text-gray-600 mb-1.5";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[460px] bg-white" data-testid="create-event-dialog">
+        <DialogHeader>
+          <DialogTitle className="text-base font-semibold text-gray-900">Create Event</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div>
+            <label className={labelCls}>Event Name *</label>
+            <input
+              type="text"
+              placeholder="e.g. College Exposure Camp"
+              className={inputCls}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              data-testid="create-event-name"
+              autoFocus
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Type *</label>
+              <select
+                className={inputCls}
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                data-testid="create-event-type"
+              >
+                <option value="showcase">Showcase</option>
+                <option value="tournament">Tournament</option>
+                <option value="camp">Camp</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Date *</label>
+              <input
+                type="date"
+                className={inputCls}
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                data-testid="create-event-date"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Location *</label>
+              <input
+                type="text"
+                placeholder="e.g. Irvine, CA"
+                className={inputCls}
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                data-testid="create-event-location"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Expected Schools</label>
+              <input
+                type="number"
+                min="0"
+                className={inputCls}
+                value={form.expectedSchools}
+                onChange={(e) => setForm({ ...form, expectedSchools: e.target.value })}
+                data-testid="create-event-schools"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+              data-testid="create-event-cancel"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg transition-colors"
+              data-testid="create-event-submit"
+            >
+              {saving ? "Creating..." : "Create Event"}
+            </button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function EventHome() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ upcoming: [], past: [] });
   const [tab, setTab] = useState("upcoming");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [showCreate, setShowCreate] = useState(false);
+
+  const fetchEvents = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (typeFilter !== "all") params.set("type", typeFilter);
+      const res = await axios.get(`${API}/events?${params}`);
+      setData(res.data);
+    } catch {
+      toast.error("Failed to load events");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user?.role === "club_coach") {
@@ -184,20 +323,7 @@ function EventHome() {
     }
   }, [user]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const params = new URLSearchParams();
-        if (typeFilter !== "all") params.set("type", typeFilter);
-        const res = await axios.get(`${API}/events?${params}`);
-        setData(res.data);
-      } catch {
-        toast.error("Failed to load events");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [typeFilter]);
+  useEffect(() => { fetchEvents(); }, [typeFilter]);
 
   const events = tab === "upcoming" ? data.upcoming : data.past;
 
@@ -217,6 +343,14 @@ function EventHome() {
           <h1 className="text-lg font-semibold text-gray-900" data-testid="events-title">Events</h1>
           <p className="text-xs text-gray-500 mt-0.5">Capture recruiting moments. Organize later.</p>
         </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+          data-testid="create-event-button"
+        >
+          <Plus className="w-4 h-4" />
+          Create Event
+        </button>
       </div>
 
       <div className="flex items-center justify-between mb-5">
@@ -280,6 +414,12 @@ function EventHome() {
           )}
         </div>
       )}
+
+      <CreateEventDialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        onCreated={fetchEvents}
+      />
     </div>
   );
 }

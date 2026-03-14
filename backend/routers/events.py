@@ -73,9 +73,10 @@ async def get_event_detail(event_id: str, current_user: dict = get_current_user_
 @router.post("/events")
 async def create_event(body: EventCreate, current_user: dict = get_current_user_dep()):
     """Create a new event"""
-    from datetime import datetime as dt
     try:
-        event_date = dt.fromisoformat(body.date.replace("Z", "+00:00"))
+        event_date = datetime.fromisoformat(body.date.replace("Z", "+00:00"))
+        if event_date.tzinfo is None:
+            event_date = event_date.replace(tzinfo=timezone.utc)
     except Exception:
         event_date = datetime.now(timezone.utc) + timedelta(days=7)
 
