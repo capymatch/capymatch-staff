@@ -7,7 +7,7 @@ from db_client import db
 from auth_middleware import get_current_user_dep
 from services.ownership import filter_events_by_ownership, get_visible_athlete_ids
 from mock_data import UPCOMING_EVENTS, SCHOOLS
-from models import EventNoteCreate, EventNoteUpdate, EventCreate, EventAthleteAdd
+from models import EventNoteCreate, EventNoteUpdate, EventCreate, EventAthleteAdd, EventSignalCreate, EventAddSchool
 from event_engine import (
     get_event,
     get_all_events,
@@ -202,7 +202,230 @@ async def create_event_note(event_id: str, body: EventNoteCreate, current_user: 
     return result
 
 
-@router.patch("/events/{event_id}/notes/{note_id}")
+# ─── Signal type → Pipeline / Follow-up mappings ──────────────
+SIGNAL_PIPELINE_MAP = {
+    "coach_interest": {"stage": "Engaged", "priority": None},
+    "offered_visit": {"stage": "Campus Visit", "priority": None},
+    "strong_performance": {"stage": None, "priority": None},
+    "needs_film": {"stage": None, "priority": None},
+    "good_conversation": {"stage": None, "priority": None},
+    "standout_skill": {"stage": None, "priority": None},
+}
+
+SIGNAL_ACTION_MAP = {
+    "coach_interest": {"title": "Send follow-up message to {school} coach", "due_days": 2},
+    "needs_film": {"title": "Send updated highlight film to {school}", "due_days": 3},
+    "offered_visit": {"title": "Schedule call to discuss {school} campus visit", "due_days": 2},
+    "good_conversation": {"title": "Send thank-you message to {school} coach", "due_days": 3},
+}
+
+# Pipeline stage priority order (higher = further in process, never downgrade)
+_STAGE_ORDER = {
+    "Not Contacted": 0, "Prospect": 1, "Initial Contact": 2,
+    "Engaged": 3, "Campus Visit": 4, "Offer": 5,
+}
+
+
+@router.post("/events/{event_id}/signals")
+async def log_recruiting_signal(event_id: str, body: EventSignalCreate, current_user: dict = get_current_user_dep()):
+    """
+    Log a structured recruiting signal during a live event.
+    Automatically updates pipeline, creates school pod actions, and feeds timeline.
+    """
+    event = get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    athlete_id = body.athlete_id
+    school_name = body.school_name or ""
+    signal_type = body.signal_type
+
+    # Resolve athlete name
+    from services.athlete_store import get_by_id as get_athlete_by_id
+    athlete = get_athlete_by_id(athlete_id)
+    athlete_name = athlete["full_name"] if athlete else "Unknown"
+
+    # 1. Store structured signal as event_note (extended schema)
+    note_id = str(uuid.uuid4())
+    signal_doc = {
+        "id": note_id,
+        "event_id": event_id,
+        "athlete_id": athlete_id,
+        "athlete_name": athlete_name,
+        "school_id": body.school_id,
+        "school_name": school_name,
+        "interest_level": body.interest_level,
+        "signal_type": signal_type,
+        "note_text": body.note_text or "",
+        "follow_ups": [],
+        "captured_by": current_user["name"],
+        "captured_at": now,
+        "routed_to_pod": False,
+        "sent_to_athlete": False,
+        "advocacy_candidate": body.interest_level in ("hot", "warm"),
+        "program_id": None,
+    }
+
+    # Look up program_id for this athlete+school
+    program_id = await _find_program_id(athlete_id, school_name) if school_name else None
+    signal_doc["program_id"] = program_id
+
+    # Determine auto-generated follow-ups from signal type
+    auto_follow_ups = []
+    action_cfg = SIGNAL_ACTION_MAP.get(signal_type)
+    if action_cfg and school_name:
+        auto_follow_ups.append(signal_type)
+    signal_doc["follow_ups"] = auto_follow_ups
+
+    await db.event_notes.insert_one({**signal_doc})
+
+    # Also add to in-memory event
+    event.setdefault("capturedNotes", []).append(signal_doc)
+
+    pipeline_updated = False
+    action_created = False
+    school_added = False
+
+    # 2. Pipeline integration — update program status if school selected
+    if school_name and program_id:
+        pipeline_cfg = SIGNAL_PIPELINE_MAP.get(signal_type, {})
+        new_stage = pipeline_cfg.get("stage")
+        if new_stage:
+            prog = await db.programs.find_one({"program_id": program_id}, {"_id": 0})
+            if prog:
+                current_stage = prog.get("recruiting_status", "Not Contacted")
+                cur_order = _STAGE_ORDER.get(current_stage, 0)
+                new_order = _STAGE_ORDER.get(new_stage, 0)
+                if new_order > cur_order:
+                    await db.programs.update_one(
+                        {"program_id": program_id},
+                        {"$set": {
+                            "recruiting_status": new_stage,
+                            "updated_at": now,
+                            "last_follow_up": now,
+                        }}
+                    )
+                    pipeline_updated = True
+
+    # 3. Auto-create school pod action
+    if action_cfg and school_name:
+        action_title = action_cfg["title"].format(school=school_name)
+        due = (datetime.now(timezone.utc) + timedelta(days=action_cfg["due_days"])).isoformat()
+        await db.pod_actions.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": athlete_id,
+            "program_id": program_id,
+            "school_name": school_name,
+            "title": action_title,
+            "owner": current_user["name"],
+            "status": "ready",
+            "due_date": due,
+            "source": "event_signal",
+            "source_category": "recruiting",
+            "created_by": current_user["name"],
+            "created_at": now,
+            "is_suggested": False,
+            "completed_at": None,
+        })
+        action_created = True
+
+        # Mark as auto-routed
+        await db.event_notes.update_one({"id": note_id}, {"$set": {"routed_to_pod": True}})
+        signal_doc["routed_to_pod"] = True
+
+    # 4. Timeline entry
+    signal_label = signal_type.replace("_", " ").title()
+    timeline_text = f"[{event['name']}] {signal_label}"
+    if school_name:
+        timeline_text += f" — {school_name}"
+    if body.note_text:
+        timeline_text += f": {body.note_text}"
+
+    await db.athlete_notes.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "program_id": program_id,
+        "author": current_user["name"],
+        "text": timeline_text,
+        "tag": "event_signal",
+        "created_at": now,
+    })
+
+    return {
+        **signal_doc,
+        "pipeline_updated": pipeline_updated,
+        "action_created": action_created,
+        "school_added": school_added,
+    }
+
+
+@router.post("/events/{event_id}/add-school")
+async def add_school_to_pipeline(event_id: str, body: EventAddSchool, current_user: dict = get_current_user_dep()):
+    """Add a new school to an athlete's pipeline from the live event."""
+    event = get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Check if program already exists
+    existing = await _find_program_id(body.athlete_id, body.school_name)
+    if existing:
+        return {"added": False, "reason": "already_exists", "program_id": existing}
+
+    # Resolve athlete
+    from services.athlete_store import get_by_id as get_athlete_by_id
+    athlete = get_athlete_by_id(body.athlete_id)
+    if not athlete:
+        raise HTTPException(status_code=404, detail="Athlete not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    program_id = str(uuid.uuid4())
+
+    # Look up KB for division/conference
+    kb = await db.university_knowledge_base.find_one(
+        {"university_name": body.school_name}, {"_id": 0}
+    )
+
+    await db.programs.insert_one({
+        "program_id": program_id,
+        "tenant_id": athlete.get("tenant_id", ""),
+        "athlete_id": body.athlete_id,
+        "university_name": body.school_name,
+        "division": kb.get("division", "") if kb else "",
+        "conference": kb.get("conference", "") if kb else "",
+        "region": kb.get("region", "") if kb else "",
+        "recruiting_status": "Prospect",
+        "reply_status": "N/A",
+        "priority": "Medium",
+        "next_action": "Follow up after event",
+        "next_action_due": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+        "initial_contact_sent": now,
+        "last_follow_up": now,
+        "notes": f"Added from event: {event['name']}",
+        "org_id": athlete.get("org_id", ""),
+        "created_at": now,
+        "updated_at": now,
+    })
+
+    # Update athlete school_targets count
+    count = await db.programs.count_documents({"athlete_id": body.athlete_id})
+    await db.athletes.update_one(
+        {"id": body.athlete_id},
+        {"$set": {"school_targets": count}}
+    )
+
+    # Timeline entry
+    await db.athlete_notes.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": body.athlete_id,
+        "program_id": program_id,
+        "author": current_user["name"],
+        "text": f"Added {body.school_name} to pipeline from {event['name']}",
+        "tag": "school_added",
+        "created_at": now,
+    })
+
+    return {"added": True, "program_id": program_id, "school_name": body.school_name}
 async def edit_event_note(event_id: str, note_id: str, body: EventNoteUpdate, current_user: dict = get_current_user_dep()):
     """Edit a captured note"""
     updates = {k: v for k, v in body.model_dump().items() if v is not None}

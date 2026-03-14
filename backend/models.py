@@ -63,6 +63,20 @@ class EventNoteCreate(BaseModel):
     interest_level: Optional[str] = "none"
     note_text: Optional[str] = ""
     follow_ups: Optional[List[str]] = []
+    signal_type: Optional[str] = None
+
+class EventSignalCreate(BaseModel):
+    athlete_id: str
+    school_id: Optional[str] = None
+    school_name: Optional[str] = None
+    interest_level: str = "none"
+    signal_type: str
+    note_text: Optional[str] = ""
+
+class EventAddSchool(BaseModel):
+    athlete_id: str
+    school_id: str
+    school_name: str
 
 class EventNoteUpdate(BaseModel):
     interest_level: Optional[str] = None
