@@ -44,6 +44,18 @@ def get_all_events(team_filter=None, type_filter=None):
         # Override athleteCount with actual athlete_ids count
         e["athleteCount"] = len(event.get("athlete_ids", []))
 
+        # Athlete photos for card display
+        athlete_photos = []
+        for aid in event.get("athlete_ids", []):
+            ath = next((a for a in get_athletes() if a["id"] == aid), None)
+            if ath:
+                athlete_photos.append({
+                    "id": aid,
+                    "name": ath.get("full_name", ""),
+                    "photo_url": ath.get("photo_url", ""),
+                })
+        e["athlete_photos"] = athlete_photos
+
         # Athlete readiness summary for card display
         athlete_ids = event.get("athlete_ids", [])
         all_athletes = get_athletes()

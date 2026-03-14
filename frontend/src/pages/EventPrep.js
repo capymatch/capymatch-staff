@@ -169,16 +169,18 @@ function EventPrep() {
               return (
                 <div key={a.id} className="px-4 py-3 flex items-center justify-between gap-3" data-testid={`prep-athlete-${a.id}`}>
                   <div className="flex-1 min-w-0 flex items-start gap-3">
-                    {a.photo_url ? (
-                      <img src={a.photo_url} alt={a.full_name} className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" data-testid={`prep-avatar-${a.id}`} />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-bold text-gray-500" data-testid={`prep-avatar-${a.id}`}>
-                        {(a.full_name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
-                      </div>
-                    )}
+                    <div className="relative shrink-0 mt-0.5">
+                      {a.photo_url ? (
+                        <img src={a.photo_url} alt={a.full_name} className="w-8 h-8 rounded-full object-cover" data-testid={`prep-avatar-${a.id}`} />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-500" data-testid={`prep-avatar-${a.id}`}>
+                          {(a.full_name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                        </div>
+                      )}
+                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${cfg.dot}`} />
+                    </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                         <span className="font-medium text-sm text-gray-900">{a.full_name}</span>
                         <span className="text-[10px] text-gray-400">{a.grad_year} · {a.position}</span>
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>

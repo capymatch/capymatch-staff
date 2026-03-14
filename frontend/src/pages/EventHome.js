@@ -75,11 +75,39 @@ function EventCard({ event }) {
           </button>
         </div>
 
-        {/* Row 2: Location + core stats */}
-        <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
-          <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-400" />{event.location}</span>
-          <span className="flex items-center gap-1"><Users className="w-3 h-3 text-slate-400" />{event.athleteCount} athletes</span>
-          <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3 text-slate-400" />{event.expectedSchools} schools</span>
+        {/* Row 2: Location + core stats + athlete photos */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-400" />{event.location}</span>
+            <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3 text-slate-400" />{event.expectedSchools} schools</span>
+          </div>
+          {/* Athlete photo stack */}
+          {event.athlete_photos?.length > 0 && (
+            <div className="flex items-center gap-1.5" data-testid={`event-athlete-photos-${event.id}`}>
+              <div className="flex -space-x-2">
+                {event.athlete_photos.slice(0, 5).map((a) => (
+                  a.photo_url ? (
+                    <img
+                      key={a.id}
+                      src={a.photo_url}
+                      alt={a.name}
+                      className="w-7 h-7 rounded-full object-cover border-2 border-white"
+                      title={a.name}
+                    />
+                  ) : (
+                    <div
+                      key={a.id}
+                      className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[9px] font-bold text-gray-500"
+                      title={a.name}
+                    >
+                      {(a.name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                    </div>
+                  )
+                ))}
+              </div>
+              <span className="text-[10px] text-slate-400">{event.athleteCount}</span>
+            </div>
+          )}
         </div>
 
         {/* Row 3: Status pills */}
