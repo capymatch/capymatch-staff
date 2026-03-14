@@ -351,18 +351,6 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
                   );
                 })}
               </div>
-              {/* Labels row */}
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                {stages.map((s, i) => {
-                  const isActive = s.state === "active";
-                  const isPast = s.state === "past";
-                  const isFirst = i === 0;
-                  const isLast = i === stages.length - 1;
-                  return (
-                    <span key={s.key} style={{ fontSize: 8, fontWeight: isActive ? 700 : 500, color: isActive ? "#5eead4" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.2)", textAlign: isFirst ? "left" : isLast ? "right" : "center", flex: isFirst || isLast ? "none" : 1, whiteSpace: "nowrap" }}>{stageLabels[s.key] || s.key}</span>
-                  );
-                })}
-              </div>
             </div>
           )}
         </div>
