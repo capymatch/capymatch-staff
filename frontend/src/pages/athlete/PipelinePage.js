@@ -253,9 +253,8 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
 
       <div style={{ padding: "20px 24px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
         {/* Filter pills + carousel arrows */}
-        {FILTER_PILLS.length > 2 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 16 }} data-testid="hero-filter-pills">
-            {FILTER_PILLS.map(pill => {
+        <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 16 }} data-testid="hero-filter-pills">
+          {FILTER_PILLS.length > 2 && FILTER_PILLS.map(pill => {
               const URGENT_CATS = new Set(["past_due", "due_today", "coach_flag"]);
               const shouldPulse = pill.key !== "all" && URGENT_CATS.has(pill.key) && pill.count > 0 && !seenCategories.has(pill.key);
               const pillCat = ALERT_CATEGORIES[pill.key];
@@ -305,7 +304,6 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
               </div>
             )}
           </div>
-        )}
 
         {/* ── Category label ── */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
