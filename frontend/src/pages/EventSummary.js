@@ -174,13 +174,16 @@ function AthleteCard({ athleteId, athleteName, notes, eventId, onRefresh, naviga
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
+          <span
+            role="link"
+            tabIndex={0}
             onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athleteId}`); }}
-            className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors"
+            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); navigate(`/support-pods/${athleteId}`); } }}
+            className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors cursor-pointer"
             data-testid={`open-pod-${athleteId}`}
           >
             Pod <ExternalLink className="w-3 h-3" />
-          </button>
+          </span>
           {expanded ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
         </div>
       </button>
