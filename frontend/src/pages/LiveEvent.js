@@ -343,7 +343,7 @@ function LiveEvent() {
               </button>
             );
           })}
-          {selectedAthlete && !showAddSchool && (
+          {!showAddSchool && (
             <button
               onClick={() => setShowAddSchool(true)}
               className="px-2.5 sm:px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-medium border border-dashed border-gray-600 text-gray-400 hover:text-gray-200 hover:border-gray-400 transition-all flex items-center gap-1"
