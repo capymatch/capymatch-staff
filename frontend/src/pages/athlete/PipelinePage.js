@@ -390,12 +390,12 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
 
         {/* Row 3: "What to do next" advice box + CTA */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 4 }}>
-          <div style={{ flex: 1, padding: "14px 18px", borderRadius: 10, border: "1px solid rgba(13,148,136,0.2)", background: "rgba(13,148,136,0.04)" }}>
+          <div style={{ flex: 1, padding: "14px 18px", borderRadius: 10, border: "1px solid rgba(13,148,136,0.35)", background: "rgba(13,148,136,0.08)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: 14, color: "rgba(255,255,255,0.3)" }}>💡</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>What to do next</span>
+              <span style={{ fontSize: 14 }}>💡</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#5eead4", letterSpacing: "0.03em" }}>What to do next</span>
             </div>
-            <p style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.65)", lineHeight: 1.5, margin: 0 }} data-testid="hero-advice-text">
+            <p style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.5, margin: 0 }} data-testid="hero-advice-text">
               {advice || "Keep the momentum going with this program."}
             </p>
           </div>
