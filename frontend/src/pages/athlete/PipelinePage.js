@@ -327,16 +327,17 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
           </div>
           {/* Progress Rail — wide with labels */}
           {isSchool && stages && (
-            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0, flex: 1, maxWidth: 500 }}>
-              {stages.map((s, i) => {
-                const isActive = s.state === "active";
-                const isPast = s.state === "past";
-                const isFuture = s.state === "future";
-                const lineActive = isPast || (stages[i - 1]?.state === "past" && isActive);
-                return (
-                  <React.Fragment key={s.key}>
-                    {i > 0 && <div style={{ flex: 1, height: 2, background: lineActive ? "rgba(13,148,136,0.5)" : "rgba(255,255,255,0.08)", borderRadius: 1 }} />}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, flexShrink: 0 }}>
+            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ display: "flex", flexDirection: "column", gap: 3, flexShrink: 0, flex: 1, maxWidth: 500 }}>
+              {/* Dots + connecting lines */}
+              <div style={{ display: "flex", alignItems: "center" }}>
+                {stages.map((s, i) => {
+                  const isActive = s.state === "active";
+                  const isPast = s.state === "past";
+                  const isFuture = s.state === "future";
+                  const lineActive = isPast || (stages[i - 1]?.state === "past" && isActive);
+                  return (
+                    <React.Fragment key={s.key}>
+                      {i > 0 && <div style={{ flex: 1, height: 2, background: lineActive ? "rgba(13,148,136,0.5)" : "rgba(255,255,255,0.08)", borderRadius: 1 }} />}
                       <div style={{
                         width: isActive ? 14 : 9,
                         height: isActive ? 14 : 9,
@@ -344,12 +345,22 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
                         background: isActive ? "#0d9488" : isPast ? "rgba(148,163,184,0.6)" : "#1e1e2e",
                         border: isFuture ? "1.5px solid rgba(255,255,255,0.12)" : isActive ? "2px solid rgba(13,148,136,0.3)" : "none",
                         boxShadow: isActive ? "0 0 8px rgba(13,148,136,0.4)" : "none",
+                        flexShrink: 0,
                       }} />
-                      <span style={{ fontSize: 8, fontWeight: isActive ? 700 : 500, color: isActive ? "#5eead4" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.2)", whiteSpace: "nowrap", letterSpacing: "0.02em" }}>{stageLabels[s.key] || s.key}</span>
-                    </div>
-                  </React.Fragment>
-                );
-              })}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+              {/* Labels row */}
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                {stages.map((s) => {
+                  const isActive = s.state === "active";
+                  const isPast = s.state === "past";
+                  return (
+                    <span key={s.key} style={{ fontSize: 8, fontWeight: isActive ? 700 : 500, color: isActive ? "#5eead4" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.2)", textAlign: "center", width: 0, overflow: "visible", whiteSpace: "nowrap" }}>{stageLabels[s.key] || s.key}</span>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
