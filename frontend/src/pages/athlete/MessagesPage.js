@@ -35,43 +35,34 @@ function ThreadList({ threads, selectedId, onSelect }) {
 
   return (
     <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-      {threads.map(t => (
-        <button
-          key={t.thread_id}
-          onClick={() => onSelect(t.thread_id)}
-          className={`w-full text-left px-4 py-3 transition-colors hover:bg-slate-50/70 ${
-            selectedId === t.thread_id ? "bg-teal-50/50" : ""
-          }`}
-          data-testid={`thread-${t.thread_id}`}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                {t.unread_count > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+      {threads.map(t => {
+        const isUnread = t.unread_count > 0 && selectedId !== t.thread_id;
+        return (
+          <button
+            key={t.thread_id}
+            onClick={() => onSelect(t.thread_id)}
+            className={`w-full text-left px-4 py-3 transition-colors hover:bg-slate-50/70 ${
+              selectedId === t.thread_id ? "bg-teal-50/50" : ""
+            }`}
+            data-testid={`thread-${t.thread_id}`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {isUnread && (
+                  <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" data-testid={`unread-dot-${t.thread_id}`} />
                 )}
-                <span className={`text-sm truncate ${t.unread_count > 0 ? "font-semibold" : "font-medium"}`}
+                <span className={`text-sm truncate ${isUnread ? "font-semibold" : "font-medium"}`}
                   style={{ color: "var(--cm-text, #1e293b)" }}>
                   {t.subject}
                 </span>
               </div>
-              <p className="text-xs mt-0.5 truncate" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-                {t.last_sender_name}: {t.last_snippet}
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              <span className="text-[10px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+              <span className="text-[10px] shrink-0" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
                 {formatTime(t.last_message_at)}
               </span>
-              {t.unread_count > 0 && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-500 text-white">
-                  {t.unread_count}
-                </span>
-              )}
             </div>
-          </div>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -213,6 +204,13 @@ export default function MessagesPage() {
 
   useEffect(() => { fetchInbox(); }, [fetchInbox]);
 
+  const handleSelectThread = useCallback((threadId) => {
+    setSelectedThread(threadId);
+    setThreads(prev => prev.map(t =>
+      t.thread_id === threadId ? { ...t, unread_count: 0 } : t
+    ));
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -231,7 +229,7 @@ export default function MessagesPage() {
           <p className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Support messages from your coaching team</p>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <ThreadList threads={threads} selectedId={selectedThread} onSelect={setSelectedThread} />
+          <ThreadList threads={threads} selectedId={selectedThread} onSelect={handleSelectThread} />
         </div>
       </div>
 
