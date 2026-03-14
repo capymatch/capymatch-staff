@@ -105,20 +105,36 @@ function generateActions(programs, matchScores, tasks, healthMap, topActionsMap)
     const alerts = [];
     for (const p of active) {
       const ta = topActionsMap[p.program_id];
-      if (!ta || ta.action_key === "no_action_needed") continue;
-      alerts.push({
-        id: p.program_id,
-        type: "school",
-        program: p,
-        category: ta.category,
-        title: `${p.university_name} — ${ta.label}`,
-        context: ta.explanation,
-        owner: ta.owner,
-        cta: { label: ta.cta_label, style: ta.priority <= 3 ? "warn" : "primary" },
-        matchScore: matchScores[p.program_id],
-        due: getDueInfo(p),
-        priority: ta.priority,
-      });
+      if (ta && ta.action_key !== "no_action_needed") {
+        alerts.push({
+          id: p.program_id,
+          type: "school",
+          program: p,
+          category: ta.category,
+          title: `${p.university_name} — ${ta.label}`,
+          context: ta.explanation,
+          owner: ta.owner,
+          cta: { label: ta.cta_label, style: ta.priority <= 3 ? "warn" : "primary" },
+          matchScore: matchScores[p.program_id],
+          due: getDueInfo(p),
+          priority: ta.priority,
+        });
+      } else {
+        // Default action for schools with no specific alert
+        alerts.push({
+          id: p.program_id,
+          type: "school",
+          program: p,
+          category: "cooling_off",
+          title: `${p.university_name} — Re-engage`,
+          context: "Keep the momentum going with this program.",
+          owner: "athlete",
+          cta: { label: "Re-engage", style: "primary" },
+          matchScore: matchScores[p.program_id],
+          due: getDueInfo(p),
+          priority: 99,
+        });
+      }
     }
     alerts.sort((a, b) => a.priority - b.priority);
     return alerts;
