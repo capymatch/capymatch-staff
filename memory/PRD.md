@@ -30,13 +30,14 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - Dynamic playbooks, school-scoped notes, actions, timeline
 
 ### Events System
-- **Create Event**: Dialog modal with name, type, date, location, expected schools count
-- **Manage Athletes**: Dialog on Prep page to add/remove athletes from events. Shows full roster with photos, toggle Add/Remove. Persists to MongoDB.
+- **Create Event**: Dialog modal on Events page with name, type, date, location, expected schools
+- **Manage Athletes**: Dialog on Prep page to add/remove athletes with photo roster, toggle buttons, MongoDB persistence
+- **Manage Schools**: Dialog on Prep page to add/remove schools from events. Shows 10 predefined D1 schools with toggle Add/Remove. Supports custom school names. Persists to MongoDB.
 - Event cards with athlete photo stacks and school counts
-- Event Prep with athlete photos + status dot overlays + prep checklist
+- Event Prep with athlete photos, status dots, prep checklist, target schools ranked by athlete overlap
 - **Live Signal Capture**: Structured recruiting signals with 6 types. Auto pipeline updates.
 - **Post-Event Summary**: Dual action paths, athlete-centric grouping, routing progress tracker.
-- **Responsive Live Event Page**: Mobile-friendly with tabbed interface. VERIFIED.
+- **Responsive Live Event Page**: Mobile tabbed interface.
 
 ### Advocacy
 - Recommendation cards with athlete photos
@@ -45,13 +46,9 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 `backend/seed_fresh.py` — 5 athlete personas with AI-generated photos, 20 programs, 11 actions, 9 notes, 3 events, 6 event notes, 4 message threads
 
 ## Test Status
-- Full regression: 25/25 PASS
 - Create Event: Backend 12/12, Frontend 100% (iteration_133)
-- Manage Athletes: Backend 15/15, Frontend 11/11 (iteration_134)
-- Codebase Cleanup: No regressions
-
-## Codebase Cleanup (Mar 14, 2026)
-Removed 30 unused frontend components, 26 stale planning docs, 42MB old codebase copy.
+- Manage Athletes: Backend 15/15, Frontend 100% (iteration_134)
+- Manage Schools: Backend 20/20, Frontend 100% (iteration_135)
 
 ## Future/Backlog
 - Parent/Family Experience (P1)
