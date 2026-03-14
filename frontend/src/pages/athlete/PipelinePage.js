@@ -283,33 +283,34 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
               </button>
               );
             })}
-            {/* Carousel arrows */}
-            {displayTotal > 1 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: "auto" }}>
-                <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
-                <div style={{ display: "flex", gap: 3 }}>
-                  {displayActions.slice(0, 12).map((a, i) => {
-                    const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
-                    return (
-                      <div key={i} onClick={() => setIdx(i)} style={{
-                        width: i === safeIdx ? 16 : 5, height: 5,
-                        borderRadius: i === safeIdx ? 3 : "50%",
-                        background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
-                        cursor: "pointer", transition: "all 0.2s",
-                      }} data-testid={`carousel-dot-${i}`} />
-                    );
-                  })}
-                </div>
-                <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
-              </div>
-            )}
           </div>
 
-        {/* ── Category label ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
-          <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }}>{action.owner}</span>
-          <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>{safeIdx + 1}/{displayTotal}</span>
+        {/* ── Category label + Carousel arrows ── */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }}>{action.owner}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>{safeIdx + 1}/{displayTotal}</span>
+          </div>
+          {displayTotal > 1 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
+              <div style={{ display: "flex", gap: 3 }}>
+                {displayActions.slice(0, 12).map((a, i) => {
+                  const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
+                  return (
+                    <div key={i} onClick={() => setIdx(i)} style={{
+                      width: i === safeIdx ? 16 : 5, height: 5,
+                      borderRadius: i === safeIdx ? 3 : "50%",
+                      background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
+                      cursor: "pointer", transition: "all 0.2s",
+                    }} data-testid={`carousel-dot-${i}`} />
+                  );
+                })}
+              </div>
+              <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
+            </div>
+          )}
         </div>
 
         {/* ── School-First Layout (matching reference design) ── */}
