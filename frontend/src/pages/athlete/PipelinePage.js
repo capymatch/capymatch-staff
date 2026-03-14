@@ -400,9 +400,9 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
             </p>
           </div>
           <button onClick={handleCTA} style={{
-            padding: "14px 28px", borderRadius: 10, border: "none",
+            padding: "10px 24px", borderRadius: 10, border: "none",
             background: "#0d9488", color: "#fff",
-            fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex",
+            fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex",
             alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit",
             transition: "all 0.2s", flexShrink: 0, minWidth: 130,
             boxShadow: "0 4px 16px rgba(13,148,136,0.3)",
