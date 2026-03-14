@@ -41,13 +41,21 @@ function RecCard({ rec }) {
       data-testid={`rec-card-${rec.id}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-sm text-gray-900">{rec.athlete_name}</span>
-            <span className="text-gray-400">→</span>
-            <span className="text-sm text-gray-700">{rec.school_name}</span>
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
-          </div>
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          {rec.photo_url ? (
+            <img src={rec.photo_url} alt={rec.athlete_name} className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" data-testid={`rec-avatar-${rec.id}`} />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-bold text-gray-500" data-testid={`rec-avatar-${rec.id}`}>
+              {(rec.athlete_name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-semibold text-sm text-gray-900">{rec.athlete_name}</span>
+              <span className="text-gray-400">&rarr;</span>
+              <span className="text-sm text-gray-700">{rec.school_name}</span>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>
+            </div>
           <div className="text-xs text-gray-500 space-y-0.5">
             {rec.sent_at && <p>Sent {timeAgo(rec.sent_at)} · "{rec.fit_summary}"</p>}
             {isDraft && <p>Started {timeAgo(rec.created_at)} · Fit: {rec.fit_summary || "In progress"}</p>}
@@ -63,6 +71,7 @@ function RecCard({ rec }) {
             {isClosed && rec.closed_reason && (
               <p className="italic">{rec.closed_reason === "positive_outcome" ? "Positive outcome" : rec.closed_reason.replace(/_/g, " ")}</p>
             )}
+          </div>
           </div>
         </div>
         <button

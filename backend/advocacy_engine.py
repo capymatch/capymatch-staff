@@ -222,11 +222,20 @@ def list_recommendations(status_filter=None, athlete_filter=None, school_filter=
         "closed": sum(1 for r in RECOMMENDATIONS if r["status"] == "closed"),
     }
 
+    # Enrich with athlete photos
+    all_athletes = get_athletes()
+    def enrich(items):
+        for r in items:
+            ath = next((a for a in all_athletes if a["id"] == r.get("athlete_id")), None)
+            if ath:
+                r["photo_url"] = ath.get("photo_url", "")
+        return items
+
     return {
-        "needs_attention": needs_attention,
-        "drafts": drafts,
-        "recently_sent": recently_sent,
-        "closed": closed,
+        "needs_attention": enrich(needs_attention),
+        "drafts": enrich(drafts),
+        "recently_sent": enrich(recently_sent),
+        "closed": enrich(closed),
         "stats": stats,
     }
 
