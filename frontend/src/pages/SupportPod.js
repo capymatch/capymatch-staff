@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   School, ChevronRight, Loader2, ArrowLeft, RefreshCw,
-  AlertTriangle, Activity, User, UserCircle, Send
+  AlertTriangle, Activity, User, UserCircle, Send,
+  Phone, MessageSquare, ArrowUpRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,8 +13,12 @@ const token = () => localStorage.getItem("capymatch_token");
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${token()}` } });
 
 // ─── Athlete-Level Hero (only for athlete-level issues) ─────
-function AthleteHero({ currentIssue, signals }) {
-  // No issue and no critical signals → don't show hero at all
+function AthleteHero({ currentIssue, signals, athleteId, onRefresh }) {
+  const [resolving, setResolving] = useState(false);
+  const [showMessageForm, setShowMessageForm] = useState(false);
+  const [messageBody, setMessageBody] = useState("");
+  const [sendingMsg, setSendingMsg] = useState(false);
+
   const hasCriticalSignals = (signals || []).some(s => s.priority === "critical" || s.priority === "high");
   if (!currentIssue && !hasCriticalSignals) return null;
 
@@ -22,6 +27,69 @@ function AthleteHero({ currentIssue, signals }) {
   const isCritical = issue?.severity === "critical" || worst?.priority === "critical";
   const color = isCritical ? "#dc2626" : "#d97706";
 
+  const issueType = issue?.type || worst?.type || "";
+  const ctaLabel = issueType === "momentum_drop" ? "Log Check-In" : "Send Message";
+  const CtaIcon = issueType === "momentum_drop" ? Phone : MessageSquare;
+
+  const contextStr = (() => {
+    const ctx = issue?.source_context || {};
+    if (ctx.days_inactive) return `No activity in ${ctx.days_inactive} days`;
+    if (ctx.count) return `${ctx.count} action${ctx.count !== 1 ? "s" : ""}`;
+    if (ctx.detail) return ctx.detail;
+    return "";
+  })();
+
+  const handleResolve = async () => {
+    if (!issue?.id) return;
+    setResolving(true);
+    try {
+      await axios.post(`${API}/support-pods/${athleteId}/issues/${issue.id}/resolve`, {}, authHeaders());
+      toast.success("Issue resolved");
+      onRefresh?.();
+    } catch {
+      toast.error("Failed to resolve issue");
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const handleCtaClick = () => {
+    setShowMessageForm(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageBody.trim()) return;
+    setSendingMsg(true);
+    try {
+      const subject = issue?.title || worst?.title || "Coach Check-In";
+      await axios.post(`${API}/support-messages`, {
+        athlete_id: athleteId,
+        subject,
+        body: messageBody.trim(),
+      }, authHeaders());
+      toast.success("Message sent");
+      setMessageBody("");
+      setShowMessageForm(false);
+    } catch {
+      toast.error("Failed to send message");
+    } finally {
+      setSendingMsg(false);
+    }
+  };
+
+  const handleEscalate = async () => {
+    try {
+      await axios.post(`${API}/support-messages`, {
+        athlete_id: athleteId,
+        subject: `[ESCALATED] ${issue?.title || worst?.title || "Athlete Issue"}`,
+        body: `This issue has been escalated for priority review.\n\nDetails: ${issue?.description || worst?.description || "See athlete profile for details."}`,
+      }, authHeaders());
+      toast.success("Issue escalated — notification sent");
+    } catch {
+      toast.error("Failed to escalate");
+    }
+  };
+
   return (
     <div className="rounded-xl border relative overflow-hidden" style={{
       backgroundColor: isCritical ? "rgba(239,68,68,0.04)" : "rgba(245,158,11,0.04)",
@@ -29,18 +97,102 @@ function AthleteHero({ currentIssue, signals }) {
     }} data-testid="athlete-hero">
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: color }} />
       <div className="px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex items-center gap-2 mb-1">
+        {/* Urgency line */}
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {isCritical && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />}
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>
-            {issue ? `${issue.severity}` : "Athlete-Level Alert"}
+            {issue ? issue.severity : "Athlete-Level Alert"}
           </span>
+          {contextStr && (
+            <>
+              <span className="text-[10px]" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>·</span>
+              <span className="text-[10px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>{contextStr}</span>
+            </>
+          )}
+          {issue?.instance_number > 1 && (
+            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(139,92,246,0.08)", color: "#8b5cf6" }}>
+              Instance #{issue.instance_number}
+            </span>
+          )}
         </div>
-        <h2 className="text-sm sm:text-base font-bold" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="athlete-hero-title">
+
+        {/* Title + Description */}
+        <h2 className="text-sm sm:text-base font-bold leading-snug" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="athlete-hero-title">
           {issue?.title || worst?.title || "Needs Attention"}
         </h2>
-        <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+        <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }} data-testid="athlete-hero-description">
           {issue?.description || worst?.description || "Review the signals and take action."}
         </p>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <button
+            onClick={handleCtaClick}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
+            style={{ backgroundColor: color }}
+            data-testid="athlete-hero-cta"
+          >
+            <CtaIcon className="w-3.5 h-3.5" />
+            {ctaLabel}
+          </button>
+          {isCritical && (
+            <button
+              onClick={handleEscalate}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors border"
+              style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
+              data-testid="athlete-hero-escalate"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              Escalate
+            </button>
+          )}
+          {issue?.id && (
+            <button
+              onClick={handleResolve}
+              disabled={resolving}
+              className="px-3 py-2 rounded-lg text-xs font-medium transition-colors border disabled:opacity-50"
+              style={{ color: "var(--cm-text-3, #94a3b8)", backgroundColor: "transparent", borderColor: "var(--cm-border, #e2e8f0)" }}
+              data-testid="athlete-hero-resolve"
+            >
+              {resolving ? "Resolving..." : "Resolve"}
+            </button>
+          )}
+        </div>
+
+        {/* Inline message form */}
+        {showMessageForm && (
+          <div className="mt-3 pt-3 border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="athlete-hero-message-form">
+            <textarea
+              value={messageBody}
+              onChange={e => setMessageBody(e.target.value)}
+              placeholder={issueType === "momentum_drop" ? "Hey, just checking in — how are things going?" : "Type your message..."}
+              className="w-full px-3 py-2 rounded-lg border text-xs resize-none focus:outline-none focus:ring-1"
+              style={{ borderColor: "var(--cm-border, #e2e8f0)", backgroundColor: "var(--cm-surface, white)", color: "var(--cm-text, #1e293b)", minHeight: "60px" }}
+              rows={2}
+              data-testid="athlete-hero-message-input"
+            />
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={handleSendMessage}
+                disabled={sendingMsg || !messageBody.trim()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: color }}
+                data-testid="athlete-hero-message-send"
+              >
+                <Send className="w-3 h-3" />
+                {sendingMsg ? "Sending..." : "Send"}
+              </button>
+              <button
+                onClick={() => { setShowMessageForm(false); setMessageBody(""); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ color: "var(--cm-text-3, #94a3b8)" }}
+                data-testid="athlete-hero-message-cancel"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -316,7 +468,7 @@ function SupportPod() {
       {/* Content — just hero + schools */}
       <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4">
         {/* Athlete-level hero (only shows if there's an issue or critical signals) */}
-        <AthleteHero currentIssue={current_issue} signals={recruiting_signals} />
+        <AthleteHero currentIssue={current_issue} signals={recruiting_signals} athleteId={athleteId} onRefresh={() => { fetchPodData(true); fetchSchools(true); }} />
 
         {/* Profile Completeness Alert */}
         <ProfileAlert completeness={profile_completeness} athleteId={athleteId} athleteName={athlete?.full_name} />
