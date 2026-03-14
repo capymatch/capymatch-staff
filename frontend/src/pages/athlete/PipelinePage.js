@@ -389,7 +389,7 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
         </div>
 
         {/* Row 3: "What to do next" advice box + CTA */}
-        <div style={{ display: "flex", alignItems: "stretch", gap: 16, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 4 }}>
           <div style={{ flex: 1, padding: "14px 18px", borderRadius: 10, border: "1px solid rgba(13,148,136,0.2)", background: "rgba(13,148,136,0.04)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 14, color: "rgba(255,255,255,0.3)" }}>💡</span>
