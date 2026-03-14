@@ -86,10 +86,10 @@ class EventNoteUpdate(BaseModel):
     school_name: Optional[str] = None
 
 class EventCreate(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1)
     type: str
     date: str
-    location: str
+    location: str = Field(..., min_length=1)
     expectedSchools: Optional[int] = 0
 
 class EventAthleteAdd(BaseModel):

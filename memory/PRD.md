@@ -31,11 +31,12 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - Dynamic playbooks, school-scoped notes, actions, timeline
 
 ### Events System
+- **Create Event**: Dialog modal with name, type, date, location, expected schools. Auto-generates prep checklist.
 - Event cards with athlete photo stacks and school counts
 - Event Prep with athlete photos + status dot overlays
-- **Live Signal Capture (Phase 5)**: Structured recruiting signals with 6 types. Auto pipeline updates, auto school pod routing, Add School button, grouped recent panel by athlete+school
-- **Post-Event Summary (Phase 4)**: Dual action paths, athlete-centric grouping, routing progress tracker, school engagement heatmap, complete debrief button
-- **Responsive Live Event Page**: Mobile-friendly with tabbed interface. VERIFIED
+- **Live Signal Capture**: Structured recruiting signals with 6 types. Auto pipeline updates, auto school pod routing.
+- **Post-Event Summary**: Dual action paths, athlete-centric grouping, routing progress tracker.
+- **Responsive Live Event Page**: Mobile-friendly with tabbed interface. VERIFIED.
 
 ### Advocacy
 - Recommendation cards with athlete photos
@@ -50,10 +51,11 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - Post-Event Summary Phase 4: 15/15 PASS
 - Live Signal Capture Phase 5: 23/23 PASS
 - Responsive Live Event Desktop: VERIFIED
-- Post-Cleanup Smoke Test: PASS (dashboard + backend healthy)
+- Create Event: Backend 12/12 PASS, Frontend 100% PASS (iteration_133)
+- Codebase Cleanup: No regressions
 
 ## Codebase Cleanup (Mar 14, 2026)
-Removed 30 unused frontend components, 26 stale planning docs, 42MB old codebase copy, and misc empty files. Zero regressions.
+Removed 30 unused frontend components, 26 stale planning docs, 42MB old codebase copy, and misc empty files.
 
 ## Future/Backlog
 - Parent/Family Experience (P1)

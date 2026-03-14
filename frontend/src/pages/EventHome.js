@@ -7,7 +7,7 @@ import {
   Calendar, MapPin, Users, GraduationCap, ChevronRight,
   AlertTriangle, Clock, CheckCircle2, Zap, FileText, ArrowRight, Plus
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -209,6 +209,7 @@ function CreateEventDialog({ open, onOpenChange, onCreated }) {
       <DialogContent className="sm:max-w-[460px] bg-white" data-testid="create-event-dialog">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold text-gray-900">Create Event</DialogTitle>
+          <DialogDescription className="text-xs text-gray-500">Add a new recruiting event to your calendar.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
