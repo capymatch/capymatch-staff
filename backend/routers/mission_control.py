@@ -66,6 +66,7 @@ def _build_athlete_roster_item(athlete: dict) -> dict:
     return {
         "id": athlete["id"],
         "name": athlete.get("full_name", athlete.get("name", "Unknown")),
+        "photo_url": athlete.get("photo_url", ""),
         "grad_year": athlete.get("grad_year"),
         "position": athlete.get("position"),
         "team": athlete.get("team"),

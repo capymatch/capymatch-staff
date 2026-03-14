@@ -428,13 +428,31 @@ function SupportPod() {
               <span className="hidden sm:inline">Mission Control</span>
             </button>
             <div className="h-5 w-px bg-gray-200 hidden sm:block" />
-            <div className="min-w-0 flex-1">
-              <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="pod-athlete-name">
-                {athlete?.full_name}
-              </h1>
-              <p className="text-[11px] sm:text-xs text-gray-500 truncate">
-                {athlete?.grad_year} · {athlete?.position} · {athlete?.team}
-              </p>
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              {athlete?.photo_url ? (
+                <img
+                  src={athlete.photo_url}
+                  alt={athlete?.full_name}
+                  className="w-9 h-9 rounded-full object-cover shrink-0 border border-gray-100"
+                  data-testid="pod-athlete-avatar"
+                />
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-bold text-white text-sm"
+                  style={{ backgroundColor: "#0d9488" }}
+                  data-testid="pod-athlete-avatar"
+                >
+                  {(athlete?.full_name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                </div>
+              )}
+              <div className="min-w-0">
+                <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="pod-athlete-name">
+                  {athlete?.full_name}
+                </h1>
+                <p className="text-[11px] sm:text-xs text-gray-500 truncate">
+                  {athlete?.grad_year} · {athlete?.position} · {athlete?.team}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
               <button

@@ -12,6 +12,33 @@ const CATEGORY_CONFIG = {
   readiness_issue: { icon: Target, label: "Readiness Issue", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)" },
 };
 
+const INITIALS_COLORS = ["#0d9488", "#6366f1", "#2563eb", "#dc2626", "#d97706", "#7c3aed", "#059669"];
+
+function AthleteAvatar({ name, photoUrl, size = 32 }) {
+  const initials = (name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  const colorIdx = (name || "").length % INITIALS_COLORS.length;
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className="rounded-full object-cover shrink-0"
+        style={{ width: size, height: size }}
+        data-testid={`avatar-${name?.toLowerCase().replace(/\s+/g, "-")}`}
+      />
+    );
+  }
+  return (
+    <div
+      className="rounded-full flex items-center justify-center shrink-0 font-bold text-white"
+      style={{ width: size, height: size, backgroundColor: INITIALS_COLORS[colorIdx], fontSize: size * 0.38 }}
+      data-testid={`avatar-${name?.toLowerCase().replace(/\s+/g, "-")}`}
+    >
+      {initials}
+    </div>
+  );
+}
+
 function MomentumIndicator({ trend }) {
   if (trend === "rising") return <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />;
   if (trend === "declining") return <TrendingDown className="w-3.5 h-3.5 text-red-500" />;
@@ -34,16 +61,16 @@ function AthleteRow({ athlete, isLast }) {
       }}
       onClick={() => navigate(`/support-pods/${athlete.id}`)}
     >
-      {/* Status indicator */}
-      {hasIssue ? (
-        <div className="w-7 sm:w-8 shrink-0 text-center pt-0.5">
-          <MomentumIndicator trend={athlete.momentum_trend} />
-        </div>
-      ) : (
-        <div className="w-7 sm:w-8 shrink-0 text-center pt-1.5">
-          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
-        </div>
-      )}
+      {/* Avatar */}
+      <div className="shrink-0 relative">
+        <AthleteAvatar name={athlete.name} photoUrl={athlete.photo_url} size={34} />
+        {hasIssue && (
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 flex items-center justify-center"
+            style={{ borderColor: "var(--cm-surface, white)", backgroundColor: cat.color }}>
+            <CatIcon className="w-1.5 h-1.5 text-white" />
+          </span>
+        )}
+      </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -105,8 +132,9 @@ function OnTrackRow({ athlete, isLast }) {
       style={{ borderBottom: isLast ? "none" : "1px solid var(--cm-border)" }}
       onClick={() => navigate(`/support-pods/${athlete.id}`)}
     >
-      <div className="w-7 sm:w-8 shrink-0 text-center">
-        <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
+      <div className="shrink-0 relative">
+        <AthleteAvatar name={athlete.name} photoUrl={athlete.photo_url} size={28} />
+        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2" style={{ borderColor: "var(--cm-surface, white)" }} />
       </div>
       <span className="text-xs sm:text-sm font-medium flex-1 min-w-0 truncate" style={{ color: "var(--cm-text-2)" }}>
         {athlete.name}
