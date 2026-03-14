@@ -222,7 +222,7 @@ export default function MessagesPage() {
   // Thread detail view
   if (selectedThread) {
     return (
-      <div data-testid="messages-page" style={{ maxWidth: 800, margin: "0 auto" }}>
+      <div data-testid="messages-page">
         <ThreadDetail
           key={selectedThread}
           threadId={selectedThread}
@@ -234,7 +234,7 @@ export default function MessagesPage() {
 
   // Inbox list view
   return (
-    <div data-testid="messages-page" style={{ maxWidth: 800, margin: "0 auto" }}>
+    <div data-testid="messages-page">
       <div className="mb-4">
         <h1 className="text-lg font-bold" style={{ color: "var(--cm-text, #1e293b)" }}>Messages</h1>
         <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Support messages from your coaching team</p>
