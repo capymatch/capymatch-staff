@@ -58,9 +58,19 @@ ACTION_MAP = {
         "category": "coach_flag",
     },
 
-    # --- Priority 2: Director actions ---
-    "director_action_open": {
+    # --- Priority 2: Coach-assigned action items ---
+    "coach_assigned_action": {
         "priority": 2,
+        "label": "Complete Coach's Task",
+        "owner": "athlete",
+        "explanation_template": "{coach_name} assigned you a task: {action_title}",
+        "cta_label": "Take Action",
+        "category": "coach_flag",
+    },
+
+    # --- Priority 3: Director actions ---
+    "director_action_open": {
+        "priority": 3,
         "label": "Action Required from Director",
         "owner": "shared",
         "explanation_template": "Your director raised an action — review and respond",
@@ -68,9 +78,9 @@ ACTION_MAP = {
         "category": "director_action",
     },
 
-    # --- Priority 3: Overdue follow-up ---
+    # --- Priority 4: Overdue follow-up ---
     "overdue_followup": {
-        "priority": 3,
+        "priority": 4,
         "label": "Follow Up Now — {days_overdue}d Overdue",
         "owner": "athlete",
         "explanation_template": "This follow-up is {days_overdue} day{s} late. Send a quick message to keep momentum",
@@ -78,9 +88,9 @@ ACTION_MAP = {
         "category": "past_due",
     },
 
-    # --- Priority 4: Reply needed ---
+    # --- Priority 5: Reply needed ---
     "reply_to_coach_question": {
-        "priority": 4,
+        "priority": 5,
         "label": "Answer Coach's Question",
         "owner": "athlete",
         "explanation_template": "A coach asked you a question — reply to keep the conversation moving",
@@ -88,7 +98,7 @@ ACTION_MAP = {
         "category": "reply_needed",
     },
     "reply_to_coach_message": {
-        "priority": 4,
+        "priority": 5,
         "label": "Reply to Coach Message",
         "owner": "athlete",
         "explanation_template": "Coach reached out — a timely reply shows strong interest",
@@ -96,9 +106,9 @@ ACTION_MAP = {
         "category": "reply_needed",
     },
 
-    # --- Priority 5: Due today ---
+    # --- Priority 6: Due today ---
     "due_today": {
-        "priority": 5,
+        "priority": 6,
         "label": "Follow Up Today",
         "owner": "athlete",
         "explanation_template": "You have a follow-up scheduled for today — don't let it slip",
@@ -197,7 +207,31 @@ async def compute_top_action(program_id: str, tenant_id: str, *, metrics: dict =
             },
         )
 
-    # ── Priority 2: Director actions ──
+    # ── Priority 2: Coach-assigned action items (from school pod) ──
+    assigned_actions = await db.pod_actions.find(
+        {
+            "program_id": program_id,
+            "athlete_id": athlete_id,
+            "assigned_to_athlete": True,
+            "status": {"$in": ["ready", "open"]},
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(5)
+
+    if assigned_actions:
+        action = assigned_actions[0]
+        return _make_action(
+            "coach_assigned_action",
+            f"coach_action:{action.get('id', '')}:{action.get('title', '')}",
+            program_id=program_id,
+            university_name=program.get("university_name", ""),
+            template_vars={
+                "coach_name": action.get("created_by", "Your coach"),
+                "action_title": action.get("title", ""),
+            },
+        )
+
+    # ── Priority 3: Director actions ──
     open_actions = await db.director_actions.find(
         {"athlete_id": athlete_id, "status": {"$in": ["open", "acknowledged"]}},
         {"_id": 0},

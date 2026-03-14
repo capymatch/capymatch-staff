@@ -475,6 +475,7 @@ async def create_school_action(athlete_id: str, program_id: str, body: dict, cur
         "school_name": school_name,
         "title": body.get("title", ""),
         "owner": body.get("owner", current_user.get("name", "")),
+        "assigned_to_athlete": body.get("assigned_to_athlete", False),
         "status": "ready",
         "due_date": body.get("due_date", (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()),
         "source": "manual",
@@ -618,3 +619,65 @@ async def save_playbook_progress(athlete_id: str, program_id: str, body: dict, c
         upsert=True,
     )
     return {"saved": True, "checked_steps": checked}
+
+
+# ─── GET: Athlete's own assigned actions (athlete-facing, "me" routes first) ───
+@router.get("/athletes/me/assigned-actions")
+async def get_my_assigned_actions(current_user: dict = get_current_user_dep()):
+    """Get all actions assigned to the current athlete by coaches."""
+    athlete_id = current_user.get("athlete_id", current_user.get("id", ""))
+    actions = await db.pod_actions.find(
+        {
+            "athlete_id": athlete_id,
+            "assigned_to_athlete": True,
+            "status": {"$in": ["ready", "open"]},
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(50)
+    return {"actions": actions}
+
+
+@router.get("/athletes/me/school/{program_id}/assigned-actions")
+async def get_my_school_assigned_actions(program_id: str, current_user: dict = get_current_user_dep()):
+    """Get assigned actions for the current athlete for a specific school."""
+    athlete_id = current_user.get("athlete_id", current_user.get("id", ""))
+    actions = await db.pod_actions.find(
+        {
+            "athlete_id": athlete_id,
+            "program_id": program_id,
+            "assigned_to_athlete": True,
+            "status": {"$in": ["ready", "open"]},
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(20)
+    return {"actions": actions}
+
+
+# ─── GET: Athlete's assigned actions (coach-facing, parameterized) ─────────
+@router.get("/athletes/{athlete_id}/assigned-actions")
+async def get_athlete_assigned_actions(athlete_id: str, current_user: dict = get_current_user_dep()):
+    """Get all actions assigned to athlete by coaches, across all schools."""
+    actions = await db.pod_actions.find(
+        {
+            "athlete_id": athlete_id,
+            "assigned_to_athlete": True,
+            "status": {"$in": ["ready", "open"]},
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(50)
+    return {"actions": actions}
+
+
+@router.get("/athletes/{athlete_id}/school/{program_id}/assigned-actions")
+async def get_athlete_school_assigned_actions(athlete_id: str, program_id: str, current_user: dict = get_current_user_dep()):
+    """Get assigned actions for a specific school."""
+    actions = await db.pod_actions.find(
+        {
+            "athlete_id": athlete_id,
+            "program_id": program_id,
+            "assigned_to_athlete": True,
+            "status": {"$in": ["ready", "open"]},
+        },
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(20)
+    return {"actions": actions}

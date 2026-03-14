@@ -106,6 +106,9 @@ export default function JourneyPage() {
   const [coachFlags, setCoachFlags] = useState([]);
   const [completingFlag, setCompletingFlag] = useState(null);
 
+  // Coach-assigned action items
+  const [assignedActions, setAssignedActions] = useState([]);
+
   // Profile data for checklist
   const [profileData, setProfileData] = useState(null);
 
@@ -154,6 +157,11 @@ export default function JourneyPage() {
           const flags = (r.data?.flags || []).filter(f => f.program_id === programId);
           setCoachFlags(flags);
         })
+        .catch(() => {});
+
+      // Fetch coach-assigned actions for this school
+      axios.get(`${API}/athletes/me/school/${programId}/assigned-actions`)
+        .then(r => setAssignedActions(r.data?.actions || []))
         .catch(() => {});
     } catch (e) {
       toast.error("Failed to load program");
@@ -476,6 +484,46 @@ export default function JourneyPage() {
 
       {/* ─── MAIN CONTENT ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-4">
+
+        {/* Coach-Assigned Action Items Hero Card */}
+        {assignedActions.length > 0 && (
+          <div className="mb-4 space-y-3" data-testid="journey-assigned-actions">
+            {assignedActions.map(action => (
+              <div key={action.id} className="rounded-lg overflow-hidden"
+                style={{ background: "#1e1e2e", border: "1px solid rgba(13,148,136,0.25)", borderRadius: 10 }}
+                data-testid={`assigned-action-${action.id}`}>
+                <div style={{ height: 2, background: "linear-gradient(90deg, #0d9488, rgba(13,148,136,0.2))" }} />
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ backgroundColor: "rgba(13,148,136,0.15)" }}>
+                      <ClipboardCheck className="w-5 h-5" style={{ color: "#0d9488" }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#0d9488" }}>
+                        Coach Task {action.due_date ? `\u00B7 Due ${new Date(action.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}
+                      </p>
+                      <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>
+                        {action.title}
+                      </h3>
+                      <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        Assigned by {action.created_by || "your coach"} for {action.school_name || program?.university_name}
+                      </p>
+                      <button
+                        onClick={() => { setShowEmail(true); setActiveAction("email"); }}
+                        className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors shadow-sm"
+                        style={{ backgroundColor: "#0d9488", color: "#fff" }}
+                        data-testid={`action-cta-${action.id}`}>
+                        <Send className="w-3.5 h-3.5" />
+                        Take Action
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Coach Flag Card */}
         {coachFlags.length > 0 && (
