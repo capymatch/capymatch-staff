@@ -327,8 +327,8 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
           </div>
           {/* Progress Rail — matching Journey hero card exactly */}
           {isSchool && stages && (
-            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ flexShrink: 0, width: 340 }}>
-              <ProgressRail rail={{ stages: Object.fromEntries(stages.map(s => [s.key, s.state === "past" || s.state === "active"])), active: stages.find(s => s.state === "active")?.key, line_fill: stages.find(s => s.state === "active")?.key }} onStageClick={() => {}} />
+            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ flexShrink: 0, width: 480 }}>
+              <ProgressRail rail={{ stages: Object.fromEntries(stages.map(s => [s.key, s.state === "past" || s.state === "active"])), active: stages.find(s => s.state === "active")?.key, line_fill: stages.find(s => s.state === "active")?.key }} onStageClick={() => {}} hideLabels />
             </div>
           )}
         </div>

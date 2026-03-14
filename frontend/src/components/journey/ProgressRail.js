@@ -1,6 +1,6 @@
 import { RAIL_STAGES } from "./constants";
 
-export function ProgressRail({ rail, onStageClick }) {
+export function ProgressRail({ rail, onStageClick, hideLabels }) {
   if (!rail) return null;
   const stages = rail.stages || {};
   const active = rail.active;
@@ -64,7 +64,7 @@ export function ProgressRail({ rail, onStageClick }) {
           );
         })}
       </div>
-      <div style={{ display: "flex", marginTop: 6 }}>
+      {!hideLabels && <div style={{ display: "flex", marginTop: 6 }}>
         {RAIL_STAGES.map((s, idx) => {
           const isActive = s.key === active;
           const isPast = activeIdx >= 0 && idx < activeIdx;
@@ -78,7 +78,7 @@ export function ProgressRail({ rail, onStageClick }) {
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }
