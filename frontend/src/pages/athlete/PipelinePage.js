@@ -325,9 +325,9 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
               {isSchool && p ? p.university_name : (action.cta?.label || "Take Action")}
             </h2>
           </div>
-          {/* Progress Rail — inline dots, no labels */}
+          {/* Progress Rail — wide with labels */}
           {isSchool && stages && (
-            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0, width: 320 }}>
+            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0, flex: 1, maxWidth: 500 }}>
               {stages.map((s, i) => {
                 const isActive = s.state === "active";
                 const isPast = s.state === "past";
@@ -336,15 +336,17 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
                 return (
                   <React.Fragment key={s.key}>
                     {i > 0 && <div style={{ flex: 1, height: 2, background: lineActive ? "rgba(13,148,136,0.5)" : "rgba(255,255,255,0.08)", borderRadius: 1 }} />}
-                    <div style={{
-                      width: isActive ? 12 : 8,
-                      height: isActive ? 12 : 8,
-                      borderRadius: "50%",
-                      background: isActive ? "#0d9488" : isPast ? "rgba(148,163,184,0.6)" : "#1e1e2e",
-                      border: isFuture ? "1.5px solid rgba(255,255,255,0.12)" : isActive ? "2px solid rgba(13,148,136,0.3)" : "none",
-                      boxShadow: isActive ? "0 0 6px rgba(13,148,136,0.4)" : "none",
-                      flexShrink: 0,
-                    }} />
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                      <div style={{
+                        width: isActive ? 14 : 9,
+                        height: isActive ? 14 : 9,
+                        borderRadius: "50%",
+                        background: isActive ? "#0d9488" : isPast ? "rgba(148,163,184,0.6)" : "#1e1e2e",
+                        border: isFuture ? "1.5px solid rgba(255,255,255,0.12)" : isActive ? "2px solid rgba(13,148,136,0.3)" : "none",
+                        boxShadow: isActive ? "0 0 8px rgba(13,148,136,0.4)" : "none",
+                      }} />
+                      <span style={{ fontSize: 8, fontWeight: isActive ? 700 : 500, color: isActive ? "#5eead4" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.2)", whiteSpace: "nowrap", letterSpacing: "0.02em" }}>{stageLabels[s.key] || s.key}</span>
+                    </div>
                   </React.Fragment>
                 );
               })}
