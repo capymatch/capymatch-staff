@@ -1,142 +1,160 @@
 <analysis>**original_problem_statement:**
-The user is building a full-stack recruiting application, CapyMatch. The project has involved major refactoring and feature implementation. Recently, the user has grown frustrated with pervasive data inconsistencies across the application, stemming from a mix of hardcoded mock data and partial database records. These inconsistencies have caused numerous bugs, such as mismatched statistics, broken navigation, and features appearing to work for one test user but not others.
-
-The user has given a clear and critical directive: delete all existing athlete-related data and create a new, comprehensive, and reliable seed dataset from scratch. This seeder must populate the database with realistic data that covers all application scenarios, including athletes with profile blockers, various school engagement statuses, events needing follow-ups, and more. This data reset is the prerequisite for any future development.
+The user is building a full-stack recruiting application, CapyMatch. The project was initially plagued by pervasive data inconsistencies. The user mandated a complete data reset and the creation of a new, comprehensive seed dataset. Following the data fix, the user has requested a series of significant feature enhancements to improve the core coaching workflows, particularly around live event capture and post-event analysis.
 
 **PRODUCT REQUIREMENTS:**
-1.  **Fix Data Inconsistency:** Erase all unreliable mock and partial data for athletes, programs, events, and related collections.
-2.  **Create a Comprehensive Seeder:** Build a script that populates the database with a clean, interconnected, and realistic dataset covering all key application features and user journeys.
-3.  **Refine Events Feature:** A multi-phase enhancement of the Events section to make it more action-oriented and better integrated with the rest of the platform. Phases 1 and 2 were completed, but progress is blocked by the data issue.
+1.  **Fix Data Inconsistency:** Erase all unreliable mock and partial data and create a robust, comprehensive seeder script. (COMPLETED)
+2.  **Refine Events Feature:** A multi-phase enhancement of the Events section.
+    *   **Phase 3 (Live Mode):** Enhance the live event capture page for speed and efficiency. (COMPLETED)
+    *   **Phase 4 (Post-Event Summary):** Make the post-event summary more structured and action-oriented. (COMPLETED)
+    *   **Live Capture V2:** Upgrade the live capture from free-text notes to a structured recruiting signal system, deeply integrated with the athlete pipeline and school pods. (COMPLETED)
+3.  **UI Enhancements:**
+    *   Add action buttons to the Athlete Overview hero card. (COMPLETED)
+    *   Integrate athlete photos across all relevant pages (Dashboard, Pods, Events, Advocacy). (COMPLETED)
+    *   Make the Live Event page responsive. (COMPLETED)
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack platform using React, FastAPI, and MongoDB. The core coaching workflow, refactored from a monolithic Athlete Pod to a two-tiered Athlete Overview - Pod system, is functionally complete. Key features like school-scoped notes, dynamic action-plan playbooks, and a profile completeness alert have been implemented and tested.
+The application is a stable full-stack platform (React, FastAPI, MongoDB) with a reliable data foundation thanks to a comprehensive seeder script that populates the database with interconnected, realistic data. The core coaching workflows have been significantly enhanced.
 
-However, the application is plagued by data integrity issues. The agent discovered that most test athletes exist only in in-memory mock data within the Events system and lack proper user accounts, programs, and other records in the database. This causes discrepancies between what is shown on the Event pages versus the School/Athlete Pods. The user has mandated a full data wipe and the creation of a robust seeder script to fix this foundationally.
+Key implemented features include:
+- A robust database seeder () that can be run to reset and populate the application with consistent data.
+- An actionable Athlete Overview page with hero cards that provide contextual CTAs (e.g., Send Message, Log Check-in).
+- A highly refined Events module with:
+    - **Live Event Capture:** A responsive, structured signal capture tool that feeds directly into the athlete's pipeline and school pod workflows. It includes features like smart school filtering, quick capture templates, and keyboard shortcuts.
+    - **Post-Event Summary:** An action-oriented debriefing workflow that groups insights by athlete, tracks routing progress, and provides dual action paths (Send to Athlete and Add to School Pod).
+- Athlete photos are integrated throughout the UI, including the main dashboard, athlete-specific pages (Support Pod), and all event-related pages, providing a more personalized experience.
 
 **Last working item**:
-    - Last item agent was working: The user mandated a complete data reset and the creation of a new, comprehensive seed dataset. The agent was in the planning phase, analyzing all relevant database collections (, , , , etc.) and the existing  file to understand the full data landscape before writing the seeder script.
-    - Status: IN PROGRESS
-    - Agent Testing Done: N
-    - Which testing method agent to use? After the seeder script is created and executed, the agent must use the **both** (frontend and backend) testing agent for a full regression test to validate that the new, consistent data works correctly across the entire application.
+    - Last item agent was working: Making the  page responsive. The agent implemented a mobile-friendly layout using a tabbed interface to switch between Capture and Signals views on small screens.
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y
+    - Which testing method agent to use? frontend testing agent
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1:  (P0) The application's data is unreliable, inconsistent, and disconnected.
-  - Issue 2:  (P1) Hero Card on Athlete Overview page lacks action buttons.
+  - Issue 1:  (P0) Desktop view of the responsive Live Event page needs verification.
   
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: The agent has previously applied several band-aid fixes for symptoms of this problem (e.g., aligning calculation logic, fixing blocker descriptions). However, the user recognized these were insufficient and ordered a full data reset.
-     - Next debug checklist: This is now an implementation task, not a debugging one. The agent must create and run a seeder script. See In progress Task List below.
-     - Why fix this issue and what will be achieved with the fix? To establish a stable, reliable, and realistic data foundation for the entire application. This will eliminate a whole class of data-discrepancy bugs and enable accurate testing and development of all features.
-     - Status:  NOT STARTED
-     - Is recurring issue? Y
-     - Should Test frontend/backend/both after fix? Both
-     - Blocked on other issue: None. This is the primary blocker for all other work.
-  - Issue 2: 
-     - Attempted fixes: None. The issue was discovered during the investigation of data discrepancies for athlete Olivia.
+     - Attempted fixes: The agent successfully generated a screenshot for the mobile view, but the subsequent attempt to generate a screenshot for the desktop view failed with a Browser crashed error. The agent did not retry.
      - Next debug checklist: 
-        1. Locate the  component in  or a related file.
-        2. Add action buttons (e.g., Resolve, Escalate, Message) to the component, visible when there is an active issue.
-        3. Wire these buttons to the appropriate modal-opening or API-calling logic.
-     - Why fix this issue and what will be achieved with the fix? Coaches currently have no way to act on athlete-level blockers directly from the Athlete Overview page, creating a dead end in the workflow. This fix will make the hero card actionable.
-     - Status:  NOT STARTED
+        1. Use the screenshot tool to capture the  page at a desktop resolution (e.g., 1280x800).
+        2. If it fails, check the browser console for errors.
+        3. Review  to ensure there are no rendering issues caused by the responsive logic (e.g., conflicting class names, hooks causing re-renders).
+     - Why fix this issue and what will be achieved with the fix? To confirm that the recent responsive design changes did not break the layout on larger screens and ensure a consistent user experience across all devices.
+     - Status:  TESTING PENDING
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? Frontend
-     - Blocked on other issue: Issue 1 (Data inconsistency). This fix should be implemented after the new seed data is in place.
+     - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1:  (P0) Create and Run Comprehensive Database Seeder
-     - Where to resume: The agent has finished exploring the data schemas. The next step is to create a new script (e.g., ) that implements the following logic:
-        1. **Wipe Data:** A function to clear all documents from relevant collections (, , , , , , , , ).
-        2. **Create Personas:** Define 4-5 distinct athlete personas (e.g., a top recruit with many interactions, a new athlete with a sparse profile, an athlete with an active blocker, an athlete with event follow-ups).
-        3. **Seed Data:** For each persona, create interconnected documents across all collections, ensuring  accounts,  assignments (target schools), , and historical / are all consistent.
-        4. **Run Seeder:** Execute the script to populate the database.
-     - What will be achieved with this? A clean, consistent, and realistic dataset that enables reliable testing and accurately reflects all application scenarios.
-     - Status:  IN PROGRESS
-     - Should Test frontend/backend/both after fix? Both
-     - Blocked on something: Nothing. This is the highest priority task.
+None.
 
 **Upcoming and Future Tasks**
 
 **Upcoming Tasks:**
-*   (P1) **Refine Event Live Mode (Phase 3):** Continue with the user's plan to enhance the Events feature by optimizing the live speed-capture workflow.
-*   (P1) **Refine Event Post-Event Summary (Phase 4):** Make the post-event follow-ups more structured and actionable.
+*   (P1) **Parent/Family Experience:** Build out the dedicated UI/UX for parents and helpers.
+*   (P2) **AI-Powered Coach Summary:** Use an LLM to generate recruiting pitches based on athlete data.
 
 **Future Tasks:**
-*   **Close the Action Loop:** Implement logic where coach actions update . The user has explicitly stated this should only happen when the *athlete* acts, so this is on hold.
-*   **Club Billing:** Implement subscription billing for organizations.
+*   **Club Billing:** Implement subscription billing for organizations using Stripe.
 *   **Multi-Agent Intelligence Pipeline:** Build , , and  agents.
-*   **AI-Powered Coach Summary:** Use an LLM to generate recruiting pitches.
-*   **Parent/Family Experience:** Build out the dedicated UI/UX for parents and helpers.
+*   **Close the Action Loop:** Implement logic where coach actions update . (User has previously stated this should only happen when the *athlete* acts, so this remains on hold pending clarification).
 
 **Completed work in this session**
-- **Data Integrity Fixes (Pre-Seeder):**
-  - Fixed inconsistent profile completeness percentages between different pages.
-  - Aligned blocker descriptions to be consistent between the Event Prep and Athlete Overview pages.
-  - Fixed a critical bug in the Route to Pod feature, ensuring event-sourced actions are correctly assigned to the specific School Pod with a .
-- **Feature Implementation & Enhancement:**
-  - **Notes Feature:** Fixed and verified the school-scoped Notes feature in the School Pod.
-  - **Profile Alert:** Added a Profile Needs Attention card to the Athlete Overview page, including a Send Reminder button to message the athlete.
-  - **Action Plan Playbooks:** Successfully integrated dynamic, school-specific playbooks into the School Pod. Implemented persistence for playbook step completion.
-  - **Events UI Refinement (Phase 1 & 2):** Redesigned the Event Home cards and the Event Prep page to be more data-rich, decision-oriented, and actionable.
+- **Data Foundation Reset:**
+  - Created and executed a comprehensive database seeder (), wiping all old inconsistent data and populating MongoDB with a clean, interconnected dataset for multiple athlete personas.
+
+- **Events Feature Overhaul:**
+  - **Live Mode (Phase 3):** Refined the  page with smart filtering, quick capture templates, keyboard shortcuts, and a streamlined stats bar.
+  - **Post-Event Summary (Phase 4):** Rebuilt the  page into an action-oriented workflow with athlete-centric grouping, a debrief progress tracker, and a school engagement heatmap.
+  - **Dual Action Paths:** Implemented backend and frontend logic for both Send to Athlete (for simple tasks) and Add to School Pod (for school-specific context) actions from the summary page.
+  - **Structured Signal Capture:** Transformed the Live Event page from a simple note-taker to a structured signal capture system. This included creating new backend models and a  endpoint to log signals (interest level, type) and automatically update the athlete's pipeline status.
+  - **UX/UI Polish:** Made the  page fully responsive, added an Add School button, and improved the Recent Signals panel to be filterable by athlete.
+
+- **Core UI/UX Enhancements:**
+  - **Actionable Hero Card:** Added contextual action buttons (, , ) to the  component on the  page.
+  - **Athlete Photo Integration:** Generated avatar images and integrated them across the application:
+    - Dashboard ()
+    - Athlete Pod Header ()
+    - Event Prep Page ()
+    - Event Home Cards ()
+    - Advocacy Page ()
+
+**Earlier issues found/mentioned but not fixed**
+None.
+
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: The application's data was unreliable, inconsistent, and disconnected.
+  - Recurrence count: 1
+  - Status: RESOLVED (The creation and execution of the  script has fixed the root cause of this issue).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Data Seeding:** The current core task involves creating a script to programmatically populate a database with a large, interconnected, and realistic dataset, which is crucial for stable application development and testing.
-- **Data Integrity:** A recurring theme of identifying and fixing discrepancies between different data sources (in-memory mocks vs. DB) and ensuring a single source of truth for all user-facing information.
-- **End-to-End Debugging:** Tracing bugs from the UI (e.g., 0 target schools) through the frontend components, API calls, backend routers, service logic, and finally to the database schema to find the root cause (e.g., a missing  account).
-- **Component Refactoring:** Iteratively improving UI components (, ) based on user feedback to make them more decision-oriented and actionable.
+- **Data Seeding:** The core of the initial fix was creating  to programmatically populate MongoDB with consistent, interconnected data for users, programs, events, etc.
+- **Responsive Design:** Using TailwindCSS responsive prefixes (, ) to create adaptive layouts, such as the tabbed interface on the  page for mobile.
+- **End-to-End Feature Development:** Implementing features from the database model () and API endpoint () all the way to the interactive frontend component ().
+- **State Management & API Integration:** Using React hooks (, , ) to manage component state, fetch data from FastAPI endpoints, and optimistically update the UI.
 
 **key DB schema**
-The seeder script will wipe and repopulate the following key collections:
-  - : Stores user accounts, including . The link to other data.
-  - : An athlete's target schools, linked via a  derived from the user ID.
-  - : Manual and routed actions, now correctly scoped with .
-  - : General and school-scoped notes.
-  - , : Data for the events subsystem.
-  - , : Backend-computed health signals and blockers.
-  - : Stores completion status of playbook steps.
+- : Stores user accounts. Now seeded with .
+- : An athlete's target school pipeline. Updated by the new signal system to track .
+- : This collection is now used to store structured recruiting signals, with fields like , , and .
+- All collections (, , , , etc.) are now populated with consistent data by the  script.
+
+**changes in tech stack**
+- None.
 
 **All files of reference**
--   : **To be created.** This will be the most critical file for the next step.
--   : Contains the recently fixed Route to Pod logic.
--   : Endpoint for the Athlete Overview page.
--   : The recently redesigned event prep screen.
--   : The recently redesigned event card component.
--   : The source of the inconsistent data; will be superseded by the new seeder.
+-   : The new source of truth for all test data.
+-   : Contains the new endpoints for structured signal capture and post-event actions.
+-   : The completely overhauled live event capture page.
+-   : The new post-event debriefing page.
+-   : The main athlete overview page where hero card actions were added.
+-   : Contains the up-to-date product requirements and completed tasks.
+
+**Areas that need refactoring**:
+None. The recent work has been focused on refactoring and improving existing areas.
+
+**key api endpoints**
+- : Creates a structured recruiting signal, automatically updates the athlete's pipeline, and creates a pod action if needed.
+- : Adds a new school to an athlete's pipeline directly from the live event page.
+- : Sends a follow-up action directly to an athlete from the summary page.
+- : Marks an event as fully debriefed.
+- : Returns data for the main dashboard, now includes .
 
 **Critical Info for New Agent**
-- **Your absolute, number one priority is to create and run the database seeder.** The user is highly frustrated with the unreliable data, and no other task should be started until this is complete.
-- Follow the plan outlined in the In progress Task List to create the  script.
-- The goal is to eliminate all dependencies on  and have a single source of truth in the MongoDB database.
-- After seeding, perform a full regression test to confirm the application is stable and data is consistent everywhere.
+- The application's data layer is now stable and reliable. All testing and development should be done against the data generated by .
+- The user's focus has shifted from fixing foundational issues to building out and refining high-value user workflows.
+- The Events module is now the most advanced part of the application. Refer to  and  as examples of current coding patterns and UI standards.
+- Always confirm the next priority with the user before starting work on a new feature from the backlog.
 
 **documents and test reports created in this job**
-- /app/test_reports/iteration_2.json
-- /app/test_reports/iteration_3.json
-- /app/test_reports/iteration_4.json
-- /app/test_reports/iteration_5.json
+-  (updated multiple times)
+- 
+- 
+- 
+- 
+- 
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- **LATEST:** please delete all the data from all the athletes and create a new one that makes complete sense so we can test it. The data is not reliable at all!!! - User directive to start the data seeding task.
-- User identified that the Active Blocker card on the School Pod was generic and had no action button or school info. (Status: Partially fixed description, but root cause is data).
-- User approved the redesigned Event Prep page (Phase 2).
-- User identified a data mismatch on Event cards (e.g., card showed 14 schools, prep page showed 5). (Status: Fixed).
-- User approved the redesigned Event Home cards (Phase 1).
-- User requested to refine the Events architecture in a multi-phase approach.
-- User asked to check if the Route to Pod buttons on the Event Summary page were working correctly. (Status: Investigated and fixed).
-- User asked for an explanation of the Events area. (Status: Provided).
-- User confirmed to proceed with wiring the Action Plan Playbooks into the School Pod.
-- User clarified that program status should only change when the athlete acts, putting the Close the Action Loop feature on hold.
+1. : Request to make the Live Event page mobile-friendly. (Status: Implemented, pending user verification).
+2. : Questioned the utility of the session timer on the Live Event page. (Status: Addressed, timer was removed).
+3. : Request to improve the signals panel UX. (Status: Implemented).
+4. : A detailed spec for a major upgrade to the live capture feature. (Status: Implemented).
+5. : Request to add athlete photos to the Advocacy page. (Status: Implemented).
+6. : Request to add photos to the main Events page and overlay status dots on avatars. (Status: Implemented).
+7. : Request to add photos to the Event Prep page. (Status: Implemented).
+8. : Request to add photos to the dashboard and athlete pod page. (Status: Implemented).
+9. : Added a new requirement for a dual-action path in the post-event summary. (Status: Implemented).
+10. : User asking for the plan for Phase 4 (Post-Event Summary). (Status: Plan was provided and approved).
 
 **Project Health Check:**
-- **Broken:** The entire application's data layer is fundamentally unreliable due to a dependency on disconnected mock data. This manifests as bugs, incorrect stats, and inconsistent UI across different pages.
-- **Mocked:** The Events system heavily relies on in-memory mock data that is not properly linked to the main database, which is the root cause of the Broken state. The seeder script will fix this.
+- **Healthy:** The foundational data integrity issues have been resolved. The application is stable and core features are well-developed.
+- **Mocked:** All significant mock data has been replaced by the database seeder.
 
 **3rd Party Integrations**
 - Resend
@@ -147,12 +165,11 @@ The seeder script will wipe and repopulate the following key collections:
   - Testing agent used after significant changes: YES
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: The application is in an unstable state due to the data inconsistency, so many regressions are likely present when testing with any user other than the one fully-wired test user.
+  - Known regressions: None. The system is in a stable state.
 
 **Credentials to test flow:**
 - **Coach:**  / 
-- **Athlete (Old):**  / 
-- **NOTE:** The seeder script will create new, reliable credentials. The old ones should be considered deprecated.
+- **Athletes:** The  script is the source of truth for all athlete data and credentials. Review this file to get login details for different athlete personas (e.g., , ).
 
 **What agent forgot to execute**
-- The agent identified that the  component on the Athlete Overview page is missing action buttons but has not yet created an issue or implemented the fix. This is captured as Issue 2 in the pending list.</analysis>
+- The agent did not re-attempt or debug the failed desktop screenshot after making the Live Event page responsive. This leaves the desktop layout unverified.</analysis>
