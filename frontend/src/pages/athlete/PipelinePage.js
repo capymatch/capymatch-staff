@@ -10,6 +10,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RAIL_STAGES } from "../../components/journey/constants";
+import { PulseIndicator } from "../../components/journey";
 import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
@@ -286,15 +287,13 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
           </div>
         )}
 
-        {/* ── Action-First Layout ── */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 6 }}>
-          {/* Left: category + counter */}
+        {/* ── Category label + Carousel nav ── */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }} data-testid="hero-category-label">{cat.label}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }} data-testid="hero-owner-badge">{action.owner}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }} data-testid="hero-alert-count">{safeIdx + 1}/{displayTotal}</span>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }}>{action.owner}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>{safeIdx + 1}/{displayTotal}</span>
           </div>
-          {/* Right: carousel nav */}
           {displayTotal > 1 && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
               <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
@@ -317,75 +316,100 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
           )}
         </div>
 
-        {/* ── ACTION HEADLINE (primary visual weight) ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 8 }}>
-          {isSchool && p && (
-            <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={40} className="rounded-[10px] flex-shrink-0" />
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", letterSpacing: -0.3, lineHeight: 1.3 }} data-testid="hero-action-headline">
-              {action.cta?.label || "Take Action"}
-            </div>
+        {/* ── School-First Layout (matching reference design) ── */}
+        {/* Row 1: Logo + School Name (left) | Progress Rail (right) */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
             {isSchool && p && (
-              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)", marginTop: 2, display: "flex", alignItems: "center", gap: 8 }}>
-                <span>{p.university_name}</span>
-                {p.division && <span style={{ padding: "1px 7px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(13,148,136,0.15)", color: "#5eead4" }}>{p.division}</span>}
-                {matchPct != null && <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)" }}>{matchPct}%</span>}
-              </div>
+              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={52} className="rounded-[10px] flex-shrink-0" />
             )}
+            <h2 style={{ fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -0.5, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} data-testid="hero-school-name">
+              {isSchool && p ? p.university_name : (action.cta?.label || "Take Action")}
+            </h2>
           </div>
+          {/* Progress Rail — large, with labels */}
+          {isSchool && stages && (
+            <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }} className="hidden sm:flex" data-testid="hero-progress-rail">
+              {stages.map((s, i) => {
+                const stageColors = { past: "#94a3b8", active: { added: "#94a3b8", outreach: "#0d9488", in_conversation: "#22c55e", campus_visit: "#3b82f6", offer: "#a855f7", committed: "#0d9488" }[s.key] || "#0d9488", future: "transparent" };
+                const dotColor = s.state === "active" ? stageColors.active : s.state === "past" ? stageColors.past : stageColors.future;
+                const lineActive = s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active");
+                return (
+                  <React.Fragment key={s.key}>
+                    {i > 0 && <div style={{ width: 28, height: 2, background: lineActive ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.08)" }} />}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                      <div style={{ position: "relative" }}>
+                        <div style={{
+                          width: s.state === "active" ? 18 : 10,
+                          height: s.state === "active" ? 18 : 10,
+                          borderRadius: "50%",
+                          background: s.state === "future" ? "transparent" : dotColor,
+                          border: s.state === "future" ? "1.5px solid rgba(255,255,255,0.15)" : s.state === "active" ? `3px solid ${dotColor}44` : "none",
+                          boxShadow: s.state === "active" ? `0 0 12px ${dotColor}50` : "none",
+                        }} />
+                        {s.state === "active" && <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: `1.5px solid ${dotColor}40`, animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
+                      </div>
+                      <span style={{ fontSize: 9, fontWeight: s.state === "active" ? 700 : 500, color: s.state === "active" ? dotColor : "rgba(255,255,255,0.3)", textTransform: "capitalize", whiteSpace: "nowrap" }}>
+                        {stageLabels[s.key] || s.label}
+                      </span>
+                    </div>
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ── Explanation (inline, not in a card) ── */}
-        {advice && (
-          <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.55)", lineHeight: 1.5, marginBottom: 14, paddingLeft: 54 }} data-testid="hero-explanation">
-            {advice}
-          </div>
-        )}
-
-        {/* ── CTA row: primary action + secondary "View School" ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }} className="hero-advice-row">
-          <button onClick={handleCTA} style={{
-            padding: "10px 24px", borderRadius: 10, border: "none",
-            background: isUrgent ? cat.color : "#0d9488",
-            color: isUrgent && cat.color === "#f59e0b" ? "#000" : "#fff",
-            fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex",
-            alignItems: "center", justifyContent: "center", gap: 7, fontFamily: "inherit",
-            transition: "all 0.2s", flexShrink: 0,
-          }} data-testid="hero-cta-btn">
-            <ArrowRight style={{ width: 15, height: 15 }} />
-            {action.cta.label}
-          </button>
-          {isSchool && p && (
-            <button onClick={handleCTA} style={{
-              padding: "10px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)",
-              background: "transparent", color: "rgba(255,255,255,0.45)", fontSize: 12, fontWeight: 600,
-              cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "inherit",
-              transition: "all 0.15s",
-            }} data-testid="hero-view-school-btn">
-              View School <ChevronRight style={{ width: 12, height: 12 }} />
-            </button>
+        {/* Row 2: Metadata badges + social */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          <PulseIndicator pulse={stages?.find(s => s.state === "active")?.pulse || "neutral"} />
+          {isSchool && p?.division && (
+            <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>
           )}
-          {/* Progress Rail — compact, inline */}
-          {isSchool && stages && (
-            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }} className="hidden md:flex">
-              {stages.map((s, i) => (
-                <React.Fragment key={s.key}>
-                  {i > 0 && <div style={{ width: 16, height: 2, background: s.state === "past" || (stages[i-1]?.state === "past" && s.state === "active") ? "rgba(13,148,136,0.4)" : "rgba(255,255,255,0.08)" }} />}
-                  <div style={{ position: "relative" }} title={stageLabels[s.key] || s.label}>
-                    <div style={{
-                      width: s.state === "active" ? 12 : 7, height: s.state === "active" ? 12 : 7,
-                      borderRadius: "50%",
-                      background: s.state === "future" ? "transparent" : s.state === "active" ? "#0d9488" : "rgba(13,148,136,0.5)",
-                      border: s.state === "future" ? "1.5px solid rgba(255,255,255,0.12)" : "none",
-                      boxShadow: s.state === "active" ? "0 0 8px rgba(13,148,136,0.5)" : "none",
-                    }} />
-                    {s.state === "active" && <div style={{ position: "absolute", inset: -3, borderRadius: "50%", border: "1.5px solid rgba(13,148,136,0.3)", animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
-                  </div>
-                </React.Fragment>
+          {matchPct != null && (
+            <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(255,255,255,0.06)", color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "#94a3b8" }}>
+              {matchPct}% Match
+            </span>
+          )}
+          {isSchool && p?.conference && (
+            <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>{p.conference}</span>
+          )}
+          {isSchool && p?.social_links && typeof p.social_links === "object" && Object.keys(p.social_links).length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 4 }}>
+              {Object.entries(p.social_links).slice(0, 4).map(([platform, url]) => (
+                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.3)", display: "flex" }} title={platform}>
+                  {platform === "twitter" ? <span style={{ fontSize: 12, fontWeight: 700 }}>𝕏</span>
+                    : platform === "instagram" ? <span style={{ fontSize: 11 }}>◎</span>
+                    : platform === "facebook" ? <span style={{ fontSize: 11 }}>ⓕ</span>
+                    : <span style={{ fontSize: 10 }}>{platform[0].toUpperCase()}</span>}
+                </a>
               ))}
             </div>
           )}
+        </div>
+
+        {/* Row 3: "What to do next" advice box + CTA */}
+        <div style={{ display: "flex", alignItems: "stretch", gap: 16, marginBottom: 4 }}>
+          <div style={{ flex: 1, padding: "14px 18px", borderRadius: 10, border: "1px solid rgba(13,148,136,0.2)", background: "rgba(13,148,136,0.04)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 14, color: "rgba(255,255,255,0.3)" }}>💡</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>What to do next</span>
+            </div>
+            <p style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.65)", lineHeight: 1.5, margin: 0 }} data-testid="hero-advice-text">
+              {advice || "Keep the momentum going with this program."}
+            </p>
+          </div>
+          <button onClick={handleCTA} style={{
+            padding: "14px 28px", borderRadius: 10, border: "none",
+            background: "#0d9488", color: "#fff",
+            fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit",
+            transition: "all 0.2s", flexShrink: 0, minWidth: 130,
+            boxShadow: "0 4px 16px rgba(13,148,136,0.3)",
+          }} data-testid="hero-cta-btn">
+            <ArrowRight style={{ width: 16, height: 16 }} />
+            {action.cta.label}
+          </button>
         </div>
       </div>
 
