@@ -106,18 +106,23 @@ export default function JourneyPage() {
   const [coachFlags, setCoachFlags] = useState([]);
   const [completingFlag, setCompletingFlag] = useState(null);
 
+  // Profile data for checklist
+  const [profileData, setProfileData] = useState(null);
+
   const fetchData = useCallback(async () => {
     try {
-      const [pRes, jRes, msRes, engRes, gmailRes] = await Promise.allSettled([
+      const [pRes, jRes, msRes, engRes, gmailRes, profRes] = await Promise.allSettled([
         axios.get(`${API}/athlete/programs/${programId}`),
         axios.get(`${API}/athlete/programs/${programId}/journey`),
         axios.get(`${API}/match-scores`),
         axios.get(`${API}/athlete/engagement/${programId}`),
         axios.get(`${API}/athlete/gmail/status`),
+        axios.get(`${API}/athlete/profile`),
       ]);
       if (pRes.status !== "fulfilled") throw new Error("Failed to load program");
       setProgram(pRes.value.data);
       if (jRes.status === "fulfilled") setTimeline(jRes.value.data.timeline || []);
+      if (profRes.status === "fulfilled") setProfileData(profRes.value.data);
 
       // Match score lookup
       if (msRes.status === "fulfilled") {
@@ -334,7 +339,7 @@ export default function JourneyPage() {
     else if (diffDays <= 5) { followUpUpcoming = true; daysUntilDue = diffDays; }
   }
 
-  const profileComplete = !!(program.athlete_name || program.athlete_video);
+  const profileComplete = !!(profileData && profileData.athlete_name && profileData.position && profileData.height && profileData.graduation_year);
 
   // Resolve logo from match score data
   const logoUrl = matchScore?.logo_url || program.logo_url || null;
