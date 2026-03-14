@@ -183,9 +183,14 @@ async def send_message(msg: SendMessage, current_user: dict = get_current_user_d
 @router.post("/support-messages/{thread_id}/reply")
 async def reply_to_thread(thread_id: str, reply: ReplyMessage, current_user: dict = get_current_user_dep()):
     """Reply to an existing support message thread."""
-    thread = await db.support_threads.find_one({"thread_id": thread_id}, {"_id": 0})
+    thread = await db.support_threads.find_one(
+        {"$or": [{"thread_id": thread_id}, {"id": thread_id}]}, {"_id": 0}
+    )
     if not thread:
         raise HTTPException(404, "Thread not found")
+
+    # Normalize thread_id
+    tid = thread.get("thread_id") or thread.get("id")
 
     # Verify user is a participant
     if current_user["id"] not in thread.get("participant_ids", []):
@@ -218,8 +223,9 @@ async def reply_to_thread(thread_id: str, reply: ReplyMessage, current_user: dic
 
     # Update thread
     await db.support_threads.update_one(
-        {"thread_id": thread_id},
+        {"$or": [{"thread_id": tid}, {"id": tid}]},
         {"$set": {
+            "thread_id": tid,
             "last_message_at": now,
             "last_sender_name": current_user.get("name", "User"),
             "last_snippet": reply.body[:120],
