@@ -251,6 +251,30 @@ async def create_event_note(event_id: str, body: EventNoteCreate, current_user: 
     # Persist event note to MongoDB
     await db.event_notes.insert_one({**result})
 
+    # Auto-route to school pod if school_name present
+    if body.school_name and body.athlete_id:
+        program_id = await _find_program_id(body.athlete_id, body.school_name)
+        now = datetime.now(timezone.utc).isoformat()
+        await db.pod_actions.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": body.athlete_id,
+            "program_id": program_id,
+            "school_name": body.school_name,
+            "title": f"Review event note — {body.school_name}",
+            "owner": current_user["name"],
+            "status": "ready",
+            "due_date": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            "source": "event_note",
+            "source_category": "recruiting",
+            "created_by": current_user["name"],
+            "created_at": now,
+            "is_suggested": False,
+            "completed_at": None,
+            "assigned_to_athlete": False,
+            "action_type": "general",
+        })
+        await db.event_notes.update_one({"id": result["id"]}, {"$set": {"routed_to_pod": True}})
+
     # Auto-log to athlete timeline
     timeline_doc = {
         "id": str(uuid.uuid4()),
@@ -371,10 +395,15 @@ async def log_recruiting_signal(event_id: str, body: EventSignalCreate, current_
                     )
                     pipeline_updated = True
 
-    # 3. Auto-create school pod action
-    if action_cfg and school_name:
-        action_title = action_cfg["title"].format(school=school_name)
-        due = (datetime.now(timezone.utc) + timedelta(days=action_cfg["due_days"])).isoformat()
+    # 3. Auto-create school pod action (auto-route to pod)
+    if school_name:
+        if action_cfg:
+            action_title = action_cfg["title"].format(school=school_name)
+            due = (datetime.now(timezone.utc) + timedelta(days=action_cfg["due_days"])).isoformat()
+        else:
+            action_title = f"Follow up on {signal_type.replace('_', ' ')} signal — {school_name}"
+            due = (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()
+
         await db.pod_actions.insert_one({
             "id": str(uuid.uuid4()),
             "athlete_id": athlete_id,
@@ -390,6 +419,8 @@ async def log_recruiting_signal(event_id: str, body: EventSignalCreate, current_
             "created_at": now,
             "is_suggested": False,
             "completed_at": None,
+            "assigned_to_athlete": False,
+            "action_type": "general",
         })
         action_created = True
 
@@ -674,11 +705,16 @@ async def send_note_to_athlete(event_id: str, note_id: str, current_user: dict =
 
     await db.support_threads.insert_one({
         "id": thread_id,
+        "thread_id": thread_id,
         "athlete_id": athlete_id,
         "subject": subject,
         "last_message_at": now,
+        "last_sender_name": current_user["name"],
+        "last_snippet": body[:120] if len(body) > 120 else body,
         "created_by": current_user["id"],
         "created_at": now,
+        "message_count": 1,
+        "participant_ids": [current_user["id"], athlete_id],
     })
     await db.support_messages.insert_one({
         "id": msg_id,
@@ -686,9 +722,61 @@ async def send_note_to_athlete(event_id: str, note_id: str, current_user: dict =
         "athlete_id": athlete_id,
         "sender_id": current_user["id"],
         "sender_name": current_user["name"],
+        "sender_role": current_user.get("role", "club_coach"),
         "body": body,
         "created_at": now,
+        "read_by": [current_user["id"]],
     })
+
+    # 1b. Create assigned pod action for the athlete
+    follow_up_action_map = {
+        "send_film": {"title": f"Send highlight film to {school_name}", "action_type": "send_email"},
+        "schedule_call": {"title": f"Schedule call with {school_name} coach", "action_type": "log_interaction"},
+        "add_to_targets": {"title": f"Add {school_name} to your target list", "action_type": "general"},
+        "route_to_pod": {"title": f"Review {school_name} interaction details", "action_type": "research"},
+    }
+    program_id = await _find_program_id(athlete_id, school_name) if school_name else None
+    for fu in follow_ups:
+        fu_cfg = follow_up_action_map.get(fu)
+        if fu_cfg:
+            await db.pod_actions.insert_one({
+                "id": str(uuid.uuid4()),
+                "athlete_id": athlete_id,
+                "program_id": program_id,
+                "school_name": school_name,
+                "title": fu_cfg["title"],
+                "owner": current_user["name"],
+                "assigned_to_athlete": True,
+                "action_type": fu_cfg["action_type"],
+                "status": "ready",
+                "due_date": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
+                "source": "event_athlete_send",
+                "source_category": "recruiting",
+                "created_by": current_user["name"],
+                "created_at": now,
+                "is_suggested": False,
+                "completed_at": None,
+            })
+    # If no specific follow-ups, create a generic assigned action
+    if not follow_ups and school_name:
+        await db.pod_actions.insert_one({
+            "id": str(uuid.uuid4()),
+            "athlete_id": athlete_id,
+            "program_id": program_id,
+            "school_name": school_name,
+            "title": f"Review and act on {event['name']} follow-up — {school_name}",
+            "owner": current_user["name"],
+            "assigned_to_athlete": True,
+            "action_type": "general",
+            "status": "ready",
+            "due_date": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat(),
+            "source": "event_athlete_send",
+            "source_category": "recruiting",
+            "created_by": current_user["name"],
+            "created_at": now,
+            "is_suggested": False,
+            "completed_at": None,
+        })
 
     # 2. Create timeline entry
     await db.athlete_notes.insert_one({

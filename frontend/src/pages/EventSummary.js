@@ -22,44 +22,27 @@ const INTEREST_BADGE = {
 const INTEREST_ORDER = { hot: 0, warm: 1, cool: 2, none: 3 };
 
 // ─── Routing Progress Bar ──────────────────────────────
-function RoutingProgress({ allNotes, followUpActions }) {
+function RoutingProgress({ allNotes }) {
   const total = allNotes.length;
-  const routed = allNotes.filter(n => n.routed_to_pod).length;
   const sentToAthlete = allNotes.filter(n => n.sent_to_athlete).length;
-  const actioned = new Set([
-    ...allNotes.filter(n => n.routed_to_pod).map(n => n.id),
-    ...allNotes.filter(n => n.sent_to_athlete).map(n => n.id),
-  ]).size;
-  const pending = total - actioned;
-  const pct = total > 0 ? Math.round((actioned / total) * 100) : 0;
+  const pct = total > 0 ? 100 : 0; // All auto-routed
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-4" data-testid="routing-progress">
       <div className="flex items-center justify-between mb-2">
         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Debrief Progress</span>
-        <span className="text-xs font-semibold text-gray-700">{actioned}/{total} notes actioned</span>
+        <span className="text-xs font-semibold text-gray-700">{total} signals captured</span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
-        <div
-          className="h-2 rounded-full transition-all"
-          style={{
-            width: `${pct}%`,
-            backgroundColor: pct === 100 ? "#10b981" : pct > 50 ? "#3b82f6" : "#f59e0b",
-          }}
-        />
+        <div className="h-2 rounded-full transition-all bg-emerald-500" style={{ width: `${pct}%` }} />
       </div>
       <div className="flex items-center gap-4 text-[11px] text-gray-500">
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-blue-500" /> {routed} routed to pod
+          <span className="w-2 h-2 rounded-full bg-blue-500" /> {total} auto-routed to pods
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-violet-500" /> {sentToAthlete} sent to athlete
+          <span className="w-2 h-2 rounded-full bg-violet-500" /> {sentToAthlete} assigned to athletes
         </span>
-        {pending > 0 && (
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-gray-300" /> {pending} pending
-          </span>
-        )}
       </div>
     </div>
   );
@@ -68,7 +51,6 @@ function RoutingProgress({ allNotes, followUpActions }) {
 // ─── Note Action Buttons ───────────────────────────────
 function NoteActions({ note, eventId, onRefresh }) {
   const [sendingToAthlete, setSendingToAthlete] = useState(false);
-  const [routingToPod, setRoutingToPod] = useState(false);
 
   const sendToAthlete = async () => {
     setSendingToAthlete(true);
@@ -83,27 +65,18 @@ function NoteActions({ note, eventId, onRefresh }) {
     }
   };
 
-  const routeToPod = async () => {
-    setRoutingToPod(true);
-    try {
-      await axios.post(`${API}/events/${eventId}/notes/${note.id}/route`, {}, authHeaders());
-      toast.success(`Routed to ${note.school_name || "School"} Pod`);
-      onRefresh();
-    } catch {
-      toast.error("Failed to route to pod");
-    } finally {
-      setRoutingToPod(false);
-    }
-  };
-
   const isSent = note.sent_to_athlete;
-  const isRouted = note.routed_to_pod;
 
   return (
     <div className="flex items-center gap-1.5 shrink-0 ml-2">
+      {/* Always In Pod (auto-routed) */}
+      <span className="flex items-center gap-0.5 text-[10px] text-blue-600 font-medium px-2 py-1 bg-blue-50 rounded-md border border-blue-100" data-testid={`routed-badge-${note.id}`}>
+        <Check className="w-3 h-3" /> In Pod
+      </span>
+      {/* Send to Athlete */}
       {isSent ? (
         <span className="flex items-center gap-0.5 text-[10px] text-violet-600 font-medium px-2 py-1 bg-violet-50 rounded-md border border-violet-100" data-testid={`sent-badge-${note.id}`}>
-          <Check className="w-3 h-3" /> Sent
+          <Check className="w-3 h-3" /> Assigned
         </span>
       ) : (
         <button
@@ -111,28 +84,12 @@ function NoteActions({ note, eventId, onRefresh }) {
           disabled={sendingToAthlete}
           className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-md transition-colors border border-violet-100 disabled:opacity-50"
           data-testid={`send-to-athlete-${note.id}`}
-          title="Send action to athlete via message"
+          title="Send action to athlete — shows in their hero card and messages"
         >
           <Send className="w-3 h-3" />
-          {sendingToAthlete ? "..." : "To Athlete"}
+          {sendingToAthlete ? "..." : "Send to Athlete"}
         </button>
       )}
-      {isRouted ? (
-        <span className="flex items-center gap-0.5 text-[10px] text-blue-600 font-medium px-2 py-1 bg-blue-50 rounded-md border border-blue-100" data-testid={`routed-badge-${note.id}`}>
-          <Check className="w-3 h-3" /> In Pod
-        </span>
-      ) : note.school_name ? (
-        <button
-          onClick={(e) => { e.stopPropagation(); routeToPod(); }}
-          disabled={routingToPod}
-          className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-100 disabled:opacity-50"
-          data-testid={`route-to-pod-${note.id}`}
-          title="Add to School Pod"
-        >
-          <ArrowRight className="w-3 h-3" />
-          {routingToPod ? "..." : "To Pod"}
-        </button>
-      ) : null}
     </div>
   );
 }
@@ -390,7 +347,7 @@ function EventSummary() {
         </div>
 
         {/* Routing Progress */}
-        <RoutingProgress allNotes={allNotes} followUpActions={data.followUpActions} />
+        <RoutingProgress allNotes={allNotes} />
 
         {/* Two-column: Athletes + Schools */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
