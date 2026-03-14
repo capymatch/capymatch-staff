@@ -402,8 +402,8 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
             transition: "all 0.2s", flexShrink: 0, minWidth: 110,
             boxShadow: "0 4px 16px rgba(13,148,136,0.3)",
           }} data-testid="hero-cta-btn">
-            <ArrowRight style={{ width: 14, height: 14 }} />
             {action.cta.label}
+            <ArrowRight style={{ width: 14, height: 14 }} />
           </button>
         </div>
       </div>
