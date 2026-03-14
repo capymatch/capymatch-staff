@@ -252,9 +252,9 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
       <div style={{ position: "absolute", top: "-30%", right: "-5%", width: 350, height: 350, background: `radial-gradient(circle, ${cat.color}${isUrgent ? "18" : "0a"} 0%, transparent 70%)`, pointerEvents: "none" }} />
 
       <div style={{ padding: "20px 24px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
-        {/* Filter pills */}
+        {/* Filter pills + carousel arrows */}
         {FILTER_PILLS.length > 2 && (
-          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 16 }} data-testid="hero-filter-pills">
+          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 16 }} data-testid="hero-filter-pills">
             {FILTER_PILLS.map(pill => {
               const URGENT_CATS = new Set(["past_due", "due_today", "coach_flag"]);
               const shouldPulse = pill.key !== "all" && URGENT_CATS.has(pill.key) && pill.count > 0 && !seenCategories.has(pill.key);
@@ -284,36 +284,34 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
               </button>
               );
             })}
+            {/* Carousel arrows */}
+            {displayTotal > 1 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: "auto" }}>
+                <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
+                <div style={{ display: "flex", gap: 3 }}>
+                  {displayActions.slice(0, 12).map((a, i) => {
+                    const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
+                    return (
+                      <div key={i} onClick={() => setIdx(i)} style={{
+                        width: i === safeIdx ? 16 : 5, height: 5,
+                        borderRadius: i === safeIdx ? 3 : "50%",
+                        background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
+                        cursor: "pointer", transition: "all 0.2s",
+                      }} data-testid={`carousel-dot-${i}`} />
+                    );
+                  })}
+                </div>
+                <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── Category label + Carousel nav ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }}>{action.owner}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>{safeIdx + 1}/{displayTotal}</span>
-          </div>
-          {displayTotal > 1 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              <button onClick={prev} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 13, height: 13 }} /></button>
-              <div style={{ display: "flex", gap: 3 }}>
-                {displayActions.slice(0, 12).map((a, i) => {
-                  const aCat = ALERT_CATEGORIES[a.category] || ALERT_CATEGORIES.past_due;
-                  return (
-                    <div key={i} onClick={() => setIdx(i)} style={{
-                      width: i === safeIdx ? 16 : 5, height: 5,
-                      borderRadius: i === safeIdx ? 3 : "50%",
-                      background: i === safeIdx ? aCat.color : "rgba(255,255,255,0.15)",
-                      cursor: "pointer", transition: "all 0.2s",
-                    }} data-testid={`carousel-dot-${i}`} />
-                  );
-                })}
-                {displayActions.length > 12 && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.25)", lineHeight: "5px" }}>+{displayActions.length - 12}</span>}
-              </div>
-              <button onClick={next} style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.4)" }} data-testid="carousel-next"><ChevronRight style={{ width: 13, height: 13 }} /></button>
-            </div>
-          )}
+        {/* ── Category label ── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: `${oc}15`, color: oc, textTransform: "uppercase", letterSpacing: "0.04em" }}>{action.owner}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>{safeIdx + 1}/{displayTotal}</span>
         </div>
 
         {/* ── School-First Layout (matching reference design) ── */}
@@ -331,25 +329,23 @@ function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage,
           {isSchool && stages && (
             <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }} className="hidden sm:flex" data-testid="hero-progress-rail">
               {stages.map((s, i) => {
-                const stageColors = { past: "#94a3b8", active: { added: "#94a3b8", outreach: "#0d9488", in_conversation: "#22c55e", campus_visit: "#3b82f6", offer: "#a855f7", committed: "#0d9488" }[s.key] || "#0d9488", future: "transparent" };
-                const dotColor = s.state === "active" ? stageColors.active : s.state === "past" ? stageColors.past : stageColors.future;
-                const lineActive = s.state === "past" || (stages[i - 1]?.state === "past" && s.state === "active");
+                const isActive = s.state === "active";
+                const isPast = s.state === "past";
+                const dotColor = isActive ? "#0d9488" : isPast ? "#94a3b8" : "transparent";
+                const lineActive = isPast || (stages[i - 1]?.state === "past" && isActive);
                 return (
                   <React.Fragment key={s.key}>
                     {i > 0 && <div style={{ width: 28, height: 2, background: lineActive ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.08)" }} />}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                      <div style={{ position: "relative" }}>
-                        <div style={{
-                          width: s.state === "active" ? 18 : 10,
-                          height: s.state === "active" ? 18 : 10,
-                          borderRadius: "50%",
-                          background: s.state === "future" ? "transparent" : dotColor,
-                          border: s.state === "future" ? "1.5px solid rgba(255,255,255,0.15)" : s.state === "active" ? `3px solid ${dotColor}44` : "none",
-                          boxShadow: s.state === "active" ? `0 0 12px ${dotColor}50` : "none",
-                        }} />
-                        {s.state === "active" && <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: `1.5px solid ${dotColor}40`, animation: "heroPulse 2s ease-out infinite", pointerEvents: "none" }} />}
-                      </div>
-                      <span style={{ fontSize: 9, fontWeight: s.state === "active" ? 700 : 500, color: s.state === "active" ? dotColor : "rgba(255,255,255,0.3)", textTransform: "capitalize", whiteSpace: "nowrap" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                      <div style={{
+                        width: isActive ? 10 : 7,
+                        height: isActive ? 10 : 7,
+                        borderRadius: "50%",
+                        background: s.state === "future" ? "transparent" : dotColor,
+                        border: s.state === "future" ? "1.5px solid rgba(255,255,255,0.15)" : isActive ? "2px solid rgba(13,148,136,0.4)" : "none",
+                        boxShadow: isActive ? "0 0 6px rgba(13,148,136,0.4)" : "none",
+                      }} />
+                      <span style={{ fontSize: 9, fontWeight: isActive ? 700 : 500, color: isActive ? "#5eead4" : "rgba(255,255,255,0.3)", textTransform: "capitalize", whiteSpace: "nowrap" }}>
                         {stageLabels[s.key] || s.label}
                       </span>
                     </div>
