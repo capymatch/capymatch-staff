@@ -5,8 +5,9 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Check, AlertTriangle, ExternalLink, ChevronRight,
   MapPin, GraduationCap, Users, Zap, Clock, CheckCircle2, Shield,
-  Target
+  Target, Plus, X
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -17,11 +18,105 @@ const PREP_CONFIG = {
   ready: { label: "Ready", bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500" },
 };
 
+function AddAthletesDialog({ open, onOpenChange, eventId, currentAthleteIds, onUpdated }) {
+  const [roster, setRoster] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(null);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      try {
+        const res = await axios.get(`${API}/mission-control`);
+        setRoster(res.data.myRoster || []);
+      } catch {
+        toast.error("Failed to load roster");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [open]);
+
+  const toggleAthlete = async (athleteId, isAdded) => {
+    setToggling(athleteId);
+    try {
+      if (isAdded) {
+        await axios.delete(`${API}/events/${eventId}/athletes/${athleteId}`);
+      } else {
+        await axios.post(`${API}/events/${eventId}/athletes`, { athlete_id: athleteId });
+      }
+      onUpdated();
+    } catch {
+      toast.error("Failed to update athlete");
+    } finally {
+      setToggling(null);
+    }
+  };
+
+  const addedSet = new Set(currentAthleteIds);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[440px] bg-white" data-testid="add-athletes-dialog">
+        <DialogHeader>
+          <DialogTitle className="text-base font-semibold text-gray-900">Manage Athletes</DialogTitle>
+          <DialogDescription className="text-xs text-gray-500">Add or remove athletes from this event.</DialogDescription>
+        </DialogHeader>
+        {loading ? (
+          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400" /></div>
+        ) : (
+          <div className="space-y-1 mt-2 max-h-[400px] overflow-y-auto">
+            {roster.map((a) => {
+              const isAdded = addedSet.has(a.id);
+              const isLoading = toggling === a.id;
+              return (
+                <div
+                  key={a.id}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${isAdded ? "bg-emerald-50 border border-emerald-100" : "bg-gray-50 border border-gray-100"}`}
+                  data-testid={`roster-athlete-${a.id}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {a.photo_url ? (
+                      <img src={a.photo_url} alt={a.name} className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-500">
+                        {(a.name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{a.name}</p>
+                      <p className="text-[10px] text-gray-500">{a.position} · {a.grad_year}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleAthlete(a.id, isAdded)}
+                    disabled={isLoading}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                      isAdded
+                        ? "text-red-600 bg-red-50 hover:bg-red-100 border border-red-200"
+                        : "text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-200"
+                    } ${isLoading ? "opacity-50" : ""}`}
+                    data-testid={`toggle-athlete-${a.id}`}
+                  >
+                    {isLoading ? "..." : isAdded ? (<><X className="w-3 h-3" /> Remove</>) : (<><Plus className="w-3 h-3" /> Add</>)}
+                  </button>
+                </div>
+              );
+            })}
+            {roster.length === 0 && <p className="text-sm text-gray-400 text-center py-6">No athletes in your roster</p>}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function EventPrep() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
+  const [showAddAthletes, setShowAddAthletes] = useState(false);
 
   const fetchPrep = useCallback(async () => {
     try {
@@ -160,10 +255,30 @@ function EventPrep() {
 
         {/* ─── Athletes — Sorted by Readiness ─── */}
         <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-athletes-section">
-          <div className="px-4 py-3 border-b border-gray-50">
+          <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Athletes ({athletes.length})</h2>
+            <button
+              onClick={() => setShowAddAthletes(true)}
+              className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+              data-testid="add-athletes-button"
+            >
+              <Plus className="w-3 h-3" /> Manage Athletes
+            </button>
           </div>
           <div className="divide-y divide-gray-50">
+            {sortedAthletes.length === 0 && (
+              <div className="px-4 py-8 text-center">
+                <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">No athletes assigned yet</p>
+                <button
+                  onClick={() => setShowAddAthletes(true)}
+                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+                  data-testid="add-athletes-empty-cta"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Athletes
+                </button>
+              </div>
+            )}
             {sortedAthletes.map((a) => {
               const cfg = PREP_CONFIG[a.prepStatus] || PREP_CONFIG.ready;
               return (
@@ -271,6 +386,14 @@ function EventPrep() {
           </section>
         </div>
       </main>
+
+      <AddAthletesDialog
+        open={showAddAthletes}
+        onOpenChange={setShowAddAthletes}
+        eventId={eventId}
+        currentAthleteIds={event.athlete_ids || []}
+        onUpdated={fetchPrep}
+      />
     </div>
   );
 }

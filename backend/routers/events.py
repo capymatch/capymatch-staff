@@ -153,6 +153,10 @@ async def add_event_athlete(event_id: str, body: EventAthleteAdd, current_user: 
     if body.athlete_id not in event["athlete_ids"]:
         event["athlete_ids"].append(body.athlete_id)
         event["athleteCount"] = len(event["athlete_ids"])
+    await db.events.update_one(
+        {"id": event_id},
+        {"$set": {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}}
+    )
     return {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}
 
 
@@ -165,6 +169,10 @@ async def remove_event_athlete(event_id: str, athlete_id: str, current_user: dic
     if athlete_id in event["athlete_ids"]:
         event["athlete_ids"].remove(athlete_id)
         event["athleteCount"] = len(event["athlete_ids"])
+    await db.events.update_one(
+        {"id": event_id},
+        {"$set": {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}}
+    )
     return {"athlete_ids": event["athlete_ids"], "athleteCount": event["athleteCount"]}
 
 
