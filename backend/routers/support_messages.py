@@ -339,12 +339,25 @@ async def get_unread_count(current_user: dict = get_current_user_dep()):
                 lookup_ids.append(ath["id"])
                 break
 
+    # First find all thread IDs the user belongs to
+    thread_filter = {"$or": [
+        {"participant_ids": {"$in": lookup_ids}},
+        {"athlete_id": {"$in": lookup_ids}},
+        {"created_by": {"$in": lookup_ids}},
+    ]}
+    thread_ids = []
+    async for t in db.support_threads.find(thread_filter, {"_id": 0, "thread_id": 1, "id": 1}):
+        tid = t.get("thread_id") or t.get("id")
+        if tid:
+            thread_ids.append(tid)
+
+    if not thread_ids:
+        return {"unread_count": 0}
+
     count = await db.support_messages.count_documents({
+        "thread_id": {"$in": thread_ids},
         "read_by": {"$nin": lookup_ids},
-        "$or": [
-            {"recipients.id": {"$in": lookup_ids}},
-            {"athlete_id": {"$in": lookup_ids}},
-        ],
+        "sender_id": {"$nin": lookup_ids},
     })
     return {"unread_count": count}
 

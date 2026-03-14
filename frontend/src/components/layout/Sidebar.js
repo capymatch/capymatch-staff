@@ -11,6 +11,7 @@ import { useAuth } from "@/AuthContext";
 const STAFF_NAV = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/mission-control" },
   { id: "events", label: "Events", icon: Calendar, path: "/events" },
+  { id: "messages", label: "Messages", icon: MessageSquare, path: "/messages" },
   { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
   { id: "program", label: "Program Insights", icon: BarChart3, path: "/program" },
 ];
