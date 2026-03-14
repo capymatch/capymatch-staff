@@ -64,9 +64,10 @@ Test credentials:
 
 ## Test Status
 - Full regression: 25/25 backend tests PASS, all frontend flows PASS (March 2026)
+- Hero card action buttons: 12/12 backend tests PASS, all frontend flows PASS (March 2026)
 
 ## Pending Issues
-- P1: Hero Card on Athlete Overview page lacks action buttons (Resolve, Escalate, Message)
+- None currently
 
 ## Upcoming Tasks (P1)
 - Event "Live Mode" refinement (Phase 3)
