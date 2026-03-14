@@ -294,8 +294,13 @@ async def get_inbox(current_user: dict = get_current_user_dep()):
 
     # Get unread counts per thread
     for t in threads:
+        tid = t.get("thread_id") or t.get("id")
+        if not tid:
+            t["unread_count"] = 0
+            continue
+        t["thread_id"] = tid
         unread = await db.support_messages.count_documents({
-            "thread_id": t["thread_id"],
+            "thread_id": tid,
             "read_by": {"$nin": lookup_ids},
         })
         t["unread_count"] = unread
@@ -340,19 +345,25 @@ async def get_unread_count(current_user: dict = get_current_user_dep()):
 @router.get("/support-messages/thread/{thread_id}")
 async def get_thread_messages(thread_id: str, current_user: dict = get_current_user_dep()):
     """Get all messages in a thread."""
-    thread = await db.support_threads.find_one({"thread_id": thread_id}, {"_id": 0})
+    thread = await db.support_threads.find_one(
+        {"$or": [{"thread_id": thread_id}, {"id": thread_id}]}, {"_id": 0}
+    )
     if not thread:
         raise HTTPException(404, "Thread not found")
 
+    # Normalize thread_id
+    tid = thread.get("thread_id") or thread.get("id")
+    thread["thread_id"] = tid
+
     messages = await db.support_messages.find(
-        {"thread_id": thread_id},
+        {"thread_id": tid},
         {"_id": 0},
     ).sort("created_at", 1).to_list(200)
 
     # Mark all as read by current user
     user_id = current_user["id"]
     await db.support_messages.update_many(
-        {"thread_id": thread_id, "read_by": {"$ne": user_id}},
+        {"thread_id": tid, "read_by": {"$ne": user_id}},
         {"$addToSet": {"read_by": user_id}},
     )
 
