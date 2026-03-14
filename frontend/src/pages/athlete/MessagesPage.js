@@ -116,7 +116,7 @@ function ThreadDetail({ threadId, onBack }) {
     <div className="flex flex-col h-full" data-testid="thread-detail">
       {/* Header */}
       <div className="px-4 py-3 border-b flex items-center gap-3 shrink-0" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-        <button onClick={onBack} className="p-1 rounded-lg hover:bg-slate-100 transition-colors sm:hidden" data-testid="thread-back">
+        <button onClick={onBack} className="p-1 rounded-lg hover:bg-slate-100 transition-colors" data-testid="thread-back">
           <ChevronLeft className="w-5 h-5" style={{ color: "var(--cm-text-2)" }} />
         </button>
         <div className="min-w-0">
@@ -219,35 +219,28 @@ export default function MessagesPage() {
     );
   }
 
-  return (
-    <div data-testid="messages-page" className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 flex" style={{ height: "calc(100vh - 64px)" }}>
-      {/* Thread list — hidden on mobile when a thread is selected */}
-      <div className={`${selectedThread ? "hidden sm:flex" : "flex"} flex-col w-full sm:w-80 lg:w-96 border-r shrink-0 bg-white`}
-        style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-        <div className="px-4 py-3 border-b" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-          <h1 className="text-base font-bold" style={{ color: "var(--cm-text, #1e293b)" }}>Messages</h1>
-          <p className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Support messages from your coaching team</p>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <ThreadList threads={threads} selectedId={selectedThread} onSelect={handleSelectThread} />
-        </div>
+  // Thread detail view
+  if (selectedThread) {
+    return (
+      <div data-testid="messages-page" style={{ maxWidth: 800, margin: "0 auto" }}>
+        <ThreadDetail
+          key={selectedThread}
+          threadId={selectedThread}
+          onBack={() => { setSelectedThread(null); fetchInbox(); }}
+        />
       </div>
+    );
+  }
 
-      {/* Thread detail */}
-      <div className={`${selectedThread ? "flex" : "hidden sm:flex"} flex-col flex-1 bg-white`}>
-        {selectedThread ? (
-          <ThreadDetail
-            key={selectedThread}
-            threadId={selectedThread}
-            onBack={() => { setSelectedThread(null); fetchInbox(); }}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center flex-1 text-center px-4">
-            <MessageSquare className="w-12 h-12 mb-3" style={{ color: "var(--cm-text-4, #cbd5e1)" }} />
-            <p className="text-sm font-medium" style={{ color: "var(--cm-text-2, #64748b)" }}>Select a conversation</p>
-            <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Choose a thread from the left to read and reply.</p>
-          </div>
-        )}
+  // Inbox list view
+  return (
+    <div data-testid="messages-page" style={{ maxWidth: 800, margin: "0 auto" }}>
+      <div className="mb-4">
+        <h1 className="text-lg font-bold" style={{ color: "var(--cm-text, #1e293b)" }}>Messages</h1>
+        <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Support messages from your coaching team</p>
+      </div>
+      <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--cm-border, #e2e8f0)", backgroundColor: "white" }}>
+        <ThreadList threads={threads} selectedId={null} onSelect={handleSelectThread} />
       </div>
     </div>
   );
