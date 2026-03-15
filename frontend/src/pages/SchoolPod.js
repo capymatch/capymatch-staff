@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, School, Mail, Phone, ExternalLink, RefreshCw,
   AlertTriangle, CheckCircle2, Clock, FileText, Plus, Send,
-  MessageSquare, TrendingUp, TrendingDown, Minus, Flag, Loader2, X
+  MessageSquare, TrendingUp, TrendingDown, Minus, Flag, Loader2, X, ClipboardCheck
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -338,6 +338,40 @@ export default function SchoolPod() {
               {metrics.meaningful_interaction_count > 0 && (
                 <span>Interactions: <strong>{metrics.meaningful_interaction_count}</strong></span>
               )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2 mt-3" data-testid="hero-action-buttons">
+              <button
+                onClick={() => window.location.href = `mailto:${school_info?.coach_email || ""}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-blue-50"
+                style={{ color: "#2563eb", borderColor: "#bfdbfe", backgroundColor: "rgba(59,130,246,0.05)" }}
+                data-testid="hero-btn-email"
+              >
+                <Mail className="w-3.5 h-3.5" /> Send Email
+              </button>
+              <button
+                onClick={() => {
+                  const title = `Follow up on ${current_issue?.title || signals[0]?.title || "signal"} — ${program.university_name}`;
+                  addAction(title, true, "send_email");
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-violet-50"
+                style={{ color: "#7c3aed", borderColor: "#c4b5fd", backgroundColor: "rgba(124,58,237,0.05)" }}
+                data-testid="hero-btn-assign"
+              >
+                <Send className="w-3.5 h-3.5" /> Assign to Athlete
+              </button>
+              <button
+                onClick={() => {
+                  const title = `Log interaction with ${program.university_name}`;
+                  addAction(title, false, "log_interaction");
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-emerald-50"
+                style={{ color: "#059669", borderColor: "#a7f3d0", backgroundColor: "rgba(5,150,105,0.05)" }}
+                data-testid="hero-btn-log"
+              >
+                <ClipboardCheck className="w-3.5 h-3.5" /> Log Interaction
+              </button>
             </div>
           </div>
         </div>
