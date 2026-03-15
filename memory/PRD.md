@@ -1,99 +1,66 @@
 # CapyMatch — Product Requirements Document
 
-## Overview
-CapyMatch is a full-stack recruiting platform for volleyball coaches and athletes. Built with React + FastAPI + MongoDB.
+## Problem Statement
+CapyMatch is a full-stack recruiting platform for women's volleyball. It connects athletes, coaches, directors, and parents to streamline the college recruiting journey.
 
 ## Core Users
-- **Coaches**: Manage athletes, track school engagement, prepare for events, assign actions
-- **Athletes**: Manage profiles, respond to coach actions, track school pipeline
-- **Directors**: Organizational oversight (future)
-- **Parents/Family**: Family experience (future)
+- **Athletes** — Track their recruiting pipeline, communicate with coaches, manage their profile
+- **Club Coaches** — Manage assigned athletes, track recruiting progress, send tasks/messages
+- **Club Directors** — Oversee all athletes and coaches, manage roster/teams, run events, admin operations
+- **Parents/Family** — (Planned) Support athletes in the recruiting process
+- **Platform Admins** — Manage organizations, integrations, and knowledge base
+
+## Credentials
+- Admin: douglas@capymatch.com / demo2026
+- Director: director@capymatch.com / director123
+- Coach: coach.williams@capymatch.com / coach123
+- Athlete: emma.chen@athlete.capymatch.com / athlete123
 
 ## Architecture
-- **Frontend**: React (port 3000) with Shadcn UI components
-- **Backend**: FastAPI (port 8001) with MongoDB
-- **Auth**: JWT-based authentication
+- **Frontend:** React (CRA) + Tailwind CSS + Shadcn/UI | Port 3000
+- **Backend:** FastAPI + Motor (async MongoDB) | Port 8001
+- **Database:** MongoDB (test_database)
+- **Payments:** Stripe (test key)
+- **Email:** Resend
 
-## Current Features (Implemented)
+---
 
-### Dashboard / Mission Control
-- Coach overview with athlete counts, attention flags, event prep alerts
-- Athletes grouped by "Need Attention" and "On Track" with photos and status overlays
+## Completed Features
 
-### Athlete Pipeline (My Schools)
-- **Hero Card Carousel**: Filter pills (top-left), carousel controls (top-right, same line), compact card with progress rail dots
-- Kanban board with drag-and-drop
-- School cards with coach-assigned tasks shown with ATHLETE badge
+### Session 1-3 (Previous)
+- Full authentication system (JWT)
+- Athlete pipeline (school targets, recruiting stages)
+- Messaging module (coach-athlete communication)
+- Coach-to-athlete task management
+- Event management (live events, signal logging)
+- Subscription tiers (basic, pro, premium)
+- Admin panel (user management)
+- Knowledge base (1,057 schools)
 
-### Athlete Journey Page
-- **Coach-Assigned Actions Hero Card**: Context-aware CTAs based on action type
-  - send_email → "Compose Email"
-  - log_visit → "Log Visit"
-  - log_interaction → "Log It"
-  - preparation → "Mark Done"
-  - research → "Mark Done"
-  - profile_update → "Update Profile"
-  - reply → "Reply"
-  - general → "Mark Done"
-- **Coach Messages in Timeline**: Support messages from coaches appear as timeline entries with "Coach Message" label
-- Progress rail, coach flags, school intelligence
+### Session 4 (2026-03-14)
+- Admin Organization Management (CRUD + members with roles)
+- Live Event workflow overhaul (note required, plan limit checks)
+- 104 missing schools restored (953 → 1,057)
+- Mobile layout fixes (z-index, button spacing)
+- School Pod hero card fixes (email/escalate buttons)
 
-### Messages / Inbox
-- Gmail-style inbox: 3-column layout (Sender | Subject - snippet | Time)
-- Unread/read grouping, click-to-open thread detail
-- Coach and athlete can both see and reply
-- Coach sidebar includes Messages link with unread badge
+### Session 5 (2026-03-15)
+- **ProductiveRecruit scraper removed** — Cleaned up non-functional code after confirming ToS prohibits scraping
+- **Subscription bug fix** — SubscriptionProvider now depends on auth token from useAuth(), re-fetches on login/logout. Added missing `limits` field to SubscriptionResponse model
+- **Roster athlete photos** — Added photo_url to backend roster response and img display in frontend
+- **Add Team feature** — Global "Add Team" button in roster header. Modal with team name, age group, coach assignment. Creates entry in club_teams collection
+- **Add Athlete to Team** — "Add Athlete" button inside each team card. Two-tab modal: (1) Autocomplete search for existing athletes, (2) Invite new athlete by email with temp password
 
-### Events System
-- Create Event, manage athletes/schools on Prep page
-- Live Signal Capture, Post-Event Summary
-- Responsive Live Event Page
-- **Live Event Add School:** "+ Add" adds school to event only (not pipeline)
-- **Note Required:** Note field is mandatory when logging signals
-- **Dual Action Buttons:** "Log to Pod" (saves to school pod only) vs "Send to Athlete" (also sends to athlete, adds school to pipeline with plan limit check)
-- **Plan Limit Enforcement:** If athlete is at plan limit, signal is saved but school NOT added to pipeline. Athlete gets upgrade notification
+---
 
-### Coach School Pod
-- **Smart Action Types**: When assigning to athlete, coach picks action type (Send Email, Log Visit, Log Interaction, Preparation, Profile Update, Research, Reply, General)
-- **"Assign to Athlete" toggle** with action type dropdown
-- **"Sent to Athlete" badge** on assigned actions
-- **Hero Card Action Buttons**: Send Email (opens composer modal), Assign to Athlete, Log Interaction, Escalate (opens escalation modal)
-- Action bar: Log, Email, Follow-up, Notes, Escalate
+## Backlog
 
-### Coach → Athlete Action Flow (Complete End-to-End)
-1. Coach creates action in School Pod with "Assign to Athlete" ON + selects action type
-2. Action stored in `pod_actions` with `assigned_to_athlete: true` and `action_type`
-3. **Pipeline hero card**: Top Action Engine picks up assigned actions as Priority 2
-4. **Journey hero card**: Context-aware CTA based on action type
-5. **Athlete completes**: "Mark Done" updates status to "completed" in pod_actions
-6. **Coach sees**: Completed status in school pod
+### P1 — Upcoming
+- **College Scorecard API** — Integrated but needs user's API key from api.data.gov
+- **Parent/Family Experience** — Dedicated UI for parents/helpers
+- **AI-Powered Coach Summary** — LLM-generated recruiting pitches from athlete data
 
-### Advocacy
-- Recommendation cards with athlete photos
-
-## Key API Endpoints
-- `POST /api/support-pods/{athlete_id}/school/{program_id}/actions` — Create action (with assigned_to_athlete, action_type)
-- `GET /api/athletes/me/school/{program_id}/assigned-actions` — Athlete's assigned actions per school
-- `PATCH /api/athletes/me/assigned-actions/{action_id}/complete` — Mark action as done
-- `GET /api/support-messages/inbox` — Gmail-style inbox
-- `POST /api/support-messages/{thread_id}/reply` — Reply to thread
-- `GET /api/athlete/programs/{program_id}/journey` — Journey data (now includes coach messages in timeline)
-
-## Key Collections
-- `pod_actions`: `{id, athlete_id, program_id, title, owner, assigned_to_athlete, action_type, status, due_date, created_by, completed_at, completed_by}`
-- `support_threads`: `{id/thread_id, athlete_id, subject, participant_ids, created_by, last_message_at, last_snippet}`
-- `support_messages`: `{id, thread_id, body, sender_id, sender_name, sender_role, read_by, created_at}`
-
-## Future/Backlog
-- Parent/Family Experience (P1)
-- AI-Powered Coach Summary (P2)
-- Club Billing (Stripe)
-- Multi-Agent Intelligence Pipeline
-- Close the Action Loop
-
-## 3rd Party Integrations
-- MongoDB, Resend (email), Stripe (payments)
-
-## Test Credentials
-- Coach: coach.williams@capymatch.com / coach123
-- Athlete: emma.chen@capymatch.com / athlete123
+### P2 — Future
+- **Club Billing** — Stripe subscription billing for organizations
+- **Multi-Agent Intelligence Pipeline** — Roster Stability, Scholarship, NIL Readiness agents
+- **CSV Import Tool** — For manually gathered school/coach data from university sites
