@@ -71,7 +71,8 @@ class EventSignalCreate(BaseModel):
     school_name: Optional[str] = None
     interest_level: str = "none"
     signal_type: str
-    note_text: Optional[str] = ""
+    note_text: str
+    send_to_athlete: bool = False
 
 class EventAddSchool(BaseModel):
     athlete_id: str

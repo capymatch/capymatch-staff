@@ -124,9 +124,10 @@ function LiveEvent() {
     noteRef.current?.focus();
   };
 
-  const logSignal = async () => {
+  const logSignal = async (sendToAthlete = false) => {
     if (!selectedAthlete) { toast.error("Select an athlete"); return; }
     if (!signalType) { toast.error("Select a signal type"); return; }
+    if (!noteText.trim()) { toast.error("Note is required"); return; }
     setSaving(true);
     try {
       const school = schools.find((s) => s.id === selectedSchool);
@@ -137,6 +138,7 @@ function LiveEvent() {
         interest_level: interest || "none",
         signal_type: signalType,
         note_text: noteText,
+        send_to_athlete: sendToAthlete,
       });
       setNotes((prev) => [res.data, ...prev]);
       setLastSavedId(res.data.id);
@@ -144,9 +146,14 @@ function LiveEvent() {
       const ath = athletes.find((a) => a.id === selectedAthlete);
       let msg = `${ath?.full_name?.split(" ")[0] || "Athlete"}`;
       if (school?.name) msg += ` × ${school.name}`;
+      if (res.data.school_added) msg += " · Added to pipeline";
       if (res.data.pipeline_updated) msg += " · Pipeline updated";
       if (res.data.action_created) msg += " · Action created";
+      if (sendToAthlete && !res.data.upgrade_needed) msg += " · Sent to athlete";
       toast.success(msg);
+      if (res.data.upgrade_needed) {
+        toast.warning("Athlete has reached their school limit. They've been notified to upgrade.", { duration: 5000 });
+      }
       clearForm();
     } catch {
       toast.error("Failed to log signal");
@@ -159,17 +166,16 @@ function LiveEvent() {
     if (!selectedAthlete || !newSchoolName.trim()) return;
     setAddingSchool(true);
     try {
-      const schoolId = newSchoolName.trim().toLowerCase().replace(/\s+/g, "_").slice(0, 30);
       const res = await axios.post(`${API}/events/${eventId}/add-school`, {
         athlete_id: selectedAthlete,
-        school_id: schoolId,
+        school_id: newSchoolName.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 30),
         school_name: newSchoolName.trim(),
       });
       if (res.data.added) {
-        toast.success(`${newSchoolName.trim()} added to pipeline`);
+        toast.success(`${newSchoolName.trim()} added to event`);
         fetchData();
       } else {
-        toast.info("School already in pipeline");
+        toast.info("School already in event");
       }
       setNewSchoolName("");
       setShowAddSchool(false);
@@ -182,7 +188,7 @@ function LiveEvent() {
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === "Enter" && e.ctrlKey) { e.preventDefault(); logSignal(); }
+      if (e.key === "Enter" && e.ctrlKey) { e.preventDefault(); logSignal(false); }
       if (e.key === "Escape") clearForm();
     };
     window.addEventListener("keydown", handler);
@@ -453,9 +459,9 @@ function LiveEvent() {
         </div>
       </div>
 
-      {/* Optional note */}
+      {/* Note (required) */}
       <div>
-        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 block">Note <span className="text-gray-600 font-normal">(optional)</span></label>
+        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 block">Note <span className="text-red-400 font-normal">*</span></label>
         <textarea
           ref={noteRef}
           value={noteText}
@@ -468,15 +474,23 @@ function LiveEvent() {
         />
       </div>
 
-      {/* Log button */}
+      {/* Log buttons */}
       <div className="flex items-center gap-2">
         <button
-          onClick={logSignal}
-          disabled={saving || !selectedAthlete || !signalType}
-          data-testid="log-signal-btn"
+          onClick={() => logSignal(false)}
+          disabled={saving || !selectedAthlete || !signalType || !noteText.trim()}
+          data-testid="log-to-pod-btn"
+          className="flex-1 py-3 bg-gray-700 text-gray-100 font-bold text-sm rounded-lg hover:bg-gray-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-gray-600"
+        >
+          <FileText className="w-4 h-4" /> LOG TO POD
+        </button>
+        <button
+          onClick={() => logSignal(true)}
+          disabled={saving || !selectedAthlete || !signalType || !noteText.trim()}
+          data-testid="send-to-athlete-btn"
           className="flex-1 py-3 bg-white text-gray-900 font-bold text-sm rounded-lg hover:bg-gray-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          <Send className="w-4 h-4" /> LOG SIGNAL
+          <Send className="w-4 h-4" /> SEND TO ATHLETE
         </button>
         <button
           onClick={clearForm}
