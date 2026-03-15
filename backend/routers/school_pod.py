@@ -78,8 +78,8 @@ def compute_school_signals(program, metrics):
             "id": "sig_overdue",
             "type": "alert",
             "priority": "critical",
-            "title": f"{overdue} Overdue Follow-up{'s' if overdue > 1 else ''}",
-            "description": f"Follow-up actions are overdue. Last engagement was {days_since} day{'s' if days_since != 1 else ''} ago.",
+            "title": f"Follow-up overdue — no response for {days_since} day{'s' if days_since != 1 else ''}",
+            "description": f"{overdue} follow-up action{'s' if overdue > 1 else ''} past due. This relationship needs immediate attention.",
             "recommendation": "Send a follow-up message or log a recent interaction.",
         })
 
@@ -99,8 +99,8 @@ def compute_school_signals(program, metrics):
             "id": "sig_stale",
             "type": "warning",
             "priority": "high",
-            "title": "Engagement Gone Stale",
-            "description": f"No engagement in {days_since} days. Trend: {trend}.",
+            "title": f"Engagement gone cold — {days_since} days silent",
+            "description": f"No activity with this school in {days_since} days. Trend: {trend}.",
             "recommendation": "Re-engage with this school or reassess priority.",
         })
 
@@ -400,6 +400,52 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     # Athlete data for playbook context
     athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0})
 
+    # Athlete context for display
+    athlete_context = {
+        "name": (athlete or {}).get("full_name", ""),
+        "graduation_year": (athlete or {}).get("grad_year", ""),
+        "position": (athlete or {}).get("position_primary", "") or (athlete or {}).get("position", ""),
+        "club_team": (athlete or {}).get("team", ""),
+    }
+
+    # Relationship context: count interactions by type
+    interaction_counts = {"emails": 0, "calls": 0, "events": 0, "total": 0}
+    all_events = await db.pod_action_events.find(
+        {"athlete_id": athlete_id, "program_id": program_id},
+        {"_id": 0, "type": 1, "description": 1}
+    ).to_list(500)
+    for evt in all_events:
+        etype = evt.get("type", "")
+        desc = (evt.get("description") or "").lower()
+        if "email" in etype or "email" in desc:
+            interaction_counts["emails"] += 1
+        elif "call" in etype or "phone" in desc or "call" in desc:
+            interaction_counts["calls"] += 1
+        elif "event" in etype:
+            interaction_counts["events"] += 1
+        interaction_counts["total"] += 1
+
+    # Determine relationship strength
+    days_eng = (metrics or {}).get("days_since_last_engagement") or 999
+    rr = (metrics or {}).get("reply_rate") or 0
+    mic = (metrics or {}).get("meaningful_interaction_count", 0)
+    if rr > 0.5 and mic >= 3 and days_eng < 14:
+        relationship_strength = "active"
+    elif mic >= 1 and days_eng < 30:
+        relationship_strength = "warm"
+    else:
+        relationship_strength = "cold"
+
+    # Pipeline stage context
+    status_to_stage_idx = {
+        "Not Contacted": 0, "Prospect": 0, "Contacted": 1,
+        "In Conversation": 2, "Engaged": 2, "Interested": 3,
+        "Visit Scheduled": 4, "Visit": 4, "Offer": 5, "Committed": 6,
+    }
+    current_stage = program.get("recruiting_status", "Prospect")
+    stage_idx = status_to_stage_idx.get(current_stage, 0)
+    stage_days = (metrics or {}).get("stage_stalled_days", 0)
+
     # Generate school-specific action plan playbook
     school_info_dict = {
         "primary_coach": (kb or {}).get("primary_coach", ""),
@@ -454,6 +500,16 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         "timeline_events": events,
         "stage_history": stage_history,
         "school_info": school_info_dict,
+        "athlete_context": athlete_context,
+        "relationship": {
+            "strength": relationship_strength,
+            "interactions": interaction_counts,
+        },
+        "pipeline": {
+            "current_stage": current_stage,
+            "stage_index": stage_idx,
+            "stage_days": stage_days,
+        },
     }
 
 

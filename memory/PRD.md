@@ -69,6 +69,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 ### Session 6 (2026-03-15)
 - **Social Spotlight page** — Copied from capymatch repo and integrated. YouTube feed + Twitter links for pipeline schools. Gated behind premium subscription. Backend: `/api/social-spotlight/feed`, `/api/social-spotlight/feed/refresh`, `/api/social-spotlight/social-links`. Requires `YOUTUBE_API_KEY` env var for live data.
 
+### Session 7 (2026-03-15)
+- **School Pod Layout Overhaul:** 7 changes implemented:
+  1. Hero wording now describes real conditions (e.g., "Follow-up overdue — no response for 6 days")
+  2. Severity indicators (Critical/High/Medium badges) on Signals
+  3. Renamed "Action Plan" → "Playbook", "Actions" → "Tasks"
+  4. Added Pipeline Status bar with 6-stage progress visualization
+  5. Added Athlete Context in header (name — year — position)
+  6. Added Relationship Context block (strength + interaction breakdown)
+  7. Playbook collapses to summary when all steps completed
+
 ---
 
 ## Backlog
