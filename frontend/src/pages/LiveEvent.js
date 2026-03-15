@@ -509,7 +509,7 @@ function LiveEvent() {
   return (
     <div className="min-h-screen bg-gray-900 text-white" data-testid="live-event-page">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50">
+      <header className="bg-gray-900/95 border-b border-gray-700/50">
         <div className="max-w-[960px] mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button onClick={() => navigate(`/events/${eventId}/prep`)} className="text-gray-400 hover:text-white transition-colors shrink-0" data-testid="back-from-live">

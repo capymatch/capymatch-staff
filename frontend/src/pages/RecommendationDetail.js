@@ -105,7 +105,7 @@ function RecommendationDetail() {
 
   return (
     <div className="min-h-screen bg-slate-50" data-testid="recommendation-detail-page">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <header className="bg-white/95 border-b border-gray-100">
         <div className="max-w-[900px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/advocacy")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800" data-testid="back-to-advocacy-detail">
