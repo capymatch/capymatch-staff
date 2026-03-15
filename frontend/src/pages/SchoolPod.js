@@ -5,7 +5,7 @@ import {
   AlertTriangle, CheckCircle2, Clock, FileText, Plus, Send,
   MessageSquare, TrendingUp, TrendingDown, Minus, Flag, Loader2, X,
   ClipboardCheck, Megaphone, ChevronDown, ChevronUp, User, Activity,
-  Zap, Shield
+  Zap, Shield, PenLine
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -716,7 +716,24 @@ export default function SchoolPod() {
         />
       )}
 
-      {/* Notes Sidebar */}
+      {/* Right-edge Notes Tab + Panel (Journey-style) */}
+      {!notesOpen && (
+        <button
+          onClick={() => setNotesOpen(true)}
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2 px-2.5 py-3 rounded-l-xl border border-r-0 transition-all hover:px-3"
+          style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)", boxShadow: "-4px 0 20px rgba(0,0,0,0.08)" }}
+          data-testid="notes-tab"
+        >
+          <PenLine className="w-4 h-4 text-amber-400" />
+          <span className="text-[10px] font-semibold" style={{ writingMode: "vertical-rl", color: "var(--cm-text-3, #94a3b8)" }}>My Notes</span>
+          {notes.length > 0 && (
+            <span className="rounded-full bg-teal-600 text-white text-[9px] font-bold flex items-center justify-center" style={{ minWidth: 18, minHeight: 18 }}>
+              {notes.length}
+            </span>
+          )}
+        </button>
+      )}
+
       <CoachNotesSidebar
         athleteId={athleteId}
         athleteName={program.university_name}
