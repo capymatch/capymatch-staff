@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-  Shield, Database, Mail, CreditCard, Brain, GraduationCap, Users,
-  RefreshCw, CheckCircle, XCircle, AlertTriangle, Loader2, ChevronRight,
+  Mail, CreditCard, Brain, GraduationCap,
+  RefreshCw, CheckCircle, XCircle, Loader2,
   Globe, UserSearch, Link2
 } from "lucide-react";
 
@@ -61,8 +61,6 @@ export default function AdminIntegrationsPage() {
   const [coachStatus, setCoachStatus] = useState(null);
   const [urlStatus, setUrlStatus] = useState(null);
   const [scorecardStatus, setScorecardStatus] = useState(null);
-  const [prCoachStatus, setPrCoachStatus] = useState(null);
-  const [prSchoolStatus, setPrSchoolStatus] = useState(null);
   const [triggering, setTriggering] = useState({});
 
   const fetchData = useCallback(async () => {
@@ -246,83 +244,6 @@ export default function AdminIntegrationsPage() {
           )}
         </IntegrationCard>
 
-        {/* ProductiveRecruit — Combined School Data + Coaches */}
-        <IntegrationCard icon={Database} title="ProductiveRecruit" subtitle="School data, logos, GPA & coaching staff" color="#ec4899"
-          status={
-            data.kbJobs ? (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "rgba(236,72,153,0.1)", color: "#ec4899" }}>
-                {data.kbJobs.stats.with_pr_coaches} coaches / {data.kbJobs.stats.with_logo} logos
-              </span>
-            ) : <StatusBadge connected={false} label="Unavailable" />
-          }>
-          {data.kbJobs && (
-            <>
-              <StatRow label="Has Logo" value={data.kbJobs.stats.with_logo} total={data.kbJobs.stats.total_schools} />
-              <StatRow label="Has PR Coaches" value={data.kbJobs.stats.with_pr_coaches} total={data.kbJobs.stats.total_schools} />
-
-              {/* School Data (logos/GPA) */}
-              <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--cm-border)" }}>
-                <p className="text-[10px] font-semibold mb-2" style={{ color: "var(--cm-text-2)" }}>School Data (Logos, GPA)</p>
-                <div className="flex gap-2">
-                  <button onClick={() => trigger("/admin/kb-jobs/scrape_school_data/run", "pr-schools", setPrSchoolStatus)}
-                    disabled={triggering["pr-schools"]}
-                    className="flex-1 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
-                    style={{ backgroundColor: "rgba(236,72,153,0.08)", color: "#ec4899", border: "1px solid rgba(236,72,153,0.2)" }}
-                    data-testid="trigger-pr-schools">
-                    {triggering["pr-schools"] ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                    Scrape School Data
-                  </button>
-                  <button onClick={async () => {
-                    const res = await axios.get(`${API}/admin/kb-jobs`);
-                    const st = res.data?.jobs?.scrape_school_data?.status;
-                    if (st) setPrSchoolStatus(st);
-                  }}
-                    className="text-[10px] font-bold py-1.5 px-3 rounded-lg"
-                    style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
-                    Status
-                  </button>
-                </div>
-                {prSchoolStatus && (
-                  <div className="mt-1.5 text-[10px] p-2 rounded-lg" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
-                    {prSchoolStatus.running ? "Running..." : "Idle"} | Success: {prSchoolStatus.success || 0} / {prSchoolStatus.total || "?"} | Failed: {prSchoolStatus.failed || 0}
-                    {prSchoolStatus.message && <span> | {prSchoolStatus.message}</span>}
-                  </div>
-                )}
-              </div>
-
-              {/* Coaching Staff */}
-              <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--cm-border)" }}>
-                <p className="text-[10px] font-semibold mb-2" style={{ color: "var(--cm-text-2)" }}>Coaching Staff</p>
-                <div className="flex gap-2">
-                  <button onClick={() => trigger("/admin/kb-jobs/scrape_pr_coaches/run", "pr-coaches", setPrCoachStatus)}
-                    disabled={triggering["pr-coaches"]}
-                    className="flex-1 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
-                    style={{ backgroundColor: "rgba(236,72,153,0.08)", color: "#ec4899", border: "1px solid rgba(236,72,153,0.2)" }}
-                    data-testid="trigger-pr-coaches">
-                    {triggering["pr-coaches"] ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                    Scrape PR Coaches
-                  </button>
-                  <button onClick={async () => {
-                    const res = await axios.get(`${API}/admin/kb-jobs`);
-                    const st = res.data?.jobs?.scrape_pr_coaches?.status;
-                    if (st) setPrCoachStatus(st);
-                  }}
-                    className="text-[10px] font-bold py-1.5 px-3 rounded-lg"
-                    style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
-                    Status
-                  </button>
-                </div>
-                {prCoachStatus && (
-                  <div className="mt-1.5 text-[10px] p-2 rounded-lg" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
-                    {prCoachStatus.running ? "Running..." : "Idle"} | Success: {prCoachStatus.success || 0} / {prCoachStatus.total || "?"} | Failed: {prCoachStatus.failed || 0}
-                    {prCoachStatus.message && <span> | {prCoachStatus.message}</span>}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </IntegrationCard>
       </div>
     </div>
   );
