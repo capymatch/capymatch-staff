@@ -51,7 +51,7 @@ export default function AppLayout({ children, title, icon }) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--cm-bg)" }}>
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" style={{ backgroundColor: "var(--cm-overlay)" }} onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-[55] lg:hidden" style={{ backgroundColor: "var(--cm-overlay)" }} onClick={() => setSidebarOpen(false)} />
       )}
 
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
