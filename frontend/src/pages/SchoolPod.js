@@ -340,7 +340,6 @@ export default function SchoolPod() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddTask, setShowAddTask] = useState(false);
-  const [showAddNote, setShowAddNote] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
   const [notesOpen, setNotesOpen] = useState(false);
 
@@ -632,34 +631,6 @@ export default function SchoolPod() {
                 </div>
               ))}
             </div>
-          )}
-        </Section>
-
-        {/* ─── Notes ─── */}
-        <Section
-          title="Notes"
-          count={notes.length || null}
-          testId="school-notes"
-          action={
-            <button onClick={() => setShowAddNote(true)} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-700" data-testid="add-note-btn">
-              <Plus className="w-3 h-3" />Add
-            </button>
-          }
-        >
-          {showAddNote && <AddNoteForm onSubmit={addNote} onCancel={() => setShowAddNote(false)} />}
-          {notes.length > 0 ? (
-            <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-              {notes.map(n => (
-                <div key={n.id} className="py-2.5" data-testid={`note-${n.id}`}>
-                  <p className="text-xs" style={{ color: "var(--cm-text, #1e293b)" }}>{n.text}</p>
-                  <p className="text-[10px] mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-                    {n.author} · {n.created_at ? new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : !showAddNote && (
-            <p className="text-xs py-3 text-center" style={{ color: "var(--cm-text-3)" }}>No notes for this school yet</p>
           )}
         </Section>
 
