@@ -131,6 +131,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             "grad_year": a.get("grad_year"),
             "position": a.get("position"),
             "team": a.get("team"),
+            "photo_url": a.get("photo_url", ""),
             "recruiting_stage": detailed_stage,
             "momentum_score": mscore,
             "momentum_trend": mtrend,

@@ -172,10 +172,14 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
         </button>
 
         {/* Avatar — hidden on mobile */}
-        <div className="w-8 h-8 bg-slate-100 rounded-full items-center justify-center shrink-0 mt-0.5 hidden sm:flex">
-          <span className="text-[10px] font-bold text-slate-500">
-            {athlete.name?.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-          </span>
+        <div className="w-8 h-8 rounded-full items-center justify-center shrink-0 mt-0.5 hidden sm:flex overflow-hidden bg-slate-100">
+          {athlete.photo_url ? (
+            <img src={athlete.photo_url} alt={athlete.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-[10px] font-bold text-slate-500">
+              {athlete.name?.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+            </span>
+          )}
         </div>
 
         {/* Content */}
