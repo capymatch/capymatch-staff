@@ -505,56 +505,6 @@ export default function SchoolPod() {
                 <span>Interactions: <strong>{metrics.meaningful_interaction_count}</strong></span>
               )}
             </div>
-
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-2 mt-3" data-testid="hero-action-buttons">
-              <button
-                onClick={() => setActiveAction("email")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-blue-50"
-                style={{ color: "#2563eb", borderColor: "#bfdbfe", backgroundColor: "rgba(59,130,246,0.05)" }}
-                data-testid="hero-btn-email"
-              >
-                <Mail className="w-3.5 h-3.5" /> Send Email
-              </button>
-              <button
-                onClick={() => {
-                  const title = `Follow up on ${current_issue?.title || signals[0]?.title || "signal"} — ${program.university_name}`;
-                  addAction(title, true, "send_email");
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-violet-50"
-                style={{ color: "#7c3aed", borderColor: "#c4b5fd", backgroundColor: "rgba(124,58,237,0.05)" }}
-                data-testid="hero-btn-assign"
-              >
-                <Send className="w-3.5 h-3.5" /> Assign to Athlete
-              </button>
-              <button
-                onClick={() => {
-                  const title = `Log interaction with ${program.university_name}`;
-                  addAction(title, false, "log_interaction");
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-emerald-50"
-                style={{ color: "#059669", borderColor: "#a7f3d0", backgroundColor: "rgba(5,150,105,0.05)" }}
-                data-testid="hero-btn-log"
-              >
-                <ClipboardCheck className="w-3.5 h-3.5" /> Log Interaction
-              </button>
-              <button
-                onClick={() => setActiveAction("escalate")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-red-50"
-                style={{ color: "#dc2626", borderColor: "#fecaca", backgroundColor: "rgba(220,38,38,0.05)" }}
-                data-testid="hero-btn-escalate"
-              >
-                <Flag className="w-3.5 h-3.5" /> Escalate
-              </button>
-              <button
-                onClick={() => navigate(`/advocacy/new?athlete=${athleteId}&schoolName=${encodeURIComponent(program.university_name)}`)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-amber-50"
-                style={{ color: "#d97706", borderColor: "#fde68a", backgroundColor: "rgba(217,119,6,0.05)" }}
-                data-testid="hero-btn-advocate"
-              >
-                <Megaphone className="w-3.5 h-3.5" /> Advocate
-              </button>
-            </div>
           </div>
         </div>
 

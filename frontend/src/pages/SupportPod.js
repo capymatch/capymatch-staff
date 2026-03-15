@@ -124,41 +124,6 @@ function AthleteHero({ currentIssue, signals, athleteId, onRefresh }) {
           {issue?.description || worst?.description || "Review the signals and take action."}
         </p>
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          <button
-            onClick={handleCtaClick}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
-            style={{ backgroundColor: color }}
-            data-testid="athlete-hero-cta"
-          >
-            <CtaIcon className="w-3.5 h-3.5" />
-            {ctaLabel}
-          </button>
-          {isCritical && (
-            <button
-              onClick={handleEscalate}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors border"
-              style={{ color: "var(--cm-text-2, #64748b)", backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
-              data-testid="athlete-hero-escalate"
-            >
-              <ArrowUpRight className="w-3.5 h-3.5" />
-              Escalate
-            </button>
-          )}
-          {issue?.id && (
-            <button
-              onClick={handleResolve}
-              disabled={resolving}
-              className="px-3 py-2 rounded-lg text-xs font-medium transition-colors border disabled:opacity-50"
-              style={{ color: "var(--cm-text-3, #94a3b8)", backgroundColor: "transparent", borderColor: "var(--cm-border, #e2e8f0)" }}
-              data-testid="athlete-hero-resolve"
-            >
-              {resolving ? "Resolving..." : "Resolve"}
-            </button>
-          )}
-        </div>
-
         {/* Inline message form */}
         {showMessageForm && (
           <div className="mt-3 pt-3 border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="athlete-hero-message-form">
