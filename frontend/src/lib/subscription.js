@@ -1,16 +1,17 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useAuth } from "../AuthContext";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const SubscriptionContext = createContext(null);
 
 export function SubscriptionProvider({ children }) {
+  const { token } = useAuth();
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const token = localStorage.getItem("capymatch_token");
       if (!token) { setSubscription(null); setLoading(false); return; }
       const res = await axios.get(`${API}/subscription`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -21,9 +22,9 @@ export function SubscriptionProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { setLoading(true); refresh(); }, [refresh]);
 
   return (
     <SubscriptionContext.Provider value={{ subscription, loading, refresh }}>

@@ -215,11 +215,23 @@ class UsageLimits(BaseModel):
     ai_drafts_limit: int = 0
     ai_drafts_remaining: int = 0
 
+class SubscriptionLimits(BaseModel):
+    max_schools: int = 5
+    ai_drafts_per_month: int = 0
+    gmail_integration: bool = False
+    analytics: bool = False
+    recruiting_insights: bool = False
+    public_profile: bool = False
+    follow_up_reminders: bool = False
+    auto_reply_detection: bool = False
+    weekly_digest: bool = False
+
 class SubscriptionResponse(BaseModel):
     tier: str = "basic"
     label: str = "Starter"
     price: float = 0
     features: List[str] = []
+    limits: SubscriptionLimits = SubscriptionLimits()
     usage: UsageLimits = UsageLimits()
 
 
