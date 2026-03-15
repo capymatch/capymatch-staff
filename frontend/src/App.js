@@ -49,6 +49,7 @@ import AthleteInboxPage from "./pages/athlete/InboxPage";
 import AthleteMessagesPage from "./pages/athlete/MessagesPage";
 import AthleteOutreachPage from "./pages/athlete/OutreachAnalysisPage";
 import AthleteHighlightPage from "./pages/athlete/HighlightAdvisorPage";
+import SocialSpotlight from "./pages/SocialSpotlight";
 
 function getHomeRoute(role, onboardingDone) {
   if (role === "platform_admin") return "/admin/dashboard";
@@ -117,6 +118,7 @@ function AppRoutes() {
       <Route path="/advocacy/:recommendationId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RecommendationDetail /></ProtectedRoute>} />
       <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RelationshipDetail /></ProtectedRoute>} />
       <Route path="/program" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><ProgramIntelligence /></ProtectedRoute>} />
+      <Route path="/spotlight" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SocialSpotlight /></ProtectedRoute>} />
       <Route path="/invites" element={<ProtectedRoute allowedRoles={["director"]}><InvitesPage /></ProtectedRoute>} />
       <Route path="/roster" element={<ProtectedRoute allowedRoles={["director"]}><RosterPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

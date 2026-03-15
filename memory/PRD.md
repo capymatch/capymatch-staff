@@ -66,9 +66,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 - **Relationship History section** — Shows previous advocacy recs + event interactions in the builder
 - **Backend: previous_advocacy in context** — GET /advocacy/athlete-context returns prior advocacy attempts with status/date/fit summary
 
+### Session 6 (2026-03-15)
+- **Social Spotlight page** — Copied from capymatch repo and integrated. YouTube feed + Twitter links for pipeline schools. Gated behind premium subscription. Backend: `/api/social-spotlight/feed`, `/api/social-spotlight/feed/refresh`, `/api/social-spotlight/social-links`. Requires `YOUTUBE_API_KEY` env var for live data.
+
 ---
 
 ## Backlog
+
+### P0 — Immediate
+- **YouTube API Key** — Configure `YOUTUBE_API_KEY` env var for Social Spotlight live data
+- **CSV Import Tool** — For manually gathered school/coach data from university sites
 
 ### P1 — Upcoming
 - **College Scorecard API** — Integrated but needs user's API key from api.data.gov

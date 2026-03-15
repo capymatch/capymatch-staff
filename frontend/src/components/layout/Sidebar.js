@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import {
   LayoutDashboard, Calendar, Megaphone, BarChart3, Users,
-  ChevronRight, Kanban, GraduationCap, Mail, Video,
+  ChevronRight, Kanban, GraduationCap, Mail, Video, Play,
   Shield, Plug, Database, CreditCard, MessageSquare, Building2,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
@@ -14,6 +14,7 @@ const STAFF_NAV = [
   { id: "messages", label: "Messages", icon: MessageSquare, path: "/messages" },
   { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
   { id: "program", label: "Program Insights", icon: BarChart3, path: "/program" },
+  { id: "spotlight", label: "Social Spotlight", icon: Play, path: "/spotlight" },
 ];
 
 const DIRECTOR_EXTRA = [
