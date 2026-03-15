@@ -48,6 +48,10 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - Create Event, manage athletes/schools on Prep page
 - Live Signal Capture, Post-Event Summary
 - Responsive Live Event Page
+- **Live Event Add School:** "+ Add" adds school to event only (not pipeline)
+- **Note Required:** Note field is mandatory when logging signals
+- **Dual Action Buttons:** "Log to Pod" (saves to school pod only) vs "Send to Athlete" (also sends to athlete, adds school to pipeline with plan limit check)
+- **Plan Limit Enforcement:** If athlete is at plan limit, signal is saved but school NOT added to pipeline. Athlete gets upgrade notification
 
 ### Coach School Pod
 - **Smart Action Types**: When assigning to athlete, coach picks action type (Send Email, Log Visit, Log Interaction, Preparation, Profile Update, Research, Reply, General)
