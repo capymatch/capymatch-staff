@@ -259,6 +259,7 @@ def create_recommendation(data):
         "supporting_event_notes": data.get("supporting_event_notes", []),
         "intro_message": data.get("intro_message", ""),
         "desired_next_step": data.get("desired_next_step", ""),
+        "attachments": data.get("attachments", []),
         "created_by": "Coach Martinez",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "sent_at": None,
@@ -283,7 +284,7 @@ def update_recommendation(rec_id, updates):
         return None
 
     editable = ("college_coach_name", "fit_reasons", "fit_note", "supporting_event_notes",
-                "intro_message", "desired_next_step", "school_id", "school_name", "athlete_id")
+                "intro_message", "desired_next_step", "school_id", "school_name", "athlete_id", "attachments")
     for key in editable:
         if key in updates:
             rec[key] = updates[key]

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import { Plus, ChevronRight, Clock, MessageCircle, AlertCircle, Check, X } from "lucide-react";
+import { Plus, ChevronRight, Clock, MessageCircle, AlertCircle, Check, X, Paperclip } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -68,6 +68,9 @@ function RecCard({ rec }) {
             {rec.status === "warm_response" && rec.desired_next_step && (
               <p className="text-emerald-600 font-medium">Next: {rec.desired_next_step.replace(/_/g, " ")}</p>
             )}
+            {rec.attachments?.length > 0 && (
+              <p className="text-gray-400 flex items-center gap-1"><Paperclip className="w-3 h-3" />{rec.attachments.length} attachment{rec.attachments.length > 1 ? "s" : ""}</p>
+            )}
             {isClosed && rec.closed_reason && (
               <p className="italic">{rec.closed_reason === "positive_outcome" ? "Positive outcome" : rec.closed_reason.replace(/_/g, " ")}</p>
             )}
@@ -109,10 +112,10 @@ function AdvocacyHome() {
 
   const tabs = [
     { id: "all", label: "All", count: data.stats.total },
-    { id: "draft", label: "Drafts", count: data.stats.drafts },
+    { id: "draft", label: "Draft", count: data.stats.drafts },
     { id: "sent", label: "Sent", count: data.stats.sent },
-    { id: "awaiting_reply", label: "Awaiting", count: data.stats.awaiting },
-    { id: "responded", label: "Responded", count: data.stats.warm },
+    { id: "awaiting_reply", label: "Waiting Response", count: data.stats.awaiting },
+    { id: "warm_response", label: "Warm", count: data.stats.warm },
     { id: "closed", label: "Closed", count: data.stats.closed },
   ];
 

@@ -112,6 +112,7 @@ async def event_recap(event_id: str, current_user: dict = get_current_user_dep()
 async def advocacy_draft(
     athlete_id: str,
     school_id: str,
+    body: dict = {},
     current_user: dict = get_current_user_dep(),
 ):
     """Generate a recommendation draft for an athlete-school pair."""
@@ -127,8 +128,24 @@ async def advocacy_draft(
     school = context.get("school", {"id": school_id, "name": school_id})
     event_notes = context.get("notes", [])
 
+    # Build extra context from body params
+    extra_parts = []
+    fit_reasons = body.get("fit_reasons", [])
+    if fit_reasons:
+        reasons_map = {
+            "athletic_ability": "Athletic ability", "tactical_awareness": "Tactical awareness",
+            "academic_fit": "Academic fit", "character_leadership": "Character/leadership",
+            "coachability": "Coachability", "program_need_match": "Program need match",
+        }
+        extra_parts.append("Key fit reasons: " + ", ".join(reasons_map.get(r, r) for r in fit_reasons))
+    if body.get("fit_note"):
+        extra_parts.append(f"Coach's note: {body['fit_note']}")
+    if body.get("highlight_video"):
+        extra_parts.append(f"Highlight video available: {body['highlight_video']}")
+    existing_context = "\n".join(extra_parts)
+
     try:
-        text = await generate_advocacy_draft(athlete, school, event_notes)
+        text = await generate_advocacy_draft(athlete, school, event_notes, existing_context)
     except RuntimeError as e:
         log.error(f"AI advocacy draft failed: {e}")
         raise HTTPException(status_code=503, detail="AI service temporarily unavailable. Please try again.")

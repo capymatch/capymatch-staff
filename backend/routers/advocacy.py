@@ -23,6 +23,67 @@ from advocacy_engine import (
 router = APIRouter()
 
 
+@router.get("/advocacy/athlete-context/{athlete_id}/{school_id}")
+async def get_athlete_recruiting_context(athlete_id: str, school_id: str, current_user: dict = get_current_user_dep()):
+    """Get rich athlete context for the recommendation builder."""
+    from services.athlete_store import get_all as get_athletes_list
+
+    athlete = next((a for a in get_athletes_list() if a["id"] == athlete_id), None)
+    if not athlete:
+        raise HTTPException(404, "Athlete not found")
+
+    # Get pipeline status for this school
+    pipeline_status = None
+    last_contact = None
+    program = await db.programs.find_one(
+        {"athlete_id": athlete_id, "university_id": school_id},
+        {"_id": 0, "recruiting_status": 1, "last_contact_date": 1, "reply_status": 1, "university_name": 1}
+    )
+    if not program:
+        program = await db.programs.find_one(
+            {"athlete_id": athlete_id, "program_id": school_id},
+            {"_id": 0, "recruiting_status": 1, "last_contact_date": 1, "reply_status": 1, "university_name": 1}
+        )
+    if not program:
+        # Try lookup by university name (from SchoolPod)
+        from urllib.parse import unquote
+        decoded_name = unquote(school_id)
+        program = await db.programs.find_one(
+            {"athlete_id": athlete_id, "university_name": {"$regex": f"^{decoded_name}$", "$options": "i"}},
+            {"_id": 0, "recruiting_status": 1, "last_contact_date": 1, "reply_status": 1, "university_name": 1}
+        )
+    if program:
+        pipeline_status = program.get("recruiting_status", "unknown")
+        last_contact = program.get("last_contact_date")
+
+    # Get event context
+    event_ctx = get_event_context(athlete_id, school_id)
+
+    # Get highlight video from athlete profile
+    athlete_doc = await db.athletes.find_one({"id": athlete_id}, {"_id": 0, "highlight_video": 1, "profile_url": 1, "video_links": 1})
+
+    return {
+        "athlete": {
+            "id": athlete["id"],
+            "name": athlete.get("full_name", ""),
+            "grad_year": athlete.get("grad_year"),
+            "position": athlete.get("position", ""),
+            "team": athlete.get("team", ""),
+            "photo_url": athlete.get("photo_url", ""),
+            "momentum_score": athlete.get("momentum_score", 0),
+            "momentum_trend": athlete.get("momentum_trend", "stable"),
+            "recruiting_stage": athlete.get("recruiting_stage", "exploring"),
+            "school_targets": athlete.get("school_targets", 0),
+        },
+        "pipeline_status": pipeline_status,
+        "last_contact": last_contact,
+        "event_notes": event_ctx.get("event_notes", []),
+        "highlight_video": (athlete_doc or {}).get("highlight_video", ""),
+        "profile_url": (athlete_doc or {}).get("profile_url", ""),
+        "video_links": (athlete_doc or {}).get("video_links", []),
+    }
+
+
 @router.get("/advocacy/recommendations")
 async def list_all_recommendations(status: str = None, athlete: str = None, school: str = None, grad_year: str = None, current_user: dict = get_current_user_dep()):
     result = list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
@@ -33,6 +94,33 @@ async def list_all_recommendations(status: str = None, athlete: str = None, scho
         key: filter_by_athlete_id(val, current_user) if isinstance(val, list) else val
         for key, val in result.items()
     }
+
+
+@router.get("/advocacy/athletes")
+async def list_advocacy_athletes(q: str = "", current_user: dict = get_current_user_dep()):
+    """Search athletes for the recommendation builder autocomplete."""
+    from services.athlete_store import get_all as get_athletes_list
+    athletes = get_athletes_list()
+
+    if q and len(q) >= 2:
+        q_lower = q.lower()
+        athletes = [a for a in athletes if q_lower in a.get("full_name", "").lower()]
+
+    visible = get_visible_athlete_ids(current_user)
+    if current_user["role"] != "director":
+        athletes = [a for a in athletes if a["id"] in visible]
+
+    return [
+        {
+            "id": a["id"],
+            "name": a.get("full_name", "Unknown"),
+            "grad_year": a.get("grad_year"),
+            "position": a.get("position", ""),
+            "team": a.get("team", ""),
+            "photo_url": a.get("photo_url", ""),
+        }
+        for a in athletes[:20]
+    ]
 
 
 @router.get("/advocacy/context/{athlete_id}/{school_id}")

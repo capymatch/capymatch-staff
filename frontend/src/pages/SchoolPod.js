@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, School, Mail, Phone, ExternalLink, RefreshCw,
   AlertTriangle, CheckCircle2, Clock, FileText, Plus, Send,
-  MessageSquare, TrendingUp, TrendingDown, Minus, Flag, Loader2, X, ClipboardCheck
+  MessageSquare, TrendingUp, TrendingDown, Minus, Flag, Loader2, X, ClipboardCheck, Megaphone
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -379,6 +379,14 @@ export default function SchoolPod() {
                 data-testid="hero-btn-escalate"
               >
                 <Flag className="w-3.5 h-3.5" /> Escalate
+              </button>
+              <button
+                onClick={() => navigate(`/advocacy/new?athlete=${athleteId}&schoolName=${encodeURIComponent(program.university_name)}`)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-amber-50"
+                style={{ color: "#d97706", borderColor: "#fde68a", backgroundColor: "rgba(217,119,6,0.05)" }}
+                data-testid="hero-btn-advocate"
+              >
+                <Megaphone className="w-3.5 h-3.5" /> Advocate
               </button>
             </div>
           </div>

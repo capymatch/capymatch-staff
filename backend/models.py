@@ -109,6 +109,7 @@ class RecommendationCreate(BaseModel):
     supporting_event_notes: Optional[List[str]] = []
     intro_message: Optional[str] = ""
     desired_next_step: Optional[str] = ""
+    attachments: Optional[List[dict]] = []
 
 class RecommendationUpdate(BaseModel):
     college_coach_name: Optional[str] = None
@@ -119,6 +120,7 @@ class RecommendationUpdate(BaseModel):
     desired_next_step: Optional[str] = None
     school_id: Optional[str] = None
     school_name: Optional[str] = None
+    attachments: Optional[List[dict]] = None
 
 class ResponseLog(BaseModel):
     response_note: str
