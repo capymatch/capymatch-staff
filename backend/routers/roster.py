@@ -193,6 +193,13 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         if team not in team_map:
             team_map[team] = []
         team_map[team].append(a)
+
+    # Include empty teams from club_teams collection
+    club_teams_docs = await db.club_teams.find({}, {"_id": 0, "name": 1}).to_list(100)
+    for ct in club_teams_docs:
+        if ct["name"] not in team_map:
+            team_map[ct["name"]] = []
+
     team_groups = [{"team": t, "athletes": ats, "count": len(ats)} for t, ats in sorted(team_map.items())]
 
     # Age groups (for Age Group View)
@@ -796,3 +803,219 @@ async def bulk_note(body: dict, current_user: dict = get_current_user_dep()):
         await db.coach_notes.insert_many(notes)
 
     return {"added": len(notes)}
+
+
+
+# ══════════════════════════════════════════════════════════════
+# Team & Athlete Management (Director)
+# ══════════════════════════════════════════════════════════════
+
+@router.post("/roster/teams")
+async def create_team(request_body: dict, current_user: dict = get_current_user_dep()):
+    """Create a new team. Director-only."""
+    from fastapi import Request
+    _require_director(current_user)
+
+    name = (request_body.get("name") or "").strip()
+    age_group = (request_body.get("age_group") or "").strip()
+    coach_id = request_body.get("coach_id")
+
+    if not name:
+        raise HTTPException(400, "Team name is required")
+
+    # Check for duplicate team name
+    existing = await db.athletes.find_one({"team": name})
+    existing_club = await db.club_teams.find_one({"name": name})
+    if existing or existing_club:
+        raise HTTPException(400, f"Team '{name}' already exists")
+
+    team_doc = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "age_group": age_group,
+        "coach_id": coach_id or None,
+        "org_id": current_user.get("org_id"),
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.club_teams.insert_one(team_doc)
+    team_doc.pop("_id", None)
+
+    # If coach assigned, update coach's team field
+    if coach_id:
+        coach = await db.users.find_one({"id": coach_id, "role": "club_coach"}, {"_id": 0, "name": 1})
+        if coach:
+            team_doc["coach_name"] = coach["name"]
+
+    return {"ok": True, "team": team_doc}
+
+
+@router.get("/roster/athletes/search")
+async def search_athletes(q: str = "", current_user: dict = get_current_user_dep()):
+    """Search athletes by name for autocomplete. Director-only."""
+    _require_director(current_user)
+
+    if not q or len(q) < 2:
+        return []
+
+    results = await db.athletes.find(
+        {"full_name": {"$regex": q, "$options": "i"}},
+        {"_id": 0, "id": 1, "full_name": 1, "position": 1, "team": 1, "photo_url": 1, "grad_year": 1}
+    ).limit(10).to_list(10)
+
+    return [
+        {
+            "id": r["id"],
+            "name": r.get("full_name", "Unknown"),
+            "position": r.get("position", ""),
+            "team": r.get("team", ""),
+            "photo_url": r.get("photo_url", ""),
+            "grad_year": r.get("grad_year"),
+        }
+        for r in results
+    ]
+
+
+@router.post("/roster/teams/{team_name}/add-athlete")
+async def add_athlete_to_team(team_name: str, request_body: dict, current_user: dict = get_current_user_dep()):
+    """Move an existing athlete to this team. Director-only."""
+    _require_director(current_user)
+
+    athlete_id = request_body.get("athlete_id")
+    if not athlete_id:
+        raise HTTPException(400, "athlete_id is required")
+
+    athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0, "id": 1, "full_name": 1, "team": 1})
+    if not athlete:
+        raise HTTPException(404, "Athlete not found")
+
+    await db.athletes.update_one(
+        {"id": athlete_id},
+        {"$set": {"team": team_name, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
+    await recompute_derived_data()
+
+    return {"ok": True, "athlete_id": athlete_id, "team": team_name, "name": athlete.get("full_name")}
+
+
+@router.post("/roster/teams/{team_name}/invite")
+async def invite_athlete_to_team(team_name: str, request_body: dict, current_user: dict = get_current_user_dep()):
+    """Invite a new athlete by email to join a team. Director-only."""
+    import bcrypt
+    _require_director(current_user)
+
+    email = (request_body.get("email") or "").strip().lower()
+    name = (request_body.get("name") or "").strip()
+
+    if not email:
+        raise HTTPException(400, "Email is required")
+    if not name:
+        raise HTTPException(400, "Name is required")
+
+    # Check if user already exists
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        # Check if they have an athlete profile
+        existing_athlete = await db.athletes.find_one({"email": email}, {"_id": 0, "id": 1, "full_name": 1})
+        if existing_athlete:
+            # Just move them to the team
+            await db.athletes.update_one(
+                {"id": existing_athlete["id"]},
+                {"$set": {"team": team_name, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            await recompute_derived_data()
+            return {"ok": True, "action": "moved", "athlete_name": existing_athlete.get("full_name"), "team": team_name}
+        raise HTTPException(400, f"A user with this email exists but has no athlete profile")
+
+    # Create user account
+    org_id = current_user.get("org_id", "org-capymatch-default")
+    temp_password = f"welcome-{uuid.uuid4().hex[:8]}"
+    hashed = bcrypt.hashpw(temp_password.encode(), bcrypt.gensalt()).decode()
+    user_id = str(uuid.uuid4())
+    tenant_id = f"tenant-{user_id}"
+
+    parts = name.split(" ", 1)
+    first_name = parts[0]
+    last_name = parts[1] if len(parts) > 1 else ""
+
+    user_doc = {
+        "id": user_id,
+        "email": email,
+        "name": name,
+        "password": hashed,
+        "role": "athlete",
+        "org_id": org_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.users.insert_one(user_doc)
+
+    athlete_doc = {
+        "id": f"athlete_{uuid.uuid4().hex[:8]}",
+        "user_id": user_id,
+        "tenant_id": tenant_id,
+        "org_id": org_id,
+        "email": email,
+        "first_name": first_name,
+        "last_name": last_name,
+        "full_name": name,
+        "team": team_name,
+        "position": "",
+        "grad_year": None,
+        "photo_url": "",
+        "recruiting_stage": "exploring",
+        "momentum_score": 0,
+        "momentum_trend": "stable",
+        "school_targets": 0,
+        "active_interest": 0,
+        "days_since_activity": 0,
+        "last_activity": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "onboarding_completed": False,
+    }
+    await db.athletes.insert_one(athlete_doc)
+    athlete_doc.pop("_id", None)
+
+    # Create basic subscription
+    await db.subscriptions.insert_one({"tenant_id": tenant_id, "tier": "basic"})
+
+    await recompute_derived_data()
+
+    return {
+        "ok": True,
+        "action": "invited",
+        "athlete_name": name,
+        "email": email,
+        "team": team_name,
+        "temp_password": temp_password,
+    }
+
+
+@router.get("/roster/teams")
+async def list_teams(current_user: dict = get_current_user_dep()):
+    """List all teams (from athlete data + club_teams collection). Director-only."""
+    _require_director(current_user)
+
+    # Teams from athlete data
+    athlete_teams = await db.athletes.distinct("team")
+    athlete_teams = [t for t in athlete_teams if t]
+
+    # Teams from club_teams collection (may be empty)
+    club_teams = await db.club_teams.find({}, {"_id": 0}).to_list(100)
+    club_team_names = {ct["name"] for ct in club_teams}
+
+    all_team_names = sorted(set(athlete_teams) | club_team_names)
+
+    teams = []
+    for name in all_team_names:
+        ct = next((c for c in club_teams if c["name"] == name), None)
+        count = await db.athletes.count_documents({"team": name})
+        teams.append({
+            "name": name,
+            "age_group": ct.get("age_group", "") if ct else "",
+            "coach_id": ct.get("coach_id") if ct else None,
+            "athlete_count": count,
+        })
+
+    return teams

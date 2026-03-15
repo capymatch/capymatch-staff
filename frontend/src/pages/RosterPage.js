@@ -7,7 +7,7 @@ import {
   AlertTriangle, ChevronDown, ChevronUp,
   ExternalLink, UserPlus, FileText, TrendingUp, TrendingDown, Minus,
   Search, LayoutGrid, UserCircle, GraduationCap,
-  ArrowRightLeft, Sparkles, Bell, CheckSquare, Square, X, User,
+  ArrowRightLeft, Sparkles, Bell, CheckSquare, Square, X, User, Plus, Mail,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -268,9 +268,10 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
 
 /* ── Group Card ── */
 
-function GroupCard({ title, subtitle, count, athletes, coaches, onReload, navigate, icon: Icon, accentClass, selectedIds, onToggle, defaultExpanded = true }) {
+function GroupCard({ title, subtitle, count, athletes, coaches, onReload, navigate, icon: Icon, accentClass, selectedIds, onToggle, defaultExpanded = true, showAddAthlete = false }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [reassignTarget, setReassignTarget] = useState(null);
+  const [showAddAthleteModal, setShowAddAthleteModal] = useState(false);
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm" data-testid={`group-card-${title.replace(/\s/g, "-").toLowerCase()}`}>
@@ -304,12 +305,25 @@ function GroupCard({ title, subtitle, count, athletes, coaches, onReload, naviga
       )}
       {expanded && athletes.length === 0 && (
         <div className="border-t border-gray-100 px-5 py-4">
-          <p className="text-xs text-gray-400 text-center">No athletes</p>
+          <p className="text-xs text-gray-400 text-center">No athletes yet</p>
+        </div>
+      )}
+      {expanded && showAddAthlete && (
+        <div className="border-t border-gray-100 px-5 py-2.5">
+          <button onClick={(e) => { e.stopPropagation(); setShowAddAthleteModal(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-md transition-colors"
+            data-testid={`add-athlete-to-${title.replace(/\s/g, "-").toLowerCase()}`}>
+            <UserPlus className="w-3 h-3" />Add Athlete
+          </button>
         </div>
       )}
       {reassignTarget && (
         <ReassignModal athlete={reassignTarget} coaches={coaches} currentCoachId={reassignTarget.coach_id}
           onClose={() => setReassignTarget(null)} onConfirm={() => { setReassignTarget(null); onReload(); }} />
+      )}
+      {showAddAthleteModal && (
+        <AddAthleteModal teamName={title} onClose={() => setShowAddAthleteModal(false)}
+          onConfirm={() => { setShowAddAthleteModal(false); onReload(); }} />
       )}
     </div>
   );
@@ -407,6 +421,198 @@ function BulkTextModal({ title, placeholder, count, names, buttonLabel, buttonIc
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-md hover:bg-slate-800 disabled:opacity-50" data-testid="bulk-text-confirm">
             <BtnIcon className="w-3 h-3" />{submitting ? "Sending..." : buttonLabel}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Add Team Modal ── */
+
+function AddTeamModal({ coaches, onClose, onConfirm }) {
+  const [name, setName] = useState("");
+  const [ageGroup, setAgeGroup] = useState("");
+  const [coachId, setCoachId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!name.trim()) { toast.error("Team name is required"); return; }
+    setSubmitting(true);
+    try {
+      await axios.post(`${API}/roster/teams`, { name: name.trim(), age_group: ageGroup.trim(), coach_id: coachId || null });
+      toast.success(`Team "${name}" created`);
+      onConfirm();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to create team");
+    } finally { setSubmitting(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()} data-testid="add-team-modal">
+        <h3 className="text-sm font-semibold text-gray-900 mb-4">Add New Team</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Team Name *</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. U15 Select"
+              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 placeholder-gray-400" data-testid="team-name-input" />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Age Group</label>
+            <input value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} placeholder="e.g. U15, U16, U17"
+              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 placeholder-gray-400" data-testid="team-age-group-input" />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Assign Coach</label>
+            <select value={coachId} onChange={(e) => setCoachId(e.target.value)}
+              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 bg-white" data-testid="team-coach-select">
+              <option value="">No coach assigned</option>
+              {coaches.map((c) => <option key={c.id} value={c.id}>{c.name}{c.team ? ` · ${c.team}` : ""}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose} className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+          <button onClick={handleSubmit} disabled={submitting || !name.trim()}
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-md hover:bg-slate-800 disabled:opacity-50" data-testid="add-team-confirm">
+            <Plus className="w-3 h-3" />{submitting ? "Creating..." : "Create Team"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Add Athlete to Team Modal ── */
+
+function AddAthleteModal({ teamName, onClose, onConfirm }) {
+  const [mode, setMode] = useState("search"); // "search" | "invite"
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Invite fields
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+
+  useEffect(() => {
+    if (query.length < 2) { setResults([]); return; }
+    const timeout = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await axios.get(`${API}/roster/athletes/search`, { params: { q: query } });
+        setResults(res.data);
+      } catch { setResults([]); }
+      finally { setSearching(false); }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [query]);
+
+  const handleAddExisting = async (athleteId) => {
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`${API}/roster/teams/${encodeURIComponent(teamName)}/add-athlete`, { athlete_id: athleteId });
+      toast.success(`${res.data.name} added to ${teamName}`);
+      onConfirm();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to add athlete");
+    } finally { setSubmitting(false); }
+  };
+
+  const handleInvite = async () => {
+    if (!inviteName.trim() || !inviteEmail.trim()) { toast.error("Name and email are required"); return; }
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`${API}/roster/teams/${encodeURIComponent(teamName)}/invite`, {
+        name: inviteName.trim(), email: inviteEmail.trim(),
+      });
+      if (res.data.temp_password) {
+        toast.success(`${res.data.athlete_name} invited! Temp password: ${res.data.temp_password}`, { duration: 10000 });
+      } else {
+        toast.success(`${res.data.athlete_name} added to ${teamName}`);
+      }
+      onConfirm();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to invite athlete");
+    } finally { setSubmitting(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()} data-testid="add-athlete-modal">
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">Add Athlete to {teamName}</h3>
+        <p className="text-xs text-gray-400 mb-4">Search for an existing athlete or invite a new one.</p>
+
+        {/* Mode Tabs */}
+        <div className="flex gap-1 mb-4 bg-slate-100 rounded-lg p-0.5">
+          <button onClick={() => setMode("search")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === "search" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
+            data-testid="mode-search">
+            <Search className="w-3 h-3" />Existing Athlete
+          </button>
+          <button onClick={() => setMode("invite")}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === "invite" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}
+            data-testid="mode-invite">
+            <Mail className="w-3 h-3" />Invite New
+          </button>
+        </div>
+
+        {mode === "search" ? (
+          <div>
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name..."
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-md focus:ring-1 focus:ring-slate-300 focus:outline-none" data-testid="athlete-search-input" autoFocus />
+            </div>
+            {searching && <p className="text-xs text-slate-400 text-center py-2">Searching...</p>}
+            {!searching && results.length === 0 && query.length >= 2 && (
+              <p className="text-xs text-slate-400 text-center py-2">No athletes found</p>
+            )}
+            <div className="max-h-48 overflow-y-auto space-y-1">
+              {results.map((r) => (
+                <button key={r.id} onClick={() => handleAddExisting(r.id)} disabled={submitting}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors text-left disabled:opacity-50"
+                  data-testid={`search-result-${r.id}`}>
+                  <div className="w-7 h-7 rounded-full bg-slate-100 overflow-hidden shrink-0">
+                    {r.photo_url ? (
+                      <img src={r.photo_url} alt={r.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-slate-500">
+                        {r.name?.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{r.name}</p>
+                    <p className="text-[10px] text-slate-400">{r.position || "No position"} · {r.grad_year || "—"}{r.team ? ` · Currently: ${r.team}` : ""}</p>
+                  </div>
+                  <Plus className="w-4 h-4 text-slate-400 shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Full Name *</label>
+              <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="e.g. Jane Smith"
+                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 placeholder-gray-400" data-testid="invite-name-input" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Email *</label>
+              <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="jane@example.com" type="email"
+                className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-700 placeholder-gray-400" data-testid="invite-email-input" />
+            </div>
+            <button onClick={handleInvite} disabled={submitting || !inviteName.trim() || !inviteEmail.trim()}
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-md hover:bg-slate-800 disabled:opacity-50" data-testid="invite-confirm">
+              <Mail className="w-3 h-3" />{submitting ? "Inviting..." : "Send Invite"}
+            </button>
+          </div>
+        )}
+
+        <div className="flex justify-end mt-4">
+          <button onClick={onClose} className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700" data-testid="add-athlete-cancel">Cancel</button>
         </div>
       </div>
     </div>
@@ -539,7 +745,7 @@ function RosterPage() {
     );
   };
 
-  const renderGroups = (groups, iconKey, accentClass) => (
+  const renderGroups = (groups, iconKey, accentClass, showAddAthlete = false) => (
     <div className="space-y-3">
       {groups.map((g) => {
         const filtered = filterAthletes(g.athletes);
@@ -549,7 +755,8 @@ function RosterPage() {
             count={filtered.length} athletes={filtered} coaches={coaches}
             onReload={fetchRoster} navigate={navigate}
             icon={iconKey} accentClass={accentClass}
-            selectedIds={selectedIds} onToggle={toggleSelect} />
+            selectedIds={selectedIds} onToggle={toggleSelect}
+            showAddAthlete={showAddAthlete} />
         );
       })}
     </div>
@@ -579,6 +786,7 @@ function RosterPage() {
 
   // Bulk action modals
   const [bulkModal, setBulkModal] = useState(null); // "assign" | "remind" | "note" | null
+  const [showAddTeam, setShowAddTeam] = useState(false);
 
   const getSelectedNames = () => {
     if (!data) return [];
@@ -589,14 +797,21 @@ function RosterPage() {
     <div data-testid="roster-page">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900" data-testid="roster-title">Roster</h1>
-          {data?.summary && (
-            <p className="text-xs text-slate-400 mt-0.5">
-              {data.summary.total_athletes} athletes · {data.summary.teams} teams · {data.summary.coach_count} coaches
-              {data.summary.unassigned > 0 && <span className="text-amber-600 ml-1">· {data.summary.unassigned} unassigned</span>}
-            </p>
-          )}
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900" data-testid="roster-title">Roster</h1>
+            {data?.summary && (
+              <p className="text-xs text-slate-400 mt-0.5">
+                {data.summary.total_athletes} athletes · {data.summary.teams} teams · {data.summary.coach_count} coaches
+                {data.summary.unassigned > 0 && <span className="text-amber-600 ml-1">· {data.summary.unassigned} unassigned</span>}
+              </p>
+            )}
+          </div>
+          <button onClick={() => setShowAddTeam(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+            data-testid="add-team-btn">
+            <Plus className="w-3.5 h-3.5" />Add Team
+          </button>
         </div>
         <div className="flex items-center gap-3">
           <SearchBar value={search} onChange={setSearch} />
@@ -688,8 +903,14 @@ function RosterPage() {
           {/* AI Roster Insights */}
           <RosterInsights athletes={data?.athletes} />
 
+          {/* Add Team Modal */}
+          {showAddTeam && (
+            <AddTeamModal coaches={coaches} onClose={() => setShowAddTeam(false)}
+              onConfirm={() => { setShowAddTeam(false); fetchRoster(); }} />
+          )}
+
           {/* View Content */}
-          {view === "team" && renderGroups(teamGroups, LayoutGrid, "bg-slate-100")}
+          {view === "team" && renderGroups(teamGroups, LayoutGrid, "bg-slate-100", true)}
           {view === "coach" && renderGroups(coachGroups, UserCircle, "bg-slate-100")}
           {view === "age" && renderGroups(ageGroups, GraduationCap, "bg-violet-50")}
         </>
