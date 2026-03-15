@@ -431,7 +431,7 @@ export default function SchoolPod() {
   return (
     <div className={`bg-slate-50/30 min-h-screen overflow-x-hidden transition-[margin] duration-300 ease-out ${notesOpen ? "mr-[340px] sm:mr-[380px]" : ""}`} data-testid="school-pod-page">
       {/* Header with Athlete Context (#5) */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="school-pod-header">
+      <header className="bg-white/95 border-b border-gray-100" data-testid="school-pod-header">
         <div className="px-3 sm:px-6 py-3 max-w-5xl mx-auto">
           <div className="flex items-center gap-3 min-w-0">
             <button

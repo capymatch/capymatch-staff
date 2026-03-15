@@ -391,7 +391,7 @@ function SupportPod() {
   return (
     <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen overflow-x-hidden" data-testid="support-pod-page">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100" data-testid="pod-header">
+      <header className="bg-white/95 border-b border-gray-100" data-testid="pod-header">
         <div className="px-2 sm:px-4 py-2.5 sm:py-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <button
