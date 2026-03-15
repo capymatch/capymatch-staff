@@ -118,7 +118,6 @@ function AppRoutes() {
       <Route path="/advocacy/:recommendationId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RecommendationDetail /></ProtectedRoute>} />
       <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RelationshipDetail /></ProtectedRoute>} />
       <Route path="/program" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><ProgramIntelligence /></ProtectedRoute>} />
-      <Route path="/spotlight" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SocialSpotlight /></ProtectedRoute>} />
       <Route path="/invites" element={<ProtectedRoute allowedRoles={["director"]}><InvitesPage /></ProtectedRoute>} />
       <Route path="/roster" element={<ProtectedRoute allowedRoles={["director"]}><RosterPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
@@ -150,6 +149,7 @@ function AppRoutes() {
       <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSettingsPage /></ProtectedRoute>} />
       <Route path="/account" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteAccountPage /></ProtectedRoute>} />
       <Route path="/billing" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteBillingPage /></ProtectedRoute>} />
+      <Route path="/spotlight" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><SocialSpotlight /></ProtectedRoute>} />
 
       {/* ── Public routes (no auth) ── */}
       <Route path="/p/:slug" element={<AthletePublicProfile />} />

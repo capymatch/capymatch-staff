@@ -14,7 +14,6 @@ const STAFF_NAV = [
   { id: "messages", label: "Messages", icon: MessageSquare, path: "/messages" },
   { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
   { id: "program", label: "Program Insights", icon: BarChart3, path: "/program" },
-  { id: "spotlight", label: "Social Spotlight", icon: Play, path: "/spotlight" },
 ];
 
 const DIRECTOR_EXTRA = [
@@ -39,6 +38,7 @@ const ATHLETE_NAV = [
   { id: "messages", label: "Messages", icon: MessageSquare, path: "/messages" },
   { id: "highlights", label: "Highlights", icon: Video, path: "/highlights" },
   { id: "analytics", label: "Analytics", icon: BarChart3, path: "/analytics" },
+  { id: "spotlight", label: "Social Spotlight", icon: Play, path: "/spotlight" },
 ];
 
 export default function Sidebar({ open, onClose }) {
