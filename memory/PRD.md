@@ -46,20 +46,25 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 
 ### Session 5 (2026-03-15)
 - **ProductiveRecruit scraper removed** — Cleaned up code after confirming ToS prohibits scraping
-- **Subscription bug fix** — SubscriptionProvider depends on auth token, re-fetches on login/logout. Added `limits` to SubscriptionResponse model
+- **Subscription bug fix** — SubscriptionProvider depends on auth token, re-fetches on login/logout
 - **Roster athlete photos** — photo_url in backend response + img display in frontend
-- **Add Team feature** — Global "Add Team" button. Modal: name, age group, coach. Stored in club_teams collection
-- **Add Athlete to Team** — "Add Athlete" button per team card. Two-tab modal: autocomplete search existing athletes / invite new by email
+- **Add Team feature** — Global "Add Team" button. Modal: name, age group, coach
+- **Add Athlete to Team** — Two-tab modal: autocomplete search existing athletes / invite new by email
 
-### Session 5 continued (2026-03-15) — Advocacy Overhaul
-- **Pre-fill from context** — Athlete + school auto-populated from URL params (?athlete=X&schoolName=Y). Works from SchoolPod, pipeline, events
-- **Athlete recruiting context card** — Displays name, position, grad year, team, pipeline status, last contact, momentum score, school targets at top of form
-- **Enhanced AI Draft** — Sends fit_reasons, fit_note, highlight_video to LLM for more contextual drafts
-- **Attachments support** — Highlight reel, athlete profile, video clip URL attachments on recommendations
+### Session 5 — Advocacy Overhaul (2026-03-15)
+- **Pre-fill from context** — Athlete + school auto-populated from URL params. Works from SchoolPod, pipeline, events
+- **Athlete recruiting context card** — Name, position, grad year, team, pipeline status, last contact, momentum, targets
+- **Enhanced AI Draft** — Sends fit_reasons, fit_note, highlight_video to LLM for contextual drafts
+- **Attachments support** — Highlight reel, athlete profile, video clip URL attachments
 - **Outcome tracking** — Tabs: Draft → Sent → Waiting Response → Warm → Closed
-- **Advocate button in SchoolPod** — Pre-fills athlete + school, navigates to recommendation builder
-- **School autocomplete search** — Searches from university_knowledge_base (1,057 schools) instead of fixed 10-item dropdown
-- **New backend endpoints:** GET /advocacy/athlete-context/{id}/{school}, GET /advocacy/athletes?q=
+- **School autocomplete search** — Searches from 1,057 schools instead of fixed dropdown
+
+### Session 5 — Contextual Advocacy Integration (2026-03-15)
+- **Advocate button in SchoolPod** — Hero action button, pre-fills athlete + school
+- **Advocate button in Pipeline (SupportPod)** — Appears on hover per school row, pre-fills context
+- **Advocate button in Event Debrief** — Per-note action alongside "Send to Athlete" and "In Pod"
+- **Relationship History section** — Shows previous advocacy recs + event interactions in the builder
+- **Backend: previous_advocacy in context** — GET /advocacy/athlete-context returns prior advocacy attempts with status/date/fit summary
 
 ---
 
