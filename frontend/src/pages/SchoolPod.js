@@ -343,7 +343,7 @@ export default function SchoolPod() {
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2 mt-3" data-testid="hero-action-buttons">
               <button
-                onClick={() => window.location.href = `mailto:${school_info?.coach_email || ""}`}
+                onClick={() => setActiveAction("email")}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-blue-50"
                 style={{ color: "#2563eb", borderColor: "#bfdbfe", backgroundColor: "rgba(59,130,246,0.05)" }}
                 data-testid="hero-btn-email"
@@ -371,6 +371,14 @@ export default function SchoolPod() {
                 data-testid="hero-btn-log"
               >
                 <ClipboardCheck className="w-3.5 h-3.5" /> Log Interaction
+              </button>
+              <button
+                onClick={() => setActiveAction("escalate")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors hover:bg-red-50"
+                style={{ color: "#dc2626", borderColor: "#fecaca", backgroundColor: "rgba(220,38,38,0.05)" }}
+                data-testid="hero-btn-escalate"
+              >
+                <Flag className="w-3.5 h-3.5" /> Escalate
               </button>
             </div>
           </div>

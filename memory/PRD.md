@@ -53,6 +53,7 @@ CapyMatch is a full-stack recruiting platform for volleyball coaches and athlete
 - **Smart Action Types**: When assigning to athlete, coach picks action type (Send Email, Log Visit, Log Interaction, Preparation, Profile Update, Research, Reply, General)
 - **"Assign to Athlete" toggle** with action type dropdown
 - **"Sent to Athlete" badge** on assigned actions
+- **Hero Card Action Buttons**: Send Email (opens composer modal), Assign to Athlete, Log Interaction, Escalate (opens escalation modal)
 - Action bar: Log, Email, Follow-up, Notes, Escalate
 
 ### Coach → Athlete Action Flow (Complete End-to-End)
