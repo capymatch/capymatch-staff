@@ -28,6 +28,7 @@ import AdminUniversitiesPage from "./pages/admin/AdminUniversitiesPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminUserDetailPage from "./pages/admin/AdminUserDetailPage";
 import AdminSubscriptionsPage from "./pages/admin/AdminSubscriptionsPage";
+import AdminOrganizationsPage from "./pages/admin/AdminOrganizationsPage";
 import RosterPage from "./pages/RosterPage";
 import ProfilePage from "./pages/ProfilePage";
 import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
@@ -126,6 +127,7 @@ function AppRoutes() {
       <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminUsersPage /></ProtectedRoute>} />
       <Route path="/admin/users/:userId" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminUserDetailPage /></ProtectedRoute>} />
       <Route path="/admin/subscriptions" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminSubscriptionsPage /></ProtectedRoute>} />
+      <Route path="/admin/organizations" element={<ProtectedRoute allowedRoles={["platform_admin"]}><AdminOrganizationsPage /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SupportPod /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId/school/:programId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SchoolPod /></ProtectedRoute>} />
       <Route path="/internal/athlete/:athleteId/profile" element={<ProtectedRoute allowedRoles={["director","club_coach","platform_admin"]}><InternalAthleteProfile /></ProtectedRoute>} />
