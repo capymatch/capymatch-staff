@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, FileText, GraduationCap, Users, ListChecks,
   ExternalLink, Check, ArrowRight, Send, CheckCircle2,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Megaphone
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -50,6 +50,7 @@ function RoutingProgress({ allNotes }) {
 
 // ─── Note Action Buttons ───────────────────────────────
 function NoteActions({ note, eventId, onRefresh }) {
+  const navigate = useNavigate();
   const [sendingToAthlete, setSendingToAthlete] = useState(false);
 
   const sendToAthlete = async () => {
@@ -63,6 +64,13 @@ function NoteActions({ note, eventId, onRefresh }) {
     } finally {
       setSendingToAthlete(false);
     }
+  };
+
+  const advocateForNote = () => {
+    const params = new URLSearchParams();
+    if (note.athlete_id) params.set("athlete", note.athlete_id);
+    if (note.school_name) params.set("schoolName", note.school_name);
+    navigate(`/advocacy/new?${params.toString()}`);
   };
 
   const isSent = note.sent_to_athlete;
@@ -88,6 +96,18 @@ function NoteActions({ note, eventId, onRefresh }) {
         >
           <Send className="w-3 h-3" />
           {sendingToAthlete ? "..." : "Send to Athlete"}
+        </button>
+      )}
+      {/* Advocate */}
+      {note.school_name && (
+        <button
+          onClick={(e) => { e.stopPropagation(); advocateForNote(); }}
+          className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md transition-colors border border-amber-100"
+          data-testid={`advocate-note-${note.id}`}
+          title="Send advocacy recommendation to this school's coach"
+        >
+          <Megaphone className="w-3 h-3" />
+          Advocate
         </button>
       )}
     </div>
@@ -397,6 +417,17 @@ function EventSummary() {
                     <p className="text-xs font-semibold text-gray-800">Add to School Pod</p>
                     <p className="text-[10px] text-gray-500 leading-relaxed">
                       For school-specific follow-ups. Creates a pod action with school context.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="w-6 h-6 rounded-md bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <Megaphone className="w-3 h-3 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">Advocate</p>
+                    <p className="text-[10px] text-gray-500 leading-relaxed">
+                      Send a recommendation to the college coach. Pre-fills athlete and school context.
                     </p>
                   </div>
                 </div>

@@ -62,6 +62,27 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
     # Get highlight video from athlete profile
     athlete_doc = await db.athletes.find_one({"id": athlete_id}, {"_id": 0, "highlight_video": 1, "profile_url": 1, "video_links": 1})
 
+    # Get previous advocacy (relationship context)
+    from advocacy_engine import list_recommendations
+    prev_advocacy = []
+    try:
+        all_recs = list_recommendations()
+        for status_key, recs in all_recs.items():
+            if isinstance(recs, list):
+                for r in recs:
+                    if r.get("athlete_id") == athlete_id and (
+                        r.get("school_id") == school_id or r.get("school_name", "").lower() == school_id.lower()
+                    ):
+                        prev_advocacy.append({
+                            "id": r.get("id"),
+                            "status": r.get("status"),
+                            "created_at": r.get("created_at"),
+                            "school_name": r.get("school_name"),
+                            "fit_summary": r.get("fit_summary", ""),
+                        })
+    except Exception:
+        pass
+
     return {
         "athlete": {
             "id": athlete["id"],
@@ -81,6 +102,7 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
         "highlight_video": (athlete_doc or {}).get("highlight_video", ""),
         "profile_url": (athlete_doc or {}).get("profile_url", ""),
         "video_links": (athlete_doc or {}).get("video_links", []),
+        "previous_advocacy": prev_advocacy,
     }
 
 

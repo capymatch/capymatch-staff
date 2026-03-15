@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   School, ChevronRight, Loader2, ArrowLeft, RefreshCw,
   AlertTriangle, Activity, User, UserCircle, Send,
-  Phone, MessageSquare, ArrowUpRight
+  Phone, MessageSquare, ArrowUpRight, Megaphone
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -294,36 +294,46 @@ function SchoolRow({ school, athleteId }) {
   const c = healthColors[school.health] || healthColors.still_early;
 
   return (
-    <button
-      onClick={() => navigate(`/support-pods/${athleteId}/school/${school.program_id}`)}
-      className="w-full flex items-center gap-3 px-4 py-3 text-left group hover:bg-slate-50/80 transition-colors"
-      data-testid={`school-row-${school.program_id}`}
-    >
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: c.bg }}>
-        <School className="w-4 h-4" style={{ color: c.text }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-xs sm:text-sm font-semibold truncate" style={{ color: "var(--cm-text, #1e293b)" }}>
-            {school.university_name}
-          </p>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: c.bg, color: c.text }}>
-            {school.health_label}
-          </span>
+    <div className="flex items-center gap-3 px-4 py-3 group hover:bg-slate-50/80 transition-colors" data-testid={`school-row-${school.program_id}`}>
+      <button
+        onClick={() => navigate(`/support-pods/${athleteId}/school/${school.program_id}`)}
+        className="flex-1 flex items-center gap-3 text-left min-w-0"
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: c.bg }}>
+          <School className="w-4 h-4" style={{ color: c.text }} />
         </div>
-        <div className="flex items-center gap-2 mt-0.5 text-[11px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-          <span>{school.recruiting_status}</span>
-          <span>·</span>
-          <span>{school.reply_status}</span>
-          {school.days_since_last_engagement != null && (
-            <>
-              <span>·</span>
-              <span>{school.days_since_last_engagement}d ago</span>
-            </>
-          )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-xs sm:text-sm font-semibold truncate" style={{ color: "var(--cm-text, #1e293b)" }}>
+              {school.university_name}
+            </p>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: c.bg, color: c.text }}>
+              {school.health_label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-0.5 text-[11px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+            <span>{school.recruiting_status}</span>
+            <span>·</span>
+            <span>{school.reply_status}</span>
+            {school.days_since_last_engagement != null && (
+              <>
+                <span>·</span>
+                <span>{school.days_since_last_engagement}d ago</span>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
+      </button>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          onClick={(e) => { e.stopPropagation(); navigate(`/advocacy/new?athlete=${athleteId}&schoolName=${encodeURIComponent(school.university_name)}`); }}
+          className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md transition-colors border border-amber-100 opacity-0 group-hover:opacity-100"
+          data-testid={`advocate-school-${school.program_id}`}
+          title="Send advocacy recommendation"
+        >
+          <Megaphone className="w-3 h-3" />
+          <span className="hidden sm:inline">Advocate</span>
+        </button>
         {school.next_action && (
           <span className="hidden sm:block text-[10px] max-w-[160px] truncate px-2 py-1 rounded-lg border" style={{ color: "var(--cm-text-2, #64748b)", borderColor: "var(--cm-border, #e2e8f0)" }}>
             {school.next_action}
@@ -336,7 +346,7 @@ function SchoolRow({ school, athleteId }) {
         )}
         <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
       </div>
-    </button>
+    </div>
   );
 }
 

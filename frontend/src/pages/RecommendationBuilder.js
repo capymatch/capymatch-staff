@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, User, GraduationCap, Check, Send, Save, ExternalLink,
   Sparkles, Search, Link2, Video, FileText, Paperclip, X, Clock,
-  TrendingUp, TrendingDown, Minus, Users,
+  TrendingUp, TrendingDown, Minus, Users, Megaphone,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -412,6 +412,41 @@ function RecommendationBuilder() {
 
         {/* ── Athlete Recruiting Context ── */}
         {athleteContext && <AthleteContextCard context={athleteContext} />}
+
+        {/* ── Relationship Context ── */}
+        {athleteContext && (athleteContext.previous_advocacy?.length > 0 || athleteContext.event_notes?.length > 0) && (
+          <section className="bg-white border border-gray-100 rounded-lg p-4" data-testid="relationship-context">
+            <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Relationship History</h2>
+            <div className="space-y-2">
+              {athleteContext.previous_advocacy?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-500 mb-1.5">Previous Advocacy</p>
+                  {athleteContext.previous_advocacy.map((a) => (
+                    <div key={a.id} className="flex items-center gap-2 px-3 py-1.5 bg-amber-50/50 border border-amber-100 rounded-md mb-1" data-testid={`prev-advocacy-${a.id}`}>
+                      <Megaphone className="w-3 h-3 text-amber-500 shrink-0" />
+                      <span className="text-xs text-gray-700 capitalize">{a.status?.replace(/_/g, " ")}</span>
+                      {a.fit_summary && <span className="text-[10px] text-gray-400 truncate">— {a.fit_summary}</span>}
+                      {a.created_at && <span className="text-[10px] text-gray-400 ml-auto shrink-0">{new Date(a.created_at).toLocaleDateString()}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {athleteContext.event_notes?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-500 mb-1.5">Event Interactions ({athleteContext.event_notes.length})</p>
+                  {athleteContext.event_notes.slice(0, 3).map((n) => (
+                    <div key={n.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-md mb-1" data-testid={`event-interaction-${n.id}`}>
+                      <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="text-xs text-gray-700 truncate">{n.event_name}</span>
+                      {n.interest_level && <span className={`w-2 h-2 rounded-full shrink-0 ${INTEREST_DOT[n.interest_level] || "bg-gray-300"}`} />}
+                      <span className="text-[10px] text-gray-400 truncate">"{n.note_text}"</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* ── Fit Reasons ── */}
         <section className="bg-white border border-gray-100 rounded-lg p-5" data-testid="builder-fit-section">
