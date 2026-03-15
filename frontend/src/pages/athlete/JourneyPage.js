@@ -94,9 +94,9 @@ export default function JourneyPage() {
   const [emailInitial, setEmailInitial] = useState({});
 
   // J4: Subscription + committed toggle
-  const { subscription } = useSubscription();
-  const isBasic = subscription?.tier === "basic" || !subscription;
-  const isPremium = subscription?.tier === "premium";
+  const { subscription, loading: subLoading } = useSubscription();
+  const isBasic = !subLoading && (subscription?.tier === "basic" || !subscription);
+  const isPremium = !subLoading && subscription?.tier === "premium";
   const [showJourneyDetails, setShowJourneyDetails] = useState(false);
 
   // Coach Watch (real API)

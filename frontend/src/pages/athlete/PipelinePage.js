@@ -738,7 +738,7 @@ export default function PipelinePage() {
   const [collapsedArchived, setCollapsedArchived] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const navigate = useNavigate();
-  const { subscription, refresh: refreshSub } = useSubscription();
+  const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
 
   const fetchPrograms = useCallback(async () => {
     try {
@@ -923,7 +923,7 @@ export default function PipelinePage() {
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}
         message={`You've reached your limit of ${usage.limit || 5} schools. Upgrade to add more.`}
-        currentTier={subscription?.tier || "basic"}
+        currentTier={subscription?.tier || (subLoading ? "premium" : "basic")}
       />
     </div>
   );
