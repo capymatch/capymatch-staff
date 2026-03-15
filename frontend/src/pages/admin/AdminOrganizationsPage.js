@@ -81,6 +81,7 @@ function CreateOrgModal({ open, onClose, onCreated }) {
 
 function AddMemberModal({ open, onClose, orgId, onAdded }) {
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("athlete");
   const [saving, setSaving] = useState(false);
 
   if (!open) return null;
@@ -89,9 +90,9 @@ function AddMemberModal({ open, onClose, orgId, onAdded }) {
     if (!email.trim()) { toast.error("Email is required"); return; }
     setSaving(true);
     try {
-      const res = await axios.post(`${API}/organizations/${orgId}/members`, { email: email.trim() });
-      toast.success(res.data.message || `${res.data.name || "User"} added`);
-      setEmail("");
+      const res = await axios.post(`${API}/organizations/${orgId}/members`, { email: email.trim(), role });
+      toast.success(res.data.message || `${res.data.name || "User"} added as ${role}`);
+      setEmail(""); setRole("athlete");
       onAdded();
       onClose();
     } catch (err) {
@@ -106,9 +107,24 @@ function AddMemberModal({ open, onClose, orgId, onAdded }) {
           <h3 className="text-base font-semibold" style={{ color: "var(--cm-text)" }}>Add Member</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70"><X className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} /></button>
         </div>
-        <div>
-          <label className="text-xs font-medium mb-1.5 block" style={{ color: "var(--cm-text-2)" }}>User Email</label>
-          <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="user@email.com" className="text-sm" style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="add-member-email" />
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-medium mb-1.5 block" style={{ color: "var(--cm-text-2)" }}>User Email</label>
+            <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="user@email.com" className="text-sm" style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="add-member-email" />
+          </div>
+          <div>
+            <label className="text-xs font-medium mb-1.5 block" style={{ color: "var(--cm-text-2)" }}>Role</label>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger className="text-sm" style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="add-member-role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="athlete">Athlete</SelectItem>
+                <SelectItem value="club_coach">Coach</SelectItem>
+                <SelectItem value="director">Director</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="flex justify-end gap-2 mt-6">
           <Button variant="outline" onClick={onClose} className="text-xs" style={{ borderColor: "var(--cm-border)", color: "var(--cm-text-2)" }}>Cancel</Button>

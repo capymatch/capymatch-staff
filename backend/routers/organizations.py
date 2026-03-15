@@ -214,7 +214,7 @@ async def get_my_linked_athletes(current_user: dict = get_current_user_dep()):
 
 @router.post("/{org_id}/members")
 async def add_member_to_org(org_id: str, request: Request, current_user: dict = get_current_user_dep()):
-    """Add an existing user to an organization by user_id or email."""
+    """Add an existing user to an organization by user_id or email, optionally setting their role."""
     if not is_platform_admin(current_user):
         await require_same_org(current_user, org_id)
         if current_user["role"] != "director":
@@ -225,6 +225,7 @@ async def add_member_to_org(org_id: str, request: Request, current_user: dict = 
     body = await request.json()
     user_id = body.get("user_id")
     email = (body.get("email") or "").strip().lower()
+    role = body.get("role")
     if not user_id and not email:
         raise HTTPException(400, "user_id or email is required")
     query = {"id": user_id} if user_id else {"email": email}
@@ -233,8 +234,11 @@ async def add_member_to_org(org_id: str, request: Request, current_user: dict = 
         raise HTTPException(404, "User not found")
     if user.get("org_id") == org_id:
         return {"ok": True, "message": "Already a member"}
-    await db.users.update_one({"id": user["id"]}, {"$set": {"org_id": org_id}})
-    if user.get("role") == "athlete" and user.get("athlete_id"):
+    update = {"org_id": org_id}
+    if role and role in ("athlete", "club_coach", "director"):
+        update["role"] = role
+    await db.users.update_one({"id": user["id"]}, {"$set": update})
+    if (role or user.get("role")) == "athlete" and user.get("athlete_id"):
         await db.athletes.update_many({"id": user["athlete_id"]}, {"$set": {"org_id": org_id}})
     return {"ok": True, "user_id": user["id"], "name": user.get("name", "")}
 
