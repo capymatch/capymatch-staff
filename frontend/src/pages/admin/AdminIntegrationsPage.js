@@ -61,14 +61,18 @@ export default function AdminIntegrationsPage() {
   const [coachStatus, setCoachStatus] = useState(null);
   const [urlStatus, setUrlStatus] = useState(null);
   const [scorecardStatus, setScorecardStatus] = useState(null);
+  const [prCoachStatus, setPrCoachStatus] = useState(null);
   const [triggering, setTriggering] = useState({});
 
   const fetchData = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.get(`${API}/admin/integrations`, { headers });
-      setData(res.data);
+      const [intRes, kbRes] = await Promise.all([
+        axios.get(`${API}/admin/integrations`, { headers }),
+        axios.get(`${API}/admin/kb-jobs`, { headers }).catch(() => null),
+      ]);
+      setData({ ...intRes.data, kbJobs: kbRes?.data || null });
     } catch {
       toast.error("Failed to load integrations");
     } finally {
@@ -238,6 +242,51 @@ export default function AdminIntegrationsPage() {
             <div className="mt-2 text-[10px] p-2 rounded-lg" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
               {urlStatus.running ? "Running..." : "Idle"} | Found: {urlStatus.found || 0} / {urlStatus.total || "?"} | Failed: {urlStatus.failed || 0}
             </div>
+          )}
+        </IntegrationCard>
+
+        {/* ProductiveRecruit Coaches */}
+        <IntegrationCard icon={Users} title="PR Coach Scraper" subtitle="Coaching staff from ProductiveRecruit.com" color="#ec4899"
+          status={
+            data.kbJobs ? (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "rgba(236,72,153,0.1)", color: "#ec4899" }}>
+                {data.kbJobs.stats.with_pr_coaches} / {data.kbJobs.stats.total_schools}
+              </span>
+            ) : <StatusBadge connected={false} label="Unavailable" />
+          }>
+          {data.kbJobs && (
+            <>
+              <StatRow label="Has PR Coaches" value={data.kbJobs.stats.with_pr_coaches} total={data.kbJobs.stats.total_schools} />
+              <StatRow label="Missing" value={(data.kbJobs.stats.total_schools || 0) - (data.kbJobs.stats.with_pr_coaches || 0)} />
+              <div className="mt-3 flex gap-2">
+                <button onClick={() => trigger("/admin/kb-jobs/scrape_pr_coaches/run", "pr-coaches", setPrCoachStatus)}
+                  disabled={triggering["pr-coaches"]}
+                  className="flex-1 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+                  style={{ backgroundColor: "rgba(236,72,153,0.08)", color: "#ec4899", border: "1px solid rgba(236,72,153,0.2)" }}
+                  data-testid="trigger-pr-coaches">
+                  {triggering["pr-coaches"] ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  Scrape PR Coaches
+                </button>
+                <button onClick={async () => {
+                  const token = localStorage.getItem("token");
+                  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                  const res = await axios.get(`${API}/admin/kb-jobs`, { headers });
+                  const st = res.data?.jobs?.scrape_pr_coaches?.status;
+                  if (st) setPrCoachStatus(st);
+                }}
+                  className="text-[10px] font-bold py-1.5 px-3 rounded-lg"
+                  style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
+                  Check Status
+                </button>
+              </div>
+              {prCoachStatus && (
+                <div className="mt-2 text-[10px] p-2 rounded-lg" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
+                  {prCoachStatus.running ? "Running..." : "Idle"} | Success: {prCoachStatus.success || 0} / {prCoachStatus.total || "?"} | Failed: {prCoachStatus.failed || 0}
+                  {prCoachStatus.message && <span> | {prCoachStatus.message}</span>}
+                </div>
+              )}
+            </>
           )}
         </IntegrationCard>
       </div>

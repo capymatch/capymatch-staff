@@ -29,7 +29,7 @@ def _job_state(name):
 # ── List available jobs & their status ──
 @router.get("/admin/kb-jobs")
 async def list_kb_jobs(current_user: dict = get_current_user_dep()):
-    if current_user["role"] not in ("director", "admin"):
+    if current_user["role"] not in ("director", "admin", "platform_admin"):
         raise HTTPException(403, "Admin only")
 
     total_schools = await db.university_knowledge_base.count_documents({})
@@ -38,6 +38,7 @@ async def list_kb_jobs(current_user: dict = get_current_user_dep()):
     with_social = await db.university_knowledge_base.count_documents({"social_links": {"$exists": True}})
     with_diversity = await db.university_knowledge_base.count_documents({"campus_diversity": {"$exists": True}})
     with_questionnaire = await db.university_knowledge_base.count_documents({"questionnaire_url": {"$exists": True, "$ne": None, "$ne": ""}})
+    with_pr_coaches = await db.university_knowledge_base.count_documents({"coaching_staff_pr": {"$exists": True, "$ne": []}})
 
     return {
         "stats": {
@@ -47,6 +48,7 @@ async def list_kb_jobs(current_user: dict = get_current_user_dep()):
             "with_social": with_social,
             "with_diversity": with_diversity,
             "with_questionnaire": with_questionnaire,
+            "with_pr_coaches": with_pr_coaches,
         },
         "jobs": {
             "scrape_school_data": {
@@ -65,6 +67,10 @@ async def list_kb_jobs(current_user: dict = get_current_user_dep()):
                 "description": "Scrape campus diversity statistics",
                 "status": _job_state("scrape_diversity"),
             },
+            "scrape_pr_coaches": {
+                "description": "Scrape coaching staff from ProductiveRecruit",
+                "status": _job_state("scrape_pr_coaches"),
+            },
         },
     }
 
@@ -72,7 +78,7 @@ async def list_kb_jobs(current_user: dict = get_current_user_dep()):
 # ── Trigger a scraper job ──
 @router.post("/admin/kb-jobs/{job_name}/run")
 async def trigger_kb_job(job_name: str, current_user: dict = get_current_user_dep()):
-    if current_user["role"] not in ("director", "admin"):
+    if current_user["role"] not in ("director", "admin", "platform_admin"):
         raise HTTPException(403, "Admin only")
 
     state = _job_state(job_name)
@@ -84,6 +90,7 @@ async def trigger_kb_job(job_name: str, current_user: dict = get_current_user_de
         "enrich_scorecard": _run_scorecard_enrichment,
         "scrape_social": _run_social_scraper,
         "scrape_diversity": _run_diversity_scraper,
+        "scrape_pr_coaches": _run_pr_coaches_scraper,
     }
 
     runner = runners.get(job_name)
@@ -394,3 +401,110 @@ async def _run_diversity_scraper():
     _jobs[job]["last_run"] = datetime.now(timezone.utc).isoformat()
     _jobs[job]["message"] = f"Done. {_jobs[job]['success']} updated, {_jobs[job]['failed']} failed."
     logger.info(f"Diversity scraper complete: {_jobs[job]}")
+
+
+
+# ── ProductiveRecruit Coaching Staff Scraper ──
+async def _run_pr_coaches_scraper():
+    """Scrape coaching staff names/roles from ProductiveRecruit pages."""
+    import httpx
+    import re
+
+    job = "scrape_pr_coaches"
+    _jobs[job] = {"running": True, "processed": 0, "total": 0, "success": 0, "failed": 0, "last_run": None, "message": "Starting..."}
+
+    HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+    BASE = "https://productiverecruit.com/athletic-scholarships/womens-volleyball"
+
+    def parse_coaches_from_pr(html):
+        clean = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
+        coaches = []
+        coach_section = re.search(r'Coaching Staff(.*?)(?:School Profile|Subscribe|Similar Programs|$)', clean, re.DOTALL)
+        if not coach_section:
+            return coaches
+        text = coach_section.group(1)
+        roles = [
+            'Associate Head Coach', 'Director of Volleyball Operations',
+            'Director of Operations', 'Volunteer Assistant Coach',
+            'Volunteer Assistant', 'Graduate Assistant Coach',
+            'Graduate Assistant', 'Assistant Coach', 'Head Coach',
+        ]
+        for role in roles:
+            pattern = re.escape(role) + r'\s*(?:<[^>]*>\s*)*(?:<[^>]*>\s*)*([A-Z][a-zA-Z\'\-\.\s]+?)(?:\s*<)'
+            for name in re.findall(pattern, text):
+                name = name.strip()
+                if 2 < len(name) < 60 and not any(c['name'] == name for c in coaches):
+                    coaches.append({"role": role, "name": name})
+        return coaches
+
+    try:
+        schools = await db.university_knowledge_base.find(
+            {
+                "pr_slug": {"$exists": True, "$nin": ["", "---", None]},
+                "$or": [
+                    {"coaching_staff_pr": {"$exists": False}},
+                    {"coaching_staff_pr": []},
+                ]
+            },
+            {"_id": 1, "university_name": 1, "pr_slug": 1, "pr_state": 1}
+        ).to_list(2000)
+
+        _jobs[job]["total"] = len(schools)
+        if not schools:
+            _jobs[job]["message"] = "No schools to scrape."
+            _jobs[job]["running"] = False
+            _jobs[job]["last_run"] = datetime.now(timezone.utc).isoformat()
+            return
+
+        async with httpx.AsyncClient(timeout=20, headers=HEADERS) as client:
+            for school in schools:
+                name = school.get("university_name", "")
+                slug = school.get("pr_slug", "")
+                state = school.get("pr_state", "")
+
+                if not slug or slug == "---" or not state:
+                    _jobs[job]["failed"] += 1
+                    _jobs[job]["processed"] += 1
+                    continue
+
+                url = f"{BASE}/{state}/{slug}"
+                try:
+                    resp = await client.get(url, follow_redirects=True)
+                    if resp.status_code != 200:
+                        _jobs[job]["failed"] += 1
+                        _jobs[job]["processed"] += 1
+                        await asyncio.sleep(1.5)
+                        continue
+
+                    coaches = parse_coaches_from_pr(resp.text)
+                    if coaches:
+                        await db.university_knowledge_base.update_one(
+                            {"_id": school["_id"]},
+                            {"$set": {
+                                "coaching_staff_pr": coaches,
+                                "pr_coaches_scraped_at": datetime.now(timezone.utc).isoformat(),
+                            }}
+                        )
+                        _jobs[job]["success"] += 1
+                    else:
+                        _jobs[job]["failed"] += 1
+
+                except Exception as e:
+                    _jobs[job]["failed"] += 1
+                    logger.warning(f"PR coach scrape failed for {name}: {e}")
+
+                _jobs[job]["processed"] += 1
+                _jobs[job]["message"] = f"Processing... {_jobs[job]['processed']}/{_jobs[job]['total']}"
+                await asyncio.sleep(1.5)
+
+    except Exception as e:
+        _jobs[job]["message"] = f"Fatal error: {e}"
+        logger.error(f"PR coaches scraper failed: {e}")
+
+    _jobs[job]["running"] = False
+    _jobs[job]["last_run"] = datetime.now(timezone.utc).isoformat()
+    _jobs[job]["message"] = f"Done. {_jobs[job]['success']} updated, {_jobs[job]['failed']} failed."
+    logger.info(f"PR coaches scraper complete: {_jobs[job]}")
