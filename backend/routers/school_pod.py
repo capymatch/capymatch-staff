@@ -51,11 +51,23 @@ def classify_school_health(program, metrics, *, actual_days_since_contact=None, 
     overdue = metrics.get("overdue_followups", 0)
     freshness = metrics.get("engagement_freshness_label", "")
 
+    # Schools in early stages should never show as at_risk
+    recruiting_status = (program.get("recruiting_status") or "").strip()
+    is_early_stage = recruiting_status in ("Prospect", "Not Contacted", "Added", "")
+    if is_early_stage:
+        # Early-stage schools are either still_early or awaiting_reply
+        if health in ("at_risk", "cooling_off", "needs_follow_up", "needs_attention"):
+            return "still_early"
+        return health if health in ("still_early", "awaiting_reply") else "still_early"
+
     # Use actual contact days when available (more accurate than stale metrics)
     effective_days = actual_days_since_contact if actual_days_since_contact is not None else (metrics.get("days_since_last_engagement") or 999)
 
+    # Clamp the 999 fallback — means "no data", not "999 days stale"
+    if effective_days >= 999:
+        effective_days = 0
+
     # Recent real-world contact overrides metric-based risk assessments
-    # If we contacted within 3 days, the relationship is clearly active
     if effective_days <= 3:
         if health in ("at_risk", "cooling_off"):
             return "active"
@@ -69,7 +81,6 @@ def classify_school_health(program, metrics, *, actual_days_since_contact=None, 
             return "needs_follow_up" if effective_days > 7 else "active"
 
     # Override: overdue follow-ups → needs_attention or at_risk
-    # But only if actual contact is also stale (> 3 days already handled above)
     if overdue > 0 and effective_days > 7:
         if freshness in ("no_recent_engagement", "momentum_slowing"):
             return "at_risk"
@@ -80,7 +91,7 @@ def classify_school_health(program, metrics, *, actual_days_since_contact=None, 
     # Override: stale + no reply
     reply = program.get("reply_status", "")
     if reply in ("No Reply", "Awaiting Reply") and freshness == "no_recent_engagement" and effective_days > 14:
-        stage = program.get("recruiting_status", "")
+        stage = recruiting_status
         if stage in ("Contacted", "In Conversation"):
             return "needs_attention"
 
@@ -97,6 +108,10 @@ def compute_school_signals(program, metrics, actual_days_since_contact=None, pla
     if not metrics:
         return signals
 
+    # Schools in early/added stages should not show engagement-based alerts
+    recruiting_status = (program.get("recruiting_status") or "").strip()
+    is_early_stage = recruiting_status in ("Prospect", "Not Contacted", "Added", "")
+
     overdue = metrics.get("overdue_followups", 0)
     freshness = metrics.get("engagement_freshness_label", "")
     reply_rate = metrics.get("reply_rate")
@@ -106,6 +121,15 @@ def compute_school_signals(program, metrics, actual_days_since_contact=None, pla
 
     # Use actual contact days when available (more accurate than stale metrics)
     effective_days = actual_days_since_contact if actual_days_since_contact is not None else (days_since or 0)
+
+    # Never surface the 999 fallback — treat it as "no data" not "999 days late"
+    if effective_days >= 999:
+        effective_days = 0  # No data = don't generate day-count signals
+
+    # Suppress all engagement-based alerts for early-stage schools
+    # (no outreach sent yet, so "overdue" and "stale" make no sense)
+    if is_early_stage:
+        return signals
 
     # Overdue signal — suppress if recent activity (within 3 days)
     if overdue > 0 and effective_days > 3:
@@ -123,7 +147,7 @@ def compute_school_signals(program, metrics, actual_days_since_contact=None, pla
         })
 
     reply = program.get("reply_status", "")
-    if reply in ("No Reply", "Awaiting Reply") and program.get("recruiting_status") in ("Contacted", "In Conversation"):
+    if reply in ("No Reply", "Awaiting Reply") and recruiting_status in ("Contacted", "In Conversation"):
         signals.append({
             "id": "sig_no_reply",
             "type": "warning",
@@ -133,14 +157,10 @@ def compute_school_signals(program, metrics, actual_days_since_contact=None, pla
             "recommendation": "Consider a different outreach approach or escalate to director.",
         })
 
-    # Stale engagement — only if actually no recent contact
+    # Stale engagement — only if actually no recent contact and not early stage
     if freshness == "no_recent_engagement" and effective_days > 7:
-        if effective_days >= 999:
-            stale_title = "No recorded engagement with this school"
-            stale_desc = "No activity has been logged yet. Trend: unknown."
-        else:
-            stale_title = f"Engagement gone cold — {effective_days} days silent"
-            stale_desc = f"No activity with this school in {effective_days} days. Trend: {trend}."
+        stale_title = f"Engagement gone cold — {effective_days} days silent"
+        stale_desc = f"No activity with this school in {effective_days} days. Trend: {trend}."
         signals.append({
             "id": "sig_stale",
             "type": "warning",
@@ -591,24 +611,47 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     else:
         actual_days = days_eng
 
-    # Override the 999 fallback
-    if actual_days >= 999 and last_contact:
-        actual_days = 0  # We have a contact but can't parse date — show as recent
+    # Clamp the 999 fallback — means "no data" not "999 days stale"
+    if actual_days >= 999:
+        actual_days = None  # No data available
 
-    if actual_days == 0:
+    # Early-stage schools: suppress day-count messaging entirely
+    recruiting_status = (program.get("recruiting_status") or "").strip()
+    is_early_stage = recruiting_status in ("Prospect", "Not Contacted", "Added", "")
+
+    if is_early_stage:
+        contact_health = "Not yet contacted — school just added to pipeline"
+        actual_days_for_signals = None
+    elif actual_days is None and not last_contact:
+        contact_health = "No recorded contact yet"
+        actual_days_for_signals = None
+    elif actual_days is None and last_contact:
+        contact_health = "Recently active"
+        actual_days_for_signals = 0
+    elif actual_days == 0:
         contact_health = "Contacted today"
+        actual_days_for_signals = 0
     elif actual_days <= 3:
         contact_health = f"Recently active — {actual_days} day{'s' if actual_days != 1 else ''} ago"
+        actual_days_for_signals = actual_days
     elif actual_days <= 7:
         contact_health = f"Awaiting reply — {actual_days} days"
+        actual_days_for_signals = actual_days
     elif actual_days <= 14:
         contact_health = f"Follow-up recommended — {actual_days} days since last contact"
+        actual_days_for_signals = actual_days
     elif actual_days <= 30:
         contact_health = f"Going cold — {actual_days} days without contact"
+        actual_days_for_signals = actual_days
     elif last_contact:
         contact_health = f"Re-engagement needed — {actual_days} days since last contact"
+        actual_days_for_signals = actual_days
     else:
         contact_health = "No recorded contact yet"
+        actual_days_for_signals = None
+
+    # Use actual_days_for_signals for downstream signal/health computation
+    actual_days = actual_days_for_signals if actual_days_for_signals is not None else 0
 
     # Pipeline stage context
     status_to_stage_idx = {

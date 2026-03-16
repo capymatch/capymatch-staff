@@ -283,7 +283,7 @@ function SchoolRow({ school, athleteId }) {
             <span>{school.recruiting_status}</span>
             <span>·</span>
             <span>{school.reply_status}</span>
-            {school.days_since_last_engagement != null && (
+            {school.days_since_last_engagement != null && school.days_since_last_engagement < 999 && school.days_since_last_engagement > 0 && (
               <>
                 <span>·</span>
                 <span>{school.days_since_last_engagement}d ago</span>

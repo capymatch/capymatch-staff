@@ -52,6 +52,11 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Added `cooling_off` and `needs_follow_up` health states to both backend and frontend
   - 23/23 backend tests passed, all frontend UI verifications passed
   - Key files: `school_pod.py`, `SchoolPod.js`, `SupportPod.js`
+- **Bug Fix: 999 Days Fallback**
+  - Early-stage schools (Prospect, Not Contacted, Added) no longer show engagement-based alerts
+  - The 999-day fallback is clamped and never surfaces in UI
+  - Contact health shows "Not yet contacted — school just added to pipeline" for early stages
+  - Frontend guards against displaying days >= 999
 
 ---
 
