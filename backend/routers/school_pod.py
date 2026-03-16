@@ -299,19 +299,27 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
     async for doc in db.pod_actions.aggregate(pipeline):
         action_counts[doc["_id"]] = doc["count"]
 
-    # Build school list
+    # Build school list — enrich with KB logos
+    uni_names = [p.get("university_name", "") for p in programs]
+    kb_docs = await db.university_knowledge_base.find(
+        {"university_name": {"$in": uni_names}},
+        {"_id": 0, "university_name": 1, "logo_url": 1, "domain": 1},
+    ).to_list(200)
+    kb_map = {d["university_name"]: d for d in kb_docs}
+
     schools = []
     for p in programs:
         pid = p["program_id"]
         m = metrics_map.get(pid, {})
         health = classify_school_health(p, m)
         health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
+        kb = kb_map.get(p.get("university_name", ""), {})
 
         schools.append({
             "program_id": pid,
             "university_name": p.get("university_name", ""),
-            "logo_url": p.get("logo_url", ""),
-            "domain": p.get("domain", ""),
+            "logo_url": kb.get("logo_url") or p.get("logo_url", ""),
+            "domain": kb.get("domain") or p.get("domain", ""),
             "division": p.get("division", ""),
             "conference": p.get("conference", ""),
             "recruiting_status": p.get("recruiting_status", ""),
