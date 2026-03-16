@@ -595,6 +595,36 @@ export default function SchoolPod() {
                 </div>
               )}
             </Section>
+
+            {/* Timeline */}
+            <Section title="Timeline" count={allTimeline.length || null} testId="school-timeline">
+              {allTimeline.length > 0 ? (
+                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+                  {allTimeline.map((e, i) => <TimelineItem key={e.id || i} event={e} />)}
+                </div>
+              ) : (
+                <p className="text-xs py-3 text-center" style={{ color: "var(--cm-text-3)" }}>No activity recorded yet</p>
+              )}
+            </Section>
+
+            {/* Stage History */}
+            {stage_history.length > 0 && (
+              <Section title="Stage History" count={stage_history.length} testId="school-stage-history">
+                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+                  {stage_history.map((h, i) => (
+                    <div key={i} className="flex items-center gap-2 py-2 text-xs flex-wrap">
+                      <span style={{ color: "var(--cm-text-3)" }}>{h.from_stage}</span>
+                      <span>&#8594;</span>
+                      <span className="font-semibold" style={{ color: "var(--cm-text)" }}>{h.to_stage}</span>
+                      {h.note && <span className="text-[10px] truncate" style={{ color: "var(--cm-text-3)" }}>— {h.note}</span>}
+                      <span className="text-[10px] ml-auto shrink-0" style={{ color: "var(--cm-text-3)" }}>
+                        {h.created_at ? new Date(h.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
           </div>
 
           {/* ═══ RIGHT COLUMN — Context & History ═══ */}
@@ -635,36 +665,6 @@ export default function SchoolPod() {
             {/* Relationship + Pipeline */}
             <RelationshipContext relationship={relationship} />
             <PipelineStatus pipeline={pipeline} />
-
-            {/* Timeline */}
-            <Section title="Timeline" count={allTimeline.length || null} testId="school-timeline">
-              {allTimeline.length > 0 ? (
-                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-                  {allTimeline.map((e, i) => <TimelineItem key={e.id || i} event={e} />)}
-                </div>
-              ) : (
-                <p className="text-xs py-3 text-center" style={{ color: "var(--cm-text-3)" }}>No activity recorded yet</p>
-              )}
-            </Section>
-
-            {/* Stage History */}
-            {stage_history.length > 0 && (
-              <Section title="Stage History" count={stage_history.length} testId="school-stage-history">
-                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-                  {stage_history.map((h, i) => (
-                    <div key={i} className="flex items-center gap-2 py-2 text-xs flex-wrap">
-                      <span style={{ color: "var(--cm-text-3)" }}>{h.from_stage}</span>
-                      <span>&#8594;</span>
-                      <span className="font-semibold" style={{ color: "var(--cm-text)" }}>{h.to_stage}</span>
-                      {h.note && <span className="text-[10px] truncate" style={{ color: "var(--cm-text-3)" }}>— {h.note}</span>}
-                      <span className="text-[10px] ml-auto shrink-0" style={{ color: "var(--cm-text-3)" }}>
-                        {h.created_at ? new Date(h.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-            )}
           </div>
         </div>
       </main>
