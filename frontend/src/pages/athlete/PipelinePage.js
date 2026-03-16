@@ -740,51 +740,47 @@ export default function PipelinePage() {
   const navigate = useNavigate();
   const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
 
-  const fetchPrograms = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/athlete/programs`);
-      setAllPrograms(Array.isArray(res.data) ? res.data : []);
+      // Fire all 5 requests in parallel instead of waterfall
+      const [programsRes, matchRes, tasksRes, topActionsRes] = await Promise.all([
+        axios.get(`${API}/athlete/programs`),
+        axios.get(`${API}/match-scores`).catch(() => ({ data: { scores: [] } })),
+        axios.get(`${API}/athlete/tasks`).catch(() => ({ data: { tasks: [] } })),
+        axios.get(`${API}/internal/programs/top-actions`).catch(() => ({ data: { actions: [] } })),
+      ]);
+
+      const programs = Array.isArray(programsRes.data) ? programsRes.data : [];
+      setAllPrograms(programs);
+
+      const byId = {};
+      (matchRes.data?.scores || []).forEach(s => { byId[s.program_id] = s; });
+      setMatchScores(byId);
+
+      setTasks(tasksRes.data?.tasks || []);
+
+      const actionsMap = {};
+      (topActionsRes.data?.actions || []).forEach(a => { actionsMap[a.program_id] = a; });
+      setTopActionsMap(actionsMap);
+
+      // Batch metrics needs program IDs — fire after we have them
+      const ids = programs.map(p => p.program_id).filter(Boolean);
+      if (ids.length > 0) {
+        try {
+          const metricsRes = await axios.post(`${API}/internal/programs/batch-metrics`, { program_ids: ids });
+          const m = metricsRes.data?.metrics || {};
+          const mapped = {};
+          for (const [pid, data] of Object.entries(m)) {
+            mapped[pid] = { ...data, program_id: pid };
+          }
+          setHealthMap(mapped);
+        } catch {}
+      }
     } catch { toast.error("Failed to load programs"); }
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
-  useEffect(() => {
-    axios.get(`${API}/match-scores`).then(res => {
-      const byId = {};
-      (res.data?.scores || []).forEach(s => { byId[s.program_id] = s; });
-      setMatchScores(byId);
-    }).catch(() => {});
-  }, [allPrograms.length]);
-  useEffect(() => { axios.get(`${API}/athlete/tasks`).then(res => setTasks(res.data?.tasks || [])).catch(() => {}); }, [allPrograms.length]);
-
-  // Fetch pipeline health metrics in batch
-  useEffect(() => {
-    const ids = allPrograms.map(p => p.program_id).filter(Boolean);
-    if (ids.length === 0) return;
-    axios.post(`${API}/internal/programs/batch-metrics`, { program_ids: ids })
-      .then(res => {
-        const m = res.data?.metrics || {};
-        const mapped = {};
-        for (const [pid, data] of Object.entries(m)) {
-          mapped[pid] = { ...data, program_id: pid };
-        }
-        setHealthMap(mapped);
-      })
-      .catch(() => {});
-  }, [allPrograms.length]);
-
-  // Fetch top actions
-  useEffect(() => {
-    if (allPrograms.length === 0) return;
-    axios.get(`${API}/internal/programs/top-actions`)
-      .then(res => {
-        const map = {};
-        (res.data?.actions || []).forEach(a => { map[a.program_id] = a; });
-        setTopActionsMap(map);
-      })
-      .catch(() => {});
-  }, [allPrograms.length]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   /* ── Drag & Drop handler ── */
   const handleDragEnd = useCallback(async (result) => {
@@ -808,9 +804,9 @@ export default function PipelinePage() {
       toast.success(`Moved to ${KANBAN_COLS.find(c => c.key === newCol)?.label || newCol}`);
     } catch {
       toast.error("Failed to update stage");
-      fetchPrograms(); // revert
+      fetchAll(); // revert
     }
-  }, [fetchPrograms]);
+  }, [fetchAll]);
 
   /* ── Add school with limit check ── */
   const handleAddSchool = useCallback(() => {
@@ -836,7 +832,7 @@ export default function PipelinePage() {
   const committedPrograms = allPrograms.filter(p => p.recruiting_status === "Committed" || p.journey_stage === "committed");
 
   if (activePrograms.length === 0 && archivedPrograms.length === 0) {
-    return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchPrograms} /></div>;
+    return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchAll} /></div>;
   }
 
   const actions = generateActions(allPrograms, matchScores, tasks, healthMap, topActionsMap);
@@ -910,7 +906,7 @@ export default function PipelinePage() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>{p.university_name}</div>
                 <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 1 }}>{[p.division, p.conference, p.state].filter(Boolean).join(" · ")}</div>
               </div>
-              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchPrograms(); } catch { toast.error("Failed"); } }} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }} data-testid={`reactivate-btn-${p.program_id}`}>
+              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchAll(); } catch { toast.error("Failed"); } }} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }} data-testid={`reactivate-btn-${p.program_id}`}>
                 <RotateCcw style={{ width: 12, height: 12 }} /> Reactivate
               </button>
             </div>
