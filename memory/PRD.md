@@ -120,6 +120,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Added coach/director access to route, sidebar, and subscription gate bypass
   - Key files: `youtube_feed.py`, `SocialSpotlight.js`, `Sidebar.js`, `App.js`
 
+### Session 9 (2026-03-16)
+- **Director Pod Access (Complete)**
+  - Backend: `/api/director/actions` CRUD, `/api/support-pods/{id}/director-notes`, `/api/support-pods/{id}/director-tasks`
+  - Frontend: EscalationsCard on DirectorView (escalation-first), EscalationBanner on SupportPod with acknowledge/guidance/task/resolve actions
+  - Role-based: Directors see DirectorView + EscalationBanner expanded; Coaches see CoachView + chip mode
+  - Fixed field mismatch (`action_id` vs `id`), resolve payload (`note` vs `resolution_note`), action buttons for acknowledged state
+  - 38 backend + 14 frontend tests passed (iteration_147)
+  - Key files: `EscalationBanner.js`, `EscalationsCard.js`, `DirectorView.js`, `SupportPod.js`, `director_actions.py`, `support_pods.py`
+
 ---
 
 ## Backlog
