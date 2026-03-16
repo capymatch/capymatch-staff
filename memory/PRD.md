@@ -72,6 +72,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Auto-resolves stale momentum_drop pod_issues when pipeline momentum >= 50
   - Dashboard shows pipeline_best_stage and momentum/100 for each athlete
   - 9/9 backend tests passed, all frontend verified (iteration 143)
+- **Unified Status Model: Journey State + Attention Status**
+  - Separated athlete status into two independent dimensions:
+    - Journey State: recruiting progress (Committed, Offer Received, Visiting Schools, Building Interest, Reaching Out, Getting Started)
+    - Attention Status: most urgent action needed (Blocker, Urgent Follow-up, At Risk, Needs Review, All Clear)
+  - All signals from 3 sources (decision engine, school health, pod issues) collected, normalized, scored by urgency
+  - Configurable weights: severity=40%, time_sensitivity=30%, opportunity_cost=20%, pipeline_impact=10%
+  - Blockers always outrank follow-ups at equal time sensitivity
+  - Secondary signals shown as "+N more issues" expandable
+  - 16/16 backend + 100% frontend tests passed (iteration 144)
+  - Key files: `unified_status.py`, `mission_control.py`, `RosterSection.js`
 
 ---
 
