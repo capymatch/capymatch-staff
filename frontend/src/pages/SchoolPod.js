@@ -10,7 +10,6 @@ import {
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CoachActionBar } from "@/components/support-pod/CoachActionBar";
 import { CoachEmailComposer } from "@/components/support-pod/CoachEmailComposer";
 import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteraction";
@@ -129,68 +128,90 @@ function AddTaskModal({ open, onOpenChange, onSubmit }) {
     setActionType("general");
   };
 
+  if (!open) return null;
+
+  const inputCls = "w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 transition-colors";
+  const inputStyle = { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" style={{ backgroundColor: "var(--cm-surface, white)" }}>
-        <DialogHeader>
-          <DialogTitle className="text-sm font-semibold" style={{ color: "var(--cm-text, #1e293b)" }}>New Task</DialogTitle>
-          <DialogDescription className="text-xs" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-            Add a task for this school relationship.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3 pt-1">
-          <input
-            autoFocus
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()}
-            placeholder="What needs to be done?"
-            className="w-full text-sm px-3 py-2.5 rounded-lg border outline-none focus:ring-1 focus:ring-teal-500"
-            style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)", color: "var(--cm-text, #1e293b)" }}
-            data-testid="new-task-input"
-          />
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer select-none" data-testid="assign-to-athlete-toggle">
-              <div
-                onClick={() => setAssignToAthlete(!assignToAthlete)}
-                className="relative w-8 h-[18px] rounded-full transition-colors"
-                style={{ background: assignToAthlete ? "#0d9488" : "#d1d5db" }}
-              >
-                <div className="absolute top-[2px] rounded-full w-[14px] h-[14px] bg-white transition-transform shadow-sm"
-                  style={{ left: assignToAthlete ? 15 : 2 }} />
-              </div>
-              <span className="text-xs font-medium" style={{ color: assignToAthlete ? "#0d9488" : "var(--cm-text-3, #94a3b8)" }}>
-                Assign to Athlete
-              </span>
-            </label>
-            {assignToAthlete && (
-              <select
-                value={actionType}
-                onChange={e => setActionType(e.target.value)}
-                className="text-xs px-2 py-1.5 rounded-md border outline-none"
-                style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)", color: "var(--cm-text, #1e293b)" }}
-                data-testid="task-type-select"
-              >
-                {ACTION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            )}
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              onClick={() => onOpenChange(false)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={{ color: "var(--cm-text-3, #94a3b8)" }}
-              data-testid="cancel-task-btn"
-            >
-              Cancel
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} data-testid="add-task-overlay" onClick={() => onOpenChange(false)}>
+      <div className="w-full max-w-md rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+        onClick={e => e.stopPropagation()}
+        style={{ background: "#161b25", border: "1px solid rgba(46, 196, 182, 0.15)", boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(26,138,128,0.08)", maxHeight: "90vh", colorScheme: "dark" }}
+        data-testid="add-task-modal">
+
+        <div className="p-5 pb-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              <ClipboardCheck className="w-4 h-4 text-teal-600" />New Task
+            </h2>
+            <button onClick={() => onOpenChange(false)} className="p-1 rounded-lg hover:bg-white/10 transition-colors" data-testid="add-task-close">
+              <X className="w-4 h-4 text-white/40" />
             </button>
-            <Button size="sm" onClick={handleSubmit} disabled={!title.trim()} data-testid="save-task-btn">
-              Add Task
-            </Button>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Add a task for this school relationship.</p>
+        </div>
+
+        <div className="p-5 space-y-3 overflow-y-auto flex-1">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>Task</label>
+            <input
+              autoFocus
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              placeholder="What needs to be done?"
+              className={inputCls}
+              style={inputStyle}
+              data-testid="new-task-input"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>Options</label>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 cursor-pointer select-none" data-testid="assign-to-athlete-toggle">
+                <div
+                  onClick={() => setAssignToAthlete(!assignToAthlete)}
+                  className="relative w-8 h-[18px] rounded-full transition-colors"
+                  style={{ background: assignToAthlete ? "#1a8a80" : "rgba(255,255,255,0.15)" }}
+                >
+                  <div className="absolute top-[2px] rounded-full w-[14px] h-[14px] bg-white transition-transform shadow-sm"
+                    style={{ left: assignToAthlete ? 15 : 2 }} />
+                </div>
+                <span className="text-xs font-medium" style={{ color: assignToAthlete ? "#5eead4" : "rgba(255,255,255,0.4)" }}>
+                  Assign to Athlete
+                </span>
+              </label>
+              {assignToAthlete && (
+                <select
+                  value={actionType}
+                  onChange={e => setActionType(e.target.value)}
+                  className="text-xs px-2 py-1.5 rounded-md border outline-none"
+                  style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" }}
+                  data-testid="task-type-select"
+                >
+                  {ACTION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              )}
+            </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <div className="p-4 flex items-center justify-between gap-3 flex-shrink-0" style={{ background: "rgba(15,18,25,0.5)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <button onClick={() => onOpenChange(false)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-all hover:bg-white/5"
+            style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }} data-testid="cancel-task-btn">
+            Cancel
+          </button>
+          <Button onClick={handleSubmit} disabled={!title.trim()}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition-all hover:shadow-[0_0_20px_rgba(26,138,128,0.4)] disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, #1a8a80, #25a99e)" }} data-testid="save-task-btn">
+            <Plus className="w-4 h-4" />
+            Add Task
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
