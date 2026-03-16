@@ -96,6 +96,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Improved expandable affordance: +N more buttons with ChevronDown/Up icons, expanded list with left border styling
   - Header badge now derives from `status_intelligence.attention` instead of old `pod_health`
   - Key files: `StatusIntelligence.js`, `SupportPod.js`, `RosterSection.js`
+- **Terminology Audit (2026-03-16)**
+  - Replaced all user-facing "Momentum Drop" labels → "Needs Review" (NeedsAttentionCard, RosterPage, ProgramIntelligence)
+  - Replaced "Engagement Drop" labels → "At Risk" (NeedsAttentionCard, ProgramIntelligence)
+  - Replaced "Momentum drop" escalation reason → "Activity stalled" (AthletePipelinePanel)
+  - Updated toast notification from "momentum dropped" → "activity has declined — review needed" (CoachView)
+  - Removed old `pod_health` usage from SupportPod header, now derives from `status_intelligence.attention`
+  - Internal keys (`momentum_drop`, `engagement_drop`) preserved for backend compatibility
+  - Key files: `NeedsAttentionCard.js`, `ProgramIntelligence.js`, `AthletePipelinePanel.js`, `CoachView.js`, `RosterPage.js`
 
 ---
 

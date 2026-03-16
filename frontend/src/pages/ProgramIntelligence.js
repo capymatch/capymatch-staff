@@ -91,9 +91,9 @@ function ProgramHealth({ data }) {
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mb-3" style={subText}>
         <span><strong style={secondaryText}>{open_issues.blockers}</strong> Blockers</span>
-        <span><strong style={secondaryText}>{open_issues.momentum_drops}</strong> Momentum Drops</span>
+        <span><strong style={secondaryText}>{open_issues.momentum_drops}</strong> Needs Review</span>
         <span><strong style={secondaryText}>{open_issues.event_follow_ups}</strong> Event Follow-ups</span>
-        <span><strong style={secondaryText}>{open_issues.engagement_drops}</strong> Engagement Drops</span>
+        <span><strong style={secondaryText}>{open_issues.engagement_drops}</strong> At Risk</span>
         <span style={{ color: "var(--cm-border)" }}>&middot;</span>
         <span>{intervention_total} total interventions</span>
       </div>

@@ -86,7 +86,7 @@ function useLiveIndicators(data, directorRequestCount) {
     for (const curr of currRoster) {
       const old = prevRoster.find(a => a.id === curr.id);
       if (old && old.momentum_score - curr.momentum_score >= 15 && curr.momentum_trend === "declining") {
-        toast.info(`${curr.name.split(" ")[0]}'s momentum dropped significantly`, {
+        toast.info(`${curr.name.split(" ")[0]}'s activity has declined — review needed`, {
           description: `Score: ${old.momentum_score} \u2192 ${curr.momentum_score}`,
           duration: 5000,
         });

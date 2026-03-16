@@ -280,7 +280,7 @@ const REVIEW_REASONS = [
 const ESCALATION_REASONS = [
   { key: "overdue_followups", label: "Overdue follow-ups" },
   { key: "no_responses", label: "No responses from schools" },
-  { key: "momentum_drop", label: "Momentum drop" },
+  { key: "momentum_drop", label: "Activity stalled" },
   { key: "deadline_risk", label: "Deadline risk" },
   { key: "other", label: "Other" },
 ];

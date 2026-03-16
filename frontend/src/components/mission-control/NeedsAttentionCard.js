@@ -9,9 +9,9 @@ import {
 const CATEGORY_CONFIG = {
   event_follow_up: { icon: Mail, label: "Follow-Up Overdue" },
   ownership_gap: { icon: Users, label: "Ownership Gap" },
-  momentum_drop: { icon: Zap, label: "Momentum Drop" },
+  momentum_drop: { icon: Zap, label: "Needs Review" },
   blocker: { icon: ShieldAlert, label: "Blocker" },
-  engagement_drop: { icon: AlertTriangle, label: "Engagement Drop" },
+  engagement_drop: { icon: AlertTriangle, label: "At Risk" },
   deadline_proximity: { icon: AlertTriangle, label: "Event Prep Risk" },
   readiness_issue: { icon: ShieldAlert, label: "Readiness Issue" },
 };

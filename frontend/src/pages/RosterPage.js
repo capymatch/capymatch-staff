@@ -19,7 +19,7 @@ const WARNING_MAP = [
   { match: /missing|transcript|document|blocks/i, tag: "Missing Docs" },
   { match: /no one owns|unassigned|ownership/i, tag: "No Owner" },
   { match: /follow.?up overdue/i, tag: "Follow-Up" },
-  { match: /momentum|declining/i, tag: "Momentum Drop" },
+  { match: /momentum|declining/i, tag: "Needs Review" },
   { match: /early warning/i, tag: "At Risk" },
   { match: /no prep|readiness/i, tag: "Unprepped" },
   { match: /engagement/i, tag: "Disengaged" },
