@@ -65,6 +65,13 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Frontend RosterSection shows "N schools need attention" in red for affected athletes
   - SupportPod filter includes cooling_off and needs_follow_up states in "needs attention" count
   - 15/15 backend tests passed, all frontend verified
+- **Pipeline-Based Momentum Model (replaces activity-based)**
+  - Momentum now reflects RECRUITING PROGRESS via stage weights (Prospect=10, Contact=20, Visit=70, Offer=90, Committed=100)
+  - Uses highest stage across all schools + breadth bonus (up to +10 for multiple advanced schools)
+  - `detect_momentum_drop()` now only triggers when pipeline_momentum < 30 AND days inactive >= 14
+  - Auto-resolves stale momentum_drop pod_issues when pipeline momentum >= 50
+  - Dashboard shows pipeline_best_stage and momentum/100 for each athlete
+  - 9/9 backend tests passed, all frontend verified (iteration 143)
 
 ---
 
