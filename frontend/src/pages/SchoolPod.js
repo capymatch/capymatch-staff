@@ -334,8 +334,8 @@ function RelationshipTracker({ relationship }) {
         <div data-testid="contact-health">
           <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--cm-text-3)" }}>Contact Health</p>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: healthColor }} />
-            <p className="text-xs font-medium" style={{ color: healthColor }}>{contact_health}</p>
+            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: contact_health.includes("today") || contact_health.includes("Recently") ? "#10b981" : contact_health.includes("Awaiting") ? "#f59e0b" : contact_health.includes("recommended") || contact_health.includes("cold") ? "#f59e0b" : contact_health.includes("No recorded") || contact_health.includes("Re-engagement") ? "#ef4444" : "#94a3b8" }} />
+            <p className="text-xs font-medium" style={{ color: contact_health.includes("today") || contact_health.includes("Recently") ? "#10b981" : contact_health.includes("Awaiting") ? "#f59e0b" : contact_health.includes("recommended") || contact_health.includes("cold") ? "#f59e0b" : contact_health.includes("No recorded") || contact_health.includes("Re-engagement") ? "#ef4444" : "#94a3b8" }}>{contact_health}</p>
           </div>
         </div>
       </div>
