@@ -6,7 +6,6 @@ import RosterSection from "./RosterSection";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import AthletePipelinePanel from "./AthletePipelinePanel";
-import DirectorActionsCard from "./DirectorActionsCard";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;

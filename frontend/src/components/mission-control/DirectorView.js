@@ -7,7 +7,6 @@ import UpcomingEventsCard from "./UpcomingEventsCard";
 import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
-import DirectorActionsCard from "./DirectorActionsCard";
 import DirectorActionsPulse from "./DirectorActionsPulse";
 import EscalationsCard from "./EscalationsCard";
 
@@ -180,22 +179,19 @@ export default function DirectorView({ data, userName }) {
         </div>
       </section>
 
-      {/* 2. ESCALATIONS — escalation-first for directors */}
+      {/* 2. ESCALATIONS — director's inbound triage inbox */}
       <EscalationsCard escalations={data.escalations || []} />
 
-      {/* 3. DIRECTOR ACTIONS PULSE */}
-      <DirectorActionsPulse />
+      {/* 3. YOUR OUTBOX — outbound tracking summary */}
+      <DirectorActionsPulse outboxSummary={data.outbox_summary} />
 
-      {/* 3. AI PROGRAM BRIEF */}
+      {/* 4. AI PROGRAM BRIEF */}
       <AIProgramBrief />
 
-      {/* 3. RECRUITING SIGNALS */}
+      {/* 5. RECRUITING SIGNALS */}
       <RecruitingSignalsCard signals={data.recruitingSignals} />
 
-      {/* 4. DIRECTOR ACTIONS */}
-      <DirectorActionsCard role="director" />
-
-      {/* 5. NEEDS ATTENTION */}
+      {/* 6. NEEDS ATTENTION */}
       <NeedsAttentionCard items={data.needsAttention || []} onViewPipeline={setPipelineAthleteId} />
 
       {/* 5. COACH HEALTH */}

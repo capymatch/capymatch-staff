@@ -1,0 +1,88 @@
+{
+  "summary": "Director dashboard refactor tested successfully. EscalationsCard now shows ONLY coach_escalation type (inbound triage inbox). Your Outbox pulse bar shows 4 metrics for director-created actions (review_request + pipeline_escalation). Old DirectorActionsCard full list removed. 14 backend tests passed, 11 frontend UI tests passed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/pytest/pytest_director_dashboard_refactor.xml",
+    "/app/backend/tests/test_director_dashboard_refactor.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend mission_control.py correctly splits: escalations (coach_escalation only) + outbox_summary (review_request + pipeline_escalation)",
+    "DirectorActionsPulse.js correctly receives outboxSummary prop and displays 4 metrics",
+    "EscalationsCard correctly shows only coach_escalation items with 'Open Pod' navigation",
+    "DirectorView.js correctly passes data.outbox_summary to DirectorActionsPulse",
+    "CoachView.js import cleanup verified - DirectorActionsCard import removed"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_director_dashboard_refactor.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14 tests passed)",
+    "frontend": "100% (11 UI tests passed)"
+  },
+  "test_credentials": {
+    "director": "director@capymatch.com / director123",
+    "coach": "coach.williams@capymatch.com / coach123"
+  },
+  "seed_data_creation": "Used existing data: 4 coach_escalation (2 open, 1 acknowledged, 1 resolved), 11 director-created (8 review_request + 3 pipeline_escalation)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Director dashboard refactor complete. Key changes: (1) EscalationsCard shows only coach_escalation type (director's inbound triage inbox), (2) Your Outbox pulse shows stats for review_request + pipeline_escalation (director's outbound tracking), (3) DirectorActionsCard full list removed. API returns: escalations array (coach_escalation only) + outbox_summary object with 4 metrics. UI verified: Hero > Escalations > Your Outbox > Program Brief order.",
+  "tests_executed": {
+    "backend_api": [
+      "GET /api/mission-control (director) - returns escalations filtered to coach_escalation only - PASSED",
+      "GET /api/mission-control (director) - returns outbox_summary with 4 metrics - PASSED",
+      "Escalations only contain coach_escalation type (not review_request or pipeline_escalation) - PASSED",
+      "outbox_summary.awaiting_response counts open review_request + pipeline_escalation - PASSED",
+      "Escalation items have athlete_id and action_id for navigation - PASSED",
+      "GET /api/mission-control (coach) - returns club_coach role with myRoster - PASSED",
+      "Coach does not receive escalations or outbox_summary - PASSED"
+    ],
+    "frontend_ui": [
+      "TEST 1: Director Login - PASSED",
+      "TEST 2: DirectorView renders (data-testid='director-mission-control') - PASSED",
+      "TEST 3: DirectorActionsCard NOT rendered (data-testid='director-actions-card' absent) - PASSED",
+      "TEST 4: EscalationsCard renders (data-testid='escalations-section') showing '3 open' - PASSED",
+      "TEST 5: Your Outbox pulse renders with metrics (5 Awaiting, 2 Critical, 2 In Progress, 4 Resolved) - PASSED",
+      "TEST 6: Escalation rows rendered with athlete names and 'Open Pod' links - PASSED",
+      "TEST 7: Dashboard section order verified: Hero(y=80) > Escalations(y=381) > Outbox(y=741) - PASSED",
+      "TEST 8: Escalation navigation to /support-pods/{athlete_id}?escalation={action_id} - PASSED",
+      "TEST 9: Coach Login - PASSED",
+      "TEST 10: CoachView renders, DirectorView NOT shown for coach - PASSED",
+      "TEST 11: Coach DIRECTOR REQUESTS KPI shows value 9 - PASSED"
+    ]
+  },
+  "verified_requirements": {
+    "ESCALATIONS_CARD_COACH_ESCALATION_ONLY": "PASS - EscalationsCard shows 3 open, all are coach_escalation type",
+    "YOUR_OUTBOX_PULSE_METRICS": "PASS - Shows awaiting_response:5, critical_pending:2, in_progress:2, resolved_this_week:4",
+    "YOUR_OUTBOX_INSIGHT_TEXT": "PASS - Shows '2 critical escalations unacknowledged by coach'",
+    "DIRECTOR_ACTIONS_CARD_REMOVED": "PASS - data-testid='director-actions-card' not found on page",
+    "DASHBOARD_SECTION_ORDER": "PASS - Hero > Escalations > Outbox > Program Brief",
+    "ESCALATION_NAVIGATION": "PASS - Click navigates to /support-pods/athlete_3?escalation=da_5219dbfdd51f",
+    "COACH_VIEW_NO_REGRESSION": "PASS - Coach sees CoachView with DIRECTOR REQUESTS KPI",
+    "COACH_DIRECTOR_REQUESTS_KPI": "PASS - Shows count 9"
+  },
+  "data_verification": {
+    "escalations_array_types": ["coach_escalation"],
+    "outbox_summary_values": {
+      "awaiting_response": 5,
+      "critical_pending": 2,
+      "in_progress": 2,
+      "resolved_this_week": 4
+    },
+    "total_director_actions_in_db": 15,
+    "breakdown": {
+      "coach_escalation": 4,
+      "review_request": 8,
+      "pipeline_escalation": 3
+    }
+  }
+}

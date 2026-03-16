@@ -191,16 +191,30 @@ async def _build_director_response(alerts, attention, signals, events):
     # Recruiting signals — from event notes and advocacy data
     recruiting_signals = await _get_recruiting_signals()
 
-    # ── Escalations section (director's primary workflow) ──
-    open_escalations = await db.director_actions.find(
-        {"status": {"$in": ["open", "acknowledged"]}},
+    # ── Escalations section (coach → director, inbound triage inbox) ──
+    coach_escalations_open = await db.director_actions.find(
+        {"status": {"$in": ["open", "acknowledged"]}, "type": "coach_escalation"},
         {"_id": 0}
     ).sort("created_at", -1).to_list(50)
-    resolved_recent = await db.director_actions.find(
-        {"status": "resolved"},
+    coach_escalations_resolved = await db.director_actions.find(
+        {"status": "resolved", "type": "coach_escalation"},
         {"_id": 0}
     ).sort("resolved_at", -1).to_list(5)
-    all_escalations = open_escalations + resolved_recent
+    escalations = coach_escalations_open + coach_escalations_resolved
+
+    # ── Outbox summary (director → coach, outbound tracking) ──
+    outbox_types = ["review_request", "pipeline_escalation"]
+    outbox_all = await db.director_actions.find(
+        {"type": {"$in": outbox_types}},
+        {"_id": 0, "status": 1, "risk_level": 1, "acknowledged_at": 1, "resolved_at": 1}
+    ).to_list(200)
+    seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    outbox_summary = {
+        "awaiting_response": sum(1 for a in outbox_all if a["status"] == "open"),
+        "critical_pending": sum(1 for a in outbox_all if a["status"] in ("open", "acknowledged") and a.get("risk_level") == "critical"),
+        "in_progress": sum(1 for a in outbox_all if a["status"] == "acknowledged"),
+        "resolved_this_week": sum(1 for a in outbox_all if a["status"] == "resolved" and (a.get("resolved_at") or "") >= seven_days_ago),
+    }
 
     return {
         "role": "director",
@@ -212,7 +226,8 @@ async def _build_director_response(alerts, attention, signals, events):
         "coachHealth": coach_health,
         "recruitingSignals": recruiting_signals,
         "programSnapshot": {**get_snapshot(), "unassigned_count": len(unassigned_ids)},
-        "escalations": all_escalations,
+        "escalations": escalations,
+        "outbox_summary": outbox_summary,
     }
 
 
