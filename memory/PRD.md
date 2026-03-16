@@ -27,7 +27,7 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 
 ## Completed Features
 
-### Session 1-3 (Previous)
+### Sessions 1-7 (Previous)
 - Full authentication system (JWT)
 - Athlete pipeline (school targets, recruiting stages)
 - Messaging module (coach-athlete communication)
@@ -36,63 +36,36 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 - Subscription tiers (basic, pro, premium)
 - Admin panel (user management)
 - Knowledge base (1,057 schools)
-
-### Session 4 (2026-03-14)
 - Admin Organization Management (CRUD + members with roles)
-- Live Event workflow overhaul (note required, plan limit checks)
-- 104 missing schools restored (953 → 1,057)
-- Mobile layout fixes (z-index, button spacing)
-- School Pod hero card fixes (email/escalate buttons)
+- Live Event workflow overhaul
+- Social Spotlight scaffolding (UI + routing)
+- School Pod Overhaul (two-column layout, relationship tracker, sliding notes panel)
+- Widespread z-index + layout fixes
 
-### Session 5 (2026-03-15)
-- **ProductiveRecruit scraper removed** — Cleaned up code after confirming ToS prohibits scraping
-- **Subscription bug fix** — SubscriptionProvider depends on auth token, re-fetches on login/logout
-- **Roster athlete photos** — photo_url in backend response + img display in frontend
-- **Add Team feature** — Global "Add Team" button. Modal: name, age group, coach
-- **Add Athlete to Team** — Two-tab modal: autocomplete search existing athletes / invite new by email
-
-### Session 5 — Advocacy Overhaul (2026-03-15)
-- **Pre-fill from context** — Athlete + school auto-populated from URL params. Works from SchoolPod, pipeline, events
-- **Athlete recruiting context card** — Name, position, grad year, team, pipeline status, last contact, momentum, targets
-- **Enhanced AI Draft** — Sends fit_reasons, fit_note, highlight_video to LLM for contextual drafts
-- **Attachments support** — Highlight reel, athlete profile, video clip URL attachments
-- **Outcome tracking** — Tabs: Draft → Sent → Waiting Response → Warm → Closed
-- **School autocomplete search** — Searches from 1,057 schools instead of fixed dropdown
-
-### Session 5 — Contextual Advocacy Integration (2026-03-15)
-- **Advocate button in SchoolPod** — Hero action button, pre-fills athlete + school
-- **Advocate button in Pipeline (SupportPod)** — Appears on hover per school row, pre-fills context
-- **Advocate button in Event Debrief** — Per-note action alongside "Send to Athlete" and "In Pod"
-- **Relationship History section** — Shows previous advocacy recs + event interactions in the builder
-- **Backend: previous_advocacy in context** — GET /advocacy/athlete-context returns prior advocacy attempts with status/date/fit summary
-
-### Session 6 (2026-03-15)
-- **Social Spotlight page** — Copied from capymatch repo and integrated. YouTube feed + Twitter links for pipeline schools. Gated behind premium subscription. Backend: `/api/social-spotlight/feed`, `/api/social-spotlight/feed/refresh`, `/api/social-spotlight/social-links`. Requires `YOUTUBE_API_KEY` env var for live data.
-
-### Session 7 (2026-03-15)
-- **School Pod Layout Overhaul:** 7 changes implemented:
-  1. Hero wording now describes real conditions (e.g., "Follow-up overdue — no response for 6 days")
-  2. Severity indicators (Critical/High/Medium badges) on Signals
-  3. Renamed "Action Plan" → "Playbook", "Actions" → "Tasks"
-  4. Added Pipeline Status bar with 6-stage progress visualization
-  5. Added Athlete Context in header (name — year — position)
-  6. Added Relationship Context block (strength + interaction breakdown)
-  7. Playbook collapses to summary when all steps completed
+### Session 8 (2026-03-16)
+- **P0 FIX: Unified Health Signal Logic**
+  - Refactored `classify_school_health()` to accept `actual_days_since_contact` and `playbook_complete` parameters
+  - List endpoint now queries `pod_action_events` and `playbook_progress` for real-time contact days per school
+  - Detail endpoint computes health AFTER signal suppression, ensuring hero card matches badge
+  - Added `hero_status` field to detail API response — single source of truth for frontend
+  - Frontend `SchoolPod.js` now uses backend-provided `hero_status` instead of independently computing
+  - Added `cooling_off` and `needs_follow_up` health states to both backend and frontend
+  - 23/23 backend tests passed, all frontend UI verifications passed
+  - Key files: `school_pod.py`, `SchoolPod.js`, `SupportPod.js`
 
 ---
 
 ## Backlog
 
 ### P0 — Immediate
-- **YouTube API Key** — Configure `YOUTUBE_API_KEY` env var for Social Spotlight live data
-- **CSV Import Tool** — For manually gathered school/coach data from university sites
+- **YouTube API Key** — Configure `YOUTUBE_API_KEY` env var for Social Spotlight live data (feature scaffolded but non-functional)
 
 ### P1 — Upcoming
+- **CSV Import Tool** — For manually gathered school/coach data from university sites
 - **College Scorecard API** — Integrated but needs user's API key from api.data.gov
 - **Parent/Family Experience** — Dedicated UI for parents/helpers
-- **AI-Powered Coach Summary** — LLM-generated recruiting pitches from athlete data
 
 ### P2 — Future
+- **AI-Powered Coach Summary** — LLM-generated recruiting pitches from athlete data
 - **Club Billing** — Stripe subscription billing for organizations
 - **Multi-Agent Intelligence Pipeline** — Roster Stability, Scholarship, NIL Readiness agents
-- **CSV Import Tool** — For manually gathered school/coach data from university sites
