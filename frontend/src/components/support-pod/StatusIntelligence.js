@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Compass, AlertCircle, ChevronDown, ChevronUp, Info, Eye } from "lucide-react";
+import { Compass, AlertCircle, ChevronDown, ChevronUp, Info, Eye, Shield } from "lucide-react";
 
 /**
  * StatusIntelligence — explains the unified Journey State + Attention Status
  * for the Support Pod detail view. Human-readable, not a developer panel.
  */
-export default function StatusIntelligence({ data }) {
+export default function StatusIntelligence({ data, escalations }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!data) return null;
@@ -14,6 +14,7 @@ export default function StatusIntelligence({ data }) {
   const journey = journey_state || {};
   const primary = attention?.primary;
   const secondary = attention?.secondary || [];
+  const activeEscalations = (escalations || []).filter(e => e.status === "open");
 
   return (
     <div
@@ -21,6 +22,19 @@ export default function StatusIntelligence({ data }) {
       style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }}
       data-testid="status-intelligence"
     >
+      {/* Persistent escalation chip */}
+      {activeEscalations.length > 0 && (
+        <div className="px-4 py-2 flex items-center gap-2 border-b" style={{ borderColor: "var(--cm-border, #e2e8f0)", backgroundColor: "rgba(99,102,241,0.04)" }} data-testid="si-escalation-chip">
+          <Shield className="w-3 h-3 shrink-0" style={{ color: "#6366f1" }} />
+          <span className="text-[10px] font-semibold" style={{ color: "#6366f1" }}>
+            Escalated to Director
+          </span>
+          <span className="text-[10px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+            &middot; {activeEscalations[0].reason_label || activeEscalations[0].reason || "Review needed"}
+          </span>
+        </div>
+      )}
+
       {/* Two-column: Journey + Attention */}
       <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
 

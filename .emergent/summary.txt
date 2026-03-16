@@ -1,0 +1,147 @@
+<analysis>**original_problem_statement:**
+The user is building a full-stack recruiting application, CapyMatch. The project began with fixing data inconsistencies and evolved into a major redesign of the athlete status model. Subsequent requests focused on refining the UI/UX, implementing a modal for adding tasks, redesigning task rows, fixing a broken Social Spotlight feature, optimizing page load performance, adding a collapsible sidebar, and finally, designing and implementing role-based access for Directors to review and act on escalated issues.
+
+The latest request is to build out a feature allowing Directors to access an athlete's profile (the pod) to handle escalations from coaches. The user has approved a detailed plan for this feature, which includes specific permissions, UI for highlighting escalated issues, and an escalation-first workflow for directors.
+
+**User's preferred language**: English
+
+**what currently exists?**
+The application is a full-stack platform (React/FastAPI/MongoDB). Key implemented features include:
+- A unified athlete status model distinguishing Journey State from Attention Status.
+- A refined UI on the dashboard and athlete detail pages reflecting this model.
+- A styled, modal-based form for adding new tasks.
+- Redesigned task list rows with owner badges and a hover-based overflow menu for contextual actions.
+- A fully functional Social Spotlight feature using the YouTube Data API to display filtered volleyball videos for both coaches and athletes.
+- An optimized My School page with improved load times.
+- A collapsible main navigation sidebar with state persisted in localStorage.
+- Initial backend work for the Director Pod Access feature has been completed.
+
+**Last working item**:
+    - Last item agent was working: The agent is in the middle of a multi-phase implementation of **Director Pod Access**. The goal is to allow users with a 'director' role to view and act on escalated issues within an athlete's profile (pod).
+        - **Phase 1 (Backend - DONE):** Created new API endpoints () for director-specific actions (e.g., adding guidance notes) and updated existing pod endpoints to include escalation data.
+        - **Phase 2 & 3 (Frontend - IN PROGRESS):** Began creating the necessary frontend components, including an  for the athlete pod, a persistent chip to indicate an escalated status, and an  for the director's main dashboard. The agent is currently integrating these components and adding role-based logic to  and .
+    - Status: IN PROGRESS
+    - Agent Testing Done: N
+    - Which testing method agent to use? both
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:
+There are no pending bugs. The current focus is on the new feature implementation.
+
+**In progress Task List**:
+  - Task 1: Implement Director Pod Access (P0)
+
+ **Task Detail:**
+  - **Task 1: Implement Director Pod Access (P0)**
+     - **Where to resume:** The backend (Phase 1) is complete. The agent needs to resume the frontend work (Phases 2 & 3). The immediate next steps are to finish integrating the new components (, ) and ensure the UI correctly adapts based on the user's role (director vs. coach) and the presence of an  URL parameter.
+     - **What will be achieved with this?** Directors will have a clear, prioritized workflow to handle escalated issues. They will be able to access athlete pods, view escalation context, and perform specific oversight actions, separate from the coach's day-to-day tasks.
+     - **Status:** IN PROGRESS
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on something:** None.
+
+**Upcoming and Future Tasks**
+**Upcoming Tasks:**
+*   **(P0) Build a CSV Import Tool:** Create a feature for bulk import of school and coach data.
+*   **(P1) Configure College Scorecard API:** The integration is in place but requires the user to provide an API key.
+*   **(P2) Parent/Family Experience:** Build out the dedicated UI/UX for parents and family members.
+*   **(P2) Polish School Detail Page:** Align the UI and terminology of the school detail page with the new athlete-level status model for application-wide consistency.
+
+**Future Tasks:**
+*   AI-Powered Coach Summary.
+*   Club Billing (Stripe Integration).
+*   Multi-Agent Intelligence Pipeline (, , ).
+
+**Completed work in this session**
+- **Director Pod Access (Phase 1):** Designed and received user approval for the feature. Implemented all required backend API endpoints and data model modifications.
+- **Collapsible Sidebar:** Implemented a collapsible left-side menu to maximize screen real estate, with the state saved to localStorage.
+- **Performance Optimization:** Fixed a significant page load delay on the My School page by refactoring multiple sequential API calls into a single parallel  fetch.
+- **Social Spotlight Feature Fix (Complete Rewrite):**
+  - Successfully integrated the user-provided YouTube Data API key.
+  - Rewrote the backend  from scratch using  to fix API timeouts and implemented robust filtering to show only relevant volleyball content.
+  - Resolved all access-related issues for both coach and athlete roles.
+- **Task Management UX Overhaul:**
+  - **Task Row Redesign:** Replaced static task rows with dynamic ones featuring color-coded owner badges and a hover-triggered overflow menu for contextual actions (, , , etc.).
+  - **Add Task Modal:** Converted the inline task creation form into a styled modal, including a custom dark-theme dropdown, to match the app's design system.
+- **Terminology and UI Consistency Audit:** Performed a full-codebase audit to remove outdated terminology (momentum drop, podHealth) and ensure consistent UI/UX for the new status model across the application.
+
+**Earlier issues found/mentioned but not fixed**
+- None. All previously identified issues, including the non-functional Social Spotlight feature, were resolved in this session.
+
+**Known issue recurrence from previous fork**
+- None. The primary recurring issue of inconsistent health signals was holistically resolved by the new unified status model.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Role-Based Access Control (RBAC):** Architecting backend permissions and frontend UI to support distinct workflows and capabilities for different user roles (Coach, Director).
+- **API Performance Optimization:** Mitigating frontend request waterfalls by consolidating multiple  hooks into a single, parallel  data fetch.
+- **Asynchronous Backend APIs:** Utilizing  to build non-blocking, efficient API clients for third-party services like the YouTube Data API.
+- **Stateful & Themed UI:** Building interactive components with local state (e.g., inline editing, hover menus) and ensuring they conform to a specific dark-theme design language.
+- **URL-based State:** Using URL query parameters () to drive the initial state and context of a page.
+
+**key DB schema**
+- No breaking schema changes were made. New endpoints were added to create data for director-specific actions (e.g., ). API responses were augmented with new fields like .
+
+**All files of reference**
+-   : Core page for implementing role-based UI.
+-   : Director's dashboard entry point.
+-   : New backend logic for director permissions.
+-   : API serving data to the .
+-   : Component to be finished.
+-   : Component to be finished.
+-   
+
+**key api endpoints**
+-   ****: Now includes an  field.
+-   ****: (New) Allows directors to add intervention notes.
+-   ****: (New) Allows directors to create guidance tasks.
+-   ****: (Rewritten) Fetches filtered videos from YouTube Data API.
+-   ****: Updated to support editing task titles.
+
+**Critical Info for New Agent**
+-   You are in the middle of implementing a multi-phase feature: **Director Pod Access**. The backend is done; the frontend is in progress.
+-   Your immediate task is to complete the frontend implementation (Phases 2 & 3). This involves finishing the  and  components and integrating them into  and  respectively.
+-   The core requirement is to create a distinct, **escalation-first** workflow for directors. Their UI and actions should be focused on oversight and intervention, not day-to-day coaching tasks.
+-   Reference the user-approved plan: directors can access all pods in their org, but their dashboard prioritizes escalated athletes. Entry into a pod via an escalation should highlight the specific issue.
+
+**documents and test reports created in this job**
+-   /app/memory/PRD.md
+-   /app/test_reports/iteration_4.json
+-   /app/test_reports/iteration_5.json
+
+**Last 10 User Messages and any pending HUMAN messages** 
+- 10. (APPROVAL) Approves the director access plan with three key adjustments: directors can create limited intervention tasks, the escalation context must persist beyond the initial banner, and the director's default view must be escalations-first. **(IN PROGRESS)**
+- 9. (QUESTION) Asks for a detailed proposal on director permissions and UI before implementation. (COMPLETED)
+- 8. (BUG) Reports that a director cannot take action on an escalated message and asks if they should have access. (COMPLETED)
+- 7. (FEATURE) Requested a button to collapse the left-side menu. (COMPLETED)
+- 6. (BUG) Reported that the My School page was loading slowly. (COMPLETED)
+- 5. (BUG) Requested that the Social Spotlight feature only show women's volleyball content. (COMPLETED)
+- 4. (BUG) Reported that the athlete user was seeing no videos in the Social Spotlight. (COMPLETED)
+- 3. (INFO) Provided the YouTube API key. (COMPLETED)
+- 2. (QUESTION) Asked where to get a YouTube API key. (COMPLETED)
+- 1. (PRIORITY) Confirmed that fixing the Social Spotlight was a P1 priority. (COMPLETED)
+
+**Project Health Check:**
+- Broken: None
+- Mocked: None
+
+**3rd Party Integrations**
+-   **YouTube Data API:** Fully implemented and functional using a user-provided API key.
+-   **College Scorecard API:** Integrated but pending user configuration (API key needed).
+-   **Resend:** Existing integration for email.
+-   **Stripe:** Existing integration for payments.
+
+**Testing status**
+  - Testing agent used after significant changes: YES (for UI refinements and task row redesign)
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: []
+  - Known regressions: None.
+
+**Credentials to test flow:**
+-   **Coach:**  / 
+-   **Athlete:**  / 
+-   **Director:** A user with the  role is required for testing the current feature. The logs mentioned . You will need to find or use this credential to validate the director workflow.
+
+**What agent forgot to execute**
+- Nothing was forgotten. The agent has been methodically executing user requests and is currently in the middle of a large, user-approved feature implementation.</analysis>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
   School, ChevronRight, Loader2, ArrowLeft, RefreshCw,
@@ -9,6 +9,8 @@ import {
 import { toast } from "sonner";
 import UniversityLogo from "../components/UniversityLogo";
 import StatusIntelligence from "../components/support-pod/StatusIntelligence";
+import EscalationBanner from "../components/support-pod/EscalationBanner";
+import { useAuth } from "../AuthContext";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
@@ -311,6 +313,10 @@ function SchoolRow({ school, athleteId }) {
 function SupportPod() {
   const { athleteId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const isDirector = user?.role === "director" || user?.role === "platform_admin";
+  const escalationId = searchParams.get("escalation");
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [schools, setSchools] = useState([]);
@@ -369,8 +375,13 @@ function SupportPod() {
     );
   }
 
-  const { athlete, current_issue, recruiting_signals, profile_completeness, status_intelligence } = data;
+  const { athlete, current_issue, recruiting_signals, profile_completeness, status_intelligence, escalations } = data;
   const needsAttention = schools.filter(s => ["at_risk", "needs_attention", "cooling_off", "needs_follow_up"].includes(s.health));
+
+  // Find the specific escalation from URL param, or the most recent open one
+  const activeEscalation = escalationId
+    ? (escalations || []).find(e => e.id === escalationId)
+    : (escalations || []).find(e => e.status === "open");
 
   // Header badge — derived from attention status (new unified model)
   const attentionPrimary = status_intelligence?.attention?.primary;
@@ -450,11 +461,23 @@ function SupportPod() {
 
       {/* Content — just hero + schools */}
       <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4">
-        {/* Status Intelligence — Journey + Attention explanation (authoritative display) */}
-        <StatusIntelligence data={status_intelligence} />
+        {/* Escalation banner for directors */}
+        {activeEscalation && (
+          <EscalationBanner
+            escalation={activeEscalation}
+            athleteId={athleteId}
+            onRefresh={() => { fetchPodData(true); fetchSchools(true); }}
+            isDirector={isDirector}
+          />
+        )}
 
-        {/* Compact action bar (only shows if there's an active issue or critical signals) */}
-        <ActionBar currentIssue={current_issue} signals={recruiting_signals} athleteId={athleteId} onRefresh={() => { fetchPodData(true); fetchSchools(true); }} />
+        {/* Status Intelligence — Journey + Attention explanation (authoritative display) */}
+        <StatusIntelligence data={status_intelligence} escalations={escalations} />
+
+        {/* Compact action bar — only for coaches, not directors */}
+        {!isDirector && (
+          <ActionBar currentIssue={current_issue} signals={recruiting_signals} athleteId={athleteId} onRefresh={() => { fetchPodData(true); fetchSchools(true); }} />
+        )}
 
         {/* Profile Completeness Alert */}
         <ProfileAlert completeness={profile_completeness} athleteId={athleteId} athleteName={athlete?.full_name} />

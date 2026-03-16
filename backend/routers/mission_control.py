@@ -191,6 +191,17 @@ async def _build_director_response(alerts, attention, signals, events):
     # Recruiting signals — from event notes and advocacy data
     recruiting_signals = await _get_recruiting_signals()
 
+    # ── Escalations section (director's primary workflow) ──
+    open_escalations = await db.director_actions.find(
+        {"status": {"$in": ["open", "acknowledged"]}},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    resolved_recent = await db.director_actions.find(
+        {"status": "resolved"},
+        {"_id": 0}
+    ).sort("resolved_at", -1).to_list(5)
+    all_escalations = open_escalations + resolved_recent
+
     return {
         "role": "director",
         "programStatus": program_status,
@@ -201,6 +212,7 @@ async def _build_director_response(alerts, attention, signals, events):
         "coachHealth": coach_health,
         "recruitingSignals": recruiting_signals,
         "programSnapshot": {**get_snapshot(), "unassigned_count": len(unassigned_ids)},
+        "escalations": all_escalations,
     }
 
 

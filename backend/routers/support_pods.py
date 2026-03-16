@@ -226,6 +226,12 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
     # ── Unified Status Intelligence ──
     status_intelligence = await _compute_status_intelligence(athlete_id, athlete, interventions)
 
+    # ── Escalation context for directors ──
+    escalations = await db.director_actions.find(
+        {"athlete_id": athlete_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(20)
+
     return {
         "athlete": {k: v for k, v in athlete.items() if k != "archetype"},
         "active_intervention": active_intervention,
@@ -249,6 +255,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         "intervention_playbook": playbook,
         "profile_completeness": profile_completeness,
         "status_intelligence": status_intelligence,
+        "escalations": escalations,
     }
 
 
@@ -603,3 +610,103 @@ async def escalate_to_director(athlete_id: str, body: dict, current_user: dict =
     await db.director_actions.insert_one(doc)
     doc.pop("_id", None)
     return doc
+
+
+
+# ── Director Guidance Note ────────────────────────────
+@router.post("/support-pods/{athlete_id}/director-notes")
+async def add_director_note(athlete_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Director adds a guidance note to the pod. Visible in timeline."""
+    if current_user["role"] not in ("director", "platform_admin"):
+        raise HTTPException(403, "Only directors can add guidance notes.")
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(403, "Access denied")
+
+    content = (body.get("content") or "").strip()
+    if not content:
+        raise HTTPException(400, "Note content is required.")
+
+    escalation_id = body.get("escalation_id")
+    now = datetime.now(timezone.utc).isoformat()
+    note_id = str(uuid.uuid4())
+
+    doc = {
+        "id": note_id,
+        "athlete_id": athlete_id,
+        "author_id": current_user["id"],
+        "author_name": current_user.get("name", "Director"),
+        "author_role": "director",
+        "content": content[:1000],
+        "type": "director_guidance",
+        "escalation_id": escalation_id,
+        "created_at": now,
+    }
+    await db.athlete_notes.insert_one(doc)
+    doc.pop("_id", None)
+
+    # Add to pod timeline
+    await db.pod_action_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "type": "director_guidance",
+        "description": f"Director guidance: {content[:100]}",
+        "actor": current_user.get("name", "Director"),
+        "escalation_id": escalation_id,
+        "created_at": now,
+    })
+
+    return {"ok": True, "note": doc}
+
+
+# ── Director Intervention Task ───────────────────────
+@router.post("/support-pods/{athlete_id}/director-tasks")
+async def create_director_task(athlete_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Director creates an intervention/guidance task (only in escalated context)."""
+    if current_user["role"] not in ("director", "platform_admin"):
+        raise HTTPException(403, "Only directors can create intervention tasks.")
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(403, "Access denied")
+
+    title = (body.get("title") or "").strip()
+    if not title:
+        raise HTTPException(400, "Task title is required.")
+
+    escalation_id = body.get("escalation_id")
+    assignee = body.get("assignee", "Coach")  # Coach | Athlete | Director
+    now = datetime.now(timezone.utc).isoformat()
+    task_id = str(uuid.uuid4())
+    due_days = int(body.get("due_days", 7))
+    due_date = (datetime.now(timezone.utc) + timedelta(days=due_days)).isoformat()
+
+    doc = {
+        "id": task_id,
+        "athlete_id": athlete_id,
+        "title": title[:300],
+        "owner": assignee,
+        "owner_role": assignee.lower(),
+        "status": "ready",
+        "due_date": due_date,
+        "source": "director_intervention",
+        "source_category": "director_intervention",
+        "escalation_id": escalation_id,
+        "is_suggested": False,
+        "created_by": current_user.get("name", "Director"),
+        "created_by_role": "director",
+        "created_at": now,
+        "completed_at": None,
+    }
+    await db.pod_actions.insert_one(doc)
+    doc.pop("_id", None)
+
+    # Timeline entry
+    await db.pod_action_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "type": "director_task_created",
+        "description": f"Director task: {title[:80]} (assigned to {assignee})",
+        "actor": current_user.get("name", "Director"),
+        "escalation_id": escalation_id,
+        "created_at": now,
+    })
+
+    return {"ok": True, "task": doc}
