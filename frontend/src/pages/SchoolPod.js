@@ -217,7 +217,7 @@ function PipelineStatus({ pipeline }) {
       <div className="flex items-center justify-between mb-2">
         <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Pipeline Status</p>
         <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text, #1e293b)" }}>
-          {displayStage} 
+        
         </span>
       </div>
       <div className="flex items-center gap-1">
