@@ -655,9 +655,12 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
 
     # Pipeline stage context
     status_to_stage_idx = {
-        "Not Contacted": 0, "Prospect": 0, "Contacted": 1,
-        "In Conversation": 2, "Engaged": 2, "Interested": 3,
-        "Visit Scheduled": 4, "Visit": 4, "Offer": 5, "Committed": 6,
+        "Not Contacted": 0, "Prospect": 0, "Added": 0,
+        "Contacted": 1, "Initial Contact": 1,
+        "In Conversation": 2, "Engaged": 2,
+        "Interested": 3,
+        "Visit Scheduled": 4, "Visit": 4, "Campus Visit": 4,
+        "Offer": 5, "Committed": 5,
     }
     current_stage = program.get("recruiting_status", "Prospect")
     stage_idx = status_to_stage_idx.get(current_stage, 0)
