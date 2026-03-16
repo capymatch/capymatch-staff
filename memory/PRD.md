@@ -128,6 +128,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Fixed field mismatch (`action_id` vs `id`), resolve payload (`note` vs `resolution_note`), action buttons for acknowledged state
   - 38 backend + 14 frontend tests passed (iteration_147)
   - Key files: `EscalationBanner.js`, `EscalationsCard.js`, `DirectorView.js`, `SupportPod.js`, `director_actions.py`, `support_pods.py`
+- **Director Dashboard Deduplication (Complete)**
+  - Identified 100% record overlap between EscalationsCard and DirectorActionsCard (both pulling from same `director_actions` collection unfiltered)
+  - EscalationsCard now filtered to `coach_escalation` only — director's inbound triage inbox
+  - Removed full DirectorActionsCard from dashboard — replaced with compact "Your Outbox" pulse bar
+  - Your Outbox tracks director-created actions only (`review_request` + `pipeline_escalation`): Awaiting Response, Critical Pending, In Progress, Resolved This Week
+  - Per-athlete outbound action detail remains in AthletePipelinePanel (Request Review + Escalate buttons)
+  - Backend returns `outbox_summary` object alongside filtered `escalations` array
+  - 14 backend + 11 frontend tests passed (iteration_148)
+  - Key files: `mission_control.py`, `DirectorView.js`, `DirectorActionsPulse.js`, `EscalationsCard.js`
 
 ---
 
