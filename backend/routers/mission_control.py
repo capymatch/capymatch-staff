@@ -121,13 +121,38 @@ async def get_mission_control_data(current_user: dict = get_current_user_dep()):
         return await _build_director_response(alerts, attention, signals, events)
     else:
         response = _build_coach_response(current_user, alerts, attention, signals, events)
-        # Enrich roster with school-level alerts from DB (async)
-        await _enrich_roster_with_school_alerts(response.get("myRoster", []))
-        # Enrich roster with active pod_issues from DB (async)
-        await _enrich_roster_with_pod_issues(response.get("myRoster", []))
-        # Recount needing_action after all enrichment
-        needing_action = [a for a in response["myRoster"] if a.get("category")]
+        # Unified status model: collect all signals, score, assign Journey + Attention
+        await _compute_unified_statuses(response.get("myRoster", []))
+        # Recount needing_action
+        needing_action = [a for a in response["myRoster"] if a.get("attention_status", {}).get("primary")]
         response["todays_summary"]["needingAction"] = len(needing_action)
+
+        # Build summary lines from attention statuses
+        blockers = [a for a in needing_action if a.get("attention_status", {}).get("primary", {}).get("nature") == "blocker"]
+        at_risk = [a for a in needing_action if a.get("attention_status", {}).get("primary", {}).get("nature") == "at_risk"]
+        followups = [a for a in needing_action if a.get("attention_status", {}).get("primary", {}).get("nature") == "urgent_followup"]
+        reviews = [a for a in needing_action if a.get("attention_status", {}).get("primary", {}).get("nature") == "needs_review"]
+
+        summary_lines = []
+        if blockers:
+            summary_lines.append(f"{len(blockers)} athlete{'s' if len(blockers) > 1 else ''} {'have' if len(blockers) > 1 else 'has'} a blocker")
+        if at_risk:
+            summary_lines.append(f"{len(at_risk)} athlete{'s' if len(at_risk) > 1 else ''} at risk")
+        if followups:
+            summary_lines.append(f"{len(followups)} urgent follow-up{'s' if len(followups) > 1 else ''}")
+        if reviews:
+            summary_lines.append(f"{len(reviews)} need{'s' if len(reviews) == 1 else ''} review")
+        events_this_week = [e for e in events if 0 <= e.get("daysAway", 99) <= 3]
+        if events_this_week:
+            summary_lines.append(f"{len(events_this_week)} event{'s' if len(events_this_week) > 1 else ''} need{'s' if len(events_this_week) == 1 else ''} prep")
+        if not summary_lines:
+            summary_lines.append("All athletes are on track today")
+        response["summary_lines"] = summary_lines
+
+        # Build priorities queue from unified statuses
+        priorities = _build_priorities_queue(needing_action, events, alerts)
+        response["priorities"] = priorities
+
         return response
 
 
@@ -385,46 +410,39 @@ def _build_coach_response(user, alerts, attention, signals, events):
         "directorRequests": 0,  # Will be enriched by frontend via DirectorActionsCard
     }
 
-    # Compact summary sentences
-    summary_lines = []
-    momentum_drops = [a for a in needing_action if a.get("category") == "momentum_drop"]
-    blockers = [a for a in needing_action if a.get("category") == "blocker"]
-    engagement_drops = [a for a in needing_action if a.get("category") == "engagement_drop"]
-    other_issues = [a for a in needing_action if a.get("category") not in ("momentum_drop", "blocker", "engagement_drop")]
-
-    if momentum_drops:
-        summary_lines.append(f"{len(momentum_drops)} athlete{'s' if len(momentum_drops) > 1 else ''} {'have' if len(momentum_drops) > 1 else 'has'} momentum drop")
-    if blockers:
-        summary_lines.append(f"{len(blockers)} athlete{'s' if len(blockers) > 1 else ''} {'have' if len(blockers) > 1 else 'has'} a blocker")
-    if engagement_drops:
-        summary_lines.append(f"{len(engagement_drops)} athlete{'s' if len(engagement_drops) > 1 else ''} {'have' if len(engagement_drops) > 1 else 'has'} engagement drop")
-    if other_issues:
-        summary_lines.append(f"{len(other_issues)} athlete{'s' if len(other_issues) > 1 else ''} need{'s' if len(other_issues) == 1 else ''} attention")
-    events_prep = [e for e in events_this_week if e.get("daysAway", 99) <= 3]
-    if events_prep:
-        summary_lines.append(f"{len(events_prep)} event{'s' if len(events_prep) > 1 else ''} require{'s' if len(events_prep) == 1 else ''} prep")
-    if not summary_lines:
-        summary_lines.append("All athletes are on track today")
+    # NOTE: summary_lines are recomputed after unified status enrichment
+    # (the caller does this after _compute_unified_statuses)
 
     return {
         "role": "club_coach",
         "todays_summary": todays_summary,
-        "summary_lines": summary_lines,
-        "priorities": priorities,
+        "summary_lines": [],  # Populated after enrichment
+        "priorities": [],  # Populated after enrichment
         "myRoster": roster,
         "upcomingEvents": upcoming,
         "recentActivity": activity,
     }
 
 
-async def _enrich_roster_with_school_alerts(roster: list):
-    """Add school-level alert counts to each athlete in the roster.
+async def _compute_unified_statuses(roster: list):
+    """Compute Journey State + Attention Status for every athlete in the roster.
 
-    Queries target_programs, program_metrics, and pod_action_events
-    to compute how many schools are in at-risk/needs-attention states.
-    Uses the same classify_school_health logic as the school pod endpoints.
+    Collects ALL signals from:
+    1. Decision engine interventions (already in athlete data)
+    2. School-level health alerts (from DB)
+    3. Active pod_issues (from DB)
+
+    Then scores each signal, picks the most urgent as primary attention,
+    and sets journey_state independently from pipeline progress.
     """
     from routers.school_pod import classify_school_health
+    from services.unified_status import (
+        compute_journey_state,
+        normalize_decision_engine_signal,
+        normalize_pod_issue_signal,
+        normalize_school_alert_signal,
+        derive_attention_status,
+    )
 
     if not roster:
         return
@@ -432,22 +450,22 @@ async def _enrich_roster_with_school_alerts(roster: list):
     athlete_ids = [a["id"] for a in roster]
     now = datetime.now(timezone.utc)
 
-    # Batch: get all target programs for all athletes
+    # ── Batch DB queries (run once for all athletes) ──
+
+    # 1. School programs
     all_programs = await db.programs.find(
         {"athlete_id": {"$in": athlete_ids}},
         {"_id": 0, "athlete_id": 1, "program_id": 1, "university_name": 1,
          "recruiting_status": 1, "reply_status": 1}
     ).to_list(500)
 
-    # Group programs by athlete
     athlete_programs = {}
     all_program_ids = []
     for p in all_programs:
-        aid = p["athlete_id"]
-        athlete_programs.setdefault(aid, []).append(p)
+        athlete_programs.setdefault(p["athlete_id"], []).append(p)
         all_program_ids.append(p["program_id"])
 
-    # Batch: get all metrics
+    # 2. Program metrics
     metrics_docs = await db.program_metrics.find(
         {"program_id": {"$in": all_program_ids}},
         {"_id": 0, "program_id": 1, "pipeline_health_state": 1,
@@ -456,26 +474,45 @@ async def _enrich_roster_with_school_alerts(roster: list):
     ).to_list(500)
     metrics_map = {m["program_id"]: m for m in metrics_docs}
 
-    # Batch: get most recent timeline event per program
-    last_event_pipeline = [
-        {"$match": {"athlete_id": {"$in": athlete_ids},
-                     "program_id": {"$in": all_program_ids}}},
-        {"$sort": {"created_at": -1}},
-        {"$group": {"_id": {"athlete_id": "$athlete_id", "program_id": "$program_id"},
-                     "last_at": {"$first": "$created_at"}}},
-    ]
+    # 3. Last timeline events per program
     last_events = {}
-    async for doc in db.pod_action_events.aggregate(last_event_pipeline):
-        key = (doc["_id"]["athlete_id"], doc["_id"]["program_id"])
-        last_events[key] = doc["last_at"]
+    if all_program_ids:
+        pipeline_agg = [
+            {"$match": {"athlete_id": {"$in": athlete_ids},
+                         "program_id": {"$in": all_program_ids}}},
+            {"$sort": {"created_at": -1}},
+            {"$group": {"_id": {"athlete_id": "$athlete_id", "program_id": "$program_id"},
+                         "last_at": {"$first": "$created_at"}}},
+        ]
+        async for doc in db.pod_action_events.aggregate(pipeline_agg):
+            key = (doc["_id"]["athlete_id"], doc["_id"]["program_id"])
+            last_events[key] = doc["last_at"]
 
-    # For each athlete, count school-level alerts
+    # 4. Active pod_issues
+    active_issues = await db.pod_issues.find(
+        {"athlete_id": {"$in": athlete_ids}, "status": "active"},
+        {"_id": 0, "athlete_id": 1, "id": 1, "type": 1, "severity": 1, "title": 1}
+    ).to_list(100)
+
+    athlete_issues = {}
+    for issue in active_issues:
+        athlete_issues.setdefault(issue["athlete_id"], []).append(issue)
+
+    # ── Per-athlete: collect signals, compute statuses ──
+
     for athlete in roster:
         aid = athlete["id"]
-        programs = athlete_programs.get(aid, [])
-        alert_count = 0
-        alert_schools = []
+        all_signals = []
 
+        # Source 1: Decision engine interventions
+        # These are already pre-computed in athlete data via get_interventions()
+        for item in get_interventions():
+            if item["athlete_id"] == aid:
+                all_signals.append(normalize_decision_engine_signal(item))
+
+        # Source 2: School-level health alerts
+        programs = athlete_programs.get(aid, [])
+        school_alert_count = 0
         for p in programs:
             pid = p["program_id"]
             m = metrics_map.get(pid, {})
@@ -495,87 +532,37 @@ async def _enrich_roster_with_school_alerts(roster: list):
 
             health = classify_school_health(p, m, actual_days_since_contact=actual_days)
             if health in _ALERT_HEALTH_STATES:
-                alert_count += 1
-                alert_schools.append({
+                school_alert_count += 1
+                signal = normalize_school_alert_signal({
                     "university_name": p.get("university_name", ""),
                     "health": health,
+                    "recruiting_status": p.get("recruiting_status", ""),
                 })
+                all_signals.append(signal)
 
-        athlete["school_alerts"] = alert_count
-        athlete["school_alert_details"] = alert_schools[:3]  # Top 3 for display
+        # Source 3: Active pod_issues
+        issues = athlete_issues.get(aid, [])
+        for issue in issues:
+            all_signals.append(normalize_pod_issue_signal(issue))
 
-        # If athlete has school alerts but no existing category, promote them
-        if alert_count > 0 and not athlete.get("category"):
-            worst = alert_schools[0]
-            athlete["category"] = "school_alert"
-            athlete["badgeColor"] = "amber" if worst["health"] != "at_risk" else "red"
-            athlete["why"] = f"{alert_count} school{'s' if alert_count > 1 else ''} need{'s' if alert_count == 1 else ''} attention — {worst['university_name']} is {worst['health'].replace('_', ' ')}"
-            athlete["next_step"] = f"Review school alerts for {athlete['name'].split(' ')[0]}"
+        # ── Derive Journey State (always from pipeline progress) ──
+        journey_state = compute_journey_state(athlete)
 
+        # ── Derive Attention Status (from urgency-scored signals) ──
+        attention = derive_attention_status(all_signals)
 
+        # ── Set on athlete ──
+        athlete["journey_state"] = journey_state
+        athlete["attention_status"] = attention
+        athlete["school_alerts"] = school_alert_count
 
-# Pod issue type → dashboard category mapping
-_ISSUE_TO_CATEGORY = {
-    "momentum_drop": "momentum_drop",
-    "overdue_actions": "blocker",
-    "stalled_pipeline": "engagement_drop",
-    "missed_deadline": "deadline_proximity",
-}
-
-_ISSUE_BADGE_COLOR = {
-    "critical": "red",
-    "high": "amber",
-    "medium": "amber",
-    "low": "blue",
-}
-
-
-async def _enrich_roster_with_pod_issues(roster: list):
-    """Check active pod_issues per athlete and promote to dashboard category if needed.
-
-    This ensures real DB-backed issues (overdue actions, stalled pipelines, etc.)
-    surface on the dashboard even if the static decision engine didn't catch them.
-    """
-    if not roster:
-        return
-
-    athlete_ids = [a["id"] for a in roster]
-
-    # Batch: get all active pod_issues for all roster athletes
-    active_issues = await db.pod_issues.find(
-        {"athlete_id": {"$in": athlete_ids}, "status": "active"},
-        {"_id": 0, "athlete_id": 1, "type": 1, "severity": 1, "title": 1}
-    ).to_list(100)
-
-    # Group by athlete, keep highest severity
-    athlete_issues = {}
-    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-    for issue in active_issues:
-        aid = issue["athlete_id"]
-        existing = athlete_issues.get(aid)
-        if not existing or severity_order.get(issue.get("severity"), 99) < severity_order.get(existing.get("severity"), 99):
-            athlete_issues[aid] = issue
-
-    for athlete in roster:
-        aid = athlete["id"]
-        issue = athlete_issues.get(aid)
-        if not issue:
-            continue
-
-        athlete["active_pod_issue"] = {
-            "type": issue.get("type", ""),
-            "severity": issue.get("severity", "medium"),
-            "title": issue.get("title", ""),
-        }
-
-        # Promote to dashboard category if athlete has no category yet
-        if not athlete.get("category"):
-            mapped_cat = _ISSUE_TO_CATEGORY.get(issue["type"], "blocker")
-            athlete["category"] = mapped_cat
-            athlete["badgeColor"] = _ISSUE_BADGE_COLOR.get(issue.get("severity"), "amber")
-            athlete["why"] = issue.get("title", "Active issue requires attention")
-            name_first = athlete["name"].split(" ")[0]
-            athlete["next_step"] = f"Resolve {issue['type'].replace('_', ' ')} for {name_first}"
+        # Backward compat: set category from attention primary for sorting/filtering
+        if attention["primary"]:
+            athlete["category"] = attention["primary"]["nature"]
+            athlete["why"] = attention["primary"]["reason"]
+        else:
+            athlete["category"] = None
+            athlete["why"] = None
 
 
 
