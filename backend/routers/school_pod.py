@@ -912,6 +912,8 @@ async def update_school_action(athlete_id: str, program_id: str, action_id: str,
             update_dict["completed_by"] = current_user.get("name", "")
     if body.get("owner"):
         update_dict["owner"] = body["owner"]
+    if body.get("title"):
+        update_dict["title"] = body["title"]
 
     existing = await db.pod_actions.find_one({"id": action_id, "athlete_id": athlete_id})
     if not existing:
