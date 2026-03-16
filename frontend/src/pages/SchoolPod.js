@@ -470,149 +470,203 @@ export default function SchoolPod() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4 pb-28">
-        {/* ─── Hero: Current Issue or Program Status (#1) ─── */}
-        <div className="rounded-xl border relative overflow-hidden" style={{
-          backgroundColor: `${heroColor}06`,
-          borderColor: `${heroColor}20`,
-        }} data-testid="school-hero">
-          <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: heroColor }} />
-          <div className="px-4 py-3 sm:px-5 sm:py-4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: heroColor }}>
-                {heroLabel}
-              </span>
-            </div>
-            <h2 className="text-sm sm:text-base font-bold" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="school-hero-title">
-              {heroTitle}
-            </h2>
-            <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-              {heroDesc}
-            </p>
+      <main className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-5 pb-28">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-            {/* Quick stats — descriptive wording */}
-            <div className="flex flex-wrap gap-3 mt-3 text-[11px]" style={{ color: "var(--cm-text-2, #64748b)" }}>
-              {metrics.days_since_last_engagement != null && metrics.days_since_last_engagement > 0 && (
-                <span>No contact for <strong>{metrics.days_since_last_engagement} day{metrics.days_since_last_engagement !== 1 ? "s" : ""}</strong></span>
-              )}
-              {metrics.days_since_last_engagement === 0 && (
-                <span>Contacted <strong>today</strong></span>
-              )}
-              {metrics.reply_rate != null && (
-                <span>Reply rate: <strong>{Math.round(metrics.reply_rate * 100)}%</strong></span>
-              )}
-              {metrics.meaningful_interaction_count > 0 && (
-                <span>Interactions: <strong>{metrics.meaningful_interaction_count}</strong></span>
-              )}
-            </div>
-          </div>
-        </div>
+          {/* ═══ LEFT COLUMN — Actions & Workflow ═══ */}
+          <div className="lg:col-span-3 space-y-4">
 
-        {/* ─── Pipeline Status (#4) + Relationship Context (#6) ─── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <PipelineStatus pipeline={pipeline} />
-          <RelationshipContext relationship={relationship} />
-        </div>
-
-        {/* ─── School Coach Info ─── */}
-        {school_info && (school_info.primary_coach || school_info.coach_email) && (
-          <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="school-coach-info">
-            <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--cm-text-3)" }}>School Contact</p>
-            <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs" style={{ color: "var(--cm-text, #1e293b)" }}>
-              {school_info.primary_coach && <span>Coach: <strong>{school_info.primary_coach}</strong></span>}
-              {school_info.coach_email && (
-                <a href={`mailto:${school_info.coach_email}`} className="text-teal-600 hover:underline flex items-center gap-1">
-                  <Mail className="w-3 h-3" />{school_info.coach_email}
-                </a>
-              )}
-              {school_info.website && (
-                <a href={school_info.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline flex items-center gap-1">
-                  <ExternalLink className="w-3 h-3" />Website
-                </a>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ─── Signals with severity indicators (#2) ─── */}
-        {signals.length > 0 && (
-          <Section title="Signals" count={signals.length} testId="school-signals">
-            <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-              {signals.map(s => <SignalCard key={s.id} signal={s} />)}
-            </div>
-          </Section>
-        )}
-
-        {/* ─── Playbook (renamed from Action Plan, #3, #7) ─── */}
-        {playbook && (
-          <PlaybookSection
-            playbook={playbook}
-            initialChecked={playbook_checked_steps || []}
-            onSave={savePlaybookProgress}
-          />
-        )}
-
-        {/* ─── Tasks (renamed from Actions, #3) ─── */}
-        <Section
-          title="Tasks"
-          count={openActions.length || null}
-          testId="school-tasks"
-          action={
-            <button onClick={() => setShowAddTask(true)} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-700" data-testid="add-task-btn">
-              <Plus className="w-3 h-3" />Add
-            </button>
-          }
-        >
-          {showAddTask && <AddTaskForm onSubmit={addAction} onCancel={() => setShowAddTask(false)} />}
-          {openActions.length > 0 ? (
-            <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-              {openActions.map(a => <TaskItem key={a.id} action={a} onComplete={completeAction} />)}
-            </div>
-          ) : !showAddTask && (
-            <p className="text-xs py-3 text-center" style={{ color: "var(--cm-text-3)" }}>No open tasks for this school</p>
-          )}
-          {completedActions.length > 0 && (
-            <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--cm-text-3)" }}>Completed ({completedActions.length})</p>
-              {completedActions.slice(0, 3).map(a => (
-                <div key={a.id} className="flex items-center gap-2 py-1 text-[11px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                  <span className="line-through truncate">{a.title}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
-
-        {/* ─── Timeline ─── */}
-        <Section title="Timeline" count={allTimeline.length || null} testId="school-timeline">
-          {allTimeline.length > 0 ? (
-            <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-              {allTimeline.map((e, i) => <TimelineItem key={e.id || i} event={e} />)}
-            </div>
-          ) : (
-            <p className="text-xs py-3 text-center" style={{ color: "var(--cm-text-3)" }}>No activity recorded yet</p>
-          )}
-        </Section>
-
-        {/* ─── Stage History ─── */}
-        {stage_history.length > 0 && (
-          <Section title="Stage History" count={stage_history.length} testId="school-stage-history">
-            <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-              {stage_history.map((h, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 text-xs">
-                  <span style={{ color: "var(--cm-text-3)" }}>{h.from_stage}</span>
-                  <span>&#8594;</span>
-                  <span className="font-semibold" style={{ color: "var(--cm-text)" }}>{h.to_stage}</span>
-                  {h.note && <span className="text-[10px] truncate flex-1" style={{ color: "var(--cm-text-3)" }}>— {h.note}</span>}
-                  <span className="text-[10px] shrink-0" style={{ color: "var(--cm-text-3)" }}>
-                    {h.created_at ? new Date(h.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+            {/* Hero: Current Issue */}
+            <div className="rounded-xl border relative overflow-hidden" style={{
+              backgroundColor: `${heroColor}06`,
+              borderColor: `${heroColor}20`,
+            }} data-testid="school-hero">
+              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: heroColor }} />
+              <div className="px-4 py-3 sm:px-5 sm:py-4">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: heroColor }}>
+                    {heroLabel}
                   </span>
                 </div>
-              ))}
+                <h2 className="text-sm sm:text-base font-bold" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="school-hero-title">
+                  {heroTitle}
+                </h2>
+                <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                  {heroDesc}
+                </p>
+                <div className="flex flex-wrap gap-3 mt-3 text-[11px]" style={{ color: "var(--cm-text-2, #64748b)" }}>
+                  {metrics.days_since_last_engagement != null && metrics.days_since_last_engagement > 0 && (
+                    <span>No contact for <strong>{metrics.days_since_last_engagement} day{metrics.days_since_last_engagement !== 1 ? "s" : ""}</strong></span>
+                  )}
+                  {metrics.days_since_last_engagement === 0 && (
+                    <span>Contacted <strong>today</strong></span>
+                  )}
+                  {metrics.reply_rate != null && (
+                    <span>Reply rate: <strong>{Math.round(metrics.reply_rate * 100)}%</strong></span>
+                  )}
+                  {metrics.meaningful_interaction_count > 0 && (
+                    <span>Interactions: <strong>{metrics.meaningful_interaction_count}</strong></span>
+                  )}
+                </div>
+              </div>
             </div>
-          </Section>
-        )}
+
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap gap-2" data-testid="quick-actions">
+              <button
+                onClick={() => setActiveAction("email")}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors hover:bg-blue-50"
+                style={{ color: "#2563eb", borderColor: "#bfdbfe", backgroundColor: "rgba(59,130,246,0.05)" }}
+                data-testid="quick-btn-email"
+              >
+                <Mail className="w-3.5 h-3.5" /> Send Email
+              </button>
+              <button
+                onClick={() => setActiveAction("log")}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors hover:bg-emerald-50"
+                style={{ color: "#059669", borderColor: "#a7f3d0", backgroundColor: "rgba(5,150,105,0.05)" }}
+                data-testid="quick-btn-log"
+              >
+                <ClipboardCheck className="w-3.5 h-3.5" /> Log Interaction
+              </button>
+              <button
+                onClick={() => setActiveAction("followup")}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors hover:bg-orange-50"
+                style={{ color: "#d97706", borderColor: "#fde68a", backgroundColor: "rgba(217,119,6,0.05)" }}
+                data-testid="quick-btn-followup"
+              >
+                <Clock className="w-3.5 h-3.5" /> Schedule Follow-up
+              </button>
+              <button
+                onClick={() => navigate(`/advocacy/new?athlete=${athleteId}&schoolName=${encodeURIComponent(program.university_name)}`)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors hover:bg-amber-50"
+                style={{ color: "#92400e", borderColor: "#fde68a", backgroundColor: "rgba(146,64,14,0.05)" }}
+                data-testid="quick-btn-advocate"
+              >
+                <Megaphone className="w-3.5 h-3.5" /> Advocate
+              </button>
+              <button
+                onClick={() => setActiveAction("escalate")}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border transition-colors hover:bg-red-50"
+                style={{ color: "#dc2626", borderColor: "#fecaca", backgroundColor: "rgba(220,38,38,0.05)" }}
+                data-testid="quick-btn-escalate"
+              >
+                <Flag className="w-3.5 h-3.5" /> Escalate
+              </button>
+            </div>
+
+            {/* Playbook */}
+            {playbook && (
+              <PlaybookSection
+                playbook={playbook}
+                initialChecked={playbook_checked_steps || []}
+                onSave={savePlaybookProgress}
+              />
+            )}
+
+            {/* Tasks */}
+            <Section
+              title="Tasks"
+              count={openActions.length || null}
+              testId="school-tasks"
+              action={
+                <button onClick={() => setShowAddTask(true)} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-700" data-testid="add-task-btn">
+                  <Plus className="w-3 h-3" />Add
+                </button>
+              }
+            >
+              {showAddTask && <AddTaskForm onSubmit={addAction} onCancel={() => setShowAddTask(false)} />}
+              {openActions.length > 0 ? (
+                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+                  {openActions.map(a => <TaskItem key={a.id} action={a} onComplete={completeAction} />)}
+                </div>
+              ) : !showAddTask && (
+                <p className="text-xs py-3 text-center" style={{ color: "var(--cm-text-3)" }}>No open tasks</p>
+              )}
+              {completedActions.length > 0 && (
+                <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--cm-text-3)" }}>Completed ({completedActions.length})</p>
+                  {completedActions.slice(0, 3).map(a => (
+                    <div key={a.id} className="flex items-center gap-2 py-1 text-[11px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                      <span className="line-through truncate">{a.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Section>
+          </div>
+
+          {/* ═══ RIGHT COLUMN — Context & History ═══ */}
+          <div className="lg:col-span-2 space-y-4">
+
+            {/* School Contact */}
+            {school_info && (school_info.primary_coach || school_info.coach_email) && (
+              <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="school-coach-info">
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--cm-text-3)" }}>School Contact</p>
+                <div className="flex flex-col gap-1.5 text-xs" style={{ color: "var(--cm-text, #1e293b)" }}>
+                  {school_info.primary_coach && <span>Coach: <strong>{school_info.primary_coach}</strong></span>}
+                  {school_info.coach_email && (
+                    <a href={`mailto:${school_info.coach_email}`} className="text-teal-600 hover:underline flex items-center gap-1">
+                      <Mail className="w-3 h-3" />{school_info.coach_email}
+                    </a>
+                  )}
+                  {school_info.coach_phone && (
+                    <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{school_info.coach_phone}</span>
+                  )}
+                  {school_info.website && (
+                    <a href={school_info.website} target="_blank" rel="noreferrer" className="text-teal-600 hover:underline flex items-center gap-1">
+                      <ExternalLink className="w-3 h-3" />Website
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Signals */}
+            {signals.length > 0 && (
+              <Section title="Signals" count={signals.length} testId="school-signals">
+                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+                  {signals.map(s => <SignalCard key={s.id} signal={s} />)}
+                </div>
+              </Section>
+            )}
+
+            {/* Relationship + Pipeline */}
+            <RelationshipContext relationship={relationship} />
+            <PipelineStatus pipeline={pipeline} />
+
+            {/* Timeline */}
+            <Section title="Timeline" count={allTimeline.length || null} testId="school-timeline">
+              {allTimeline.length > 0 ? (
+                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+                  {allTimeline.map((e, i) => <TimelineItem key={e.id || i} event={e} />)}
+                </div>
+              ) : (
+                <p className="text-xs py-3 text-center" style={{ color: "var(--cm-text-3)" }}>No activity recorded yet</p>
+              )}
+            </Section>
+
+            {/* Stage History */}
+            {stage_history.length > 0 && (
+              <Section title="Stage History" count={stage_history.length} testId="school-stage-history">
+                <div className="divide-y" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
+                  {stage_history.map((h, i) => (
+                    <div key={i} className="flex items-center gap-2 py-2 text-xs flex-wrap">
+                      <span style={{ color: "var(--cm-text-3)" }}>{h.from_stage}</span>
+                      <span>&#8594;</span>
+                      <span className="font-semibold" style={{ color: "var(--cm-text)" }}>{h.to_stage}</span>
+                      {h.note && <span className="text-[10px] truncate" style={{ color: "var(--cm-text-3)" }}>— {h.note}</span>}
+                      <span className="text-[10px] ml-auto shrink-0" style={{ color: "var(--cm-text-3)" }}>
+                        {h.created_at ? new Date(h.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+          </div>
+        </div>
       </main>
 
       {/* Action Bar */}
