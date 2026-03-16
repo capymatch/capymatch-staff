@@ -57,6 +57,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - The 999-day fallback is clamped and never surfaces in UI
   - Contact health shows "Not yet contacted — school just added to pipeline" for early stages
   - Frontend guards against displaying days >= 999
+- **Dashboard-to-School-Pod Alert Consistency**
+  - Added async `_enrich_roster_with_school_alerts()` in mission_control.py
+  - Dashboard now queries `programs`, `program_metrics`, and `pod_action_events` per athlete
+  - School-level alerts (at_risk, cooling_off, needs_attention) surface on dashboard roster
+  - New `school_alert` category auto-promotes athletes without existing categories
+  - Frontend RosterSection shows "N schools need attention" in red for affected athletes
+  - SupportPod filter includes cooling_off and needs_follow_up states in "needs attention" count
+  - 15/15 backend tests passed, all frontend verified
 
 ---
 

@@ -381,7 +381,7 @@ function SupportPod() {
   }
 
   const { athlete, current_issue, recruiting_signals, pod_health, profile_completeness } = data;
-  const needsAttention = schools.filter(s => s.health === "at_risk" || s.health === "needs_attention");
+  const needsAttention = schools.filter(s => ["at_risk", "needs_attention", "cooling_off", "needs_follow_up"].includes(s.health));
 
   // Health badge config
   const healthMap = {
