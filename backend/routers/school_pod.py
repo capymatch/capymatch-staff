@@ -424,6 +424,11 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
         health = classify_school_health(p, m, actual_days_since_contact=actual_days, playbook_complete=pb_complete)
         health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
 
+        # Suppress overdue count for early-stage schools — no outreach to be "overdue" on
+        recruiting_status = (p.get("recruiting_status") or "").strip()
+        is_early = recruiting_status in ("Prospect", "Not Contacted", "Added", "")
+        overdue_count = 0 if is_early else m.get("overdue_followups", 0)
+
         schools.append({
             "program_id": pid,
             "university_name": p.get("university_name", ""),
@@ -445,7 +450,7 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
             "engagement_trend": m.get("engagement_trend", ""),
             "days_since_last_engagement": actual_days if actual_days is not None else m.get("days_since_last_engagement"),
             "reply_rate": m.get("reply_rate"),
-            "overdue_followups": m.get("overdue_followups", 0),
+            "overdue_followups": overdue_count,
             "open_actions": action_counts.get(pid, 0),
         })
 
@@ -733,6 +738,7 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     # This is the single source of truth the frontend should use
     remaining_critical = any(s["priority"] == "critical" for s in signals)
     remaining_high = any(s["priority"] == "high" for s in signals)
+    remaining_medium = any(s["priority"] == "medium" for s in signals)
     if current_issue:
         hero_status = {"label": "Active Issue", "color": "#dc2626", "severity": "critical"}
     elif remaining_critical:
@@ -743,6 +749,8 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         hero_status = {"label": "At Risk", "color": "#ef4444", "severity": "high"}
     elif health in ("needs_attention", "needs_follow_up", "cooling_off"):
         hero_status = {"label": "Needs Attention", "color": "#d97706", "severity": "medium"}
+    elif remaining_medium:
+        hero_status = {"label": "Monitor", "color": "#f59e0b", "severity": "medium"}
     elif health in ("awaiting_reply",):
         hero_status = {"label": "Awaiting Reply", "color": "#3b82f6", "severity": "info"}
     else:
