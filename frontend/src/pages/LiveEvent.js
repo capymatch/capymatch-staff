@@ -475,33 +475,31 @@ function LiveEvent() {
       </div>
 
       {/* Log buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => logSignal(false)}
           disabled={saving || !selectedAthlete || !signalType || !noteText.trim()}
           data-testid="log-to-pod-btn"
-          className="flex-1 py-3 bg-gray-700 text-gray-100 font-bold text-sm rounded-lg hover:bg-gray-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-gray-600"
+          className="flex-1 py-3 bg-gray-700 text-gray-100 font-bold text-xs sm:text-sm rounded-lg hover:bg-gray-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-gray-600"
         >
-          <FileText className="w-4 h-4" /> LOG TO POD
+          <FileText className="w-4 h-4 shrink-0" /> LOG TO POD
         </button>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => logSignal(true)}
-            disabled={saving || !selectedAthlete || !signalType || !noteText.trim()}
-            data-testid="send-to-athlete-btn"
-            className="flex-1 py-3 bg-white text-gray-900 font-bold text-sm rounded-lg hover:bg-gray-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <Send className="w-4 h-4" /> SEND TO ATHLETE
-          </button>
-          <button
-            onClick={clearForm}
-            data-testid="clear-form-btn"
-            className="p-3 bg-gray-800 text-gray-400 rounded-lg hover:bg-gray-700 hover:text-gray-200 transition-colors border border-gray-700 shrink-0"
-            title="Clear form (Esc)"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        <button
+          onClick={() => logSignal(true)}
+          disabled={saving || !selectedAthlete || !signalType || !noteText.trim()}
+          data-testid="send-to-athlete-btn"
+          className="flex-1 py-3 bg-white text-gray-900 font-bold text-xs sm:text-sm rounded-lg hover:bg-gray-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <Send className="w-4 h-4 shrink-0" /> SEND TO ATHLETE
+        </button>
+        <button
+          onClick={clearForm}
+          data-testid="clear-form-btn"
+          className="p-3 bg-gray-800 text-gray-400 rounded-lg hover:bg-gray-700 hover:text-gray-200 transition-colors border border-gray-700 shrink-0"
+          title="Clear form (Esc)"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
