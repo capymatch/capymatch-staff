@@ -440,7 +440,7 @@ function EventPrep() {
                       </div>
                     )}
                     {a.blockers?.length > 0 && (
-                      <p className="text-[11px] text-red-600 mt-1 ml-4">{a.blockers[0].impact}</p>
+                      <p className="text-[11px] text-red-600 mt-1 ml-4">{a.blockers[0].why_this_surfaced || a.blockers[0].recommended_action}</p>
                     )}
                     </div>
                   </div>
