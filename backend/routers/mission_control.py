@@ -29,6 +29,10 @@ from support_pod import (
 )
 from db_client import db
 
+
+# Health states that count as "alerts" on the dashboard
+_ALERT_HEALTH_STATES = {"at_risk", "cooling_off", "needs_attention", "needs_follow_up"}
+
 router = APIRouter()
 
 
@@ -115,7 +119,13 @@ async def get_mission_control_data(current_user: dict = get_current_user_dep()):
     if role == "director":
         return await _build_director_response(alerts, attention, signals, events)
     else:
-        return _build_coach_response(current_user, alerts, attention, signals, events)
+        response = _build_coach_response(current_user, alerts, attention, signals, events)
+        # Enrich roster with school-level alerts from DB (async)
+        await _enrich_roster_with_school_alerts(response.get("myRoster", []))
+        # Recount needing_action after enrichment (school alerts may promote athletes)
+        needing_action = [a for a in response["myRoster"] if a.get("category")]
+        response["todays_summary"]["needingAction"] = len(needing_action)
+        return response
 
 
 async def _build_director_response(alerts, attention, signals, events):
@@ -404,6 +414,102 @@ def _build_coach_response(user, alerts, attention, signals, events):
     }
 
 
+async def _enrich_roster_with_school_alerts(roster: list):
+    """Add school-level alert counts to each athlete in the roster.
+
+    Queries target_programs, program_metrics, and pod_action_events
+    to compute how many schools are in at-risk/needs-attention states.
+    Uses the same classify_school_health logic as the school pod endpoints.
+    """
+    from routers.school_pod import classify_school_health
+
+    if not roster:
+        return
+
+    athlete_ids = [a["id"] for a in roster]
+    now = datetime.now(timezone.utc)
+
+    # Batch: get all target programs for all athletes
+    all_programs = await db.programs.find(
+        {"athlete_id": {"$in": athlete_ids}},
+        {"_id": 0, "athlete_id": 1, "program_id": 1, "university_name": 1,
+         "recruiting_status": 1, "reply_status": 1}
+    ).to_list(500)
+
+    # Group programs by athlete
+    athlete_programs = {}
+    all_program_ids = []
+    for p in all_programs:
+        aid = p["athlete_id"]
+        athlete_programs.setdefault(aid, []).append(p)
+        all_program_ids.append(p["program_id"])
+
+    # Batch: get all metrics
+    metrics_docs = await db.program_metrics.find(
+        {"program_id": {"$in": all_program_ids}},
+        {"_id": 0, "program_id": 1, "pipeline_health_state": 1,
+         "overdue_followups": 1, "engagement_freshness_label": 1,
+         "days_since_last_engagement": 1}
+    ).to_list(500)
+    metrics_map = {m["program_id"]: m for m in metrics_docs}
+
+    # Batch: get most recent timeline event per program
+    last_event_pipeline = [
+        {"$match": {"athlete_id": {"$in": athlete_ids},
+                     "program_id": {"$in": all_program_ids}}},
+        {"$sort": {"created_at": -1}},
+        {"$group": {"_id": {"athlete_id": "$athlete_id", "program_id": "$program_id"},
+                     "last_at": {"$first": "$created_at"}}},
+    ]
+    last_events = {}
+    async for doc in db.pod_action_events.aggregate(last_event_pipeline):
+        key = (doc["_id"]["athlete_id"], doc["_id"]["program_id"])
+        last_events[key] = doc["last_at"]
+
+    # For each athlete, count school-level alerts
+    for athlete in roster:
+        aid = athlete["id"]
+        programs = athlete_programs.get(aid, [])
+        alert_count = 0
+        alert_schools = []
+
+        for p in programs:
+            pid = p["program_id"]
+            m = metrics_map.get(pid, {})
+
+            # Compute actual days since contact
+            last_evt = last_events.get((aid, pid))
+            actual_days = None
+            if last_evt:
+                try:
+                    if isinstance(last_evt, str):
+                        lc_date = datetime.fromisoformat(last_evt.replace("Z", "+00:00"))
+                    else:
+                        lc_date = last_evt if last_evt.tzinfo else last_evt.replace(tzinfo=timezone.utc)
+                    actual_days = (now - lc_date).days
+                except Exception:
+                    pass
+
+            health = classify_school_health(p, m, actual_days_since_contact=actual_days)
+            if health in _ALERT_HEALTH_STATES:
+                alert_count += 1
+                alert_schools.append({
+                    "university_name": p.get("university_name", ""),
+                    "health": health,
+                })
+
+        athlete["school_alerts"] = alert_count
+        athlete["school_alert_details"] = alert_schools[:3]  # Top 3 for display
+
+        # If athlete has school alerts but no existing category, promote them
+        if alert_count > 0 and not athlete.get("category"):
+            worst = alert_schools[0]
+            athlete["category"] = "school_alert"
+            athlete["badgeColor"] = "amber" if worst["health"] != "at_risk" else "red"
+            athlete["why"] = f"{alert_count} school{'s' if alert_count > 1 else ''} need{'s' if alert_count == 1 else ''} attention — {worst['university_name']} is {worst['health'].replace('_', ' ')}"
+            athlete["next_step"] = f"Review school alerts for {athlete['name'].split(' ')[0]}"
+
+
 def _build_priorities_queue(needing_action, events, alerts):
     """Build a structured priority queue for the coach's work surface."""
     priorities = []
@@ -422,10 +528,10 @@ def _build_priorities_queue(needing_action, events, alerts):
                 "cta_path": f"/support-pods/{a['id']}",
             })
 
-    # Follow-up needed: engagement drop, deadline, readiness
+    # Follow-up needed: engagement drop, deadline, readiness, school alerts
     for a in needing_action:
         cat = a.get("category", "")
-        if cat in ("engagement_drop", "deadline_proximity", "readiness_issue"):
+        if cat in ("engagement_drop", "deadline_proximity", "readiness_issue", "school_alert"):
             priorities.append({
                 "urgency": "follow_up",
                 "athlete_id": a["id"],
@@ -469,6 +575,7 @@ def _category_to_action(category):
         "engagement_drop": "Re-engage athlete",
         "ownership_gap": "Assign coach ownership",
         "readiness_issue": "Review readiness gaps",
+        "school_alert": "Review school alerts",
     }.get(category, "Review athlete status")
 
 
@@ -483,6 +590,7 @@ def _category_to_reason(category, athlete):
         "engagement_drop": f"Engagement declining for {name}",
         "ownership_gap": f"{name} has no assigned primary coach",
         "readiness_issue": f"{name} has readiness gaps to address",
+        "school_alert": f"{name} has schools needing attention",
     }.get(category, f"{name} needs attention")
 
 

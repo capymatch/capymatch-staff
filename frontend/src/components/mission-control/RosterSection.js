@@ -10,6 +10,8 @@ const CATEGORY_CONFIG = {
   engagement_drop: { icon: AlertTriangle, label: "Engagement Drop", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
   ownership_gap: { icon: Users, label: "Unassigned", color: "#3b82f6", bg: "rgba(59,130,246,0.08)" },
   readiness_issue: { icon: Target, label: "Readiness Issue", color: "#8b5cf6", bg: "rgba(139,92,246,0.08)" },
+  event_follow_up: { icon: AlertTriangle, label: "Follow-up", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
+  school_alert: { icon: AlertTriangle, label: "School Alert", color: "#ef4444", bg: "rgba(239,68,68,0.08)" },
 };
 
 const INITIALS_COLORS = ["#0d9488", "#6366f1", "#2563eb", "#dc2626", "#d97706", "#7c3aed", "#059669"];
@@ -91,6 +93,13 @@ function AthleteRow({ athlete, isLast }) {
         {/* Row 2: Why (reason) */}
         {athlete.why && (
           <p className="text-[10px] sm:text-[11px] mt-0.5 truncate" style={{ color: "var(--cm-text-3)" }}>{athlete.why}</p>
+        )}
+
+        {/* Row 2b: School alerts count */}
+        {athlete.school_alerts > 0 && !athlete.why?.includes("school") && (
+          <p className="text-[10px] sm:text-[11px] mt-0.5" style={{ color: "#ef4444" }}>
+            {athlete.school_alerts} school{athlete.school_alerts !== 1 ? "s" : ""} need{athlete.school_alerts === 1 ? "s" : ""} attention
+          </p>
         )}
 
         {/* Row 3: Next action - visually prominent */}
