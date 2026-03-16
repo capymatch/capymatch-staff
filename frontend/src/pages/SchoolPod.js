@@ -119,6 +119,7 @@ function AddTaskModal({ open, onOpenChange, onSubmit }) {
   const [title, setTitle] = useState("");
   const [assignToAthlete, setAssignToAthlete] = useState(false);
   const [actionType, setActionType] = useState("general");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -132,10 +133,11 @@ function AddTaskModal({ open, onOpenChange, onSubmit }) {
 
   const inputCls = "w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 transition-colors";
   const inputStyle = { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" };
+  const selectedLabel = ACTION_TYPES.find(t => t.value === actionType)?.label || "General Task";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} data-testid="add-task-overlay" onClick={() => onOpenChange(false)}>
-      <div className="w-full max-w-md rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+      <div className="w-full max-w-md rounded-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
         onClick={e => e.stopPropagation()}
         style={{ background: "#161b25", border: "1px solid rgba(46, 196, 182, 0.15)", boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(26,138,128,0.08)", maxHeight: "90vh", colorScheme: "dark" }}
         data-testid="add-task-modal">
@@ -152,7 +154,7 @@ function AddTaskModal({ open, onOpenChange, onSubmit }) {
           <p className="text-[11px] text-slate-500 mt-1">Add a task for this school relationship.</p>
         </div>
 
-        <div className="p-5 space-y-3 overflow-y-auto flex-1">
+        <div className="p-5 space-y-3 flex-1">
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>Task</label>
             <input
@@ -184,15 +186,38 @@ function AddTaskModal({ open, onOpenChange, onSubmit }) {
                 </span>
               </label>
               {assignToAthlete && (
-                <select
-                  value={actionType}
-                  onChange={e => setActionType(e.target.value)}
-                  className="text-xs px-2 py-1.5 rounded-md border outline-none"
-                  style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" }}
-                  data-testid="task-type-select"
-                >
-                  {ACTION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
+                <div className="relative" data-testid="task-type-select">
+                  <button
+                    type="button"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border outline-none transition-colors hover:border-teal-600/40"
+                    style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: dropdownOpen ? "rgba(46,196,182,0.4)" : "rgba(255,255,255,0.1)", color: "#e2e8f0" }}
+                  >
+                    {selectedLabel}
+                    <ChevronDown className="w-3 h-3" style={{ color: "rgba(255,255,255,0.4)" }} />
+                  </button>
+                  {dropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-48 rounded-lg border shadow-xl overflow-hidden z-10"
+                      style={{ backgroundColor: "#1e2535", borderColor: "rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
+                      {ACTION_TYPES.map(t => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => { setActionType(t.value); setDropdownOpen(false); }}
+                          className="w-full text-left px-3 py-2 text-xs transition-colors"
+                          style={{
+                            color: t.value === actionType ? "#5eead4" : "rgba(255,255,255,0.6)",
+                            backgroundColor: t.value === actionType ? "rgba(46,196,182,0.1)" : "transparent",
+                          }}
+                          onMouseEnter={e => { if (t.value !== actionType) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; }}
+                          onMouseLeave={e => { if (t.value !== actionType) e.currentTarget.style.backgroundColor = "transparent"; }}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
