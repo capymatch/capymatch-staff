@@ -664,7 +664,34 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     }
     current_stage = program.get("recruiting_status", "Prospect")
     stage_idx = status_to_stage_idx.get(current_stage, 0)
-    stage_days = (metrics or {}).get("stage_stalled_days", 0)
+
+    # Compute stage_days: how long in the CURRENT stage
+    # For contacted/initial contact stages, use initial_contact_sent
+    # For other stages, use stage_entered_at or fall back to initial_contact_sent/created_at
+    stage_days = 0
+    if stage_idx >= 1 and program.get("initial_contact_sent"):
+        # For any stage past Prospect, the initial_contact_sent is the baseline
+        # But stage_entered_at should win if it's AFTER initial_contact_sent (means a real stage transition)
+        stage_date_str = program.get("initial_contact_sent")
+        entered_at = program.get("stage_entered_at")
+        if entered_at and stage_date_str:
+            try:
+                entered_dt = datetime.fromisoformat(str(entered_at).replace("Z", "+00:00"))
+                contact_dt = datetime.fromisoformat(str(stage_date_str).replace("Z", "+00:00"))
+                # Use stage_entered_at only if it's after initial contact (real stage transition)
+                if entered_dt > contact_dt:
+                    stage_date_str = entered_at
+            except Exception:
+                pass
+    else:
+        stage_date_str = program.get("stage_entered_at") or program.get("created_at")
+
+    if stage_date_str:
+        try:
+            stage_date = datetime.fromisoformat(str(stage_date_str).replace("Z", "+00:00"))
+            stage_days = max(0, (datetime.now(timezone.utc) - stage_date).days)
+        except Exception:
+            pass
 
     # Now compute signals with actual contact context
     signals = compute_school_signals(program, metrics, actual_days_since_contact=actual_days)
