@@ -493,19 +493,36 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     reply_count = round(rr * outbound_count)
     response_detail = f"{reply_count} / {outbound_count} replies"
 
-    # Contact health message
-    if days_eng == 0:
-        contact_health = "Contacted today"
-    elif days_eng <= 3:
-        contact_health = f"Recently active — {days_eng} day{'s' if days_eng != 1 else ''} ago"
-    elif days_eng <= 7:
-        contact_health = f"Awaiting reply — {days_eng} days"
-    elif days_eng <= 14:
-        contact_health = f"Follow-up recommended — {days_eng} days since last contact"
-    elif days_eng <= 30:
-        contact_health = f"Going cold — {days_eng} days without contact"
+    # Contact health message — prefer actual last_contact date over metrics fallback
+    if last_contact:
+        try:
+            from datetime import datetime as dt_cls
+            lc = last_contact if isinstance(last_contact, str) else str(last_contact)
+            lc_date = dt_cls.fromisoformat(lc.replace("Z", "+00:00")) if isinstance(lc, str) else lc
+            actual_days = (datetime.now(timezone.utc) - lc_date).days if hasattr(lc_date, 'day') else days_eng
+        except Exception:
+            actual_days = days_eng
     else:
-        contact_health = f"No contact for {days_eng} days — re-engagement needed"
+        actual_days = days_eng
+
+    # Override the 999 fallback
+    if actual_days >= 999 and last_contact:
+        actual_days = 0  # We have a contact but can't parse date — show as recent
+
+    if actual_days == 0:
+        contact_health = "Contacted today"
+    elif actual_days <= 3:
+        contact_health = f"Recently active — {actual_days} day{'s' if actual_days != 1 else ''} ago"
+    elif actual_days <= 7:
+        contact_health = f"Awaiting reply — {actual_days} days"
+    elif actual_days <= 14:
+        contact_health = f"Follow-up recommended — {actual_days} days since last contact"
+    elif actual_days <= 30:
+        contact_health = f"Going cold — {actual_days} days without contact"
+    elif last_contact:
+        contact_health = f"Re-engagement needed — {actual_days} days since last contact"
+    else:
+        contact_health = "No recorded contact yet"
 
     # Pipeline stage context
     status_to_stage_idx = {
