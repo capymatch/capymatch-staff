@@ -104,6 +104,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Removed old `pod_health` usage from SupportPod header, now derives from `status_intelligence.attention`
   - Internal keys (`momentum_drop`, `engagement_drop`) preserved for backend compatibility
   - Key files: `NeedsAttentionCard.js`, `ProgramIntelligence.js`, `AthletePipelinePanel.js`, `CoachView.js`, `RosterPage.js`
+- **Task Row Redesign (2026-03-16)**
+  - Replaced always-visible row CTAs with clean, scannable task rows
+  - "+ Add" modal is the primary place for task creation, owner assignment, and type selection
+  - Owner badges: Coach (indigo), Athlete (teal), Director (purple)
+  - Overflow menu (⋯) on hover with contextual actions: Edit, Mark Complete, Reassign, Follow Up
+  - Inline edit mode for task title (Save/Esc)
+  - OVERDUE badge + visible "Nudge" CTA only for overdue athlete-owned tasks
+  - Custom dark-themed dropdown replacing native `<select>` in Add Task modal
+  - Backend PATCH endpoint extended to support title updates
+  - Key files: `SchoolPod.js` (TaskItem, AddTaskModal), `school_pod.py`
 
 ---
 
