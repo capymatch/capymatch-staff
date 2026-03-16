@@ -567,7 +567,7 @@ export default function SchoolPod() {
                 </p>
                 <div className="flex flex-wrap gap-3 mt-3 text-[11px]" style={{ color: "var(--cm-text-2, #64748b)" }}>
                   {metrics.days_since_last_engagement != null && metrics.days_since_last_engagement > 0 && (
-                    <span>No contact for <strong>{metrics.days_since_last_engagement} day{metrics.days_since_last_engagement !== 1 ? "s" : ""}</strong></span>
+                    <span>Last contact <strong>{metrics.days_since_last_engagement} day{metrics.days_since_last_engagement !== 1 ? "s" : ""} ago</strong></span>
                   )}
                   {metrics.days_since_last_engagement === 0 && (
                     <span>Contacted <strong>today</strong></span>

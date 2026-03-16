@@ -71,14 +71,18 @@ def compute_school_signals(program, metrics):
     reply_rate = metrics.get("reply_rate")
     stalled = metrics.get("stage_stalled_days") or 0
     trend = metrics.get("engagement_trend", "")
-    days_since = metrics.get("days_since_last_engagement") or 0
+    days_since = metrics.get("days_since_last_engagement")
 
     if overdue > 0:
+        if days_since and days_since > 0:
+            overdue_title = f"Follow-up overdue — no response for {days_since} day{'s' if days_since != 1 else ''}"
+        else:
+            overdue_title = f"Follow-up overdue — {overdue} action{'s' if overdue > 1 else ''} past due"
         signals.append({
             "id": "sig_overdue",
             "type": "alert",
             "priority": "critical",
-            "title": f"Follow-up overdue — no response for {days_since} day{'s' if days_since != 1 else ''}",
+            "title": overdue_title,
             "description": f"{overdue} follow-up action{'s' if overdue > 1 else ''} past due. This relationship needs immediate attention.",
             "recommendation": "Send a follow-up message or log a recent interaction.",
         })
@@ -94,7 +98,7 @@ def compute_school_signals(program, metrics):
             "recommendation": "Consider a different outreach approach or escalate to director.",
         })
 
-    if freshness == "no_recent_engagement" and days_since > 7:
+    if freshness == "no_recent_engagement" and (days_since or 0) > 7:
         signals.append({
             "id": "sig_stale",
             "type": "warning",
