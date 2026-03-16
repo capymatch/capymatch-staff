@@ -149,7 +149,7 @@ function AppRoutes() {
       <Route path="/athlete-settings" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSettingsPage /></ProtectedRoute>} />
       <Route path="/account" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteAccountPage /></ProtectedRoute>} />
       <Route path="/billing" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteBillingPage /></ProtectedRoute>} />
-      <Route path="/spotlight" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><SocialSpotlight /></ProtectedRoute>} />
+      <Route path="/spotlight" element={<ProtectedRoute allowedRoles={["athlete","parent","club_coach","director"]}><SocialSpotlight /></ProtectedRoute>} />
 
       {/* ── Public routes (no auth) ── */}
       <Route path="/p/:slug" element={<AthletePublicProfile />} />

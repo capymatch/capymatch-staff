@@ -22,12 +22,32 @@ from fastapi import APIRouter, HTTPException
 
 from db_client import db
 from auth_middleware import get_current_user_dep
+from services.ownership import get_visible_athlete_ids
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/social-spotlight", tags=["social-spotlight"])
 
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY")
 CACHE_TTL_HOURS = 6
+
+
+async def _get_tenant_ids(user: dict) -> list[str]:
+    """Get all tenant_ids the user can see, using the ownership model."""
+    role = user.get("role", "")
+    if role in ("athlete", "parent"):
+        athlete = await db.athletes.find_one({"user_id": user["id"]}, {"_id": 0, "tenant_id": 1})
+        if athlete and athlete.get("tenant_id"):
+            return [athlete["tenant_id"]]
+        return [f"tenant-{user['id']}"]
+    # Coach or director: get athletes they can see
+    visible_ids = get_visible_athlete_ids(user)
+    if not visible_ids:
+        return []
+    athletes = await db.athletes.find(
+        {"id": {"$in": list(visible_ids)}},
+        {"_id": 0, "tenant_id": 1}
+    ).to_list(200)
+    return list({a["tenant_id"] for a in athletes if a.get("tenant_id")})
 
 
 # ── Helper: extract channel identifier from URL ──
@@ -52,13 +72,6 @@ def parse_youtube_url(url: str):
         custom = path.split("/c/")[1].split("/")[0]
         return "username", custom
     return None, None
-
-
-async def _get_tenant_id(user_id: str):
-    athlete = await db.athletes.find_one({"user_id": user_id}, {"_id": 0, "tenant_id": 1})
-    if athlete and athlete.get("tenant_id"):
-        return athlete["tenant_id"]
-    return f"tenant-{user_id}"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -313,12 +326,15 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
     Uses YouTube API if YOUTUBE_API_KEY is set, otherwise falls back to RSS feeds.
     Results are cached per (tenant_id, school_id) for 6 hours.
     """
-    tenant_id = await _get_tenant_id(current_user["id"])
+    tenant_ids = await _get_tenant_ids(current_user)
+    if not tenant_ids:
+        return {"videos": [], "school_count": 0, "total_videos": 0}
+
     use_api = bool(YOUTUBE_API_KEY)
     yt = _get_youtube_client() if use_api else None
 
     programs = await db.programs.find(
-        {"tenant_id": tenant_id, "board_group": {"$ne": "archived"}},
+        {"tenant_id": {"$in": tenant_ids}, "board_group": {"$ne": "archived"}},
         {"_id": 0, "program_id": 1, "university_name": 1,
          "logo_url": 1, "domain": 1, "division": 1, "board_group": 1,
          "recruiting_status": 1},
@@ -347,6 +363,7 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(hours=CACHE_TTL_HOURS)
     feed_items = []
+    primary_tenant = tenant_ids[0] if tenant_ids else ""
 
     # Share a single aiohttp session for all RSS fetches
     http_session = aiohttp.ClientSession() if not use_api else None
@@ -357,7 +374,7 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
 
             # Check cache first
             cached = await db.youtube_feed_cache.find_one(
-                {"program_id": pid, "tenant_id": tenant_id, "fetched_at": {"$gte": cutoff}},
+                {"program_id": pid, "tenant_id": primary_tenant, "fetched_at": {"$gte": cutoff}},
                 {"_id": 0},
             )
 
@@ -376,10 +393,10 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
 
                 # Cache results (even empty — avoids re-fetching broken channels)
                 await db.youtube_feed_cache.update_one(
-                    {"program_id": pid, "tenant_id": tenant_id},
+                    {"program_id": pid, "tenant_id": primary_tenant},
                     {"$set": {
                         "program_id": pid,
-                        "tenant_id": tenant_id,
+                        "tenant_id": primary_tenant,
                         "youtube_url": yt_url,
                         "videos": videos,
                         "fetched_at": now,
@@ -427,18 +444,22 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
 @router.post("/feed/refresh")
 async def refresh_feed(current_user: dict = get_current_user_dep()):
     """Force-clear the cache so the next /feed call re-fetches."""
-    tenant_id = await _get_tenant_id(current_user["id"])
-    result = await db.youtube_feed_cache.delete_many({"tenant_id": tenant_id})
+    tenant_ids = await _get_tenant_ids(current_user)
+    if not tenant_ids:
+        return {"cleared": 0}
+    result = await db.youtube_feed_cache.delete_many({"tenant_id": {"$in": tenant_ids}})
     return {"cleared": result.deleted_count}
 
 
 @router.get("/social-links")
 async def get_social_links(current_user: dict = get_current_user_dep()):
     """Return Twitter/social links for pipeline schools."""
-    tenant_id = await _get_tenant_id(current_user["id"])
+    tenant_ids = await _get_tenant_ids(current_user)
+    if not tenant_ids:
+        return {"schools": []}
 
     programs = await db.programs.find(
-        {"tenant_id": tenant_id, "board_group": {"$ne": "archived"}},
+        {"tenant_id": {"$in": tenant_ids}, "board_group": {"$ne": "archived"}},
         {"_id": 0, "program_id": 1, "university_name": 1,
          "logo_url": 1, "domain": 1},
     ).to_list(200)

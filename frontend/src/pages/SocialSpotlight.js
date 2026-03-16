@@ -3,6 +3,7 @@ import axios from "axios";
 import { Play, Lock, Sparkles, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, Eye, ExternalLink } from "lucide-react";
 import UniversityLogo from "../components/UniversityLogo";
 import { useSubscription } from "../lib/subscription";
+import { useAuth } from "../AuthContext";
 import UpgradeModal from "../components/UpgradeModal";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -366,8 +367,10 @@ export default function SocialSpotlight() {
   const [activeTab, setActiveTab] = useState("youtube");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const { subscription } = useSubscription();
+  const { user } = useAuth();
   const tier = subscription?.tier || "basic";
-  const isLocked = !tier || tier === "basic";
+  const isStaff = user?.role === "club_coach" || user?.role === "director";
+  const isLocked = !isStaff && (!tier || tier === "basic");
 
   /* Load pipeline schools */
   useEffect(() => {
@@ -398,20 +401,20 @@ export default function SocialSpotlight() {
   }, []);
 
   useEffect(() => {
-    if (tier && tier !== "basic") {
+    if (!isLocked) {
       fetchFeed();
       axios.get(`${API}/social-spotlight/social-links`)
         .then((res) => setTwitterSchools(res.data.schools || []))
         .catch(() => {});
     }
-  }, [tier, fetchFeed]);
+  }, [isLocked, fetchFeed]);
 
   const handleRefresh = useCallback(async () => {
-    if (tier !== "basic") {
+    if (!isLocked) {
       await axios.post(`${API}/social-spotlight/feed/refresh`).catch(() => {});
       fetchFeed();
     }
-  }, [tier, fetchFeed]);
+  }, [isLocked, fetchFeed]);
 
   /* Filtered videos — exclude trending to avoid duplicates */
   const trendingIds = useMemo(() => new Set(trendingVideos.map(v => v.video_id)), [trendingVideos]);

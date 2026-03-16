@@ -114,13 +114,18 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Custom dark-themed dropdown replacing native `<select>` in Add Task modal
   - Backend PATCH endpoint extended to support title updates
   - Key files: `SchoolPod.js` (TaskItem, AddTaskModal), `school_pod.py`
+- **Social Spotlight Feature Fixed (2026-03-16)**
+  - Added YouTube Data API key, fixed tenant_id lookup for coaches using ownership model
+  - Seeded YouTube channel URLs for pipeline schools
+  - Added coach/director access to route, sidebar, and subscription gate bypass
+  - Key files: `youtube_feed.py`, `SocialSpotlight.js`, `Sidebar.js`, `App.js`
 
 ---
 
 ## Backlog
 
 ### P0 — Immediate
-- **YouTube API Key** — Configure `YOUTUBE_API_KEY` env var for Social Spotlight live data (feature scaffolded but non-functional)
+- ~~**YouTube API Key** — DONE~~
 
 ### P1 — Upcoming
 - **CSV Import Tool** — For manually gathered school/coach data from university sites
