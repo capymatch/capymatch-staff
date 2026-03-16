@@ -380,7 +380,7 @@ function SupportPod() {
 
   // Find the specific escalation from URL param, or the most recent open one
   const activeEscalation = escalationId
-    ? (escalations || []).find(e => e.id === escalationId)
+    ? (escalations || []).find(e => e.action_id === escalationId)
     : (escalations || []).find(e => e.status === "open");
 
   // Header badge — derived from attention status (new unified model)

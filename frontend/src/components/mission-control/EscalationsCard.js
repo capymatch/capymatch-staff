@@ -31,7 +31,7 @@ export default function EscalationsCard({ escalations = [] }) {
   };
 
   const openPod = (esc) => {
-    navigate(`/support-pods/${esc.athlete_id}?escalation=${esc.id}`);
+    navigate(`/support-pods/${esc.athlete_id}?escalation=${esc.action_id}`);
   };
 
   if (escalations.length === 0) {
@@ -78,10 +78,10 @@ export default function EscalationsCard({ escalations = [] }) {
           const isAcknowledged = !!esc.acknowledged_at;
           return (
             <div
-              key={esc.id}
+              key={esc.action_id}
               onClick={() => openPod(esc)}
               className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-white/[0.02] group"
-              data-testid={`escalation-row-${esc.id}`}
+              data-testid={`escalation-row-${esc.action_id}`}
             >
               {/* Status indicator */}
               <div className="w-2 h-2 rounded-full shrink-0" style={{
@@ -145,9 +145,9 @@ export default function EscalationsCard({ escalations = [] }) {
           {showResolved && (
             <div className="divide-y" style={{ borderColor: "#2D3548" }}>
               {resolved.map(esc => (
-                <div key={esc.id} onClick={() => openPod(esc)}
+                <div key={esc.action_id} onClick={() => openPod(esc)}
                   className="flex items-center gap-3 px-5 py-2.5 cursor-pointer hover:bg-white/[0.02] opacity-60"
-                  data-testid={`escalation-resolved-${esc.id}`}>
+                  data-testid={`escalation-resolved-${esc.action_id}`}>
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#10b981" }} />
                   <p className="text-[11px] text-white/70 truncate flex-1">{esc.athlete_name || "Athlete"} — {esc.reason_label || esc.reason || "Resolved"}</p>
                   <span className="text-[10px] shrink-0" style={{ color: "#6B7280" }}>{formatAgo(esc.resolved_at)}</span>

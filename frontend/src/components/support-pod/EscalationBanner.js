@@ -34,7 +34,7 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
   const handleAcknowledge = async () => {
     setAcknowledging(true);
     try {
-      await axios.post(`${API}/director/actions/${escalation.id}/acknowledge`, {}, { headers: headers() });
+      await axios.post(`${API}/director/actions/${escalation.action_id}/acknowledge`, {}, { headers: headers() });
       toast.success("Escalation acknowledged");
       onRefresh?.();
     } catch { toast.error("Failed to acknowledge"); }
@@ -44,7 +44,7 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
   const handleResolve = async () => {
     setResolving(true);
     try {
-      await axios.post(`${API}/director/actions/${escalation.id}/resolve`, { resolution_note: "Resolved by director" }, { headers: headers() });
+      await axios.post(`${API}/director/actions/${escalation.action_id}/resolve`, { note: "Resolved by director" }, { headers: headers() });
       toast.success("Escalation resolved");
       onRefresh?.();
     } catch { toast.error("Failed to resolve"); }
@@ -57,7 +57,7 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
     try {
       await axios.post(`${API}/support-pods/${athleteId}/director-notes`, {
         content: noteText.trim(),
-        escalation_id: escalation.id,
+        escalation_id: escalation.action_id,
       }, { headers: headers() });
       toast.success("Guidance note added");
       setNoteText("");
@@ -75,7 +75,7 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
         title: taskTitle.trim(),
         assignee: taskAssignee,
         due_days: taskDueDays,
-        escalation_id: escalation.id,
+        escalation_id: escalation.action_id,
       }, { headers: headers() });
       toast.success("Intervention task created");
       setTaskTitle("");
@@ -147,9 +147,9 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
       </div>
 
       {/* Actions */}
-      {isOpen && (
+      {!isResolved && (
         <div className="px-4 py-3 flex flex-wrap gap-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          {!isAcknowledged && (
+          {isOpen && !isAcknowledged && (
             <button onClick={handleAcknowledge} disabled={acknowledging}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90 disabled:opacity-50"
               style={{ backgroundColor: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.2)" }}

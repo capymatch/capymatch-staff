@@ -9,6 +9,7 @@ import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
 import DirectorActionsCard from "./DirectorActionsCard";
 import DirectorActionsPulse from "./DirectorActionsPulse";
+import EscalationsCard from "./EscalationsCard";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -179,7 +180,10 @@ export default function DirectorView({ data, userName }) {
         </div>
       </section>
 
-      {/* 2. DIRECTOR ACTIONS PULSE */}
+      {/* 2. ESCALATIONS — escalation-first for directors */}
+      <EscalationsCard escalations={data.escalations || []} />
+
+      {/* 3. DIRECTOR ACTIONS PULSE */}
       <DirectorActionsPulse />
 
       {/* 3. AI PROGRAM BRIEF */}
