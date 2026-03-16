@@ -476,7 +476,7 @@ export default function SchoolPod() {
 
   if (!data) return null;
 
-  const { program, metrics, health, health_display, signals, actions, notes, timeline_events, stage_history, school_info, current_issue, playbook, playbook_checked_steps, athlete_context, relationship, pipeline } = data;
+  const { program, metrics, health, health_display, hero_status, signals, actions, notes, timeline_events, stage_history, school_info, current_issue, playbook, playbook_checked_steps, athlete_context, relationship, pipeline } = data;
   const openActions = actions.filter(a => a.status === "ready" || a.status === "open");
   const completedActions = actions.filter(a => a.status === "completed");
   const allTimeline = [
@@ -484,9 +484,9 @@ export default function SchoolPod() {
     ...notes.map(n => ({ ...n, type: "note_display", description: n.text, actor: n.author })),
   ].sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
 
-  // Hero wording: describe the real condition
-  const heroColor = current_issue ? "#dc2626" : signals.some(s => s.priority === "critical") ? "#dc2626" : signals.some(s => s.priority === "high") ? "#d97706" : "#10b981";
-  const heroLabel = current_issue ? "Active Issue" : signals[0]?.priority === "critical" ? "Critical" : signals[0]?.priority === "high" ? "Needs Attention" : "On Track";
+  // Hero uses the unified hero_status from the backend (single source of truth)
+  const heroColor = hero_status?.color || "#10b981";
+  const heroLabel = hero_status?.label || "On Track";
 
   // Build descriptive hero subtitle
   let heroTitle = current_issue?.title || signals[0]?.title || `${program.university_name} — ${program.recruiting_status}`;

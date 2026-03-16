@@ -251,7 +251,9 @@ function SchoolRow({ school, athleteId }) {
   const navigate = useNavigate();
   const healthColors = {
     at_risk: { bg: "rgba(239,68,68,0.08)", text: "#ef4444" },
+    cooling_off: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b" },
     needs_attention: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b" },
+    needs_follow_up: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b" },
     awaiting_reply: { bg: "rgba(59,130,246,0.08)", text: "#3b82f6" },
     active: { bg: "rgba(13,148,136,0.08)", text: "#0d9488" },
     strong_momentum: { bg: "rgba(16,185,129,0.08)", text: "#10b981" },

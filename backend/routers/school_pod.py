@@ -17,16 +17,20 @@ router = APIRouter()
 # ─── Health classification for a school ───────────────────────
 HEALTH_ORDER = {
     "at_risk": 0,
-    "needs_attention": 1,
-    "awaiting_reply": 2,
-    "active": 3,
-    "strong_momentum": 4,
-    "still_early": 5,
+    "cooling_off": 1,
+    "needs_attention": 2,
+    "needs_follow_up": 3,
+    "awaiting_reply": 4,
+    "active": 5,
+    "strong_momentum": 6,
+    "still_early": 7,
 }
 
 HEALTH_DISPLAY = {
     "at_risk": {"label": "At Risk", "color": "#ef4444", "bg": "rgba(239,68,68,0.08)"},
+    "cooling_off": {"label": "Cooling Off", "color": "#f59e0b", "bg": "rgba(245,158,11,0.08)"},
     "needs_attention": {"label": "Needs Attention", "color": "#f59e0b", "bg": "rgba(245,158,11,0.08)"},
+    "needs_follow_up": {"label": "Needs Follow-up", "color": "#f59e0b", "bg": "rgba(245,158,11,0.08)"},
     "awaiting_reply": {"label": "Awaiting Reply", "color": "#3b82f6", "bg": "rgba(59,130,246,0.08)"},
     "active": {"label": "Active", "color": "#0d9488", "bg": "rgba(13,148,136,0.08)"},
     "strong_momentum": {"label": "Strong", "color": "#10b981", "bg": "rgba(16,185,129,0.08)"},
@@ -34,25 +38,48 @@ HEALTH_DISPLAY = {
 }
 
 
-def classify_school_health(program, metrics):
-    """Derive a health state from program + metrics data."""
+def classify_school_health(program, metrics, *, actual_days_since_contact=None, playbook_complete=False):
+    """Derive a unified health state from program + metrics + real-time context.
+
+    actual_days_since_contact: real days from timeline events (overrides stale metrics)
+    playbook_complete: if True, suppress at_risk when contact is recent
+    """
     if not metrics:
         return "still_early"
 
     health = metrics.get("pipeline_health_state", "still_early")
     overdue = metrics.get("overdue_followups", 0)
     freshness = metrics.get("engagement_freshness_label", "")
-    trend = metrics.get("engagement_trend", "")
+
+    # Use actual contact days when available (more accurate than stale metrics)
+    effective_days = actual_days_since_contact if actual_days_since_contact is not None else (metrics.get("days_since_last_engagement") or 999)
+
+    # Recent real-world contact overrides metric-based risk assessments
+    # If we contacted within 3 days, the relationship is clearly active
+    if effective_days <= 3:
+        if health in ("at_risk", "cooling_off"):
+            return "active"
+        if health == "needs_follow_up":
+            return "active"
+        return health if health in ("strong_momentum", "active") else "active"
+
+    # Playbook complete + reasonably recent contact → not at_risk
+    if playbook_complete and effective_days <= 14:
+        if health in ("at_risk", "cooling_off"):
+            return "needs_follow_up" if effective_days > 7 else "active"
 
     # Override: overdue follow-ups → needs_attention or at_risk
-    if overdue > 0 and freshness in ("no_recent_engagement", "needs_follow_up"):
-        return "at_risk"
-    if overdue > 0:
+    # But only if actual contact is also stale (> 3 days already handled above)
+    if overdue > 0 and effective_days > 7:
+        if freshness in ("no_recent_engagement", "momentum_slowing"):
+            return "at_risk"
+        return "needs_attention"
+    if overdue > 0 and effective_days > 3:
         return "needs_attention"
 
     # Override: stale + no reply
     reply = program.get("reply_status", "")
-    if reply in ("No Reply", "Awaiting Reply") and freshness == "no_recent_engagement":
+    if reply in ("No Reply", "Awaiting Reply") and freshness == "no_recent_engagement" and effective_days > 14:
         stage = program.get("recruiting_status", "")
         if stage in ("Contacted", "In Conversation"):
             return "needs_attention"
@@ -318,6 +345,28 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
     async for doc in db.pod_actions.aggregate(pipeline):
         action_counts[doc["_id"]] = doc["count"]
 
+    # Get the most recent timeline event per program for actual contact days
+    program_ids = [p["program_id"] for p in programs]
+    last_event_map = {}
+    if program_ids:
+        last_events_pipeline = [
+            {"$match": {"athlete_id": athlete_id, "program_id": {"$in": program_ids}}},
+            {"$sort": {"created_at": -1}},
+            {"$group": {"_id": "$program_id", "last_created_at": {"$first": "$created_at"}}},
+        ]
+        async for doc in db.pod_action_events.aggregate(last_events_pipeline):
+            last_event_map[doc["_id"]] = doc["last_created_at"]
+
+    # Get playbook completion status per program
+    playbook_progress_map = {}
+    if program_ids:
+        pb_docs = await db.playbook_progress.find(
+            {"athlete_id": athlete_id, "program_id": {"$in": program_ids}},
+            {"_id": 0, "program_id": 1, "checked_steps": 1}
+        ).to_list(50)
+        for pb in pb_docs:
+            playbook_progress_map[pb["program_id"]] = pb.get("checked_steps", [])
+
     # Build school list — enrich with KB logos
     uni_names = [p.get("university_name", "") for p in programs]
     kb_docs = await db.university_knowledge_base.find(
@@ -326,13 +375,34 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
     ).to_list(200)
     kb_map = {d["university_name"]: d for d in kb_docs}
 
+    now = datetime.now(timezone.utc)
     schools = []
     for p in programs:
         pid = p["program_id"]
         m = metrics_map.get(pid, {})
-        health = classify_school_health(p, m)
-        health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
         kb = kb_map.get(p.get("university_name", ""), {})
+
+        # Compute actual days since last event for this school
+        last_evt_at = last_event_map.get(pid)
+        actual_days = None
+        if last_evt_at:
+            try:
+                if isinstance(last_evt_at, str):
+                    lc_date = datetime.fromisoformat(last_evt_at.replace("Z", "+00:00"))
+                else:
+                    lc_date = last_evt_at if last_evt_at.tzinfo else last_evt_at.replace(tzinfo=timezone.utc)
+                actual_days = (now - lc_date).days
+            except Exception:
+                pass
+
+        # Check if playbook is complete for this school
+        checked = playbook_progress_map.get(pid, [])
+        # We need to know total steps — compute signals to get playbook
+        # For list view, use a lightweight estimate: if checked_steps > 0, check against overdue
+        pb_complete = len(checked) >= 3 and len(checked) > 0  # At least 3 steps checked is a reasonable heuristic
+
+        health = classify_school_health(p, m, actual_days_since_contact=actual_days, playbook_complete=pb_complete)
+        health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
 
         schools.append({
             "program_id": pid,
@@ -353,7 +423,7 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
             "health_color": health_display["color"],
             "health_bg": health_display["bg"],
             "engagement_trend": m.get("engagement_trend", ""),
-            "days_since_last_engagement": m.get("days_since_last_engagement"),
+            "days_since_last_engagement": actual_days if actual_days is not None else m.get("days_since_last_engagement"),
             "reply_rate": m.get("reply_rate"),
             "overdue_followups": m.get("overdue_followups", 0),
             "open_actions": action_counts.get(pid, 0),
@@ -390,10 +460,7 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         {"university_name": program.get("university_name")}, {"_id": 0}
     )
 
-    # Health
-    health = classify_school_health(program, metrics)
-    health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
-    # Signals computed after relationship data (below)
+    # NOTE: Health is computed AFTER we have actual_days + playbook context (below)
 
     # School-scoped actions (have program_id set)
     actions = await db.pod_actions.find(
@@ -573,14 +640,40 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     )
     playbook_checked_steps = progress_doc.get("checked_steps", []) if progress_doc else []
 
-    # Re-check: playbook complete → suppress critical signals
-    # Recent contact (≤3 days) → suppress critical AND high signals
+    # Determine playbook completion state
     total_steps = len(playbook.get("steps", [])) if playbook else 0
     pb_complete = total_steps > 0 and len(playbook_checked_steps) >= total_steps
+
+    # ── UNIFIED HEALTH + SIGNAL CONSISTENCY ──
+    # Suppress signals based on context (playbook complete, recent contact)
     if pb_complete:
         signals = [s for s in signals if s["priority"] != "critical"]
     if actual_days <= 3:
         signals = [s for s in signals if s["priority"] not in ("critical", "high")]
+
+    # Compute health WITH full context (actual contact days + playbook)
+    # This ensures health badge, hero card, and signals all agree
+    health = classify_school_health(program, metrics, actual_days_since_contact=actual_days, playbook_complete=pb_complete)
+    health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
+
+    # Derive hero status from the unified health + remaining signals
+    # This is the single source of truth the frontend should use
+    remaining_critical = any(s["priority"] == "critical" for s in signals)
+    remaining_high = any(s["priority"] == "high" for s in signals)
+    if current_issue:
+        hero_status = {"label": "Active Issue", "color": "#dc2626", "severity": "critical"}
+    elif remaining_critical:
+        hero_status = {"label": "Critical", "color": "#dc2626", "severity": "critical"}
+    elif remaining_high:
+        hero_status = {"label": "Needs Attention", "color": "#d97706", "severity": "high"}
+    elif health in ("at_risk",):
+        hero_status = {"label": "At Risk", "color": "#ef4444", "severity": "high"}
+    elif health in ("needs_attention", "needs_follow_up", "cooling_off"):
+        hero_status = {"label": "Needs Attention", "color": "#d97706", "severity": "medium"}
+    elif health in ("awaiting_reply",):
+        hero_status = {"label": "Awaiting Reply", "color": "#3b82f6", "severity": "info"}
+    else:
+        hero_status = {"label": "On Track", "color": "#10b981", "severity": "ok"}
 
     return {
         "program": {
@@ -610,6 +703,7 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         },
         "health": health,
         "health_display": health_display,
+        "hero_status": hero_status,
         "signals": signals,
         "current_issue": current_issue,
         "actions": actions,
