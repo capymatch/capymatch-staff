@@ -7,6 +7,7 @@ import {
   Phone, MessageSquare, ArrowUpRight, Megaphone
 } from "lucide-react";
 import { toast } from "sonner";
+import UniversityLogo from "../components/UniversityLogo";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
@@ -264,8 +265,8 @@ function SchoolRow({ school, athleteId }) {
         onClick={() => navigate(`/support-pods/${athleteId}/school/${school.program_id}`)}
         className="flex-1 flex items-center gap-3 text-left min-w-0"
       >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: c.bg }}>
-          <School className="w-4 h-4" style={{ color: c.text }} />
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: c.bg }}>
+          <UniversityLogo domain={school.domain} name={school.university_name} logoUrl={school.logo_url} size={32} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

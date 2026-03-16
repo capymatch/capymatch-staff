@@ -310,6 +310,8 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
         schools.append({
             "program_id": pid,
             "university_name": p.get("university_name", ""),
+            "logo_url": p.get("logo_url", ""),
+            "domain": p.get("domain", ""),
             "division": p.get("division", ""),
             "conference": p.get("conference", ""),
             "recruiting_status": p.get("recruiting_status", ""),
