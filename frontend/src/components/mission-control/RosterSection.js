@@ -77,24 +77,27 @@ function AthleteRow({ athlete, isLast }) {
                 </span>
               </div>
 
-              {/* Secondary: "+N more" */}
+              {/* Secondary: expandable list */}
               {secondary.length > 0 && (
                 <button
                   data-testid={`more-issues-${athlete.id}`}
-                  className="text-[9px] sm:text-[10px] font-medium mt-0.5 hover:underline"
-                  style={{ color: "var(--cm-text-3)" }}
+                  className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-medium transition-colors"
+                  style={{
+                    color: "var(--cm-text-3)",
+                    backgroundColor: expanded ? "rgba(241,245,249,0.8)" : "rgba(241,245,249,0.4)",
+                  }}
                   onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
                 >
-                  +{secondary.length} more issue{secondary.length !== 1 ? "s" : ""}
-                  {expanded ? " ▴" : " ▾"}
+                  <span>+{secondary.length} more</span>
+                  {expanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
                 </button>
               )}
 
               {/* Expanded secondary issues */}
               {expanded && secondary.length > 0 && (
-                <div className="mt-1 pl-1 space-y-0.5" onClick={(e) => e.stopPropagation()}>
+                <div className="mt-1.5 pl-1 space-y-1 border-l-2" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} onClick={(e) => e.stopPropagation()}>
                   {secondary.map((s, i) => (
-                    <p key={i} className="text-[9px] sm:text-[10px]" style={{ color: "var(--cm-text-3)" }}>
+                    <p key={i} className="text-[9px] sm:text-[10px] pl-2" style={{ color: "var(--cm-text-3)" }}>
                       {s.reason}
                     </p>
                   ))}

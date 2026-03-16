@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Compass, AlertCircle, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Compass, AlertCircle, ChevronDown, ChevronUp, Info, Eye } from "lucide-react";
 
 /**
  * StatusIntelligence — explains the unified Journey State + Attention Status
@@ -24,29 +24,29 @@ export default function StatusIntelligence({ data }) {
       {/* Two-column: Journey + Attention */}
       <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
 
-        {/* Journey State */}
+        {/* Journey State — calm, contextual */}
         <div className="px-4 py-3 sm:py-4" data-testid="si-journey">
           <div className="flex items-center gap-2 mb-1.5">
-            <Compass className="w-3.5 h-3.5" style={{ color: journey.color || "#94a3b8" }} />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+            <Compass className="w-3.5 h-3.5" style={{ color: "#94a3b8" }} />
+            <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
               Journey
             </span>
           </div>
           <div className="flex items-center gap-2 mb-1">
             <span
-              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
               style={{ backgroundColor: journey.bg, color: journey.color }}
               data-testid="si-journey-badge"
             >
               {journey.label || "Unknown"}
             </span>
           </div>
-          <p className="text-[11px] leading-relaxed" style={{ color: "var(--cm-text-2, #64748b)" }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
             {journey.explanation || ""}
           </p>
         </div>
 
-        {/* Attention Status */}
+        {/* Attention Status — action-oriented */}
         <div className="px-4 py-3 sm:py-4" data-testid="si-attention">
           <div className="flex items-center gap-2 mb-1.5">
             {primary ? (
@@ -54,7 +54,7 @@ export default function StatusIntelligence({ data }) {
             ) : (
               <Info className="w-3.5 h-3.5" style={{ color: "#10b981" }} />
             )}
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: primary ? primary.color : "var(--cm-text-3, #94a3b8)" }}>
               Attention
             </span>
           </div>
@@ -94,25 +94,37 @@ export default function StatusIntelligence({ data }) {
         </div>
       </div>
 
-      {/* Secondary Signals (expandable) */}
+      {/* Secondary Signals — expandable with clear affordance */}
       {secondary.length > 0 && (
         <div className="border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center justify-between w-full px-4 py-2 text-left hover:bg-slate-50/50 transition-colors"
+            className="flex items-center justify-between w-full px-4 py-2.5 text-left transition-colors group"
+            style={{ backgroundColor: expanded ? "rgba(241,245,249,0.5)" : "transparent" }}
             data-testid="si-toggle-secondary"
           >
-            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-              {secondary.length} additional signal{secondary.length !== 1 ? "s" : ""} detected
-            </span>
-            {expanded ? (
-              <ChevronUp className="w-3.5 h-3.5" style={{ color: "var(--cm-text-3)" }} />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5" style={{ color: "var(--cm-text-3)" }} />
-            )}
+            <div className="flex items-center gap-2">
+              <Eye className="w-3 h-3" style={{ color: "var(--cm-text-3, #94a3b8)" }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wider group-hover:underline" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                Also worth watching ({secondary.length})
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-medium" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>
+                {expanded ? "Hide" : "Show"}
+              </span>
+              {expanded ? (
+                <ChevronUp className="w-3.5 h-3.5" style={{ color: "var(--cm-text-3)" }} />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5" style={{ color: "var(--cm-text-3)" }} />
+              )}
+            </div>
           </button>
 
-          {expanded && (
+          <div
+            className="overflow-hidden transition-all duration-200"
+            style={{ maxHeight: expanded ? "500px" : "0", opacity: expanded ? 1 : 0 }}
+          >
             <div className="px-4 pb-3 space-y-1.5" data-testid="si-secondary-list">
               {secondary.map((sig, i) => {
                 const natureColors = {
@@ -143,7 +155,7 @@ export default function StatusIntelligence({ data }) {
                 );
               })}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

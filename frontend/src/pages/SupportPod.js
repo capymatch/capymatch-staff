@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   School, ChevronRight, Loader2, ArrowLeft, RefreshCw,
-  AlertTriangle, Activity, User, UserCircle, Send,
-  Phone, MessageSquare, ArrowUpRight, Megaphone
+  Activity, User, UserCircle, Send,
+  MessageSquare, Megaphone
 } from "lucide-react";
 import { toast } from "sonner";
 import UniversityLogo from "../components/UniversityLogo";
@@ -14,8 +14,8 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
 const authHeaders = () => ({ headers: { Authorization: `Bearer ${token()}` } });
 
-// ─── Athlete-Level Hero (only for athlete-level issues) ─────
-function AthleteHero({ currentIssue, signals, athleteId, onRefresh }) {
+// ─── Compact Action Bar (shows quick actions when status intelligence provides the explanation) ─────
+function ActionBar({ currentIssue, signals, athleteId, onRefresh }) {
   const [resolving, setResolving] = useState(false);
   const [showMessageForm, setShowMessageForm] = useState(false);
   const [messageBody, setMessageBody] = useState("");
@@ -29,18 +29,6 @@ function AthleteHero({ currentIssue, signals, athleteId, onRefresh }) {
   const isCritical = issue?.severity === "critical" || worst?.priority === "critical";
   const color = isCritical ? "#dc2626" : "#d97706";
 
-  const issueType = issue?.type || worst?.type || "";
-  const ctaLabel = issueType === "momentum_drop" ? "Log Check-In" : "Send Message";
-  const CtaIcon = issueType === "momentum_drop" ? Phone : MessageSquare;
-
-  const contextStr = (() => {
-    const ctx = issue?.source_context || {};
-    if (ctx.days_inactive) return `No activity in ${ctx.days_inactive} days`;
-    if (ctx.count) return `${ctx.count} action${ctx.count !== 1 ? "s" : ""}`;
-    if (ctx.detail) return ctx.detail;
-    return "";
-  })();
-
   const handleResolve = async () => {
     if (!issue?.id) return;
     setResolving(true);
@@ -53,10 +41,6 @@ function AthleteHero({ currentIssue, signals, athleteId, onRefresh }) {
     } finally {
       setResolving(false);
     }
-  };
-
-  const handleCtaClick = () => {
-    setShowMessageForm(true);
   };
 
   const handleSendMessage = async () => {
@@ -94,45 +78,49 @@ function AthleteHero({ currentIssue, signals, athleteId, onRefresh }) {
 
   return (
     <div className="rounded-xl border relative overflow-hidden" style={{
-      backgroundColor: isCritical ? "rgba(239,68,68,0.04)" : "rgba(245,158,11,0.04)",
-      borderColor: isCritical ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)",
+      backgroundColor: isCritical ? "rgba(239,68,68,0.03)" : "rgba(245,158,11,0.03)",
+      borderColor: isCritical ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)",
     }} data-testid="athlete-hero">
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: color }} />
-      <div className="px-4 py-3 sm:px-5 sm:py-4">
-        {/* Urgency line */}
-        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-          {isCritical && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500" />}
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>
-            {issue ? issue.severity : "Athlete-Level Alert"}
-          </span>
-          {contextStr && (
-            <>
-              <span className="text-[10px]" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>·</span>
-              <span className="text-[10px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>{contextStr}</span>
-            </>
-          )}
-          {issue?.instance_number > 1 && (
-            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(139,92,246,0.08)", color: "#8b5cf6" }}>
-              Instance #{issue.instance_number}
+      <div className="px-4 py-2.5 sm:px-5 sm:py-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            {isCritical && <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500 shrink-0" />}
+            <span className="text-[11px] font-semibold truncate" style={{ color: "var(--cm-text, #1e293b)" }}>
+              {issue?.title || worst?.title || "Needs Attention"}
             </span>
-          )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setShowMessageForm(!showMessageForm)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90"
+              style={{ backgroundColor: `${color}12`, color }}
+              data-testid="action-bar-message-btn"
+            >
+              <MessageSquare className="w-3 h-3" />
+              Send Message
+            </button>
+            {issue?.id && (
+              <button
+                onClick={handleResolve}
+                disabled={resolving}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: color }}
+                data-testid="action-bar-resolve-btn"
+              >
+                {resolving ? "..." : "Resolve"}
+              </button>
+            )}
+          </div>
         </div>
-
-        {/* Title + Description */}
-        <h2 className="text-sm sm:text-base font-bold leading-snug" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="athlete-hero-title">
-          {issue?.title || worst?.title || "Needs Attention"}
-        </h2>
-        <p className="text-xs mt-1 leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }} data-testid="athlete-hero-description">
-          {issue?.description || worst?.description || "Review the signals and take action."}
-        </p>
 
         {/* Inline message form */}
         {showMessageForm && (
-          <div className="mt-3 pt-3 border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="athlete-hero-message-form">
+          <div className="mt-2.5 pt-2.5 border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="athlete-hero-message-form">
             <textarea
               value={messageBody}
               onChange={e => setMessageBody(e.target.value)}
-              placeholder={issueType === "momentum_drop" ? "Hey, just checking in — how are things going?" : "Type your message..."}
+              placeholder="Type your message..."
               className="w-full px-3 py-2 rounded-lg border text-xs resize-none focus:outline-none focus:ring-1"
               style={{ borderColor: "var(--cm-border, #e2e8f0)", backgroundColor: "var(--cm-surface, white)", color: "var(--cm-text, #1e293b)", minHeight: "60px" }}
               rows={2}
@@ -381,16 +369,14 @@ function SupportPod() {
     );
   }
 
-  const { athlete, current_issue, recruiting_signals, pod_health, profile_completeness, status_intelligence } = data;
+  const { athlete, current_issue, recruiting_signals, profile_completeness, status_intelligence } = data;
   const needsAttention = schools.filter(s => ["at_risk", "needs_attention", "cooling_off", "needs_follow_up"].includes(s.health));
 
-  // Health badge config
-  const healthMap = {
-    healthy: { label: "On Track", dot: "bg-emerald-400", text: "text-emerald-600", bg: "bg-emerald-50" },
-    monitor: { label: "Monitor", dot: "bg-amber-400", text: "text-amber-600", bg: "bg-amber-50" },
-    at_risk: { label: "At Risk", dot: "bg-red-500", text: "text-red-600", bg: "bg-red-50" },
-  };
-  const health = healthMap[pod_health] || healthMap.monitor;
+  // Header badge — derived from attention status (new unified model)
+  const attentionPrimary = status_intelligence?.attention?.primary;
+  const headerBadge = attentionPrimary
+    ? { label: attentionPrimary.label, dot: attentionPrimary.color, text: attentionPrimary.color, bg: attentionPrimary.bg }
+    : { label: "On Track", dot: "#10b981", text: "#10b981", bg: "rgba(16,185,129,0.08)" };
 
   return (
     <div className="-mx-4 -mt-4 sm:-mx-6 sm:-mt-6 bg-slate-50/30 min-h-screen overflow-x-hidden" data-testid="support-pod-page">
@@ -453,9 +439,9 @@ function SupportPod() {
                   <User className="w-3.5 h-3.5" />
                 </button>
               )}
-              <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${health.bg}`} data-testid="pod-health-badge" title={health.label}>
-                <div className={`w-2 h-2 rounded-full ${health.dot}`} />
-                <Activity className={`w-3.5 h-3.5 ${health.text}`} />
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full" style={{ backgroundColor: headerBadge.bg }} data-testid="pod-health-badge" title={headerBadge.label}>
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: headerBadge.dot }} />
+                <Activity className="w-3.5 h-3.5" style={{ color: headerBadge.text }} />
               </div>
             </div>
           </div>
@@ -464,11 +450,11 @@ function SupportPod() {
 
       {/* Content — just hero + schools */}
       <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4">
-        {/* Athlete-level hero (only shows if there's an issue or critical signals) */}
-        <AthleteHero currentIssue={current_issue} signals={recruiting_signals} athleteId={athleteId} onRefresh={() => { fetchPodData(true); fetchSchools(true); }} />
-
-        {/* Status Intelligence — Journey + Attention explanation */}
+        {/* Status Intelligence — Journey + Attention explanation (authoritative display) */}
         <StatusIntelligence data={status_intelligence} />
+
+        {/* Compact action bar (only shows if there's an active issue or critical signals) */}
+        <ActionBar currentIssue={current_issue} signals={recruiting_signals} athleteId={athleteId} onRefresh={() => { fetchPodData(true); fetchSchools(true); }} />
 
         {/* Profile Completeness Alert */}
         <ProfileAlert completeness={profile_completeness} athleteId={athleteId} athleteName={athlete?.full_name} />
