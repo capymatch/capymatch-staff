@@ -8,6 +8,7 @@ import {
   Target, Plus, X, School
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import UniversityLogo from "../components/UniversityLogo";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -490,6 +491,7 @@ function EventPrep() {
                 <div key={s.id} className="px-4 py-2.5 flex items-center justify-between" data-testid={`prep-school-${s.id}`}>
                   <div className="flex items-center gap-2.5">
                     <span className="text-[10px] text-gray-300 font-mono w-4 text-right">{i + 1}</span>
+                    <UniversityLogo domain={s.domain} name={s.name} logoUrl={s.logo_url} size={28} />
                     <div>
                       <span className="text-sm font-medium text-gray-900">{s.name}</span>
                       <span className="text-[10px] text-gray-400 ml-1.5">{s.division}</span>

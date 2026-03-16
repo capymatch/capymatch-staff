@@ -126,6 +126,30 @@ async def get_prep_data(event_id: str, current_user: dict = get_current_user_dep
     result = get_event_prep(event_id)
     if not result:
         return {"error": "Event not found"}
+
+    # Enrich target schools with logos from KB
+    target_schools = result.get("targetSchools", [])
+    if target_schools:
+        school_names = [s["name"] for s in target_schools]
+        kb_docs = await db.university_knowledge_base.find(
+            {"$or": [
+                {"university_name": {"$in": school_names}},
+                {"university_name": {"$regex": "|".join(school_names), "$options": "i"}},
+            ]},
+            {"_id": 0, "university_name": 1, "logo_url": 1, "domain": 1},
+        ).to_list(100)
+        kb_map = {}
+        for doc in kb_docs:
+            kb_map[doc["university_name"]] = doc
+            # Also index by short name match
+            for sn in school_names:
+                if sn.lower() in doc["university_name"].lower():
+                    kb_map[sn] = doc
+        for s in target_schools:
+            kb = kb_map.get(s["name"], {})
+            s["logo_url"] = kb.get("logo_url", "")
+            s["domain"] = kb.get("domain", "")
+
     return result
 
 
