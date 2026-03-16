@@ -44,9 +44,18 @@ export default function AppLayout({ children, title, icon }) {
   const location = useLocation();
   const routeMeta = getRouteMeta(location.pathname);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem("cm-sidebar-collapsed") === "true");
   const [aiOpen, setAiOpen] = useState(false);
   const { user } = useAuth();
   const isAthlete = user?.role === "athlete" || user?.role === "parent";
+
+  const toggleCollapsed = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem("cm-sidebar-collapsed", String(next));
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--cm-bg)" }}>
@@ -54,9 +63,10 @@ export default function AppLayout({ children, title, icon }) {
         <div className="fixed inset-0 z-[55] lg:hidden" style={{ backgroundColor: "var(--cm-overlay)" }} onClick={() => setSidebarOpen(false)} />
       )}
 
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
 
-      <div className="lg:ml-[220px] flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen transition-[margin] duration-300" style={{ marginLeft: `var(--sidebar-offset, 0px)` }}>
+        <style>{`@media (min-width: 1024px) { :root { --sidebar-offset: ${collapsed ? "64px" : "220px"}; } }`}</style>
         <TopBar
           title={title || routeMeta.title}
           icon={icon || routeMeta.icon}

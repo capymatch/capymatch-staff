@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Calendar, Megaphone, BarChart3, Users,
   ChevronRight, Kanban, GraduationCap, Mail, Video, Play,
   Shield, Plug, Database, CreditCard, MessageSquare, Building2,
+  PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
@@ -42,7 +43,7 @@ const ATHLETE_NAV = [
   { id: "spotlight", label: "Social Spotlight", icon: Play, path: "/spotlight" },
 ];
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -70,9 +71,11 @@ export default function Sidebar({ open, onClose }) {
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + "/");
 
+  const w = collapsed ? "w-16" : "w-[220px]";
+
   return (
     <aside
-      className={`fixed top-0 left-0 h-full w-[220px] z-[60] flex flex-col transition-transform duration-300 border-r
+      className={`fixed top-0 left-0 h-full ${w} z-[60] flex flex-col transition-all duration-300 border-r
         lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       style={{
         backgroundColor: "var(--cm-sidebar)",
@@ -81,25 +84,29 @@ export default function Sidebar({ open, onClose }) {
       data-testid="sidebar"
     >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 pt-5 pb-4" data-testid="sidebar-logo">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-md">
+      <div className={`flex items-center gap-2.5 pt-5 pb-4 ${collapsed ? "px-3 justify-center" : "px-5"}`} data-testid="sidebar-logo">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-md shrink-0">
           <span className="text-white font-extrabold text-sm tracking-tight">C</span>
         </div>
-        <span className="text-[15px] font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }}>
-          CapyMatch
-        </span>
+        {!collapsed && (
+          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }}>
+            CapyMatch
+          </span>
+        )}
       </div>
 
       {/* Role badge */}
-      <div className="px-5 mb-3">
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-md"
-          style={{ backgroundColor: "var(--cm-accent-light)", color: "var(--cm-accent)" }}>
-          {user?.role === "director" ? "Director" : user?.role === "club_coach" ? "Coach" : "Athlete"}
-        </span>
-      </div>
+      {!collapsed && (
+        <div className="px-5 mb-3">
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-md"
+            style={{ backgroundColor: "var(--cm-accent-light)", color: "var(--cm-accent)" }}>
+            {user?.role === "director" ? "Director" : user?.role === "club_coach" ? "Coach" : "Athlete"}
+          </span>
+        </div>
+      )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3">
+      <nav className="flex-1 overflow-y-auto px-2">
         <div className="space-y-0.5">
           {navItems.map((item) => {
             const active = isActive(item.path);
@@ -107,21 +114,22 @@ export default function Sidebar({ open, onClose }) {
               <button
                 key={item.id}
                 onClick={() => { navigate(item.path); onClose?.(); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all group"
+                title={collapsed ? item.label : undefined}
+                className={`w-full flex items-center gap-2.5 py-2.5 rounded-lg text-[13px] font-medium transition-all group ${collapsed ? "px-0 justify-center" : "px-3"}`}
                 style={{
                   backgroundColor: active ? "var(--cm-sidebar-active)" : "transparent",
                   color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-2)",
                 }}
                 data-testid={`nav-${item.id}`}
               >
-                <item.icon className="w-[18px] h-[18px]" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.id === "messages" && unreadMessages > 0 && (
+                <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
+                {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
+                {!collapsed && item.id === "messages" && unreadMessages > 0 && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-500 text-white leading-none" data-testid="messages-badge">
                     {unreadMessages}
                   </span>
                 )}
-                {active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
+                {!collapsed && active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
               </button>
             );
           })}
@@ -130,9 +138,12 @@ export default function Sidebar({ open, onClose }) {
         {/* Admin Section */}
         {isAdmin && (
           <>
-            <div className="mt-4 mb-2 px-3">
-              <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--cm-text-4)" }}>Admin</span>
-            </div>
+            {!collapsed && (
+              <div className="mt-4 mb-2 px-3">
+                <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--cm-text-4)" }}>Admin</span>
+              </div>
+            )}
+            {collapsed && <div className="mt-3 mb-1 mx-auto w-6 border-t" style={{ borderColor: "var(--cm-border)" }} />}
             <div className="space-y-0.5">
               {ADMIN_NAV.map((item) => {
                 const active = isActive(item.path);
@@ -140,16 +151,17 @@ export default function Sidebar({ open, onClose }) {
                   <button
                     key={item.id}
                     onClick={() => { navigate(item.path); onClose?.(); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all group"
+                    title={collapsed ? item.label : undefined}
+                    className={`w-full flex items-center gap-2.5 py-2.5 rounded-lg text-[13px] font-medium transition-all group ${collapsed ? "px-0 justify-center" : "px-3"}`}
                     style={{
                       backgroundColor: active ? "var(--cm-sidebar-active)" : "transparent",
                       color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-2)",
                     }}
                     data-testid={`nav-${item.id}`}
                   >
-                    <item.icon className="w-[18px] h-[18px]" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
+                    <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
+                    {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
+                    {!collapsed && active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
                   </button>
                 );
               })}
@@ -158,21 +170,44 @@ export default function Sidebar({ open, onClose }) {
         )}
       </nav>
 
-      {/* Bottom */}
-      <div className="px-5 py-4 border-t" style={{ borderColor: "var(--cm-border)" }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center">
-            <span className="text-white text-xs font-bold">
-              {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>
-              {user?.name || user?.email || "User"}
-            </p>
-            <p className="text-[10px] truncate" style={{ color: "var(--cm-text-3)" }}>
-              {user?.email || ""}
-            </p>
+      {/* Bottom: user + collapse toggle */}
+      <div className="border-t" style={{ borderColor: "var(--cm-border)" }}>
+        {/* Collapse toggle */}
+        <button
+          onClick={onToggleCollapse}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-black/5"
+          style={{ color: "var(--cm-text-3)" }}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          data-testid="sidebar-collapse-btn"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="w-4 h-4 mx-auto" />
+          ) : (
+            <>
+              <PanelLeftClose className="w-4 h-4" />
+              <span className="text-[11px] font-medium">Collapse</span>
+            </>
+          )}
+        </button>
+
+        {/* User info */}
+        <div className={`py-3 border-t ${collapsed ? "px-2" : "px-5"}`} style={{ borderColor: "var(--cm-border)" }}>
+          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shrink-0">
+              <span className="text-white text-xs font-bold">
+                {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+              </span>
+            </div>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>
+                  {user?.name || user?.email || "User"}
+                </p>
+                <p className="text-[10px] truncate" style={{ color: "var(--cm-text-3)" }}>
+                  {user?.email || ""}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
