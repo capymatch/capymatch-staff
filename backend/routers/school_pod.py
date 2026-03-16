@@ -419,32 +419,93 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     }
 
     # Relationship context: count interactions by type
-    interaction_counts = {"emails": 0, "calls": 0, "events": 0, "total": 0}
+    interaction_counts = {"emails": 0, "calls": 0, "events": 0, "advocacy": 0, "visits": 0, "total": 0}
+    last_contact = None
+    last_contact_type = ""
     all_events = await db.pod_action_events.find(
         {"athlete_id": athlete_id, "program_id": program_id},
-        {"_id": 0, "type": 1, "description": 1}
-    ).to_list(500)
+        {"_id": 0, "type": 1, "description": 1, "created_at": 1}
+    ).sort("created_at", -1).to_list(500)
     for evt in all_events:
         etype = evt.get("type", "")
         desc = (evt.get("description") or "").lower()
+        created = evt.get("created_at")
         if "email" in etype or "email" in desc:
             interaction_counts["emails"] += 1
+            if not last_contact:
+                last_contact = created
+                last_contact_type = "Email"
         elif "call" in etype or "phone" in desc or "call" in desc:
             interaction_counts["calls"] += 1
-        elif "event" in etype:
+            if not last_contact:
+                last_contact = created
+                last_contact_type = "Phone Call"
+        elif "visit" in etype or "visit" in desc or "campus" in desc:
+            interaction_counts["visits"] += 1
+            if not last_contact:
+                last_contact = created
+                last_contact_type = "Campus Visit"
+        elif "event" in etype or "event" in desc:
             interaction_counts["events"] += 1
+            if not last_contact:
+                last_contact = created
+                last_contact_type = "Event Interaction"
+        elif "advocacy" in etype or "recommend" in desc or "advocate" in desc:
+            interaction_counts["advocacy"] += 1
+            if not last_contact:
+                last_contact = created
+                last_contact_type = "Advocacy"
+        else:
+            if not last_contact and created:
+                last_contact = created
+                last_contact_type = etype.replace("_", " ").title() if etype else "Interaction"
         interaction_counts["total"] += 1
 
-    # Determine relationship strength
+    # Also check advocacy/recommendations collection
+    advocacy_count = await db.recommendations.count_documents({
+        "athlete_id": athlete_id,
+        "$or": [
+            {"school_name": program.get("university_name")},
+            {"program_id": program_id},
+        ]
+    })
+    interaction_counts["advocacy"] += advocacy_count
+
+    # Determine relationship strength — richer calculation
     days_eng = (metrics or {}).get("days_since_last_engagement") or 999
     rr = (metrics or {}).get("reply_rate") or 0
     mic = (metrics or {}).get("meaningful_interaction_count", 0)
-    if rr > 0.5 and mic >= 3 and days_eng < 14:
+    total_ints = interaction_counts["total"]
+    has_visit = interaction_counts["visits"] > 0
+    has_advocacy = interaction_counts["advocacy"] > 0
+
+    if has_visit and rr > 0.4 and days_eng < 21:
+        relationship_strength = "strong"
+    elif rr > 0.5 and mic >= 3 and days_eng < 14:
         relationship_strength = "active"
-    elif mic >= 1 and days_eng < 30:
+    elif (mic >= 1 and days_eng < 30) or (total_ints >= 3 and days_eng < 45):
         relationship_strength = "warm"
     else:
         relationship_strength = "cold"
+
+    # Response rate detail
+    outbound_count = max(interaction_counts["emails"], 1)
+    reply_count = round(rr * outbound_count)
+    response_detail = f"{reply_count} / {outbound_count} replies"
+
+    # Contact health message
+    if days_eng == 0:
+        contact_health = "Contacted today"
+    elif days_eng <= 3:
+        contact_health = f"Recently active — {days_eng} day{'s' if days_eng != 1 else ''} ago"
+    elif days_eng <= 7:
+        contact_health = f"Awaiting reply — {days_eng} days"
+    elif days_eng <= 14:
+        contact_health = f"Follow-up recommended — {days_eng} days since last contact"
+    elif days_eng <= 30:
+        contact_health = f"Going cold — {days_eng} days without contact"
+    else:
+        contact_health = f"No contact for {days_eng} days — re-engagement needed"
 
     # Pipeline stage context
     status_to_stage_idx = {
@@ -514,6 +575,10 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         "relationship": {
             "strength": relationship_strength,
             "interactions": interaction_counts,
+            "last_contact": last_contact if isinstance(last_contact, str) else (last_contact.isoformat() if last_contact else None),
+            "last_contact_type": last_contact_type,
+            "response_detail": response_detail,
+            "contact_health": contact_health,
         },
         "pipeline": {
             "current_stage": current_stage,
