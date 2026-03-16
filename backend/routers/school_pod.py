@@ -60,8 +60,12 @@ def classify_school_health(program, metrics):
     return health
 
 
-def compute_school_signals(program, metrics):
-    """Generate school-specific signals from program_metrics."""
+def compute_school_signals(program, metrics, actual_days_since_contact=None, playbook_complete=False):
+    """Generate school-specific signals from program_metrics.
+    
+    actual_days_since_contact: real days since last pod event (overrides stale metrics)
+    playbook_complete: if True, suppress follow-up overdue signals
+    """
     signals = []
     if not metrics:
         return signals
@@ -73,9 +77,13 @@ def compute_school_signals(program, metrics):
     trend = metrics.get("engagement_trend", "")
     days_since = metrics.get("days_since_last_engagement")
 
-    if overdue > 0:
-        if days_since and days_since > 0:
-            overdue_title = f"Follow-up overdue — no response for {days_since} day{'s' if days_since != 1 else ''}"
+    # Use actual contact days when available (more accurate than stale metrics)
+    effective_days = actual_days_since_contact if actual_days_since_contact is not None else (days_since or 0)
+
+    # Overdue signal — suppress if recent activity (within 3 days)
+    if overdue > 0 and effective_days > 3:
+        if effective_days > 0:
+            overdue_title = f"Follow-up overdue — no response for {effective_days} day{'s' if effective_days != 1 else ''}"
         else:
             overdue_title = f"Follow-up overdue — {overdue} action{'s' if overdue > 1 else ''} past due"
         signals.append({
@@ -98,13 +106,20 @@ def compute_school_signals(program, metrics):
             "recommendation": "Consider a different outreach approach or escalate to director.",
         })
 
-    if freshness == "no_recent_engagement" and (days_since or 0) > 7:
+    # Stale engagement — only if actually no recent contact
+    if freshness == "no_recent_engagement" and effective_days > 7:
+        if effective_days >= 999:
+            stale_title = "No recorded engagement with this school"
+            stale_desc = "No activity has been logged yet. Trend: unknown."
+        else:
+            stale_title = f"Engagement gone cold — {effective_days} days silent"
+            stale_desc = f"No activity with this school in {effective_days} days. Trend: {trend}."
         signals.append({
             "id": "sig_stale",
             "type": "warning",
             "priority": "high",
-            "title": f"Engagement gone cold — {days_since} days silent",
-            "description": f"No activity with this school in {days_since} days. Trend: {trend}.",
+            "title": stale_title,
+            "description": stale_desc,
             "recommendation": "Re-engage with this school or reassess priority.",
         })
 
@@ -375,10 +390,10 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         {"university_name": program.get("university_name")}, {"_id": 0}
     )
 
-    # Health and signals
+    # Health
     health = classify_school_health(program, metrics)
     health_display = HEALTH_DISPLAY.get(health, HEALTH_DISPLAY["still_early"])
-    signals = compute_school_signals(program, metrics)
+    # Signals computed after relationship data (below)
 
     # School-scoped actions (have program_id set)
     actions = await db.pod_actions.find(
@@ -538,6 +553,9 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     stage_idx = status_to_stage_idx.get(current_stage, 0)
     stage_days = (metrics or {}).get("stage_stalled_days", 0)
 
+    # Now compute signals with actual contact context
+    signals = compute_school_signals(program, metrics, actual_days_since_contact=actual_days)
+
     # Generate school-specific action plan playbook
     school_info_dict = {
         "primary_coach": (kb or {}).get("primary_coach", ""),
@@ -554,6 +572,15 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         {"athlete_id": athlete_id, "program_id": program_id}, {"_id": 0}
     )
     playbook_checked_steps = progress_doc.get("checked_steps", []) if progress_doc else []
+
+    # Re-check: playbook complete → suppress critical signals
+    # Recent contact (≤3 days) → suppress critical AND high signals
+    total_steps = len(playbook.get("steps", [])) if playbook else 0
+    pb_complete = total_steps > 0 and len(playbook_checked_steps) >= total_steps
+    if pb_complete:
+        signals = [s for s in signals if s["priority"] != "critical"]
+    if actual_days <= 3:
+        signals = [s for s in signals if s["priority"] not in ("critical", "high")]
 
     return {
         "program": {
