@@ -123,7 +123,9 @@ async def get_mission_control_data(current_user: dict = get_current_user_dep()):
         response = _build_coach_response(current_user, alerts, attention, signals, events)
         # Enrich roster with school-level alerts from DB (async)
         await _enrich_roster_with_school_alerts(response.get("myRoster", []))
-        # Recount needing_action after enrichment (school alerts may promote athletes)
+        # Enrich roster with active pod_issues from DB (async)
+        await _enrich_roster_with_pod_issues(response.get("myRoster", []))
+        # Recount needing_action after all enrichment
         needing_action = [a for a in response["myRoster"] if a.get("category")]
         response["todays_summary"]["needingAction"] = len(needing_action)
         return response
@@ -509,6 +511,72 @@ async def _enrich_roster_with_school_alerts(roster: list):
             athlete["badgeColor"] = "amber" if worst["health"] != "at_risk" else "red"
             athlete["why"] = f"{alert_count} school{'s' if alert_count > 1 else ''} need{'s' if alert_count == 1 else ''} attention — {worst['university_name']} is {worst['health'].replace('_', ' ')}"
             athlete["next_step"] = f"Review school alerts for {athlete['name'].split(' ')[0]}"
+
+
+
+# Pod issue type → dashboard category mapping
+_ISSUE_TO_CATEGORY = {
+    "momentum_drop": "momentum_drop",
+    "overdue_actions": "blocker",
+    "stalled_pipeline": "engagement_drop",
+    "missed_deadline": "deadline_proximity",
+}
+
+_ISSUE_BADGE_COLOR = {
+    "critical": "red",
+    "high": "amber",
+    "medium": "amber",
+    "low": "blue",
+}
+
+
+async def _enrich_roster_with_pod_issues(roster: list):
+    """Check active pod_issues per athlete and promote to dashboard category if needed.
+
+    This ensures real DB-backed issues (overdue actions, stalled pipelines, etc.)
+    surface on the dashboard even if the static decision engine didn't catch them.
+    """
+    if not roster:
+        return
+
+    athlete_ids = [a["id"] for a in roster]
+
+    # Batch: get all active pod_issues for all roster athletes
+    active_issues = await db.pod_issues.find(
+        {"athlete_id": {"$in": athlete_ids}, "status": "active"},
+        {"_id": 0, "athlete_id": 1, "type": 1, "severity": 1, "title": 1}
+    ).to_list(100)
+
+    # Group by athlete, keep highest severity
+    athlete_issues = {}
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    for issue in active_issues:
+        aid = issue["athlete_id"]
+        existing = athlete_issues.get(aid)
+        if not existing or severity_order.get(issue.get("severity"), 99) < severity_order.get(existing.get("severity"), 99):
+            athlete_issues[aid] = issue
+
+    for athlete in roster:
+        aid = athlete["id"]
+        issue = athlete_issues.get(aid)
+        if not issue:
+            continue
+
+        athlete["active_pod_issue"] = {
+            "type": issue.get("type", ""),
+            "severity": issue.get("severity", "medium"),
+            "title": issue.get("title", ""),
+        }
+
+        # Promote to dashboard category if athlete has no category yet
+        if not athlete.get("category"):
+            mapped_cat = _ISSUE_TO_CATEGORY.get(issue["type"], "blocker")
+            athlete["category"] = mapped_cat
+            athlete["badgeColor"] = _ISSUE_BADGE_COLOR.get(issue.get("severity"), "amber")
+            athlete["why"] = issue.get("title", "Active issue requires attention")
+            name_first = athlete["name"].split(" ")[0]
+            athlete["next_step"] = f"Resolve {issue['type'].replace('_', ' ')} for {name_first}"
+
 
 
 def _build_priorities_queue(needing_action, events, alerts):
