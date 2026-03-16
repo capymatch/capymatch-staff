@@ -210,13 +210,14 @@ function Section({ title, count, children, action, testId }) {
 /* ─── Pipeline Status Bar ─── */
 function PipelineStatus({ pipeline }) {
   if (!pipeline) return null;
-  const { current_stage, stage_index, stage_days } = pipeline;
+  const { stage_index, stage_days } = pipeline;
+  const displayStage = PIPELINE_STAGES[stage_index] || PIPELINE_STAGES[0];
   return (
     <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="pipeline-status">
       <div className="flex items-center justify-between mb-2">
         <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Pipeline Status</p>
         <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text, #1e293b)" }}>
-          {current_stage} {stage_days > 0 ? <span className="font-normal" style={{ color: "var(--cm-text-3)" }}>&#8212; {stage_days} day{stage_days !== 1 ? "s" : ""}</span> : ""}
+          {displayStage} {stage_days > 0 ? <span className="font-normal" style={{ color: "var(--cm-text-3)" }}>&#8212; {stage_days} day{stage_days !== 1 ? "s" : ""}</span> : ""}
         </span>
       </div>
       <div className="flex items-center gap-1">
