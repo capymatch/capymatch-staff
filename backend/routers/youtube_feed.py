@@ -194,125 +194,114 @@ async def fetch_videos_via_rss(youtube_url: str, max_results: int = 8, session: 
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#   YOUTUBE DATA API (requires YOUTUBE_API_KEY)
+#   YOUTUBE DATA API (requires YOUTUBE_API_KEY) — async HTTP, no google client
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _get_youtube_client():
-    if not YOUTUBE_API_KEY:
+YT_API_BASE = "https://www.googleapis.com/youtube/v3"
+
+
+async def _yt_api_get(session: aiohttp.ClientSession, endpoint: str, params: dict) -> dict | None:
+    """Make a YouTube Data API GET request."""
+    params["key"] = YOUTUBE_API_KEY
+    url = f"{YT_API_BASE}/{endpoint}"
+    try:
+        async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=12)) as resp:
+            if resp.status != 200:
+                err = await resp.text()
+                logger.warning(f"YouTube API {endpoint} {resp.status}: {err[:200]}")
+                return None
+            return await resp.json()
+    except Exception as e:
+        logger.warning(f"YouTube API {endpoint} error: {e}")
         return None
-    from googleapiclient.discovery import build
-    return build("youtube", "v3", developerKey=YOUTUBE_API_KEY, cache_discovery=False)
 
 
-def fetch_channel_videos_api(yt, youtube_url: str, max_results: int = 5):
-    """Fetch videos via YouTube Data API v3 (richer data)."""
-    from googleapiclient.errors import HttpError
-
+async def resolve_channel_id(session: aiohttp.ClientSession, youtube_url: str) -> str | None:
+    """Resolve a YouTube URL to a channel ID."""
     kind, value = parse_youtube_url(youtube_url)
     if not kind or not value:
+        return None
+    if kind == "id":
+        return value
+
+    params = {"part": "id"}
+    if kind == "handle":
+        params["forHandle"] = value
+    else:
+        params["forUsername"] = value
+
+    data = await _yt_api_get(session, "channels", params)
+    if data and data.get("items"):
+        return data["items"][0]["id"]
+    return None
+
+
+async def fetch_channel_videos_api(session: aiohttp.ClientSession, youtube_url: str, max_results: int = 5) -> list:
+    """Fetch women's volleyball videos via YouTube Data API v3."""
+    channel_id = await resolve_channel_id(session, youtube_url)
+    if not channel_id:
         return []
 
-    try:
-        if kind == "id":
-            resp = yt.channels().list(part="id,snippet", id=value).execute()
-        elif kind == "handle":
-            resp = yt.channels().list(part="id,snippet", forHandle=value).execute()
-        else:
-            resp = yt.channels().list(part="id,snippet", forUsername=value).execute()
+    six_months_ago = (datetime.utcnow() - timedelta(days=180)).strftime("%Y-%m-%dT00:00:00Z")
 
-        items = resp.get("items", [])
-        if not items:
-            return []
-
-        channel = items[0]
-        channel_id = channel["id"]
-        channel_title = channel["snippet"]["title"]
-        channel_thumb = channel["snippet"]["thumbnails"].get("default", {}).get("url", "")
-
-        now_dt = datetime.utcnow()
-        jan_1 = datetime(now_dt.year, 1, 1).strftime("%Y-%m-%dT00:00:00Z")
-        six_months_ago = (now_dt - timedelta(days=180)).strftime("%Y-%m-%dT00:00:00Z")
-
-        def _search(published_after, q_str):
-            return yt.search().list(
-                part="snippet", channelId=channel_id, q=q_str,
-                type="video", order="date", publishedAfter=published_after,
-                maxResults=max_results,
-            ).execute()
-
-        current_year = now_dt.year
-        search_resp = _search(jan_1, f"women's volleyball {current_year} -beach")
-        raw_items = search_resp.get("items", [])
-
-        if len(raw_items) < 2:
-            search_resp = _search(six_months_ago, "women's volleyball -beach")
-            raw_items = search_resp.get("items", [])
-
-        EXCLUDE = re.compile(r"\bbeach\b|\bmen\'?s\s+volley|\bm\.\s*volley\b|\bMVB\b", re.I)
-        REQUIRE = re.compile(r"volley", re.I)
-
-        videos = []
-        for item in raw_items:
-            if item.get("id", {}).get("kind") != "youtube#video":
-                continue
-            video_id = item["id"]["videoId"]
-            snip = item["snippet"]
-            title = snip.get("title", "")
-            desc = snip.get("description", "")
-            if not REQUIRE.search(title) and not REQUIRE.search(desc):
-                continue
-            if EXCLUDE.search(title):
-                continue
-            thumb = (
-                snip["thumbnails"].get("maxres")
-                or snip["thumbnails"].get("high")
-                or snip["thumbnails"].get("medium")
-                or snip["thumbnails"].get("default")
-                or {}
-            )
-            videos.append({
-                "video_id": video_id,
-                "title": title,
-                "description": desc[:200],
-                "thumbnail_url": thumb.get("url", ""),
-                "published_at": snip.get("publishedAt", ""),
-                "url": f"https://www.youtube.com/watch?v={video_id}",
-                "channel_id": channel_id,
-                "channel_title": channel_title,
-                "channel_thumbnail": channel_thumb,
-            })
-
-        return videos
-
-    except HttpError as e:
-        logger.warning(f"YouTube API error for {youtube_url}: {e}")
-        return []
-    except Exception as e:
-        logger.warning(f"Unexpected error for {youtube_url}: {e}")
+    data = await _yt_api_get(session, "search", {
+        "part": "snippet",
+        "channelId": channel_id,
+        "q": "women's volleyball -beach",
+        "type": "video",
+        "order": "date",
+        "publishedAfter": six_months_ago,
+        "maxResults": max_results,
+    })
+    if not data:
         return []
 
+    raw_items = data.get("items", [])
+    EXCLUDE = re.compile(r"\bbeach\b|\bmen\'?s\s+volley|\bm\.\s*volley\b|\bMVB\b", re.I)
 
-def enrich_view_counts(yt, videos: list):
-    """Batch-fetch view counts (only when using API)."""
-    if not yt or not videos:
-        return
-    ids = [v["video_id"] for v in videos if v.get("video_id")]
-    if not ids:
-        return
-    try:
-        for i in range(0, len(ids), 50):
-            batch = ids[i:i + 50]
-            resp = yt.videos().list(part="statistics", id=",".join(batch)).execute()
-            stats_map = {}
-            for item in resp.get("items", []):
-                vid = item["id"]
-                view_count = int(item.get("statistics", {}).get("viewCount", 0))
-                stats_map[vid] = view_count
+    videos = []
+    video_ids = []
+    for item in raw_items:
+        if item.get("id", {}).get("kind") != "youtube#video":
+            continue
+        video_id = item["id"]["videoId"]
+        snip = item["snippet"]
+        title = snip.get("title", "")
+        if EXCLUDE.search(title):
+            continue
+        thumb = (
+            snip["thumbnails"].get("maxres")
+            or snip["thumbnails"].get("high")
+            or snip["thumbnails"].get("medium")
+            or snip["thumbnails"].get("default")
+            or {}
+        )
+        videos.append({
+            "video_id": video_id,
+            "title": title,
+            "description": (snip.get("description") or "")[:200],
+            "thumbnail_url": thumb.get("url", ""),
+            "published_at": snip.get("publishedAt", ""),
+            "url": f"https://www.youtube.com/watch?v={video_id}",
+            "channel_id": channel_id,
+            "channel_title": snip.get("channelTitle", ""),
+            "channel_thumbnail": "",
+            "view_count": 0,
+        })
+        video_ids.append(video_id)
+
+    # Batch fetch view counts
+    if video_ids:
+        vc_data = await _yt_api_get(session, "videos", {
+            "part": "statistics",
+            "id": ",".join(video_ids),
+        })
+        if vc_data:
+            vc_map = {v["id"]: int(v.get("statistics", {}).get("viewCount", 0)) for v in vc_data.get("items", [])}
             for v in videos:
-                if v["video_id"] in stats_map:
-                    v["view_count"] = stats_map[v["video_id"]]
-    except Exception as e:
-        logger.warning(f"Failed to fetch view counts: {e}")
+                v["view_count"] = vc_map.get(v["video_id"], 0)
+
+    return videos
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -331,7 +320,6 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
         return {"videos": [], "school_count": 0, "total_videos": 0}
 
     use_api = bool(YOUTUBE_API_KEY)
-    yt = _get_youtube_client() if use_api else None
 
     programs = await db.programs.find(
         {"tenant_id": {"$in": tenant_ids}, "board_group": {"$ne": "archived"}},
@@ -365,9 +353,8 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
     feed_items = []
     primary_tenant = tenant_ids[0] if tenant_ids else ""
 
-    # Share a single aiohttp session for all RSS fetches
-    http_session = aiohttp.ClientSession() if not use_api else None
-    try:
+    # Single aiohttp session for all fetches (both API and RSS)
+    async with aiohttp.ClientSession() as http_session:
         for school in yt_schools:
             pid = school["program_id"]
             yt_url = school["youtube_url"]
@@ -384,7 +371,7 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
                 # Fetch fresh
                 try:
                     if use_api:
-                        videos = fetch_channel_videos_api(yt, yt_url, max_results=8)
+                        videos = await fetch_channel_videos_api(http_session, yt_url, max_results=8)
                     else:
                         videos = await fetch_videos_via_rss(yt_url, max_results=8, session=http_session)
                 except Exception as e:
@@ -415,13 +402,6 @@ async def get_social_feed(current_user: dict = get_current_user_dep()):
                     "board_group": school.get("board_group"),
                     "recruiting_status": school.get("recruiting_status"),
                 })
-    finally:
-        if http_session:
-            await http_session.close()
-
-    # Enrich view counts only when using API
-    if use_api and yt:
-        enrich_view_counts(yt, feed_items)
 
     # Sort by published_at descending
     feed_items.sort(key=lambda x: x.get("published_at", ""), reverse=True)
