@@ -165,7 +165,7 @@ function OnTrackRow({ athlete, isLast }) {
 
 export default function RosterSection({ athletes = [], eventPrep = [] }) {
   const navigate = useNavigate();
-  const [onTrackOpen, setOnTrackOpen] = useState(false);
+  const [onTrackOpen, setOnTrackOpen] = useState(true);
 
   const needsAction = athletes.filter(a => a.category);
   const onTrack = athletes.filter(a => !a.category);
