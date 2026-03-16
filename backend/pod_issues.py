@@ -282,7 +282,11 @@ async def evaluate_issues(athlete_id: str, athlete: dict, interventions: list, a
 # ─── Get current active issue (highest priority) ─────────────────────
 
 async def get_current_issue(athlete_id: str):
-    """Return the highest-priority active issue, or None."""
+    """Return the highest-priority active issue, or None.
+
+    Auto-resolves stale momentum_drop issues when pipeline momentum is high,
+    since momentum is now based on pipeline progress, not activity recency.
+    """
     active = await db.pod_issues.find(
         {"athlete_id": athlete_id, "status": "active"},
         {"_id": 0},
@@ -291,9 +295,31 @@ async def get_current_issue(athlete_id: str):
     if not active:
         return None
 
+    # Auto-resolve momentum_drop issues that are no longer valid
+    # under the pipeline-based momentum model
+    from services.athlete_store import get_all as get_athletes
+    athlete = next((a for a in get_athletes() if a["id"] == athlete_id), None)
+    pipeline_momentum = athlete.get("pipeline_momentum", 0) if athlete else 0
+
+    still_active = []
+    for issue in active:
+        if issue.get("type") == "momentum_drop" and pipeline_momentum >= 50:
+            # Auto-resolve: pipeline progress makes this irrelevant
+            now = datetime.now(timezone.utc).isoformat()
+            await db.pod_issues.update_one(
+                {"id": issue["id"]},
+                {"$set": {"status": "resolved", "resolved_at": now,
+                          "resolved_by": "system", "resolution_source": "auto_pipeline_momentum"}}
+            )
+            continue
+        still_active.append(issue)
+
+    if not still_active:
+        return None
+
     # Sort by severity priority
-    active.sort(key=lambda i: SEVERITY_PRIORITY.get(i.get("severity"), 99))
-    return active[0]
+    still_active.sort(key=lambda i: SEVERITY_PRIORITY.get(i.get("severity"), 99))
+    return still_active[0]
 
 
 async def get_all_active_issues(athlete_id: str):

@@ -88,6 +88,9 @@ async def recompute_derived_data():
     # Step 1: Reload athletes from DB
     athletes = await load_from_db()
 
+    # Step 1b: Compute pipeline-based momentum for each athlete
+    await _compute_pipeline_momentum(athletes)
+
     # Step 2: Recompute interventions from athletes + events
     interventions = []
     for athlete in athletes:
@@ -131,3 +134,77 @@ def _recompute_time_fields(athletes):
             a["days_since_activity"] = max(0, (now - last).days)
         except (KeyError, ValueError):
             pass
+
+
+# Stage weights for pipeline momentum (recruiting progress, NOT activity)
+STAGE_WEIGHTS = {
+    "Not Contacted": 5,
+    "Added": 5,
+    "Prospect": 10,
+    "Contacted": 20,
+    "Initial Contact": 20,
+    "In Conversation": 35,
+    "Engaged": 35,
+    "Interested": 50,
+    "Campus Visit": 70,
+    "Visit Scheduled": 70,
+    "Visit": 70,
+    "Offer": 90,
+    "Committed": 100,
+}
+
+
+async def _compute_pipeline_momentum(athletes):
+    """Compute pipeline-based momentum for each athlete from their school pipeline.
+
+    Momentum reflects RECRUITING PROGRESS (stage advancement), not activity recency.
+    - Uses the HIGHEST stage reached across all schools as the primary driver.
+    - Breadth bonus: more schools at advanced stages adds a small boost.
+    """
+    athlete_ids = [a["id"] for a in athletes]
+    if not athlete_ids:
+        return
+
+    # Batch: get all programs for all athletes
+    programs = await db.programs.find(
+        {"athlete_id": {"$in": athlete_ids}},
+        {"_id": 0, "athlete_id": 1, "recruiting_status": 1}
+    ).to_list(1000)
+
+    # Group by athlete
+    athlete_programs = {}
+    for p in programs:
+        athlete_programs.setdefault(p["athlete_id"], []).append(p)
+
+    for athlete in athletes:
+        aid = athlete["id"]
+        progs = athlete_programs.get(aid, [])
+
+        if not progs:
+            athlete["pipeline_momentum"] = 0
+            athlete["pipeline_best_stage"] = "No Schools"
+            athlete["momentum_score"] = 0
+            continue
+
+        # Get the weight for each school's stage
+        stage_scores = []
+        best_stage = "Prospect"
+        best_weight = 0
+        for p in progs:
+            status = (p.get("recruiting_status") or "Prospect").strip()
+            weight = STAGE_WEIGHTS.get(status, 10)
+            stage_scores.append(weight)
+            if weight > best_weight:
+                best_weight = weight
+                best_stage = status
+
+        # Pipeline momentum = best stage weight + breadth bonus
+        # Breadth bonus: each additional school past the first at 20+ adds up to 2 pts
+        advanced = [s for s in stage_scores if s >= 20]
+        breadth_bonus = min(10, max(0, len(advanced) - 1) * 3)
+        pipeline_momentum = min(100, best_weight + breadth_bonus)
+
+        athlete["pipeline_momentum"] = pipeline_momentum
+        athlete["pipeline_best_stage"] = best_stage
+        # Override the old momentum_score with pipeline-based one
+        athlete["momentum_score"] = pipeline_momentum

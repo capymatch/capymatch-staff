@@ -134,6 +134,9 @@ function AthleteRow({ athlete, isLast }) {
 
 function OnTrackRow({ athlete, isLast }) {
   const navigate = useNavigate();
+  const momentum = athlete.momentum_score || 0;
+  const bestStage = athlete.pipeline_best_stage || "";
+  const momentumColor = momentum >= 70 ? "#10b981" : momentum >= 40 ? "#0d9488" : momentum >= 20 ? "#f59e0b" : "#94a3b8";
   return (
     <div
       data-testid={`roster-athlete-${athlete.id}`}
@@ -143,11 +146,18 @@ function OnTrackRow({ athlete, isLast }) {
     >
       <div className="shrink-0 relative">
         <AthleteAvatar name={athlete.name} photoUrl={athlete.photo_url} size={28} />
-        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2" style={{ borderColor: "var(--cm-surface, white)" }} />
+        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2" style={{ backgroundColor: momentumColor, borderColor: "var(--cm-surface, white)" }} />
       </div>
-      <span className="text-xs sm:text-sm font-medium flex-1 min-w-0 truncate" style={{ color: "var(--cm-text-2)" }}>
-        {athlete.name}
-      </span>
+      <div className="flex-1 min-w-0">
+        <span className="text-xs sm:text-sm font-medium truncate block" style={{ color: "var(--cm-text-2)" }}>
+          {athlete.name}
+        </span>
+        {bestStage && (
+          <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>
+            Best: {bestStage} · {momentum}/100
+          </span>
+        )}
+      </div>
       <ChevronRight className="w-3 h-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" style={{ color: "var(--cm-text-3)" }} />
     </div>
   );

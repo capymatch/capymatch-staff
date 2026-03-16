@@ -19,13 +19,28 @@ import random
 def detect_momentum_drop(athlete: Dict) -> Dict or None:
     """
     Category 1: Momentum Drop
-    Triggers: No activity 21+ days (3 weeks = meaningful silence, not just a busy week)
+    Triggers: Low pipeline momentum (no meaningful stage progress) combined
+    with inactivity.  Momentum is primarily about recruiting PROGRESS,
+    not recency of activity.  An athlete sitting at Offer with no
+    recent log-in should NOT show as a momentum drop.
     """
-    days_since = athlete.get('days_since_activity', 0)
+    # Pipeline-based momentum (0-100)
+    pipeline_momentum = athlete.get("pipeline_momentum", 0)
+    days_since = athlete.get("days_since_activity", 0)
 
-    if days_since >= 21:
-        urgency = min(10, 6 + (days_since - 21) // 3)
-        impact = 8 if days_since > 28 else 6
+    # High pipeline momentum → never trigger momentum_drop
+    # (e.g. athlete with an Offer doesn't need a "momentum drop" alert)
+    if pipeline_momentum >= 50:
+        return None
+
+    # Medium pipeline momentum + long inactivity → low-priority nudge only
+    if pipeline_momentum >= 30 and days_since < 30:
+        return None
+
+    # Low pipeline momentum + inactivity → real momentum drop
+    if pipeline_momentum < 30 and days_since >= 14:
+        urgency = min(10, 5 + (days_since - 14) // 5)
+        impact = 8 if days_since > 21 else 6
         actionability = 8
         ownership = 9
 
@@ -34,25 +49,27 @@ def detect_momentum_drop(athlete: Dict) -> Dict or None:
 
         return {
             'category': 'momentum_drop',
-            'trigger': f'no_activity_{days_since}_days',
+            'trigger': f'low_pipeline_momentum_{pipeline_momentum}',
             'score': int(score),
             'urgency': urgency,
             'impact': impact,
             'actionability': actionability,
             'ownership': ownership,
 
-            'why_this_surfaced': f"No activity in {days_since} days — this athlete has gone dark",
-            'what_changed': f"Last logged activity was {days_since} days ago",
-            'recommended_action': "Check in with family about engagement and recruiting interest",
+            'why_this_surfaced': f"Pipeline momentum is low ({pipeline_momentum}/100) with no activity in {days_since} days",
+            'what_changed': f"No meaningful pipeline progress — best stage reached is early in the recruiting process",
+            'recommended_action': "Review target school list and help advance at least one relationship",
             'owner': "Coach Martinez",
 
             'details': {
-                'last_activity': athlete['last_activity'],
-                'momentum_score': athlete['momentum_score'],
+                'last_activity': athlete.get('last_activity', ''),
+                'momentum_score': pipeline_momentum,
+                'pipeline_momentum': pipeline_momentum,
+                'days_since_activity': days_since,
                 'expected_frequency': 'Weekly updates',
                 'suggested_steps': [
-                    'Phone call to check in (preferred over text)',
                     'Review target school list — is the plan still viable?',
+                    'Help athlete send initial outreach to top targets',
                     'Log update after conversation'
                 ]
             }
