@@ -258,6 +258,7 @@ async def fetch_channel_videos_api(session: aiohttp.ClientSession, youtube_url: 
 
     raw_items = data.get("items", [])
     EXCLUDE = re.compile(r"\bbeach\b|\bmen\'?s\s+volley|\bm\.\s*volley\b|\bMVB\b", re.I)
+    REQUIRE = re.compile(r"volley", re.I)
 
     videos = []
     video_ids = []
@@ -267,6 +268,9 @@ async def fetch_channel_videos_api(session: aiohttp.ClientSession, youtube_url: 
         video_id = item["id"]["videoId"]
         snip = item["snippet"]
         title = snip.get("title", "")
+        desc = (snip.get("description") or "")
+        if not REQUIRE.search(title) and not REQUIRE.search(desc):
+            continue
         if EXCLUDE.search(title):
             continue
         thumb = (
@@ -279,7 +283,7 @@ async def fetch_channel_videos_api(session: aiohttp.ClientSession, youtube_url: 
         videos.append({
             "video_id": video_id,
             "title": title,
-            "description": (snip.get("description") or "")[:200],
+            "description": desc[:200],
             "thumbnail_url": thumb.get("url", ""),
             "published_at": snip.get("publishedAt", ""),
             "url": f"https://www.youtube.com/watch?v={video_id}",
