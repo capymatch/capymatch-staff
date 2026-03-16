@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import UniversityLogo from "../components/UniversityLogo";
+import StatusIntelligence from "../components/support-pod/StatusIntelligence";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
@@ -380,7 +381,7 @@ function SupportPod() {
     );
   }
 
-  const { athlete, current_issue, recruiting_signals, pod_health, profile_completeness } = data;
+  const { athlete, current_issue, recruiting_signals, pod_health, profile_completeness, status_intelligence } = data;
   const needsAttention = schools.filter(s => ["at_risk", "needs_attention", "cooling_off", "needs_follow_up"].includes(s.health));
 
   // Health badge config
@@ -465,6 +466,9 @@ function SupportPod() {
       <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-5 space-y-4">
         {/* Athlete-level hero (only shows if there's an issue or critical signals) */}
         <AthleteHero currentIssue={current_issue} signals={recruiting_signals} athleteId={athleteId} onRefresh={() => { fetchPodData(true); fetchSchools(true); }} />
+
+        {/* Status Intelligence — Journey + Attention explanation */}
+        <StatusIntelligence data={status_intelligence} />
 
         {/* Profile Completeness Alert */}
         <ProfileAlert completeness={profile_completeness} athleteId={athleteId} athleteName={athlete?.full_name} />

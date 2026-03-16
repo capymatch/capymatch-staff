@@ -25,6 +25,148 @@ from migrations.schema_v2_signals import compute_profile_completeness_detail
 router = APIRouter()
 
 
+async def _compute_status_intelligence(athlete_id: str, athlete: dict, interventions: list) -> dict:
+    """Compute the full unified Status Intelligence for the Support Pod detail view.
+
+    Returns journey_state, attention (primary + secondary), and human-readable explanations.
+    """
+    from routers.school_pod import classify_school_health
+    from services.unified_status import (
+        compute_journey_state,
+        normalize_decision_engine_signal,
+        normalize_pod_issue_signal,
+        normalize_school_alert_signal,
+        derive_attention_status,
+        JOURNEY_STATE_MAP,
+        JOURNEY_STATE_DEFAULT,
+    )
+
+    now = datetime.now(timezone.utc)
+    all_signals = []
+
+    # Source 1: Decision engine interventions
+    for item in interventions:
+        all_signals.append(normalize_decision_engine_signal(item))
+
+    # Source 2: School-level health
+    programs = await db.programs.find(
+        {"athlete_id": athlete_id},
+        {"_id": 0, "program_id": 1, "university_name": 1,
+         "recruiting_status": 1, "reply_status": 1}
+    ).to_list(50)
+
+    program_ids = [p["program_id"] for p in programs]
+    metrics_docs = await db.program_metrics.find(
+        {"program_id": {"$in": program_ids}},
+        {"_id": 0, "program_id": 1, "pipeline_health_state": 1,
+         "overdue_followups": 1, "engagement_freshness_label": 1,
+         "days_since_last_engagement": 1}
+    ).to_list(50)
+    metrics_map = {m["program_id"]: m for m in metrics_docs}
+
+    last_events = {}
+    if program_ids:
+        agg = [
+            {"$match": {"athlete_id": athlete_id, "program_id": {"$in": program_ids}}},
+            {"$sort": {"created_at": -1}},
+            {"$group": {"_id": "$program_id", "last_at": {"$first": "$created_at"}}},
+        ]
+        async for doc in db.pod_action_events.aggregate(agg):
+            last_events[doc["_id"]] = doc["last_at"]
+
+    for p in programs:
+        pid = p["program_id"]
+        m = metrics_map.get(pid, {})
+        last_evt = last_events.get(pid)
+        actual_days = None
+        if last_evt:
+            try:
+                if isinstance(last_evt, str):
+                    lc_date = datetime.fromisoformat(last_evt.replace("Z", "+00:00"))
+                else:
+                    lc_date = last_evt if last_evt.tzinfo else last_evt.replace(tzinfo=timezone.utc)
+                actual_days = (now - lc_date).days
+            except Exception:
+                pass
+        health = classify_school_health(p, m, actual_days_since_contact=actual_days)
+        if health in ("at_risk", "cooling_off", "needs_attention", "needs_follow_up"):
+            all_signals.append(normalize_school_alert_signal({
+                "university_name": p.get("university_name", ""),
+                "health": health,
+                "recruiting_status": p.get("recruiting_status", ""),
+            }))
+
+    # Source 3: Active pod issues
+    active_issues = await db.pod_issues.find(
+        {"athlete_id": athlete_id, "status": "active"},
+        {"_id": 0, "id": 1, "type": 1, "severity": 1, "title": 1}
+    ).to_list(20)
+    for issue in active_issues:
+        all_signals.append(normalize_pod_issue_signal(issue))
+
+    # Journey State
+    journey_state = compute_journey_state(athlete)
+    best_stage = athlete.get("pipeline_best_stage", "")
+    school_count = len(programs)
+    journey_explanation = _explain_journey(journey_state["label"], best_stage, school_count)
+
+    # Attention Status
+    attention = derive_attention_status(all_signals)
+    attention_explanation = _explain_attention(attention)
+
+    return {
+        "journey_state": {
+            **journey_state,
+            "explanation": journey_explanation,
+            "best_stage": best_stage,
+            "school_count": school_count,
+        },
+        "attention": attention,
+        "attention_explanation": attention_explanation,
+        "signal_count": len(all_signals),
+    }
+
+
+def _explain_journey(label: str, best_stage: str, school_count: int) -> str:
+    """Human-readable explanation of why this journey state was assigned."""
+    if label == "Committed":
+        return f"This athlete has committed to a school. Pipeline includes {school_count} school{'s' if school_count != 1 else ''}."
+    elif label == "Offer Received":
+        return f"At least one school has extended an offer. This is a strong position in the recruiting process."
+    elif label == "Visiting Schools":
+        return f"The furthest stage reached is {best_stage}. Campus visits signal serious mutual interest."
+    elif label == "Building Interest":
+        return f"Active conversations with schools at the {best_stage} stage. Interest is developing on both sides."
+    elif label == "Reaching Out":
+        return f"Initial contact has been made with schools. Waiting for responses and building connections."
+    elif label == "Getting Started":
+        return f"Schools have been added to the pipeline but outreach hasn't begun yet. {school_count} school{'s' if school_count != 1 else ''} in the list."
+    return f"Currently at the {best_stage} stage across {school_count} schools."
+
+
+def _explain_attention(attention: dict) -> str:
+    """Human-readable explanation of why this attention status was assigned."""
+    primary = attention.get("primary")
+    if not primary:
+        return "No issues detected across any source. All school relationships and actions are in good shape."
+
+    total = attention.get("total_issues", 0)
+    secondary = attention.get("secondary", [])
+
+    explanation = f"The most urgent issue is: {primary['reason']}."
+    if secondary:
+        sources = set()
+        for s in secondary:
+            sources.add(s.get("nature", ""))
+        source_labels = {"blocker": "blockers", "urgent_followup": "follow-ups", "at_risk": "at-risk schools", "needs_review": "items to review"}
+        other_types = [source_labels.get(src, src) for src in sources if src]
+        if other_types:
+            explanation += f" There {'are' if total > 2 else 'is'} also {', '.join(other_types)} that need attention."
+
+    return explanation
+
+
+
 @router.get("/support-pods/{athlete_id}")
 async def get_support_pod(athlete_id: str, context: str = None, current_user: dict = get_current_user_dep()):
     """Get full Support Pod data for an athlete"""
@@ -81,6 +223,9 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
     db_athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0})
     profile_completeness = compute_profile_completeness_detail(db_athlete) if db_athlete else None
 
+    # ── Unified Status Intelligence ──
+    status_intelligence = await _compute_status_intelligence(athlete_id, athlete, interventions)
+
     return {
         "athlete": {k: v for k, v in athlete.items() if k != "archetype"},
         "active_intervention": active_intervention,
@@ -103,6 +248,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         "recruiting_signals": recruiting_signals,
         "intervention_playbook": playbook,
         "profile_completeness": profile_completeness,
+        "status_intelligence": status_intelligence,
     }
 
 
