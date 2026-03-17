@@ -220,6 +220,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Verified across 4 school profiles: Stanford=hot_opportunity, Florida=deprioritize, Creighton=no_signals, UCLA=active_conversation
   - 26/26 backend + all frontend tests passed (iteration_159)
   - Key files: `athlete_dashboard.py` (lines 128-400), `CoachWatchCard.js`, `SchoolIntelligencePanel.js`
+- **Coach Watch State-Copy Matrix & Transition Explanations (Complete — 2026-03-17)**
+  - Standardized UI copy for all 10 states: headline, summary, why line, primary CTA, secondary CTA
+  - State names refined: waiting → waiting_for_signal, follow_up_window → follow_up_window_open, emerging → emerging_interest
+  - Added state transition tracking: previousState, currentState, stateChangedAt, stateChangeReason, whatChangedCopy
+  - Backend persists state per program in coach_watch_states collection; computes transition explanations from _TRANSITION_COPY dict
+  - Frontend CoachWatchCard shows headline (prominent), why line (subtle), and conditional "What changed" block on state transitions
+  - 27/27 backend + all frontend tests passed (iteration_160)
+  - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`
 
 ---
 
