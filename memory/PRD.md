@@ -236,6 +236,13 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Backward compatible: PipelinePage still uses legacy pulse prop
   - All frontend + backend tests passed (iteration_161)
   - Key files: `PulseIndicator.js`, `JourneyPage.js`
+- **Coach Watch Persuasion & Confidence Layers (Complete — 2026-03-17)**
+  - Added "Why this matters" persuasion copy for all 10 states (italic, 1-line, below why line)
+  - Added confidence level badge: high (green ShieldCheck), medium (amber Shield), low (gray ShieldAlert)
+  - Mapping: hot_opportunity/active_conversation → high, no_signals/deprioritize → low, all others → medium
+  - Backend returns new fields: whyThisMatters, confidenceLevel
+  - All tests passed (iteration_162)
+  - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`
 
 ---
 
