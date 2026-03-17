@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
-  Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
+  Edit2, Trash2, Plus, AlertCircle, Clock, ExternalLink,
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
   Eye, Send, Share2,
   GitCompare, ChevronDown, ChevronUp, Lock, Flag, Check,
@@ -25,8 +25,8 @@ import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
 import CoachWatchCard from "../../components/journey/CoachWatchCard";
+import SchoolIntelligencePanel from "../../components/journey/SchoolIntelligencePanel";
 import NotesSidebar from "../../components/NotesSidebar";
-// Intelligence cards removed — School Intelligence is now single source in main column
 import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -74,8 +74,6 @@ export default function JourneyPage() {
   const [aiNextStepLoading, setAiNextStepLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
-  const [aiInsight, setAiInsight] = useState(null);
-  const [aiInsightLoading, setAiInsightLoading] = useState(false);
 
   // J1: Match score + risk badges
   const [matchScore, setMatchScore] = useState(null);
@@ -228,15 +226,6 @@ export default function JourneyPage() {
       setAiSummary(res.data);
     } catch { toast.error("Failed to generate summary"); }
     finally { setAiSummaryLoading(false); }
-  };
-
-  const fetchAiInsight = async () => {
-    setAiInsightLoading(true);
-    try {
-      const res = await axios.post(`${API}/ai/school-insight/${programId}`);
-      setAiInsight(res.data);
-    } catch { toast.error("Failed to get school insight"); }
-    finally { setAiInsightLoading(false); }
   };
 
   const handleStageClick = (stageKey) => {
@@ -819,24 +808,25 @@ export default function JourneyPage() {
         {/* J4: Hide remaining content when committed and toggle is off */}
         {(!isCommitted || showJourneyDetails) && (
           <>
-        {/* Knowledge Base / School Intelligence — single source of truth */}
-        {!isBasic && (program.school_id || domain) && (
-          <div className="mb-6" id="school-intelligence">
-            <button onClick={() => navigate(domain ? `/school/${domain}` : `/schools/${program.school_id}`)}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors hover:bg-white/[0.02]"
-              style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
-              data-testid="school-intel-link">
-              <BookOpen className="w-4 h-4 text-teal-700 flex-shrink-0" />
-              <div className="text-left flex-1">
-                <p className="text-xs font-bold" style={{ color: "var(--cm-text)" }}>School Intelligence</p>
-                <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>
-                  {program.match_score
-                    ? `${program.match_score}% match — recruiting requirements, roster info, and opportunity signals`
-                    : "View recruiting requirements, roster info, and more"}
-                </p>
-              </div>
-              <span className="text-[10px] font-semibold text-teal-600 flex-shrink-0">View full analysis &rarr;</span>
-            </button>
+        {/* School Intelligence — unified Fit + Relationship + Strategy panel */}
+        {!isBasic && (
+          <div className="mb-6">
+            <SchoolIntelligencePanel
+              matchScore={matchScore}
+              signals={signals}
+              engagement={engagement}
+              coaches={coaches}
+              coachWatch={coachWatch}
+              timeline={timeline}
+              program={program}
+              onEmail={openGatedEmail}
+              onFollowUp={() => { setShowFollowup(true); setActiveAction("followup"); }}
+              onNavigateToSchool={() => {
+                const d = matchScore?.domain || program.domain;
+                if (d) navigate(`/school/${d}`);
+                else if (program.school_id) navigate(`/schools/${program.school_id}`);
+              }}
+            />
           </div>
         )}
 
@@ -1030,25 +1020,22 @@ export default function JourneyPage() {
               </div>
             </div>
 
-            {/* Section 4: School Fit (compact preview → links to main column) */}
+            {/* Section 4: School Fit (compact preview → scrolls to main column panel) */}
             <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="school-fit-preview">
               <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2" style={{ color: "var(--cm-text-3)" }}>School Fit</h3>
               <p className="text-[10.5px] leading-snug mb-1" style={{ color: "var(--cm-text)" }}>
-                {program.match_score
-                  ? program.match_score >= 70
-                    ? "Strong academic and athletic match"
-                    : program.match_score >= 40
-                      ? "Moderate fit — review roster and requirements"
-                      : "Limited match signals — explore alternatives"
-                  : "Analysis available in School Intelligence"}
+                {matchScore?.match_score
+                  ? matchScore.match_score >= 70
+                    ? `${matchScore.match_score}% — Strong academic and athletic match`
+                    : matchScore.match_score >= 40
+                      ? `${matchScore.match_score}% — Moderate fit — review analysis below`
+                      : `${matchScore.match_score}% — Limited match signals`
+                  : "Analysis available below"}
               </p>
-              {signals.days_since_activity != null && signals.days_since_activity > 7 && (
-                <p className="text-[9px] mb-2" style={{ color: "#f59e0b" }}>Limited engagement so far</p>
-              )}
               <button
                 onClick={() => {
                   const el = document.getElementById("school-intelligence");
-                  if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
                 className="text-[9px] font-semibold text-teal-600 hover:text-teal-500 transition-colors"
                 data-testid="school-fit-view-analysis">
@@ -1107,24 +1094,17 @@ export default function JourneyPage() {
                       )}
                     </div>
                   </button>
-                  <button onClick={fetchAiInsight} disabled={aiInsightLoading}
+                  <button onClick={() => {
+                      const el = document.getElementById("school-intelligence");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
                     className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
                     style={{ backgroundColor: "var(--cm-surface-2)" }}
                     data-testid="ai-school-insight-btn">
-                    {aiInsightLoading ? (
-                      <Loader2 className="w-3 h-3 animate-spin text-[#1a8a80]" />
-                    ) : (
-                      <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
-                    )}
+                    <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
                     <div className="text-left flex-1 min-w-0">
-                      {aiInsight?.insight ? (
-                        <p className="text-[10px] truncate" style={{ color: "var(--cm-text-2)" }}>{aiInsight.insight.summary}</p>
-                      ) : (
-                        <>
-                          <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Explore School Intelligence</p>
-                          <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Roster, fit, and timing signals</p>
-                        </>
-                      )}
+                      <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Explore School Intelligence</p>
+                      <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Fit, timing, and strategy analysis</p>
                     </div>
                   </button>
                 </div>
