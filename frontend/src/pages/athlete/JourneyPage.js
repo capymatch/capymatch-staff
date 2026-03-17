@@ -151,13 +151,10 @@ export default function JourneyPage() {
       // Gmail connection status
       setGmailConnected(gmailRes.status === "fulfilled" && gmailRes.value.data?.connected === true);
 
-      // Coach Watch alert (fire-and-forget after program loads)
-      const uniName = pRes.value.data?.university_name;
-      if (uniName) {
-        axios.get(`${API}/ai/coach-watch/alert/${encodeURIComponent(uniName)}`)
-          .then(r => setCoachWatch(r.data))
-          .catch(() => {});
-      }
+      // Coach Watch — new relationship state engine
+      axios.get(`${API}/coach-watch/${programId}`)
+        .then(r => setCoachWatch(r.data))
+        .catch(() => {});
 
       // Fetch coach flags for this program
       axios.get(`${API}/athlete/flags`)
@@ -927,15 +924,7 @@ export default function JourneyPage() {
           {/* RIGHT: Sidebar — Coach Watch Intelligence Layer */}
           <div className="space-y-5">
             {/* Section 1: Coach Watch Summary (NEW TOP CARD) */}
-            <CoachWatchCard
-              signals={signals}
-              engagement={engagement}
-              coaches={coaches}
-              coachWatch={coachWatch}
-              timeline={timeline}
-              onEmail={openGatedEmail}
-              onFollowUp={() => { setShowFollowup(true); setActiveAction("followup"); }}
-            />
+            <CoachWatchCard coachWatch={coachWatch} />
 
             {/* Section 2: Key Contacts (compact, max 2) */}
             <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="key-contacts-card">

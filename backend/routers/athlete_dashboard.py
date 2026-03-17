@@ -105,6 +105,326 @@ async def _batch_signals(tenant_id: str, program_ids: list) -> dict:
     }
 
 
+
+# ─────────────────────────────────────────────────────────────────────────
+# Coach Watch — Weighted Relationship State Engine
+# ─────────────────────────────────────────────────────────────────────────
+
+def _time_decay(days):
+    """Signal strength decay: 100%→80%→55%→30%→10%."""
+    if days is None:
+        return 0.1
+    if days <= 3:
+        return 1.0
+    if days <= 7:
+        return 0.8
+    if days <= 14:
+        return 0.55
+    if days <= 21:
+        return 0.30
+    return 0.10
+
+
+def _compute_coach_watch(program: dict, interactions: list, email_tracking: list):
+    """
+    Compute a weighted Coach Watch score from all available signals.
+    Returns structured output: score, interestLevel, trend, state, summary,
+    recommendedAction, mostEngagedContact, signals[].
+    """
+    now = datetime.now(timezone.utc)
+
+    # ── Extract program-level pipeline context ──
+    reply_status = (program.get("reply_status") or "").lower()
+    recruiting_status = (program.get("recruiting_status") or "").lower()
+
+    initial_contact_str = program.get("initial_contact_sent")
+    last_follow_up_str = program.get("last_follow_up")
+
+    def _parse_dt(val):
+        if not val:
+            return None
+        try:
+            dt = datetime.fromisoformat(str(val).replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+        except Exception:
+            return None
+
+    initial_contact_dt = _parse_dt(initial_contact_str)
+    last_follow_up_dt = _parse_dt(last_follow_up_str)
+
+    has_outreach = initial_contact_dt is not None
+    days_since_outreach = (now - initial_contact_dt).days if initial_contact_dt else None
+    days_since_follow_up = (now - last_follow_up_dt).days if last_follow_up_dt else None
+    days_since_last_activity = min(
+        d for d in [days_since_outreach, days_since_follow_up] if d is not None
+    ) if any(d is not None for d in [days_since_outreach, days_since_follow_up]) else None
+
+    # ── Coach-side signals from program document ──
+    has_reply = "reply" in reply_status and reply_status not in ("no reply", "")
+    has_visit = "visit" in recruiting_status
+    has_offer = "offer" in recruiting_status
+
+    # ── Aggregate email tracking ──
+    total_opens = sum(int(t.get("opens", 0)) for t in email_tracking)
+    total_clicks = sum(int(t.get("clicks", 0)) for t in email_tracking)
+
+    # ── Count interactions by type ──
+    coach_replies_ix = 0
+    athlete_outreach_ix = 0
+    for ix in interactions:
+        ix_type = (ix.get("type") or "").lower()
+        if ix_type in ("coach_reply", "email_received"):
+            coach_replies_ix += 1
+        else:
+            athlete_outreach_ix += 1
+
+    # ═══ SCORING: 4 buckets ═══
+
+    # Bucket 1: Coach engagement signals (strong)
+    score = 0
+    signal_log = []
+
+    if has_reply:
+        pts = round(35 * _time_decay(days_since_follow_up))
+        score += pts
+        signal_log.append({"type": "coach_reply", "label": "Coach replied to your message", "points": pts, "strength": "strong"})
+
+    if has_visit:
+        pts = round(45 * _time_decay(days_since_follow_up))
+        score += pts
+        signal_log.append({"type": "visit_invite", "label": "Campus visit scheduled or completed", "points": pts, "strength": "strong"})
+
+    if has_offer:
+        pts = round(50 * _time_decay(days_since_follow_up))
+        score += pts
+        signal_log.append({"type": "offer", "label": "Offer received", "points": pts, "strength": "strong"})
+
+    if total_clicks > 0:
+        pts = round(16 * _time_decay(days_since_last_activity))
+        score += pts
+        signal_log.append({"type": "coach_click", "label": "Coach clicked a link in your outreach", "points": pts, "strength": "strong"})
+
+    # Bucket 2: Passive engagement
+    if total_opens > 2:
+        pts = round(10 * _time_decay(days_since_last_activity))
+        score += pts
+        signal_log.append({"type": "repeat_open", "label": f"Message opened {total_opens} times", "points": pts, "strength": "medium"})
+    elif total_opens > 0:
+        pts = round(8 * _time_decay(days_since_last_activity))
+        score += pts
+        signal_log.append({"type": "coach_open", "label": "Coach opened your message", "points": pts, "strength": "medium"})
+
+    if coach_replies_ix > 0 and not has_reply:
+        pts = round(25 * _time_decay(days_since_last_activity))
+        score += pts
+        signal_log.append({"type": "ix_reply", "label": "Coach interaction logged", "points": pts, "strength": "medium"})
+
+    # Bucket 3: Athlete outreach (context only — 0 for interest scoring)
+    outreach_count = athlete_outreach_ix + (1 if has_outreach else 0)
+
+    # Bucket 4: Negative / cooling signals
+    if has_outreach and not has_reply and total_opens == 0 and total_clicks == 0:
+        if days_since_outreach is not None and days_since_outreach > 14:
+            penalty = -18
+            score += penalty
+            signal_log.append({"type": "no_engagement_14d", "label": f"No coach engagement after {days_since_outreach} days", "points": penalty, "strength": "negative"})
+        elif days_since_outreach is not None and days_since_outreach > 7:
+            penalty = -10
+            score += penalty
+            signal_log.append({"type": "no_engagement_7d", "label": "No coach engagement after 7+ days", "points": penalty, "strength": "negative"})
+
+    if has_outreach and not has_reply and outreach_count > 2:
+        penalty = -15
+        score += penalty
+        signal_log.append({"type": "repeated_no_response", "label": "Multiple outreach attempts with no response", "points": penalty, "strength": "negative"})
+
+    score = max(0, score)  # Floor at 0
+
+    # ═══ INTEREST LEVEL ═══
+    has_coach_signal = has_reply or has_visit or has_offer or total_clicks > 0 or total_opens > 0
+    if score >= 70 and has_coach_signal:
+        interest_level = "High"
+    elif score >= 50:
+        interest_level = "Medium"
+    elif score >= 25:
+        interest_level = "Emerging"
+    elif has_outreach and not has_coach_signal:
+        interest_level = "No signals yet"
+    elif not has_outreach:
+        interest_level = "Not started"
+    else:
+        interest_level = "No signals yet"
+
+    # ═══ TREND ═══
+    if has_reply and days_since_follow_up is not None and days_since_follow_up <= 7:
+        trend = "Increasing"
+    elif has_visit:
+        trend = "Increasing"
+    elif has_outreach and days_since_last_activity is not None and days_since_last_activity > 14 and not has_coach_signal:
+        trend = "Cooling"
+    elif has_coach_signal and days_since_last_activity is not None and days_since_last_activity > 14:
+        trend = "Cooling"
+    elif has_coach_signal:
+        trend = "Stable"
+    elif has_outreach:
+        trend = "Stable"
+    else:
+        trend = "Not started"
+
+    # ═══ STATE ═══
+    if not has_outreach:
+        state = "pre_outreach"
+    elif has_offer:
+        state = "offer"
+    elif has_visit:
+        state = "visit"
+    elif has_reply:
+        state = "conversation"
+    elif has_coach_signal:
+        state = "passive_interest"
+    elif has_outreach and days_since_outreach is not None and days_since_outreach <= 5:
+        state = "waiting"
+    elif has_outreach and days_since_outreach is not None and days_since_outreach > 10:
+        state = "stale_outreach"
+    elif has_outreach:
+        state = "follow_up_needed"
+    else:
+        state = "pre_outreach"
+
+    # ═══ SUMMARY (human language, one clear sentence) ═══
+    if state == "pre_outreach":
+        summary = "No outreach yet. This school is in your pipeline but contact hasn't started."
+    elif state == "offer":
+        summary = "You have an offer from this program. This is a decision-stage school."
+    elif state == "visit":
+        summary = "Campus visit is on the calendar. The relationship is progressing."
+    elif state == "conversation":
+        summary = "The coach replied. You have an active conversation."
+    elif state == "passive_interest":
+        if total_clicks > 0:
+            summary = "The coach engaged with your content but hasn't replied yet."
+        elif total_opens > 2:
+            summary = f"Your message was opened {total_opens} times. Interest is building."
+        else:
+            summary = "A coach opened your message. Passive interest is present."
+    elif state == "waiting":
+        summary = "Your outreach is still fresh. Give coaches a few more days to respond."
+    elif state == "stale_outreach":
+        if days_since_outreach:
+            summary = f"No response in {days_since_outreach} days. Your outreach may need a fresh angle."
+        else:
+            summary = "No response to your outreach. A follow-up with a new angle may help."
+    elif state == "follow_up_needed":
+        summary = "Outreach sent but no engagement yet. A follow-up is recommended."
+    else:
+        summary = "Early stage. Start outreach to activate this relationship."
+
+    # ═══ RECOMMENDED ACTION (state-based CTA rules) ═══
+    if state == "pre_outreach":
+        recommended_action = "Send your first email to start the conversation."
+        primary_cta = "Send First Email"
+        secondary_cta = None
+    elif state == "offer":
+        recommended_action = "Review the offer details and discuss next steps with your family."
+        primary_cta = "Send Email"
+        secondary_cta = "Schedule Follow Up"
+    elif state == "visit":
+        recommended_action = "Prepare for your visit. Send a thank-you note after."
+        primary_cta = "Send Email"
+        secondary_cta = "Schedule Follow Up"
+    elif state == "conversation":
+        recommended_action = "Reply promptly. Keep the momentum going."
+        primary_cta = "Send Email"
+        secondary_cta = "Schedule Follow Up"
+    elif state == "passive_interest":
+        recommended_action = "Follow up while interest is active. Reference something specific."
+        primary_cta = "Send Email"
+        secondary_cta = "Schedule Follow Up"
+    elif state == "waiting":
+        recommended_action = "Wait a few more days. If no response by day 5-7, follow up."
+        primary_cta = "Send Email"
+        secondary_cta = "Schedule Follow Up"
+    elif state == "stale_outreach" and days_since_outreach and days_since_outreach > 10:
+        recommended_action = "Follow up with a new angle — updated highlights, a question, or a visit request."
+        primary_cta = "Send Email"
+        secondary_cta = "Schedule Follow Up"
+    elif state == "follow_up_needed":
+        recommended_action = "Send a follow-up with something new — a recent stat, highlight clip, or specific question."
+        primary_cta = "Send Email"
+        secondary_cta = "Schedule Follow Up"
+    else:
+        recommended_action = "Send your first email to start the conversation."
+        primary_cta = "Send First Email"
+        secondary_cta = None
+
+    # ═══ MOST ENGAGED CONTACT ═══
+    most_engaged = None  # Placeholder — populated from college_coaches in the endpoint
+
+    return {
+        "score": score,
+        "interestLevel": interest_level,
+        "trend": trend,
+        "state": state,
+        "summary": summary,
+        "recommendedAction": recommended_action,
+        "primaryCta": primary_cta,
+        "secondaryCta": secondary_cta,
+        "mostEngagedContact": most_engaged,
+        "signals": signal_log,
+        "meta": {
+            "hasOutreach": has_outreach,
+            "hasReply": has_reply,
+            "hasVisit": has_visit,
+            "hasOffer": has_offer,
+            "totalOpens": total_opens,
+            "totalClicks": total_clicks,
+            "daysSinceActivity": days_since_last_activity,
+            "outreachCount": outreach_count,
+        },
+    }
+
+
+@router.get("/coach-watch/{program_id}")
+async def get_coach_watch(program_id: str, current_user: dict = get_current_user_dep()):
+    """Compute Coach Watch relationship intelligence for a program."""
+    tenant_id = await get_athlete_tenant(current_user)
+    program = await db.programs.find_one(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    )
+    if not program:
+        raise HTTPException(404, "Program not found")
+
+    # Gather all data sources in parallel
+    interactions, email_tracking, college_coaches = await asyncio.gather(
+        db.interactions.find(
+            {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+        ).to_list(500),
+        db.email_tracking.find(
+            {"program_id": program_id}, {"_id": 0}
+        ).to_list(500),
+        db.college_coaches.find(
+            {"tenant_id": tenant_id, "university_name": program.get("university_name")}, {"_id": 0}
+        ).to_list(20),
+    )
+
+    result = _compute_coach_watch(program, interactions, email_tracking)
+
+    # Populate most engaged contact
+    if college_coaches:
+        primary = next(
+            (c for c in college_coaches if "head" in (c.get("title") or "").lower()),
+            next(
+                (c for c in college_coaches if "recruit" in (c.get("title") or "").lower()),
+                college_coaches[0]
+            )
+        )
+        result["mostEngagedContact"] = primary.get("name") or primary.get("title") or "Coach"
+
+    return result
+
+
 # ─────────────────────────────────────────────────────────────────────────
 # Board grouping (ported from athlete app programs.py)
 # ─────────────────────────────────────────────────────────────────────────

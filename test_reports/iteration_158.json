@@ -1,0 +1,95 @@
+{
+  "summary": "Coach Watch weighted relationship state engine verified. Backend /api/coach-watch/{program_id} returns structured output with all 13 features working. Stanford (reply+visit) shows Medium/Increasing/visit state. Creighton (no outreach) shows 'Not started' (NOT 'Low interest'). UCLA (has outreach+reply) shows conversation state. CoachWatchCard displays all required elements. SI drawer CTAs correctly show/hide 'Schedule Follow Up' based on outreach status.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_coach_watch.py",
+    "/app/test_reports/pytest/pytest_coach_watch_v2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "_compute_coach_watch() function correctly implements 4-bucket weighted scoring: coach engagement (35-50pts), passive engagement (8-25pts), athlete outreach (context only), negative signals (-10 to -18pts)",
+    "Time decay formula correct: 0-3d=100%, 4-7d=80%, 8-14d=55%, 15-21d=30%, 22+d=10%",
+    "Interest thresholds correct: 0-24=Low/Not started, 25-49=Emerging, 50-69=Medium, 70+=High (only if coach signal exists)",
+    "CoachWatchCard correctly consumes structured backend output - no longer treats athlete actions as coach interest",
+    "SchoolIntelligencePanel.classifyEngagement() now uses coachWatch.meta for consistent state",
+    "CTA logic correct: No outreach → only 'Send Email'; Has outreach → 'Send Email' + 'Schedule Follow Up'"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_coach_watch.py"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24 tests passed)",
+    "frontend": "100% (all CoachWatch/SI tests passed)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "athlete123"
+    }
+  },
+  "seed_data_creation": "Used existing programs: Stanford (e02f08c6-7c47-430a-aa8d-787a6fbeae00), Creighton (f624f30a-d505-493b-8d5d-4197b970f72f), UCLA (85095202-8b95-4cb2-9390-3275d7840a3d)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Coach Watch relationship state engine complete. Backend endpoint: /api/coach-watch/{program_id}. Key data-testid selectors: coach-watch-card, cw-interest-level, cw-trend, cw-summary, cw-action, cw-signal-{n}, cw-score. SI drawer CTAs: si-primary-cta, si-secondary-cta. CTA visibility depends on coachWatch.meta.hasOutreach. Console CORS error for external images is expected and not blocking.",
+  "tests_executed": {
+    "backend_api_tests": {
+      "total": 24,
+      "passed": 24,
+      "failed": 0,
+      "test_file": "/app/backend/tests/test_coach_watch.py",
+      "key_assertions": [
+        "Stanford: interestLevel=Medium, trend=Increasing, state=visit, score=64, signals=[coach_reply, visit_invite]",
+        "Creighton: interestLevel=Not started (NOT Low interest), trend=Not started, state=pre_outreach, score=0, signals=[]",
+        "UCLA: state=conversation, score=19 (>0), hasReply=true",
+        "All schools: Structured response with score, interestLevel, trend, state, summary, recommendedAction, primaryCta, secondaryCta, signals[], meta{}"
+      ]
+    },
+    "frontend_playwright_tests": {
+      "stanford_tests": [
+        "CoachWatchCard visible ✅",
+        "Interest level 'Medium' ✅",
+        "Trend 'Increasing' ✅",
+        "Summary shows campus visit context ✅",
+        "Signals show coach_reply and visit_invite with points ✅",
+        "SI drawer CTAs: 'Send Email' + 'Schedule Follow Up' ✅"
+      ],
+      "creighton_tests": [
+        "Interest level 'Not started' (NOT 'Low interest') ✅ CRITICAL",
+        "Trend 'Not started' ✅",
+        "Score 0 ✅",
+        "No signals visible ✅",
+        "SI drawer CTA: Only 'Send Email' (no 'Schedule Follow Up') ✅"
+      ],
+      "ucla_tests": [
+        "Score 19 (>0) ✅",
+        "Summary: 'The coach replied. You have an active conversation.' ✅",
+        "Signal: 'Coach replied to your message' ✅",
+        "SI drawer CTAs: 'Send Email' + 'Schedule Follow Up' ✅"
+      ],
+      "console_errors": "Only CORS error for external image (expected, not blocking)"
+    }
+  },
+  "verified_requirements": {
+    "Backend /api/coach-watch/{program_id} returns structured output": "✅ PASS",
+    "Stanford: interestLevel=Medium, trend=Increasing, state=visit, score>0, signals include coach_reply and visit_invite": "✅ PASS",
+    "Creighton: interestLevel=Not started, trend=Not started, state=pre_outreach, score=0, no false 'Low interest'": "✅ PASS",
+    "UCLA: score>0, state=conversation": "✅ PASS",
+    "CoachWatchCard displays interest level badge (data-testid='cw-interest-level')": "✅ PASS",
+    "CoachWatchCard displays trend with icon (data-testid='cw-trend')": "✅ PASS",
+    "CoachWatchCard displays human summary (data-testid='cw-summary')": "✅ PASS",
+    "CoachWatchCard displays recommended action (data-testid='cw-action')": "✅ PASS",
+    "CoachWatchCard displays signal log with point values when signals exist": "✅ PASS",
+    "Coach Watch and School Intelligence drawer do NOT conflict": "✅ PASS",
+    "SI drawer CTA: Creighton shows only 'Send Email'": "✅ PASS",
+    "SI drawer CTA: Stanford/UCLA shows 'Send Email' + 'Schedule Follow Up'": "✅ PASS",
+    "No console errors on journey pages": "✅ PASS (only expected CORS error for external images)"
+  }
+}

@@ -22,20 +22,33 @@ const SUB_SCORE_META = {
   measurables:  { label: "Athletic Fit",    color: "#d97706" },
 };
 
-/* ── Classify engagement state ── */
-function classifyEngagement({ signals, engagement }) {
+/* ── Classify engagement state (prefer backend coachWatch.meta if available) ── */
+function classifyEngagement({ signals, engagement, coachWatch }) {
+  const cw = coachWatch?.meta;
+  if (cw) {
+    const hasSignals = cw.hasReply || cw.totalClicks > 0 || cw.totalOpens > 0;
+    return {
+      level: coachWatch.state || "none",
+      hasSignals,
+      opens: cw.totalOpens || 0,
+      clicks: cw.totalClicks || 0,
+      hasReply: cw.hasReply || false,
+      daysSince: cw.daysSinceActivity,
+      outreach: cw.outreachCount || 0,
+      hasOutreach: cw.hasOutreach || false,
+    };
+  }
   const opens = engagement?.total_opens || 0;
   const clicks = engagement?.total_clicks || 0;
   const hasReply = signals?.has_coach_reply;
   const daysSince = signals?.days_since_activity;
   const outreach = signals?.outreach_count || 0;
-
-  if (hasReply)   return { level: "replied", hasSignals: true, opens, clicks, hasReply, daysSince, outreach };
-  if (clicks > 0) return { level: "clicked", hasSignals: true, opens, clicks, hasReply, daysSince, outreach };
-  if (opens > 0)  return { level: "opened",  hasSignals: true, opens, clicks, hasReply, daysSince, outreach };
-  if (daysSince != null && daysSince > 14 && outreach > 0) return { level: "stale", hasSignals: false, opens, clicks, hasReply, daysSince, outreach };
-  if (outreach > 0) return { level: "waiting", hasSignals: false, opens, clicks, hasReply, daysSince, outreach };
-  return { level: "none", hasSignals: false, opens, clicks, hasReply, daysSince, outreach };
+  if (hasReply)   return { level: "replied", hasSignals: true, opens, clicks, hasReply, daysSince, outreach, hasOutreach: outreach > 0 };
+  if (clicks > 0) return { level: "clicked", hasSignals: true, opens, clicks, hasReply, daysSince, outreach, hasOutreach: outreach > 0 };
+  if (opens > 0)  return { level: "opened",  hasSignals: true, opens, clicks, hasReply, daysSince, outreach, hasOutreach: outreach > 0 };
+  if (daysSince != null && daysSince > 14 && outreach > 0) return { level: "stale", hasSignals: false, opens, clicks, hasReply, daysSince, outreach, hasOutreach: true };
+  if (outreach > 0) return { level: "waiting", hasSignals: false, opens, clicks, hasReply, daysSince, outreach, hasOutreach: true };
+  return { level: "none", hasSignals: false, opens, clicks, hasReply, daysSince, outreach: 0, hasOutreach: false };
 }
 
 /* ── Fit descriptor ── */
@@ -204,7 +217,7 @@ export default function SchoolIntelligencePanel({
   const matchReasons = ms.match_reasons || [];
   const riskBadges = ms.risk_badges || [];
 
-  const eng = classifyEngagement({ signals, engagement });
+  const eng = classifyEngagement({ signals, engagement, coachWatch });
   const narrative = buildNarrative({ matchScore: ms, eng, coachWatch });
   const signalDetails = buildSignalDetails(eng);
   const dqLabel = dataQualityLabel(ms.confidence, eng.hasSignals);
@@ -213,7 +226,7 @@ export default function SchoolIntelligencePanel({
   riskBadges.forEach(b => { if (b.label && improvements.length < 3) improvements.push(b.label); });
 
   // Dynamic CTAs — "Schedule Follow Up" only appears when outreach exists
-  const hasOutreach = eng.outreach > 0;
+  const hasOutreach = eng.hasOutreach || eng.outreach > 0;
   const primaryCta = { label: "Send Email", icon: Mail, action: onEmail };
   const secondaryCta = hasOutreach
     ? { label: "Schedule Follow Up", icon: CalendarPlus, action: onFollowUp }
