@@ -201,6 +201,13 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Added "Why this is a strong fit:" heading above strengths list
   - 13/13 requirements verified, 100% pass (iteration_157)
   - Key files: `SchoolIntelligencePanel.js` (REFINED)
+- **Journey Timeline Data Integrity Fix (Complete)**
+  - Root cause: `support_messages` (club coach → athlete) had no `program_id` field, so ALL messages appeared on EVERY school's journey page
+  - This created false signals: coach messages about UCLA/Stanford appeared on Creighton's page, conflicting with "No coach engagement" in School Intelligence
+  - Fix: Removed unfiltered support_messages from per-school journey timeline; timeline now only shows school-specific `interactions` and `athlete_events`
+  - Support messages remain accessible in the Messages tab (where they belong)
+  - SI narrative, engagement status, and CTAs are now fully consistent with timeline data
+  - Key files: `athlete_dashboard.py` (MODIFIED: removed support_messages from journey endpoint)
 
 ---## Backlog
 

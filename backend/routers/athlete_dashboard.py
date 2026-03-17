@@ -419,50 +419,7 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
     # Sort by date descending
     timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
 
-    # Include coach support messages related to this athlete
-    athlete_id = current_user.get("athlete_id", current_user.get("id", ""))
-    lookup_ids = [current_user.get("id", ""), athlete_id]
-    support_threads = await db.support_threads.find(
-        {"$or": [
-            {"participant_ids": {"$in": lookup_ids}},
-            {"athlete_id": {"$in": lookup_ids}},
-        ]},
-        {"_id": 0},
-    ).to_list(50)
-
-    # Get actual messages from those threads to show correct sender per message
-    thread_ids = []
-    for t in support_threads:
-        tid = t.get("thread_id") or t.get("id")
-        if tid:
-            thread_ids.append(tid)
-
-    if thread_ids:
-        messages = await db.support_messages.find(
-            {"thread_id": {"$in": thread_ids}},
-            {"_id": 0},
-        ).sort("created_at", -1).to_list(100)
-
-        for m in messages:
-            sender = m.get("sender_name", "Unknown")
-            sender_role = m.get("sender_role", "")
-            is_athlete = sender_role == "athlete" or m.get("sender_id") in lookup_ids
-            snippet = m.get("body", "")[:150]
-            timeline.append({
-                "id": f"msg-{m.get('id', '')}",
-                "event_type": "athlete_message" if is_athlete else "coach_message",
-                "type": "Your Message" if is_athlete else "Coach Message",
-                "title": snippet,
-                "date": m.get("created_at"),
-                "date_time": m.get("created_at"),
-                "content": snippet,
-                "notes": snippet,
-                "outcome": "",
-                "coach_name": sender,
-                "thread_id": m.get("thread_id"),
-            })
-
-    # Re-sort after adding messages
+    # Re-sort after adding events
     timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
 
     # Enrich timeline with per-message engagement tracking
