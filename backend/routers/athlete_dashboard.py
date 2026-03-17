@@ -127,19 +127,13 @@ def _time_decay(days):
 
 def _compute_coach_watch(program: dict, interactions: list, email_tracking: list):
     """
-    Compute a weighted Coach Watch score from all available signals.
-    Returns structured output: score, interestLevel, trend, state, summary,
-    recommendedAction, mostEngagedContact, signals[].
+    Compute Coach Watch using the 10-state relationship matrix.
+    Scoring uses 4 weighted buckets + time decay.
+    State is deterministic from the matrix, not score-derived.
     """
     now = datetime.now(timezone.utc)
 
-    # ── Extract program-level pipeline context ──
-    reply_status = (program.get("reply_status") or "").lower()
-    recruiting_status = (program.get("recruiting_status") or "").lower()
-
-    initial_contact_str = program.get("initial_contact_sent")
-    last_follow_up_str = program.get("last_follow_up")
-
+    # ── Parse dates ──
     def _parse_dt(val):
         if not val:
             return None
@@ -151,8 +145,10 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         except Exception:
             return None
 
-    initial_contact_dt = _parse_dt(initial_contact_str)
-    last_follow_up_dt = _parse_dt(last_follow_up_str)
+    reply_status = (program.get("reply_status") or "").lower()
+    recruiting_status = (program.get("recruiting_status") or "").lower()
+    initial_contact_dt = _parse_dt(program.get("initial_contact_sent"))
+    last_follow_up_dt = _parse_dt(program.get("last_follow_up"))
 
     has_outreach = initial_contact_dt is not None
     days_since_outreach = (now - initial_contact_dt).days if initial_contact_dt else None
@@ -161,16 +157,14 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         d for d in [days_since_outreach, days_since_follow_up] if d is not None
     ) if any(d is not None for d in [days_since_outreach, days_since_follow_up]) else None
 
-    # ── Coach-side signals from program document ──
+    # ── Coach-side signals ──
     has_reply = "reply" in reply_status and reply_status not in ("no reply", "")
     has_visit = "visit" in recruiting_status
     has_offer = "offer" in recruiting_status
 
-    # ── Aggregate email tracking ──
     total_opens = sum(int(t.get("opens", 0)) for t in email_tracking)
     total_clicks = sum(int(t.get("clicks", 0)) for t in email_tracking)
 
-    # ── Count interactions by type ──
     coach_replies_ix = 0
     athlete_outreach_ix = 0
     for ix in interactions:
@@ -180,33 +174,34 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         else:
             athlete_outreach_ix += 1
 
-    # ═══ SCORING: 4 buckets ═══
+    has_coach_signal = has_reply or has_visit or has_offer or total_clicks > 0 or total_opens > 0 or coach_replies_ix > 0
+    has_passive_signal = (total_clicks > 0 or total_opens > 0) and not has_reply
+    outreach_count = athlete_outreach_ix + (1 if has_outreach else 0)
 
-    # Bucket 1: Coach engagement signals (strong)
+    # ═══ SCORING (4 buckets, unchanged weights) ═══
     score = 0
     signal_log = []
-
-    if has_reply:
-        pts = round(35 * _time_decay(days_since_follow_up))
-        score += pts
-        signal_log.append({"type": "coach_reply", "label": "Coach replied to your message", "points": pts, "strength": "strong"})
-
-    if has_visit:
-        pts = round(45 * _time_decay(days_since_follow_up))
-        score += pts
-        signal_log.append({"type": "visit_invite", "label": "Campus visit scheduled or completed", "points": pts, "strength": "strong"})
 
     if has_offer:
         pts = round(50 * _time_decay(days_since_follow_up))
         score += pts
         signal_log.append({"type": "offer", "label": "Offer received", "points": pts, "strength": "strong"})
 
+    if has_visit:
+        pts = round(45 * _time_decay(days_since_follow_up))
+        score += pts
+        signal_log.append({"type": "visit_invite", "label": "Campus visit scheduled or completed", "points": pts, "strength": "strong"})
+
+    if has_reply:
+        pts = round(35 * _time_decay(days_since_follow_up))
+        score += pts
+        signal_log.append({"type": "coach_reply", "label": "Coach replied to your message", "points": pts, "strength": "strong"})
+
     if total_clicks > 0:
         pts = round(16 * _time_decay(days_since_last_activity))
         score += pts
-        signal_log.append({"type": "coach_click", "label": "Coach clicked a link in your outreach", "points": pts, "strength": "strong"})
+        signal_log.append({"type": "coach_click", "label": "Coach clicked a link in your outreach", "points": pts, "strength": "medium"})
 
-    # Bucket 2: Passive engagement
     if total_opens > 2:
         pts = round(10 * _time_decay(days_since_last_activity))
         score += pts
@@ -214,153 +209,133 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
     elif total_opens > 0:
         pts = round(8 * _time_decay(days_since_last_activity))
         score += pts
-        signal_log.append({"type": "coach_open", "label": "Coach opened your message", "points": pts, "strength": "medium"})
+        signal_log.append({"type": "coach_open", "label": "Coach opened your message", "points": pts, "strength": "low"})
 
     if coach_replies_ix > 0 and not has_reply:
         pts = round(25 * _time_decay(days_since_last_activity))
         score += pts
         signal_log.append({"type": "ix_reply", "label": "Coach interaction logged", "points": pts, "strength": "medium"})
 
-    # Bucket 3: Athlete outreach (context only — 0 for interest scoring)
-    outreach_count = athlete_outreach_ix + (1 if has_outreach else 0)
-
-    # Bucket 4: Negative / cooling signals
-    if has_outreach and not has_reply and total_opens == 0 and total_clicks == 0:
+    # Negative / cooling
+    if has_outreach and not has_coach_signal:
         if days_since_outreach is not None and days_since_outreach > 14:
-            penalty = -18
-            score += penalty
-            signal_log.append({"type": "no_engagement_14d", "label": f"No coach engagement after {days_since_outreach} days", "points": penalty, "strength": "negative"})
+            p = -18
+            score += p
+            signal_log.append({"type": "no_engagement_14d", "label": f"No coach engagement after {days_since_outreach} days", "points": p, "strength": "negative"})
         elif days_since_outreach is not None and days_since_outreach > 7:
-            penalty = -10
-            score += penalty
-            signal_log.append({"type": "no_engagement_7d", "label": "No coach engagement after 7+ days", "points": penalty, "strength": "negative"})
+            p = -10
+            score += p
+            signal_log.append({"type": "no_engagement_7d", "label": "No coach engagement after 7+ days", "points": p, "strength": "negative"})
 
     if has_outreach and not has_reply and outreach_count > 2:
-        penalty = -15
-        score += penalty
-        signal_log.append({"type": "repeated_no_response", "label": "Multiple outreach attempts with no response", "points": penalty, "strength": "negative"})
+        p = -15
+        score += p
+        signal_log.append({"type": "repeated_no_response", "label": "Multiple outreach attempts with no response", "points": p, "strength": "negative"})
 
-    score = max(0, score)  # Floor at 0
+    score = max(0, score)
 
-    # ═══ INTEREST LEVEL ═══
-    has_coach_signal = has_reply or has_visit or has_offer or total_clicks > 0 or total_opens > 0
-    if score >= 70 and has_coach_signal:
-        interest_level = "High"
-    elif score >= 50:
-        interest_level = "Medium"
-    elif score >= 25:
+    # ═══ 10-STATE MATRIX ═══
+    # Priority order: hot > active > re_engaged > emerging > cooling > stalled > follow_up > waiting > deprioritize > no_signals
+
+    # State 6: Hot Opportunity
+    if has_visit or has_offer or (has_reply and score >= 70):
+        state = "hot_opportunity"
+        interest_level = "High" if score >= 70 else "Medium"
+        trend = "Increasing"
+        summary = "This school is actively showing interest. Act while the window is open."
+        recommended_action = "Respond now and move to the next step."
+        primary_cta = "Respond Now"
+        secondary_cta = "Prepare Next Step"
+
+    # State 5: Active Conversation
+    elif has_reply or coach_replies_ix > 0:
+        state = "active_conversation"
+        interest_level = "Medium" if score < 70 else "High"
+        trend = "Increasing" if days_since_follow_up is not None and days_since_follow_up <= 7 else "Stable"
+        summary = "A coach has engaged directly. Keep momentum moving."
+        recommended_action = "Reply promptly and keep the conversation going."
+        primary_cta = "Reply Promptly"
+        secondary_cta = "Draft Response"
+
+    # State 8: Re-Engaged (was dormant > 21 days, then new signal appeared)
+    elif has_coach_signal and days_since_outreach is not None and days_since_outreach > 21:
+        state = "re_engaged"
+        interest_level = "Emerging" if score < 50 else "Medium"
+        trend = "Reactivated"
+        summary = "This relationship has become active again after a quiet period."
+        recommended_action = "Follow up now while interest is fresh."
+        primary_cta = "Follow Up Now"
+        secondary_cta = "Generate Message"
+
+    # State 4: Emerging Interest (passive signals, no direct reply)
+    elif has_passive_signal:
+        state = "emerging"
         interest_level = "Emerging"
-    elif has_outreach and not has_coach_signal:
-        interest_level = "No signals yet"
-    elif not has_outreach:
-        interest_level = "Not started"
-    else:
-        interest_level = "No signals yet"
+        trend = "Increasing" if total_clicks > 0 else "Stable"
+        summary = "Coach activity suggests interest is starting, but the conversation has not started yet."
+        recommended_action = "Follow up while interest is building."
+        primary_cta = "Follow Up"
+        secondary_cta = "Generate Message"
 
-    # ═══ TREND ═══
-    if has_reply and days_since_follow_up is not None and days_since_follow_up <= 7:
-        trend = "Increasing"
-    elif has_visit:
-        trend = "Increasing"
-    elif has_outreach and days_since_last_activity is not None and days_since_last_activity > 14 and not has_coach_signal:
+    # State 7: Cooling (had engagement before, now stale)
+    elif has_outreach and has_coach_signal and days_since_last_activity is not None and days_since_last_activity > 14:
+        state = "cooling"
+        interest_level = "Emerging" if score >= 25 else "No signals yet"
         trend = "Cooling"
-    elif has_coach_signal and days_since_last_activity is not None and days_since_last_activity > 14:
-        trend = "Cooling"
-    elif has_coach_signal:
-        trend = "Stable"
-    elif has_outreach:
-        trend = "Stable"
-    else:
-        trend = "Not started"
+        summary = "Interest was stronger before, but recent activity has slowed."
+        recommended_action = "Re-engage with a fresh angle or new content."
+        primary_cta = "Re-Engage"
+        secondary_cta = "Reassess"
 
-    # ═══ STATE ═══
-    if not has_outreach:
-        state = "pre_outreach"
-    elif has_offer:
-        state = "offer"
-    elif has_visit:
-        state = "visit"
-    elif has_reply:
-        state = "conversation"
-    elif has_coach_signal:
-        state = "passive_interest"
-    elif has_outreach and days_since_outreach is not None and days_since_outreach <= 5:
+    # State 9: Stalled (repeated attempts, not converting, > 10 days)
+    elif has_outreach and not has_coach_signal and outreach_count > 2 and days_since_outreach is not None and days_since_outreach > 10:
+        state = "stalled"
+        interest_level = "No signals yet"
+        trend = "Cooling"
+        summary = "This school has not moved forward despite recent effort."
+        recommended_action = "Try a completely different approach or reassess priority."
+        primary_cta = "Re-Engage with New Angle"
+        secondary_cta = "Consider Lower Priority"
+
+    # State 3: Follow-Up Window Open (outreach 5-10 days, no engagement)
+    elif has_outreach and not has_coach_signal and days_since_outreach is not None and 5 <= days_since_outreach <= 10:
+        state = "follow_up_window"
+        interest_level = "No signals yet"
+        trend = "Stable"
+        summary = "No response yet. This is a good time for a light follow-up."
+        recommended_action = "Send a friendly follow-up referencing your earlier message."
+        primary_cta = "Follow Up"
+        secondary_cta = "Generate Follow-up"
+
+    # State 2: Waiting for Signal (outreach < 5 days)
+    elif has_outreach and not has_coach_signal and days_since_outreach is not None and days_since_outreach < 5:
         state = "waiting"
-    elif has_outreach and days_since_outreach is not None and days_since_outreach > 10:
-        state = "stale_outreach"
-    elif has_outreach:
-        state = "follow_up_needed"
-    else:
-        state = "pre_outreach"
+        interest_level = "No signals yet"
+        trend = "Stable"
+        summary = "Outreach was sent recently. Give the coach a little time to respond."
+        recommended_action = "Wait a few more days before following up."
+        primary_cta = "Wait"
+        secondary_cta = "Generate Follow-up"
 
-    # ═══ SUMMARY (human language, one clear sentence) ═══
-    if state == "pre_outreach":
-        summary = "No outreach yet. This school is in your pipeline but contact hasn't started."
-    elif state == "offer":
-        summary = "You have an offer from this program. This is a decision-stage school."
-    elif state == "visit":
-        summary = "Campus visit is on the calendar. The relationship is progressing."
-    elif state == "conversation":
-        summary = "The coach replied. You have an active conversation."
-    elif state == "passive_interest":
-        if total_clicks > 0:
-            summary = "The coach engaged with your content but hasn't replied yet."
-        elif total_opens > 2:
-            summary = f"Your message was opened {total_opens} times. Interest is building."
-        else:
-            summary = "A coach opened your message. Passive interest is present."
-    elif state == "waiting":
-        summary = "Your outreach is still fresh. Give coaches a few more days to respond."
-    elif state == "stale_outreach":
-        if days_since_outreach:
-            summary = f"No response in {days_since_outreach} days. Your outreach may need a fresh angle."
-        else:
-            summary = "No response to your outreach. A follow-up with a new angle may help."
-    elif state == "follow_up_needed":
-        summary = "Outreach sent but no engagement yet. A follow-up is recommended."
-    else:
-        summary = "Early stage. Start outreach to activate this relationship."
+    # State 10: Deprioritize (stale, no signals, outreach > 14 days)
+    elif has_outreach and not has_coach_signal and days_since_outreach is not None and days_since_outreach > 14:
+        state = "deprioritize"
+        interest_level = "No signals yet"
+        trend = "Cooling"
+        summary = "There is no meaningful traction here right now. Focus on stronger opportunities."
+        recommended_action = "Lower priority and redirect energy to active schools."
+        primary_cta = "Lower Priority"
+        secondary_cta = "Keep on Watch"
 
-    # ═══ RECOMMENDED ACTION (state-based CTA rules) ═══
-    if state == "pre_outreach":
+    # State 1: No Signals Yet (default — no outreach, no signals)
+    else:
+        state = "no_signals"
+        interest_level = "Not started"
+        trend = "Stable"
+        summary = "No coach engagement yet. This relationship has not started."
         recommended_action = "Send your first email to start the conversation."
         primary_cta = "Send First Email"
-        secondary_cta = None
-    elif state == "offer":
-        recommended_action = "Review the offer details and discuss next steps with your family."
-        primary_cta = "Send Email"
-        secondary_cta = "Schedule Follow Up"
-    elif state == "visit":
-        recommended_action = "Prepare for your visit. Send a thank-you note after."
-        primary_cta = "Send Email"
-        secondary_cta = "Schedule Follow Up"
-    elif state == "conversation":
-        recommended_action = "Reply promptly. Keep the momentum going."
-        primary_cta = "Send Email"
-        secondary_cta = "Schedule Follow Up"
-    elif state == "passive_interest":
-        recommended_action = "Follow up while interest is active. Reference something specific."
-        primary_cta = "Send Email"
-        secondary_cta = "Schedule Follow Up"
-    elif state == "waiting":
-        recommended_action = "Wait a few more days. If no response by day 5-7, follow up."
-        primary_cta = "Send Email"
-        secondary_cta = "Schedule Follow Up"
-    elif state == "stale_outreach" and days_since_outreach and days_since_outreach > 10:
-        recommended_action = "Follow up with a new angle — updated highlights, a question, or a visit request."
-        primary_cta = "Send Email"
-        secondary_cta = "Schedule Follow Up"
-    elif state == "follow_up_needed":
-        recommended_action = "Send a follow-up with something new — a recent stat, highlight clip, or specific question."
-        primary_cta = "Send Email"
-        secondary_cta = "Schedule Follow Up"
-    else:
-        recommended_action = "Send your first email to start the conversation."
-        primary_cta = "Send First Email"
-        secondary_cta = None
-
-    # ═══ MOST ENGAGED CONTACT ═══
-    most_engaged = None  # Placeholder — populated from college_coaches in the endpoint
+        secondary_cta = "Generate Message"
 
     return {
         "score": score,
@@ -371,7 +346,7 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         "recommendedAction": recommended_action,
         "primaryCta": primary_cta,
         "secondaryCta": secondary_cta,
-        "mostEngagedContact": most_engaged,
+        "mostEngagedContact": None,
         "signals": signal_log,
         "meta": {
             "hasOutreach": has_outreach,

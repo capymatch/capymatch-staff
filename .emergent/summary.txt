@@ -1,43 +1,49 @@
 <analysis>**original_problem_statement:**
-The user is building a full-stack recruiting application, CapyMatch. The project began with fixing data inconsistencies and evolved into a major redesign of the athlete status model. Subsequent requests focused on refining the UI/UX, implementing a modal for adding tasks, redesigning task rows, fixing a broken Social Spotlight feature, optimizing page load performance, adding a collapsible sidebar, and finally, designing and implementing role-based access for Directors to review and act on escalated issues.
+The user is building a full-stack recruiting application, CapyMatch. The core task has been a significant, multi-stage UI/UX overhaul of the Athlete Journey page. The user's goal is to transform the page from a simple data display into a decision engine that provides clear, actionable intelligence.
 
-The latest request is to build out a feature allowing Directors to access an athlete's profile (the pod) to handle escalations from coaches. The user has approved a detailed plan for this feature, which includes specific permissions, UI for highlighting escalated issues, and an escalation-first workflow for directors.
+This involved:
+1.  **Unifying School Intelligence:** Evolving a static fit report into a dynamic intelligence panel. This included moving it from an inline component to a right-side drawer to reduce clutter.
+2.  **Making it Decision-First:** Refactoring the intelligence drawer to prioritize the recommended strategy and next action at the top, moving detailed data into collapsible sections.
+3.  **Improving Clarity:** Refining the language to be more human and direct, removing redundant messaging and system-level jargon.
+4.  **Building a Coach Watch Engine:** Creating a sophisticated backend service that analyzes multiple signals (coach replies, email opens, profile views, pipeline status) with time decay to produce a reliable relationship state.
+5.  **Implementing a State Matrix:** Standardizing the Coach Watch output into a 10-state matrix, ensuring that for any given situation, the system provides a consistent interest level, trend, summary, and set of recommended actions (CTAs).
+
+The last request was to implement this detailed 10-state matrix in the backend to make the Coach Watch feature trustworthy and consistent.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack platform (React/FastAPI/MongoDB). Key implemented features include:
-- A unified athlete status model distinguishing Journey State from Attention Status.
-- A refined UI on the dashboard and athlete detail pages reflecting this model.
-- A styled, modal-based form for adding new tasks.
-- Redesigned task list rows with owner badges and a hover-based overflow menu for contextual actions.
-- A fully functional Social Spotlight feature using the YouTube Data API to display filtered volleyball videos for both coaches and athletes.
-- An optimized My School page with improved load times.
-- A collapsible main navigation sidebar with state persisted in localStorage.
-- Initial backend work for the Director Pod Access feature has been completed.
+The application is a full-stack React/FastAPI/MongoDB platform. The key components relevant to the current task are:
+-   ****: The main page for viewing an athlete's recruiting journey with a specific school.
+-   ****: A right-side slide-out panel that provides a decision-first analysis of the school, including a recommended strategy, fit summary, and action buttons.
+-   ****: A card in the right rail of the Journey Page that displays the high-level relationship status.
+-   ****: A backend endpoint that contains the new Coach Watch engine. This engine implements a weighted scoring model with time decay and a 10-state matrix to determine the relationship state, summary, and recommended actions.
+-   The backend logic for the state matrix has been implemented in  and tested via .
 
 **Last working item**:
-    - Last item agent was working: The agent is in the middle of a multi-phase implementation of **Director Pod Access**. The goal is to allow users with a 'director' role to view and act on escalated issues within an athlete's profile (pod).
-        - **Phase 1 (Backend - DONE):** Created new API endpoints () for director-specific actions (e.g., adding guidance notes) and updated existing pod endpoints to include escalation data.
-        - **Phase 2 & 3 (Frontend - IN PROGRESS):** Began creating the necessary frontend components, including an  for the athlete pod, a persistent chip to indicate an escalated status, and an  for the director's main dashboard. The agent is currently integrating these components and adding role-based logic to  and .
+    - Last item agent was working: Implementing the definitive 10-state matrix for the Coach Watch engine. The agent replaced the previous logic in  with the detailed matrix provided by the user, ensuring that outputs (state, summary, CTAs) are consistent and rule-based. The backend logic was tested against multiple school profiles with different engagement histories to validate the output of each state.
     - Status: IN PROGRESS
     - Agent Testing Done: N
     - Which testing method agent to use? both
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-There are no pending bugs. The current focus is on the new feature implementation.
+  - Issue 1:  (P0) Verify the full implementation of the Coach Watch State Matrix.
+
+  Issues Detail:
+  - Issue 1: 
+     - Attempted fixes: The backend logic in  has been completely rewritten to match the user's 10-state matrix specification. The agent performed  tests against multiple school s, and the JSON responses correctly reflected the expected states (No Signals Yet, Hot Opportunity, Deprioritize, etc.).
+     - Next debug checklist: 
+        1.  **Frontend Verification**: The backend is producing the correct data, but the frontend ( and ) has not been visually verified with this new data. Take screenshots of the Journey Page for different schools (e.g., Creighton, Stanford, Florida) to confirm the new summaries and CTAs are rendering correctly.
+        2.  **End-to-End Testing**: After visual confirmation, run the  to perform a full regression test and ensure the new logic hasn't introduced any side effects. The tests should cover opening the Journey Page for various schools and verifying the content of the Coach Watch card and the School Intelligence drawer.
+     - Why fix this issue and what will be achieved with the fix? This is the final step in making the Coach Watch feature a trustworthy, consistent, and actionable relationship state engine, which is the core goal of the user's recent requests.
+     - Status:  IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? both
+     - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1: Implement Director Pod Access (P0)
-
- **Task Detail:**
-  - **Task 1: Implement Director Pod Access (P0)**
-     - **Where to resume:** The backend (Phase 1) is complete. The agent needs to resume the frontend work (Phases 2 & 3). The immediate next steps are to finish integrating the new components (, ) and ensure the UI correctly adapts based on the user's role (director vs. coach) and the presence of an  URL parameter.
-     - **What will be achieved with this?** Directors will have a clear, prioritized workflow to handle escalated issues. They will be able to access athlete pods, view escalation context, and perform specific oversight actions, separate from the coach's day-to-day tasks.
-     - **Status:** IN PROGRESS
-     - **Should Test frontend/backend/both after fix?** both
-     - **Blocked on something:** None.
+- None. The last item is categorized as a pending issue to be verified.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
@@ -52,96 +58,88 @@ There are no pending bugs. The current focus is on the new feature implementatio
 *   Multi-Agent Intelligence Pipeline (, , ).
 
 **Completed work in this session**
-- **Director Pod Access (Phase 1):** Designed and received user approval for the feature. Implemented all required backend API endpoints and data model modifications.
-- **Collapsible Sidebar:** Implemented a collapsible left-side menu to maximize screen real estate, with the state saved to localStorage.
-- **Performance Optimization:** Fixed a significant page load delay on the My School page by refactoring multiple sequential API calls into a single parallel  fetch.
-- **Social Spotlight Feature Fix (Complete Rewrite):**
-  - Successfully integrated the user-provided YouTube Data API key.
-  - Rewrote the backend  from scratch using  to fix API timeouts and implemented robust filtering to show only relevant volleyball content.
-  - Resolved all access-related issues for both coach and athlete roles.
-- **Task Management UX Overhaul:**
-  - **Task Row Redesign:** Replaced static task rows with dynamic ones featuring color-coded owner badges and a hover-triggered overflow menu for contextual actions (, , , etc.).
-  - **Add Task Modal:** Converted the inline task creation form into a styled modal, including a custom dark-theme dropdown, to match the app's design system.
-- **Terminology and UI Consistency Audit:** Performed a full-codebase audit to remove outdated terminology (momentum drop, podHealth) and ensure consistent UI/UX for the new status model across the application.
+- **School Intelligence UI/UX Overhaul (DONE):** Refactored the School Intelligence feature through multiple stages: created a unified inline panel, moved it to a right-side drawer to de-clutter the UI, and restructured it to be decision-first by prioritizing the recommended strategy.
+- **Content & Clarity Refinement (DONE):** Further improved the School Intelligence drawer by removing duplicate messaging, simplifying system-level jargon (Needs more data -> No coach engagement yet), and making CTAs state-aware.
+- **Bug Fix - Timeline Consistency (DONE):** Resolved a critical bug where global coach-athlete communications were incorrectly displayed on school-specific journey timelines, creating conflicting signals. The logic in  was fixed to ensure timeline events are program-specific.
+- **UI Cleanup and Fixes (DONE):** Removed a redundant School Fit card from the Journey page's right panel and fixed button labels and navigation logic within the School Intelligence drawer.
+- **Coach Watch Engine Implementation (DONE):** Created a new backend service () and a  endpoint. This service implements a sophisticated, weighted scoring model with time decay and a 10-state matrix to transform raw engagement signals into a trustworthy relationship state.
 
 **Earlier issues found/mentioned but not fixed**
-- None. All previously identified issues, including the non-functional Social Spotlight feature, were resolved in this session.
+- None.
 
 **Known issue recurrence from previous fork**
-- None. The primary recurring issue of inconsistent health signals was holistically resolved by the new unified status model.
+- None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Role-Based Access Control (RBAC):** Architecting backend permissions and frontend UI to support distinct workflows and capabilities for different user roles (Coach, Director).
-- **API Performance Optimization:** Mitigating frontend request waterfalls by consolidating multiple  hooks into a single, parallel  data fetch.
-- **Asynchronous Backend APIs:** Utilizing  to build non-blocking, efficient API clients for third-party services like the YouTube Data API.
-- **Stateful & Themed UI:** Building interactive components with local state (e.g., inline editing, hover menus) and ensuring they conform to a specific dark-theme design language.
-- **URL-based State:** Using URL query parameters () to drive the initial state and context of a page.
+-   **Backend for Frontend (BFF):** The creation of the  endpoint is a prime example. The backend now performs the complex logic of computing the relationship state, allowing the frontend () to be a simple, stateless presentation component.
+-   **State-Driven UI:** The UI (summaries, CTAs) dynamically changes based on a calculated state from the backend (e.g., No Signals Yet, Hot Opportunity, Stalled), ensuring consistency.
+-   **Weighted Scoring & Time Decay:** A deterministic model in  that assigns weights to different engagement signals (replies, clicks, views) and decays their value over time to calculate a current, relevant interest score.
+-   **Finite State Machine (FSM):** The 10-state matrix implemented in the backend acts as a state machine, transitioning the relationship status based on the score, signal types, and time since last interaction.
 
 **key DB schema**
-- No breaking schema changes were made. New endpoints were added to create data for director-specific actions (e.g., ). API responses were augmented with new fields like .
+-   ****: This collection is the primary source of truth. The Coach Watch engine heavily relies on its fields: , , , , and various date fields to determine the current state.
+-   ****: A source of discrete, weighted engagement events like email opens and clicks.
+-   ** / **: Now correctly excluded from the school-specific Journey Page timeline to prevent displaying misleading, non-program-specific communications.
 
 **All files of reference**
--   : Core page for implementing role-based UI.
--   : Director's dashboard entry point.
--   : New backend logic for director permissions.
--   : API serving data to the .
--   : Component to be finished.
--   : Component to be finished.
--   
+-   : The heart of the new relationship intelligence engine.
+-   : The main page where all UI changes are visible.
+-   : The component defining the content of the drawer, which has undergone significant refactoring.
+-   : The right-rail card that presents the high-level output of the Coach Watch engine.
+-   : Contains the evolution of the product requirements.
 
 **key api endpoints**
--   ****: Now includes an  field.
--   ****: (New) Allows directors to add intervention notes.
--   ****: (New) Allows directors to create guidance tasks.
--   ****: (Rewritten) Fetches filtered videos from YouTube Data API.
--   ****: Updated to support editing task titles.
+-   ** (New)**: The core endpoint for the new intelligence system. It accepts a  and returns a rich JSON object containing the computed state, interest score, trend, summary, and recommended actions.
+-   ** (Modified)**: This endpoint's response was cleaned up to no longer include non-program-specific , fixing a data consistency bug.
 
 **Critical Info for New Agent**
--   You are in the middle of implementing a multi-phase feature: **Director Pod Access**. The backend is done; the frontend is in progress.
--   Your immediate task is to complete the frontend implementation (Phases 2 & 3). This involves finishing the  and  components and integrating them into  and  respectively.
--   The core requirement is to create a distinct, **escalation-first** workflow for directors. Their UI and actions should be focused on oversight and intervention, not day-to-day coaching tasks.
--   Reference the user-approved plan: directors can access all pods in their org, but their dashboard prioritizes escalated athletes. Entry into a pod via an escalation should highlight the specific issue.
+-   The user's primary goal is to build a decision engine, not a data dashboard. All future changes should reinforce this principle of providing clear, actionable guidance.
+-   The Coach Watch engine in  is now the single source of truth for relationship intelligence. Avoid implementing complex state logic on the frontend; instead, consume the structured data from the  endpoint.
+-   The most recent task was implementing a detailed 10-state matrix in the backend. Your immediate first step should be to **verify this implementation on the frontend** before proceeding with any new tasks. Check how schools in different states (e.g., no outreach, active conversation, stalled) appear in the UI.
 
 **documents and test reports created in this job**
--   /app/memory/PRD.md
--   /app/test_reports/iteration_4.json
--   /app/test_reports/iteration_5.json
+-   /app/memory/PRD.md (Updated multiple times)
+-   /app/test_reports/iteration_12.json
+-   /app/test_reports/iteration_13.json
+-   /app/test_reports/iteration_14.json
+-   /app/test_reports/iteration_15.json
+-   /app/test_reports/iteration_16.json
 
-**Last 10 User Messages and any pending HUMAN messages** 
-- 10. (APPROVAL) Approves the director access plan with three key adjustments: directors can create limited intervention tasks, the escalation context must persist beyond the initial banner, and the director's default view must be escalations-first. **(IN PROGRESS)**
-- 9. (QUESTION) Asks for a detailed proposal on director permissions and UI before implementation. (COMPLETED)
-- 8. (BUG) Reports that a director cannot take action on an escalated message and asks if they should have access. (COMPLETED)
-- 7. (FEATURE) Requested a button to collapse the left-side menu. (COMPLETED)
-- 6. (BUG) Reported that the My School page was loading slowly. (COMPLETED)
-- 5. (BUG) Requested that the Social Spotlight feature only show women's volleyball content. (COMPLETED)
-- 4. (BUG) Reported that the athlete user was seeing no videos in the Social Spotlight. (COMPLETED)
-- 3. (INFO) Provided the YouTube API key. (COMPLETED)
-- 2. (QUESTION) Asked where to get a YouTube API key. (COMPLETED)
-- 1. (PRIORITY) Confirmed that fixing the Social Spotlight was a P1 priority. (COMPLETED)
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **Prompt:** Implement a 10-state matrix for Coach Watch to standardize its output. (IN PROGRESS)
+2.  **Prompt:** Refine the School Intelligence system to be a clear, decision-driven layer, reinforcing product differentiation. (COMPLETED)
+3.  **Request:** Fix the button labels and navigation in the School Intelligence drawer. (COMPLETED)
+4.  **Request:** Remove the School Fit card from the right panel. (COMPLETED)
+5.  **Question:** Why is a vague Add to improve match accuracy message showing as a risk? (ADDRESSED & FIXED)
+6.  **Question:** Why does School Intelligence say No coach engagement yet when the timeline shows a coach reply? (ADDRESSED & FIXED)
+7.  **Approval:** User approved the plan to fix the timeline data inconsistency. (COMPLETED)
+8.  **Prompt:** Refine the School Intelligence drawer to remove redundant messaging and improve clarity. (COMPLETED)
+9.  **Prompt:** Refactor the School Intelligence drawer to have a decision-first UI. (COMPLETED)
+10. **Prompt:** Relocate the inline School Intelligence panel into a right-side drawer to de-clutter the page. (COMPLETED)
 
 **Project Health Check:**
 - Broken: None
 - Mocked: None
 
 **3rd Party Integrations**
--   **YouTube Data API:** Fully implemented and functional using a user-provided API key.
+-   **YouTube Data API:** Implemented and functional.
 -   **College Scorecard API:** Integrated but pending user configuration (API key needed).
 -   **Resend:** Existing integration for email.
 -   **Stripe:** Existing integration for payments.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (for UI refinements and task row redesign)
+  - Testing agent used after significant changes: YES (but not for the very last change)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: None.
+  - Known regressions: None
 
 **Credentials to test flow:**
+-   **Director:**  / 
 -   **Coach:**  / 
 -   **Athlete:**  / 
--   **Director:** A user with the  role is required for testing the current feature. The logs mentioned . You will need to find or use this credential to validate the director workflow.
 
 **What agent forgot to execute**
-- Nothing was forgotten. The agent has been methodically executing user requests and is currently in the middle of a large, user-approved feature implementation.</analysis>
+- The agent did not perform a final frontend verification (e.g., via screenshot) or run the testing agent after implementing the final 10-state matrix in the backend. This is the immediate next action required to confirm the task is complete.</analysis>
