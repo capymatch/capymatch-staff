@@ -125,6 +125,22 @@ def _time_decay(days):
     return 0.10
 
 
+# ── Transition explanation copy (state A → state B) ──
+_TRANSITION_COPY = {
+    ("no_signals", "waiting_for_signal"): "A first outreach was sent. Coach Watch is now waiting for a response.",
+    ("waiting_for_signal", "follow_up_window_open"): "Enough time has passed without engagement, so a follow-up is now recommended.",
+    ("waiting_for_signal", "emerging_interest"): "Coach-side activity was detected after your recent outreach.",
+    ("emerging_interest", "active_conversation"): "A coach replied or took a direct next step.",
+    ("active_conversation", "hot_opportunity"): "Stronger engagement signals suggest this relationship is accelerating.",
+    ("active_conversation", "cooling"): "Direct engagement slowed down and has not been reinforced recently.",
+    ("cooling", "re_engaged"): "A new meaningful signal appeared after a quiet period.",
+    ("re_engaged", "active_conversation"): "The renewed interest turned into direct conversation.",
+    ("follow_up_window_open", "stalled"): "Repeated effort did not create traction, and the relationship is no longer progressing.",
+    ("stalled", "deprioritize"): "This school has remained inactive long enough that it should not stay a top priority.",
+}
+
+
+
 def _compute_coach_watch(program: dict, interactions: list, email_tracking: list):
     """
     Compute Coach Watch using the 10-state relationship matrix.
@@ -242,7 +258,9 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         state = "hot_opportunity"
         interest_level = "High" if score >= 70 else "Medium"
         trend = "Increasing"
-        summary = "This school is actively showing interest. Act while the window is open."
+        headline = "Interest is active"
+        summary = "This school is showing strong interest right now. Act while the window is open."
+        why_line = "High-value signals were detected, such as repeated engagement, multiple staff activity, or a next-step request."
         recommended_action = "Respond now and move to the next step."
         primary_cta = "Respond Now"
         secondary_cta = "Prepare Next Step"
@@ -252,7 +270,9 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         state = "active_conversation"
         interest_level = "Medium" if score < 70 else "High"
         trend = "Increasing" if days_since_follow_up is not None and days_since_follow_up <= 7 else "Stable"
-        summary = "A coach has engaged directly. Keep momentum moving."
+        headline = "Conversation is active"
+        summary = "A coach has engaged directly. Keep momentum moving while the relationship is live."
+        why_line = "A reply or direct next-step signal was detected."
         recommended_action = "Reply promptly and keep the conversation going."
         primary_cta = "Reply Promptly"
         secondary_cta = "Draft Response"
@@ -262,17 +282,21 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         state = "re_engaged"
         interest_level = "Emerging" if score < 50 else "Medium"
         trend = "Reactivated"
-        summary = "This relationship has become active again after a quiet period."
+        headline = "Interest has restarted"
+        summary = "This school became active again after a quieter period."
+        why_line = "A new meaningful signal appeared after dormancy."
         recommended_action = "Follow up now while interest is fresh."
         primary_cta = "Follow Up Now"
         secondary_cta = "Generate Message"
 
     # State 4: Emerging Interest (passive signals, no direct reply)
     elif has_passive_signal:
-        state = "emerging"
+        state = "emerging_interest"
         interest_level = "Emerging"
         trend = "Increasing" if total_clicks > 0 else "Stable"
-        summary = "Coach activity suggests interest is starting, but the conversation has not started yet."
+        headline = "Interest is starting"
+        summary = "Coach activity suggests this school is paying attention, but the conversation has not started yet."
+        why_line = "Passive signals like views, opens, or clicks are rising."
         recommended_action = "Follow up while interest is building."
         primary_cta = "Follow Up"
         secondary_cta = "Generate Message"
@@ -282,7 +306,9 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         state = "cooling"
         interest_level = "Emerging" if score >= 25 else "No signals yet"
         trend = "Cooling"
-        summary = "Interest was stronger before, but recent activity has slowed."
+        headline = "Interest is cooling"
+        summary = "This relationship had traction before, but recent activity has slowed down."
+        why_line = "Earlier engagement has not been reinforced by recent signals."
         recommended_action = "Re-engage with a fresh angle or new content."
         primary_cta = "Re-Engage"
         secondary_cta = "Reassess"
@@ -292,27 +318,33 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         state = "stalled"
         interest_level = "No signals yet"
         trend = "Cooling"
-        summary = "This school has not moved forward despite recent effort."
+        headline = "Progress has stalled"
+        summary = "You've put effort into this school, but the relationship is not moving forward."
+        why_line = "The stage is aging and recent attempts have not converted into momentum."
         recommended_action = "Try a completely different approach or reassess priority."
         primary_cta = "Re-Engage with New Angle"
         secondary_cta = "Consider Lower Priority"
 
     # State 3: Follow-Up Window Open (outreach 5-10 days, no engagement)
     elif has_outreach and not has_coach_signal and days_since_outreach is not None and 5 <= days_since_outreach <= 10:
-        state = "follow_up_window"
+        state = "follow_up_window_open"
         interest_level = "No signals yet"
         trend = "Stable"
-        summary = "No response yet. This is a good time for a light follow-up."
+        headline = "Follow-up window is open"
+        summary = "There has been no response yet, and this is now a good time for a light follow-up."
+        why_line = "Your outreach has been sitting long enough to justify another touchpoint."
         recommended_action = "Send a friendly follow-up referencing your earlier message."
         primary_cta = "Follow Up"
         secondary_cta = "Generate Follow-up"
 
     # State 2: Waiting for Signal (outreach < 5 days)
     elif has_outreach and not has_coach_signal and days_since_outreach is not None and days_since_outreach < 5:
-        state = "waiting"
+        state = "waiting_for_signal"
         interest_level = "No signals yet"
         trend = "Stable"
-        summary = "Outreach was sent recently. Give the coach a little time to respond."
+        headline = "Waiting for a response"
+        summary = "Your outreach was sent recently. Give the coach a little time before following up."
+        why_line = "A message was sent, but there has not been any coach activity yet."
         recommended_action = "Wait a few more days before following up."
         primary_cta = "Wait"
         secondary_cta = "Generate Follow-up"
@@ -322,7 +354,9 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         state = "deprioritize"
         interest_level = "No signals yet"
         trend = "Cooling"
-        summary = "There is no meaningful traction here right now. Focus on stronger opportunities."
+        headline = "Focus elsewhere for now"
+        summary = "There is not enough traction here right now to make this a priority."
+        why_line = "Signals are weak, progress is stale, or stronger schools deserve more attention."
         recommended_action = "Lower priority and redirect energy to active schools."
         primary_cta = "Lower Priority"
         secondary_cta = "Keep on Watch"
@@ -332,7 +366,9 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         state = "no_signals"
         interest_level = "Not started"
         trend = "Stable"
-        summary = "No coach engagement yet. This relationship has not started."
+        headline = "No coach engagement yet"
+        summary = "This school looks worth pursuing, but the relationship has not started yet."
+        why_line = "No outreach or coach-side activity has been recorded."
         recommended_action = "Send your first email to start the conversation."
         primary_cta = "Send First Email"
         secondary_cta = "Generate Message"
@@ -342,7 +378,9 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         "interestLevel": interest_level,
         "trend": trend,
         "state": state,
+        "headline": headline,
         "summary": summary,
+        "whyLine": why_line,
         "recommendedAction": recommended_action,
         "primaryCta": primary_cta,
         "secondaryCta": secondary_cta,
@@ -372,7 +410,7 @@ async def get_coach_watch(program_id: str, current_user: dict = get_current_user
         raise HTTPException(404, "Program not found")
 
     # Gather all data sources in parallel
-    interactions, email_tracking, college_coaches = await asyncio.gather(
+    interactions, email_tracking, college_coaches, prev_state_doc = await asyncio.gather(
         db.interactions.find(
             {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
         ).to_list(500),
@@ -382,6 +420,9 @@ async def get_coach_watch(program_id: str, current_user: dict = get_current_user
         db.college_coaches.find(
             {"tenant_id": tenant_id, "university_name": program.get("university_name")}, {"_id": 0}
         ).to_list(20),
+        db.coach_watch_states.find_one(
+            {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+        ),
     )
 
     result = _compute_coach_watch(program, interactions, email_tracking)
@@ -396,6 +437,36 @@ async def get_coach_watch(program_id: str, current_user: dict = get_current_user
             )
         )
         result["mostEngagedContact"] = primary.get("name") or primary.get("title") or "Coach"
+
+    # ── State transition tracking ──
+    now = datetime.now(timezone.utc)
+    current_state = result["state"]
+    previous_state = prev_state_doc.get("state") if prev_state_doc else None
+
+    result["previousState"] = previous_state
+    result["currentState"] = current_state
+    result["stateChangedAt"] = None
+    result["stateChangeReason"] = None
+    result["whatChangedCopy"] = None
+    result["triggeringSignals"] = [s["type"] for s in result.get("signals", [])]
+
+    if previous_state and previous_state != current_state:
+        transition_key = (previous_state, current_state)
+        result["whatChangedCopy"] = _TRANSITION_COPY.get(transition_key)
+        result["stateChangedAt"] = now.isoformat()
+        result["stateChangeReason"] = f"{previous_state} \u2192 {current_state}"
+
+    # Persist current state (upsert)
+    await db.coach_watch_states.update_one(
+        {"tenant_id": tenant_id, "program_id": program_id},
+        {"$set": {
+            "tenant_id": tenant_id,
+            "program_id": program_id,
+            "state": current_state,
+            "updated_at": now.isoformat(),
+        }},
+        upsert=True,
+    )
 
     return result
 

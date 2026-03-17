@@ -27,12 +27,11 @@ export default function CoachWatchCard({ coachWatch }) {
   const trend = cw.trend || "Not started";
   const trendMeta = TREND_ICON[trend] || TREND_ICON["Not started"];
   const signals = cw.signals || [];
-  const meta = cw.meta || {};
 
   return (
     <div className="rounded-xl border px-4 py-3.5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coach-watch-card">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Signal className="w-3 h-3 text-teal-600" />
           <span className="text-[9px] font-extrabold uppercase tracking-[1.5px]" style={{ color: "var(--cm-text-3)" }}>Coach Watch</span>
@@ -42,8 +41,15 @@ export default function CoachWatchCard({ coachWatch }) {
         )}
       </div>
 
+      {/* Headline */}
+      {cw.headline && (
+        <h3 className="text-[12px] font-bold mb-1.5" style={{ color: "var(--cm-text)" }} data-testid="cw-headline">
+          {cw.headline}
+        </h3>
+      )}
+
       {/* Interest Level + Trend row */}
-      <div className="flex items-center gap-2.5 mb-3">
+      <div className="flex items-center gap-2.5 mb-2.5">
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md"
           style={{ color: iStyle.color, backgroundColor: iStyle.bg, border: `1px solid ${iStyle.border}` }}
           data-testid="cw-interest-level">
@@ -57,9 +63,26 @@ export default function CoachWatchCard({ coachWatch }) {
 
       {/* Summary */}
       {cw.summary && (
-        <p className="text-[10.5px] leading-snug mb-2" style={{ color: "var(--cm-text-2)" }} data-testid="cw-summary">
+        <p className="text-[10.5px] leading-snug mb-1.5" style={{ color: "var(--cm-text-2)" }} data-testid="cw-summary">
           {cw.summary}
         </p>
+      )}
+
+      {/* Why line */}
+      {cw.whyLine && (
+        <p className="text-[9.5px] leading-snug mb-2" style={{ color: "var(--cm-text-3)" }} data-testid="cw-why-line">
+          {cw.whyLine}
+        </p>
+      )}
+
+      {/* What Changed — transition explanation (only shown on state change) */}
+      {cw.whatChangedCopy && (
+        <div className="flex items-start gap-1.5 mb-2.5 px-2.5 py-1.5 rounded-md"
+          style={{ backgroundColor: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.12)" }}
+          data-testid="cw-what-changed">
+          <span className="text-[9px] font-bold flex-shrink-0 mt-px" style={{ color: "#0d9488" }}>What changed:</span>
+          <span className="text-[9.5px] leading-snug" style={{ color: "var(--cm-text-2)" }}>{cw.whatChangedCopy}</span>
+        </div>
       )}
 
       {/* Recommended Action */}
