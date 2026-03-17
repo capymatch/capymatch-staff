@@ -120,23 +120,28 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Added coach/director access to route, sidebar, and subscription gate bypass
   - Key files: `youtube_feed.py`, `SocialSpotlight.js`, `Sidebar.js`, `App.js`
 
-### Session 9 (2026-03-16)
+### Session 9 (2026-03-16/17)
 - **Director Pod Access (Complete)**
   - Backend: `/api/director/actions` CRUD, `/api/support-pods/{id}/director-notes`, `/api/support-pods/{id}/director-tasks`
   - Frontend: EscalationsCard on DirectorView (escalation-first), EscalationBanner on SupportPod with acknowledge/guidance/task/resolve actions
   - Role-based: Directors see DirectorView + EscalationBanner expanded; Coaches see CoachView + chip mode
   - Fixed field mismatch (`action_id` vs `id`), resolve payload (`note` vs `resolution_note`), action buttons for acknowledged state
   - 38 backend + 14 frontend tests passed (iteration_147)
-  - Key files: `EscalationBanner.js`, `EscalationsCard.js`, `DirectorView.js`, `SupportPod.js`, `director_actions.py`, `support_pods.py`
 - **Director Dashboard Deduplication (Complete)**
-  - Identified 100% record overlap between EscalationsCard and DirectorActionsCard (both pulling from same `director_actions` collection unfiltered)
+  - Identified 100% record overlap between EscalationsCard and DirectorActionsCard
   - EscalationsCard now filtered to `coach_escalation` only — director's inbound triage inbox
   - Removed full DirectorActionsCard from dashboard — replaced with compact "Your Outbox" pulse bar
-  - Your Outbox tracks director-created actions only (`review_request` + `pipeline_escalation`): Awaiting Response, Critical Pending, In Progress, Resolved This Week
-  - Per-athlete outbound action detail remains in AthletePipelinePanel (Request Review + Escalate buttons)
-  - Backend returns `outbox_summary` object alongside filtered `escalations` array
+  - Your Outbox tracks director-created actions only (`review_request` + `pipeline_escalation`)
   - 14 backend + 11 frontend tests passed (iteration_148)
-  - Key files: `mission_control.py`, `DirectorView.js`, `DirectorActionsPulse.js`, `EscalationsCard.js`
+- **Journey Page Right Rail Redesign (Complete)**
+  - Created CoachWatchCard component (`/components/journey/CoachWatchCard.js`) with signal interpretation engine
+  - Converts raw signals/engagement data into: status headline, pill, summary, 2x2 stats, recommended action, CTAs, recent signals
+  - Upgraded Coaching Staff with signal-aware relationship notes per coach
+  - Renamed Engagement → Communication & Activity with improved framing
+  - Made Intelligence section secondary; AI Insights now context-aware with helper text
+  - Right rail hierarchy: Coach Watch > Coaching Staff > Communication & Activity > Intelligence > AI Insights
+  - 19 frontend tests passed (iteration_149)
+  - Key files: `CoachWatchCard.js`, `JourneyPage.js`
 
 ---
 
