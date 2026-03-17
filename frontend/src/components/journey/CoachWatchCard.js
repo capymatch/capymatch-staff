@@ -189,9 +189,21 @@ export default function CoachWatchCard({ signals, engagement, coaches, coachWatc
         </h4>
 
         {/* Summary — 1-2 lines max */}
-        <p className="text-[10.5px] leading-snug mb-3" style={{ color: "var(--cm-text-2)" }} data-testid="coach-watch-summary">
+        <p className="text-[10.5px] leading-snug mb-1.5" style={{ color: "var(--cm-text-2)" }} data-testid="coach-watch-summary">
           {data.summary}
         </p>
+
+        {/* Raw engagement metrics — subtle supporting data */}
+        {(engagement?.total_opens > 0 || engagement?.total_clicks > 0) && (
+          <p className="text-[8px] mb-3" style={{ color: "var(--cm-text-3)", opacity: 0.7 }} data-testid="coach-watch-raw-metrics">
+            {[
+              engagement.total_opens > 0 && `${engagement.total_opens} open${engagement.total_opens > 1 ? "s" : ""}`,
+              engagement.total_clicks > 0 && `${engagement.total_clicks} click${engagement.total_clicks > 1 ? "s" : ""}`,
+              engagement.unique_opens > 0 && `${engagement.unique_opens} unique`,
+            ].filter(Boolean).join(" · ")}
+          </p>
+        )}
+        {(!engagement?.total_opens && !engagement?.total_clicks) && <div className="mb-1.5" />}
 
         {/* 2x2 Stats */}
         <div className="grid grid-cols-2 gap-1.5 mb-3" data-testid="coach-watch-stats">
