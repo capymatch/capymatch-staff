@@ -429,7 +429,7 @@ export default function JourneyPage() {
                 <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#ffffff" }} data-testid="journey-school-name">
                   {program.university_name}
                 </h1>
-                <PulseIndicator pulse={rail.pulse} />
+                <PulseIndicator coachWatchState={coachWatch?.state} />
                 {/* J1: Match score badge */}
                 {matchScore && (
                   <span
