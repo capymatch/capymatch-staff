@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   TrendingUp, TrendingDown, Minus, ArrowUpRight,
   Activity, Signal, User, ShieldCheck, ShieldAlert, Shield,
@@ -21,10 +22,35 @@ const TREND_ICON = {
 };
 
 const CONFIDENCE_META = {
-  high:   { Icon: ShieldCheck, label: "High confidence", color: "#22c55e", bg: "rgba(34,197,94,0.08)" },
-  medium: { Icon: Shield,      label: "Medium confidence", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
-  low:    { Icon: ShieldAlert, label: "Low confidence", color: "#94a3b8", bg: "rgba(148,163,184,0.08)" },
+  high:   { Icon: ShieldCheck, label: "High confidence", color: "#22c55e", bg: "rgba(34,197,94,0.08)", tooltip: "Based on strong recent coach engagement signals." },
+  medium: { Icon: Shield,      label: "Medium confidence", color: "#f59e0b", bg: "rgba(245,158,11,0.08)", tooltip: "Based on moderate activity or inferred patterns." },
+  low:    { Icon: ShieldAlert, label: "Low confidence", color: "#94a3b8", bg: "rgba(148,163,184,0.08)", tooltip: "Based on limited or no engagement data." },
 };
+
+function ConfidenceBadge({ level }) {
+  const conf = CONFIDENCE_META[level] || CONFIDENCE_META.low;
+  const [showTip, setShowTip] = useState(false);
+
+  return (
+    <div className="relative inline-flex mb-2.5"
+      onMouseEnter={() => setShowTip(true)}
+      onMouseLeave={() => setShowTip(false)}>
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-md cursor-default"
+        style={{ backgroundColor: conf.bg }}
+        data-testid="cw-confidence">
+        <conf.Icon className="w-3 h-3" style={{ color: conf.color }} />
+        <span className="text-[9px] font-semibold" style={{ color: conf.color }}>{conf.label}</span>
+      </div>
+      {showTip && (
+        <div className="absolute bottom-full left-0 mb-1.5 px-2.5 py-1.5 rounded-md text-[9px] leading-snug whitespace-nowrap z-50"
+          style={{ backgroundColor: "var(--cm-text)", color: "var(--cm-surface)" }}
+          data-testid="cw-confidence-tooltip">
+          {conf.tooltip}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CoachWatchCard({ coachWatch }) {
   const cw = coachWatch || {};
@@ -33,7 +59,6 @@ export default function CoachWatchCard({ coachWatch }) {
   const trend = cw.trend || "Not started";
   const trendMeta = TREND_ICON[trend] || TREND_ICON["Not started"];
   const signals = cw.signals || [];
-  const conf = CONFIDENCE_META[cw.confidenceLevel] || CONFIDENCE_META.low;
 
   return (
     <div className="rounded-xl border px-4 py-3.5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coach-watch-card">
@@ -82,14 +107,14 @@ export default function CoachWatchCard({ coachWatch }) {
         </p>
       )}
 
-      {/* 4. Why this matters (persuasion layer) */}
+      {/* 4. What to do now */}
       {cw.whyThisMatters && (
-        <p className="text-[9.5px] leading-snug italic mb-2" style={{ color: "var(--cm-text-2)" }} data-testid="cw-why-this-matters">
+        <p className="text-[10.5px] font-medium leading-snug mb-2" style={{ color: "var(--cm-text)" }} data-testid="cw-what-to-do-now">
           {cw.whyThisMatters}
         </p>
       )}
 
-      {/* 5. What Changed — transition explanation (only shown on state change) */}
+      {/* 5. What Changed — transition explanation */}
       {cw.whatChangedCopy && (
         <div className="flex items-start gap-1.5 mb-2.5 px-2.5 py-1.5 rounded-md"
           style={{ backgroundColor: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.12)" }}
@@ -99,15 +124,8 @@ export default function CoachWatchCard({ coachWatch }) {
         </div>
       )}
 
-      {/* 6. Confidence badge */}
-      {cw.confidenceLevel && (
-        <div className="flex items-center gap-1.5 mb-2.5 px-2 py-1 rounded-md w-fit"
-          style={{ backgroundColor: conf.bg }}
-          data-testid="cw-confidence">
-          <conf.Icon className="w-3 h-3" style={{ color: conf.color }} />
-          <span className="text-[9px] font-semibold" style={{ color: conf.color }}>{conf.label}</span>
-        </div>
-      )}
+      {/* 6. Confidence badge with tooltip */}
+      {cw.confidenceLevel && <ConfidenceBadge level={cw.confidenceLevel} />}
 
       {/* 7. Recommended Action */}
       {cw.recommendedAction && (

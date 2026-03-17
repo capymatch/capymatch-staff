@@ -139,18 +139,18 @@ _TRANSITION_COPY = {
     ("stalled", "deprioritize"): "This school has remained inactive long enough that it should not stay a top priority.",
 }
 
-# ── "Why this matters" persuasion copy (per state) ──
-_WHY_THIS_MATTERS = {
-    "no_signals": "Starting outreach now gives you the best chance to get on the coach's radar early.",
-    "waiting_for_signal": "Following up too soon can hurt your chances — timing matters here.",
-    "follow_up_window_open": "Following up now significantly increases your chances of getting a response.",
-    "emerging_interest": "The coach is paying attention — a timely follow-up can turn this into a conversation.",
-    "active_conversation": "Fast responses keep momentum and show strong interest.",
-    "hot_opportunity": "This is a high-opportunity moment — acting quickly can make a big difference.",
-    "cooling": "Without action, this opportunity may fade completely.",
-    "re_engaged": "Re-engagement moments are rare — this is your chance to rebuild momentum.",
-    "stalled": "Continuing the same approach is unlikely to work — you need a new angle.",
-    "deprioritize": "Your time is better spent on schools showing stronger signals.",
+# ── "What to do now" action copy (per state) ──
+_WHAT_TO_DO_NOW = {
+    "no_signals": "Start outreach now to get on the coach's radar early.",
+    "waiting_for_signal": "Wait before following up — it's too soon to reach out again.",
+    "follow_up_window_open": "Send a follow-up now to increase your chances of a response.",
+    "emerging_interest": "Follow up now — the coach is showing early interest.",
+    "active_conversation": "Reply quickly to keep the conversation moving.",
+    "hot_opportunity": "Act now — this is a high-opportunity moment.",
+    "cooling": "Re-engage now before this opportunity fades.",
+    "re_engaged": "Follow up now to rebuild momentum.",
+    "stalled": "Try a new approach — your current strategy isn't working.",
+    "deprioritize": "Focus on other schools with stronger signals.",
 }
 
 # ── Confidence level (per state) ──
@@ -409,7 +409,7 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         "headline": headline,
         "summary": summary,
         "whyLine": why_line,
-        "whyThisMatters": _WHY_THIS_MATTERS.get(state, ""),
+        "whyThisMatters": _WHAT_TO_DO_NOW.get(state, ""),
         "confidenceLevel": _CONFIDENCE_LEVEL.get(state, "low"),
         "recommendedAction": recommended_action,
         "primaryCta": primary_cta,

@@ -1,12 +1,12 @@
 """
-Test Coach Watch Persuasion Copy and Confidence Level features.
-Tests the new 'whyThisMatters' and 'confidenceLevel' fields added to Coach Watch API.
+Test Coach Watch 'What to do now' action-oriented copy and Confidence Level features.
+Tests the 'whyThisMatters' (renamed from _WHY_THIS_MATTERS to _WHAT_TO_DO_NOW) and 'confidenceLevel' fields.
 
-Requirements:
-- Stanford (hot_opportunity): whyThisMatters='This is a high-opportunity moment...', confidenceLevel='high'
-- Creighton (no_signals): whyThisMatters='Starting outreach now...', confidenceLevel='low'
-- UCLA (active_conversation): whyThisMatters='Fast responses keep momentum...', confidenceLevel='high'
-- Florida (deprioritize): whyThisMatters='Your time is better spent...', confidenceLevel='low'
+Requirements (UI Polish iteration):
+- Stanford (hot_opportunity): whyThisMatters='Act now — this is a high-opportunity moment.', confidenceLevel='high'
+- Creighton (no_signals): whyThisMatters='Start outreach now to get on the coach's radar early.', confidenceLevel='low'
+- UCLA (active_conversation): whyThisMatters='Reply quickly to keep the conversation moving.', confidenceLevel='high'
+- Florida (deprioritize): whyThisMatters='Focus on other schools with stronger signals.', confidenceLevel='low'
 """
 
 import pytest
@@ -25,12 +25,12 @@ FLORIDA_ID = "470e3fd1-0b64-49ac-8530-42214ec7500b"
 CREIGHTON_ID = "f624f30a-d505-493b-8d5d-4197b970f72f"
 UCLA_ID = "85095202-8b95-4cb2-9390-3275d7840a3d"
 
-# Expected values per state
+# Expected values per state (updated for "What to do now" action-oriented copy)
 EXPECTED_WHY_THIS_MATTERS = {
-    "hot_opportunity": "This is a high-opportunity moment — acting quickly can make a big difference.",
-    "no_signals": "Starting outreach now gives you the best chance to get on the coach's radar early.",
-    "active_conversation": "Fast responses keep momentum and show strong interest.",
-    "deprioritize": "Your time is better spent on schools showing stronger signals.",
+    "hot_opportunity": "Act now — this is a high-opportunity moment.",
+    "no_signals": "Start outreach now to get on the coach's radar early.",
+    "active_conversation": "Reply quickly to keep the conversation moving.",
+    "deprioritize": "Focus on other schools with stronger signals.",
 }
 
 EXPECTED_CONFIDENCE = {
