@@ -191,6 +191,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Removed 4 standalone sections — content merged into summary + engagement
   - 16/16 tests passed across UCLA + Stanford (iteration_156)
   - Key files: `SchoolIntelligencePanel.js` (REFACTORED)
+- **Content + UX Clarity Refinement (Complete)**
+  - Eliminated duplicate messaging: top block is now single source of truth with engagement context + fit + timing + action
+  - Human language: "No coach engagement yet. This is a strong-fit school, but interest has not been activated." (not generic AI text)
+  - Added "Best time to act: Now" timing signal
+  - Fixed CTA logic: no outreach → "Send First Email" + "Generate Message"; has outreach → "Follow Up" + "Generate Follow-up"
+  - Engagement section hidden when no signals (prevents redundant "no activity" text)
+  - Replaced "Needs more data (No coach engagement yet)" → just "No coach engagement yet"
+  - Added "Why this is a strong fit:" heading above strengths list
+  - 13/13 requirements verified, 100% pass (iteration_157)
+  - Key files: `SchoolIntelligencePanel.js` (REFINED)
 
 ---## Backlog
 
