@@ -202,14 +202,21 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 13/13 requirements verified, 100% pass (iteration_157)
   - Key files: `SchoolIntelligencePanel.js` (REFINED)
 - **Journey Timeline Data Integrity Fix (Complete)**
-  - Root cause: `support_messages` (club coach → athlete) had no `program_id` field, so ALL messages appeared on EVERY school's journey page
-  - This created false signals: coach messages about UCLA/Stanford appeared on Creighton's page, conflicting with "No coach engagement" in School Intelligence
-  - Fix: Removed unfiltered support_messages from per-school journey timeline; timeline now only shows school-specific `interactions` and `athlete_events`
-  - Support messages remain accessible in the Messages tab (where they belong)
-  - SI narrative, engagement status, and CTAs are now fully consistent with timeline data
-  - Key files: `athlete_dashboard.py` (MODIFIED: removed support_messages from journey endpoint)
+  - Removed unfiltered support_messages from per-school journey timeline
+  - Key files: `athlete_dashboard.py`
+- **Coach Watch Relationship State Engine (Complete)**
+  - Backend `/api/coach-watch/{program_id}`: 4-bucket weighted scoring with time decay
+  - Interest: Not started / No signals yet / Emerging / Medium / High (High only with coach signal)
+  - Trends: Not started / Increasing / Stable / Cooling / Reactivated
+  - State-based CTAs aligned with outreach status
+  - Frontend CoachWatchCard rewritten for structured backend output
+  - SI panel uses coachWatch.meta for consistency — no conflicting states
+  - 24/24 backend + all frontend tests passed (iteration_158)
+  - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`, `SchoolIntelligencePanel.js`, `JourneyPage.js`
 
----## Backlog
+---
+
+## Backlog
 
 ### P0 — Immediate
 - ~~**YouTube API Key** — DONE~~
