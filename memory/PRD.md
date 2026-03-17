@@ -147,6 +147,13 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Key Contacts: "Opened your last message", "Engaged with your highlight link", "No engagement yet"
   - Removed all raw metric displays; engagement strip header row eliminated
   - 18 frontend tests passed (iteration_151)
+- **Per-Message Engagement Tracking on Timeline (Complete)**
+  - Backend: Journey endpoint enriches timeline events with opens/clicks from `email_tracking` collection
+  - Frontend: Inline signal badges on "Your Message" bubbles — "Opened", "Opened 3x", "Link clicked"
+  - Coach messages show no badges; zero-engagement messages show nothing
+  - Seeded sample tracking data on Stanford messages for demo
+  - All backend + frontend tests passed (iteration_152)
+  - Key files: `ConversationBubble.js`, `athlete_dashboard.py`
 
 ---
 
