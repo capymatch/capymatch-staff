@@ -926,12 +926,34 @@ export default function JourneyPage() {
                 <div className="space-y-2">
                   {coaches.slice(0, 2).map((c, idx) => {
                     const engOpens = engagement?.total_opens || 0;
+                    const engClicks = engagement?.total_clicks || 0;
                     const hasReply = signals.has_coach_reply;
+                    const hasOutreach = (signals.outreach_count || 0) > 0;
+
+                    // Engagement-interpreted status line (click > open > no engagement)
                     let statusLine, statusColor;
-                    if (hasReply && idx === 0) { statusLine = "Most active contact. Recent engagement."; statusColor = "#22c55e"; }
-                    else if (engOpens > 1 && idx === 0) { statusLine = "Warmest contact. Viewed profile recently."; statusColor = "#3b82f6"; }
-                    else if (idx === 0 && coaches.length > 1) { statusLine = "Primary decision maker."; statusColor = "#94a3b8"; }
-                    else { statusLine = "No recent engagement."; statusColor = "#64748b"; }
+                    if (hasReply && idx === 0) {
+                      statusLine = "Replied to your message";
+                      statusColor = "#22c55e";
+                    } else if (engClicks > 0 && idx === 0) {
+                      statusLine = "Engaged with your highlight link";
+                      statusColor = "#22c55e";
+                    } else if (engOpens > 2 && idx === 0) {
+                      statusLine = "Viewed your message multiple times";
+                      statusColor = "#3b82f6";
+                    } else if (engOpens > 0 && idx === 0) {
+                      statusLine = "Opened your last message";
+                      statusColor = "#3b82f6";
+                    } else if (idx === 0 && coaches.length > 1) {
+                      statusLine = hasOutreach && engOpens === 0 ? "No engagement with your outreach" : "Primary decision maker";
+                      statusColor = hasOutreach && engOpens === 0 ? "#f59e0b" : "#94a3b8";
+                    } else if (hasOutreach && engOpens === 0) {
+                      statusLine = "No engagement yet";
+                      statusColor = "#64748b";
+                    } else {
+                      statusLine = "No engagement yet";
+                      statusColor = "#64748b";
+                    }
 
                     return (
                       <div key={c.coach_id} className="flex items-start gap-2.5 p-2.5 rounded-lg"

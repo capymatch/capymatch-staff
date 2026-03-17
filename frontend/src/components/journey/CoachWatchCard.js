@@ -88,7 +88,13 @@ function interpretSignals({ signals, engagement, coaches, coachWatch, timeline }
   } else if (daysSince != null && daysSince > 7 && outreach > 0) {
     summary = `No meaningful coach engagement in the last ${daysSince} days. Activity has not converted into replies.`;
   } else if (opens > 0 && !hasReply) {
-    summary = `Passive interest with ${opens} email open${opens > 1 ? "s" : ""}, but no direct response yet.`;
+    summary = clicks > 0
+      ? "A coach engaged with your content but hasn't replied yet. Interest is building."
+      : opens > 2
+        ? "Your message was viewed multiple times. Passive interest is present but no reply yet."
+        : "A coach opened your message but hasn't responded yet.";
+  } else if (outreach > 0 && opens === 0 && !hasReply) {
+    summary = "No engagement with your last outreach. Your message hasn't been opened yet.";
   } else if (outreach > 0 && daysSince != null && daysSince <= 7) {
     summary = "Recent outreach is still fresh. Give coaches a few more days to respond.";
   } else if (timelineLen === 0) {
@@ -106,7 +112,11 @@ function interpretSignals({ signals, engagement, coaches, coachWatch, timeline }
   } else if (daysSince != null && daysSince > 7) {
     action = "Send a short follow-up with updated highlight this week.";
   } else if (opens > 0 && !hasReply && outreach > 0) {
-    action = "Try a different angle — mention a recent achievement.";
+    action = clicks > 0
+      ? "They're engaging with your content. Send a direct follow-up referencing what they clicked."
+      : "Your emails are getting opened. Try a different angle or share a recent highlight.";
+  } else if (outreach > 0 && opens === 0 && !hasReply) {
+    action = "Your message hasn't been opened. Try a new subject line or a different contact.";
   } else if (outreach > 0 && daysSince != null && daysSince <= 7) {
     action = "Pause outreach and wait for reply signal.";
   } else if (timelineLen === 0) {
@@ -115,22 +125,24 @@ function interpretSignals({ signals, engagement, coaches, coachWatch, timeline }
     action = "Keep building momentum with consistent outreach.";
   }
 
-  // Recent signals — max 2
+  // Recent signals — max 2, plain-language engagement signals
   const recentSignals = [];
   if (hasReply) {
-    recentSignals.push({ color: "#22c55e", icon: MessageCircle, title: "Coach replied", detail: "Direct engagement confirmed" });
-  }
-  if (opens > 0 && recentSignals.length < 2) {
-    recentSignals.push({ color: "#3b82f6", icon: Eye, title: `Email opened ${opens} time${opens > 1 ? "s" : ""}`, detail: uniqueOpens > 0 ? `${uniqueOpens} unique coach open${uniqueOpens > 1 ? "s" : ""}` : "Passive interest detected" });
+    recentSignals.push({ color: "#22c55e", icon: MessageCircle, title: "Coach replied to your message", detail: "Direct conversation started" });
   }
   if (clicks > 0 && recentSignals.length < 2) {
-    recentSignals.push({ color: "#22c55e", icon: ArrowUpRight, title: `Highlight link clicked`, detail: "Coaches engaging with your content" });
+    recentSignals.push({ color: "#22c55e", icon: ArrowUpRight, title: "Coach engaged with your content", detail: "Your highlight link was clicked" });
   }
-  if (outreach > 0 && !hasReply && recentSignals.length < 2) {
-    recentSignals.push({ color: "#f59e0b", icon: AlertCircle, title: "No reply after outreach", detail: `${outreach} message${outreach > 1 ? "s" : ""} sent without response` });
+  if (opens > 2 && recentSignals.length < 2) {
+    recentSignals.push({ color: "#3b82f6", icon: Eye, title: "Coach viewed your message multiple times", detail: "Repeat interest is a strong signal" });
+  } else if (opens > 0 && recentSignals.length < 2) {
+    recentSignals.push({ color: "#3b82f6", icon: Eye, title: "Coach opened your message", detail: opens > 1 ? `Opened ${opens} times` : "Passive interest detected" });
+  }
+  if (outreach > 0 && opens === 0 && !hasReply && recentSignals.length < 2) {
+    recentSignals.push({ color: "#f59e0b", icon: AlertCircle, title: "No engagement with your last message", detail: "Your outreach hasn't been opened yet" });
   }
   if (daysSince != null && daysSince > 5 && recentSignals.length < 2) {
-    recentSignals.push({ color: "#94a3b8", icon: Clock, title: `${daysSince} days since activity`, detail: "May need re-engagement" });
+    recentSignals.push({ color: "#94a3b8", icon: Clock, title: `${daysSince} days since last activity`, detail: "May need re-engagement" });
   }
   if (recentSignals.length === 0) {
     recentSignals.push({ color: "#64748b", icon: Activity, title: "No signals yet", detail: "Start outreach to generate signals" });
