@@ -6,7 +6,7 @@ import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
   Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
-  Eye, MousePointerClick, Send, Share2,
+  Eye, Send, Share2,
   GitCompare, ChevronDown, ChevronUp, Lock, Flag, Check,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
@@ -26,8 +26,7 @@ import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../compone
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
 import CoachWatchCard from "../../components/journey/CoachWatchCard";
 import NotesSidebar from "../../components/NotesSidebar";
-import { SchoolInsightCard, TimelineCard } from "../../components/intelligence/IntelligenceCards";
-import { EngagementOutlookCard } from "../../components/intelligence/EngagementOutlookCard";
+import { SchoolInsightCard } from "../../components/intelligence/IntelligenceCards";
 import { useSubscription } from "../../lib/subscription";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -88,6 +87,7 @@ export default function JourneyPage() {
   const [questNudgeDismissed, setQuestNudgeDismissed] = useState(false);
 
   // J2: Engagement data
+  const [showAllStaff, setShowAllStaff] = useState(false);
   const [engagement, setEngagement] = useState(null);
 
   // J3: Gmail connected check + email initial (for Send Profile)
@@ -911,245 +911,185 @@ export default function JourneyPage() {
               onFollowUp={() => { setShowFollowup(true); setActiveAction("followup"); }}
             />
 
-            {/* Section 2: Coaching Staff (Upgraded with signal-aware status) */}
-            <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coaches-sidebar">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>Coaching Staff</h3>
-                <button onClick={() => setShowCoachForm({})} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-500 transition-colors" data-testid="add-coach-btn">
-                  <Plus className="w-3 h-3" />Add
+            {/* Section 2: Key Contacts (compact, max 2) */}
+            <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="key-contacts-card">
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>Key Contacts</h3>
+                <button onClick={() => setShowCoachForm({})} className="flex items-center gap-1 text-[9px] font-semibold text-teal-600 hover:text-teal-500 transition-colors" data-testid="add-coach-btn">
+                  <Plus className="w-2.5 h-2.5" />Add
                 </button>
               </div>
 
-              {/* Secondary engagement stats strip */}
-              {(engagement?.total_opens > 0 || engagement?.total_clicks > 0) && (
-                <div className="flex items-center gap-3 mb-3 py-2 px-3 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }} data-testid="engagement-strip">
-                  <div className="flex items-center gap-1.5">
-                    <Eye className="w-3 h-3" style={{ color: "#10b981" }} />
-                    <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_opens ?? 0}</span>
-                    <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Opens</span>
-                  </div>
-                  <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
-                  <div className="flex items-center gap-1.5">
-                    <MousePointerClick className="w-3 h-3" style={{ color: "#3b82f6" }} />
-                    <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_clicks ?? 0}</span>
-                    <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Clicks</span>
-                  </div>
-                  <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
-                  <div className="flex items-center gap-1.5">
-                    <User className="w-3 h-3" style={{ color: "#a78bfa" }} />
-                    <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.unique_opens ?? 0}</span>
-                    <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Unique</span>
-                  </div>
-                </div>
-              )}
-
               {coaches.length === 0 ? (
-                <p className="text-xs text-center py-4" style={{ color: "var(--cm-text-3)" }}>No coaches added yet</p>
+                <p className="text-[10px] text-center py-3" style={{ color: "var(--cm-text-3)" }}>No contacts added yet</p>
               ) : (
                 <div className="space-y-2">
-                  {coaches.map((c, idx) => {
-                    // Signal-aware relationship note
-                    const isFirst = idx === 0;
+                  {coaches.slice(0, 2).map((c, idx) => {
                     const engOpens = engagement?.total_opens || 0;
                     const hasReply = signals.has_coach_reply;
-                    let relationNote, noteColor;
-                    if (hasReply && isFirst) {
-                      relationNote = "Active conversation. Most recent engagement.";
-                      noteColor = "#22c55e";
-                    } else if (engOpens > 1 && isFirst) {
-                      relationNote = "Warmest contact. Profile viewed recently.";
-                      noteColor = "#3b82f6";
-                    } else if (engOpens > 0 && !isFirst) {
-                      relationNote = "Some engagement detected.";
-                      noteColor = "#f59e0b";
-                    } else if (signals.days_since_activity > 14) {
-                      relationNote = "Cold relationship. No recent engagement.";
-                      noteColor = "#94a3b8";
-                    } else {
-                      relationNote = "No engagement yet.";
-                      noteColor = "#64748b";
-                    }
+                    let statusLine, statusColor;
+                    if (hasReply && idx === 0) { statusLine = "Most active contact. Recent engagement."; statusColor = "#22c55e"; }
+                    else if (engOpens > 1 && idx === 0) { statusLine = "Warmest contact. Viewed profile recently."; statusColor = "#3b82f6"; }
+                    else if (idx === 0 && coaches.length > 1) { statusLine = "Primary decision maker."; statusColor = "#94a3b8"; }
+                    else { statusLine = "No recent engagement."; statusColor = "#64748b"; }
 
                     return (
-                      <div key={c.coach_id} className="flex items-start gap-3 p-3 rounded-lg border transition-colors"
-                        style={{ backgroundColor: "var(--cm-surface-2)", borderColor: isFirst && (hasReply || engOpens > 1) ? `${noteColor}25` : "var(--cm-border)" }}
+                      <div key={c.coach_id} className="flex items-start gap-2.5 p-2.5 rounded-lg"
+                        style={{ backgroundColor: "var(--cm-surface-2)" }}
                         data-testid={`coach-card-${c.coach_id}`}>
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: `${noteColor}15` }}>
-                          <User className="w-3.5 h-3.5" style={{ color: noteColor }} />
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: `${statusColor}12` }}>
+                          <User className="w-3 h-3" style={{ color: statusColor }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold truncate" style={{ color: "var(--cm-text)" }}>{c.coach_name}</p>
-                          <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{c.role || "Coach"}</p>
-                          <p className="text-[10px] mt-1 leading-snug" style={{ color: noteColor }}>
-                            {relationNote}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-[11px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>{c.coach_name}</p>
+                            <span className="text-[9px] flex-shrink-0" style={{ color: "var(--cm-text-3)" }}>{c.role || "Coach"}</span>
+                          </div>
+                          <p className="text-[9px] mt-0.5" style={{ color: statusColor }}>{statusLine}</p>
                           {c.email && (
-                            <div className="flex items-center gap-1 mt-1.5">
-                              <Mail className="w-2.5 h-2.5" style={{ color: "var(--cm-text-3)" }} />
-                              <a href={`mailto:${c.email}`} className="text-[10px] text-teal-600 truncate hover:underline">{c.email}</a>
-                            </div>
+                            <a href={`mailto:${c.email}`} className="text-[9px] text-teal-600 truncate hover:underline mt-0.5 block">{c.email}</a>
                           )}
-                          {c.phone && (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              <Phone className="w-2.5 h-2.5" style={{ color: "var(--cm-text-3)" }} />
-                              <span className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{c.phone}</span>
-                            </div>
-                          )}
-                          <CoachSocialLinks coachName={c.coach_name} kbCoaches={program.kb_coaches} />
                         </div>
-                        <div className="flex gap-1 flex-shrink-0">
-                          <button onClick={() => setShowCoachForm(c)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`edit-coach-${c.coach_id}`}>
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                          <button onClick={() => handleDeleteCoach(c.coach_id)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`delete-coach-${c.coach_id}`}>
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                        <div className="flex gap-0.5 flex-shrink-0">
+                          <button onClick={() => setShowCoachForm(c)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`edit-coach-${c.coach_id}`}><Edit2 className="w-2.5 h-2.5" /></button>
+                          <button onClick={() => handleDeleteCoach(c.coach_id)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`delete-coach-${c.coach_id}`}><Trash2 className="w-2.5 h-2.5" /></button>
                         </div>
                       </div>
                     );
                   })}
+                  {coaches.length > 2 && (
+                    <button onClick={() => setShowAllStaff(prev => !prev)}
+                      className="w-full text-[9px] font-semibold text-teal-600 hover:text-teal-500 py-1 transition-colors"
+                      data-testid="view-all-staff-btn">
+                      {showAllStaff ? "Show less" : `View all staff (${coaches.length})`}
+                    </button>
+                  )}
+                  {showAllStaff && coaches.slice(2).map(c => (
+                    <div key={c.coach_id} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg"
+                      style={{ backgroundColor: "var(--cm-surface-2)" }}
+                      data-testid={`coach-card-${c.coach_id}`}>
+                      <User className="w-3 h-3 flex-shrink-0" style={{ color: "#64748b" }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>{c.coach_name}</p>
+                        <p className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>{c.role || "Coach"}</p>
+                      </div>
+                      <div className="flex gap-0.5 flex-shrink-0">
+                        <button onClick={() => setShowCoachForm(c)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }}><Edit2 className="w-2.5 h-2.5" /></button>
+                        <button onClick={() => handleDeleteCoach(c.coach_id)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }}><Trash2 className="w-2.5 h-2.5" /></button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Section 3: Communication & Activity (renamed from Engagement) */}
-            <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="communication-activity-card">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest mb-3" style={{ color: "var(--cm-text-3)" }}>Communication & Activity</h3>
-              <div className="grid grid-cols-2 gap-2">
+            {/* Section 3: Communication & Activity (compact, low emphasis) */}
+            <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="communication-activity-card">
+              <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2" style={{ color: "var(--cm-text-3)" }}>Communication & Activity</h3>
+              <div className="grid grid-cols-4 gap-1.5">
                 {[
-                  { label: "Total Outreach", value: signals.outreach_count || 0, group: "communication" },
-                  { label: "Coach Replies", value: signals.reply_count || 0, group: "communication" },
-                  { label: "Days Since Activity", value: signals.days_since_activity != null ? signals.days_since_activity : "\u2014", group: "activity" },
-                  { label: "Interactions", value: timeline.length, group: "activity" },
+                  { label: "Outreach", value: signals.outreach_count || 0 },
+                  { label: "Replies", value: signals.reply_count || 0 },
+                  { label: "Interactions", value: timeline.length },
+                  { label: "Last Active", value: signals.days_since_activity != null ? `${signals.days_since_activity}d` : "\u2014" },
                 ].map(stat => (
-                  <div key={stat.label} className="px-3 py-2.5 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }}
+                  <div key={stat.label} className="text-center py-2 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }}
                     data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}>
-                    <p className="text-[9px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--cm-text-3)" }}>{stat.label}</p>
-                    <p className="text-base font-extrabold" style={{ color: "var(--cm-text)" }}>{stat.value}</p>
+                    <p className="text-sm font-extrabold" style={{ color: "var(--cm-text)" }}>{stat.value}</p>
+                    <p className="text-[8px] font-medium uppercase" style={{ color: "var(--cm-text-3)" }}>{stat.label}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Section 4: Intelligence (secondary to Coach Watch) */}
-            <div data-testid="intelligence-section">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest mb-3 flex items-center gap-1.5" style={{ color: "var(--cm-text-3)" }}>
-                Intelligence
-              </h3>
-              <div className="space-y-2">
-                <EngagementOutlookCard programId={program.program_id} isBasic={isBasic} />
-                <SchoolInsightCard programId={program.program_id} isBasic={isBasic} />
-                <TimelineCard programId={program.program_id} isBasic={isBasic} />
-              </div>
+            {/* Section 4: School Insight (collapsed preview) */}
+            <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="school-insight-section">
+              <SchoolInsightCard programId={program.program_id} isBasic={isBasic} />
             </div>
 
-            {/* Section 5: AI Insights (context-aware) */}
-            <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(26,138,128,0.2)" : "var(--cm-border)" }} data-testid="ai-section">
-              <h3 className="text-[10px] font-extrabold uppercase tracking-widest mb-3 flex items-center gap-1.5 text-[#1a8a80]">
-                <Sparkles className="w-3.5 h-3.5" /> AI Insights
-                {!isPremium && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 ml-1">PREMIUM</span>}
+            {/* Section 5: AI Assist (lightweight tools) */}
+            <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(13,148,136,0.12)" : "var(--cm-border)" }} data-testid="ai-section">
+              <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: "var(--cm-text-3)" }}>
+                <Sparkles className="w-3 h-3 text-[#1a8a80]" /> AI Assist
+                {!isPremium && <span className="text-[8px] font-bold px-1 py-px rounded bg-amber-500/15 text-amber-400 ml-auto">PREMIUM</span>}
               </h3>
 
               {isPremium ? (
-                <div className="space-y-2">
-                  {/* AI Next Step */}
+                <div className="space-y-1.5">
                   <button onClick={fetchAiNextStep} disabled={aiNextStepLoading}
-                    className="w-full text-left p-3 rounded-lg border transition-colors hover:bg-white/[0.02]"
-                    style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
+                    className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
+                    style={{ backgroundColor: "var(--cm-surface-2)" }}
                     data-testid="ai-next-step-btn">
                     {aiNextStepLoading ? (
-                      <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Analyzing...</span></div>
+                      <Loader2 className="w-3 h-3 animate-spin text-[#1a8a80]" />
                     ) : aiNextStep ? (
-                      <>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`w-2 h-2 rounded-full ${aiNextStep.urgency === "high" ? "bg-red-400" : aiNextStep.urgency === "medium" ? "bg-amber-400" : "bg-green-400"}`} />
-                          <span className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80]">AI Recommended</span>
-                        </div>
-                        <p className="text-[12px] font-semibold mb-1" style={{ color: "var(--cm-text)" }}>{aiNextStep.next_step}</p>
-                        <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{aiNextStep.reasoning}</p>
-                      </>
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${aiNextStep.urgency === "high" ? "bg-red-400" : aiNextStep.urgency === "medium" ? "bg-amber-400" : "bg-green-400"}`} />
                     ) : (
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                          <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text)" }}>Get AI Next Step</span>
-                        </div>
-                        <p className="text-[9px] ml-5" style={{ color: "var(--cm-text-3)" }}>Based on Coach Watch and timeline activity</p>
-                      </div>
+                      <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
                     )}
+                    <div className="text-left flex-1 min-w-0">
+                      {aiNextStep ? (
+                        <p className="text-[10px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>{aiNextStep.next_step}</p>
+                      ) : (
+                        <>
+                          <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Get Next Step</p>
+                          <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Based on Coach Watch and activity</p>
+                        </>
+                      )}
+                    </div>
                   </button>
-
-                  {/* AI Journey Summary */}
                   <button onClick={fetchAiSummary} disabled={aiSummaryLoading}
-                    className="w-full text-left p-3 rounded-lg border transition-colors hover:bg-white/[0.02]"
-                    style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
+                    className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
+                    style={{ backgroundColor: "var(--cm-surface-2)" }}
                     data-testid="ai-journey-summary-btn">
                     {aiSummaryLoading ? (
-                      <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Summarizing...</span></div>
-                    ) : aiSummary ? (
-                      <>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">Journey Summary</p>
-                        <p className="text-[12px] mb-1" style={{ color: "var(--cm-text-2)" }}>{aiSummary.relationship_summary}</p>
-                        {aiSummary.suggested_action && <p className="text-[11px] text-[#1a8a80] font-semibold mt-2">Next: {aiSummary.suggested_action}</p>}
-                      </>
+                      <Loader2 className="w-3 h-3 animate-spin text-[#1a8a80]" />
                     ) : (
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                          <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text)" }}>Get Journey Summary</span>
-                        </div>
-                        <p className="text-[9px] ml-5" style={{ color: "var(--cm-text-3)" }}>Summarize this school relationship</p>
-                      </div>
+                      <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
                     )}
+                    <div className="text-left flex-1 min-w-0">
+                      {aiSummary ? (
+                        <p className="text-[10px] truncate" style={{ color: "var(--cm-text-2)" }}>{aiSummary.relationship_summary}</p>
+                      ) : (
+                        <>
+                          <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Summarize Relationship</p>
+                          <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Full journey overview</p>
+                        </>
+                      )}
+                    </div>
                   </button>
-
-                  {/* AI School Insight */}
                   <button onClick={fetchAiInsight} disabled={aiInsightLoading}
-                    className="w-full text-left p-3 rounded-lg border transition-colors hover:bg-white/[0.02]"
-                    style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
+                    className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
+                    style={{ backgroundColor: "var(--cm-surface-2)" }}
                     data-testid="ai-school-insight-btn">
                     {aiInsightLoading ? (
-                      <div className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-[#1a8a80]" /><span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>Analyzing school...</span></div>
-                    ) : aiInsight?.insight ? (
-                      <>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[#1a8a80] mb-1">School Fit Analysis</p>
-                        <p className="text-[12px] mb-2" style={{ color: "var(--cm-text-2)" }}>{aiInsight.insight.summary}</p>
-                        {aiInsight.insight.strengths?.slice(0, 2).map((s, i) => (
-                          <div key={i} className="flex items-start gap-1.5 mb-1">
-                            <span className="text-[9px] text-emerald-400 mt-0.5">+</span>
-                            <span className="text-[11px] text-emerald-400/70">{s.text}</span>
-                          </div>
-                        ))}
-                        {aiInsight.insight.concerns?.slice(0, 1).map((c, i) => (
-                          <div key={i} className="flex items-start gap-1.5 mt-1">
-                            <span className="text-[9px] text-amber-400 mt-0.5">!</span>
-                            <span className="text-[11px] text-amber-400/70">{c.text}</span>
-                          </div>
-                        ))}
-                      </>
+                      <Loader2 className="w-3 h-3 animate-spin text-[#1a8a80]" />
                     ) : (
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                          <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text)" }}>Get School Insight</span>
-                        </div>
-                        <p className="text-[9px] ml-5" style={{ color: "var(--cm-text-3)" }}>Analyze fit, roster, and timing signals</p>
-                      </div>
+                      <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
                     )}
+                    <div className="text-left flex-1 min-w-0">
+                      {aiInsight?.insight ? (
+                        <p className="text-[10px] truncate" style={{ color: "var(--cm-text-2)" }}>{aiInsight.insight.summary}</p>
+                      ) : (
+                        <>
+                          <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Analyze School Fit</p>
+                          <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Fit, roster, and timing signals</p>
+                        </>
+                      )}
+                    </div>
                   </button>
                 </div>
               ) : (
-                /* Non-premium teaser */
-                <div className="p-4 rounded-lg border border-dashed text-center" style={{ borderColor: "var(--cm-border)" }} data-testid="ai-premium-teaser">
-                  <Lock className="w-6 h-6 mx-auto mb-2" style={{ color: "var(--cm-text-3)" }} />
-                  <p className="text-xs font-semibold mb-1" style={{ color: "var(--cm-text-2)" }}>AI-powered recruiting insights</p>
-                  <p className="text-[10px] mb-3" style={{ color: "var(--cm-text-3)" }}>Get personalized next steps, journey summaries, and school fit analysis</p>
+                <div className="py-3 text-center">
+                  <Lock className="w-4 h-4 mx-auto mb-1.5" style={{ color: "var(--cm-text-3)" }} />
+                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--cm-text-2)" }}>AI-powered insights</p>
+                  <p className="text-[8px] mb-2" style={{ color: "var(--cm-text-3)" }}>Next steps, summaries, and fit analysis</p>
                   <button onClick={() => navigate("/settings")}
-                    className="text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors text-white"
+                    className="text-[10px] font-semibold px-3 py-1 rounded-lg text-white"
                     style={{ backgroundColor: "#1a8a80" }}
                     data-testid="ai-upgrade-btn">
-                    Upgrade to Premium
+                    Upgrade
                   </button>
                 </div>
               )}
