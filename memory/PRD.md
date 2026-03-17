@@ -228,6 +228,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Frontend CoachWatchCard shows headline (prominent), why line (subtle), and conditional "What changed" block on state transitions
   - 27/27 backend + all frontend tests passed (iteration_160)
   - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`
+- **Hero Pulse Indicator → Coach Watch Badge (Complete — 2026-03-17)**
+  - Replaced legacy Pulse Indicator (Neutral/Warm/Hot/Cold based on days_since_activity) with Coach Watch-derived badge
+  - 10 compact labels: No Signals, Waiting, Follow Up, Emerging, Active, Hot Opportunity, Cooling, Re-engaged, Stalled, Low Priority
+  - State-based colors (green for hot, blue for active, teal for emerging/re-engaged, amber for cooling/stalled/follow-up, gray for no_signals/deprioritize)
+  - Animated dot for active states (hot_opportunity, active_conversation, emerging_interest, re_engaged)
+  - Backward compatible: PipelinePage still uses legacy pulse prop
+  - All frontend + backend tests passed (iteration_161)
+  - Key files: `PulseIndicator.js`, `JourneyPage.js`
 
 ---
 
