@@ -213,6 +213,13 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - SI panel uses coachWatch.meta for consistency — no conflicting states
   - 24/24 backend + all frontend tests passed (iteration_158)
   - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`, `SchoolIntelligencePanel.js`, `JourneyPage.js`
+- **Coach Watch 10-State Matrix (Complete — 2026-03-17)**
+  - Implemented definitive 10-state relationship matrix: no_signals, waiting, follow_up_window, emerging, active_conversation, hot_opportunity, cooling, re_engaged, stalled, deprioritize
+  - Each state produces consistent: interestLevel, trend, summary, recommendedAction, primaryCta, secondaryCta
+  - Priority order enforced: hot > active > re_engaged > emerging > cooling > stalled > follow_up > waiting > deprioritize > no_signals
+  - Verified across 4 school profiles: Stanford=hot_opportunity, Florida=deprioritize, Creighton=no_signals, UCLA=active_conversation
+  - 26/26 backend + all frontend tests passed (iteration_159)
+  - Key files: `athlete_dashboard.py` (lines 128-400), `CoachWatchCard.js`, `SchoolIntelligencePanel.js`
 
 ---
 
