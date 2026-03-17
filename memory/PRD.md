@@ -141,6 +141,12 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - AI Assist: renamed from "AI Insights", lightweight buttons with helper text
   - 22 frontend tests passed (iteration_150)
   - Key files: `CoachWatchCard.js`, `JourneyPage.js`
+- **Engagement Data Transformation (Complete)**
+  - Converted raw email metrics (Opens/Clicks/Unique) into plain-language signals
+  - Coach Watch signals: "Coach opened your message", "Coach engaged with your content", "No engagement with your last message"
+  - Key Contacts: "Opened your last message", "Engaged with your highlight link", "No engagement yet"
+  - Removed all raw metric displays; engagement strip header row eliminated
+  - 18 frontend tests passed (iteration_151)
 
 ---
 
