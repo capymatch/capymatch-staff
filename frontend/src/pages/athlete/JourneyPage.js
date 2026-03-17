@@ -6,7 +6,7 @@ import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
   Edit2, Trash2, Plus, AlertCircle, Clock, BookOpen, ExternalLink,
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
-  Eye, MousePointerClick, ShieldCheck, Send, Share2,
+  Eye, MousePointerClick, Send, Share2,
   GitCompare, ChevronDown, ChevronUp, Lock, Flag, Check,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
@@ -24,6 +24,7 @@ import { RAIL_STAGES, STAGE_LABELS } from "../../components/journey/constants";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
+import CoachWatchCard from "../../components/journey/CoachWatchCard";
 import NotesSidebar from "../../components/NotesSidebar";
 import { SchoolInsightCard, TimelineCard } from "../../components/intelligence/IntelligenceCards";
 import { EngagementOutlookCard } from "../../components/intelligence/EngagementOutlookCard";
@@ -897,122 +898,143 @@ export default function JourneyPage() {
             )}
           </div>
 
-          {/* RIGHT: Sidebar */}
+          {/* RIGHT: Sidebar — Coach Watch Intelligence Layer */}
           <div className="space-y-5">
-            {/* Coaches */}
-            <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coaches-sidebar">
+            {/* Section 1: Coach Watch Summary (NEW TOP CARD) */}
+            <CoachWatchCard
+              signals={signals}
+              engagement={engagement}
+              coaches={coaches}
+              coachWatch={coachWatch}
+              timeline={timeline}
+              onEmail={openGatedEmail}
+              onFollowUp={() => { setShowFollowup(true); setActiveAction("followup"); }}
+            />
+
+            {/* Section 2: Coaching Staff (Upgraded with signal-aware status) */}
+            <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coaches-sidebar">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Coaching Staff</h3>
-                  {/* Coach Watch Alert (real API) */}
-                  {coachWatch && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
-                      style={{
-                        backgroundColor: coachWatch.severity === "high" ? "rgba(239,68,68,0.1)" : coachWatch.severity === "medium" ? "rgba(245,158,11,0.1)" : "rgba(34,197,94,0.1)",
-                        color: coachWatch.severity === "high" ? "#f87171" : coachWatch.severity === "medium" ? "#fbbf24" : "#4ade80",
-                        border: `1px solid ${coachWatch.severity === "high" ? "rgba(239,68,68,0.2)" : coachWatch.severity === "medium" ? "rgba(245,158,11,0.2)" : "rgba(34,197,94,0.15)"}`,
-                      }}
-                      title={coachWatch.recommendation || ""}
-                      data-testid="coach-watch-badge">
-                      <ShieldCheck className="w-2.5 h-2.5" /> {coachWatch.status || "Staff Stable"}
-                    </span>
-                  )}
-                  {!coachWatch && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
-                      style={{ backgroundColor: "rgba(148,163,184,0.1)", color: "#94a3b8", border: "1px solid rgba(148,163,184,0.15)" }}
-                      data-testid="coach-watch-badge">
-                      <ShieldCheck className="w-2.5 h-2.5" /> Loading...
-                    </span>
-                  )}
-                </div>
+                <h3 className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>Coaching Staff</h3>
                 <button onClick={() => setShowCoachForm({})} className="flex items-center gap-1 text-[10px] font-semibold text-teal-600 hover:text-teal-500 transition-colors" data-testid="add-coach-btn">
                   <Plus className="w-3 h-3" />Add
                 </button>
               </div>
 
-              {/* J2: Engagement Stats Strip */}
-              <div className="flex items-center gap-3 mb-3 py-2 px-3 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }} data-testid="engagement-strip">
-                <div className="flex items-center gap-1.5">
-                  <Eye className="w-3 h-3" style={{ color: "#10b981" }} />
-                  <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_opens ?? 0}</span>
-                  <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Opens</span>
+              {/* Secondary engagement stats strip */}
+              {(engagement?.total_opens > 0 || engagement?.total_clicks > 0) && (
+                <div className="flex items-center gap-3 mb-3 py-2 px-3 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }} data-testid="engagement-strip">
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="w-3 h-3" style={{ color: "#10b981" }} />
+                    <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_opens ?? 0}</span>
+                    <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Opens</span>
+                  </div>
+                  <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
+                  <div className="flex items-center gap-1.5">
+                    <MousePointerClick className="w-3 h-3" style={{ color: "#3b82f6" }} />
+                    <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_clicks ?? 0}</span>
+                    <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Clicks</span>
+                  </div>
+                  <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
+                  <div className="flex items-center gap-1.5">
+                    <User className="w-3 h-3" style={{ color: "#a78bfa" }} />
+                    <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.unique_opens ?? 0}</span>
+                    <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Unique</span>
+                  </div>
                 </div>
-                <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
-                <div className="flex items-center gap-1.5">
-                  <MousePointerClick className="w-3 h-3" style={{ color: "#3b82f6" }} />
-                  <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.total_clicks ?? 0}</span>
-                  <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Clicks</span>
-                </div>
-                <div className="w-px h-3" style={{ backgroundColor: "var(--cm-border)" }} />
-                <div className="flex items-center gap-1.5">
-                  <User className="w-3 h-3" style={{ color: "#a78bfa" }} />
-                  <span className="text-[10px] font-bold" style={{ color: "var(--cm-text)" }}>{engagement?.unique_opens ?? 0}</span>
-                  <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>Unique</span>
-                </div>
-              </div>
+              )}
 
               {coaches.length === 0 ? (
                 <p className="text-xs text-center py-4" style={{ color: "var(--cm-text-3)" }}>No coaches added yet</p>
               ) : (
                 <div className="space-y-2">
-                  {coaches.map(c => (
-                    <div key={c.coach_id} className="flex items-start gap-3 p-3 rounded-lg border transition-colors" style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }} data-testid={`coach-card-${c.coach_id}`}>
-                      <div className="w-8 h-8 rounded-full bg-teal-700/15 flex items-center justify-center flex-shrink-0">
-                        <User className="w-3.5 h-3.5 text-teal-700" />
+                  {coaches.map((c, idx) => {
+                    // Signal-aware relationship note
+                    const isFirst = idx === 0;
+                    const engOpens = engagement?.total_opens || 0;
+                    const hasReply = signals.has_coach_reply;
+                    let relationNote, noteColor;
+                    if (hasReply && isFirst) {
+                      relationNote = "Active conversation. Most recent engagement.";
+                      noteColor = "#22c55e";
+                    } else if (engOpens > 1 && isFirst) {
+                      relationNote = "Warmest contact. Profile viewed recently.";
+                      noteColor = "#3b82f6";
+                    } else if (engOpens > 0 && !isFirst) {
+                      relationNote = "Some engagement detected.";
+                      noteColor = "#f59e0b";
+                    } else if (signals.days_since_activity > 14) {
+                      relationNote = "Cold relationship. No recent engagement.";
+                      noteColor = "#94a3b8";
+                    } else {
+                      relationNote = "No engagement yet.";
+                      noteColor = "#64748b";
+                    }
+
+                    return (
+                      <div key={c.coach_id} className="flex items-start gap-3 p-3 rounded-lg border transition-colors"
+                        style={{ backgroundColor: "var(--cm-surface-2)", borderColor: isFirst && (hasReply || engOpens > 1) ? `${noteColor}25` : "var(--cm-border)" }}
+                        data-testid={`coach-card-${c.coach_id}`}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: `${noteColor}15` }}>
+                          <User className="w-3.5 h-3.5" style={{ color: noteColor }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold truncate" style={{ color: "var(--cm-text)" }}>{c.coach_name}</p>
+                          <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{c.role || "Coach"}</p>
+                          <p className="text-[10px] mt-1 leading-snug" style={{ color: noteColor }}>
+                            {relationNote}
+                          </p>
+                          {c.email && (
+                            <div className="flex items-center gap-1 mt-1.5">
+                              <Mail className="w-2.5 h-2.5" style={{ color: "var(--cm-text-3)" }} />
+                              <a href={`mailto:${c.email}`} className="text-[10px] text-teal-600 truncate hover:underline">{c.email}</a>
+                            </div>
+                          )}
+                          {c.phone && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Phone className="w-2.5 h-2.5" style={{ color: "var(--cm-text-3)" }} />
+                              <span className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{c.phone}</span>
+                            </div>
+                          )}
+                          <CoachSocialLinks coachName={c.coach_name} kbCoaches={program.kb_coaches} />
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button onClick={() => setShowCoachForm(c)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`edit-coach-${c.coach_id}`}>
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button onClick={() => handleDeleteCoach(c.coach_id)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`delete-coach-${c.coach_id}`}>
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold truncate" style={{ color: "var(--cm-text)" }}>{c.coach_name}</p>
-                        <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{c.role || "Coach"}</p>
-                        {c.email && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Mail className="w-2.5 h-2.5" style={{ color: "var(--cm-text-3)" }} />
-                            <a href={`mailto:${c.email}`} className="text-[10px] text-teal-600 truncate hover:underline">{c.email}</a>
-                          </div>
-                        )}
-                        {c.phone && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <Phone className="w-2.5 h-2.5" style={{ color: "var(--cm-text-3)" }} />
-                            <span className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{c.phone}</span>
-                          </div>
-                        )}
-                        {/* J2: Coach Social Links */}
-                        <CoachSocialLinks coachName={c.coach_name} kbCoaches={program.kb_coaches} />
-                      </div>
-                      <div className="flex gap-1 flex-shrink-0">
-                        <button onClick={() => setShowCoachForm(c)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`edit-coach-${c.coach_id}`}>
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                        <button onClick={() => handleDeleteCoach(c.coach_id)} className="p-1 rounded" style={{ color: "var(--cm-text-3)" }} data-testid={`delete-coach-${c.coach_id}`}>
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Engagement Stats */}
-            <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="engagement-stats">
-              <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "var(--cm-text-3)" }}>Engagement</h3>
+            {/* Section 3: Communication & Activity (renamed from Engagement) */}
+            <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="communication-activity-card">
+              <h3 className="text-[10px] font-extrabold uppercase tracking-widest mb-3" style={{ color: "var(--cm-text-3)" }}>Communication & Activity</h3>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label: "Total Outreach", value: signals.outreach_count || 0 },
-                  { label: "Coach Replies", value: signals.reply_count || 0 },
-                  { label: "Days Since Activity", value: signals.days_since_activity != null ? signals.days_since_activity : "\u2014" },
-                  { label: "Interactions", value: timeline.length },
+                  { label: "Total Outreach", value: signals.outreach_count || 0, group: "communication" },
+                  { label: "Coach Replies", value: signals.reply_count || 0, group: "communication" },
+                  { label: "Days Since Activity", value: signals.days_since_activity != null ? signals.days_since_activity : "\u2014", group: "activity" },
+                  { label: "Interactions", value: timeline.length, group: "activity" },
                 ].map(stat => (
-                  <div key={stat.label} className="p-3 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }} data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}>
-                    <p className="text-[10px] font-medium mb-0.5" style={{ color: "var(--cm-text-3)" }}>{stat.label}</p>
-                    <p className="text-lg font-extrabold" style={{ color: "var(--cm-text)" }}>{stat.value}</p>
+                  <div key={stat.label} className="px-3 py-2.5 rounded-lg" style={{ backgroundColor: "var(--cm-card-stat)" }}
+                    data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: "var(--cm-text-3)" }}>{stat.label}</p>
+                    <p className="text-base font-extrabold" style={{ color: "var(--cm-text)" }}>{stat.value}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Intelligence Section — Phase 1 */}
+            {/* Section 4: Intelligence (secondary to Coach Watch) */}
             <div data-testid="intelligence-section">
-              <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5" style={{ color: "var(--cm-text-3)" }}>
+              <h3 className="text-[10px] font-extrabold uppercase tracking-widest mb-3 flex items-center gap-1.5" style={{ color: "var(--cm-text-3)" }}>
                 Intelligence
               </h3>
               <div className="space-y-2">
@@ -1022,10 +1044,9 @@ export default function JourneyPage() {
               </div>
             </div>
 
-            {/* AI Section */}
-            {/* AI Section — gated on premium */}
-            <div className="rounded-lg border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(26,138,128,0.2)" : "var(--cm-border)" }} data-testid="ai-section">
-              <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5 text-[#1a8a80]">
+            {/* Section 5: AI Insights (context-aware) */}
+            <div className="rounded-xl border p-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(26,138,128,0.2)" : "var(--cm-border)" }} data-testid="ai-section">
+              <h3 className="text-[10px] font-extrabold uppercase tracking-widest mb-3 flex items-center gap-1.5 text-[#1a8a80]">
                 <Sparkles className="w-3.5 h-3.5" /> AI Insights
                 {!isPremium && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 ml-1">PREMIUM</span>}
               </h3>
@@ -1034,7 +1055,7 @@ export default function JourneyPage() {
                 <div className="space-y-2">
                   {/* AI Next Step */}
                   <button onClick={fetchAiNextStep} disabled={aiNextStepLoading}
-                    className="w-full text-left p-3 rounded-lg border transition-colors"
+                    className="w-full text-left p-3 rounded-lg border transition-colors hover:bg-white/[0.02]"
                     style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                     data-testid="ai-next-step-btn">
                     {aiNextStepLoading ? (
@@ -1049,16 +1070,19 @@ export default function JourneyPage() {
                         <p className="text-[10px]" style={{ color: "var(--cm-text-2)" }}>{aiNextStep.reasoning}</p>
                       </>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                        <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get AI Next Step</span>
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                          <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text)" }}>Get AI Next Step</span>
+                        </div>
+                        <p className="text-[9px] ml-5" style={{ color: "var(--cm-text-3)" }}>Based on Coach Watch and timeline activity</p>
                       </div>
                     )}
                   </button>
 
                   {/* AI Journey Summary */}
                   <button onClick={fetchAiSummary} disabled={aiSummaryLoading}
-                    className="w-full text-left p-3 rounded-lg border transition-colors"
+                    className="w-full text-left p-3 rounded-lg border transition-colors hover:bg-white/[0.02]"
                     style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                     data-testid="ai-journey-summary-btn">
                     {aiSummaryLoading ? (
@@ -1070,16 +1094,19 @@ export default function JourneyPage() {
                         {aiSummary.suggested_action && <p className="text-[11px] text-[#1a8a80] font-semibold mt-2">Next: {aiSummary.suggested_action}</p>}
                       </>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                        <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get Journey Summary</span>
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                          <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text)" }}>Get Journey Summary</span>
+                        </div>
+                        <p className="text-[9px] ml-5" style={{ color: "var(--cm-text-3)" }}>Summarize this school relationship</p>
                       </div>
                     )}
                   </button>
 
                   {/* AI School Insight */}
                   <button onClick={fetchAiInsight} disabled={aiInsightLoading}
-                    className="w-full text-left p-3 rounded-lg border transition-colors"
+                    className="w-full text-left p-3 rounded-lg border transition-colors hover:bg-white/[0.02]"
                     style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}
                     data-testid="ai-school-insight-btn">
                     {aiInsightLoading ? (
@@ -1102,9 +1129,12 @@ export default function JourneyPage() {
                         ))}
                       </>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
-                        <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text-3)" }}>Get School Insight</span>
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#1a8a80]" />
+                          <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text)" }}>Get School Insight</span>
+                        </div>
+                        <p className="text-[9px] ml-5" style={{ color: "var(--cm-text-3)" }}>Analyze fit, roster, and timing signals</p>
                       </div>
                     )}
                   </button>
