@@ -25,7 +25,7 @@ import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
 import CoachWatchCard from "../../components/journey/CoachWatchCard";
-import SchoolIntelligencePanel from "../../components/journey/SchoolIntelligencePanel";
+import SchoolIntelligenceDrawer from "../../components/journey/SchoolIntelligenceDrawer";
 import NotesSidebar from "../../components/NotesSidebar";
 import { useSubscription } from "../../lib/subscription";
 
@@ -74,6 +74,7 @@ export default function JourneyPage() {
   const [aiNextStepLoading, setAiNextStepLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [siDrawerOpen, setSiDrawerOpen] = useState(false);
 
   // J1: Match score + risk badges
   const [matchScore, setMatchScore] = useState(null);
@@ -808,25 +809,55 @@ export default function JourneyPage() {
         {/* J4: Hide remaining content when committed and toggle is off */}
         {(!isCommitted || showJourneyDetails) && (
           <>
-        {/* School Intelligence — unified Fit + Relationship + Strategy panel */}
+        {/* School Intelligence — compact preview (full panel in drawer) */}
         {!isBasic && (
           <div className="mb-6">
-            <SchoolIntelligencePanel
-              matchScore={matchScore}
-              signals={signals}
-              engagement={engagement}
-              coaches={coaches}
-              coachWatch={coachWatch}
-              timeline={timeline}
-              program={program}
-              onEmail={openGatedEmail}
-              onFollowUp={() => { setShowFollowup(true); setActiveAction("followup"); }}
-              onNavigateToSchool={() => {
-                const d = matchScore?.domain || program.domain;
-                if (d) navigate(`/school/${d}`);
-                else if (program.school_id) navigate(`/schools/${program.school_id}`);
-              }}
-            />
+            <button
+              onClick={() => setSiDrawerOpen(true)}
+              className="w-full rounded-xl border px-4 py-3 text-left transition-colors hover:bg-white/[0.02] group"
+              style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
+              data-testid="si-compact-preview"
+            >
+              <div className="flex items-center gap-3">
+                {matchScore?.match_score != null && matchScore.match_score > 0 && (
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)"}15, ${matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)"}08)`,
+                      border: `2px solid ${matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)"}40`,
+                    }}>
+                    <span className="text-sm font-extrabold"
+                      style={{ color: matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)" }}
+                      data-testid="si-preview-score">{matchScore.match_score}</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <Target className="w-3 h-3 text-teal-600 flex-shrink-0" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-[1.2px]" style={{ color: "var(--cm-text-3)" }}>School Intelligence</span>
+                    {matchScore?.measurables_fit?.label && matchScore.measurables_fit.label !== "Not Enough Data" && (
+                      <span className="text-[9px] font-bold px-1.5 py-px rounded"
+                        style={{
+                          color: matchScore.measurables_fit.label === "Strong Fit" ? "#16a34a" : matchScore.measurables_fit.label === "Possible Fit" ? "#0d9488" : "#d97706",
+                          backgroundColor: matchScore.measurables_fit.label === "Strong Fit" ? "rgba(22,163,74,0.1)" : matchScore.measurables_fit.label === "Possible Fit" ? "rgba(13,148,136,0.1)" : "rgba(245,158,11,0.08)",
+                        }}
+                        data-testid="si-preview-label">{matchScore.measurables_fit.label}</span>
+                    )}
+                  </div>
+                  <p className="text-[10.5px] leading-snug truncate" style={{ color: "var(--cm-text-2)" }} data-testid="si-preview-summary">
+                    {matchScore?.match_score
+                      ? matchScore.match_score >= 75
+                        ? "Strong academic and athletic fit — view full breakdown"
+                        : matchScore.match_score >= 55
+                          ? "Moderate fit across key dimensions — review strategy"
+                          : "Limited match signals — explore analysis"
+                      : "Fit and strategy analysis available"}
+                  </p>
+                </div>
+                <span className="text-[9px] font-semibold text-teal-600 flex-shrink-0 group-hover:text-teal-400 transition-colors whitespace-nowrap" data-testid="si-preview-cta">
+                  View Full Analysis &rarr;
+                </span>
+              </div>
+            </button>
           </div>
         )}
 
@@ -1020,7 +1051,7 @@ export default function JourneyPage() {
               </div>
             </div>
 
-            {/* Section 4: School Fit (compact preview → scrolls to main column panel) */}
+            {/* Section 4: School Fit (compact preview → opens drawer) */}
             <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="school-fit-preview">
               <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2" style={{ color: "var(--cm-text-3)" }}>School Fit</h3>
               <p className="text-[10.5px] leading-snug mb-1" style={{ color: "var(--cm-text)" }}>
@@ -1028,15 +1059,12 @@ export default function JourneyPage() {
                   ? matchScore.match_score >= 70
                     ? `${matchScore.match_score}% — Strong academic and athletic match`
                     : matchScore.match_score >= 40
-                      ? `${matchScore.match_score}% — Moderate fit — review analysis below`
+                      ? `${matchScore.match_score}% — Moderate fit — review analysis`
                       : `${matchScore.match_score}% — Limited match signals`
-                  : "Analysis available below"}
+                  : "Analysis available"}
               </p>
               <button
-                onClick={() => {
-                  const el = document.getElementById("school-intelligence");
-                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
+                onClick={() => setSiDrawerOpen(true)}
                 className="text-[9px] font-semibold text-teal-600 hover:text-teal-500 transition-colors"
                 data-testid="school-fit-view-analysis">
                 View full analysis &rarr;
@@ -1094,10 +1122,7 @@ export default function JourneyPage() {
                       )}
                     </div>
                   </button>
-                  <button onClick={() => {
-                      const el = document.getElementById("school-intelligence");
-                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}
+                  <button onClick={() => setSiDrawerOpen(true)}
                     className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
                     style={{ backgroundColor: "var(--cm-surface-2)" }}
                     data-testid="ai-school-insight-btn">
@@ -1202,6 +1227,26 @@ export default function JourneyPage() {
 
       {/* J3: Notes Sidebar */}
       <NotesSidebar programId={programId} universityName={program.university_name} />
+
+      {/* School Intelligence Drawer */}
+      <SchoolIntelligenceDrawer
+        open={siDrawerOpen}
+        onClose={() => setSiDrawerOpen(false)}
+        matchScore={matchScore}
+        signals={signals}
+        engagement={engagement}
+        coaches={coaches}
+        coachWatch={coachWatch}
+        timeline={timeline}
+        program={program}
+        onEmail={openGatedEmail}
+        onFollowUp={() => { setShowFollowup(true); setActiveAction("followup"); }}
+        onNavigateToSchool={() => {
+          const d = matchScore?.domain || program.domain;
+          if (d) navigate(`/school/${d}`);
+          else if (program.school_id) navigate(`/schools/${program.school_id}`);
+        }}
+      />
     </div>
   );
 }
