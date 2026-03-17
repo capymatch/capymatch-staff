@@ -1,8 +1,7 @@
 import { useState } from "react";
 import {
   Shield, Mail, CalendarPlus, ExternalLink,
-  ChevronDown, ChevronUp, Check, AlertTriangle, Send,
-  MessageSquare,
+  ChevronDown, ChevronUp, Check, AlertTriangle,
 } from "lucide-react";
 
 /* ── Fit label styles ── */
@@ -160,13 +159,13 @@ function buildSignalDetails(eng) {
   return details;
 }
 
-/* ── Data-quality label ── */
+/* ── Data-quality label (only when it adds NEW info the narrative doesn't cover) ── */
 function dataQualityLabel(confidence, hasSignals) {
   if (confidence === "high") return null;
-  if (confidence === "medium") return { color: "var(--cm-text-3)", text: "Limited data available" };
-  return hasSignals
-    ? { color: "var(--cm-text-3)", text: "Limited profile data" }
-    : { color: "var(--cm-text-3)", text: "No coach engagement yet" };
+  if (confidence === "medium") return { color: "var(--cm-text-3)", text: "Limited profile data" };
+  // For low/estimated: narrative already says "No coach engagement yet" — only show if signals exist but profile is thin
+  if (hasSignals) return { color: "var(--cm-text-3)", text: "Limited profile data" };
+  return null;
 }
 
 /* ── Fit heading ── */
@@ -213,10 +212,12 @@ export default function SchoolIntelligencePanel({
   const improvements = [];
   riskBadges.forEach(b => { if (b.label && improvements.length < 3) improvements.push(b.label); });
 
-  // Dynamic CTAs based on outreach state
+  // Dynamic CTAs — "Schedule Follow Up" only appears when outreach exists
   const hasOutreach = eng.outreach > 0;
   const primaryCta = { label: "Send Email", icon: Mail, action: onEmail };
-  const secondaryCta = { label: "Schedule Follow Up", icon: CalendarPlus, action: onFollowUp };
+  const secondaryCta = hasOutreach
+    ? { label: "Schedule Follow Up", icon: CalendarPlus, action: onFollowUp }
+    : null;
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="school-intelligence-panel" id="school-intelligence">
@@ -257,7 +258,7 @@ export default function SchoolIntelligencePanel({
                 <primaryCta.icon className="w-3.5 h-3.5" /> {primaryCta.label}
               </button>
             )}
-            {secondaryCta.action && (
+            {secondaryCta?.action && (
               <button onClick={secondaryCta.action}
                 className="flex items-center gap-1.5 px-4 h-9 rounded-lg text-[11px] font-semibold transition-colors"
                 style={{ color: "var(--cm-text-2)", border: "1px solid var(--cm-border)", backgroundColor: "transparent" }}
