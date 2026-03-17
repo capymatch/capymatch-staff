@@ -153,6 +153,12 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Coach messages show no badges; zero-engagement messages show nothing
   - Seeded sample tracking data on Stanford messages for demo
   - All backend + frontend tests passed (iteration_152)
+- **School Intelligence Unification (Complete)**
+  - "School Intelligence" in main column = single source of truth (enhanced with match score summary + "View full analysis →" CTA)
+  - Removed duplicate "School Insight" card from right panel
+  - Replaced with compact "School Fit" preview that scrolls to main column School Intelligence
+  - AI Assist renamed "Analyze School Fit" → "Explore School Intelligence"
+  - 13 frontend tests passed (iteration_153)
   - Key files: `ConversationBubble.js`, `athlete_dashboard.py`
 
 ---
