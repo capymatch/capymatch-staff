@@ -180,11 +180,19 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Main page now much cleaner — timeline and Coach Watch are primary focus
   - 14/14 tests passed (iteration_155)
   - Key files: `SchoolIntelligenceDrawer.js` (NEW), `JourneyPage.js` (MODIFIED)
+- **Decision-First UI Refactor (Complete)**
+  - Restructured SchoolIntelligencePanel from report-heavy to decision-first layout
+  - Strategy moved to TOP: badge (Continue Pursuing / High Priority / Reconsider) + explanation + directive
+  - Dynamic CTAs: No signals → "Send First Email" + "Generate Follow-up"; Has engagement → "Follow Up" + "Email Coach"
+  - Merged Opportunity & Timing + Coach Signals → single "Engagement Status" (3 states: active/stale/none)
+  - Fit Summary: score + label + inline strengths (green checks) + gaps (amber warnings), max 3 each
+  - Score Breakdown: collapsible (default CLOSED), "View Full Breakdown" toggle
+  - Replaced "Low confidence" → "Needs more data (No coach engagement yet)"
+  - Removed 4 standalone sections — content merged into summary + engagement
+  - 16/16 tests passed across UCLA + Stanford (iteration_156)
+  - Key files: `SchoolIntelligencePanel.js` (REFACTORED)
 
----
-  - Key files: `SchoolIntelligencePanel.js` (NEW), `JourneyPage.js` (MODIFIED)
-
-## Backlog
+---## Backlog
 
 ### P0 — Immediate
 - ~~**YouTube API Key** — DONE~~
