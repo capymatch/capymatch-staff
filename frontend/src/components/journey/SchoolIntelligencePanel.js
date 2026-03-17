@@ -211,7 +211,6 @@ export default function SchoolIntelligencePanel({
   const dqLabel = dataQualityLabel(ms.confidence, eng.hasSignals);
 
   const improvements = [];
-  if (ms.confidence_guidance) improvements.push(ms.confidence_guidance);
   riskBadges.forEach(b => { if (b.label && improvements.length < 3) improvements.push(b.label); });
 
   // Dynamic CTAs based on outreach state
