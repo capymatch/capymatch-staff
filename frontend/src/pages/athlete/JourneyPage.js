@@ -1051,26 +1051,6 @@ export default function JourneyPage() {
               </div>
             </div>
 
-            {/* Section 4: School Fit (compact preview → opens drawer) */}
-            <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="school-fit-preview">
-              <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2" style={{ color: "var(--cm-text-3)" }}>School Fit</h3>
-              <p className="text-[10.5px] leading-snug mb-1" style={{ color: "var(--cm-text)" }}>
-                {matchScore?.match_score
-                  ? matchScore.match_score >= 70
-                    ? `${matchScore.match_score}% — Strong academic and athletic match`
-                    : matchScore.match_score >= 40
-                      ? `${matchScore.match_score}% — Moderate fit — review analysis`
-                      : `${matchScore.match_score}% — Limited match signals`
-                  : "Analysis available"}
-              </p>
-              <button
-                onClick={() => setSiDrawerOpen(true)}
-                className="text-[9px] font-semibold text-teal-600 hover:text-teal-500 transition-colors"
-                data-testid="school-fit-view-analysis">
-                View full analysis &rarr;
-              </button>
-            </div>
-
             {/* Section 5: AI Assist (lightweight tools) */}
             <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(13,148,136,0.12)" : "var(--cm-border)" }} data-testid="ai-section">
               <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: "var(--cm-text-3)" }}>
