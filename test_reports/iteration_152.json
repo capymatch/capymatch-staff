@@ -1,0 +1,73 @@
+{
+  "summary": "Per-message engagement tracking signals feature tested successfully. Backend enriches timeline events with opens/clicks from email_tracking collection. Frontend displays inline badges (Opened, Opened Nx, Link clicked) on athlete's sent messages. All test cases passed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/frontend/src/components/journey/ConversationBubble.js",
+    "/app/backend/routers/athlete_dashboard.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ConversationBubble.js EngagementSignals component (lines 15-37): Correctly shows badges only when opens > 0 or clicks > 0",
+    "Badge text logic correct: opens=1 shows 'Opened', opens>1 shows 'Opened Nx'",
+    "Badge only rendered on isRight bubbles (line 171): ensures coach messages don't show engagement signals",
+    "athlete_dashboard.py journey endpoint (lines 469-479): Correctly enriches timeline with email_tracking data"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123"
+  },
+  "seed_data_creation": "Used existing seeded email_tracking docs: msg-de6804c3 (3 opens, 1 click), msg-2e7d7b6f (2 opens), msg-296b29f4 (1 open, 1 click)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Per-message engagement tracking feature complete. data-testid selectors: engagement-signals (wrapper), signal-opened (opened badge), signal-clicked (clicked badge). Stanford journey has 3 athlete messages with tracking data and 3 coach messages without. LOGIN: Fill credentials and press Enter.",
+  "tests_executed": {
+    "backend_api": [
+      "GET /api/athlete/programs/{id}/journey returns opens and clicks fields on timeline events - PASSED",
+      "Athlete messages have opens/clicks populated from email_tracking collection - PASSED",
+      "Coach messages have opens=0, clicks=0 (no tracking data) - PASSED"
+    ],
+    "frontend_ui": [
+      "TEST 1: Login as athlete - PASSED",
+      "TEST 2: Journey page loads without errors - PASSED",
+      "TEST 3: engagement-signals containers found (3 total) - PASSED",
+      "TEST 4: Message with 3 opens shows 'Opened 3x' badge - PASSED",
+      "TEST 5: Message with 2 opens shows 'Opened 2x' badge - PASSED",
+      "TEST 6: Message with 1 open shows 'Opened' badge - PASSED",
+      "TEST 7: Two messages with clicks show 'Link clicked' badge - PASSED",
+      "TEST 8: Coach messages (left-side) do NOT show engagement badges - PASSED",
+      "TEST 9: Coach Watch card visible with raw metrics line (0 opens · 0 clicks · 0 unique) - PASSED",
+      "TEST 10: Key Contacts section renders correctly - PASSED",
+      "TEST 11: Communication & Activity section renders correctly - PASSED",
+      "TEST 12: Hero card / school header visible - PASSED",
+      "TEST 13: Floating action bar (Email, Log, Replied, Follow-up) visible - PASSED"
+    ]
+  },
+  "verified_requirements": {
+    "JOURNEY_PAGE_LOADS": "PASS",
+    "ENGAGEMENT_SIGNALS_ON_ATHLETE_MESSAGES": "PASS - 3 containers with data-testid='engagement-signals'",
+    "OPENED_3X_BADGE": "PASS - 'Opened 3x' badge shown with data-testid='signal-opened'",
+    "OPENED_2X_BADGE": "PASS - 'Opened 2x' badge shown",
+    "OPENED_BADGE": "PASS - 'Opened' badge shown for 1 open",
+    "LINK_CLICKED_BADGE": "PASS - 2 'Link clicked' badges with data-testid='signal-clicked'",
+    "BOTH_BADGES_ON_SAME_MESSAGE": "PASS - Message with 1 open + 1 click shows both badges",
+    "NO_BADGES_ON_COACH_MESSAGES": "PASS - Left-side bubbles have no engagement-signals",
+    "NO_BADGES_WHEN_ZERO": "PASS - Coach messages with 0 opens/clicks show NO badges",
+    "BACKEND_RETURNS_OPENS_CLICKS": "PASS - Journey endpoint enriches timeline with tracking data",
+    "COACH_WATCH_RAW_METRICS": "PASS - Shows '0 opens · 0 clicks · 0 unique'",
+    "RIGHT_RAIL_SECTIONS": "PASS - Coach Watch, Key Contacts, Comm & Activity render correctly",
+    "FLOATING_ACTION_BAR": "PASS - Email, Log, Replied, Follow-up buttons visible",
+    "HERO_CARD": "PASS - Stanford University header card works correctly"
+  }
+}

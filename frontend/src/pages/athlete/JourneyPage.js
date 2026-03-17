@@ -892,7 +892,7 @@ export default function JourneyPage() {
             ) : (
               <div className="space-y-1" data-testid="timeline-list">
                 {timeline.map((ev, idx) => (
-                  <ConversationBubble key={ev.id || idx} event={ev} engagement={engagement} />
+                  <ConversationBubble key={ev.id || idx} event={ev} />
                 ))}
               </div>
             )}

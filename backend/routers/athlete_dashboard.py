@@ -465,6 +465,19 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
     # Re-sort after adding messages
     timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
 
+    # Enrich timeline with per-message engagement tracking
+    msg_ids = [e["id"] for e in timeline if e.get("id")]
+    if msg_ids:
+        tracking = await db.email_tracking.find(
+            {"message_id": {"$in": msg_ids}},
+            {"_id": 0, "message_id": 1, "opens": 1, "clicks": 1}
+        ).to_list(200)
+        tracking_map = {t["message_id"]: t for t in tracking}
+        for event in timeline:
+            t = tracking_map.get(event.get("id"), {})
+            event["opens"] = t.get("opens", 0)
+            event["clicks"] = t.get("clicks", 0)
+
     return {"timeline": timeline}
 
 
