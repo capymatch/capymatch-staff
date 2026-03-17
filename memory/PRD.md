@@ -243,6 +243,12 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Backend returns new fields: whyThisMatters, confidenceLevel
   - All tests passed (iteration_162)
   - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`
+- **Coach Watch UI Polish — Action Copy + Confidence Tooltip (Complete — 2026-03-17)**
+  - Removed italics from persuasion text, changed to font-medium for scanability
+  - Renamed "Why this matters" → "What to do now" with action-oriented copy for all 10 states
+  - Added confidence tooltip on hover: High/Medium/Low each with 1-line explanation
+  - All tests passed (iteration_163)
+  - Key files: `CoachWatchCard.js`, `athlete_dashboard.py`
 
 ---
 
