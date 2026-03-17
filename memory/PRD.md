@@ -161,6 +161,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 13 frontend tests passed (iteration_153)
   - Key files: `ConversationBubble.js`, `athlete_dashboard.py`
 
+### Session 10 (2026-03-17)
+- **Unified School Intelligence Panel (Complete)**
+  - Merged School Knowledge Base (Fit UI) + School Intelligence/Coach Watch into single "School Intelligence" panel in main column
+  - PRESERVED: Header (score, fit label, confidence), Score Breakdown bars (division, region, priorities, academics, measurables), Strengths from match_reasons, Risks/Gaps from risk_badges
+  - ADDED: 1-line contextual summary, Opportunity & Timing section (opportunity level + timing window + signal bullets), Coach Signals section (engagement-derived insights), Recommended Strategy section (decision label + explanation + next action), expanded action buttons (Email Coach, Generate Follow-up, View School Details)
+  - Right panel School Fit preview now shows match score percentage and scrolls to main column panel
+  - AI Assist "Explore School Intelligence" now scrolls to panel (no separate API call)
+  - All data derived client-side from existing endpoints (match-scores, engagement, coach-watch) — no new backend needed
+  - 24 tests passed across UCLA + Stanford (iteration_154)
+  - Key files: `SchoolIntelligencePanel.js` (NEW), `JourneyPage.js` (MODIFIED)
+
 ---
 
 ## Backlog
