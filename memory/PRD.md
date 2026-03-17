@@ -170,9 +170,19 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - AI Assist "Explore School Intelligence" now scrolls to panel (no separate API call)
   - All data derived client-side from existing endpoints (match-scores, engagement, coach-watch) — no new backend needed
   - 24 tests passed across UCLA + Stanford (iteration_154)
-  - Key files: `SchoolIntelligencePanel.js` (NEW), `JourneyPage.js` (MODIFIED)
+- **School Intelligence Drawer (Complete)**
+  - Converted large inline SchoolIntelligencePanel into a right-side expandable drawer
+  - Compact preview card in main column: score circle + fit label + 1-line summary + "View Full Analysis" CTA
+  - Drawer: 480px wide, slides from right with 250ms animation, dimmed backdrop with blur, closes on X/ESC/click-outside
+  - Three unified entry points: compact preview click, right panel "School Fit" CTA, AI Assist "Explore School Intelligence"
+  - Action buttons in drawer (Email Coach, etc.) close drawer first then trigger their actions
+  - Body scroll lock when drawer open, proper cleanup on close
+  - Main page now much cleaner — timeline and Coach Watch are primary focus
+  - 14/14 tests passed (iteration_155)
+  - Key files: `SchoolIntelligenceDrawer.js` (NEW), `JourneyPage.js` (MODIFIED)
 
 ---
+  - Key files: `SchoolIntelligencePanel.js` (NEW), `JourneyPage.js` (MODIFIED)
 
 ## Backlog
 
