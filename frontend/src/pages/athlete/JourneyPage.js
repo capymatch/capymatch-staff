@@ -1223,7 +1223,7 @@ export default function JourneyPage() {
         onFollowUp={() => { setShowFollowup(true); setActiveAction("followup"); }}
         onNavigateToSchool={() => {
           const d = matchScore?.domain || program.domain;
-          if (d) navigate(`/school/${d}`);
+          if (d) navigate(`/schools/${d}`);
           else if (program.school_id) navigate(`/schools/${program.school_id}`);
         }}
       />

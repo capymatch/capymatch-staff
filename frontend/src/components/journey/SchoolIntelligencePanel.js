@@ -215,14 +215,8 @@ export default function SchoolIntelligencePanel({
 
   // Dynamic CTAs based on outreach state
   const hasOutreach = eng.outreach > 0;
-  const primaryCta = eng.hasSignals
-    ? { label: "Follow Up", icon: CalendarPlus, action: onFollowUp }
-    : hasOutreach
-      ? { label: "Follow Up", icon: CalendarPlus, action: onFollowUp }
-      : { label: "Send First Email", icon: Send, action: onEmail };
-  const secondaryCta = hasOutreach
-    ? { label: "Generate Follow-up", icon: MessageSquare, action: onFollowUp }
-    : { label: "Generate Message", icon: MessageSquare, action: onFollowUp };
+  const primaryCta = { label: "Send Email", icon: Mail, action: onEmail };
+  const secondaryCta = { label: "Schedule Follow Up", icon: CalendarPlus, action: onFollowUp };
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="school-intelligence-panel" id="school-intelligence">
