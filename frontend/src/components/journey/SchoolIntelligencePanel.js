@@ -1,7 +1,8 @@
 import { useState } from "react";
 import {
-  Target, Shield, Mail, CalendarPlus, ExternalLink,
+  Shield, Mail, CalendarPlus, ExternalLink,
   ChevronDown, ChevronUp, Check, AlertTriangle, Send,
+  MessageSquare,
 } from "lucide-react";
 
 /* ── Fit label styles ── */
@@ -22,140 +23,159 @@ const SUB_SCORE_META = {
   measurables:  { label: "Athletic Fit",    color: "#d97706" },
 };
 
-/* ── Derive engagement state (merged from opportunity/timing + coach signals) ── */
-function deriveEngagementState({ signals, engagement }) {
+/* ── Classify engagement state ── */
+function classifyEngagement({ signals, engagement }) {
   const opens = engagement?.total_opens || 0;
   const clicks = engagement?.total_clicks || 0;
   const hasReply = signals?.has_coach_reply;
   const daysSince = signals?.days_since_activity;
   const outreach = signals?.outreach_count || 0;
 
-  const hasCoachSignals = hasReply || clicks > 0 || opens > 0;
-
-  if (hasReply || clicks > 0) {
-    return {
-      state: "active",
-      color: "#22c55e",
-      dotColor: "bg-emerald-400",
-      label: "Active engagement",
-      description: hasReply
-        ? "Coach replied to your message"
-        : "Coach engaged with your content",
-    };
-  }
-
-  if (opens > 0) {
-    return {
-      state: "active",
-      color: "#3b82f6",
-      dotColor: "bg-blue-400",
-      label: "Active engagement",
-      description: opens > 2
-        ? `Message viewed ${opens} times — coach is paying attention`
-        : "Coach opened your last message",
-    };
-  }
-
-  if (daysSince != null && daysSince > 14 && outreach > 0) {
-    return {
-      state: "stale",
-      color: "#ef4444",
-      dotColor: "bg-red-400",
-      label: "No recent activity",
-      description: `${daysSince} days since last activity — follow up recommended`,
-    };
-  }
-
-  if (outreach > 0 && !hasCoachSignals) {
-    return {
-      state: "waiting",
-      color: "#f59e0b",
-      dotColor: "bg-amber-400",
-      label: "No activity yet",
-      description: "Outreach sent, waiting for coach response",
-    };
-  }
-
-  return {
-    state: "none",
-    color: "#f59e0b",
-    dotColor: "bg-amber-400",
-    label: "No activity yet",
-    description: "Start outreach to generate coach interest",
-  };
+  if (hasReply)   return { level: "replied", hasSignals: true, opens, clicks, hasReply, daysSince, outreach };
+  if (clicks > 0) return { level: "clicked", hasSignals: true, opens, clicks, hasReply, daysSince, outreach };
+  if (opens > 0)  return { level: "opened",  hasSignals: true, opens, clicks, hasReply, daysSince, outreach };
+  if (daysSince != null && daysSince > 14 && outreach > 0) return { level: "stale", hasSignals: false, opens, clicks, hasReply, daysSince, outreach };
+  if (outreach > 0) return { level: "waiting", hasSignals: false, opens, clicks, hasReply, daysSince, outreach };
+  return { level: "none", hasSignals: false, opens, clicks, hasReply, daysSince, outreach };
 }
 
-/* ── Derive recommended strategy (unchanged logic) ── */
-function deriveStrategy({ matchScore, signals, engagement, coachWatch }) {
+/* ── Fit descriptor ── */
+function fitDescriptor(score) {
+  if (score >= 75) return "strong-fit";
+  if (score >= 55) return "moderate-fit";
+  if (score > 0) return "low-fit";
+  return "unknown";
+}
+
+/* ── Build unified top narrative (SINGLE source of truth) ── */
+function buildNarrative({ matchScore, eng, coachWatch }) {
   const score = matchScore?.match_score || 0;
-  const hasReply = signals?.has_coach_reply;
-  const opens = engagement?.total_opens || 0;
-  const clicks = engagement?.total_clicks || 0;
-  const daysSince = signals?.days_since_activity;
-  const outreach = signals?.outreach_count || 0;
+  const fit = fitDescriptor(score);
 
-  let label, labelColor, labelBg, explanation, nextAction;
+  let label, labelColor, labelBg, body, timing, action;
 
-  if (hasReply && score >= 60) {
-    label = "High Priority";
-    labelColor = "#22c55e"; labelBg = "rgba(34,197,94,0.1)";
-    explanation = "Active coach engagement combined with strong fit makes this a top-priority school.";
-    nextAction = "Follow up within 24 hours while interest is high.";
-  } else if (hasReply) {
-    label = "High Priority";
-    labelColor = "#22c55e"; labelBg = "rgba(34,197,94,0.1)";
-    explanation = "Coach engagement is present despite moderate fit. Relationship momentum matters.";
-    nextAction = "Respond promptly and reference specific program details to deepen the connection.";
-  } else if (clicks > 0 || (opens > 2 && score >= 60)) {
-    label = "Continue Pursuing";
-    labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
-    explanation = "Engagement signals are positive. The coach is paying attention.";
-    nextAction = "Send a follow-up with updated highlights within 5\u20137 days.";
-  } else if (score >= 70 && outreach > 0 && daysSince != null && daysSince <= 7) {
-    label = "Continue Pursuing";
-    labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
-    explanation = "Strong fit and recent outreach. Give coaches time to respond.";
-    nextAction = "Wait 5\u20137 days, then follow up with a different angle or new content.";
-  } else if (score >= 60 && (daysSince == null || daysSince <= 14)) {
-    label = "Continue Pursuing";
-    labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
-    explanation = "Good fit profile. Engagement has room to grow.";
-    nextAction = "Increase outreach frequency and personalize each message.";
-  } else if (daysSince != null && daysSince > 14 && score < 50) {
-    label = "Reconsider";
-    labelColor = "#ef4444"; labelBg = "rgba(239,68,68,0.08)";
-    explanation = "Low fit combined with extended inactivity. Resources may be better spent elsewhere.";
-    nextAction = "Focus energy on higher-fit schools and revisit if circumstances change.";
-  } else if (daysSince != null && daysSince > 14) {
-    label = "Reconsider";
-    labelColor = "#f59e0b"; labelBg = "rgba(245,158,11,0.1)";
-    explanation = "Extended period without activity. The relationship needs attention.";
-    nextAction = "Send a re-engagement message with a specific ask or update.";
-  } else if (score < 40) {
-    label = "Reconsider";
-    labelColor = "#f59e0b"; labelBg = "rgba(245,158,11,0.1)";
-    explanation = "Limited match signals. Worth exploring but not a primary target.";
-    nextAction = "Research the program further before investing more outreach.";
+  // ── REPLIED ──
+  if (eng.level === "replied" && (fit === "strong-fit" || fit === "moderate-fit")) {
+    label = "High Priority"; labelColor = "#22c55e"; labelBg = "rgba(34,197,94,0.1)";
+    body = "The coach replied and the fit is strong. This is one of your best opportunities right now.";
+    timing = "Now — while the conversation is active";
+    action = "Reply within 24 hours. Reference something specific about their program.";
+  } else if (eng.level === "replied") {
+    label = "High Priority"; labelColor = "#22c55e"; labelBg = "rgba(34,197,94,0.1)";
+    body = "The coach replied. Even with a modest fit score, coach interest is what matters most.";
+    timing = "Now — momentum is on your side";
+    action = "Respond promptly and ask a thoughtful question about the program.";
+  }
+
+  // ── CLICKED ──
+  else if (eng.level === "clicked") {
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = "The coach clicked a link in your message. They\u2019re interested enough to look deeper.";
+    timing = "This week";
+    action = "Send a follow-up within a few days with updated highlights or video.";
+  }
+
+  // ── OPENED (passive interest) ──
+  else if (eng.level === "opened" && eng.opens > 2) {
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = `Your message was opened ${eng.opens} times. The coach keeps coming back to it.`;
+    timing = "This week";
+    action = "Follow up now with something new \u2014 a highlight clip or a specific question.";
+  } else if (eng.level === "opened") {
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = "The coach opened your message. That\u2019s a positive signal.";
+    timing = "Within 5\u20137 days";
+    action = "Give it a few days, then follow up with a personalized message.";
+  }
+
+  // ── STALE (outreach sent, no engagement, 14+ days) ──
+  else if (eng.level === "stale" && fit === "strong-fit") {
+    label = "Continue Pursuing"; labelColor = "#f59e0b"; labelBg = "rgba(245,158,11,0.1)";
+    body = `It\u2019s been ${eng.daysSince} days with no response, but the fit is strong. Don\u2019t give up yet.`;
+    timing = "Now — re-engage before interest fades";
+    action = "Send a fresh message with a different angle \u2014 new results, a highlight reel, or a campus visit request.";
+  } else if (eng.level === "stale" && fit === "low-fit") {
+    label = "Reconsider"; labelColor = "#ef4444"; labelBg = "rgba(239,68,68,0.08)";
+    body = `No response in ${eng.daysSince} days and the fit is limited. Your energy may be better spent elsewhere.`;
+    timing = "Not urgent";
+    action = "Shift focus to stronger-fit schools. You can always circle back later.";
+  } else if (eng.level === "stale") {
+    label = "Reconsider"; labelColor = "#f59e0b"; labelBg = "rgba(245,158,11,0.1)";
+    body = `No response in ${eng.daysSince} days. The relationship needs attention.`;
+    timing = "Soon — before the window closes";
+    action = "Try a re-engagement message with something specific \u2014 an updated stat, a question, or a visit request.";
+  }
+
+  // ── WAITING (outreach sent recently, no signals yet) ──
+  else if (eng.level === "waiting" && fit === "strong-fit") {
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = "You\u2019ve reached out and the fit is strong. Coaches are busy \u2014 give it time.";
+    timing = "Wait 5\u20137 days before following up";
+    action = "If no response in a week, follow up with new content or a specific question.";
+  } else if (eng.level === "waiting") {
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = "Outreach sent, but no response yet. That\u2019s normal early on.";
+    timing = "Wait 5\u20137 days";
+    action = "Plan a follow-up with something specific about this program.";
+  }
+
+  // ── NONE (no outreach, no signals) — most common starting state ──
+  else if (fit === "strong-fit") {
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = "No coach engagement yet. This is a strong-fit school, but interest has not been activated.";
+    timing = "Now";
+    action = "Send your first message and personalize it with something specific about this program.";
+  } else if (fit === "moderate-fit") {
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = "No coach engagement yet. The fit is moderate \u2014 worth exploring with a personalized intro.";
+    timing = "When ready";
+    action = "Send a short, specific intro email. Mention what you like about their program.";
+  } else if (fit === "low-fit") {
+    label = "Reconsider"; labelColor = "#f59e0b"; labelBg = "rgba(245,158,11,0.1)";
+    body = "No engagement and limited fit signals. This school may not be the best use of your time right now.";
+    timing = "Not urgent";
+    action = "Focus on higher-fit schools first. Come back to this one if your priorities change.";
   } else {
-    label = "Continue Pursuing";
-    labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
-    explanation = "Early stage with potential. Build the relationship consistently.";
-    nextAction = "Send your first outreach or continue with consistent follow-ups.";
+    label = "Continue Pursuing"; labelColor = "#3b82f6"; labelBg = "rgba(59,130,246,0.1)";
+    body = "No engagement yet. Reach out to learn more and start the conversation.";
+    timing = "When ready";
+    action = "Send your first message to get things started.";
   }
 
+  // Override action with coachWatch if available
   if (coachWatch?.recommendation) {
-    nextAction = coachWatch.recommendation;
+    action = coachWatch.recommendation;
   }
 
-  return { label, labelColor, labelBg, explanation, nextAction };
+  return { label, labelColor, labelBg, body, timing, action };
 }
 
-/* ── Data-quality label (replaces "confidence") ── */
-function dataQualityLabel(confidence, hasCoachSignals) {
-  if (confidence === "high") return null; // Good data — no label needed
-  if (confidence === "medium") return { color: "#f59e0b", text: "Limited data available" };
-  const reason = hasCoachSignals ? "Limited profile data" : "No coach engagement yet";
-  return { color: "#f59e0b", text: `Needs more data (${reason})` };
+/* ── Signal details (only shown when there ARE specific signals) ── */
+function buildSignalDetails(eng) {
+  const details = [];
+  if (eng.hasReply) details.push({ color: "#22c55e", text: "Coach replied to your message" });
+  if (eng.clicks > 0) details.push({ color: "#22c55e", text: "Coach clicked a link in your outreach" });
+  if (eng.opens > 2 && !eng.hasReply) details.push({ color: "#3b82f6", text: `Message opened ${eng.opens} times` });
+  else if (eng.opens > 0 && !eng.hasReply && eng.clicks === 0) details.push({ color: "#3b82f6", text: "Coach opened your last message" });
+  return details;
+}
+
+/* ── Data-quality label ── */
+function dataQualityLabel(confidence, hasSignals) {
+  if (confidence === "high") return null;
+  if (confidence === "medium") return { color: "var(--cm-text-3)", text: "Limited data available" };
+  return hasSignals
+    ? { color: "var(--cm-text-3)", text: "Limited profile data" }
+    : { color: "var(--cm-text-3)", text: "No coach engagement yet" };
+}
+
+/* ── Fit heading ── */
+function fitHeading(fitLabel) {
+  if (fitLabel === "Strong Fit") return "Why this is a strong fit:";
+  if (fitLabel === "Possible Fit") return "Why this could be a fit:";
+  if (fitLabel === "Stretch") return "Why this is a stretch:";
+  if (fitLabel === "Less Likely Fit") return "What to consider:";
+  return "Fit breakdown:";
 }
 
 /* ── Score Bar ── */
@@ -185,48 +205,56 @@ export default function SchoolIntelligencePanel({
   const matchReasons = ms.match_reasons || [];
   const riskBadges = ms.risk_badges || [];
 
-  const engState = deriveEngagementState({ signals, engagement });
-  const strategy = deriveStrategy({ matchScore: ms, signals, engagement, coachWatch });
-  const hasCoachSignals = engState.state === "active";
-  const dqLabel = dataQualityLabel(ms.confidence, hasCoachSignals);
+  const eng = classifyEngagement({ signals, engagement });
+  const narrative = buildNarrative({ matchScore: ms, eng, coachWatch });
+  const signalDetails = buildSignalDetails(eng);
+  const dqLabel = dataQualityLabel(ms.confidence, eng.hasSignals);
 
-  // Derive improvements from risk_badges + confidence guidance
   const improvements = [];
   if (ms.confidence_guidance) improvements.push(ms.confidence_guidance);
   riskBadges.forEach(b => { if (b.label && improvements.length < 3) improvements.push(b.label); });
 
-  // Dynamic CTA labels
-  const primaryCta = hasCoachSignals
+  // Dynamic CTAs based on outreach state
+  const hasOutreach = eng.outreach > 0;
+  const primaryCta = eng.hasSignals
     ? { label: "Follow Up", icon: CalendarPlus, action: onFollowUp }
-    : { label: "Send First Email", icon: Send, action: onEmail };
-  const secondaryCta = hasCoachSignals
-    ? { label: "Email Coach", icon: Mail, action: onEmail }
-    : { label: "Generate Follow-up", icon: CalendarPlus, action: onFollowUp };
+    : hasOutreach
+      ? { label: "Follow Up", icon: CalendarPlus, action: onFollowUp }
+      : { label: "Send First Email", icon: Send, action: onEmail };
+  const secondaryCta = hasOutreach
+    ? { label: "Generate Follow-up", icon: MessageSquare, action: onFollowUp }
+    : { label: "Generate Message", icon: MessageSquare, action: onFollowUp };
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="school-intelligence-panel" id="school-intelligence">
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${strategy.labelColor}, ${strategy.labelColor}33)` }} />
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${narrative.labelColor}, ${narrative.labelColor}33)` }} />
 
       <div className="p-5 sm:p-6 space-y-5">
 
-        {/* ═══ 1. RECOMMENDED STRATEGY (PRIMARY — TOP) ═══ */}
+        {/* ═══ 1. DECISION BLOCK (single source of truth) ═══ */}
         <div data-testid="si-recommended-strategy">
           <div className="flex items-center gap-2 mb-3">
-            <Shield className="w-3.5 h-3.5" style={{ color: strategy.labelColor }} />
+            <Shield className="w-3.5 h-3.5" style={{ color: narrative.labelColor }} />
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md"
-              style={{ color: strategy.labelColor, backgroundColor: strategy.labelBg, border: `1px solid ${strategy.labelColor}30` }}
+              style={{ color: narrative.labelColor, backgroundColor: narrative.labelBg, border: `1px solid ${narrative.labelColor}30` }}
               data-testid="si-strategy-label">
-              {strategy.label}
+              {narrative.label}
             </span>
           </div>
-          <p className="text-[12px] leading-relaxed mb-1" style={{ color: "var(--cm-text-2)" }} data-testid="si-strategy-explanation">
-            {strategy.explanation}
-          </p>
-          <p className="text-[12px] font-semibold leading-relaxed" style={{ color: "var(--cm-text)" }} data-testid="si-strategy-action">
-            {strategy.nextAction}
+
+          <p className="text-[12px] leading-relaxed mb-2" style={{ color: "var(--cm-text-2)" }} data-testid="si-strategy-explanation">
+            {narrative.body}
           </p>
 
-          {/* Dynamic CTAs — always visible without scrolling */}
+          <p className="text-[10px] font-semibold mb-2" style={{ color: "var(--cm-text-3)" }} data-testid="si-timing">
+            Best time to act: <span style={{ color: "var(--cm-text)" }}>{narrative.timing}</span>
+          </p>
+
+          <p className="text-[12px] font-semibold leading-relaxed" style={{ color: "var(--cm-text)" }} data-testid="si-strategy-action">
+            {narrative.action}
+          </p>
+
+          {/* CTAs */}
           <div className="flex flex-wrap gap-2 mt-4" data-testid="si-actions">
             {primaryCta.action && (
               <button onClick={primaryCta.action}
@@ -255,29 +283,28 @@ export default function SchoolIntelligencePanel({
           </div>
         </div>
 
-        {/* Divider */}
+        {/* ═══ 2. ENGAGEMENT SIGNALS (only when there are specific details) ═══ */}
+        {signalDetails.length > 0 && (
+          <>
+            <div style={{ height: 1, backgroundColor: "var(--cm-border)" }} />
+            <div data-testid="si-engagement-status">
+              <p className="text-[9px] font-bold uppercase tracking-[1px] mb-2" style={{ color: "var(--cm-text-3)" }}>Coach Signals</p>
+              <div className="space-y-1.5">
+                {signalDetails.map((sig, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: sig.color }} />
+                    <span className="text-[10.5px]" style={{ color: "var(--cm-text-2)" }} data-testid="si-engagement-label">{sig.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ═══ 3. FIT SUMMARY ═══ */}
         <div style={{ height: 1, backgroundColor: "var(--cm-border)" }} />
-
-        {/* ═══ 2. ENGAGEMENT STATUS (merged opportunity + signals) ═══ */}
-        <div data-testid="si-engagement-status">
-          <div className="flex items-center gap-2.5">
-            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${engState.dotColor}`} />
-            <span className="text-[11px] font-bold" style={{ color: engState.color }} data-testid="si-engagement-label">
-              {engState.label}
-            </span>
-          </div>
-          <p className="text-[11px] leading-snug mt-1 ml-[18px]" style={{ color: "var(--cm-text-2)" }} data-testid="si-engagement-description">
-            {engState.description}
-          </p>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height: 1, backgroundColor: "var(--cm-border)" }} />
-
-        {/* ═══ 3. FIT SUMMARY (score + inline strengths/gaps) ═══ */}
         <div data-testid="si-fit-summary">
           <div className="flex items-center gap-3 mb-3">
-            {/* Score */}
             {ms.match_score != null && ms.match_score > 0 && (
               <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: `linear-gradient(135deg, ${scoreColor}15, ${scoreColor}08)`, border: `2px solid ${scoreColor}40` }}>
@@ -302,7 +329,13 @@ export default function SchoolIntelligencePanel({
             </div>
           </div>
 
-          {/* Inline strengths + gaps */}
+          {/* Heading for strengths/gaps */}
+          {(matchReasons.length > 0 || improvements.length > 0) && (
+            <p className="text-[9px] font-bold uppercase tracking-[1px] mb-2" style={{ color: "var(--cm-text-3)" }} data-testid="si-fit-heading">
+              {fitHeading(fitLabel)}
+            </p>
+          )}
+
           <div className="grid grid-cols-1 gap-1.5">
             {matchReasons.slice(0, 3).map((r, i) => (
               <div key={`s-${i}`} className="flex items-center gap-2">
