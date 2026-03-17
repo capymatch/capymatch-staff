@@ -1,6 +1,6 @@
 import {
   TrendingUp, TrendingDown, Minus, ArrowUpRight,
-  Activity, Signal, User,
+  Activity, Signal, User, ShieldCheck, ShieldAlert, Shield,
 } from "lucide-react";
 
 /* ── Interest level styles ── */
@@ -20,6 +20,12 @@ const TREND_ICON = {
   "Not started":  { Icon: Activity,     color: "#64748b" },
 };
 
+const CONFIDENCE_META = {
+  high:   { Icon: ShieldCheck, label: "High confidence", color: "#22c55e", bg: "rgba(34,197,94,0.08)" },
+  medium: { Icon: Shield,      label: "Medium confidence", color: "#f59e0b", bg: "rgba(245,158,11,0.08)" },
+  low:    { Icon: ShieldAlert, label: "Low confidence", color: "#94a3b8", bg: "rgba(148,163,184,0.08)" },
+};
+
 export default function CoachWatchCard({ coachWatch }) {
   const cw = coachWatch || {};
   const interest = cw.interestLevel || "Not started";
@@ -27,6 +33,7 @@ export default function CoachWatchCard({ coachWatch }) {
   const trend = cw.trend || "Not started";
   const trendMeta = TREND_ICON[trend] || TREND_ICON["Not started"];
   const signals = cw.signals || [];
+  const conf = CONFIDENCE_META[cw.confidenceLevel] || CONFIDENCE_META.low;
 
   return (
     <div className="rounded-xl border px-4 py-3.5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="coach-watch-card">
@@ -41,7 +48,7 @@ export default function CoachWatchCard({ coachWatch }) {
         )}
       </div>
 
-      {/* Headline */}
+      {/* 1. Headline */}
       {cw.headline && (
         <h3 className="text-[12px] font-bold mb-1.5" style={{ color: "var(--cm-text)" }} data-testid="cw-headline">
           {cw.headline}
@@ -61,21 +68,28 @@ export default function CoachWatchCard({ coachWatch }) {
         </div>
       </div>
 
-      {/* Summary */}
+      {/* 2. Summary */}
       {cw.summary && (
         <p className="text-[10.5px] leading-snug mb-1.5" style={{ color: "var(--cm-text-2)" }} data-testid="cw-summary">
           {cw.summary}
         </p>
       )}
 
-      {/* Why line */}
+      {/* 3. Why line */}
       {cw.whyLine && (
         <p className="text-[9.5px] leading-snug mb-2" style={{ color: "var(--cm-text-3)" }} data-testid="cw-why-line">
           {cw.whyLine}
         </p>
       )}
 
-      {/* What Changed — transition explanation (only shown on state change) */}
+      {/* 4. Why this matters (persuasion layer) */}
+      {cw.whyThisMatters && (
+        <p className="text-[9.5px] leading-snug italic mb-2" style={{ color: "var(--cm-text-2)" }} data-testid="cw-why-this-matters">
+          {cw.whyThisMatters}
+        </p>
+      )}
+
+      {/* 5. What Changed — transition explanation (only shown on state change) */}
       {cw.whatChangedCopy && (
         <div className="flex items-start gap-1.5 mb-2.5 px-2.5 py-1.5 rounded-md"
           style={{ backgroundColor: "rgba(13,148,136,0.06)", border: "1px solid rgba(13,148,136,0.12)" }}
@@ -85,7 +99,17 @@ export default function CoachWatchCard({ coachWatch }) {
         </div>
       )}
 
-      {/* Recommended Action */}
+      {/* 6. Confidence badge */}
+      {cw.confidenceLevel && (
+        <div className="flex items-center gap-1.5 mb-2.5 px-2 py-1 rounded-md w-fit"
+          style={{ backgroundColor: conf.bg }}
+          data-testid="cw-confidence">
+          <conf.Icon className="w-3 h-3" style={{ color: conf.color }} />
+          <span className="text-[9px] font-semibold" style={{ color: conf.color }}>{conf.label}</span>
+        </div>
+      )}
+
+      {/* 7. Recommended Action */}
       {cw.recommendedAction && (
         <p className="text-[10.5px] font-semibold leading-snug mb-3" style={{ color: "var(--cm-text)" }} data-testid="cw-action">
           {cw.recommendedAction}

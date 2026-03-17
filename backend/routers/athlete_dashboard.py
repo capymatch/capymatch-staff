@@ -139,6 +139,34 @@ _TRANSITION_COPY = {
     ("stalled", "deprioritize"): "This school has remained inactive long enough that it should not stay a top priority.",
 }
 
+# ── "Why this matters" persuasion copy (per state) ──
+_WHY_THIS_MATTERS = {
+    "no_signals": "Starting outreach now gives you the best chance to get on the coach's radar early.",
+    "waiting_for_signal": "Following up too soon can hurt your chances — timing matters here.",
+    "follow_up_window_open": "Following up now significantly increases your chances of getting a response.",
+    "emerging_interest": "The coach is paying attention — a timely follow-up can turn this into a conversation.",
+    "active_conversation": "Fast responses keep momentum and show strong interest.",
+    "hot_opportunity": "This is a high-opportunity moment — acting quickly can make a big difference.",
+    "cooling": "Without action, this opportunity may fade completely.",
+    "re_engaged": "Re-engagement moments are rare — this is your chance to rebuild momentum.",
+    "stalled": "Continuing the same approach is unlikely to work — you need a new angle.",
+    "deprioritize": "Your time is better spent on schools showing stronger signals.",
+}
+
+# ── Confidence level (per state) ──
+_CONFIDENCE_LEVEL = {
+    "no_signals": "low",
+    "waiting_for_signal": "medium",
+    "follow_up_window_open": "medium",
+    "emerging_interest": "medium",
+    "active_conversation": "high",
+    "hot_opportunity": "high",
+    "cooling": "medium",
+    "re_engaged": "medium",
+    "stalled": "medium",
+    "deprioritize": "low",
+}
+
 
 
 def _compute_coach_watch(program: dict, interactions: list, email_tracking: list):
@@ -381,6 +409,8 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
         "headline": headline,
         "summary": summary,
         "whyLine": why_line,
+        "whyThisMatters": _WHY_THIS_MATTERS.get(state, ""),
+        "confidenceLevel": _CONFIDENCE_LEVEL.get(state, "low"),
         "recommendedAction": recommended_action,
         "primaryCta": primary_cta,
         "secondaryCta": secondary_cta,
