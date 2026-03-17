@@ -133,14 +133,13 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Removed full DirectorActionsCard from dashboard — replaced with compact "Your Outbox" pulse bar
   - Your Outbox tracks director-created actions only (`review_request` + `pipeline_escalation`)
   - 14 backend + 11 frontend tests passed (iteration_148)
-- **Journey Page Right Rail Redesign (Complete)**
-  - Created CoachWatchCard component (`/components/journey/CoachWatchCard.js`) with signal interpretation engine
-  - Converts raw signals/engagement data into: status headline, pill, summary, 2x2 stats, recommended action, CTAs, recent signals
-  - Upgraded Coaching Staff with signal-aware relationship notes per coach
-  - Renamed Engagement → Communication & Activity with improved framing
-  - Made Intelligence section secondary; AI Insights now context-aware with helper text
-  - Right rail hierarchy: Coach Watch > Coaching Staff > Communication & Activity > Intelligence > AI Insights
-  - 19 frontend tests passed (iteration_149)
+- **Journey Page Right Rail Refinement (Complete)**
+  - Restructured into 5-section decision hierarchy: Coach Watch (HIGH) > Key Contacts (MED) > Communication & Activity (LOW) > School Insight (LOW) > AI Assist (MIN)
+  - Key Contacts: max 2 shown, "View all staff" overflow, signal-aware status lines
+  - Communication & Activity: compact 4-column row (Outreach/Replies/Interactions/Last Active)
+  - School Insight: collapsed preview only (Engagement Outlook + Recruiting Timeline REMOVED)
+  - AI Assist: renamed from "AI Insights", lightweight buttons with helper text
+  - 22 frontend tests passed (iteration_150)
   - Key files: `CoachWatchCard.js`, `JourneyPage.js`
 
 ---
