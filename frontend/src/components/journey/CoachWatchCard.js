@@ -194,7 +194,7 @@ export default function CoachWatchCard({ signals, engagement, coaches, coachWatc
         </p>
 
         {/* Raw engagement metrics — subtle supporting data */}
-        <p className="text-[8px] mb-3" style={{ color: "var(--cm-text-3)", opacity: 0.7 }} data-testid="coach-watch-raw-metrics">
+        <p className="text-[9px] font-medium mb-3" style={{ color: "var(--cm-text-3)" }} data-testid="coach-watch-raw-metrics">
           {`${engagement?.total_opens ?? 0} opens · ${engagement?.total_clicks ?? 0} clicks · ${engagement?.unique_opens ?? 0} unique`}
         </p>
 
