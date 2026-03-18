@@ -3,11 +3,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
   KANBAN_COLS, programToKanbanCol, getColInsight, getEmptyColCopy,
 } from "./pipeline-constants";
-import {
-  LogoBox, StatusIndicator, OwnerTag, PipelineRowStyles,
-  shortenName, getTimingColor, STATUS,
-  ROW_GAP, DIVIDER, FONT,
-} from "./pipeline-design";
+import { LogoBox, StatusIndicator, PipelineRowStyles, ROW_GAP, DIVIDER, FONT } from "./pipeline-design";
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
@@ -19,16 +15,21 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-/* ── Kanban card — uses SAME design system as list rows ── */
+/* ── Filter: only show state context, not timing ── */
+function getCardContext(reasonShort) {
+  if (!reasonShort) return null;
+  const lower = reasonShort.toLowerCase();
+  if (lower.includes('overdue') || lower.includes('due ') || lower.includes('days since')) return null;
+  if (lower === 'on track') return null;
+  return reasonShort;
+}
+
+/* ── Minimal Kanban card: logo + name + status + context ── */
 function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
   const level = attn?.attentionLevel || 'low';
-  const ctaLabel = attn?.ctaLabel;
-  const owner = attn?.owner;
-  const timingLabel = attn?.timingLabel;
-  const timingColor = getTimingColor(timingLabel);
+  const reasonShort = getCardContext(attn?.reasonShort);
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
-  const short = shortenName(p.university_name);
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -58,8 +59,8 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
                 : isDropping
                   ? 'transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms ease-out'
                   : undefined,
-              display: 'flex', alignItems: 'flex-start', gap: ROW_GAP,
-              padding: '8px 4px',
+              display: 'flex', alignItems: 'center', gap: ROW_GAP,
+              padding: '7px 4px',
               cursor: isLifted ? 'grabbing' : 'grab',
               borderBottom: DIVIDER,
               background: isLifted ? 'rgba(255,255,255,0.97)' : 'transparent',
@@ -76,40 +77,23 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
             }}
             data-testid={`kanban-card-${p.program_id}`}
           >
-            <div style={{ paddingTop: 1 }}>
-              <LogoBox domain={p.domain} name={p.university_name} muted={level === 'low'} />
-            </div>
+            <LogoBox domain={p.domain} name={p.university_name} muted={level === 'low'} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Line 1: School name (primary) */}
               <div style={{
-                ...(level === 'high' ? FONT.actionHigh : level === 'medium' ? FONT.actionMed : FONT.actionLow),
-                lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                fontSize: 13, fontWeight: 600, color: 'var(--cm-text, #0f172a)',
+                lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }} data-testid={`card-name-${p.program_id}`}>
                 {p.university_name}
               </div>
-
-              {/* Line 2: Status + timing + owner */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
                 <StatusIndicator level={level} />
-                {timingLabel && (
-                  <span style={{ fontSize: 10, fontWeight: 600, color: timingColor }}>{timingLabel}</span>
+                {reasonShort && reasonShort !== 'On track' && (
+                  <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }} data-testid={`card-context-${p.program_id}`}>
+                    · {reasonShort}
+                  </span>
                 )}
-                {owner && <OwnerTag owner={owner} />}
               </div>
             </div>
-
-            {/* CTA — same hierarchy as list */}
-            {!isLifted && ctaLabel && level !== 'low' && (
-              <span className="pb-cta" style={{
-                fontSize: level === 'high' ? 11 : 10.5,
-                fontWeight: level === 'high' ? 700 : 600,
-                color: level === 'high' ? '#dc2626' : 'var(--cm-text-3, #94a3b8)',
-                opacity: level === 'high' ? 0.85 : 0.65,
-                flexShrink: 0, whiteSpace: 'nowrap', paddingTop: 1,
-              }} data-testid={`card-action-${p.program_id}`}>
-                {ctaLabel} →
-              </span>
-            )}
           </div>
         );
       }}
@@ -175,7 +159,6 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                   }}
                   data-testid={`kanban-col-${col.key}`}
                 >
-                  {/* Accent line */}
                   <div style={{
                     height: 2, borderRadius: '8px 8px 0 0',
                     background: col.color,
@@ -183,7 +166,6 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                     transition: 'opacity 150ms ease-out',
                   }} />
 
-                  {/* Column header — same typography scale as list section headers */}
                   <div style={{ padding: '10px 10px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
                       <span style={{
@@ -198,7 +180,6 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                     )}
                   </div>
 
-                  {/* Cards list */}
                   <div style={{ padding: '0 4px 8px', display: 'flex', flexDirection: 'column', minHeight: 60 }}>
                     {count > 0 ? (
                       cards.map((p, idx) => (
