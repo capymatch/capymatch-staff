@@ -1,13 +1,9 @@
 /**
  * ComingUpTimeline — "Coming Up Next" forecast section.
- *
- * Shows what will need attention soon (not urgent yet).
- * Horizontal timeline: Today → 2d → 5d → 7d with event cards.
- * Light background, visually separate from the dark hero.
+ * Fully responsive: stacks vertically on mobile.
  */
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import UniversityLogo from "../UniversityLogo";
 
 /* ── Color per urgency ── */
 const URGENCY_DOT = {
@@ -18,8 +14,6 @@ const URGENCY_DOT = {
 
 /**
  * Build timeline items from programs + top-actions data.
- * Shows on-track programs that may need attention soon,
- * generating forecast estimates from available signals.
  */
 export function buildTimelineItems(programs, topActionsMap, matchScores) {
   const items = [];
@@ -30,15 +24,12 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
     if (p.board_group === "archived" || p.recruiting_status === "Committed" || p.journey_stage === "committed") continue;
 
     const ta = topActionsMap[p.program_id];
-
-    // Skip programs that are already actionable (shown in hero)
     if (ta && ta.action_key !== "no_action_needed" && ta.category !== "on_track") continue;
 
     const sig = p.signals || {};
     let daysUntil = null;
     let reason = "";
 
-    // 1. Check follow-up due date
     if (p.next_action_due) {
       const dueStr = typeof p.next_action_due === "string" ? p.next_action_due.split("T")[0] : "";
       if (dueStr) {
@@ -51,14 +42,12 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
           daysUntil = 0;
           reason = "Follow-up is due today and may become overdue if ignored.";
         } else if (diff < 0 && diff >= -7) {
-          // Recently overdue on-track programs — show as upcoming (spread out)
           daysUntil = Math.min(Math.abs(diff), 5);
           reason = "Follow-up was recently due. A quick check-in keeps things on track.";
         }
       }
     }
 
-    // 2. Check days since last activity
     if (daysUntil === null && sig.days_since_activity != null && sig.days_since_activity > 0) {
       const daysSince = sig.days_since_activity;
       if (daysSince >= 10) {
@@ -70,7 +59,6 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
       }
     }
 
-    // 3. Programs with zero interactions — need first outreach soon
     if (daysUntil === null && sig.total_interactions === 0) {
       daysUntil = 3;
       reason = "No contact yet. Making a first touchpoint early builds momentum.";
@@ -89,8 +77,6 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
       items.push({
         programId: p.program_id,
         university: p.university_name,
-        domain: p.domain,
-        logoUrl: matchScores[p.program_id]?.logo_url || p.logo_url,
         daysUntil,
         reason,
         urgency,
@@ -100,17 +86,16 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
     }
   }
 
-  // Sort by urgency (soonest first), limit to 4
   items.sort((a, b) => a.daysUntil - b.daysUntil);
   return items.slice(0, 4);
 }
 
-/* ── Timeline markers for the horizontal track ── */
+/* ── Timeline markers ── */
 const TIME_MARKS = [
   { label: "Today", day: 0 },
-  { label: "2 Days", day: 2 },
-  { label: "5 Days", day: 5 },
-  { label: "7 Days", day: 7 },
+  { label: "2d", day: 2 },
+  { label: "5d", day: 5 },
+  { label: "7d", day: 7 },
 ];
 
 export default function ComingUpTimeline({ items }) {
@@ -123,148 +108,89 @@ export default function ComingUpTimeline({ items }) {
   return (
     <div
       data-testid="coming-up-timeline"
-      style={{
-        background: "var(--cm-surface, #ffffff)",
-        border: "1px solid var(--cm-border, #e2e8f0)",
-        borderRadius: 14,
-        padding: "24px 28px 28px",
-        marginBottom: 20,
-      }}
+      className="rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-5"
+      style={{ background: "var(--cm-surface, #ffffff)", border: "1px solid var(--cm-border, #e2e8f0)" }}
     >
-      <div style={{ display: "flex", gap: 32 }}>
-        {/* Left: Header text */}
-        <div style={{ width: 180, flexShrink: 0 }}>
-          <div style={{
-            fontSize: 10, fontWeight: 800, color: "var(--cm-text-3, #94a3b8)",
-            letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8,
-          }}>
-            Coming Up Next
-          </div>
-          <h3 style={{
-            fontSize: 18, fontWeight: 800, color: "var(--cm-text, #0f172a)",
-            lineHeight: 1.3, margin: "0 0 8px",
-          }}>
-            What may need attention soon
-          </h3>
-          <p style={{
-            fontSize: 12, color: "var(--cm-text-3, #94a3b8)",
-            lineHeight: 1.5, margin: 0,
-          }}>
-            A forward-looking view so you can see what's about to slip before it becomes urgent.
-          </p>
+      {/* Header */}
+      <div className="mb-4">
+        <div className="text-[10px] font-extrabold tracking-wider uppercase mb-1.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+          Coming Up Next
+        </div>
+        <h3 className="text-base sm:text-lg font-extrabold leading-tight mb-1" style={{ color: "var(--cm-text, #0f172a)" }}>
+          What may need attention soon
+        </h3>
+        <p className="text-[11px] sm:text-xs hidden sm:block" style={{ color: "var(--cm-text-3, #94a3b8)", lineHeight: 1.5 }}>
+          A forward-looking view so you can see what's about to slip before it becomes urgent.
+        </p>
+      </div>
+
+      {/* Timeline track */}
+      <div className="mb-4">
+        {/* Labels */}
+        <div className="flex justify-between mb-2 px-1">
+          {TIME_MARKS.map((m, i) => (
+            <span key={m.day} className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wide"
+              style={{ color: "var(--cm-text-3, #94a3b8)", textAlign: i === 0 ? "left" : i === TIME_MARKS.length - 1 ? "right" : "center" }}>
+              {m.label}
+            </span>
+          ))}
         </div>
 
-        {/* Right: Timeline */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Timeline track */}
-          <div style={{ position: "relative", marginBottom: 20, paddingTop: 4 }}>
-            {/* Labels row */}
-            <div style={{ display: "flex", marginBottom: 14, paddingLeft: 4, paddingRight: 4 }}>
-              {TIME_MARKS.map((m, i) => (
-                <span key={m.day} style={{
-                  flex: 1,
-                  fontSize: 10, fontWeight: 700, color: "var(--cm-text-3, #94a3b8)",
-                  letterSpacing: "0.06em", textTransform: "uppercase",
-                  textAlign: i === 0 ? "left" : i === TIME_MARKS.length - 1 ? "right" : "center",
-                }}>
-                  {m.label}
-                </span>
-              ))}
-            </div>
-
-            {/* Track line with pills */}
-            <div style={{
-              height: 2, background: "var(--cm-border, #e2e8f0)", borderRadius: 1,
-              position: "relative", marginBottom: 14,
-            }}>
-              {/* Time mark dots */}
-              {TIME_MARKS.map(m => {
-                const pct = (m.day / maxDay) * 100;
-                return (
-                  <div key={m.day} style={{
-                    position: "absolute", left: `${pct}%`, top: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: "var(--cm-border, #cbd5e1)",
-                    border: "2px solid var(--cm-surface, #fff)",
-                  }} />
-                );
-              })}
-            </div>
-
-            {/* Pills row below the track */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {items.map((item) => {
-                const dotColor = URGENCY_DOT[item.urgency] || URGENCY_DOT.later;
-                return (
-                  <div
-                    key={item.programId}
-                    onClick={() => navigate(`/pipeline/${item.programId}`)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 5,
-                      padding: "4px 10px", borderRadius: 16,
-                      background: `${dotColor}10`,
-                      border: `1px solid ${dotColor}20`,
-                      cursor: "pointer", whiteSpace: "nowrap",
-                      transition: "background 0.15s",
-                    }}
-                    data-testid={`timeline-pill-${item.programId}`}
-                  >
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text, #0f172a)" }}>
-                      {item.shortLabel}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Cards below timeline */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${Math.min(items.length, 3)}, 1fr)`,
-            gap: 14,
-          }}>
-            {items.slice(0, 3).map(item => {
-              const dotColor = URGENCY_DOT[item.urgency] || URGENCY_DOT.later;
-              return (
-                <div
-                  key={item.programId}
-                  onClick={() => navigate(`/pipeline/${item.programId}`)}
-                  style={{
-                    background: `${dotColor}06`,
-                    border: `1px solid ${dotColor}18`,
-                    borderRadius: 10,
-                    padding: "14px 16px",
-                    cursor: "pointer",
-                    transition: "box-shadow 0.15s",
-                  }}
-                  data-testid={`timeline-card-${item.programId}`}
-                >
-                  <div style={{
-                    fontSize: 10, fontWeight: 700, color: dotColor,
-                    letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6,
-                  }}>
-                    {item.timeLabel}
-                  </div>
-                  <div style={{
-                    fontSize: 14, fontWeight: 700, color: "var(--cm-text, #0f172a)",
-                    marginBottom: 4, lineHeight: 1.3,
-                  }}>
-                    {item.university}
-                  </div>
-                  <div style={{
-                    fontSize: 12, color: "var(--cm-text-3, #64748b)",
-                    lineHeight: 1.5,
-                  }}>
-                    {item.reason}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {/* Track line with dots */}
+        <div className="relative h-[2px] rounded-full mb-3" style={{ background: "var(--cm-border, #e2e8f0)" }}>
+          {TIME_MARKS.map(m => {
+            const pct = (m.day / maxDay) * 100;
+            return (
+              <div key={m.day} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
+                style={{ left: `${pct}%`, background: "var(--cm-border, #cbd5e1)", border: "2px solid var(--cm-surface, #fff)" }} />
+            );
+          })}
         </div>
+
+        {/* Pills row */}
+        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+          {items.map((item) => {
+            const dotColor = URGENCY_DOT[item.urgency] || URGENCY_DOT.later;
+            return (
+              <div
+                key={item.programId}
+                onClick={() => navigate(`/pipeline/${item.programId}`)}
+                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full cursor-pointer text-[10px] sm:text-[11px] font-semibold whitespace-nowrap"
+                style={{ background: `${dotColor}10`, border: `1px solid ${dotColor}20`, color: "var(--cm-text, #0f172a)" }}
+                data-testid={`timeline-pill-${item.programId}`}
+              >
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+                {item.shortLabel}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Cards grid — 1 col on mobile, 3 on desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {items.slice(0, 3).map(item => {
+          const dotColor = URGENCY_DOT[item.urgency] || URGENCY_DOT.later;
+          return (
+            <div
+              key={item.programId}
+              onClick={() => navigate(`/pipeline/${item.programId}`)}
+              className="rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-shadow hover:shadow-sm"
+              style={{ background: `${dotColor}06`, border: `1px solid ${dotColor}18` }}
+              data-testid={`timeline-card-${item.programId}`}
+            >
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: dotColor }}>
+                {item.timeLabel}
+              </div>
+              <div className="text-[13px] sm:text-sm font-bold mb-1 leading-snug" style={{ color: "var(--cm-text, #0f172a)" }}>
+                {item.university}
+              </div>
+              <div className="text-[11px] sm:text-xs leading-relaxed" style={{ color: "var(--cm-text-3, #64748b)" }}>
+                {item.reason}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

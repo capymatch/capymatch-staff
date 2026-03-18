@@ -553,31 +553,34 @@ export default function PipelinePage() {
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER: Title + Summary Chips ═══ */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, padding: "4px 0" }} data-testid="pipeline-header">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-4 sm:mb-5" data-testid="pipeline-header">
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--cm-text, #0f172a)", margin: 0, letterSpacing: -0.5 }}>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight m-0" style={{ color: "var(--cm-text, #0f172a)" }}>
             Your Pipeline
           </h1>
-          <p style={{ fontSize: 13, color: "var(--cm-text-3, #94a3b8)", margin: "4px 0 0", fontWeight: 500 }}>
+          <p className="text-[12px] sm:text-[13px] font-medium mt-1 m-0 hidden sm:block" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
             One focused hero for what matters now, plus a forward-looking timeline for what's next.
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginTop: 4 }} data-testid="summary-chips">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap flex-shrink-0" data-testid="summary-chips">
           {urgentCount > 0 && (
-            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #64748b)", padding: "5px 12px", borderRadius: 20, background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }} data-testid="chip-attention">
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444" }} />
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl" data-testid="chip-attention"
+              style={{ color: "var(--cm-text-2, #64748b)", background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#ef4444" }} />
               {urgentCount} needs attention
             </span>
           )}
           {momentumCount > 0 && (
-            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #64748b)", padding: "5px 12px", borderRadius: 20, background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }} data-testid="chip-momentum">
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#818cf8" }} />
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl" data-testid="chip-momentum"
+              style={{ color: "var(--cm-text-2, #64748b)", background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#818cf8" }} />
               {momentumCount} losing momentum
             </span>
           )}
           {onTrackCount > 0 && (
-            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #64748b)", padding: "5px 12px", borderRadius: 20, background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }} data-testid="chip-on-track">
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981" }} />
+            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl" data-testid="chip-on-track"
+              style={{ color: "var(--cm-text-2, #64748b)", background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10b981" }} />
               {onTrackCount} on track
             </span>
           )}

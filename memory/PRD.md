@@ -297,6 +297,7 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Removed all side panels, capacity strip, multi-column layout from hero
   - Created `ComingUpTimeline.js`: horizontal timeline with forecast items for on-track programs
   - Page flow: Overview (chips) → Focus (hero) → Foresight (timeline) → Management (Kanban board)
+  - **Mobile responsive**: Tailwind breakpoints for stacking, smaller text, single-col cards on mobile
   - All 17 test features pass at 100% (test report: `/app/test_reports/iteration_167.json`)
   - Key files: `PipelineHero.js`, `ComingUpTimeline.js`, `PipelinePage.js`
 

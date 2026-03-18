@@ -1,9 +1,6 @@
 /**
  * PipelineHero — Single-column dark carousel. One school at a time.
- *
- * Each slide: category label, school identity, match score, progress rail,
- * "what to do next" box, owner badge, CTA button.
- * No side panels. No capacity strip. Focused + calm + premium.
+ * Fully responsive: mobile-first with progressive enhancement.
  */
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
@@ -115,7 +112,6 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
 
   /* Metadata pills */
   const metaPills = [p?.division, p?.conference, stageLabel].filter(Boolean);
-  // Add action-specific context pill
   if (current?.category === "coach_flag") metaPills.push("Coach task open");
   else if (current?.category === "past_due") metaPills.push("Follow-up overdue");
   else if (current?.category === "reply_needed") metaPills.push("Reply needed");
@@ -125,148 +121,118 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
   /* Filter pills */
   const pills = [
     { key: "all", label: "All", count: allActionable.length },
-    { key: "attention", label: "Needs Attention", count: urgent.length },
-    { key: "momentum", label: "Keep Momentum Going", count: momentum.length },
+    { key: "attention", label: "Attention", count: urgent.length },
+    { key: "momentum", label: "Momentum", count: momentum.length },
   ].filter(pill => pill.key === "all" || pill.count > 0);
 
   return (
     <div
       data-testid="pipeline-hero"
-      style={{
-        background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)",
-        borderRadius: 14,
-        overflow: "hidden",
-        position: "relative",
-      }}
+      className="rounded-xl sm:rounded-2xl overflow-hidden relative"
+      style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)" }}
     >
       {/* Ambient glow */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-        background: `radial-gradient(ellipse at 20% 30%, ${style.glow} 0%, transparent 60%)`,
-        pointerEvents: "none", zIndex: 0,
-      }} />
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse at 20% 30%, ${style.glow} 0%, transparent 60%)` }} />
 
       {/* ═══ TOP BAR: Filter pills + Carousel nav ═══ */}
       <div
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "14px 24px 12px",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-          position: "relative", zIndex: 1,
-        }}
+        className="flex items-center justify-between px-4 sm:px-6 pt-3 pb-3 relative z-[1]"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
         data-testid="hero-top-bar"
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }} data-testid="hero-filter-pills">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap" data-testid="hero-filter-pills">
           {pills.map(pill => (
             <button
               key={pill.key}
               onClick={() => handleFilter(pill.key)}
               data-testid={`hero-filter-${pill.key}`}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-2xl text-[11px] sm:text-[13px] font-semibold transition-colors"
               style={{
-                padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600,
-                cursor: "pointer", border: "none", fontFamily: "inherit",
-                display: "flex", alignItems: "center", gap: 8,
-                transition: "all 0.15s",
                 background: filter === pill.key ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)",
                 color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.45)",
+                border: "none", cursor: "pointer", fontFamily: "inherit",
               }}
             >
               {pill.label}
-              <span style={{
-                fontSize: 11, fontWeight: 800, padding: "1px 7px", borderRadius: 8,
-                background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.35)",
-              }}>{pill.count}</span>
+              <span className="text-[9px] sm:text-[11px] font-extrabold px-1.5 py-0.5 rounded-md"
+                style={{
+                  background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+                  color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.35)",
+                }}>{pill.count}</span>
             </button>
           ))}
         </div>
         {total > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }} data-testid="hero-carousel-nav">
-            <button onClick={prev} data-testid="carousel-prev" style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "rgba(255,255,255,0.45)",
-            }}>
-              <ChevronLeft style={{ width: 15, height: 15 }} />
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0" data-testid="hero-carousel-nav">
+            <button onClick={prev} data-testid="carousel-prev"
+              className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span style={{
-              fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.5)",
-              fontVariantNumeric: "tabular-nums", minWidth: 36, textAlign: "center",
-            }} data-testid="carousel-counter">
+            <span className="text-xs sm:text-sm font-bold tabular-nums min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.5)" }} data-testid="carousel-counter">
               {safeIdx + 1} / {total}
             </span>
-            <button onClick={next} data-testid="carousel-next" style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "rgba(255,255,255,0.45)",
-            }}>
-              <ChevronRight style={{ width: 15, height: 15 }} />
+            <button onClick={next} data-testid="carousel-next"
+              className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
       </div>
 
       {/* ═══ SLIDE CONTENT ═══ */}
-      <div style={{ padding: "20px 28px 24px", position: "relative", zIndex: 1 }}>
+      <div className="px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-6 relative z-[1]">
 
-        {/* 1. Category label + "Top priority" */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: style.accent, boxShadow: `0 0 8px ${style.accent}66` }} />
-            <span style={{ fontSize: 11, fontWeight: 800, color: style.accent, letterSpacing: "0.08em", textTransform: "uppercase" }} data-testid="hero-category-label">
+        {/* 1. Category label */}
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ background: style.accent, boxShadow: `0 0 8px ${style.accent}66` }} />
+            <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider uppercase" style={{ color: style.accent }} data-testid="hero-category-label">
               {style.label}
             </span>
           </div>
-          <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.3)", letterSpacing: "0.02em" }}>
+          <span className="hidden sm:inline text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>
             Top priority across your schools
           </span>
         </div>
 
         {/* 2. School identity + Match score */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flex: 1, minWidth: 0 }}>
+        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-2">
+          <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
             {p && (
               <UniversityLogo
                 name={p.university_name}
                 logoUrl={ms?.logo_url || p.logo_url}
                 domain={ms?.domain || p.domain}
-                size={52}
-                className="rounded-xl flex-shrink-0"
+                size={44}
+                className="rounded-lg sm:rounded-xl flex-shrink-0"
               />
             )}
-            <div style={{ minWidth: 0 }}>
-              <h2 style={{
-                fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: -0.3,
-                lineHeight: 1.2, margin: 0,
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 500,
-              }} data-testid="hero-school-name">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-2xl font-extrabold text-white tracking-tight truncate" data-testid="hero-school-name">
                 {p?.university_name || "Take Action"}
               </h2>
               {/* Metadata pills */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+              <div className="flex items-center gap-1.5 mt-1.5 sm:mt-2 flex-wrap">
                 {metaPills.map((pill, i) => (
-                  <span key={i} style={{
-                    fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 6,
-                    background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)",
-                  }}>{pill}</span>
+                  <span key={i} className="text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md"
+                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)" }}>{pill}</span>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* 3. Match score (right aligned) */}
+          {/* 3. Match score */}
           {matchPct != null && (
-            <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 20 }} data-testid="hero-match-score">
-              <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>
-                Match
-              </div>
-              <div style={{ fontSize: 38, fontWeight: 800, lineHeight: 1, letterSpacing: -1 }}>
-                <span style={{ color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "#94a3b8" }}>
+            <div className="text-right flex-shrink-0" data-testid="hero-match-score">
+              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>Match</div>
+              <div className="flex items-baseline justify-end">
+                <span className="text-2xl sm:text-4xl font-extrabold leading-none" style={{ color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "#94a3b8" }}>
                   {matchPct}
                 </span>
-                <span style={{ fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.3)", marginLeft: 2 }}>%</span>
+                <span className="text-sm sm:text-lg font-semibold ml-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>%</span>
               </div>
             </div>
           )}
@@ -274,53 +240,36 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
 
         {/* 4. Progress rail */}
         {rail && (
-          <div style={{ margin: "18px 0 20px", maxWidth: 420 }} data-testid="hero-progress-rail">
-            <ProgressRail
-              rail={rail}
-              onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)}
-            />
+          <div className="my-3 sm:my-4 max-w-md" data-testid="hero-progress-rail">
+            <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
           </div>
         )}
 
         {/* 5. "What to do next" box */}
-        <div style={{
-          background: "rgba(255,255,255,0.03)",
-          border: `1px solid ${style.accent}30`,
-          borderRadius: 12,
-          padding: "16px 20px",
-          marginBottom: 18,
-        }} data-testid="hero-advice-box">
-          <div style={{ fontSize: 10, fontWeight: 800, color: style.accent, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+        <div className="rounded-lg sm:rounded-xl px-3 sm:px-5 py-3 sm:py-4 mb-4" data-testid="hero-advice-box"
+          style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${style.accent}30` }}>
+          <div className="text-[9px] sm:text-[10px] font-extrabold tracking-wider uppercase mb-1.5" style={{ color: style.accent }}>
             What to do next
           </div>
-          <p style={{ fontSize: 15, fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.55, margin: 0 }} data-testid="hero-advice-text">
+          <p className="text-[13px] sm:text-[15px] font-medium leading-relaxed m-0" style={{ color: "rgba(255,255,255,0.8)" }} data-testid="hero-advice-text">
             {current.context || "Review this program and take the next step."}
           </p>
         </div>
 
         {/* 6 + 7. Owner badge + CTA */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{
-            fontSize: 11, fontWeight: 800, padding: "5px 14px", borderRadius: 8,
-            background: "rgba(255,255,255,0.06)", color: owner.color,
-            letterSpacing: "0.06em",
-          }} data-testid="hero-owner-badge">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg tracking-wider" data-testid="hero-owner-badge"
+            style={{ background: "rgba(255,255,255,0.06)", color: owner.color }}>
             {owner.text}
           </span>
           <button
             onClick={handleCTA}
             data-testid="hero-cta-btn"
-            style={{
-              padding: "12px 28px", borderRadius: 28, border: "none",
-              background: style.accent, color: "#fff",
-              fontSize: 15, fontWeight: 700, cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 8,
-              fontFamily: "inherit", transition: "all 0.2s",
-              boxShadow: `0 4px 24px ${style.accent}50`,
-            }}
+            className="flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-[13px] sm:text-[15px] font-bold text-white cursor-pointer transition-all"
+            style={{ background: style.accent, border: "none", fontFamily: "inherit", boxShadow: `0 4px 24px ${style.accent}50` }}
           >
             {current.cta?.label || "Take Action"}
-            <ArrowRight style={{ width: 16, height: 16 }} />
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
