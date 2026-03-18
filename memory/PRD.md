@@ -257,6 +257,19 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Special committed hero with gold celebration rendering + journey toggle
   - All tests passed across 4 schools (iteration_164)
   - Key files: `heroOrchestrator.js`, `PrimaryHeroCard.js`, `RadarStrip.js`, `JourneyPage.js`
+- **Pipeline 2-Tier Hero System (Complete — 2026-03-18)**
+  - Replaced single carousel hero (HeroActionsCarousel) with 2-tier system
+  - Tier 1 "Needs Attention Now": urgent actions (coach_flag, director_action, past_due, reply_needed, due_today) with red accent, solid CTAs
+  - Tier 2 "Keep Momentum Going": momentum actions (cooling_off, first_outreach) with indigo accent, outline CTAs
+  - Excluded "on_track" from hero — shown as calm summary ("N programs on track — no action needed")
+  - Dynamic header: "Your Pipeline" + summary line ("1 need attention · 2 losing momentum · 4 on track")
+  - Empty urgent state: "You're on track. Nothing urgent right now."
+  - Horizontal scroll with snap + desktop navigation arrows
+  - Fixed generateActions to tag no_action_needed as "on_track" instead of "cooling_off"
+  - Removed legacy HeroActionsCarousel, ALERT_CATEGORIES, computeRail, getStatusDot
+  - Cleaned PipelineStyles (removed hero-specific keyframes/CSS)
+  - 16/16 backend + all frontend tests passed (iteration_165)
+  - Key files: `PipelineHero.js`, `HeroSection.js`, `HeroCard.js`, `PipelinePage.js`
 
 ---
 
