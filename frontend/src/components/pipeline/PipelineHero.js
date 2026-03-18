@@ -239,9 +239,9 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           </div>
         </div>
 
-        {/* Meta line: reason · owner */}
+        {/* Meta line: non-timing reason · owner */}
         <div className="flex items-center gap-2 mt-2" data-testid="hero-meta-line">
-          {current.reasonShort && (
+          {current.reasonShort && !/^Overdue by/i.test(current.reasonShort) && !/^Due /i.test(current.reasonShort) && (
             <span className="text-[11px] sm:text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.35)" }} data-testid="hero-reason-short">
               {current.reasonShort}
             </span>

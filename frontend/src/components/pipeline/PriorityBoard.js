@@ -5,6 +5,9 @@ import { ATTENTION_META } from "./pipeline-constants";
 function HighCard({ item, navigate }) {
   const { primaryAction, reasonShort, microSignal, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
+  /* Hide reasonShort when it just restates timing already shown in top row */
+  const isTimingDupe = reasonShort && (/^Overdue by/i.test(reasonShort) || /^Due /i.test(reasonShort));
+  const metaReason = isTimingDupe ? null : reasonShort;
 
   return (
     <div
@@ -50,10 +53,10 @@ function HighCard({ item, navigate }) {
           {primaryAction}
         </div>
 
-        {/* Meta line: reason · owner */}
+        {/* Meta line: non-timing reason · owner */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }} data-testid={`priority-reason-${prog.program_id}`}>
-          {reasonShort && (
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }}>{reasonShort}</span>
+          {metaReason && (
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }}>{metaReason}</span>
           )}
           <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 6px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
@@ -80,6 +83,8 @@ function HighCard({ item, navigate }) {
 function MedCard({ item, navigate }) {
   const { primaryAction, reasonShort, microSignal, timingLabel, owner, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
+  const isTimingDupe = reasonShort && (/^Overdue by/i.test(reasonShort) || /^Due /i.test(reasonShort));
+  const metaReason = isTimingDupe ? null : reasonShort;
 
   return (
     <div
@@ -124,8 +129,8 @@ function MedCard({ item, navigate }) {
 
       {/* Meta */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }} data-testid={`priority-reason-${prog.program_id}`}>
-        {reasonShort && (
-          <span style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>{reasonShort}</span>
+        {metaReason && (
+          <span style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>{metaReason}</span>
         )}
         <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
       </div>
