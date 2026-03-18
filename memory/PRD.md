@@ -467,6 +467,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Level labels shortened: "High" / "Med" / "On track" (matches card terminology)
   - Key file: `PipelineHero.js`
 
+- **Unified Hero + Card System (Complete — 2026-03-18)**
+  - Hero restructured: single-line status `● HIGH · Overdue 10d` (matches card pattern exactly)
+  - School info + match % + rail are hero-only enhancements, visually subdued
+  - Ghost CTAs everywhere: text-only "Take Action →" replaces solid red buttons
+  - Section labels: "Up next" (high), "More actions" (medium), "On Track" (low)
+  - Visual hierarchy fade: card[0]=1.0, card[1]=0.95, card[2+]=0.88 opacity + thinner accent bars
+  - Scroll-based compact hero: IntersectionObserver reduces padding, hides rail+school on scroll
+  - Peek row shortened: "Also:" prefix, timing label as action hint
+  - Key files: `PipelineHero.js`, `PriorityBoard.js`
+
 ---
 
 ## Backlog
