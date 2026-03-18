@@ -1,144 +1,153 @@
 <analysis>**original_problem_statement:**
-The user, acting as a senior product and interaction designer, is directing the development of CapyMatch, a full-stack recruiting application. The entire session has been focused on a series of highly detailed, iterative UI/UX refinements for the athlete's Kanban board on the Pipeline page.
+The user, a product and interaction designer, has directed the development of the CapyMatch application through several major iterations. The current high-level goal is to refine the Dual-Mode Pipeline System to feel less like a data display and more like an intuitive, action-oriented assistant.
 
-The user's goal is to elevate the Kanban board's drag-and-drop functionality to a premium, Apple/Linear/Notion-level experience. This involves transforming the interaction from a generic D&D to one that feels physical, precise, responsive, and satisfying.
+The immediate task is to implement a 7-part refinement pass on the existing dual-mode UI. This is a non-structural, polish-focused request aimed at improving clarity, copy, and visual hierarchy to reduce cognitive load for the user. The refinements include simplifying the Hero component, shortening Priority Cards, adding time-based urgency, cleaning up the Coming Up section, and de-emphasizing less critical elements.
 
-Multiple refinement passes have already been completed, including polishing headers, card states, and implementing a precise insertion-line system. The latest request is for a final layer of polish focusing on magnetic alignment, drop animations, and subtle feedback cues.
+**PRODUCT REQUIREMENTS:**
+- **Hero Simplification:** Replace verbose, system-driven text with a direct, two-line command (e.g., Follow up with Florida coach / No response in 9 days).
+- **Priority Card Refinement:** Shorten card text to use natural, concise language (max 3 lines) and include a clear timing indicator (Due today).
+- **Time-Based Urgency:** Integrate timing signals (Due today, Overdue, Tomorrow) into all priority cards to complement the existing attention-level system.
+- **Coming Up Section Cleanup:** Replace paragraph descriptions with single-line, action-focused phrases.
+- **Visual Hierarchy Adjustment:** De-emphasize the Coming Up section with reduced contrast/text size to focus attention on the Hero and Priority board.
+- **Micro-signals:** Add small, muted labels like Now overdue or New today for state changes.
+- **Global Rules:** No paragraphs in cards; all copy must be plain, human language that answers What should I do?.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The  file contains a highly refined, functional Kanban board built with . The page has undergone multiple successful refinement passes:
-- **Component Logic:** All Kanban-related logic, including components like  and , state management, and drag-and-drop handlers, is centralized within the  file.
-- **Styling:** Styling is primarily handled via extensive inline style objects that react to component state (e.g., , ).
-- **Drag-and-Drop System:** A sophisticated D&D system is in place, featuring:
-    - A custom lifted state for the dragged card (scale, shadow, rotation).
-    - A precise insertion line that appears between cards to indicate the exact drop location.
-    - Column activation states (glow, gradient) when a card is dragged over them.
-- **Bug Fix:** A critical bug where the dragged card would disappear (due to a CSS containing block issue) has been successfully identified and resolved.
+The application features a Dual-Mode Pipeline System on the . This system is controlled by a UI toggle that switches between:
+1.  **Priority View (Default):** An action-oriented layout featuring a main  component, a peek row of other important items, and a  that groups tasks by urgency (Needs Attention, Coming Up, On Track).
+2.  **Pipeline View:** A traditional Kanban board layout with columns representing stages in the recruiting process (Added, Outreach, Talking, etc.).
+
+Both views are rendered conditionally from the same data source, which is managed within the monolithic  file. This file also contains the definitions for multiple sub-components (, , ). The user's view preference is persisted in .
 
 **Last working item**:
-    - Last item agent was working: The user requested a final polish pass on the Kanban drag-and-drop system to make it feel premium, responsive, and satisfying. This involves implementing six specific refinements: enhancing the insertion line, adding magnetic alignment, creating pre-drop tension, designing a new drop animation, adding a column confirmation pulse, and providing post-drop feedback.
-    - Status: NOT STARTED
+    - Last item agent was working: Implementing the 7-part UI/UX refinement pass for the dual-mode pipeline. The agent had begun by updating helper functions (, , ) in  to support the new microcopy and time-based urgency rules.
+    - Status: IN PROGRESS
     - Agent Testing Done: N
     - Which testing method agent to use? testing_agent_v3_fork
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1:  (P0) Implement final D&D interaction polish pass.
+  - Issue 1:  (P0) Complete the 7-part UI and copy refinement for the dual-mode pipeline.
 
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: None. This is a new request building on previously completed work.
+     - Attempted fixes: The agent has started by modifying several helper functions in  to align with the new copy and data requirements. The next steps involve applying these changes to the rendering logic of the , , and  components.
      - Next debug checklist: 
-        1. **View **: Re-familiarize with the structure of , the  column,  render props, and the / handlers.
-        2. **(Point 1) Insertion Line Glow**: In the  component, find the insertion line div and add a  to create the glow effect and pseudo-elements for the endpoints.
-        3. **(Point 2) Magnetic Alignment**: In the  render prop within , modify the  object applied to the dragged element. Lock the horizontal position by not altering its 's x-value while dragging over a column.
-        4. **(Point 3 & 4) Pre-Drop Tension & Drop Animation**: Utilize the  property in the  render prop to apply a  during the drop. The pre-drop tension (slowing) could be simulated with a slightly longer  when a valid drop target is hovered.
-        5. **(Point 5) Column Confirmation**: In the  handler, set a temporary state variable (e.g., ) with the . Use this state to apply a CSS animation class to the corresponding column, and reset the state after ~200ms using .
-        6. **(Point 6) Post-Drop Feedback**: The existing  state can be enhanced. Modify the styles applied to the card matching this ID to include a highlight/glow that fades out over 1 second using a CSS animation.
-     - Why fix this issue and what will be achieved with the fix? To achieve the user's explicit goal of a premium, Notion/Linear-level interaction quality, making the core Kanban interaction feel satisfying and intuitive.
-     - Status:  NOT STARTED
-     - Is recurring issue? Y (This is not a bug, but the user's workflow is based on iterative refinement of the same feature to achieve a high-quality result. This is the 5th such refinement request for the Kanban board.)
+        1.  **Modify :** Update the hero's text rendering to use the new action-first, two-line format from .
+        2.  **Modify  in :** Update the card structure to the new 3-line format: Attention Level, Action Title, and a new line combining timing () and ownership.
+        3.  **Modify :** Refactor the component to display a single, concise action line instead of a paragraph description.
+        4.  **Adjust  styles:** Apply styles to reduce the visual weight (contrast, text size) of this section.
+        5.  **Review and Test:** After implementation, use the screenshot tool to verify all visual and copy changes in the Priority view. Then, call the  to confirm functionality hasn't regressed.
+     - Why fix this issue and what will be achieved with the fix? To meet the user's explicit request to make the UI feel like an action-oriented assistant, reducing cognitive load and improving usability.
+     - Status:  IN PROGRESS
+     - Is recurring issue? N
      - Should Test frontend/backend/both after fix? frontend
      - Blocked on other issue: None
 
 **In progress Task List**:
-- None
+  - Task 1:  UI/UX Refinement Implementation
+     - Where to resume: The helper functions in  have been updated. The agent now needs to propagate these changes into the JSX of the affected components: , the  component within , and .
+     - What will be achieved with this? A clearer, more actionable UI that aligns with the user's latest design specifications.
+     - Status:  IN PROGRESS
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on something: None
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
-*   **(P0) Refine Kanban Drag-and-Drop System:** Implement the final 6-point polish pass as described above.
-*   **(P1) Build a CSV Import Tool:** Create a feature for the bulk import of school and coach data.
-*   **(P1) Configure College Scorecard API:** The integration is in place but requires the user to provide an API key.
+*   **(P0) Animated View Morphing:** Polish the transition between Priority and Pipeline views with smooth card animations, as per the original dual-mode spec (this was deferred).
+*   **(P1) CSV Import Tool:** Build a feature for bulk importing school and coach data.
+*   **(P1) Refactor :** Break the monolithic 1000+ line file into smaller, maintainable components (, , , etc.).
 *   **(P2) Parent/Family Experience:** Build out the dedicated UI/UX for parents and family members.
-*   **(P2) Polish School Detail Page:** Align the UI and terminology of the school detail page with the new athlete-level status model.
 
 **Future Tasks:**
 *   AI-Powered Coach Summary.
 *   Club Billing (Stripe Integration).
 *   Multi-Agent Intelligence Pipeline (, , ).
+*   Kanban Keyboard Shortcuts.
 
 **Completed work in this session**
-- **Kanban D&D Polish (Initial Pass):** Implemented premium D&D UX features like card lift, target lane activation, and a post-drop settle animation.
-- **Kanban Column Header Refinement:** Improved header hierarchy, readability, and spacing based on user specifications.
-- **Kanban Board Premium Refinement (Second Pass):** Enhanced card states, drag interactions, and visual consistency with the Hero component.
-- **Kanban Magnetic Interaction System (Third Pass):** Removed competing colors and replaced boxy highlights with a neutral glow system for a more cohesive feel.
-- **Bug Fix: Card Disappearing During Drag:** Diagnosed and fixed a CSS containing block issue that made the dragged card invisible.
-- **Kanban Precise Insertion Line System:** Implemented a Notion-style insertion line with dot endpoints to show the exact drop location, replacing ambiguous placeholders.
+- **Dual-Mode Pipeline System:** Implemented a complete dual-mode UI with Priority and Pipeline views, controlled by a toggle that persists its state. This included creating new components (, ), adding a peek row to the hero, and ensuring both views use the same data source. (DONE)
+- **Kanban Board Interaction Redesign:** Overhauled the Kanban board to group cards by attention level, introduced a simplified card design, and refined drag-and-drop visuals. (DONE)
+- **Kanban D&D Final Polish:** Implemented a 6-point premium interaction system with insertion line glows, magnetic alignment, drop animations, and other subtle feedback cues. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-- None.
+   - **Issue 1: Agent Misinterpretation of Tool Output:** In a previous task (the Kanban redesign), the agent misinterpreted a  failure (which reported 0 kanban cards found) as a success. It then proceeded to call the testing agent, which reported a 100% pass, contradicting the screenshot. The user's next request made this bug irrelevant by replacing the feature, but the process failure is critical to note. The next agent should be highly critical of tool outputs and investigate any mismatch between screenshots and test reports.
+     - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
-- **Workflow Pattern:** The user provides highly specific, iterative UI/UX refinement requests for the same feature. This is the established workflow and should be expected.
+  - **Workflow Pattern:** The user provides highly specific, iterative UI/UX refinement requests for the same feature. This is the established workflow and should be expected.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Iterative UI/UX Refinement:** The core development process is a tight feedback loop with a designer-minded user, implementing detailed specs for motion, spacing, and interaction.
--   **:** The library used for all drag-and-drop functionality. Expertise in its render props (, ) and handlers () is crucial.
--   **State-Driven Inline Styling:** The UI heavily relies on inline  objects that change based on component state (, , ).
--   **CSS Stacking Context / Containing Block:** The agent successfully debugged an issue where  created a containing block that trapped a  child element. This is a key concept to remember to avoid regressions.
--   **High-Fidelity Interaction Design:** Implementing subtle UX features like insertion lines, glow effects, and micro-animations to match the quality of high-end applications like Notion and Linear.
+- **Dual-Mode UI:** Using a single state variable () to conditionally render two completely different layouts (action list vs. Kanban board) from the same data source.
+- **:** The library used for all drag-and-drop functionality in the Pipeline View.
+- **State-Driven Inline Styling & Conditional Rendering:** The UI heavily relies on state to change styles and render different components, making  very complex.
+- **Monolithic God Component:**  has grown to an unmaintainable size and is a major source of technical debt.
 
 **key DB schema**
-- No changes made to the database schema in this session.
+  - No changes made to the database schema in this session.
 
 **All files of reference**
--   : The primary and most heavily modified file, containing almost all the logic for the Kanban board.
--   : A supporting CSS file, though many styles have been implemented inline within .
+-   : The primary file for almost all work. Contains the logic for both views, the toggle, data fetching, and several component definitions.
+-   : The hero component displayed at the top of both views.
+-   : The Coming Up section in the Priority view.
+-   : A supporting CSS file for animations and custom styles.
 
 **Areas that need refactoring**:
--   ** God Component:** This file is now over 850 lines long and handles state management, API calls, drag-and-drop logic, and contains the definitions for multiple sub-components (, ). It urgently needs to be broken down into smaller, dedicated component files (, , ) to improve maintainability.
--   **Inline Styles to CSS-in-JS/Modules:** The heavy use of complex, conditional inline styles makes the code hard to read and maintain. These should be extracted into a more robust styling solution like CSS Modules or a styled-components approach.
+-   **:** This is the highest priority for refactoring. The file is over 1030 lines and contains the logic and component definitions for , , and . It needs to be broken down into separate, manageable component files to improve maintainability and reduce complexity.
 
 **key api endpoints**
--   : Used in the  function to persist a program's new status and position after being dropped in a new column.
+-   : Fetches all school programs for the user.
+-   : Fetches AI-driven next actions, which power the Priority view.
+-   : Persists changes to a program's stage, typically after a drag-and-drop action.
 
 **Critical Info for New Agent**
--   **User is the Designer:** The user acts as an expert-level interaction designer. Follow their specifications with high fidelity, paying close attention to timings, easing, and visual details.
--   **Monolithic File:** All your work will likely be inside . Be careful when making edits as it contains all related logic.
--   **Avoid CSS Regressions:** Remember the disappearing card bug was caused by a  creating a CSS containing block. Be mindful of how transforms on parent elements can affect  children used by the D&D library.
--   **Test Thoroughly:** Use the  after implementing the 6-point polish to verify all the subtle visual cues and animations are working as specified.
+-   **User is the Designer:** The user provides expert-level design specifications. Adhere to them with high fidelity, paying close attention to copy, timing, and visual hierarchy.
+-   **Work Inside :** Most of your work will be inside the monolithic  file. Be extremely careful when making edits, as it controls the entire page's state and rendering.
+-   **Refactoring is Needed:** The  file is a god component and is critically overdue for refactoring. While the current task is polish, be aware that any future structural changes will be difficult without addressing this technical debt first. Proposing this refactor as the next step is highly recommended.
+-   **Verify Tool Outputs:** A previous agent misdiagnosed a screenshot failure. Always cross-reference tool outputs (screenshots, logs, test reports) and investigate any contradictions before proceeding.
 
 **documents and test reports created in this job**
--   
--   
--   
--   
--   
+- /app/memory/PRD.md
+- /app/test_reports/iteration_172.json
+- /app/test_reports/iteration_173.json
+- /app/test_reports/iteration_174.json
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Requested a precise insertion line D&D system. (COMPLETED)
-2.  **Agent**: Implemented the 10-point insertion line system.
-3.  **Agent**: Used  to verify the implementation.
-4.  **Agent**: Test report confirmed 100% pass. (COMPLETED)
-5.  **Agent**: Submitted  tool summary for the insertion line system.
-6.  **User**: Provided the final 6-point polish request for the D&D system (magnetic alignment, drop animation, etc.). (PENDING - **THIS IS THE CURRENT TASK**)
-7.  **Agent**: Viewed relevant files to gain context for the new request.
-8.  **Agent**: (No further action taken, ready to start implementation).
+- **User (Msg 177):** Provided the current 7-part refinement request to improve the dual-mode UI's clarity and make it feel like an action-oriented assistant. (PENDING - **THIS IS THE CURRENT TASK**)
+- **Agent (Msg 175):** Finished the implementation of the dual-mode pipeline system.
+- **User (Msg 176):** Acknowledged the agent's summary.
+- **Agent (Msg 169-174):** Ran the testing agent, which passed, and updated the PRD.
+- **User (Msg 166-168):** Acknowledged screenshots and a final microcopy fix.
+- **Agent (Msg 165):** Successfully took a screenshot showing the Pipeline view working after a toggle click.
+- **User (Msg 164):** Received a failed screenshot due to a timeout.
+- **Agent (Msg 163):** Successfully took a screenshot of the Priority view with corrected action titles.
+- **User (Msg 162):** Acknowledged the screenshot.
+- **Agent (Msg 159-161):** Correctly diagnosed and fixed a bug where action titles were wrong due to a mismatch between API keys and frontend mappings.
 
 **Project Health Check:**
--   Broken: None
--   Mocked: None
+- Broken: None
+- Mocked: None
 
 **3rd Party Integrations**
--   **react-beautiful-dnd**: The core library for the Kanban board's drag-and-drop functionality.
--   **YouTube Data API**: Implemented and functional.
--   **College Scorecard API**: Integrated but pending user configuration (API key needed).
--   **Resend**: Existing integration for email.
--   **Stripe**: Existing integration for payments.
+- **react-beautiful-dnd**: Core library for Kanban drag-and-drop.
+- **YouTube Data API**: Implemented and functional.
+- **College Scorecard API**: Integrated but pending user API key.
+- **Resend**: Existing integration for email.
+- **Stripe**: Existing integration for payments.
 
 **Testing status**
-- Testing agent used after significant changes: YES. The agent has consistently used the testing agent after each major refinement pass, resulting in high-quality, verified output.
-- Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: []
-- Known regressions: None.
+  - Testing agent used after significant changes: YES
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: []
+  - Known regressions: None.
 
 **Credentials to test flow:**
 -   **Athlete:**  / 
 
 **What agent forgot to execute**
-- Nothing. The agent has been diligent in following user requests and has successfully completed multiple complex, iterative refinement cycles.</analysis>
+- In a previous task (Kanban Redesign), the agent failed to correctly diagnose a rendering failure shown in a screenshot (Message #72). It claimed the UI was rendering correctly when it was blank, and proceeded as if the task was successful. The user's subsequent request for a different feature (Dual-Mode) overwrote the broken code, inadvertently fixing the problem. The agent should have debugged the rendering failure instead of misinterpreting the tool output.</analysis>

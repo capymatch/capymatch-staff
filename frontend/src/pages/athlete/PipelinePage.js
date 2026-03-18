@@ -259,7 +259,7 @@ function getCardReason(topAction) {
 function getActionTitle(topAction, schoolName) {
   if (!topAction || topAction.action_key === 'no_action_needed') return `${schoolName} is on track`;
   const map = {
-    coach_assigned_action: `Follow up with ${schoolName}`,
+    coach_assigned_action: `Follow up with ${schoolName} coach`,
     overdue_follow_up: `Follow up with ${schoolName}`,
     stale_reply: `Follow up with ${schoolName}`,
     first_outreach_needed: `Send intro to ${schoolName}`,
@@ -269,6 +269,26 @@ function getActionTitle(topAction, schoolName) {
     due_today_follow_up: `Follow up with ${schoolName} today`,
   };
   return map[topAction.action_key] || `${topAction.cta_label || 'Take action'} — ${schoolName}`;
+}
+
+function getShortName(name) {
+  if (!name) return '';
+  return name
+    .replace(/^University of /i, '')
+    .replace(/^The /i, '')
+    .replace(/ University$/i, '')
+    .replace(/ College$/i, '')
+    .replace(/ Institute of Technology$/i, ' Tech');
+}
+
+function getTimingSignal(p, ta) {
+  const due = getDueInfo(p);
+  if (due?.urgent) return due.text;
+  if (due?.text) return due.text;
+  const days = p.signals?.days_since_activity;
+  if (days > 0) return `No response in ${days} day${days !== 1 ? 's' : ''}`;
+  if (ta?.category === 'first_outreach') return 'No contact yet';
+  return '';
 }
 
 /* ── Column header contextual insights ── */
