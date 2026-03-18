@@ -187,80 +187,101 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         )}
       </div>
 
-      {/* SLIDE CONTENT — compact focus panel */}
+      {/* SLIDE CONTENT — 2-column: info left, CTA right */}
       <div className={`relative z-[1] ${slideClass}`}
         style={{
-          padding: compact ? '8px 14px 10px' : '10px 16px 14px',
+          padding: compact ? '8px 14px 10px' : '10px 16px 12px',
           transition: 'padding 180ms ease-out',
         }}
       >
-        <div style={{ maxWidth: 560 }}>
-          {/* Row 1: ● HIGH · Overdue 10d */}
-          <div className="flex items-center gap-1.5" data-testid="hero-status-row">
-            <div className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: style.accent }} />
-            <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider uppercase" style={{ color: style.accent }} data-testid="hero-category-label">
-              {style.label}
-            </span>
-            {current.timingLabel && (
-              <>
-                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
-                <span className="text-[10px] sm:text-[11px] font-bold" style={{ color: style.accent, opacity: 0.7 }} data-testid="hero-timing-label">
-                  {current.timingLabel}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Row 2: School + match% + rail — single tight row */}
-          {!compact && (
-            <div className="flex items-center gap-2 mt-1.5" data-testid="hero-school-row">
-              {p && (
-                <UniversityLogo
-                  name={p.university_name}
-                  logoUrl={ms?.logo_url || p.logo_url}
-                  domain={ms?.domain || p.domain}
-                  size={22}
-                  className="rounded flex-shrink-0"
-                />
-              )}
-              <span className="text-[12px] sm:text-[13px] font-semibold text-white/65 truncate" data-testid="hero-school-name">
-                {p?.university_name || "School"}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* LEFT — 70%: urgency → school → action → owner */}
+          <div style={{ flex: '1 1 0%', minWidth: 0 }}>
+            {/* Urgency: ● HIGH · Overdue 10d */}
+            <div className="flex items-center gap-1.5" data-testid="hero-status-row">
+              <div className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: style.accent }} />
+              <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider uppercase" style={{ color: style.accent }} data-testid="hero-category-label">
+                {style.label}
               </span>
-              {matchPct != null && (
-                <span className="text-[11px] font-bold flex-shrink-0" style={{ color: matchPct >= 80 ? "rgba(74,222,128,0.65)" : matchPct >= 60 ? "rgba(251,191,36,0.6)" : "rgba(148,163,184,0.4)" }} data-testid="hero-match-score">
-                  {matchPct}%
-                </span>
-              )}
-              {rail && (
-                <div className="flex-shrink-0 w-[100px]" style={{ opacity: 0.25 }} data-testid="hero-progress-rail">
-                  <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
-                </div>
+              {current.timingLabel && (
+                <>
+                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold" style={{ color: style.accent, opacity: 0.7 }} data-testid="hero-timing-label">
+                    {current.timingLabel}
+                  </span>
+                </>
               )}
             </div>
-          )}
 
-          {/* Main action */}
-          <div className={compact ? "mt-1.5" : "mt-2"} data-testid="hero-advice-box">
-            <div className={`${compact ? 'text-[15px]' : 'text-[16px] sm:text-[18px]'} font-extrabold leading-snug`}
-              style={{ color: "#fff", display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', transition: 'font-size 180ms ease-out' }}
-              data-testid="hero-advice-text"
-            >
-              {current.primaryAction}
+            {/* School + match% + rail inline */}
+            {!compact && (
+              <div className="flex items-center gap-2 mt-1.5" data-testid="hero-school-row">
+                {p && (
+                  <UniversityLogo
+                    name={p.university_name}
+                    logoUrl={ms?.logo_url || p.logo_url}
+                    domain={ms?.domain || p.domain}
+                    size={20}
+                    className="rounded flex-shrink-0"
+                  />
+                )}
+                <span className="text-[12px] font-semibold text-white/60 truncate" data-testid="hero-school-name">
+                  {p?.university_name || "School"}
+                </span>
+                {matchPct != null && (
+                  <span className="text-[11px] font-bold flex-shrink-0" style={{ color: matchPct >= 80 ? "rgba(74,222,128,0.6)" : matchPct >= 60 ? "rgba(251,191,36,0.55)" : "rgba(148,163,184,0.4)" }} data-testid="hero-match-score">
+                    {matchPct}%
+                  </span>
+                )}
+                {rail && (
+                  <div className="flex-shrink-0 w-[80px]" style={{ opacity: 0.2 }} data-testid="hero-progress-rail">
+                    <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action — largest */}
+            <div className={compact ? "mt-1.5" : "mt-2"} data-testid="hero-advice-box">
+              <div className={`${compact ? 'text-[15px]' : 'text-[16px] sm:text-[17px]'} font-extrabold leading-snug`}
+                style={{ color: "#fff", display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                data-testid="hero-advice-text"
+              >
+                {current.primaryAction}
+              </div>
+            </div>
+
+            {/* Owner */}
+            <div className="mt-1.5" data-testid="hero-meta-line">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: ownerLabel === 'You' ? 'rgba(13,148,136,0.12)' : 'rgba(99,102,241,0.12)', color: ownerLabel === 'You' ? '#5eead4' : '#a5b4fc' }}>
+                {ownerLabel}
+              </span>
             </div>
           </div>
 
-          {/* Owner + ghost CTA — tight row */}
-          <div className="flex items-center justify-between mt-2" data-testid="hero-meta-line">
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: ownerLabel === 'You' ? 'rgba(13,148,136,0.12)' : 'rgba(99,102,241,0.12)', color: ownerLabel === 'You' ? '#5eead4' : '#a5b4fc' }}>
-              {ownerLabel}
-            </span>
+          {/* RIGHT — CTA vertically centered with action */}
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <button
               onClick={(e) => { e.stopPropagation(); if (p) navigate(`/pipeline/${p.program_id}`); }}
               data-testid="hero-cta-btn"
-              className="flex items-center gap-1.5 text-[11px] font-bold cursor-pointer pm-nav-hover"
-              style={{ background: "none", border: "none", fontFamily: "inherit", color: style.accent, padding: '2px 0', opacity: 0.85 }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] sm:text-[12px] font-bold cursor-pointer"
+              style={{
+                background: `${style.accent}18`, border: `1px solid ${style.accent}30`,
+                color: style.accent, fontFamily: "inherit", whiteSpace: 'nowrap',
+                transition: 'background 120ms ease-out',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = `${style.accent}28`}
+              onMouseLeave={(e) => e.currentTarget.style.background = `${style.accent}18`}
             >
               {current.ctaLabel || "Take Action"} <ArrowRight className="w-3 h-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); if (p) navigate(`/pipeline/${p.program_id}`); }}
+              data-testid="hero-secondary-btn"
+              className="text-[10px] font-medium cursor-pointer"
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.25)", fontFamily: "inherit", padding: 0 }}
+            >
+              View details
             </button>
           </div>
         </div>
