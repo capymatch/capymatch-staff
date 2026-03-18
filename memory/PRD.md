@@ -286,11 +286,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Mobile responsive (collapses to single column)
   - 100% frontend tests passed (iteration_166)
   - Key files: `PipelineHero.js`, `PipelineCapacityStrip.js`
-- **Hero Accent Bar + 60/40 Layout (Complete — 2026-03-18)**
-  - Added 6px dynamic accent bar on left edge of hero card (red for urgent, indigo for momentum)
-  - Added ambient radial glow from accent color
-  - Changed column ratio to 60/40 (3fr/2fr) for left/right panels
-  - Key files: `PipelineHero.js`
+- **Hero Accent Bar + 60/40 Layout (Complete & Reverted — 2026-03-18)**
+  - Built but reverted per user feedback in favor of single-carousel design
+- **Pipeline Hero Restyled to Match Journey Hero (Complete — 2026-03-18)**
+  - Restyled PipelineHero to match PrimaryHeroCard (Journey page) aesthetic
+  - Flat dark background (#1e1e2e), horizontal top accent bar, compact icon+content layout
+  - Removed "You" owner badge per user request
+  - Preserved filter pills (All / Needs Attention / Losing Momentum) and carousel navigation
+  - Typography: 10px kicker, 14px title, 12px subtitle, 9px metadata pills
+  - Dual CTAs: primary (accent bg) + secondary (outline) matching Journey hero style
+  - Key files: `PipelineHero.js`, `PipelineCapacityStrip.js`
 
 ---
 
