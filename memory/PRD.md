@@ -299,7 +299,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
     - `PipelineHeroEmptyState.js`: Dark card, green glow, "You're in a great spot" + metric + CTAs
     - `ComingUpTimelineEmptyState.js`: Light card, "Nothing needs attention soon" + reassuring copy
     - Both independent, always render (never collapse or show "No data")
-  - **Mobile responsive**: Tailwind breakpoints for stacking, smaller text, single-col cards
+  - **Refinement pass (Complete — 2026-03-18)**:
+    - #1 Simplified metadata: "D1 · SEC" inline + max 1 status chip (not 4 stacked pills)
+    - #2 Lightweight task text: no box/border, just label + primary text + AI helper hint
+    - #3 CTA dominance: strongest visual element, clearly separated
+    - #4 Removed duplicate timeline chip row (cards only)
+    - #5 Human time labels: "Tomorrow", "In 2 days" (not "IN 1 DAY")
+    - #6 Stronger card hierarchy: time label dominant, bold school, supportive text
+    - #7 Board separator: "MANAGE ALL PROGRAMS" divider between timeline and Kanban
+    - #8 Filter counts in pills: "All 2", "Attention 1", "Momentum 1"
+    - #9 Smooth slide/fade transitions on carousel + filter + glow color
   - Key files: `PipelineHero.js`, `PipelineHeroEmptyState.js`, `ComingUpTimeline.js`, `ComingUpTimelineEmptyState.js`, `PipelinePage.js`
 
 ---

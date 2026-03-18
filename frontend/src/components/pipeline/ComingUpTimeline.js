@@ -1,6 +1,6 @@
 /**
  * ComingUpTimeline — "Coming Up Next" forecast section.
- * Fully responsive: stacks vertically on mobile.
+ * Refined: removed duplicate chip row, human time labels, stronger card hierarchy.
  */
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -67,13 +67,12 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
 
     if (daysUntil !== null && reason) {
       const urgency = daysUntil === 0 ? "today" : daysUntil <= 3 ? "soon" : "later";
-      const nameParts = p.university_name.split(" ");
-      const shortName = nameParts.length > 2 ? nameParts.slice(0, 2).join(" ") : nameParts[0];
-      const shortLabel = daysUntil === 0
-        ? `${shortName} follow-up`
-        : daysUntil <= 3
-          ? `${shortName} cools off`
-          : `${shortName} touchpoint`;
+
+      /* #5 Human-friendly time labels */
+      let timeLabel;
+      if (daysUntil === 0) timeLabel = "Today";
+      else if (daysUntil === 1) timeLabel = "Tomorrow";
+      else timeLabel = `In ${daysUntil} days`;
 
       items.push({
         programId: p.program_id,
@@ -81,8 +80,7 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
         daysUntil,
         reason,
         urgency,
-        shortLabel,
-        timeLabel: daysUntil === 0 ? "Today" : `In ${daysUntil} day${daysUntil !== 1 ? "s" : ""}`,
+        timeLabel,
       });
     }
   }
@@ -91,84 +89,29 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
   return items.slice(0, 4);
 }
 
-/* ── Timeline markers ── */
-const TIME_MARKS = [
-  { label: "Today", day: 0 },
-  { label: "2d", day: 2 },
-  { label: "5d", day: 5 },
-  { label: "7d", day: 7 },
-];
-
 export default function ComingUpTimeline({ items }) {
   const navigate = useNavigate();
 
   if (!items || items.length === 0) return <ComingUpTimelineEmptyState />;
 
-  const maxDay = 7;
-
   return (
     <div
       data-testid="coming-up-timeline"
-      className="rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-5"
+      className="rounded-xl sm:rounded-2xl p-4 sm:p-6"
       style={{ background: "var(--cm-surface, #ffffff)", border: "1px solid var(--cm-border, #e2e8f0)" }}
     >
-      {/* Header */}
+      {/* Header — compact */}
       <div className="mb-4">
-        <div className="text-[10px] font-extrabold tracking-wider uppercase mb-1.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+        <div className="text-[10px] font-extrabold tracking-wider uppercase mb-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
           Coming Up Next
         </div>
-        <h3 className="text-base sm:text-lg font-extrabold leading-tight mb-1" style={{ color: "var(--cm-text, #0f172a)" }}>
+        <h3 className="text-sm sm:text-base font-bold leading-tight" style={{ color: "var(--cm-text, #0f172a)" }}>
           What may need attention soon
         </h3>
-        <p className="text-[11px] sm:text-xs hidden sm:block" style={{ color: "var(--cm-text-3, #94a3b8)", lineHeight: 1.5 }}>
-          A forward-looking view so you can see what's about to slip before it becomes urgent.
-        </p>
       </div>
 
-      {/* Timeline track */}
-      <div className="mb-4">
-        {/* Labels */}
-        <div className="flex justify-between mb-2 px-1">
-          {TIME_MARKS.map((m, i) => (
-            <span key={m.day} className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wide"
-              style={{ color: "var(--cm-text-3, #94a3b8)", textAlign: i === 0 ? "left" : i === TIME_MARKS.length - 1 ? "right" : "center" }}>
-              {m.label}
-            </span>
-          ))}
-        </div>
-
-        {/* Track line with dots */}
-        <div className="relative h-[2px] rounded-full mb-3" style={{ background: "var(--cm-border, #e2e8f0)" }}>
-          {TIME_MARKS.map(m => {
-            const pct = (m.day / maxDay) * 100;
-            return (
-              <div key={m.day} className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full"
-                style={{ left: `${pct}%`, background: "var(--cm-border, #cbd5e1)", border: "2px solid var(--cm-surface, #fff)" }} />
-            );
-          })}
-        </div>
-
-        {/* Pills row */}
-        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-          {items.map((item) => {
-            const dotColor = URGENCY_DOT[item.urgency] || URGENCY_DOT.later;
-            return (
-              <div
-                key={item.programId}
-                onClick={() => navigate(`/pipeline/${item.programId}`)}
-                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full cursor-pointer text-[10px] sm:text-[11px] font-semibold whitespace-nowrap"
-                style={{ background: `${dotColor}10`, border: `1px solid ${dotColor}20`, color: "var(--cm-text, #0f172a)" }}
-                data-testid={`timeline-pill-${item.programId}`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
-                {item.shortLabel}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Cards grid — 1 col on mobile, 3 on desktop */}
+      {/* #4 REMOVED duplicate chip row — cards only */}
+      {/* #6 STRONGER card hierarchy — time label dominant, more spacing */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {items.slice(0, 3).map(item => {
           const dotColor = URGENCY_DOT[item.urgency] || URGENCY_DOT.later;
@@ -176,17 +119,23 @@ export default function ComingUpTimeline({ items }) {
             <div
               key={item.programId}
               onClick={() => navigate(`/pipeline/${item.programId}`)}
-              className="rounded-lg sm:rounded-xl p-3 sm:p-4 cursor-pointer transition-shadow hover:shadow-sm"
-              style={{ background: `${dotColor}06`, border: `1px solid ${dotColor}18` }}
+              className="rounded-lg sm:rounded-xl p-3.5 sm:p-4 cursor-pointer transition-all hover:shadow-md group"
+              style={{ background: `${dotColor}05`, border: `1px solid ${dotColor}14` }}
               data-testid={`timeline-card-${item.programId}`}
             >
-              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: dotColor }}>
-                {item.timeLabel}
+              {/* Time label — strongest visual */}
+              <div className="flex items-center gap-2 mb-2.5">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wide" style={{ color: dotColor }}>
+                  {item.timeLabel}
+                </span>
               </div>
-              <div className="text-[13px] sm:text-sm font-bold mb-1 leading-snug" style={{ color: "var(--cm-text, #0f172a)" }}>
+              {/* School name — secondary emphasis */}
+              <div className="text-[14px] sm:text-[15px] font-bold mb-1.5 leading-snug group-hover:underline" style={{ color: "var(--cm-text, #0f172a)" }}>
                 {item.university}
               </div>
-              <div className="text-[11px] sm:text-xs leading-relaxed" style={{ color: "var(--cm-text-3, #64748b)" }}>
+              {/* Reason — supporting */}
+              <div className="text-[11px] sm:text-xs leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
                 {item.reason}
               </div>
             </div>

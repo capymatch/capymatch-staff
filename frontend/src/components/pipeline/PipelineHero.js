@@ -1,8 +1,8 @@
 /**
  * PipelineHero — Single-column dark carousel. One school at a time.
- * Fully responsive: mobile-first with progressive enhancement.
+ * Refined: simplified metadata, lightweight task text, dominant CTA, smooth transitions.
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import UniversityLogo from "../UniversityLogo";
 import { ProgressRail } from "../journey/ProgressRail";
@@ -36,14 +36,6 @@ const CAT_STYLE = {
 };
 const DEFAULT_STYLE = { accent: "#0d9488", glow: "rgba(13,148,136,0.06)", label: "Take Action" };
 
-/* ── Owner badge config ── */
-const OWNER_CFG = {
-  athlete: { text: "YOU",    color: "#5eead4" },
-  coach:   { text: "COACH",  color: "#fbbf24" },
-  shared:  { text: "SHARED", color: "#93c5fd" },
-  parent:  { text: "PARENT", color: "#c4b5fd" },
-};
-
 /* ── Build rail from program stage ── */
 function buildRail(program) {
   if (!program) return null;
@@ -56,25 +48,40 @@ function buildRail(program) {
   return { active, stages, line_fill: active };
 }
 
-/* ── Stage label for pills ── */
-const STAGE_LABEL = {
-  added: "Added", outreach: "Outreach", in_conversation: "Talking",
-  campus_visit: "Visit", offer: "Offer", committed: "Committed",
-  needs_outreach: "Added", waiting_on_reply: "Outreach", overdue: "Outreach",
+/* ── Status chip labels (max 1 shown) ── */
+const STATUS_CHIP = {
+  coach_flag: "Coach task open",
+  past_due: "Follow-up overdue",
+  reply_needed: "Reply needed",
+  first_outreach: "No contact yet",
+  cooling_off: "Cooling off",
+  due_today: "Due today",
+};
+
+/* ── AI-style helper hints ── */
+const HELPER_HINTS = {
+  coach_flag: "Coaches typically review follow-ups within 48 hours",
+  past_due: "Programs with recent follow-ups stay 2x more engaged",
+  reply_needed: "Responding within 24 hours shows strong interest",
+  first_outreach: "Early outreach builds the strongest recruiting relationships",
+  cooling_off: "A short check-in now can prevent losing momentum",
+  due_today: "Completing tasks on time keeps your pipeline healthy",
 };
 
 export default function PipelineHero({ actions, matchScores, navigate }) {
   const [filter, setFilter] = useState("all");
   const [idx, setIdx] = useState(0);
+  const [slideDir, setSlideDir] = useState(0); // -1 left, 1 right, 0 initial
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const slideRef = useRef(null);
 
   /* Keyboard nav */
   useEffect(() => {
     const onKey = (e) => {
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select") return;
-      if (e.key === "ArrowLeft")  { e.preventDefault(); setIdx(i => Math.max(0, i - 1)); }
-      if (e.key === "ArrowRight") { e.preventDefault(); setIdx(i => i + 1); }
-      if (e.key === "Enter")      { e.preventDefault(); handleCTA(); }
+      if (e.key === "ArrowLeft")  { e.preventDefault(); goTo(-1); }
+      if (e.key === "ArrowRight") { e.preventDefault(); goTo(1); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -96,9 +103,23 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
 
   const safeIdx = Math.min(idx, total - 1);
   const current = filtered[safeIdx];
-  const prev = () => setIdx(i => (i - 1 + total) % total);
-  const next = () => setIdx(i => (i + 1) % total);
-  const handleFilter = (f) => { setFilter(f); setIdx(0); };
+
+  const triggerTransition = (dir) => {
+    setSlideDir(dir);
+    setIsTransitioning(true);
+    setTimeout(() => setIsTransitioning(false), 280);
+  };
+
+  const goTo = (dir) => {
+    triggerTransition(dir);
+    setIdx(i => dir === -1 ? (i - 1 + total) % total : (i + 1) % total);
+  };
+
+  const handleFilter = (f) => {
+    triggerTransition(1);
+    setFilter(f);
+    setIdx(0);
+  };
 
   const handleCTA = () => {
     if (!current) return;
@@ -111,24 +132,24 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
   const ms = current?.matchScore || matchScores[p?.program_id];
   const matchPct = ms?.match_score ?? current?.match_score;
   const style = CAT_STYLE[current?.category] || DEFAULT_STYLE;
-  const owner = OWNER_CFG[current?.owner] || OWNER_CFG.athlete;
   const rail = buildRail(p);
-  const stageLabel = p ? (STAGE_LABEL[p.journey_stage] || STAGE_LABEL[p.board_group] || "") : "";
 
-  /* Metadata pills */
-  const metaPills = [p?.division, p?.conference, stageLabel].filter(Boolean);
-  if (current?.category === "coach_flag") metaPills.push("Coach task open");
-  else if (current?.category === "past_due") metaPills.push("Follow-up overdue");
-  else if (current?.category === "reply_needed") metaPills.push("Reply needed");
-  else if (current?.category === "first_outreach") metaPills.push("No contact yet");
-  else if (current?.category === "cooling_off") metaPills.push("Cooling off");
+  /* #1 Simplified metadata: "D1 · SEC" inline + max 1 status chip */
+  const inlineMeta = [p?.division, p?.conference].filter(Boolean).join(" · ");
+  const statusChip = STATUS_CHIP[current?.category] || null;
+  const helperHint = HELPER_HINTS[current?.category] || null;
 
-  /* Filter pills */
+  /* Filter pills with counts */
   const pills = [
     { key: "all", label: "All", count: allActionable.length },
     { key: "attention", label: "Attention", count: urgent.length },
     { key: "momentum", label: "Momentum", count: momentum.length },
   ].filter(pill => pill.key === "all" || pill.count > 0);
+
+  /* Slide transition style */
+  const slideStyle = isTransitioning
+    ? { opacity: 0, transform: `translateX(${slideDir * 12}px)`, transition: "none" }
+    : { opacity: 1, transform: "translateX(0)", transition: "opacity 0.28s ease, transform 0.28s ease" };
 
   return (
     <div
@@ -136,11 +157,13 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
       className="rounded-xl sm:rounded-2xl overflow-hidden relative"
       style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)" }}
     >
-      {/* Ambient glow */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: `radial-gradient(ellipse at 20% 30%, ${style.glow} 0%, transparent 60%)` }} />
+      {/* Ambient glow — transitions with accent color */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: `radial-gradient(ellipse at 20% 30%, ${style.glow} 0%, transparent 60%)`,
+        transition: "background 0.4s ease",
+      }} />
 
-      {/* ═══ TOP BAR: Filter pills + Carousel nav ═══ */}
+      {/* ═══ TOP BAR: Filters + Carousel nav ═══ */}
       <div
         className="flex items-center justify-between px-4 sm:px-6 pt-3 pb-3 relative z-[1]"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
@@ -152,7 +175,7 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
               key={pill.key}
               onClick={() => handleFilter(pill.key)}
               data-testid={`hero-filter-${pill.key}`}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-2xl text-[11px] sm:text-[13px] font-semibold transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-2xl text-[11px] sm:text-[13px] font-semibold transition-all duration-200"
               style={{
                 background: filter === pill.key ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)",
                 color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.45)",
@@ -160,7 +183,7 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
               }}
             >
               {pill.label}
-              <span className="text-[9px] sm:text-[11px] font-extrabold px-1.5 py-0.5 rounded-md"
+              <span className="text-[9px] sm:text-[11px] font-extrabold px-1.5 py-0.5 rounded-md transition-all duration-200"
                 style={{
                   background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
                   color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.35)",
@@ -170,16 +193,16 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
         </div>
         {total > 1 && (
           <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0" data-testid="hero-carousel-nav">
-            <button onClick={prev} data-testid="carousel-prev"
-              className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer"
+            <button onClick={() => goTo(-1)} data-testid="carousel-prev"
+              className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors hover:bg-white/10"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <span className="text-xs sm:text-sm font-bold tabular-nums min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.5)" }} data-testid="carousel-counter">
               {safeIdx + 1} / {total}
             </span>
-            <button onClick={next} data-testid="carousel-next"
-              className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer"
+            <button onClick={() => goTo(1)} data-testid="carousel-next"
+              className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors hover:bg-white/10"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -187,8 +210,8 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
         )}
       </div>
 
-      {/* ═══ SLIDE CONTENT ═══ */}
-      <div className="px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-6 relative z-[1]">
+      {/* ═══ SLIDE CONTENT — with transition ═══ */}
+      <div ref={slideRef} className="px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-6 relative z-[1]" style={slideStyle}>
 
         {/* 1. Category label */}
         <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -198,13 +221,13 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
               {style.label}
             </span>
           </div>
-          <span className="hidden sm:inline text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <span className="hidden sm:inline text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.25)" }}>
             Top priority across your schools
           </span>
         </div>
 
         {/* 2. School identity + Match score */}
-        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-2">
+        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-1">
           <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
             {p && (
               <UniversityLogo
@@ -219,17 +242,24 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
               <h2 className="text-base sm:text-2xl font-extrabold text-white tracking-tight truncate" data-testid="hero-school-name">
                 {p?.university_name || "Take Action"}
               </h2>
-              {/* Metadata pills */}
-              <div className="flex items-center gap-1.5 mt-1.5 sm:mt-2 flex-wrap">
-                {metaPills.map((pill, i) => (
-                  <span key={i} className="text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-md"
-                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.55)" }}>{pill}</span>
-                ))}
+              {/* #1 SIMPLIFIED METADATA: inline text + 1 status chip max */}
+              <div className="flex items-center gap-2 mt-1.5" data-testid="hero-metadata">
+                {inlineMeta && (
+                  <span className="text-[11px] sm:text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    {inlineMeta}
+                  </span>
+                )}
+                {statusChip && (
+                  <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md"
+                    style={{ background: `${style.accent}18`, color: style.accent }}>
+                    {statusChip}
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* 3. Match score */}
+          {/* Match score */}
           {matchPct != null && (
             <div className="text-right flex-shrink-0" data-testid="hero-match-score">
               <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>Match</div>
@@ -243,34 +273,41 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
           )}
         </div>
 
-        {/* 4. Progress rail */}
+        {/* Progress rail */}
         {rail && (
           <div className="my-3 sm:my-4 max-w-md" data-testid="hero-progress-rail">
             <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
           </div>
         )}
 
-        {/* 5. "What to do next" box + CTA aligned */}
-        <div className="rounded-lg sm:rounded-xl px-3 sm:px-5 py-3 sm:py-4" data-testid="hero-advice-box"
-          style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${style.accent}30` }}>
-          <div className="text-[9px] sm:text-[10px] font-extrabold tracking-wider uppercase mb-1.5" style={{ color: style.accent }}>
+        {/* #2 LIGHTWEIGHT "What to do next" — no box, no border */}
+        <div className="mt-4 sm:mt-5 mb-4" data-testid="hero-advice-box">
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
             What to do next
-          </div>
-          <div className="flex items-end justify-between gap-4">
-            <p className="text-[13px] sm:text-[15px] font-medium leading-relaxed m-0 flex-1" style={{ color: "rgba(255,255,255,0.8)" }} data-testid="hero-advice-text">
-              {current.context || "Review this program and take the next step."}
+          </span>
+          <p className="text-[14px] sm:text-[16px] font-semibold leading-snug mt-1.5 mb-0" style={{ color: "rgba(255,255,255,0.85)" }} data-testid="hero-advice-text">
+            {current.context || "Review this program and take the next step."}
+          </p>
+          {helperHint && (
+            <p className="text-[11px] sm:text-xs mt-1.5 mb-0" style={{ color: "rgba(255,255,255,0.28)" }}>
+              {helperHint}
             </p>
-            <button
-              onClick={handleCTA}
-              data-testid="hero-cta-btn"
-              className="flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-[13px] sm:text-[15px] font-bold text-white cursor-pointer transition-all flex-shrink-0"
-              style={{ background: style.accent, border: "none", fontFamily: "inherit", boxShadow: `0 4px 24px ${style.accent}50` }}
-            >
-              {current.cta?.label || "Take Action"}
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          )}
         </div>
+
+        {/* #3 CTA — dominant, clearly separated */}
+        <button
+          onClick={handleCTA}
+          data-testid="hero-cta-btn"
+          className="flex items-center gap-2 px-6 sm:px-7 py-2.5 sm:py-3 rounded-full text-[13px] sm:text-[15px] font-bold text-white cursor-pointer transition-all hover:brightness-110 active:scale-[0.98]"
+          style={{
+            background: style.accent, border: "none", fontFamily: "inherit",
+            boxShadow: `0 4px 24px ${style.accent}50`,
+          }}
+        >
+          {current.cta?.label || "Take Action"}
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

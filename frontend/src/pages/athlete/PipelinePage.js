@@ -591,8 +591,17 @@ export default function PipelinePage() {
       <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} />
 
       {/* ═══ COMING UP NEXT: What's next ═══ */}
-      <div style={{ marginTop: 20, marginBottom: 20 }}>
+      <div style={{ marginTop: 20, marginBottom: 0 }}>
         <ComingUpTimeline items={timelineItems} />
+      </div>
+
+      {/* #7 BOARD SEPARATOR — subtle divider between timeline and board */}
+      <div className="flex items-center gap-3 my-5 sm:my-6 px-1" data-testid="board-separator">
+        <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
+        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex-shrink-0" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+          Manage all programs
+        </span>
+        <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
       </div>
 
       {/* Upgrade prompt — shows at 80%+ of limit */}
