@@ -29,13 +29,13 @@ function classifyActions(actions) {
 
 /* ── Accent + glow per category ── */
 const CAT_STYLE = {
-  coach_flag:       { accent: "#ef4444", glow: "rgba(239,68,68,0.12)", label: "Needs Attention Now" },
-  director_action:  { accent: "#ef4444", glow: "rgba(239,68,68,0.12)", label: "Needs Attention Now" },
-  past_due:         { accent: "#ef4444", glow: "rgba(239,68,68,0.10)", label: "Needs Attention Now" },
-  reply_needed:     { accent: "#f59e0b", glow: "rgba(245,158,11,0.08)", label: "Needs Attention Now" },
-  due_today:        { accent: "#f59e0b", glow: "rgba(245,158,11,0.08)", label: "Needs Attention Now" },
-  first_outreach:   { accent: "#818cf8", glow: "rgba(129,140,248,0.08)", label: "Keep Momentum Going" },
-  cooling_off:      { accent: "#818cf8", glow: "rgba(129,140,248,0.08)", label: "Keep Momentum Going" },
+  coach_flag:       { accent: "#ef4444", glow: "rgba(239,68,68,0.12)", label: "Needs Attention" },
+  director_action:  { accent: "#ef4444", glow: "rgba(239,68,68,0.12)", label: "Needs Attention" },
+  past_due:         { accent: "#ef4444", glow: "rgba(239,68,68,0.10)", label: "Needs Attention" },
+  reply_needed:     { accent: "#f59e0b", glow: "rgba(245,158,11,0.08)", label: "Needs Attention" },
+  due_today:        { accent: "#f59e0b", glow: "rgba(245,158,11,0.08)", label: "Needs Attention" },
+  first_outreach:   { accent: "#818cf8", glow: "rgba(129,140,248,0.08)", label: "Keep Moving" },
+  cooling_off:      { accent: "#818cf8", glow: "rgba(129,140,248,0.08)", label: "Keep Moving" },
 };
 const DEFAULT_STYLE = { accent: "#0d9488", glow: "rgba(13,148,136,0.06)", label: "Take Action" };
 
@@ -52,7 +52,7 @@ function buildRail(program) {
 }
 
 const STATUS_CHIP = {
-  coach_flag: "Coach task open", past_due: "Follow-up overdue",
+  coach_flag: "Follow up needed", past_due: "Follow-up overdue",
   reply_needed: "Reply needed", first_outreach: "No contact yet",
   cooling_off: "Cooling off", due_today: "Due today",
 };
@@ -62,9 +62,17 @@ const HELPER_HINTS = {
   past_due: "Programs with recent follow-ups stay 2x more engaged",
   reply_needed: "Responding within 24 hours shows strong interest",
   first_outreach: "Early outreach builds the strongest recruiting relationships",
-  cooling_off: "A short check-in now can prevent losing momentum",
+  cooling_off: "A short check-in keeps things moving",
   due_today: "Completing tasks on time keeps your pipeline healthy",
 };
+
+function getShortAction(action) {
+  const map = {
+    coach_flag: 'Follow up', past_due: 'Follow up', reply_needed: 'Follow up',
+    due_today: 'Follow up today', first_outreach: 'Send intro', cooling_off: 'Re-engage',
+  };
+  return map[action?.category] || action?.cta?.label || 'Take action';
+}
 
 export default function PipelineHero({ actions, matchScores, navigate }) {
   const [filter, setFilter] = useState("all");
@@ -155,7 +163,14 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
                    : phase === "enter" ? "pm-slide-enter"
                    : "pm-slide-idle";
 
+  /* Peek items: other high-priority actions (exclude current) */
+  const peekItems = [];
+  for (let i = 0; i < filtered.length && peekItems.length < 4; i++) {
+    if (i !== safeIdx && filtered[i].program) peekItems.push({ action: filtered[i], filteredIdx: i });
+  }
+
   return (
+    <>
     <div
       data-testid="pipeline-hero"
       className="rounded-xl sm:rounded-2xl overflow-hidden relative pm-hero-hover"
@@ -310,5 +325,23 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
         </button>
       </div>
     </div>
+
+    {/* ═══ ALSO NEEDS ATTENTION — peek row ═══ */}
+    {peekItems.length > 0 && (
+      <div data-testid="peek-row" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--cm-text-3, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>Also needs attention:</span>
+        {peekItems.map(item => (
+          <button
+            key={item.action.program?.program_id || item.filteredIdx}
+            onClick={() => transitionTo(() => setIdx(item.filteredIdx))}
+            data-testid={`peek-item-${item.action.program?.program_id}`}
+            style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: 'var(--cm-surface-2, #f1f5f9)', color: 'var(--cm-text-2, #475569)', border: '1px solid var(--cm-border, #e2e8f0)', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 120ms ease-out', whiteSpace: 'nowrap' }}
+          >
+            {item.action.program?.university_name} &middot; {getShortAction(item.action)}
+          </button>
+        ))}
+      </div>
+    )}
+    </>
   );
 }

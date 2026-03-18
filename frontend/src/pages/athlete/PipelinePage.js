@@ -99,7 +99,7 @@ function generateActions(programs, matchScores, tasks, healthMap, topActionsMap)
           program: p,
           category: "on_track",
           title: `${p.university_name} — On Track`,
-          context: "Everything looks good — keep the momentum going.",
+          context: "Everything looks good — no action needed right now.",
           owner: "athlete",
           cta: { label: "View School", style: "primary" },
           matchScore: matchScores[p.program_id],
@@ -248,10 +248,27 @@ function getCardReason(topAction) {
     overdue_follow_up: 'Follow-up is overdue',
     stale_reply: 'Awaiting coach reply',
     first_outreach_needed: 'Ready for first contact',
+    send_intro_email: 'Ready for first contact',
     relationship_cooling: 'No recent engagement',
+    reengage_relationship: 'No recent engagement',
     due_today_follow_up: 'Follow-up due today',
   };
   return reasons[topAction.action_key] || topAction.label || 'Action needed';
+}
+
+function getActionTitle(topAction, schoolName) {
+  if (!topAction || topAction.action_key === 'no_action_needed') return `${schoolName} is on track`;
+  const map = {
+    coach_assigned_action: `Follow up with ${schoolName}`,
+    overdue_follow_up: `Follow up with ${schoolName}`,
+    stale_reply: `Follow up with ${schoolName}`,
+    first_outreach_needed: `Send intro to ${schoolName}`,
+    send_intro_email: `Send intro to ${schoolName}`,
+    relationship_cooling: `Re-engage ${schoolName}`,
+    reengage_relationship: `Re-engage ${schoolName}`,
+    due_today_follow_up: `Follow up with ${schoolName} today`,
+  };
+  return map[topAction.action_key] || `${topAction.cta_label || 'Take action'} — ${schoolName}`;
 }
 
 /* ── Column header contextual insights ── */
@@ -282,12 +299,11 @@ function getEmptyColCopy(colKey) {
 function KanbanCard({ program: p, navigate, index, topAction, justDroppedId, activeDragId }) {
   const attention = getAttentionLevel(topAction);
   const meta = ATTENTION_META[attention];
-  const reason = getCardReason(topAction);
   const ctaLabel = topAction?.cta_label;
-  const owner = topAction?.owner;
-  const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
+  const stageKey = programToKanbanCol(p);
+  const stageLabel = KANBAN_COLS.find(c => c.key === stageKey)?.label || '';
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -342,30 +358,20 @@ function KanbanCard({ program: p, navigate, index, topAction, justDroppedId, act
                 </div>
               </>
             ) : (
-              /* Full card: 3-4 lines max */
+              /* Pipeline card: 4 lines max */
               <>
-                {/* Line 1: Name + attention badge */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--cm-text)', lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`card-name-${p.program_id}`}>{p.university_name}</div>
-                  {attention !== 'low' ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0, fontSize: 10, fontWeight: 600, color: meta.color, padding: '1px 6px', borderRadius: 4, background: meta.bg }} data-testid={`card-attention-${p.program_id}`}>
-                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
-                      {meta.label}
-                    </span>
-                  ) : (
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot, flexShrink: 0 }} data-testid={`card-attention-${p.program_id}`} />
-                  )}
+                {/* Line 1: School name */}
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--cm-text)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`card-name-${p.program_id}`}>{p.university_name}</div>
+                {/* Line 2: Stage */}
+                <div style={{ fontSize: 10.5, color: 'var(--cm-text-3, #94a3b8)', marginTop: 3, fontWeight: 500 }} data-testid={`card-stage-${p.program_id}`}>{stageLabel} stage</div>
+                {/* Line 3: Attention indicator */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
+                  <span style={{ fontSize: 10, fontWeight: 600, color: meta.color }} data-testid={`card-attention-${p.program_id}`}>{attention === 'high' ? 'High attention' : attention === 'medium' ? 'Needs action' : 'On track'}</span>
                 </div>
-                {/* Line 2: Primary reason */}
-                {reason && (
-                  <div style={{ fontSize: 11, color: 'var(--cm-text-3, #64748b)', marginTop: 4, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`card-reason-${p.program_id}`}>{reason}</div>
-                )}
-                {/* Line 3: Next action + owner (only for actionable cards) */}
+                {/* Line 4: Action (actionable cards only) */}
                 {ctaLabel && attention !== 'low' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }} data-testid={`card-action-${p.program_id}`}>
-                    <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-2, #475569)' }}>→ {ctaLabel}</span>
-                    <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
-                  </div>
+                  <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-2, #475569)', marginTop: 4 }} data-testid={`card-action-${p.program_id}`}>→ {ctaLabel}</div>
                 )}
               </>
             )}
@@ -551,6 +557,99 @@ function CommittedBanner({ programs, navigate }) {
 
 
 /* ═══════════════════════════════════════════ */
+/* ── Priority View — Action Board            */
+/* ═══════════════════════════════════════════ */
+
+function PriorityCard({ program: p, topAction, navigate }) {
+  const attention = getAttentionLevel(topAction);
+  const meta = ATTENTION_META[attention];
+  const actionTitle = getActionTitle(topAction, p.university_name);
+  const owner = topAction?.owner;
+  const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
+  const due = getDueInfo(p);
+  let timing = due?.text;
+  if (!timing && p.signals?.days_since_activity > 0) {
+    timing = `No response in ${p.signals.days_since_activity}d`;
+  }
+
+  return (
+    <div
+      onClick={() => navigate(`/pipeline/${p.program_id}`)}
+      className="kanban-card"
+      style={{
+        background: 'var(--cm-surface, #fff)',
+        borderRadius: 8,
+        padding: '10px 12px',
+        cursor: 'pointer',
+        border: `1px solid ${attention === 'high' ? 'rgba(239,68,68,0.12)' : 'var(--cm-border, #e8ecf1)'}`,
+        boxShadow: attention === 'high' ? '0 1px 3px rgba(239,68,68,0.06)' : '0 1px 2px rgba(0,0,0,0.04)',
+      }}
+      data-testid={`priority-card-${p.program_id}`}
+    >
+      {/* Line 1: Attention level */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+        <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
+        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: meta.color }}>{meta.label}</span>
+      </div>
+      {/* Line 2: Action title (includes school context) */}
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cm-text)', marginTop: 4, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`priority-action-${p.program_id}`}>
+        {actionTitle}
+      </div>
+      {/* Line 3: Timing + owner (actionable cards only) */}
+      {attention !== 'low' && (timing || topAction?.cta_label) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }} data-testid={`priority-timing-${p.program_id}`}>
+          <span style={{ fontSize: 10.5, fontWeight: 600, color: due?.urgent ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>→ {timing || topAction?.cta_label}</span>
+          <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PriorityBoard({ programs, topActionsMap, navigate }) {
+  const high = [], medium = [], low = [];
+  for (const p of programs) {
+    if (p.board_group === 'archived') continue;
+    const level = getAttentionLevel(topActionsMap[p.program_id]);
+    if (level === 'high') high.push(p);
+    else if (level === 'medium') medium.push(p);
+    else low.push(p);
+  }
+
+  const sections = [
+    { key: 'attention', label: 'Needs Attention', color: '#dc2626', programs: high, empty: 'Nothing urgent right now' },
+    { key: 'coming-up', label: 'Coming Up', color: '#d97706', programs: medium, empty: 'No upcoming actions' },
+    { key: 'on-track', label: 'On Track', color: '#10b981', programs: low, empty: 'No programs on track yet' },
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} data-testid="priority-board">
+      {sections.map(sec => (
+        <div key={sec.key} data-testid={`priority-section-${sec.key}`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: sec.color }} />
+            <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: sec.color }}>{sec.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--cm-text-3)' }}>{sec.programs.length}</span>
+          </div>
+          {sec.programs.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
+              {sec.programs.map(p => (
+                <PriorityCard key={p.program_id} program={p} topAction={topActionsMap[p.program_id]} navigate={navigate} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '16px', fontSize: 11, color: 'var(--cm-text-4)', fontWeight: 500 }}>
+              {sec.empty}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+/* ═══════════════════════════════════════════ */
 /* ── Styles + Empty State                   ── */
 /* ═══════════════════════════════════════════ */
 function PipelineStyles() {
@@ -642,6 +741,10 @@ export default function PipelinePage() {
   const [dragDest, setDragDest] = useState(null);
   const [pulsingColumnId, setPulsingColumnId] = useState(null);
   const [activeDragId, setActiveDragId] = useState(null);
+  const [viewMode, setViewMode] = useState(() => {
+    try { return localStorage.getItem('capymatch_view_mode') || 'priority'; }
+    catch { return 'priority'; }
+  });
   const navigate = useNavigate();
   const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
 
@@ -733,6 +836,11 @@ export default function PipelinePage() {
     setActiveDragId(start.draggableId);
   }, []);
 
+  const toggleView = useCallback((mode) => {
+    setViewMode(mode);
+    try { localStorage.setItem('capymatch_view_mode', mode); } catch {}
+  }, []);
+
   /* ── Add school with limit check ── */
   const handleAddSchool = useCallback(() => {
     if (!subscription) { navigate("/schools"); return; }
@@ -785,38 +893,45 @@ export default function PipelinePage() {
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
 
-      {/* ═══ PAGE HEADER: Title + Summary Chips ═══ */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0 mb-4 sm:mb-5" data-testid="pipeline-header">
+      {/* ═══ PAGE HEADER: Title + Toggle + Chips ═══ */}
+      <div className="flex items-start justify-between gap-3 mb-4 sm:mb-5" data-testid="pipeline-header">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight m-0" style={{ color: "var(--cm-text, #0f172a)" }}>
             Your Pipeline
           </h1>
-          <p className="text-[12px] sm:text-[13px] font-medium mt-1 m-0 hidden sm:block" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-            One focused hero for what matters now, plus a forward-looking timeline for what's next.
-          </p>
+          <div className="flex items-center gap-2 flex-wrap mt-1.5" data-testid="summary-chips">
+            {urgentCount > 0 && (
+              <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-attention"
+                style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#ef4444" }} />
+                {urgentCount} needs attention
+              </span>
+            )}
+            {momentumCount > 0 && (
+              <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-momentum"
+                style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#818cf8" }} />
+                {momentumCount} keep moving
+              </span>
+            )}
+            {onTrackCount > 0 && (
+              <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-on-track"
+                style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10b981" }} />
+                {onTrackCount} on track
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap flex-shrink-0" data-testid="summary-chips">
-          {urgentCount > 0 && (
-            <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full" data-testid="chip-attention"
-              style={{ color: "var(--cm-text-3, #94a3b8)", background: "transparent" }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#ef4444" }} />
-              {urgentCount} needs attention
-            </span>
-          )}
-          {momentumCount > 0 && (
-            <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full" data-testid="chip-momentum"
-              style={{ color: "var(--cm-text-3, #94a3b8)", background: "transparent" }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#818cf8" }} />
-              {momentumCount} losing momentum
-            </span>
-          )}
-          {onTrackCount > 0 && (
-            <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full" data-testid="chip-on-track"
-              style={{ color: "var(--cm-text-3, #94a3b8)", background: "transparent" }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10b981" }} />
-              {onTrackCount} on track
-            </span>
-          )}
+        <div style={{ display: 'flex', background: 'var(--cm-surface-2, #f1f5f9)', borderRadius: 8, padding: 2, flexShrink: 0 }} data-testid="view-toggle">
+          <button onClick={() => toggleView('priority')} data-testid="toggle-priority"
+            style={{ padding: '5px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: viewMode === 'priority' ? 'var(--cm-surface, #fff)' : 'transparent', color: viewMode === 'priority' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)', border: 'none', cursor: 'pointer', transition: 'all 160ms ease-out', boxShadow: viewMode === 'priority' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', fontFamily: 'inherit' }}>
+            Priority
+          </button>
+          <button onClick={() => toggleView('pipeline')} data-testid="toggle-pipeline"
+            style={{ padding: '5px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: viewMode === 'pipeline' ? 'var(--cm-surface, #fff)' : 'transparent', color: viewMode === 'pipeline' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)', border: 'none', cursor: 'pointer', transition: 'all 160ms ease-out', boxShadow: viewMode === 'pipeline' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', fontFamily: 'inherit' }}>
+            Pipeline
+          </button>
         </div>
       </div>
 
@@ -870,8 +985,12 @@ export default function PipelinePage() {
       {/* Committed Banner */}
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
-      {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} topActionsMap={topActionsMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
+      {/* 4. Board — Priority or Pipeline based on toggle */}
+      {viewMode === 'pipeline' ? (
+        <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} topActionsMap={topActionsMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
+      ) : (
+        <PriorityBoard programs={allPrograms} topActionsMap={topActionsMap} navigate={navigate} />
+      )}
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (

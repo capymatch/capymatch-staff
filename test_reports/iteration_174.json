@@ -1,0 +1,71 @@
+{
+  "summary": "Dual-Mode Pipeline System Testing Complete - All 10 features verified. Priority/Pipeline toggle working, localStorage persistence confirmed, peek row functional, shared components rendering correctly in both views.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_174.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Feature 1 VIEW TOGGLE: PASS - data-testid='view-toggle' found with toggle-priority and toggle-pipeline buttons. Default view is Priority (priority-board visible, kanban-board hidden).",
+    "Feature 2 LOCALSTORAGE PERSISTENCE: PASS - localStorage key 'capymatch_view_mode' updates on toggle click. Pipeline persisted after reload, Priority persisted after reload. Toggle switch persists correctly.",
+    "Feature 3 PEEK ROW: PASS - data-testid='peek-row' shows 4 items in 'School · Action' format (e.g., 'Stanford University · Send intro'). Clicking peek item updates hero carousel. Current hero excluded from peek row.",
+    "Feature 4 PRIORITY VIEW ACTION BOARD: PASS - Three sections found: priority-section-attention, priority-section-coming-up, priority-section-on-track. Colored headers with counts visible.",
+    "Feature 5 PRIORITY CARDS: PASS - 7 priority cards found. Cards show: Line 1 (● HIGH/MED/LOW), Line 2 (action title: 'Follow up with University of Florida'), Line 3 (→ timing + owner badge for non-low). data-testid verified: priority-card-*, priority-action-*, priority-timing-*.",
+    "Feature 6 PIPELINE VIEW KANBAN CARDS: PASS - 7 kanban cards with 4-line format: school name, stage ('Added stage'), attention ('High attention'/'Needs action'/'On track'), action line. data-testid verified: card-name-*, card-stage-*, card-attention-*, card-action-*.",
+    "Feature 7 ATTENTION GROUPING: PASS - 4 group headers found: 'Keep Moving', 'Needs Attention', 'On Track'. Cards sorted by attention within columns. Headers fade out during drag (opacity: 0).",
+    "Feature 8 SHARED COMPONENTS: PASS - Hero, peek row, and Coming Up timeline render in BOTH Priority and Pipeline views. Same data source. Only board section changes on toggle.",
+    "Feature 9 MICROCOPY: PASS - 'Coach task open' REMOVED, 'Keep Momentum Going' REMOVED, 'losing momentum' REMOVED. 'Follow up needed' PRESENT in hero, 'Keep Moving' PRESENT as group header, 'keep moving' PRESENT in summary chips.",
+    "Feature 10 DRAG & DROP: PASS - Drag-and-drop working in Pipeline view. Visual effects in CSS: 80ms card hover, 160ms drop animation, 300ms settle. Background cards fade to 60% opacity during drag. Drop zones show dashed borders."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only)",
+    "frontend": "100% (10/10 features pass)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "athlete123"
+    }
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Dual-mode pipeline system fully verified. KEY FINDINGS: (1) View toggle at top-right with Priority/Pipeline buttons (data-testid='view-toggle'). (2) Default view is Priority, stored in localStorage key 'capymatch_view_mode'. (3) Peek row shows 2-4 items in 'School · Action' format, clicking updates hero carousel. (4) Priority View has 3 sections: Needs Attention, Coming Up, On Track with colored headers. (5) Priority cards: 3 lines max (attention dot, action title with school, timing + owner). (6) Pipeline View has 5 Kanban columns (Added, Outreach, Talking, Visit, Offered). (7) Kanban cards: 4 lines max (school name, stage, attention indicator, action). (8) Both views share Hero, peek row, and Coming Up timeline - same data source. (9) Microcopy updated: 'Follow up needed' replaces 'Coach task open', 'Keep Moving' replaces 'Keep Momentum Going'. (10) Animations 80-160ms (except 300ms settle).",
+  "verified_features": {
+    "1_view_toggle": "PASS - view-toggle, toggle-priority, toggle-pipeline data-testids found. Default=Priority.",
+    "2_localstorage_persistence": "PASS - capymatch_view_mode key set on toggle. Persists on reload.",
+    "3_peek_row": "PASS - peek-row with 4 items in 'School · Action' format. Clicking updates hero. Current hero excluded.",
+    "4_priority_view_action_board": "PASS - 3 sections with colored headers: attention (red), coming-up (amber), on-track (green).",
+    "5_priority_cards": "PASS - 7 cards. 3-line format with attention dot, action title, timing+owner. data-testids verified.",
+    "6_pipeline_kanban_cards": "PASS - 7 cards in 5 columns. 4-line format. All card-* data-testids found.",
+    "7_attention_grouping": "PASS - 4 group headers. Cards sorted by attention. Headers fade during drag (opacity:0).",
+    "8_shared_components": "PASS - Hero, peek-row, timeline visible in both views. Same data source.",
+    "9_microcopy": "PASS - Old copy removed. New copy verified: 'Follow up needed', 'Keep Moving', 'keep moving'.",
+    "10_drag_drop": "PASS - Drag working. Animations 80-160ms. Cards fade to 60%. Drop zones show dashed borders."
+  },
+  "playwright_tests_performed": [
+    "Login with token injection",
+    "Priority view default state verification",
+    "View toggle element detection (data-testids)",
+    "Pipeline toggle click and localStorage update",
+    "Page reload persistence verification",
+    "Priority view sections verification",
+    "Priority cards format verification",
+    "Kanban board element detection",
+    "Kanban cards 4-line format verification",
+    "Attention grouping headers verification",
+    "Shared components (Hero, peek row, timeline) in both views",
+    "Microcopy verification (old removed, new present)",
+    "Peek row click interaction and hero carousel update",
+    "Drag and drop functionality test"
+  ]
+}
