@@ -356,6 +356,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Top color bars: 0.5 default → 0.85 on drag-over with soft glow
   - 10/10 features + teal removal audit verified (iteration_170)
   - Key files: `PipelinePage.js`, `pipeline-motion.css`
+- **Kanban Precise Insertion Line System (Complete — 2026-03-18)**
+  - Insertion line: 2px colored line at exact insertion position with 6px dot endpoints (Notion-style), 120ms fade-in, column accent color at 45% opacity
+  - Cross-column only: insertion line filtered by sourceId !== col.key — no misleading same-column indicators
+  - Tracks destination via onDragUpdate + dragDest state (droppableId, index, sourceId)
+  - Card drag refined: scale 1.02 (from 1.04), NO rotation (from 1deg), flat and controlled
+  - Empty column handling: empty state hidden when insertion line appears, restored when card leaves
+  - Drop settle: 350ms neutral glow animation + toast confirmation
+  - Fixed card disappearing bug: removed overflow:hidden, transform:scale(1)→none to prevent CSS containing block
+  - 10/10 features verified (iteration_171)
 
 ---
 
