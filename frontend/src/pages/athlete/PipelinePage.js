@@ -385,7 +385,9 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
           const insight = getColInsight(col.key, count);
           return (
             <Droppable droppableId={col.key} key={col.key}>
-              {(provided, snapshot) => (
+              {(provided, snapshot) => {
+                const isReceiving = snapshot.isDraggingOver && !snapshot.draggingFromThisWith;
+                return (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
@@ -393,13 +395,13 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                     background: snapshot.isDraggingOver
                       ? "linear-gradient(180deg, rgba(0,0,0,0.004) 0%, rgba(0,0,0,0.016) 100%)"
                       : "transparent",
-                    borderRadius: 10, minHeight: 200, overflow: "hidden",
+                    borderRadius: 10, minHeight: 200,
                     transition: "transform 220ms cubic-bezier(0.16,1,0.3,1), background 220ms cubic-bezier(0.16,1,0.3,1), box-shadow 220ms cubic-bezier(0.16,1,0.3,1)",
                     border: "1px solid transparent",
                     boxShadow: snapshot.isDraggingOver
                       ? "inset 0 1px 24px rgba(0,0,0,0.025)"
                       : "none",
-                    transform: snapshot.isDraggingOver ? "scale(1.008)" : "scale(1)",
+                    transform: isReceiving ? "scale(1.008)" : "none",
                     ...colStyle,
                   }}
                 >
@@ -441,7 +443,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                     {provided.placeholder}
                   </div>
                 </div>
-              )}
+              )}}
             </Droppable>
           );
         })}
