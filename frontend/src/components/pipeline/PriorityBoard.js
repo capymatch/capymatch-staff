@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { ChevronRight } from "lucide-react";
 import SwipeableCard from "./SwipeableCard";
+import UniversityLogo from "../UniversityLogo";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -24,7 +25,7 @@ function HighRow({ item, navigate, isLast }) {
     <div
       className="kanban-card"
       style={{
-        display: 'flex', alignItems: 'center', gap: 14,
+        display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 4px',
         cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
@@ -32,6 +33,7 @@ function HighRow({ item, navigate, isLast }) {
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
+      <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded-md" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 13, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
@@ -63,7 +65,7 @@ function MedRow({ item, navigate, isLast }) {
     <div
       className="kanban-card"
       style={{
-        display: 'flex', alignItems: 'center', gap: 14,
+        display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 4px',
         cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
@@ -71,6 +73,7 @@ function MedRow({ item, navigate, isLast }) {
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
+      <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded-md" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 13, fontWeight: 600, color: 'var(--cm-text, #0f172a)',
@@ -102,7 +105,7 @@ function LowRow({ item, navigate, isLast }) {
       onClick={() => navigate(`/pipeline/${prog.program_id}`)}
       className="kanban-card"
       style={{
-        display: 'flex', alignItems: 'center', gap: 14,
+        display: 'flex', alignItems: 'center', gap: 10,
         padding: '9px 4px',
         cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
@@ -110,6 +113,9 @@ function LowRow({ item, navigate, isLast }) {
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
+      <div style={{ opacity: 0.6 }}>
+        <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded-md" />
+      </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 13, fontWeight: 500, color: 'var(--cm-text-2, #475569)',
