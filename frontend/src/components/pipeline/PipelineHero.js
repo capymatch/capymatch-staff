@@ -194,7 +194,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           transition: 'padding 180ms ease-out',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
           {/* LEFT — 70%: urgency → school → action → owner */}
           <div style={{ flex: '1 1 0%', minWidth: 0 }}>
             {/* Urgency: ● HIGH · Overdue 10d */}
@@ -236,13 +236,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               </div>
             )}
 
-            {/* Stage progress rail — own row, proper width */}
-            {!compact && rail && (
-              <div className="mt-2" style={{ maxWidth: 320 }} data-testid="hero-progress-rail">
-                <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
-              </div>
-            )}
-
             {/* Action — largest */}
             <div className={compact ? "mt-1.5" : "mt-2"} data-testid="hero-advice-box">
               <div className={`${compact ? 'text-[15px]' : 'text-[16px] sm:text-[17px]'} font-extrabold leading-snug`}
@@ -261,8 +254,14 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             </div>
           </div>
 
-          {/* RIGHT — CTA vertically centered with action */}
-          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          {/* RIGHT — CTA + progress rail */}
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+            {/* Progress rail — top right */}
+            {!compact && rail && (
+              <div style={{ width: 240 }} data-testid="hero-progress-rail">
+                <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
+              </div>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); if (p) navigate(`/pipeline/${p.program_id}`); }}
               data-testid="hero-cta-btn"
