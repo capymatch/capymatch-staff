@@ -50,11 +50,11 @@ export function getColInsight(colKey, count) {
 
 export function getEmptyColCopy(colKey) {
   const copy = {
-    added: "Add schools to start building your list",
-    outreach: "Schools move here after first contact",
-    in_conversation: "Active conversations will appear here",
-    campus_visit: "No visits scheduled yet",
-    offer: "Offers will appear here when received",
+    added: "No schools added yet",
+    outreach: "No outreach started",
+    in_conversation: "No active conversations",
+    campus_visit: "No visits scheduled",
+    offer: "No offers yet",
   };
   return copy[colKey] || "No schools yet";
 }

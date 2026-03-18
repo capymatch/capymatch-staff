@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
   KANBAN_COLS, programToKanbanCol, getColInsight, getEmptyColCopy,
 } from "./pipeline-constants";
-import { LogoBox, StatusIndicator, PipelineRowStyles, ROW_GAP, DIVIDER, FONT } from "./pipeline-design";
+import { LogoBox, StatusIndicator, PipelineRowStyles, FONT } from "./pipeline-design";
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
@@ -15,19 +15,21 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-/* ── Filter: only show state context, not timing ── */
+/* ── Context filter: state-only, no timing, no duplicates of status ── */
 function getCardContext(reasonShort) {
   if (!reasonShort) return null;
   const lower = reasonShort.toLowerCase();
-  if (lower.includes('overdue') || lower.includes('due ') || lower.includes('days since')) return null;
-  if (lower === 'on track') return null;
+  if (lower.includes('overdue') || lower.includes('due ') || lower.includes('days since') || lower.includes('no response')) return null;
+  if (lower === 'on track' || lower === 'no recent engagement') return null;
   return reasonShort;
 }
 
-/* ── Minimal Kanban card: logo + name + status + context ── */
+/* ── Card: strict 3-line layout ── */
+const CARD_PAD = 8;
+
 function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
   const level = attn?.attentionLevel || 'low';
-  const reasonShort = getCardContext(attn?.reasonShort);
+  const context = getCardContext(attn?.reasonShort);
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
 
@@ -50,7 +52,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
             {...provided.draggableProps}
             {...provided.dragHandleProps}
             onClick={() => !snapshot.isDragging && navigate(`/pipeline/${p.program_id}`)}
-            className="pb-row"
+            className="kb-card"
             style={{
               ...libStyle,
               transform: composedTransform,
@@ -59,41 +61,46 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
                 : isDropping
                   ? 'transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms ease-out'
                   : undefined,
-              display: 'flex', alignItems: 'center', gap: ROW_GAP,
-              padding: '7px 4px',
+              padding: CARD_PAD,
               cursor: isLifted ? 'grabbing' : 'grab',
-              borderBottom: DIVIDER,
-              background: isLifted ? 'rgba(255,255,255,0.97)' : 'transparent',
+              background: isLifted ? '#fff' : 'transparent',
               boxShadow: isLifted
                 ? '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)'
-                : isJustDropped ? undefined : 'none',
-              opacity: isFaded ? 0.45 : 1,
+                : 'none',
+              opacity: isFaded ? 0.4 : 1,
               zIndex: isLifted ? 9999 : undefined,
               pointerEvents: isFaded ? 'none' : undefined,
-              borderRadius: isLifted ? 8 : undefined,
-              margin: isLifted ? 0 : undefined,
-              paddingLeft: isLifted ? '12px' : undefined,
-              paddingRight: isLifted ? '12px' : undefined,
+              borderRadius: 6,
             }}
             data-testid={`kanban-card-${p.program_id}`}
           >
-            <LogoBox domain={p.domain} name={p.university_name} muted={level === 'low'} />
-            <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Line 1: Logo + School name */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <LogoBox domain={p.domain} name={p.university_name} muted={level === 'low'} />
               <div style={{
-                fontSize: 13, fontWeight: 600, color: 'var(--cm-text, #0f172a)',
+                fontSize: 12.5, fontWeight: 600, color: 'var(--cm-text, #0f172a)',
                 lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                flex: 1, minWidth: 0,
               }} data-testid={`card-name-${p.program_id}`}>
                 {p.university_name}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                <StatusIndicator level={level} />
-                {reasonShort && reasonShort !== 'On track' && (
-                  <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }} data-testid={`card-context-${p.program_id}`}>
-                    · {reasonShort}
-                  </span>
-                )}
-              </div>
             </div>
+
+            {/* Line 2: Status — one signal only */}
+            <div style={{ paddingLeft: 32, marginTop: 3 }} data-testid={`card-status-${p.program_id}`}>
+              <StatusIndicator level={level} />
+            </div>
+
+            {/* Line 3: Context (optional, smaller, muted) */}
+            {context && (
+              <div style={{
+                paddingLeft: 32, marginTop: 1,
+                fontSize: 9.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
+                lineHeight: 1.3,
+              }} data-testid={`card-context-${p.program_id}`}>
+                {context}
+              </div>
+            )}
           </div>
         );
       }}
@@ -119,9 +126,10 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
     });
   }
 
+  const COL_GAP = 16;
   const gridStyle = isMobile
-    ? { display: "flex", gap: 12, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
-    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 };
+    ? { display: "flex", gap: COL_GAP, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
+    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: COL_GAP };
 
   const colStyle = isMobile ? { minWidth: 240, flexShrink: 0, scrollSnapAlign: "start" } : {};
 
@@ -131,7 +139,10 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
 
   return (
     <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate} onDragStart={onDragStart}>
-      <PipelineRowStyles />
+      <style>{`
+        .kb-card { transition: background 100ms ease-out, box-shadow 100ms ease-out; }
+        .kb-card:hover { background: rgba(241,245,249,0.5) !important; }
+      `}</style>
       <div style={gridStyle} className="kanban-grid" data-testid="kanban-board">
         {KANBAN_COLS.map(col => {
           const cards = columns[col.key];
@@ -159,28 +170,31 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                   }}
                   data-testid={`kanban-col-${col.key}`}
                 >
+                  {/* Accent line */}
                   <div style={{
                     height: 2, borderRadius: '8px 8px 0 0',
                     background: col.color,
-                    opacity: isHovering ? 0.8 : 0.3,
+                    opacity: isHovering ? 0.8 : 0.25,
                     transition: 'opacity 150ms ease-out',
                   }} />
 
-                  <div style={{ padding: '10px 10px 6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                  {/* Column header */}
+                  <div style={{ padding: '10px 10px 8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
                       <span style={{
-                        fontSize: 11, fontWeight: 700, letterSpacing: '0.02em',
+                        fontSize: 11, fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase',
                         color: isHovering ? 'var(--cm-text, #0f172a)' : 'var(--cm-text-2, #475569)',
                         transition: 'color 120ms ease-out',
                       }}>{col.label}</span>
-                      <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>({count})</span>
+                      <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>{count}</span>
                     </div>
                     {insight && !activeDragId && (
-                      <div style={{ ...FONT.stage, marginTop: 1 }}>{insight}</div>
+                      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)', marginTop: 2 }}>{insight}</div>
                     )}
                   </div>
 
-                  <div style={{ padding: '0 4px 8px', display: 'flex', flexDirection: 'column', minHeight: 60 }}>
+                  {/* Cards */}
+                  <div style={{ padding: '0 6px 10px', display: 'flex', flexDirection: 'column', gap: 2, minHeight: 60 }}>
                     {count > 0 ? (
                       cards.map((p, idx) => (
                         <div key={p.program_id} style={{ position: 'relative' }}>
@@ -198,8 +212,8 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                         </div>
                       ))
                     ) : (
-                      <div style={{ padding: '20px 10px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 10.5, color: 'var(--cm-text-4, #cbd5e1)', fontWeight: 500 }}>
+                      <div style={{ padding: '24px 10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 11, color: 'var(--cm-text-4, #cbd5e1)', fontWeight: 500 }} data-testid={`empty-col-${col.key}`}>
                           {isTarget ? 'Drop here' : getEmptyColCopy(col.key)}
                         </div>
                       </div>
