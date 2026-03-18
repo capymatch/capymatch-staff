@@ -235,7 +235,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                 )}
                 {rail && (
                   <div className="flex-shrink-0 w-[80px]" style={{ opacity: 0.2 }} data-testid="hero-progress-rail">
-                    <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
+                    <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} hideLabels />
                   </div>
                 )}
               </div>
