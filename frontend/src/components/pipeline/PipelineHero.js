@@ -213,7 +213,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               )}
             </div>
 
-            {/* School + match% + rail inline */}
+            {/* School + match% inline */}
             {!compact && (
               <div className="flex items-center gap-2 mt-1.5" data-testid="hero-school-row">
                 {p && (
@@ -233,11 +233,13 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                     {matchPct}%
                   </span>
                 )}
-                {rail && (
-                  <div className="flex-shrink-0 w-[80px]" style={{ opacity: 0.2 }} data-testid="hero-progress-rail">
-                    <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} hideLabels />
-                  </div>
-                )}
+              </div>
+            )}
+
+            {/* Stage progress rail — own row, proper width */}
+            {!compact && rail && (
+              <div className="mt-2" style={{ maxWidth: 320 }} data-testid="hero-progress-rail">
+                <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
               </div>
             )}
 
