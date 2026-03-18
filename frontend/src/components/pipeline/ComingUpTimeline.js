@@ -5,6 +5,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ComingUpTimelineEmptyState from "./ComingUpTimelineEmptyState";
+import "./pipeline-motion.css";
 
 /* ── Color per urgency ── */
 const URGENCY_DOT = {
@@ -119,7 +120,7 @@ export default function ComingUpTimeline({ items }) {
             <div
               key={item.programId}
               onClick={() => navigate(`/pipeline/${item.programId}`)}
-              className="rounded-lg sm:rounded-xl p-3.5 sm:p-4 cursor-pointer transition-all hover:shadow-md group"
+              className="rounded-lg sm:rounded-xl p-3.5 sm:p-4 cursor-pointer pm-stagger-card pm-card-hover group"
               style={{ background: `${dotColor}05`, border: `1px solid ${dotColor}14` }}
               data-testid={`timeline-card-${item.programId}`}
             >

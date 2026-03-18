@@ -308,7 +308,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
     - #6 Stronger card hierarchy: time label dominant, bold school, supportive text
     - #7 Board separator: "MANAGE ALL PROGRAMS" divider between timeline and Kanban
     - #8 Filter counts in pills: "All 2", "Attention 1", "Momentum 1"
-    - #9 Smooth slide/fade transitions on carousel + filter + glow color
+  - **Motion system (Complete — 2026-03-18)**:
+    - `pipeline-motion.css`: Reusable CSS keyframes + classes for all pipeline animations
+    - Hero 2-phase exit/enter: exit (opacity→0, translateY→-8px, 140ms) → enter (opacity 0→1, translateY 8px→0, 180ms, 40ms delay)
+    - Ambient glow crossfade (220ms), filter pill transitions (120ms), CTA press feedback (scale 0.96, 120ms)
+    - Timeline card stagger entry (translateX 16px→0, 40ms stagger), card hover lift (-2px)
+    - Empty state scale-in entrance (0.98→1), timeline empty fade-up
+    - All using transform+opacity only, cubic-bezier(0.22,1,0.36,1), 60fps
+    - Key file: `pipeline-motion.css`
   - Key files: `PipelineHero.js`, `PipelineHeroEmptyState.js`, `ComingUpTimeline.js`, `ComingUpTimelineEmptyState.js`, `PipelinePage.js`
 
 ---

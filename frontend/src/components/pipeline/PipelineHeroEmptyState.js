@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { CheckCircle2, ArrowRight, Compass } from "lucide-react";
+import "./pipeline-motion.css";
 
 const GREEN = "#34d399";
 const GREEN_GLOW = "rgba(52,211,153,0.08)";
@@ -15,11 +16,11 @@ export default function PipelineHeroEmptyState({ onTrackCount, navigate }) {
       className="rounded-xl sm:rounded-2xl overflow-hidden relative"
       style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)" }}
     >
-      {/* Soft green ambient glow */}
-      <div className="absolute inset-0 pointer-events-none"
+      {/* Green glow — crossfades from red/purple */}
+      <div className="absolute inset-0 pointer-events-none pm-glow"
         style={{ background: `radial-gradient(ellipse at 50% 40%, ${GREEN_GLOW} 0%, transparent 65%)` }} />
 
-      <div className="relative z-[1] flex flex-col items-center text-center px-6 sm:px-10 py-12 sm:py-16">
+      <div className="relative z-[1] flex flex-col items-center text-center px-6 sm:px-10 py-12 sm:py-16 pm-empty-enter">
         {/* Success icon */}
         <div
           className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-5"
@@ -65,7 +66,7 @@ export default function PipelineHeroEmptyState({ onTrackCount, navigate }) {
               if (board) board.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
             data-testid="hero-empty-primary-cta"
-            className="flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-full text-[13px] sm:text-sm font-bold text-white cursor-pointer transition-all"
+            className="flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-full text-[13px] sm:text-sm font-bold text-white cursor-pointer pm-btn-hover"
             style={{ background: GREEN, border: "none", fontFamily: "inherit", boxShadow: `0 4px 20px rgba(52,211,153,0.35)` }}
           >
             Review your schools
@@ -74,7 +75,7 @@ export default function PipelineHeroEmptyState({ onTrackCount, navigate }) {
           <button
             onClick={() => navigate("/schools")}
             data-testid="hero-empty-secondary-cta"
-            className="flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-full text-[13px] sm:text-sm font-semibold cursor-pointer transition-all"
+            className="flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-full text-[13px] sm:text-sm font-semibold cursor-pointer pm-btn-hover"
             style={{ color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontFamily: "inherit" }}
           >
             <Compass className="w-3.5 h-3.5" />

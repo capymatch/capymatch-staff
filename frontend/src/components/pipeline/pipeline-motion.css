@@ -1,0 +1,142 @@
+/* ═══════════════════════════════════════════════
+   Pipeline Motion System
+   
+   Easing: cubic-bezier(0.22, 1, 0.36, 1)
+   Duration: 140ms–240ms
+   Uses transform + opacity only (60fps)
+   ═══════════════════════════════════════════════ */
+
+:root {
+  --pm-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --pm-fast: 140ms;
+  --pm-normal: 180ms;
+  --pm-slow: 220ms;
+}
+
+/* ── Hero slide phases ── */
+.pm-slide-exit {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity var(--pm-fast) var(--pm-ease),
+              transform var(--pm-fast) var(--pm-ease);
+  will-change: transform, opacity;
+}
+
+.pm-slide-enter {
+  animation: pm-slide-in var(--pm-normal) var(--pm-ease) 40ms both;
+  will-change: transform, opacity;
+}
+
+.pm-slide-idle {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes pm-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Empty state entrance ── */
+.pm-empty-enter {
+  animation: pm-scale-in var(--pm-normal) var(--pm-ease) both;
+  will-change: transform, opacity;
+}
+
+@keyframes pm-scale-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Timeline card stagger ── */
+.pm-stagger-card {
+  animation: pm-card-in var(--pm-normal) var(--pm-ease) both;
+  will-change: transform, opacity;
+}
+.pm-stagger-card:nth-child(1) { animation-delay: 0ms; }
+.pm-stagger-card:nth-child(2) { animation-delay: 40ms; }
+.pm-stagger-card:nth-child(3) { animation-delay: 80ms; }
+.pm-stagger-card:nth-child(4) { animation-delay: 120ms; }
+
+@keyframes pm-card-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Timeline empty state ── */
+.pm-timeline-empty-enter {
+  animation: pm-fade-up var(--pm-normal) var(--pm-ease) both;
+  will-change: transform, opacity;
+}
+
+@keyframes pm-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── CTA press feedback ── */
+.pm-cta-press {
+  animation: pm-press 120ms var(--pm-ease);
+  will-change: transform;
+}
+
+@keyframes pm-press {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+/* ── Ambient glow transition ── */
+.pm-glow {
+  transition: background var(--pm-slow) var(--pm-ease);
+  will-change: background;
+}
+
+/* ── Filter pill active transition ── */
+.pm-pill {
+  transition: background 120ms var(--pm-ease),
+              color 120ms var(--pm-ease);
+}
+
+.pm-pill-badge {
+  transition: background 120ms var(--pm-ease),
+              color 120ms var(--pm-ease);
+}
+
+/* ── Hover: hero subtle brightness ── */
+.pm-hero-hover {
+  transition: filter 120ms var(--pm-ease);
+}
+.pm-hero-hover:hover {
+  filter: brightness(1.03);
+}
+
+/* ── Hover: timeline card lift ── */
+.pm-card-hover {
+  transition: transform 120ms var(--pm-ease),
+              box-shadow 120ms var(--pm-ease);
+}
+.pm-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* ── Hover: button scale ── */
+.pm-btn-hover {
+  transition: transform 100ms var(--pm-ease),
+              box-shadow 120ms var(--pm-ease);
+}
+.pm-btn-hover:hover {
+  transform: scale(1.02);
+}
+.pm-btn-hover:active {
+  transform: scale(0.97);
+}
+
+/* ── Nav button hover ── */
+.pm-nav-hover {
+  transition: background 120ms var(--pm-ease);
+}
+.pm-nav-hover:hover {
+  background: rgba(255,255,255,0.1) !important;
+}

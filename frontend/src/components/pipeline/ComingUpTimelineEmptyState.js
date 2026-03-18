@@ -4,12 +4,13 @@
  */
 import React from "react";
 import { CheckCircle2 } from "lucide-react";
+import "./pipeline-motion.css";
 
 export default function ComingUpTimelineEmptyState() {
   return (
     <div
       data-testid="coming-up-timeline-empty"
-      className="rounded-xl sm:rounded-2xl p-5 sm:p-7 mb-5"
+      className="rounded-xl sm:rounded-2xl p-5 sm:p-7 mb-5 pm-timeline-empty-enter"
       style={{ background: "var(--cm-surface, #ffffff)", border: "1px solid var(--cm-border, #e2e8f0)" }}
     >
       <div className="flex items-start gap-5 sm:gap-8">
