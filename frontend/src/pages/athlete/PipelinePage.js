@@ -14,6 +14,7 @@ import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
 import { PipelineHealthBadge } from "../../components/PipelineHealthBadge";
 import PipelineHero from "../../components/pipeline/PipelineHero";
+import ComingUpTimeline, { buildTimelineItems } from "../../components/pipeline/ComingUpTimeline";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -537,12 +538,61 @@ export default function PipelinePage() {
   const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;
   const nearLimit = schoolPct >= 0.8;
 
+  /* Classify for summary chips */
+  const URGENT_CATS = new Set(["coach_flag", "director_action", "past_due", "reply_needed", "due_today"]);
+  const MOMENTUM_CATS = new Set(["cooling_off", "first_outreach"]);
+  const urgentCount = actions.filter(a => URGENT_CATS.has(a.category)).length;
+  const momentumCount = actions.filter(a => MOMENTUM_CATS.has(a.category)).length;
+  const onTrackCount = actions.filter(a => a.category === "on_track").length;
+
+  /* Build timeline items for "Coming Up Next" */
+  const timelineItems = buildTimelineItems(allPrograms, topActionsMap, matchScores);
+
   return (
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
 
-      {/* 2-Tier Pipeline Hero */}
-      <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} usage={usage} />
+      {/* ═══ PAGE HEADER: Title + Summary Chips ═══ */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, padding: "4px 0" }} data-testid="pipeline-header">
+        <div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: "var(--cm-text, #0f172a)", margin: 0, letterSpacing: -0.5 }}>
+            Your Pipeline
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--cm-text-3, #94a3b8)", margin: "4px 0 0", fontWeight: 500 }}>
+            One focused hero for what matters now, plus a forward-looking timeline for what's next.
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginTop: 4 }} data-testid="summary-chips">
+          {urgentCount > 0 && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #64748b)", padding: "5px 12px", borderRadius: 20, background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }} data-testid="chip-attention">
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444" }} />
+              {urgentCount} needs attention
+            </span>
+          )}
+          {momentumCount > 0 && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #64748b)", padding: "5px 12px", borderRadius: 20, background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }} data-testid="chip-momentum">
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#818cf8" }} />
+              {momentumCount} losing momentum
+            </span>
+          )}
+          {onTrackCount > 0 && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #64748b)", padding: "5px 12px", borderRadius: 20, background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }} data-testid="chip-on-track">
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981" }} />
+              {onTrackCount} on track
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ═══ HERO: What to do now ═══ */}
+      <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} />
+
+      {/* ═══ COMING UP NEXT: What's next ═══ */}
+      {timelineItems.length > 0 && (
+        <div style={{ marginTop: 20, marginBottom: 20 }}>
+          <ComingUpTimeline items={timelineItems} />
+        </div>
+      )}
 
       {/* Upgrade prompt — shows at 80%+ of limit */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (
