@@ -394,6 +394,18 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 10/10 features verified (iteration_174)
   - Key files: `PipelinePage.js`, `PipelineHero.js`
 
+- **7-Part UI/UX Refinement Pass (Complete — 2026-03-18)**
+  - #1 Hero Simplification: Replaced "What to do next" paragraph + helper hints with direct two-line command (action title + timing signal)
+  - #2 Priority Card Refinement: Confirmed max 3-line format with natural, concise language
+  - #3 Time-Based Urgency: Integrated timing signals via getHeroTiming (hero) and getDueInfo (cards)
+  - #4 Coming Up Cleanup: Replaced paragraph descriptions with single-line action phrases ("Follow up — due today", "Check in — no activity in 12 days", "Send first message")
+  - #5 Visual Hierarchy: De-emphasized Coming Up section — removed container border/bg, reduced text sizes (13px→10px), lowered contrast (--cm-text-4)
+  - #6 Micro-signals: Added getMicroSignal function — "Now overdue", "Due today", "New" badges next to attention level dot on priority cards
+  - #7 Global Rules: All card copy now answers "What should I do?" — no paragraphs anywhere
+  - New helpers: getHeroAction, getHeroTiming, getMicroSignal; removed HELPER_HINTS
+  - 12/12 features verified (iteration_175)
+  - Key files: `PipelineHero.js`, `PipelinePage.js`, `ComingUpTimeline.js`
+
 ---
 
 ## Backlog
