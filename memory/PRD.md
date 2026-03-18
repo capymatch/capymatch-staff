@@ -335,6 +335,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - All animations use transform+opacity only, 60fps, cubic-bezier(0.22,1,0.36,1)
   - 7/7 features verified (iteration_168)
   - Key files: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles), `pipeline-motion.css`
+- **Kanban Board Premium Refinement Pass (Complete — 2026-03-18)**
+  - Column headers: simplified inline count (no pill badge), baseline-aligned label+count, tighter gap, subtext at readable contrast
+  - Drag interaction: scale(1.04) rotate(1.5deg) for physical lift, soft diffuse shadow (24px+8px blur), cursor grabbing, z-index 9999
+  - Column drop state: stronger teal tint (0.05), visible border (0.2), inner glow (20px), header contrast boost, top bar glow to full opacity
+  - Card state hierarchy: urgent (4px left border + inset shadow), inactive (0.72 opacity), normal (clean base)
+  - Visual consistency: 200-250ms transitions with hero-matched cubic-bezier(0.22,1,0.36,1), softer hover shadows (6px+2px)
+  - Post-drop settle: 400ms animation with 0.25 teal glow → normal
+  - Lane border radius: 8→10px matching card radius
+  - Top color bars: 0.65 default opacity → 1.0 on drag-over with glow
+  - 10/10 features verified (iteration_169)
+  - Key files: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles)
 
 ---
 
