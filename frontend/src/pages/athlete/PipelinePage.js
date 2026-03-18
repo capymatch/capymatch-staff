@@ -221,18 +221,51 @@ const COL_TO_STAGE = {
   offer: { journey_stage: "offer", recruiting_status: "Offer" },
 };
 
-const OWNER_STYLES = {
-  athlete: { bg: "rgba(13,148,136,0.1)", color: "#0d9488", label: "Athlete" },
-  parent:  { bg: "rgba(139,92,246,0.1)", color: "#8b5cf6", label: "Parent" },
-  coach:   { bg: "rgba(245,158,11,0.1)", color: "#d97706", label: "Coach" },
-  shared:  { bg: "rgba(59,130,246,0.1)", color: "#3b82f6", label: "Shared" },
+/* ── Card status detection + visual cues ── */
+const STATUS_VISUAL = {
+  coach_flag:     { border: "rgba(239,68,68,0.22)", chip: "#ef4444", chipBg: "rgba(239,68,68,0.08)", label: "Coach task" },
+  director_action:{ border: "rgba(239,68,68,0.22)", chip: "#ef4444", chipBg: "rgba(239,68,68,0.08)", label: "Action needed" },
+  past_due:       { border: "rgba(239,68,68,0.22)", chip: "#ef4444", chipBg: "rgba(239,68,68,0.08)", label: "Overdue" },
+  reply_needed:   { border: "rgba(59,130,246,0.18)", chip: "#3b82f6", chipBg: "rgba(59,130,246,0.07)", label: "Awaiting reply" },
+  due_today:      { border: "rgba(245,158,11,0.22)", chip: "#d97706", chipBg: "rgba(245,158,11,0.08)", label: "Due today" },
+  cooling_off:    { border: "rgba(245,158,11,0.18)", chip: "#d97706", chipBg: "rgba(245,158,11,0.07)", label: "No recent engagement" },
+  first_outreach: { border: "rgba(129,140,248,0.18)", chip: "#818cf8", chipBg: "rgba(129,140,248,0.07)", label: "No contact yet" },
+  on_track:       { border: "transparent", chip: "#10b981", chipBg: "rgba(16,185,129,0.06)", label: "On track" },
 };
+const NEUTRAL_STATUS = { border: "transparent", chip: null, chipBg: null, label: null };
 
-function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction }) {
-  const due = getDueInfo(p);
-  const hasUrgent = due?.urgent && due?.color === "#dc2626";
-  const ownerStyle = topAction ? (OWNER_STYLES[topAction.owner] || OWNER_STYLES.athlete) : null;
-  const showAction = topAction && topAction.action_key !== "no_action_needed";
+/* ── Short insight from top action (max 1 line) ── */
+function getShortInsight(topAction) {
+  if (!topAction || topAction.action_key === "no_action_needed") return null;
+  const map = {
+    coach_assigned_action: "Coach assigned a follow-up",
+    overdue_follow_up: "Follow-up is overdue",
+    stale_reply: "Awaiting reply",
+    first_outreach_needed: "Ready for first contact",
+    relationship_cooling: "No recent engagement",
+    due_today_follow_up: "Follow-up due today",
+  };
+  return map[topAction.action_key] || topAction.label || null;
+}
+
+/* ── Column header contextual insights ── */
+function getColInsight(colKey, count) {
+  if (count === 0) return "";
+  const insights = {
+    added: `${count} ready to outreach`,
+    outreach: `${count} waiting on coaches`,
+    in_conversation: "Active conversations",
+    campus_visit: count === 1 ? "Visit planned" : `${count} visits planned`,
+    offer: count === 1 ? "Offer to review" : `${count} offers to review`,
+  };
+  return insights[colKey] || "";
+}
+
+function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction, isHighlighted }) {
+  const category = topAction?.category || "on_track";
+  const sv = STATUS_VISUAL[category] || NEUTRAL_STATUS;
+  const insight = getShortInsight(topAction);
+  const inlineMeta = [p.division, p.conference].filter(Boolean).join(" \u00b7 ");
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -244,36 +277,43 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
           onClick={() => navigate(`/pipeline/${p.program_id}`)}
           className="kanban-card"
           style={{
-            background: "var(--cm-surface)", borderRadius: 2,
-            padding: "14px 14px 12px", cursor: "grab", transition: "box-shadow 0.15s ease",
-            boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.12)" : undefined,
+            background: "var(--cm-surface)",
+            borderRadius: 10,
+            padding: "12px 14px",
+            cursor: "grab",
+            borderLeft: sv.border !== "transparent" ? `3px solid ${sv.border}` : "3px solid transparent",
+            boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.12)" : isHighlighted ? `0 0 0 1px ${sv.border}` : "none",
             opacity: snapshot.isDragging ? 0.95 : 1,
             ...provided.draggableProps.style,
           }}
           data-testid={`kanban-card-${p.program_id}`}
         >
+          {/* Row 1: Logo + Name + Metadata */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={p.logo_url} size={28} className="rounded-[6px] mt-[2px] flex-shrink-0" />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
-                {hasUrgent && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ef4444", flexShrink: 0, marginTop: 5 }} />}
-              </div>
-              <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 2 }}>{[p.division, p.conference].filter(Boolean).join(" · ")}</div>
-              {healthMetrics && (
-                <div style={{ marginTop: 5 }}>
-                  <PipelineHealthBadge metrics={healthMetrics} variant="compact" />
-                </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
+              {inlineMeta && (
+                <div style={{ fontSize: 11, color: "var(--cm-text-4, var(--cm-text-3))", marginTop: 2 }}>{inlineMeta}</div>
               )}
             </div>
           </div>
-          {showAction && (
-            <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 8, background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)" }} data-testid={`top-action-${p.program_id}`}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "var(--cm-text)" }}>{topAction.label}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 4, background: ownerStyle.bg, color: ownerStyle.color, textTransform: "uppercase", letterSpacing: "0.05em" }} data-testid={`owner-${p.program_id}`}>{ownerStyle.label}</span>
-              </div>
-              <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 3, lineHeight: 1.4 }}>{topAction.explanation}</div>
+
+          {/* Row 2: Status chip */}
+          {sv.label && category !== "on_track" && (
+            <div style={{ marginTop: 8 }}>
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+                background: sv.chipBg, color: sv.chip,
+                letterSpacing: "0.02em",
+              }}>{sv.label}</span>
+            </div>
+          )}
+
+          {/* Row 3: Short insight (max 1 line) */}
+          {insight && (
+            <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 6, lineHeight: 1.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {insight}
             </div>
           )}
         </div>
@@ -282,7 +322,7 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, topActionsMap }) {
+function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, topActionsMap, highlightedIds }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -294,44 +334,70 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
 
   const gridStyle = isMobile
     ? { display: "flex", gap: 10, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
-    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 };
+    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 };
 
   const colStyle = isMobile ? { minWidth: 240, flexShrink: 0, scrollSnapAlign: "start" } : {};
+  const hlSet = new Set(highlightedIds || []);
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div style={gridStyle} className="kanban-grid" data-testid="kanban-board">
-        {KANBAN_COLS.map(col => (
-          <Droppable droppableId={col.key} key={col.key}>
-            {(provided, snapshot) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                style={{
-                  background: snapshot.isDraggingOver ? "var(--cm-surface-3, var(--cm-surface-2))" : "var(--cm-surface-2)",
-                  borderRadius: 4, minHeight: 200, overflow: "hidden",
-                  transition: "background 0.2s ease",
-                  outline: snapshot.isDraggingOver ? "2px dashed rgba(13,148,136,0.3)" : "none",
-                  ...colStyle,
-                }}
-              >
-                <div style={{ height: 3, background: col.color }} />
-                <div style={{ padding: "14px 14px 10px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--cm-text-2)" }}>{col.label}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-4)" }}>{columns[col.key].length}</span>
+        {KANBAN_COLS.map(col => {
+          const count = columns[col.key].length;
+          const insight = getColInsight(col.key, count);
+          return (
+            <Droppable droppableId={col.key} key={col.key}>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  style={{
+                    background: snapshot.isDraggingOver ? "var(--cm-surface-3, rgba(13,148,136,0.02))" : "transparent",
+                    borderRadius: 8, minHeight: 200, overflow: "hidden",
+                    transition: "background 0.2s ease",
+                    outline: snapshot.isDraggingOver ? "2px dashed rgba(13,148,136,0.2)" : "none",
+                    ...colStyle,
+                  }}
+                >
+                  {/* Lane top bar */}
+                  <div style={{ height: 3, background: col.color, borderRadius: "8px 8px 0 0" }} />
+
+                  {/* Header with insight */}
+                  <div style={{ padding: "12px 8px 8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--cm-text-2)" }}>{col.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-4)" }}>{count}</span>
+                    </div>
+                    {insight && (
+                      <div style={{ fontSize: 10, color: "var(--cm-text-4, var(--cm-text-3))", marginTop: 2, fontWeight: 500 }}>{insight}</div>
+                    )}
+                  </div>
+
+                  {/* Cards */}
+                  <div style={{ padding: "0 4px 10px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
+                    {count > 0 ? (
+                      columns[col.key].map((p, idx) => (
+                        <KanbanCard
+                          key={p.program_id}
+                          program={p}
+                          matchScore={matchScores[p.program_id]}
+                          navigate={navigate}
+                          index={idx}
+                          healthMetrics={healthMap[p.program_id]}
+                          topAction={topActionsMap[p.program_id]}
+                          isHighlighted={hlSet.has(p.program_id)}
+                        />
+                      ))
+                    ) : (
+                      <div style={{ padding: "28px 14px", textAlign: "center", fontSize: 11, color: "var(--cm-text-4)", fontWeight: 500, fontStyle: "italic" }}>No schools yet</div>
+                    )}
+                    {provided.placeholder}
+                  </div>
                 </div>
-                <div style={{ padding: "0 8px 10px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
-                  {columns[col.key].length > 0 ? (
-                    columns[col.key].map((p, idx) => <KanbanCard key={p.program_id} program={p} matchScore={matchScores[p.program_id]} navigate={navigate} index={idx} healthMetrics={healthMap[p.program_id]} topAction={topActionsMap[p.program_id]} />)
-                  ) : (
-                    <div style={{ padding: "30px 14px", textAlign: "center", fontSize: 12, color: "var(--cm-text-4)", fontWeight: 500 }}>No schools yet</div>
-                  )}
-                  {provided.placeholder}
-                </div>
-              </div>
-            )}
-          </Droppable>
-        ))}
+              )}
+            </Droppable>
+          );
+        })}
       </div>
     </DragDropContext>
   );
@@ -395,7 +461,15 @@ function CommittedBanner({ programs, navigate }) {
 function PipelineStyles() {
   return (
     <style>{`
-      .kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+      .kanban-card {
+        transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 120ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+      }
+      .kanban-card:active { transform: translateY(0); }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
       .kanban-grid::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 4px; }
       @media (max-width: 768px) {
@@ -548,6 +622,11 @@ export default function PipelinePage() {
   /* Build timeline items for "Coming Up Next" */
   const timelineItems = buildTimelineItems(allPrograms, topActionsMap, matchScores);
 
+  /* Build highlighted program IDs for board connection (#8) */
+  const heroIds = actions.filter(a => URGENT_CATS.has(a.category) || MOMENTUM_CATS.has(a.category)).map(a => a.program?.program_id).filter(Boolean);
+  const timelineIds = timelineItems.map(t => t.programId);
+  const highlightedIds = [...new Set([...heroIds, ...timelineIds])];
+
   return (
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
@@ -638,7 +717,7 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} topActionsMap={topActionsMap} />
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (
