@@ -397,16 +397,16 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                   }}
                 >
                   {/* Lane top bar */}
-                  <div style={{ height: 3, background: col.color, borderRadius: "8px 8px 0 0", boxShadow: snapshot.isDraggingOver ? `0 0 8px ${col.color}44` : "none", transition: "box-shadow 200ms cubic-bezier(0.22,1,0.36,1)" }} />
+                  <div style={{ height: 2, background: col.color, opacity: 0.8, borderRadius: "8px 8px 0 0", boxShadow: snapshot.isDraggingOver ? `0 0 8px ${col.color}44` : "none", transition: "box-shadow 200ms cubic-bezier(0.22,1,0.36,1)" }} />
 
-                  {/* Header — #3 hierarchy: stage name strong, subtext muted */}
-                  <div style={{ padding: "14px 10px 10px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--cm-text)" }}>{col.label}</span>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: "var(--cm-text-4)", padding: "0 5px", borderRadius: 4, background: "var(--cm-border, rgba(0,0,0,0.04))" }}>{count}</span>
+                  {/* Header — hierarchy: stage name dominant, count clear, subtext supportive */}
+                  <div style={{ padding: "16px 10px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--cm-text, #1e293b)" }}>{col.label}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--cm-text-3, #64748b)", padding: "1px 7px", borderRadius: 5, background: "var(--cm-border, rgba(0,0,0,0.05))" }}>{count}</span>
                     </div>
                     {insight && (
-                      <div style={{ fontSize: 10, color: "var(--cm-text-4)", marginTop: 3, fontWeight: 500 }}>{insight}</div>
+                      <div style={{ fontSize: 10.5, color: "var(--cm-text-3, #64748b)", marginTop: 5, fontWeight: 500, opacity: 0.78 }}>{insight}</div>
                     )}
                   </div>
 
