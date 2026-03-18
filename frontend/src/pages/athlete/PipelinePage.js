@@ -275,17 +275,19 @@ function getEmptyColCopy(colKey) {
 
 function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction, isHighlighted, justDroppedId }) {
   const category = topAction?.category || "on_track";
-  const isPassive = category === "on_track" || category === "cooling_off" || category === "first_outreach";
+  const isUrgent = ["coach_flag", "director_action", "past_due", "due_today"].includes(category);
+  const isPassive = !isUrgent && (category === "on_track" || category === "cooling_off" || category === "first_outreach");
   const sv = STATUS_VISUAL[category] || NEUTRAL_STATUS;
   const insight = getShortInsight(topAction);
   const inlineMeta = [p.division, p.conference].filter(Boolean).join(" \u00b7 ");
 
-  const baseShadow = "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)";
+  const baseShadow = "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)";
   const activeBorder = sv.border !== "transparent" ? sv.border : "var(--cm-border, #e2e8f0)";
   const heroBorder = isHighlighted ? `${sv.chip || "rgba(13,148,136,0.3)"}` : null;
 
   let cardShadow = baseShadow;
-  if (isHighlighted && !isPassive) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}, 0 0 8px ${heroBorder}22`;
+  if (isUrgent) cardShadow = `${baseShadow}, inset 0 0 0 1px ${sv.border}`;
+  else if (isHighlighted && !isPassive) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}, 0 0 8px ${heroBorder}22`;
   else if (isHighlighted) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}55`;
 
   const isJustDropped = justDroppedId === p.program_id;
@@ -297,9 +299,9 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
         const libStyle = provided.draggableProps.style || {};
         const baseTransform = libStyle.transform || '';
         const composedTransform = isActiveDrag
-          ? `${baseTransform} scale(1.03) rotate(0.5deg)`.trim()
+          ? `${baseTransform} scale(1.04) rotate(1.5deg)`.trim()
           : baseTransform || undefined;
-        const dragShadow = "0 20px 40px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.1), 0 0 0 1px rgba(13,148,136,0.1)";
+        const dragShadow = "0 24px 48px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(13,148,136,0.08)";
 
         return (
           <div
@@ -315,10 +317,10 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
               borderRadius: 10,
               padding: "12px 14px",
               cursor: isActiveDrag ? "grabbing" : "grab",
-              border: `1px solid ${isActiveDrag ? "rgba(13,148,136,0.15)" : isPassive ? "var(--cm-border, #e8ecf1)" : activeBorder}`,
-              borderLeft: sv.border !== "transparent" && !isActiveDrag ? `3px solid ${sv.border}` : isActiveDrag ? "3px solid rgba(13,148,136,0.25)" : undefined,
+              border: `1px solid ${isActiveDrag ? "rgba(13,148,136,0.12)" : isPassive ? "var(--cm-border, #e8ecf1)" : activeBorder}`,
+              borderLeft: sv.border !== "transparent" && !isActiveDrag ? `${isUrgent ? 4 : 3}px solid ${sv.border}` : isActiveDrag ? "3px solid rgba(13,148,136,0.2)" : undefined,
               boxShadow: isActiveDrag ? dragShadow : cardShadow,
-              opacity: isActiveDrag ? 1 : isPassive && !isHighlighted ? 0.85 : 1,
+              opacity: isActiveDrag ? 1 : isPassive && !isHighlighted ? 0.72 : 1,
               zIndex: isActiveDrag ? 9999 : undefined,
             }}
             data-testid={`kanban-card-${p.program_id}`}
@@ -388,25 +390,25 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   style={{
-                    background: snapshot.isDraggingOver ? "rgba(13,148,136,0.03)" : "transparent",
-                    borderRadius: 8, minHeight: 200, overflow: "hidden",
-                    transition: "background 200ms cubic-bezier(0.22,1,0.36,1), box-shadow 200ms cubic-bezier(0.22,1,0.36,1), border-color 200ms cubic-bezier(0.22,1,0.36,1)",
-                    border: snapshot.isDraggingOver ? "1.5px solid rgba(13,148,136,0.12)" : "1.5px solid transparent",
-                    boxShadow: snapshot.isDraggingOver ? "inset 0 1px 12px rgba(13,148,136,0.05)" : "none",
+                    background: snapshot.isDraggingOver ? "rgba(13,148,136,0.05)" : "transparent",
+                    borderRadius: 10, minHeight: 200, overflow: "hidden",
+                    transition: "background 250ms cubic-bezier(0.22,1,0.36,1), box-shadow 250ms cubic-bezier(0.22,1,0.36,1), border-color 250ms cubic-bezier(0.22,1,0.36,1)",
+                    border: snapshot.isDraggingOver ? "1.5px solid rgba(13,148,136,0.2)" : "1.5px solid transparent",
+                    boxShadow: snapshot.isDraggingOver ? "inset 0 2px 20px rgba(13,148,136,0.06), 0 0 0 1px rgba(13,148,136,0.04)" : "none",
                     ...colStyle,
                   }}
                 >
                   {/* Lane top bar */}
-                  <div style={{ height: 2, background: col.color, opacity: 0.8, borderRadius: "8px 8px 0 0", boxShadow: snapshot.isDraggingOver ? `0 0 8px ${col.color}44` : "none", transition: "box-shadow 200ms cubic-bezier(0.22,1,0.36,1)" }} />
+                  <div style={{ height: 2, background: col.color, opacity: snapshot.isDraggingOver ? 1 : 0.65, borderRadius: "10px 10px 0 0", boxShadow: snapshot.isDraggingOver ? `0 0 12px ${col.color}55` : "none", transition: "opacity 250ms ease, box-shadow 250ms ease" }} />
 
-                  {/* Header — hierarchy: stage name dominant, count clear, subtext supportive */}
+                  {/* Header */}
                   <div style={{ padding: "16px 10px 14px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--cm-text, #1e293b)" }}>{col.label}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "var(--cm-text-3, #64748b)", padding: "1px 7px", borderRadius: 5, background: "var(--cm-border, rgba(0,0,0,0.05))" }}>{count}</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: snapshot.isDraggingOver ? "var(--cm-text, #0f172a)" : "var(--cm-text-2, #334155)", transition: "color 250ms ease" }}>{col.label}</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 600, color: "var(--cm-text-3, #94a3b8)" }}>{count}</span>
                     </div>
                     {insight && (
-                      <div style={{ fontSize: 10.5, color: "var(--cm-text-3, #64748b)", marginTop: 5, fontWeight: 500, opacity: 0.78 }}>{insight}</div>
+                      <div style={{ fontSize: 10.5, color: "var(--cm-text-3, #94a3b8)", marginTop: 4, fontWeight: 500 }}>{insight}</div>
                     )}
                   </div>
 
@@ -502,24 +504,24 @@ function PipelineStyles() {
   return (
     <style>{`
       .kanban-card {
-        transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1),
-                    box-shadow 120ms cubic-bezier(0.22, 1, 0.36, 1),
-                    opacity 120ms cubic-bezier(0.22, 1, 0.36, 1),
-                    border-color 120ms cubic-bezier(0.22, 1, 0.36, 1);
+        transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+                    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1),
+                    border-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
       }
       .kanban-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04) !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04) !important;
         opacity: 1 !important;
       }
       .kanban-card:active { transform: translateY(0); }
       .kanban-card-settled {
-        animation: kanban-settle 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation: kanban-settle 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
       @keyframes kanban-settle {
-        0%   { box-shadow: 0 0 0 3px rgba(13,148,136,0.22), 0 4px 20px rgba(13,148,136,0.1); }
-        60%  { box-shadow: 0 0 0 2px rgba(13,148,136,0.1), 0 2px 8px rgba(13,148,136,0.04); }
-        100% { box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02); }
+        0%   { box-shadow: 0 0 0 3px rgba(13,148,136,0.25), 0 6px 24px rgba(13,148,136,0.12); }
+        50%  { box-shadow: 0 0 0 2px rgba(13,148,136,0.12), 0 3px 12px rgba(13,148,136,0.05); }
+        100% { box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03); }
       }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
       .kanban-grid::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 4px; }
