@@ -299,9 +299,9 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
         const libStyle = provided.draggableProps.style || {};
         const baseTransform = libStyle.transform || '';
         const composedTransform = isActiveDrag
-          ? `${baseTransform} scale(1.04) rotate(1deg)`.trim()
+          ? `${baseTransform} scale(1.02)`.trim()
           : baseTransform || undefined;
-        const dragShadow = "0 0 0 1px rgba(255,255,255,0.5), 0 28px 52px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.08)";
+        const dragShadow = "0 0 0 1px rgba(255,255,255,0.5), 0 24px 48px rgba(0,0,0,0.1), 0 8px 20px rgba(0,0,0,0.06)";
 
         return (
           <div
@@ -360,7 +360,7 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, topActionsMap, highlightedIds, justDroppedId }) {
+function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate, healthMap, topActionsMap, highlightedIds, justDroppedId, dragDest }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -378,11 +378,12 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
   const hlSet = new Set(highlightedIds || []);
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate}>
       <div style={gridStyle} className="kanban-grid" data-testid="kanban-board">
         {KANBAN_COLS.map(col => {
           const count = columns[col.key].length;
           const insight = getColInsight(col.key, count);
+          const insertAt = dragDest && dragDest.droppableId === col.key && dragDest.sourceId !== col.key ? dragDest.index : null;
           return (
             <Droppable droppableId={col.key} key={col.key}>
               {(provided, snapshot) => {
@@ -419,27 +420,30 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                     )}
                   </div>
 
-                  {/* Cards — #5 more vertical spacing */}
+                  {/* Cards */}
                   <div style={{ padding: "0 6px 12px", display: "flex", flexDirection: "column", gap: 8, minHeight: 60 }}>
                     {count > 0 ? (
                       columns[col.key].map((p, idx) => (
-                        <KanbanCard
-                          key={p.program_id}
-                          program={p}
-                          matchScore={matchScores[p.program_id]}
-                          navigate={navigate}
-                          index={idx}
-                          healthMetrics={healthMap[p.program_id]}
-                          topAction={topActionsMap[p.program_id]}
-                          isHighlighted={hlSet.has(p.program_id)}
-                          justDroppedId={justDroppedId}
-                        />
+                        <div key={p.program_id} style={{ position: 'relative' }}>
+                          {insertAt === idx && <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -5, left: 4, right: 4, height: 2, background: col.color, borderRadius: 1, zIndex: 10 }} />}
+                          <KanbanCard
+                            program={p}
+                            matchScore={matchScores[p.program_id]}
+                            navigate={navigate}
+                            index={idx}
+                            healthMetrics={healthMap[p.program_id]}
+                            topAction={topActionsMap[p.program_id]}
+                            isHighlighted={hlSet.has(p.program_id)}
+                            justDroppedId={justDroppedId}
+                          />
+                        </div>
                       ))
-                    ) : (
+                    ) : insertAt === null ? (
                       <div style={{ padding: "28px 12px", textAlign: "center" }}>
                         <div style={{ fontSize: 11, color: "var(--cm-text-4)", fontWeight: 500 }}>{getEmptyColCopy(col.key)}</div>
                       </div>
-                    )}
+                    ) : null}
+                    {insertAt !== null && insertAt >= count && <div className="kanban-insert-line" data-testid="insertion-line" style={{ height: 2, margin: '4px 4px 0', background: col.color, borderRadius: 1, position: 'relative', zIndex: 10 }} />}
                     {provided.placeholder}
                   </div>
                 </div>
@@ -522,6 +526,26 @@ function PipelineStyles() {
         opacity: 1 !important;
       }
       .kanban-card:active { transform: translateY(0); }
+      .kanban-insert-line {
+        animation: insert-line-in 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .kanban-insert-line::before,
+      .kanban-insert-line::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: inherit;
+        transform: translateY(-50%);
+      }
+      .kanban-insert-line::before { left: -2px; }
+      .kanban-insert-line::after { right: -2px; }
+      @keyframes insert-line-in {
+        from { opacity: 0; }
+        to { opacity: 0.45; }
+      }
       .kanban-card-settled {
         animation: kanban-settle 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
       }
@@ -569,6 +593,7 @@ export default function PipelinePage() {
   const [collapsedArchived, setCollapsedArchived] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [justDroppedId, setJustDroppedId] = useState(null);
+  const [dragDest, setDragDest] = useState(null);
   const navigate = useNavigate();
   const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
 
@@ -616,6 +641,7 @@ export default function PipelinePage() {
 
   /* ── Drag & Drop handler ── */
   const handleDragEnd = useCallback(async (result) => {
+    setDragDest(null);
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId) return;
@@ -643,6 +669,12 @@ export default function PipelinePage() {
       fetchAll(); // revert
     }
   }, [fetchAll]);
+
+  const handleDragUpdate = useCallback((update) => {
+    setDragDest(update.destination
+      ? { droppableId: update.destination.droppableId, index: update.destination.index, sourceId: update.source.droppableId }
+      : null);
+  }, []);
 
   /* ── Add school with limit check ── */
   const handleAddSchool = useCallback(() => {
@@ -782,7 +814,7 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} justDroppedId={justDroppedId} />
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} justDroppedId={justDroppedId} dragDest={dragDest} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (

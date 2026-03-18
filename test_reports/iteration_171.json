@@ -1,0 +1,100 @@
+{
+  "summary": "CapyMatch Kanban D&D Insertion Line System - All 10 features verified. CONFIRMED: Insertion line appears with 2px height, column accent color at 45% opacity, 120ms fade-in animation, and 6px circular dot endpoints. Card uses scale(1.02) with NO rotation during drag, visible with z-index 9999. Library handles card shifting. Drop confirms with toast 'Moved to X'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Console",
+        "issues": ["Minor warning: 'Updating border borderLeft' - style property conflict during rerender. Not critical but could be cleaned up."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_171.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "insertAt calculation correct: only shows when dragDest.sourceId !== col.key (cross-column drag only)",
+    "Insertion line uses absolute positioning (top: -5) for between-card placement",
+    "Insertion line uses relative positioning for end-of-list placement",
+    "onDragUpdate correctly tracks destination via dragDest state",
+    "Card composedTransform uses scale(1.02) with NO rotate - changed from previous 1.04 rotate(1deg)",
+    "Insertion line CSS has ::before/::after pseudo-elements with 6px circular dots",
+    "Animation uses 120ms cubic-bezier(0.16, 1, 0.3, 1) with opacity fade 0→0.45",
+    "Column activation uses gradient background + inset shadow + scale(1.008)",
+    "Settle animation is 350ms with neutral shadows (no teal)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only)",
+    "frontend": "100% (10/10 features pass)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "athlete123"
+    }
+  },
+  "seed_data_creation": "None - used existing seed data. Cards moved during testing for verification.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Kanban D&D insertion line system fully verified. KEY VALUES: scale(1.02) NO rotate, insertion line 2px height with column color at 45% opacity, 120ms animation, 6px dot endpoints (border-radius 50%), shows only in TARGET column (not source). Card positions after test: Added(0), Outreach(3), Talking(2-3), Visit(1), Offered(1).",
+  "verified_features": {
+    "kanban_board_5_lanes": "✅ PASS - All 5 lanes visible: Added, Outreach, Talking, Visit, Offered",
+    "card_visible_during_drag": "✅ PASS - Card opacity=1, z-index=9999, visible floating above board",
+    "card_scale_102_no_rotate": "✅ PASS - Transform: matrix(1.02, 0, 0, 1.02, 0, 0) - scale(1.02) with NO rotation",
+    "insertion_line_appears": "✅ PASS - Insertion line appears in TARGET column during cross-column drag",
+    "insertion_line_height_2px": "✅ PASS - Line height is exactly 2px",
+    "insertion_line_column_color": "✅ PASS - Uses column accent color (e.g., rgb(168, 85, 247) for Offered)",
+    "insertion_line_opacity_045": "✅ PASS - Opacity is 0.45 (45%)",
+    "insertion_line_animation_120ms": "✅ PASS - Animation: 0.12s cubic-bezier(0.16, 1, 0.3, 1)",
+    "insertion_line_dot_endpoints": "✅ PASS - ::before/::after have border-radius: 50%, size: 6px x 6px",
+    "insertion_line_only_target": "✅ PASS - Insertion line shows only in target column (filtered by sourceId !== col.key)",
+    "insertion_line_disappears": "✅ PASS - Insertion line disappears when dragDest becomes null or after drop",
+    "toast_moved_to_x": "✅ PASS - Toast 'Moved to X' appears after successful drop",
+    "column_activation_gradient": "✅ PASS - Column uses linear-gradient background during drag-over",
+    "column_activation_scale": "✅ PASS - Column scale(1.008) when receiving drag",
+    "column_activation_inner_glow": "✅ PASS - Inset shadow for inner glow effect",
+    "header_contrast_boost": "✅ PASS - Header color boosts on isDraggingOver",
+    "card_click_navigation": "✅ PASS - Card click navigates to /pipeline/{program_id}",
+    "empty_column_state": "✅ PASS - Empty columns show state text, hide when insertion line appears"
+  },
+  "insertion_line_verification": {
+    "height": "2px",
+    "border_radius": "1px",
+    "background": "Column accent color (e.g., rgb(168, 85, 247) for purple/Offered)",
+    "opacity": "0.45",
+    "animation": "0.12s (120ms) cubic-bezier(0.16, 1, 0.3, 1) both insert-line-in",
+    "z_index": "10",
+    "dot_endpoints": {
+      "before_radius": "50%",
+      "before_size": "6px x 6px",
+      "after_radius": "50%",
+      "after_size": "6px x 6px"
+    },
+    "position_between_cards": "absolute, top: -5",
+    "position_end_of_list": "relative"
+  },
+  "card_drag_verification": {
+    "transform": "matrix(1.02, 0, 0, 1.02, 0, 0) - scale(1.02) NO rotation",
+    "cursor": "grabbing",
+    "z_index": "9999",
+    "opacity": "1 (fully visible)",
+    "box_shadow": "rgba(255, 255, 255, 0.5) 0px 0px 0px 1px (white halo) + rgba(0, 0, 0, ...) shadows"
+  },
+  "code_locations_verified": {
+    "insertion_line_calculation": "line 386 (insertAt = dragDest && droppableId === col.key && sourceId !== col.key)",
+    "insertion_line_between_cards": "line 428 (position: absolute, top: -5)",
+    "insertion_line_end_of_list": "line 446 (position: relative)",
+    "insertion_line_css": "lines 529-548 (120ms animation, 6px dots, opacity 0.45)",
+    "card_drag_transform": "line 301-302 (composedTransform = scale(1.02))",
+    "drag_shadow": "line 304 (white halo + neutral shadows)",
+    "handleDragUpdate": "lines 673-677 (sets dragDest state)",
+    "handleDragEnd": "lines 643-671 (clears dragDest, triggers toast)"
+  }
+}
