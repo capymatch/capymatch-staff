@@ -529,6 +529,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 12/12 features verified (iteration_184)
   - Key files: `PriorityBoard.js`
 
+- **Pipeline List Visual Polish V2 (Complete — 2026-03-18)**
+  - 24px logo containers (down from 26px) with 18px inner logo, rounded-sm corners
+  - Tighter density: 8px row padding (from 11px), marginTop:1 for metadata, more rows visible per viewport
+  - CTA alignment: `alignItems: flex-start` + `paddingTop: 1` on logo/CTA to align with action text baseline
+  - Coming Up distinction: subtle bg tint (rgba(241,245,249,0.35)) with 8px border-radius, padding, negative margin
+  - Softer separators: rgba(226,232,240,0.6) — reduced from solid borders
+  - OwnerTag component: 8px font, 0.6 opacity colors — smaller/less dominant
+  - Normalized spacing: 24px uniform gap between sections (down from 28px)
+  - 11/11 features verified (iteration_185)
+  - Key files: `PriorityBoard.js`
+
 ---
 
 ## Backlog
