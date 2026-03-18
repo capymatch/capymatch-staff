@@ -1,12 +1,15 @@
 /**
- * PipelineHero — Single-card carousel styled to match Journey PrimaryHeroCard.
+ * PipelineHero — Single-card carousel styled to match the Journey page header.
  *
- * Dark card, horizontal accent bar, compact icon+content layout.
+ * Dark card (#1e1e2e), horizontal accent bar, large logo + name + badges,
+ * metadata row, progress rail with labels.
  * Filter pills + carousel arrows preserved at top.
  */
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Target } from "lucide-react";
 import UniversityLogo from "../UniversityLogo";
+import { ProgressRail } from "../journey/ProgressRail";
+import { RAIL_STAGES } from "../journey/constants";
 import PipelineCapacityStrip from "./PipelineCapacityStrip";
 
 /* ── Classification ── */
@@ -24,19 +27,38 @@ function classifyActions(actions) {
   return { urgent, momentum, onTrackCount };
 }
 
-/* ── Stage labels ── */
-const STAGE_LABELS = {
-  added: "Added", outreach: "Outreach", in_conversation: "Talking",
-  campus_visit: "Visit", offer: "Offer", committed: "Committed",
-  needs_outreach: "Added", waiting_on_reply: "Outreach", overdue: "Outreach",
-};
-
 /* ── Accent colors by category ── */
 const CAT_ACCENT = {
   coach_flag: "#ef4444", director_action: "#ef4444", past_due: "#ef4444",
   reply_needed: "#f59e0b", due_today: "#f59e0b",
-  first_outreach: "#818cf8", cooling_off: "#818cf8",
+  first_outreach: "#0d9488", cooling_off: "#818cf8",
+  on_track: "#0d9488",
 };
+
+/* ── Priority label mapping ── */
+const PRIORITY_LABEL = {
+  coach_flag: "Coach Flag", director_action: "Director Action",
+  past_due: "Overdue", reply_needed: "Reply Needed", due_today: "Due Today",
+  first_outreach: "First Outreach", cooling_off: "Cooling Off",
+  on_track: "On Track",
+};
+
+/* ── Build rail object from program stage ── */
+function buildRail(program) {
+  if (!program) return null;
+  const stage = program.journey_stage || program.board_group;
+  const stageMap = { needs_outreach: "added", waiting_on_reply: "outreach", overdue: "outreach" };
+  const active = stageMap[stage] || stage || "added";
+  const activeIdx = RAIL_STAGES.findIndex(s => s.key === active);
+
+  const stages = {};
+  RAIL_STAGES.forEach((s, i) => {
+    if (i < activeIdx) stages[s.key] = true;
+    if (i === activeIdx) stages[s.key] = true;
+  });
+
+  return { active, stages, line_fill: active };
+}
 
 export default function PipelineHero({ actions, matchScores, navigate, usage }) {
   const [filter, setFilter] = useState("all");
@@ -78,10 +100,9 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
   const p = current?.program;
   const ms = current ? (current.matchScore || matchScores[p?.program_id]) : null;
   const matchPct = ms?.match_score ?? current?.match_score;
-  const accent = CAT_ACCENT[current?.category] || "#818cf8";
-  const isUrgent = current ? URGENT_CATS.has(current.category) : false;
-  const tierLabel = isUrgent ? "Needs attention now" : "Keep momentum going";
-  const stageLabel = p ? (STAGE_LABELS[p.journey_stage] || STAGE_LABELS[p.board_group] || "") : "";
+  const accent = CAT_ACCENT[current?.category] || "#0d9488";
+  const priorityLabel = PRIORITY_LABEL[current?.category] || "";
+  const rail = buildRail(p);
 
   /* Filter pills */
   const pills = [
@@ -90,203 +111,207 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
     { key: "momentum", label: "Losing Momentum", count: momentum.length, countBg: "#6366f1" },
   ].filter((pill) => pill.key === "all" || pill.count > 0);
 
-  /* Metadata pills for current school */
-  const metaPills = [];
-  if (p?.division) metaPills.push(p.division);
-  if (stageLabel) metaPills.push(stageLabel);
-  if (p?.conference) metaPills.push(p.conference);
-  if (matchPct != null) metaPills.push(`${matchPct}% match`);
-
   return (
     <div
       data-testid="pipeline-hero"
-      style={{ background: "#1e1e2e", borderRadius: 10, overflow: "hidden", marginBottom: 20 }}
+      style={{
+        background: "#1e1e2e",
+        borderRadius: 12,
+        overflow: "hidden",
+        marginBottom: 20,
+        border: "1px solid rgba(255,255,255,0.04)",
+        position: "relative",
+      }}
     >
-      {/* ── Top accent bar (horizontal, matching Journey hero) ── */}
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${accent}, ${accent}33)` }} />
+      {/* ── Top accent bar (matching Journey header) ── */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
 
-      {/* ═══ TOP BAR: Filter pills + Carousel nav ═══ */}
-      <div
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "10px 16px 10px 20px",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-        }}
-        data-testid="hero-top-bar"
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }} data-testid="hero-filter-pills">
-          {pills.map((pill) => (
-            <button
-              key={pill.key}
-              onClick={() => handleFilter(pill.key)}
-              data-testid={`hero-filter-${pill.key}`}
-              style={{
-                padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600,
-                cursor: "pointer", border: "1px solid", fontFamily: "inherit",
-                display: "flex", alignItems: "center", gap: 6, transition: "all 0.15s",
-                background: filter === pill.key ? "rgba(255,255,255,0.08)" : "transparent",
-                borderColor: filter === pill.key ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
-                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.45)",
-              }}
-            >
-              {pill.label}
-              <span style={{
-                fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 6,
-                background: filter === pill.key ? pill.countBg : "rgba(255,255,255,0.06)",
-                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.35)",
-              }}>{pill.count}</span>
-            </button>
-          ))}
-        </div>
-        {total > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }} data-testid="hero-carousel-nav">
-            <button onClick={prev} data-testid="carousel-prev" style={{ width: 26, height: 26, borderRadius: 6, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.45)" }}>
-              <ChevronLeft style={{ width: 13, height: 13 }} />
-            </button>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", fontVariantNumeric: "tabular-nums", minWidth: 28, textAlign: "center" }} data-testid="carousel-counter">
-              {safeIdx + 1}/{total}
-            </span>
-            <button onClick={next} data-testid="carousel-next" style={{ width: 26, height: 26, borderRadius: 6, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.45)" }}>
-              <ChevronRight style={{ width: 13, height: 13 }} />
-            </button>
+      <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
+
+        {/* ═══ TOP ROW: Filter pills + Carousel nav ═══ */}
+        <div
+          className="flex items-center justify-between mb-4"
+          data-testid="hero-top-bar"
+        >
+          <div className="flex items-center gap-2 flex-wrap" data-testid="hero-filter-pills">
+            {pills.map((pill) => (
+              <button
+                key={pill.key}
+                onClick={() => handleFilter(pill.key)}
+                data-testid={`hero-filter-${pill.key}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors"
+                style={{
+                  background: filter === pill.key ? "rgba(255,255,255,0.08)" : "transparent",
+                  borderColor: filter === pill.key ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                  color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.4)",
+                  cursor: "pointer", fontFamily: "inherit",
+                }}
+              >
+                {pill.label}
+                <span
+                  className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md"
+                  style={{
+                    background: filter === pill.key ? pill.countBg : "rgba(255,255,255,0.06)",
+                    color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.35)",
+                  }}
+                >{pill.count}</span>
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+          {total > 1 && (
+            <div className="flex items-center gap-2" data-testid="hero-carousel-nav">
+              <button onClick={prev} data-testid="carousel-prev"
+                className="w-7 h-7 rounded-lg flex items-center justify-center border transition-colors hover:bg-white/5"
+                style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-xs font-bold tabular-nums min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="carousel-counter">
+                {safeIdx + 1}/{total}
+              </span>
+              <button onClick={next} data-testid="carousel-next"
+                className="w-7 h-7 rounded-lg flex items-center justify-center border transition-colors hover:bg-white/5"
+                style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
 
-      {/* ═══ MAIN CONTENT: Journey-style layout ═══ */}
-      {current && (
-        <div style={{ padding: "16px 20px" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-            {/* University logo (icon position) */}
-            {p && (
-              <div
-                style={{
-                  width: 40, height: 40, borderRadius: 12,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0, marginTop: 2, overflow: "hidden",
-                  background: "rgba(255,255,255,0.04)",
-                }}
-              >
+        {/* ═══ SCHOOL IDENTITY: Logo + Name + Badges (matching Journey) ═══ */}
+        {current && (
+          <>
+            <div className="flex items-start gap-4 mb-3">
+              {p && (
                 <UniversityLogo
-                  domain={p.domain} name={p.university_name}
+                  name={p.university_name}
                   logoUrl={ms?.logo_url || p.logo_url}
-                  size={32} className="rounded-[8px]"
+                  domain={ms?.domain || p.domain}
+                  size={48}
+                  className="rounded-lg"
                 />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+                  <h1
+                    className="text-lg sm:text-xl font-extrabold tracking-tight truncate"
+                    style={{ color: "#ffffff" }}
+                    data-testid="hero-school-name"
+                  >
+                    {p?.university_name || "Take Action"}
+                  </h1>
+                  {/* Priority badge */}
+                  {priorityLabel && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold"
+                      style={{ background: `${accent}18`, color: accent }}
+                      data-testid="hero-priority-badge"
+                    >
+                      {priorityLabel}
+                    </span>
+                  )}
+                  {/* Match score badge */}
+                  {matchPct != null && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold"
+                      style={{
+                        background: "rgba(255,255,255,0.06)",
+                        color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "#94a3b8",
+                      }}
+                      data-testid="hero-match-pct"
+                    >
+                      <Target className="w-3 h-3" /> {matchPct}% Match
+                    </span>
+                  )}
+                </div>
+                {/* Metadata row */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  {p?.division && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-700/20 text-teal-500">
+                      {p.division}
+                    </span>
+                  )}
+                  {p?.conference && (
+                    <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>{p.conference}</span>
+                  )}
+                  {p?.location && (
+                    <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{p.location}</span>
+                  )}
+                </div>
               </div>
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Kicker */}
-              <p
-                style={{
-                  fontSize: 10, fontWeight: 700, textTransform: "uppercase",
-                  letterSpacing: "0.12em", marginBottom: 4, color: accent, margin: 0,
-                }}
-                data-testid="hero-kicker"
-              >
-                {tierLabel}
+            </div>
+
+            {/* ═══ ACTION CONTEXT: "What to do next" ═══ */}
+            <div
+              className="ml-16 mb-4 rounded-lg px-4 py-3"
+              style={{ background: `${accent}0a`, border: `1px solid ${accent}20` }}
+              data-testid="hero-advice-box"
+            >
+              <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: accent }}>
+                What to do next
               </p>
-
-              {/* Title */}
-              <h3
-                style={{
-                  fontSize: 14, fontWeight: 700, marginBottom: 4, color: "#ffffff",
-                  margin: "0 0 4px", lineHeight: 1.35,
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}
-                data-testid="hero-school-name"
-              >
-                {current.title || p?.university_name || "Take Action"}
-              </h3>
-
-              {/* Subtitle */}
-              <p
-                style={{
-                  fontSize: 12, color: "rgba(255,255,255,0.5)", margin: "0 0 12px",
-                  lineHeight: 1.5,
-                }}
-                data-testid="hero-subtitle"
-              >
+              <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }} data-testid="hero-advice-text">
                 {current.context || "Review this program and take the next step."}
               </p>
-
-              {/* Metadata pills */}
-              {metaPills.length > 0 && (
-                <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-                  {metaPills.map((pill, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        fontSize: 9, fontWeight: 500, padding: "2px 8px", borderRadius: 99,
-                        background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)",
-                      }}
-                    >
-                      {pill}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* CTA */}
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleCTA}
                   data-testid="hero-cta-btn"
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    padding: "0 12px", height: 32, borderRadius: 6,
-                    fontSize: 12, fontWeight: 600, color: "#fff",
-                    background: accent, border: "none", cursor: "pointer",
-                    fontFamily: "inherit", transition: "opacity 0.15s",
-                    boxShadow: `0 2px 8px ${accent}40`,
-                  }}
+                  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium text-white transition-colors shadow-md"
+                  style={{ backgroundColor: accent }}
                 >
                   {current.cta?.label || "Take Action"}
-                  <ArrowRight style={{ width: 13, height: 13 }} />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => p && navigate(`/pipeline/${p.program_id}`)}
                   data-testid="hero-secondary-cta"
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    padding: "0 12px", height: 32, borderRadius: 6,
-                    fontSize: 12, fontWeight: 600,
-                    color: "rgba(255,255,255,0.6)", background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    cursor: "pointer", fontFamily: "inherit", transition: "opacity 0.15s",
-                  }}
+                  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors"
+                  style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
                 >
                   View School
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* ═══ FOOTER: On-track + Capacity ═══ */}
-      <div style={{ padding: "0 20px 14px" }}>
-        {onTrackCount > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0" }} data-testid="hero-on-track-summary">
-            <CheckCircle2 style={{ width: 14, height: 14, color: "#4ade80", flexShrink: 0, opacity: 0.6 }} />
-            <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.3)" }}>
-              {onTrackCount} program{onTrackCount !== 1 ? "s" : ""} on track
-            </span>
-          </div>
+            {/* ═══ PROGRESS RAIL (same as Journey page) ═══ */}
+            {rail && (
+              <div data-testid="hero-progress-rail">
+                <ProgressRail
+                  rail={rail}
+                  onStageClick={(stageKey) => {
+                    if (p) navigate(`/pipeline/${p.program_id}`);
+                  }}
+                />
+              </div>
+            )}
+          </>
         )}
-        {usage && (
-          <PipelineCapacityStrip
-            current={usage.used || 0}
-            limit={usage.unlimited ? 0 : usage.limit || 0}
-          />
-        )}
+
+        {/* ═══ FOOTER: On-track + Capacity ═══ */}
+        <div style={{ marginTop: current ? 16 : 0 }}>
+          {onTrackCount > 0 && (
+            <div className="flex items-center gap-2 py-2" data-testid="hero-on-track-summary">
+              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#4ade80", opacity: 0.6 }} />
+              <span className="text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>
+                {onTrackCount} program{onTrackCount !== 1 ? "s" : ""} on track
+              </span>
+            </div>
+          )}
+          {usage && (
+            <PipelineCapacityStrip
+              current={usage.used || 0}
+              limit={usage.unlimited ? 0 : usage.limit || 0}
+            />
+          )}
+        </div>
       </div>
 
       {/* ── No actionable items state ── */}
       {total === 0 && onTrackCount > 0 && (
-        <div style={{ padding: "40px 28px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          <CheckCircle2 style={{ width: 28, height: 28, color: "#4ade80" }} />
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>You're all clear</span>
-          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
+        <div className="flex flex-col items-center gap-3 py-10 px-7">
+          <CheckCircle2 className="w-7 h-7" style={{ color: "#4ade80" }} />
+          <span className="text-base font-bold text-white">You're all clear</span>
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
             All {onTrackCount} programs are on track — nothing needs your attention.
           </span>
         </div>
