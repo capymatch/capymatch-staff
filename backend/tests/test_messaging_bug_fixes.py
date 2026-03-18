@@ -21,7 +21,7 @@ import uuid
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://kanban-preview-4.preview.emergentagent.com"
+    BASE_URL = "https://capymatch-kanban.preview.emergentagent.com"
 
 # Test credentials
 COACH_EMAIL = "coach.williams@capymatch.com"
