@@ -24,18 +24,18 @@ function getCardContext(reasonShort) {
   return reasonShort;
 }
 
-/* ── Time: calm informational signal from timingLabel ── */
+/* ── Time: normalized format ── */
 function getCardTime(timingLabel) {
   if (!timingLabel) return null;
   const lower = timingLabel.toLowerCase();
   const m = lower.match(/overdue (\d+)d/);
-  if (m) return `${m[1]}d past due`;
+  if (m) return `${m[1]}d overdue`;
   if (lower === 'due today') return 'Due today';
   if (lower === 'tomorrow') return 'Due tomorrow';
   const inM = lower.match(/in (\d+) days/);
   if (inM) return `Due in ${inM[1]}d`;
   const nrM = lower.match(/no response in (\d+)/);
-  if (nrM) return `Last contact ${nrM[1]}d ago`;
+  if (nrM) return `${nrM[1]}d since contact`;
   if (lower === 'no contact yet') return 'No outreach yet';
   return null;
 }
@@ -45,6 +45,9 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
   const level = attn?.attentionLevel || 'low';
   const context = getCardContext(attn?.reasonShort);
   const time = getCardTime(attn?.timingLabel);
+  // Max 2 lines below status: show context OR time, or both if both exist
+  const showContext = !!context;
+  const showTime = !!time;
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
 
@@ -76,7 +79,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
                 : isDropping
                   ? 'transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms ease-out'
                   : undefined,
-              padding: 12,
+              padding: 14,
               cursor: isLifted ? 'grabbing' : 'grab',
               background: isLifted ? '#fff' : undefined,
               boxShadow: isLifted
@@ -101,27 +104,27 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
               </div>
             </div>
 
-            {/* Line 2: Status — one signal only */}
-            <div style={{ paddingLeft: 32, marginTop: 3 }} data-testid={`card-status-${p.program_id}`}>
+            {/* Line 2: Status */}
+            <div style={{ paddingLeft: 32, marginTop: 5 }} data-testid={`card-status-${p.program_id}`}>
               <StatusIndicator level={level} />
             </div>
 
-            {/* Line 3: Context (state, muted) */}
-            {context && (
+            {/* Line 3: Context (optional, clearly secondary) */}
+            {showContext && (
               <div style={{
-                paddingLeft: 32, marginTop: 2,
-                fontSize: 10, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)',
+                paddingLeft: 32, marginTop: 3,
+                fontSize: 9.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
                 lineHeight: 1.3,
               }} data-testid={`card-context-${p.program_id}`}>
                 {context}
               </div>
             )}
 
-            {/* Line 4: Time (weakest, informational) */}
-            {time && (
+            {/* Line 4: Time (optional, weakest) */}
+            {showTime && (
               <div style={{
-                paddingLeft: 32, marginTop: 1,
-                fontSize: 9, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
+                paddingLeft: 32, marginTop: showContext ? 1 : 3,
+                fontSize: 9, fontWeight: 500, color: 'var(--cm-text-4, rgba(148,163,184,0.55))',
                 lineHeight: 1.3,
               }} data-testid={`card-time-${p.program_id}`}>
                 {time}
