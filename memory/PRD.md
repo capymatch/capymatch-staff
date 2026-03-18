@@ -367,14 +367,18 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 10/10 features verified (iteration_171)
 
 - **Kanban D&D Final Polish — 6-Point Interaction System (Complete — 2026-03-18)**
-  - (1) Insertion Line Glow: box-shadow 10px+4px using currentColor, 7px dot endpoints with 6px glow, opacity increased to 0.6
-  - (2) Magnetic Alignment: 50ms ease-out CSS transition on dragged card transform — creates smooth trailing effect
-  - (3) Pre-Drop Tension: transition increases to 80ms when hovering over a cross-column target (draggingOver !== sourceCol)
-  - (4) Drop Animation: scale(0.97) squeeze on isDropAnimating with 280ms cubic-bezier(0.22,1,0.36,1)
-  - (5) Column Confirmation Pulse: pulsingColumnId state + kanban-col-pulse CSS class (400ms) on destination column after drop
-  - (6) Post-Drop Feedback: enhanced settle animation from 350ms→1000ms with 4-stage keyframe (0%/25%/60%/100%), justDroppedId timeout extended to 1200ms
-  - Cleaned up duplicate kanban-card-settled from pipeline-motion.css
-  - 9/9 features verified + runtime Playwright checks (iteration_172)
+  - SUPERSEDED by Kanban Board Interaction Redesign below.
+
+- **Kanban Board Interaction Redesign (Complete — 2026-03-18)**
+  - Full redesign focused on: fast scanning, clean dragging, reduced cognitive load
+  - **Attention-level system**: Cards classified as High (coach_flag, director_action, past_due, due_today), Medium (reply_needed, cooling_off, first_outreach), Low (on_track)
+  - **Card design**: Max 3-4 lines — school name + attention badge, primary reason, next action → owner. No logos, no dense stats.
+  - **Attention grouping**: Cards sorted by attention level within each column. Group headers ("Needs Attention", "Keep Moving", "On Track") between groups. Headers fade during drag.
+  - **Drag behavior**: Simplified floating preview (name + attention only), scale(1.03), elevated shadow. Background cards fade to 60% opacity. Columns show dashed borders as drop zones.
+  - **Drop interaction**: Column highlight on hover, insertion line with dot endpoints (80ms), snap animation (160ms), column pulse (160ms), card settle (300ms)
+  - **Motion**: All animations 80-160ms (settle 300ms). No 220ms+ timings. Clarity over decoration.
+  - **Code cleanup**: Removed STATUS_VISUAL, NEUTRAL_STATUS, getShortInsight. Added getAttentionLevel, ATTENTION_META, ATTENTION_SORT, ATTENTION_GROUP_LABEL, getCardReason. Removed matchScore/healthMetrics/isHighlighted props from cards.
+  - 10/10 features verified (iteration_173)
   - Key files: `PipelinePage.js`, `pipeline-motion.css`
 
 ---
