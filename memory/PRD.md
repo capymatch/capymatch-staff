@@ -435,6 +435,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - No data/logic/content changes — layout and spacing only
   - Key files: `PipelinePage.js` (PriorityBoard, PriorityCard, PipelineStyles)
 
+- **PipelinePage.js Refactoring (Complete — 2026-03-18)**
+  - Extracted 6 components from 921-line monolith → 279-line orchestrator
+  - KanbanBoard.js (213 lines): KanbanCard + KanbanBoard with drag-and-drop
+  - PriorityBoard.js (95 lines): PriorityCard + PriorityBoard with 3 sections
+  - PipelineStyles.js (73 lines): CSS-in-JS animations
+  - UpcomingTasksSection.js (52 lines): Tasks section
+  - CommittedBanner.js (31 lines): Committed programs banner
+  - pipeline-constants.js (61 lines): Shared KANBAN_COLS, COL_TO_STAGE, ATTENTION_META, helpers
+  - Removed dead code: MeasurablesGuidanceBanner, DIV_TAG_STYLES, PipelineHealthBadge import, healthMap state
+  - 12/12 regression features verified (iteration_179)
+
 ---
 
 ## Backlog
