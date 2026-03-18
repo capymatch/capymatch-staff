@@ -1,0 +1,77 @@
+{
+  "summary": "Kanban 4-Line Card Layout Testing Complete - All 11/11 features verified. Cards show 4-line layout: (1) logo+name, (2) status dot+label, (3) context in medium gray (#94a3b8, 10px), (4) time in lightest gray (#cbd5e1, 9px). Time signal is NEVER red - all use calm neutral gray. No CTAs, no 'Overdue' labels on cards (converted to 'Xd past due'). Visual hierarchy maintained: name > status > context > time. Priority view unchanged with full action UI.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_189.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "getCardContext() correctly filters out timing/overdue text and 'on track' - only shows state info like 'Ready for first contact', 'Coach assigned a task'",
+    "getCardTime() correctly converts: 'Overdue Xd' → 'Xd past due', 'Due today' stays, 'Tomorrow' → 'Due tomorrow', 'No contact yet' → 'No outreach yet'",
+    "Context line styling correct: fontSize: 10px, color: var(--cm-text-3, #94a3b8) = rgb(148, 163, 184)",
+    "Time line styling correct: fontSize: 9px, color: var(--cm-text-4, #cbd5e1) = rgb(203, 213, 225)",
+    "Visual hierarchy properly implemented: name (12.5px) > status (dot+label) > context (10px) > time (9px)",
+    "data-testid attributes present: card-name-*, card-status-*, card-context-*, card-time-*"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (11/11 features pass)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "athlete123"
+    }
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Kanban 4-line card layout complete. All visual styling verified: (1) Line 1: logo+name (12.5px), (2) Line 2: status dot+label, (3) Line 3: context (10px, #94a3b8) - shows 'Ready for first contact', 'Coach assigned a task', (4) Line 4: time (9px, #cbd5e1) - shows 'Xd past due', 'Due today', 'No outreach yet'. Time is NEVER red - all calm gray. No CTAs on Kanban cards. Priority view unchanged with Take Action, Re-engage, Start Outreach, timing labels, You tags.",
+  "verified_features": {
+    "1_4line_layout": "PASS - Cards show name → status → context (optional) → time (optional)",
+    "2_status_line_strongest": "PASS - Status line has colored dot + label (Needs attention, On track, etc.)",
+    "3_context_line_styling": "PASS - fontSize: 10px, color: rgb(148, 163, 184) = #94a3b8",
+    "4_time_line_styling": "PASS - fontSize: 9px, color: rgb(203, 213, 225) = #cbd5e1",
+    "5_time_never_red": "PASS - All time text uses calm neutral gray, no red",
+    "6_no_ctas_on_cards": "PASS - No buttons, no action text on Kanban cards",
+    "7_no_overdue_labels": "PASS - 'Overdue Xd' converted to 'Xd past due' format",
+    "8_visual_hierarchy": "PASS - name (12.5px) > status > context (10px) > time (9px) - progressively lighter",
+    "9_card_containers": "PASS - white bg, rounded corners (10px), shadow, hover state",
+    "10_drag_and_drop": "PASS - Cards have cursor: grab for drag affordance",
+    "11_cards_clickable": "PASS - Card click navigates to /pipeline/{program_id}"
+  },
+  "priority_view_unchanged": {
+    "take_action_buttons": "PASS - Present",
+    "reengage_buttons": "PASS - Present",
+    "start_outreach_buttons": "PASS - Present",
+    "timing_labels": "PASS - Shows 'Overdue Xd', 'Due today'",
+    "you_tags": "PASS - Present"
+  },
+  "context_lines_found": [
+    "Ready for first contact",
+    "Coach assigned a task"
+  ],
+  "time_lines_found": [
+    "1d past due",
+    "Due today",
+    "No outreach yet",
+    "15d past due",
+    "2d past due",
+    "10d past due",
+    "2d past due"
+  ],
+  "test_data": {
+    "total_kanban_cards": 7,
+    "cards_with_context": 2,
+    "cards_with_time": 7
+  }
+}

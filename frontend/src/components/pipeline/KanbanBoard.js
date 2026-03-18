@@ -15,19 +15,36 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-/* ── Context filter: state-only, no timing, no duplicates of status ── */
+/* ── Context: state-only, describes what's happening ── */
 function getCardContext(reasonShort) {
   if (!reasonShort) return null;
   const lower = reasonShort.toLowerCase();
-  if (lower.includes('overdue') || lower.includes('due ') || lower.includes('days since') || lower.includes('no response')) return null;
-  if (lower === 'on track' || lower === 'no recent engagement') return null;
+  if (lower.includes('overdue') || lower.includes('due ') || lower.includes('days since')) return null;
+  if (lower === 'on track') return null;
   return reasonShort;
 }
 
-/* ── Card: strict 3-line layout ── */
+/* ── Time: calm informational signal from timingLabel ── */
+function getCardTime(timingLabel) {
+  if (!timingLabel) return null;
+  const lower = timingLabel.toLowerCase();
+  const m = lower.match(/overdue (\d+)d/);
+  if (m) return `${m[1]}d past due`;
+  if (lower === 'due today') return 'Due today';
+  if (lower === 'tomorrow') return 'Due tomorrow';
+  const inM = lower.match(/in (\d+) days/);
+  if (inM) return `Due in ${inM[1]}d`;
+  const nrM = lower.match(/no response in (\d+)/);
+  if (nrM) return `Last contact ${nrM[1]}d ago`;
+  if (lower === 'no contact yet') return 'No outreach yet';
+  return null;
+}
+
+/* ── Card: 4-line layout ── */
 function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
   const level = attn?.attentionLevel || 'low';
   const context = getCardContext(attn?.reasonShort);
+  const time = getCardTime(attn?.timingLabel);
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
 
@@ -89,14 +106,25 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
               <StatusIndicator level={level} />
             </div>
 
-            {/* Line 3: Context (optional, smaller, muted) */}
+            {/* Line 3: Context (state, muted) */}
             {context && (
               <div style={{
-                paddingLeft: 32, marginTop: 1,
-                fontSize: 9.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
+                paddingLeft: 32, marginTop: 2,
+                fontSize: 10, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)',
                 lineHeight: 1.3,
               }} data-testid={`card-context-${p.program_id}`}>
                 {context}
+              </div>
+            )}
+
+            {/* Line 4: Time (weakest, informational) */}
+            {time && (
+              <div style={{
+                paddingLeft: 32, marginTop: 1,
+                fontSize: 9, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
+                lineHeight: 1.3,
+              }} data-testid={`card-time-${p.program_id}`}>
+                {time}
               </div>
             )}
           </div>
