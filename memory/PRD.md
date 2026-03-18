@@ -381,6 +381,19 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 10/10 features verified (iteration_173)
   - Key files: `PipelinePage.js`, `pipeline-motion.css`
 
+- **Dual-Mode Pipeline System (Complete — 2026-03-18)**
+  - Built a complete dual-mode recruiting OS: Priority View (default) + Pipeline View
+  - **Toggle**: [Priority] [Pipeline] at top-right, persists to localStorage, instant switch
+  - **Priority View**: Action Board with 3 sections (Needs Attention, Coming Up, On Track), responsive grid layout
+  - **Priority Cards**: Action-first, max 3 lines (● HIGH/MED/LOW, action title with school name, → timing + owner)
+  - **Pipeline Cards**: 4-line format (school name, stage label, attention indicator, action)
+  - **Peek Row**: "Also needs attention" — 2-4 items below hero, format "School · Action", excludes current hero, click switches hero
+  - **Shared Components**: Hero, peek row, Coming Up timeline shared between both views — same data source, zero duplication
+  - **Microcopy cleanup**: Removed "Coach task open" → "Follow up needed", "Keep Momentum Going" → "Keep Moving", "losing momentum" → "keep moving"
+  - **New helpers**: getActionTitle, getShortAction; updated getCardReason with correct API action_keys (send_intro_email, reengage_relationship)
+  - 10/10 features verified (iteration_174)
+  - Key files: `PipelinePage.js`, `PipelineHero.js`
+
 ---
 
 ## Backlog
