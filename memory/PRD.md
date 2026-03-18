@@ -557,6 +557,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 12/12 features verified (iteration_187)
   - Key files: `KanbanBoard.js`, `pipeline-constants.js`
 
+- **Kanban Card Container Affordance Restored (Complete — 2026-03-18)**
+  - White bg, 10px border-radius, subtle border + box-shadow (0 1px 2px)
+  - 12px card padding, 8px gap between cards, cursor:grab
+  - Hover: increased shadow + border-color
+  - Drag: scale(1.02) + elevated shadow (12px+4px blur)
+  - Content unchanged: logo + name + status + optional context only
+  - 11/11 features verified (iteration_188)
+  - Key files: `KanbanBoard.js`
+
 ---
 
 ## Backlog
