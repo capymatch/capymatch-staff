@@ -346,6 +346,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Top color bars: 0.65 default opacity → 1.0 on drag-over with glow
   - 10/10 features verified (iteration_169)
   - Key files: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles)
+- **Kanban D&D Magnetic Interaction System (Complete — 2026-03-18)**
+  - Magnetic columns: scale(1.008) on isDraggingOver — column "reaches" toward dragged card
+  - Column reaction: replaced solid teal tint with subtle gradient overlay (rgba(0,0,0,0.004→0.016)) + neutral inner glow (inset 24px rgba(0,0,0,0.025)), transparent border — no boxy feel
+  - Header+column unity: stage label contrast boosts, count weight 600→700 + color boost, subtext color boost — entire column reacts as one connected surface
+  - Dragged card: rotate(1deg) intentional not playful, white halo shadow (rgba(255,255,255,0.5)) + neutral blur (28px+8px), neutral border (rgba(0,0,0,0.06)), no teal borderLeft during drag
+  - Reduced accent noise: ALL teal removed from drag/drop/settle feedback — neutral shadows only. Colored elements limited to card status borders, top bars, status chips
+  - Motion system: 220ms cubic-bezier(0.16,1,0.3,1) ease-out everywhere, settle 350ms, smooth and intentional
+  - Top color bars: 0.5 default → 0.85 on drag-over with soft glow
+  - 10/10 features + teal removal audit verified (iteration_170)
+  - Key files: `PipelinePage.js`, `pipeline-motion.css`
 
 ---
 
