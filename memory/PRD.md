@@ -366,6 +366,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Fixed card disappearing bug: removed overflow:hidden, transform:scale(1)→none to prevent CSS containing block
   - 10/10 features verified (iteration_171)
 
+- **Kanban D&D Final Polish — 6-Point Interaction System (Complete — 2026-03-18)**
+  - (1) Insertion Line Glow: box-shadow 10px+4px using currentColor, 7px dot endpoints with 6px glow, opacity increased to 0.6
+  - (2) Magnetic Alignment: 50ms ease-out CSS transition on dragged card transform — creates smooth trailing effect
+  - (3) Pre-Drop Tension: transition increases to 80ms when hovering over a cross-column target (draggingOver !== sourceCol)
+  - (4) Drop Animation: scale(0.97) squeeze on isDropAnimating with 280ms cubic-bezier(0.22,1,0.36,1)
+  - (5) Column Confirmation Pulse: pulsingColumnId state + kanban-col-pulse CSS class (400ms) on destination column after drop
+  - (6) Post-Drop Feedback: enhanced settle animation from 350ms→1000ms with 4-stage keyframe (0%/25%/60%/100%), justDroppedId timeout extended to 1200ms
+  - Cleaned up duplicate kanban-card-settled from pipeline-motion.css
+  - 9/9 features verified + runtime Playwright checks (iteration_172)
+  - Key files: `PipelinePage.js`, `pipeline-motion.css`
+
 ---
 
 ## Backlog
