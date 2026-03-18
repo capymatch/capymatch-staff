@@ -427,6 +427,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 11/11 features verified (iteration_178)
   - Key files: `PipelinePage.js`, `pipeline-motion.css`
 
+- **Priority Board Layout Refinement (Complete — 2026-03-18)**
+  - Needs Attention: single-column full-width layout (task-list feel), 10px card gap, 12px header margin
+  - Coming Up Soon: 2-column grid desktop, collapses to 1-column on mobile via `.priority-grid-coming-up` media query
+  - On Track: compact grid (minmax 220px), tighter 6px gap, smaller card padding
+  - Visual hierarchy: 28px section gap, header opacity 1.0/0.75/0.6 for high/med/low, card opacity 0.88 for subdued sections
+  - No data/logic/content changes — layout and spacing only
+  - Key files: `PipelinePage.js` (PriorityBoard, PriorityCard, PipelineStyles)
+
 ---
 
 ## Backlog
