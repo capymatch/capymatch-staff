@@ -416,6 +416,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 11/11 features verified (iteration_177)
   - Key files: `computeAttention.js`, `PipelineHero.js`, `PipelinePage.js`, `ComingUpTimeline.js`
 
+- **Animated View Morphing (Complete — 2026-03-18)**
+  - Smooth crossfade transition between Priority ↔ Pipeline views: 140ms exit (opacity→0, translateY→-6px, scale→0.995) → 180ms enter (fade in from translateY 6px)
+  - Animated pill slider on toggle: white indicator slides between Priority/Pipeline with 180ms easing
+  - Debounced rapid clicks: toggle ignores clicks during in-flight animation
+  - View mode persists to localStorage across sessions
+  - Non-blocking: page remains interactive during transition
+  - Kanban drag-and-drop still works after morph animation
+  - CSS-only animations using existing motion system (transform+opacity only, 60fps)
+  - 11/11 features verified (iteration_178)
+  - Key files: `PipelinePage.js`, `pipeline-motion.css`
+
 ---
 
 ## Backlog
