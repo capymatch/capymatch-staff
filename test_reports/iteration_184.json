@@ -1,0 +1,66 @@
+{
+  "summary": "Pipeline List UI Polish - All 12 features verified successfully. Comprehensive Playwright testing confirmed: (1) 26px LogoBox containers with rounded corners and subtle bg, (2) On Track logos muted at opacity 0.55, (3) Shortened school names (Florida not University of Florida), (4) CTA hierarchy (HIGH=red#dc2626+bold700, MED=gray#94a3b8+600, LOW=#cbd5e1+500+opacity0.6), (5) Coming Up header opacity 0.92, (6) Green dot 5px#10b981@0.5 in On Track rows, (7-8) Hover states with pb-row:hover CSS, (9) Rows clickable cursor:pointer, (10) SwipeableCard on HIGH(5)/MED(1) rows, (11) On Track collapsible toggle, (12) Priority/Pipeline toggle buttons.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_184.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "LogoBox component correctly implements 26px container with borderRadius:6, flexShrink:0, and subtle #f1f5f9 background",
+    "shortenName() helper correctly strips 'University of', 'University', 'College', 'Institute of Technology' patterns",
+    "PriorityRowStyles injects hover CSS with .pb-row:hover and .pb-row:hover .pb-cta opacity rules",
+    "HighRow CTA: color #dc2626, fontWeight 700, opacity 0.8 - correctly red+bold",
+    "MedRow CTA: color var(--cm-text-3), fontWeight 600, opacity 0.7 - correctly gray+medium",
+    "LowRow CTA: color var(--cm-text-4), fontWeight 500, opacity 0.6 - correctly muted",
+    "Green dot in LowRow: 5px width/height, borderRadius 50%, background #10b981, opacity 0.5",
+    "SectionHeader receives opacity prop - Coming Up uses opacity={0.92}",
+    "All rows use consistent padding '11px 4px' and gap:10 for alignment"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only testing)",
+    "frontend": "100% (12/12 features pass)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "athlete123"
+    }
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pipeline list UI polish complete. LogoBox 26px with subtle bg, shortenName strips prefixes/suffixes, CTA hierarchy by attention level, hover states via injected CSS (.pb-row, .pb-cta classes). Current data: 5 HIGH (Florida, Emory, Stanford, UCLA, TEST_Dup), 1 MED (Florida Atlantic), 1 LOW (Creighton). Toggle buttons: data-testid='toggle-priority' and 'toggle-pipeline'. On Track section collapsible via header click.",
+  "verified_features": {
+    "1_logo_26px_containers": "PASS - LogoBox 26x26px with borderRadius:6 and #f1f5f9 background",
+    "2_on_track_logo_muted": "PASS - On Track LogoBox has opacity: 0.55",
+    "3_shortened_names": "PASS - shortenName() strips 'University of', 'University', 'College' - showing 'Florida', 'Emory', 'Stanford', 'UCLA'",
+    "4_cta_hierarchy_high": "PASS - HIGH rows: color #dc2626 (red), fontWeight 700 (bold), opacity 0.8",
+    "4_cta_hierarchy_med": "PASS - MED rows: color #94a3b8 (gray), fontWeight 600 (medium), opacity 0.7",
+    "4_cta_hierarchy_low": "PASS - LOW rows: color #cbd5e1 (muted), fontWeight 500, opacity 0.6",
+    "5_coming_up_header_opacity": "PASS - Coming Up header has opacity 0.92",
+    "6_green_dot_on_track": "PASS - 5px circle, #10b981 (rgb(16,185,129)), opacity 0.5",
+    "7_row_hover_background": "PASS - .pb-row:hover changes background to var(--cm-surface-2)",
+    "8_cta_hover_brighten": "PASS - .pb-row:hover .pb-cta opacity: 1 !important",
+    "9_rows_clickable": "PASS - All rows have cursor: pointer",
+    "10_swipe_gestures": "PASS - SwipeableCard wraps HIGH (5) and MED (1) rows",
+    "11_on_track_collapsible": "PASS - Header toggle expands/collapses On Track section",
+    "12_priority_pipeline_toggle": "PASS - Toggle buttons switch views (data-testid: toggle-priority, toggle-pipeline)"
+  },
+  "test_data": {
+    "high_cards_count": 5,
+    "med_cards_count": 1,
+    "low_cards_count": 1,
+    "total_priority_cards": 7,
+    "logo_size": "26px (container) with 20px UniversityLogo inside",
+    "on_track_logo_opacity": "0.55"
+  }
+}

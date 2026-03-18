@@ -7,7 +7,8 @@ import UniversityLogo from "../UniversityLogo";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-/* ── Timing color helper ── */
+/* ── Helpers ── */
+
 function getTimingColor(timingLabel) {
   if (!timingLabel) return null;
   const lower = timingLabel.toLowerCase();
@@ -15,120 +16,152 @@ function getTimingColor(timingLabel) {
   return '#64748b';
 }
 
-/* ── HIGH row: action-first list item ── */
-function HighRow({ item, navigate, isLast }) {
+function shortenName(name) {
+  if (!name) return '';
+  return name
+    .replace(/^University of\s+/i, '')
+    .replace(/^The\s+/i, '')
+    .replace(/\s+University$/i, '')
+    .replace(/\s+College$/i, '')
+    .replace(/\s+Institute\s+of\s+Technology$/i, ' Tech');
+}
+
+/* ── Logo container — consistent 26px rounded square ── */
+function LogoBox({ domain, name, muted }) {
+  return (
+    <div style={{
+      width: 26, height: 26, borderRadius: 6, flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--cm-surface-2, #f1f5f9)',
+      opacity: muted ? 0.55 : 1,
+    }} data-testid={`logo-box-${domain || 'unknown'}`}>
+      <UniversityLogo domain={domain} name={name} size={20} className="rounded" />
+    </div>
+  );
+}
+
+/* ── Hover styles (injected once) ── */
+function PriorityRowStyles() {
+  return (
+    <style>{`
+      .pb-row { transition: background 120ms ease-out; border-radius: 6px; margin: 0 -6px; padding-left: 10px !important; padding-right: 10px !important; }
+      .pb-row:hover { background: var(--cm-surface-2, rgba(241,245,249,0.5)); }
+      .pb-row .pb-cta { transition: opacity 120ms ease-out; }
+      .pb-row:hover .pb-cta { opacity: 1 !important; }
+    `}</style>
+  );
+}
+
+/* ── HIGH row ── */
+function HighRow({ item, isLast }) {
   const { primaryAction, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
   const timingColor = getTimingColor(timingLabel);
+  const short = shortenName(prog.university_name);
 
   return (
     <div
-      className="kanban-card"
+      className="pb-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 4px',
-        cursor: 'pointer',
+        padding: '11px 4px', cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
-        background: 'transparent', borderRadius: 0,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded-md" />
+      <LogoBox domain={prog.domain} name={prog.university_name} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 13, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
-          lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }} data-testid={`priority-action-${prog.program_id}`}>
           {primaryAction}
-          <span style={{ fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)', marginLeft: 6 }}>— {prog.university_name}</span>
+          <span style={{ fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)', marginLeft: 6 }}>— {short}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
           {timingLabel && (
             <span style={{ fontSize: 10, fontWeight: 700, color: timingColor }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
           )}
-          <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
       </div>
-      <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', opacity: 0.75, flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
+      <span className="pb-cta" style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', opacity: 0.8, flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
         {ctaLabel || 'Take Action'} →
       </span>
     </div>
   );
 }
 
-/* ── MED row: same list style, neutral timing ── */
-function MedRow({ item, navigate, isLast }) {
+/* ── MED row ── */
+function MedRow({ item, isLast }) {
   const { primaryAction, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
+  const short = shortenName(prog.university_name);
 
   return (
     <div
-      className="kanban-card"
+      className="pb-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 4px',
-        cursor: 'pointer',
+        padding: '11px 4px', cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
-        background: 'transparent', borderRadius: 0,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded-md" />
+      <LogoBox domain={prog.domain} name={prog.university_name} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 13, fontWeight: 600, color: 'var(--cm-text, #0f172a)',
-          lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }} data-testid={`priority-action-${prog.program_id}`}>
           {primaryAction}
-          <span style={{ fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)', marginLeft: 6 }}>— {prog.university_name}</span>
+          <span style={{ fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)', marginLeft: 6 }}>— {short}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
           {timingLabel && (
             <span style={{ fontSize: 10, fontWeight: 600, color: '#64748b' }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
           )}
-          <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
       </div>
-      <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-3, #94a3b8)', flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
+      <span className="pb-cta" style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-3, #94a3b8)', opacity: 0.7, flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
         {ctaLabel || 'View'} →
       </span>
     </div>
   );
 }
 
-/* ── LOW row: same list style, muted ── */
+/* ── LOW row ── */
 function LowRow({ item, navigate, isLast }) {
   const { primaryAction, program: prog } = item;
+  const short = shortenName(prog.university_name);
 
   return (
     <div
       onClick={() => navigate(`/pipeline/${prog.program_id}`)}
-      className="kanban-card"
+      className="pb-row"
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '9px 4px',
-        cursor: 'pointer',
+        padding: '11px 4px', cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
-        background: 'transparent', borderRadius: 0,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      <div style={{ opacity: 0.6 }}>
-        <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded-md" />
-      </div>
+      <LogoBox domain={prog.domain} name={prog.university_name} muted />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 13, fontWeight: 500, color: 'var(--cm-text-2, #475569)',
-          lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }} data-testid={`priority-action-${prog.program_id}`}>
           {primaryAction}
-          <span style={{ fontWeight: 400, color: 'var(--cm-text-4, #cbd5e1)', marginLeft: 6 }}>— {prog.university_name}</span>
+          <span style={{ fontWeight: 400, color: 'var(--cm-text-4, #cbd5e1)', marginLeft: 6 }}>— {short}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(16,185,129,0.55)' }}>On track</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#10b981', opacity: 0.5, flexShrink: 0 }} />
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(16,185,129,0.5)' }}>On track</span>
         </div>
       </div>
-      <span style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)', flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
+      <span className="pb-cta" style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)', opacity: 0.6, flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
         View →
       </span>
     </div>
@@ -167,7 +200,7 @@ function SwipePriorityCard({ item, navigate, section, cardIdx, isLast }) {
     return (
       <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || 'Take Action'} programId={programId}>
         <div onClick={handleTap}>
-          <HighRow item={item} navigate={navigate} isLast={isLast} />
+          <HighRow item={item} isLast={isLast} />
         </div>
       </SwipeableCard>
     );
@@ -177,7 +210,7 @@ function SwipePriorityCard({ item, navigate, section, cardIdx, isLast }) {
     return (
       <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || 'Take Action'} programId={programId}>
         <div onClick={handleTap}>
-          <MedRow item={item} navigate={navigate} isLast={isLast} />
+          <MedRow item={item} isLast={isLast} />
         </div>
       </SwipeableCard>
     );
@@ -211,6 +244,8 @@ export default function PriorityBoard({ items, navigate }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }} data-testid="priority-board">
+      <PriorityRowStyles />
+
       {allOnTrack && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderRadius: 10, background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.10)' }} data-testid="all-on-track-banner">
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
@@ -237,7 +272,7 @@ export default function PriorityBoard({ items, navigate }) {
 
       {/* ── Coming up (medium) ── */}
       <div data-testid="priority-section-coming-up">
-        <SectionHeader label="Coming up" count={medium.length} color="#64748b" opacity={0.85} />
+        <SectionHeader label="Coming up" count={medium.length} color="#64748b" opacity={0.92} />
         {medium.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {medium.map((item, i) => (
