@@ -296,12 +296,22 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
     <Draggable draggableId={p.program_id} index={index}>
       {(provided, snapshot) => {
         const isActiveDrag = snapshot.isDragging && !snapshot.isDropAnimating;
+        const isDrop = snapshot.isDropAnimating;
+        const sourceCol = programToKanbanCol(p);
+        const isOverTarget = isActiveDrag && snapshot.draggingOver && snapshot.draggingOver !== sourceCol;
         const libStyle = provided.draggableProps.style || {};
         const baseTransform = libStyle.transform || '';
         const composedTransform = isActiveDrag
           ? `${baseTransform} scale(1.02)`.trim()
-          : baseTransform || undefined;
+          : isDrop
+            ? `${baseTransform} scale(0.97)`.trim()
+            : baseTransform || undefined;
         const dragShadow = "0 0 0 1px rgba(255,255,255,0.5), 0 24px 48px rgba(0,0,0,0.1), 0 8px 20px rgba(0,0,0,0.06)";
+        const magneticTransition = isActiveDrag
+          ? `transform ${isOverTarget ? '80ms' : '50ms'} ease-out, box-shadow 220ms cubic-bezier(0.16,1,0.3,1), opacity 220ms cubic-bezier(0.16,1,0.3,1)`
+          : isDrop
+            ? 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1)'
+            : undefined;
 
         return (
           <div
@@ -313,6 +323,7 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
             style={{
               ...libStyle,
               transform: composedTransform,
+              transition: magneticTransition,
               background: "var(--cm-surface)",
               borderRadius: 10,
               padding: "12px 14px",
@@ -360,7 +371,7 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate, healthMap, topActionsMap, highlightedIds, justDroppedId, dragDest }) {
+function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate, healthMap, topActionsMap, highlightedIds, justDroppedId, dragDest, pulsingColumnId }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -392,6 +403,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate,
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
+                  className={pulsingColumnId === col.key ? 'kanban-col-pulse' : ''}
                   style={{
                     background: snapshot.isDraggingOver
                       ? "linear-gradient(180deg, rgba(0,0,0,0.004) 0%, rgba(0,0,0,0.016) 100%)"
@@ -425,7 +437,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate,
                     {count > 0 ? (
                       columns[col.key].map((p, idx) => (
                         <div key={p.program_id} style={{ position: 'relative' }}>
-                          {insertAt === idx && <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -5, left: 4, right: 4, height: 2, background: col.color, borderRadius: 1, zIndex: 10 }} />}
+                          {insertAt === idx && <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -5, left: 4, right: 4, height: 2, background: col.color, color: col.color, borderRadius: 1, zIndex: 10 }} />}
                           <KanbanCard
                             program={p}
                             matchScore={matchScores[p.program_id]}
@@ -443,7 +455,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate,
                         <div style={{ fontSize: 11, color: "var(--cm-text-4)", fontWeight: 500 }}>{getEmptyColCopy(col.key)}</div>
                       </div>
                     ) : null}
-                    {insertAt !== null && insertAt >= count && <div className="kanban-insert-line" data-testid="insertion-line" style={{ height: 2, margin: '4px 4px 0', background: col.color, borderRadius: 1, position: 'relative', zIndex: 10 }} />}
+                    {insertAt !== null && insertAt >= count && <div className="kanban-insert-line" data-testid="insertion-line" style={{ height: 2, margin: '4px 4px 0', background: col.color, color: col.color, borderRadius: 1, position: 'relative', zIndex: 10 }} />}
                     {provided.placeholder}
                   </div>
                 </div>
@@ -527,31 +539,42 @@ function PipelineStyles() {
       }
       .kanban-card:active { transform: translateY(0); }
       .kanban-insert-line {
-        animation: insert-line-in 120ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation: insert-line-in 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        box-shadow: 0 0 10px currentColor, 0 0 4px currentColor;
       }
       .kanban-insert-line::before,
       .kanban-insert-line::after {
         content: '';
         position: absolute;
         top: 50%;
-        width: 6px;
-        height: 6px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
         background: inherit;
         transform: translateY(-50%);
+        box-shadow: 0 0 6px currentColor;
       }
-      .kanban-insert-line::before { left: -2px; }
-      .kanban-insert-line::after { right: -2px; }
+      .kanban-insert-line::before { left: -3px; }
+      .kanban-insert-line::after { right: -3px; }
       @keyframes insert-line-in {
         from { opacity: 0; }
-        to { opacity: 0.45; }
+        to { opacity: 0.6; }
+      }
+      .kanban-col-pulse {
+        animation: kanban-col-pulse 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      @keyframes kanban-col-pulse {
+        0%   { box-shadow: inset 0 0 0 0 transparent; }
+        40%  { box-shadow: inset 0 0 24px rgba(0,0,0,0.025), inset 0 0 0 1px rgba(0,0,0,0.04); }
+        100% { box-shadow: none; }
       }
       .kanban-card-settled {
-        animation: kanban-settle 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation: kanban-settle 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
       }
       @keyframes kanban-settle {
-        0%   { box-shadow: 0 0 0 2px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.1); }
-        50%  { box-shadow: 0 0 0 1px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.05); }
+        0%   { box-shadow: 0 0 0 3px rgba(0,0,0,0.08), 0 8px 28px rgba(0,0,0,0.12); }
+        25%  { box-shadow: 0 0 0 2px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.08); }
+        60%  { box-shadow: 0 0 0 1px rgba(0,0,0,0.02), 0 3px 10px rgba(0,0,0,0.04); }
         100% { box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03); }
       }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
@@ -594,6 +617,7 @@ export default function PipelinePage() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [justDroppedId, setJustDroppedId] = useState(null);
   const [dragDest, setDragDest] = useState(null);
+  const [pulsingColumnId, setPulsingColumnId] = useState(null);
   const navigate = useNavigate();
   const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
 
@@ -650,9 +674,13 @@ export default function PipelinePage() {
     const stageUpdate = COL_TO_STAGE[newCol];
     if (!stageUpdate) return;
 
-    // Post-drop settle animation
+    // Post-drop settle animation (1.2s for rich fade-out)
     setJustDroppedId(draggableId);
-    setTimeout(() => setJustDroppedId(null), 500);
+    setTimeout(() => setJustDroppedId(null), 1200);
+
+    // Column confirmation pulse
+    setPulsingColumnId(newCol);
+    setTimeout(() => setPulsingColumnId(null), 400);
 
     // Optimistic update
     setAllPrograms(prev => prev.map(p =>
@@ -814,7 +842,7 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} justDroppedId={justDroppedId} dragDest={dragDest} />
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (
