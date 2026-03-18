@@ -289,15 +289,16 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 - **Hero Accent Bar + 60/40 Layout (Complete & Reverted — 2026-03-18)**
   - Built but reverted per user feedback in favor of single-carousel design
 - **Pipeline Hero Restyled to Match Journey Page Header (Complete — 2026-03-18)**
-  - Restyled PipelineHero to match the JourneyPage school detail header aesthetic
-  - Dark bg (#1e1e2e), border, borderRadius 12, horizontal accent bar at top
-  - Large 48px university logo + xl bold school name + inline priority/match badges
-  - Metadata row: D1 teal division pill, conference, location
-  - "What to do next" context box with primary + secondary CTAs
-  - Integrated `ProgressRail` component with labeled stage dots (Added → Committed)
-  - Removed "You" owner badge per user request
-  - Preserved filter pills (All / Needs Attention / Losing Momentum) and carousel navigation
-  - Key files: `PipelineHero.js`, `PipelineCapacityStrip.js`, `ProgressRail.js`
+  - **SUPERSEDED** by full Pipeline page redesign below.
+
+- **Pipeline Page Full Redesign — Smart Assistant Layout (Complete — 2026-03-18)**
+  - Page header: "Your Pipeline" title + subtitle + summary chips (red=attention, purple=momentum, green=on track)
+  - Single-column dark gradient hero carousel: category label with glow, school identity (52px logo + 26px name + metadata pills), large match score (38px), ProgressRail, "What to do next" box, owner badge, CTA button
+  - Removed all side panels, capacity strip, multi-column layout from hero
+  - Created `ComingUpTimeline.js`: horizontal timeline with forecast items for on-track programs
+  - Page flow: Overview (chips) → Focus (hero) → Foresight (timeline) → Management (Kanban board)
+  - All 17 test features pass at 100% (test report: `/app/test_reports/iteration_167.json`)
+  - Key files: `PipelineHero.js`, `ComingUpTimeline.js`, `PipelinePage.js`
 
 ---
 
