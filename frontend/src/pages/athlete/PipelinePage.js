@@ -534,7 +534,6 @@ export default function PipelinePage() {
   const actions = generateActions(allPrograms, matchScores, tasks, healthMap, topActionsMap);
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
   const usage = getUsage(subscription, "schools");
-  const aiUsage = getUsage(subscription, "ai_drafts");
   const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;
   const nearLimit = schoolPct >= 0.8;
 
@@ -543,7 +542,7 @@ export default function PipelinePage() {
       <PipelineStyles />
 
       {/* 2-Tier Pipeline Hero */}
-      <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} />
+      <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} usage={usage} />
 
       {/* Upgrade prompt — shows at 80%+ of limit */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (

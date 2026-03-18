@@ -270,6 +270,12 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Cleaned PipelineStyles (removed hero-specific keyframes/CSS)
   - 16/16 backend + all frontend tests passed (iteration_165)
   - Key files: `PipelineHero.js`, `HeroSection.js`, `HeroCard.js`, `PipelinePage.js`
+- **Pipeline Capacity Strip (Complete — 2026-03-18)**
+  - Replaced boxed Quick Context section with minimal inline capacity strip
+  - Shows "7 / 20 programs on your board" (or just count for unlimited plans)
+  - Subtle progress bar for limited plans (amber at 90%+)
+  - Removed AI drafts, keyboard hints, boxed metrics from hero
+  - Key files: `PipelineCapacityStrip.js`, `PipelineHero.js`, `PipelinePage.js`
 
 ---
 

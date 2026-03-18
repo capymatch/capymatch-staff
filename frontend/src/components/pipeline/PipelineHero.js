@@ -21,6 +21,7 @@ import React from "react";
 import { CheckCircle2 } from "lucide-react";
 import HeroSection from "./HeroSection";
 import HeroCard from "./HeroCard";
+import PipelineCapacityStrip from "./PipelineCapacityStrip";
 
 /* ── Tier classification sets ── */
 const URGENT_CATS = new Set([
@@ -59,7 +60,7 @@ function buildSummary(urgentCount, momentumCount, onTrackCount) {
   return parts;
 }
 
-export default function PipelineHero({ actions, matchScores, navigate }) {
+export default function PipelineHero({ actions, matchScores, navigate, usage }) {
   if (!actions || actions.length === 0) return null;
 
   const { urgent, momentum, onTrackCount } = classifyActions(actions);
@@ -202,6 +203,14 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
             action needed
           </span>
         </div>
+      )}
+
+      {/* ── Capacity strip ── */}
+      {usage && (
+        <PipelineCapacityStrip
+          current={usage.used || 0}
+          limit={usage.unlimited ? 0 : usage.limit || 0}
+        />
       )}
 
       {/* ── Styles ── */}
