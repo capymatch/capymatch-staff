@@ -1,144 +1,135 @@
 <analysis>**original_problem_statement:**
-The user, a product and interaction designer, has directed the development of the CapyMatch application through several major iterations. The current high-level goal is to refine the Dual-Mode Pipeline System to feel less like a data display and more like an intuitive, action-oriented assistant.
-
-The immediate task is to implement a 7-part refinement pass on the existing dual-mode UI. This is a non-structural, polish-focused request aimed at improving clarity, copy, and visual hierarchy to reduce cognitive load for the user. The refinements include simplifying the Hero component, shortening Priority Cards, adding time-based urgency, cleaning up the Coming Up section, and de-emphasizing less critical elements.
+The user wants to implement an explainability polish layer on top of the recently created  system. This involves several key enhancements to make the pipeline's automated decisions feel more trustworthy, stable, and intentional to the end-user.
 
 **PRODUCT REQUIREMENTS:**
-- **Hero Simplification:** Replace verbose, system-driven text with a direct, two-line command (e.g., Follow up with Florida coach / No response in 9 days).
-- **Priority Card Refinement:** Shorten card text to use natural, concise language (max 3 lines) and include a clear timing indicator (Due today).
-- **Time-Based Urgency:** Integrate timing signals (Due today, Overdue, Tomorrow) into all priority cards to complement the existing attention-level system.
-- **Coming Up Section Cleanup:** Replace paragraph descriptions with single-line, action-focused phrases.
-- **Visual Hierarchy Adjustment:** De-emphasize the Coming Up section with reduced contrast/text size to focus attention on the Hero and Priority board.
-- **Micro-signals:** Add small, muted labels like Now overdue or New today for state changes.
-- **Global Rules:** No paragraphs in cards; all copy must be plain, human language that answers What should I do?.
+1.  **Add Readable Reasons:** The  function must be enhanced to return a short, human-readable reason (e.g., Due today, No response in 9 days) for each program's attention score. This  must be consistently displayed in the Hero component, Priority cards, and Timeline.
+2.  **Implement Stable Sorting:** When multiple programs have the same , a deterministic secondary sorting rule must be applied: first by the earliest due date, then by a higher-priority stage, and finally alphabetically. This ensures the list order is stable and predictable.
+3.  **Create Intentional Empty States:** The UI must display specific, helpful messages when there are no items in a given category, such as Nothing urgent right now for the high-attention list or Everything is on track when all items are in the low-attention group.
+4.  **Ensure Visual Consistency:** The same program must display the exact same reason text across all UI components where it appears (Hero, Board, Timeline).
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application features a Dual-Mode Pipeline System on the . This system is controlled by a UI toggle that switches between:
-1.  **Priority View (Default):** An action-oriented layout featuring a main  component, a peek row of other important items, and a  that groups tasks by urgency (Needs Attention, Coming Up, On Track).
-2.  **Pipeline View:** A traditional Kanban board layout with columns representing stages in the recruiting process (Added, Outreach, Talking, etc.).
-
-Both views are rendered conditionally from the same data source, which is managed within the monolithic  file. This file also contains the definitions for multiple sub-components (, , ). The user's view preference is persisted in .
+The application's core feature is a dual-mode recruiting pipeline () that can be viewed as a Priority list or a Kanban board. The logic for what to display and how to prioritize it is now governed by a unified Attention Engine V2 located in . This engine calculates an  for every program and assigns a level (, , ), which in turn dictates where and how the program is displayed in the UI. The previous major task successfully centralized this logic, fixing bugs related to conflicting program statuses. The  file, however, remains a large, monolithic component.
 
 **Last working item**:
-    - Last item agent was working: Implementing the 7-part UI/UX refinement pass for the dual-mode pipeline. The agent had begun by updating helper functions (, , ) in  to support the new microcopy and time-based urgency rules.
-    - Status: IN PROGRESS
+    - Last item agent was working: The user just requested the explainability polish feature. The agent had begun the task by gathering context, viewing the relevant files (, , , , etc.) to understand the current implementation before making changes.
+    - Status: NOT STARTED
     - Agent Testing Done: N
     - Which testing method agent to use? testing_agent_v3_fork
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1:  (P0) Complete the 7-part UI and copy refinement for the dual-mode pipeline.
+  - Issue 1:  (P0) Implement the explainability polish on top of the unified Attention Engine V2.
 
   Issues Detail:
   - Issue 1: 
-     - Attempted fixes: The agent has started by modifying several helper functions in  to align with the new copy and data requirements. The next steps involve applying these changes to the rendering logic of the , , and  components.
+     - Attempted fixes: None. The task has just been assigned. The agent has only performed initial file reviews.
      - Next debug checklist: 
-        1.  **Modify :** Update the hero's text rendering to use the new action-first, two-line format from .
-        2.  **Modify  in :** Update the card structure to the new 3-line format: Attention Level, Action Title, and a new line combining timing () and ownership.
-        3.  **Modify :** Refactor the component to display a single, concise action line instead of a paragraph description.
-        4.  **Adjust  styles:** Apply styles to reduce the visual weight (contrast, text size) of this section.
-        5.  **Review and Test:** After implementation, use the screenshot tool to verify all visual and copy changes in the Priority view. Then, call the  to confirm functionality hasn't regressed.
-     - Why fix this issue and what will be achieved with the fix? To meet the user's explicit request to make the UI feel like an action-oriented assistant, reducing cognitive load and improving usability.
-     - Status:  IN PROGRESS
+        1.  **Update :** Modify the  function to determine and return .
+        2.  **Update  in :** Enhance the sorting logic to include the new stable sorting rules for tie-breaking (due date, stage, alphabetical).
+        3.  **Update :** Modify the component to render the new  as secondary text and implement the Nothing urgent right now empty state.
+        4.  **Update  (in ):** Integrate  into the card's display.
+        5.  **Update :** Use  for subtext and handle its specific empty state (No follow-ups due...).
+        6.  **Update  (in ):** Implement logic to display the Everything is on track empty state when appropriate.
+        7.  **Test:** After implementation, use the screenshot tool to verify that reasons, sorting, and empty states appear correctly. Follow up with a  call for comprehensive validation.
+     - Why fix this issue and what will be achieved with the fix? This will fulfill the user's request to make the automated pipeline feel more transparent, trustworthy, and less like a black box, improving the overall user experience.
+     - Status:  NOT STARTED
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? frontend
      - Blocked on other issue: None
 
 **In progress Task List**:
-  - Task 1:  UI/UX Refinement Implementation
-     - Where to resume: The helper functions in  have been updated. The agent now needs to propagate these changes into the JSX of the affected components: , the  component within , and .
-     - What will be achieved with this? A clearer, more actionable UI that aligns with the user's latest design specifications.
-     - Status:  IN PROGRESS
-     - Should Test frontend/backend/both after fix? frontend
-     - Blocked on something: None
+  - None.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
-*   **(P0) Animated View Morphing:** Polish the transition between Priority and Pipeline views with smooth card animations, as per the original dual-mode spec (this was deferred).
-*   **(P1) CSV Import Tool:** Build a feature for bulk importing school and coach data.
-*   **(P1) Refactor :** Break the monolithic 1000+ line file into smaller, maintainable components (, , , etc.).
-*   **(P2) Parent/Family Experience:** Build out the dedicated UI/UX for parents and family members.
+*   (P0) Animated View Morphing: Polish the transition between Priority and Pipeline views with smooth animations.
+*   (P1) Refactor : Break the monolithic 900+ line file into smaller, maintainable components (, , etc.).
+*   (P1) CSV Import Tool: Build a feature for bulk importing school and coach data.
 
 **Future Tasks:**
-*   AI-Powered Coach Summary.
-*   Club Billing (Stripe Integration).
-*   Multi-Agent Intelligence Pipeline (, , ).
-*   Kanban Keyboard Shortcuts.
+*   Parent/Family Experience
+*   AI-Powered Coach Summary
+*   Club Billing (Stripe Integration)
+*   Multi-Agent Intelligence Pipeline
+*   Kanban Keyboard Shortcuts
 
 **Completed work in this session**
-- **Dual-Mode Pipeline System:** Implemented a complete dual-mode UI with Priority and Pipeline views, controlled by a toggle that persists its state. This included creating new components (, ), adding a peek row to the hero, and ensuring both views use the same data source. (DONE)
-- **Kanban Board Interaction Redesign:** Overhauled the Kanban board to group cards by attention level, introduced a simplified card design, and refined drag-and-drop visuals. (DONE)
-- **Kanban D&D Final Polish:** Implemented a 6-point premium interaction system with insertion line glows, magnetic alignment, drop animations, and other subtle feedback cues. (DONE)
+- **Attention Engine V2:**
+  - Created a unified  function in  to serve as the single source of truth for program prioritization, replacing all fragmented frontend logic.
+  - Fixed a critical bug where programs showed conflicting statuses (e.g., On Track but also Coming Up Today).
+  - Refactored , , and  to consume data from the new engine. This work was fully tested and verified. (DONE)
+- **7-Part UI/UX Refinement Pass:**
+  - Implemented a series of visual and copy refinements to the Hero, Priority Cards, and Coming Up sections to make the UI more action-oriented. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1: Agent Misinterpretation of Tool Output:** In a previous task (the Kanban redesign), the agent misinterpreted a  failure (which reported 0 kanban cards found) as a success. It then proceeded to call the testing agent, which reported a 100% pass, contradicting the screenshot. The user's next request made this bug irrelevant by replacing the feature, but the process failure is critical to note. The next agent should be highly critical of tool outputs and investigate any mismatch between screenshots and test reports.
+   - **Issue 1: Agent Misinterpretation of Tool Output:** In a past job, an agent misdiagnosed a screenshot failure, highlighting the need for the current agent to be critical of tool outputs and cross-verify results (e.g., screenshots vs. test reports). This is a process note, not an active code bug.
      - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
-  - **Workflow Pattern:** The user provides highly specific, iterative UI/UX refinement requests for the same feature. This is the established workflow and should be expected.
+  - **Workflow Pattern:** The user consistently provides highly specific, iterative UI/UX refinement requests for the same core feature. This is the established and expected development pattern.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Dual-Mode UI:** Using a single state variable () to conditionally render two completely different layouts (action list vs. Kanban board) from the same data source.
-- **:** The library used for all drag-and-drop functionality in the Pipeline View.
-- **State-Driven Inline Styling & Conditional Rendering:** The UI heavily relies on state to change styles and render different components, making  very complex.
-- **Monolithic God Component:**  has grown to an unmaintainable size and is a major source of technical debt.
+- **Unified Attention Engine:** A single function () that decouples prioritization logic from UI components, acting as a single source of truth for program state.
+- **State-Driven UI:** Components render based on the processed data from the Attention Engine, rather than containing their own classification logic.
+- **Monolithic Component ():** A significant piece of technical debt that houses the logic for multiple sub-views and components, making changes complex.
 
 **key DB schema**
-  - No changes made to the database schema in this session.
+  - No changes to the database schema in this session.
 
 **All files of reference**
--   : The primary file for almost all work. Contains the logic for both views, the toggle, data fetching, and several component definitions.
--   : The hero component displayed at the top of both views.
--   : The Coming Up section in the Priority view.
--   : A supporting CSS file for animations and custom styles.
+-   : **Central file for the current task.** Will need to be modified to add reason generation and stable sorting.
+-   : Contains the  and  components that will consume the new reason text.
+-   : Will display the new reason text and handle the no high-attention items empty state.
+-   : Will display the new reason text and handle its empty state.
+-   : Component to be used for the high-attention empty state.
+-   : Component to be used for the upcoming items empty state.
 
 **Areas that need refactoring**:
--   **:** This is the highest priority for refactoring. The file is over 1030 lines and contains the logic and component definitions for , , and . It needs to be broken down into separate, manageable component files to improve maintainability and reduce complexity.
+-   **:** This large file remains the highest priority for future refactoring to improve maintainability. The plan to break it into smaller components should be addressed after the current feature polish.
 
 **key api endpoints**
--   : Fetches all school programs for the user.
--   : Fetches AI-driven next actions, which power the Priority view.
--   : Persists changes to a program's stage, typically after a drag-and-drop action.
+-   
+-   
 
 **Critical Info for New Agent**
--   **User is the Designer:** The user provides expert-level design specifications. Adhere to them with high fidelity, paying close attention to copy, timing, and visual hierarchy.
--   **Work Inside :** Most of your work will be inside the monolithic  file. Be extremely careful when making edits, as it controls the entire page's state and rendering.
--   **Refactoring is Needed:** The  file is a god component and is critically overdue for refactoring. While the current task is polish, be aware that any future structural changes will be difficult without addressing this technical debt first. Proposing this refactor as the next step is highly recommended.
--   **Verify Tool Outputs:** A previous agent misdiagnosed a screenshot failure. Always cross-reference tool outputs (screenshots, logs, test reports) and investigate any contradictions before proceeding.
+-   **Focus on Explainability:** The immediate task is to implement the explainability polish as defined by the user: add reasons, stable sorting, and intentional empty states.
+-   **Centralize Logic in :** All new logic for reasons and sorting should be added to the  file to maintain it as the single source of truth.
+-   **Propagate Changes to UI:** The new data () must be threaded through and rendered consistently in ,  (for cards), and .
+-   **Handle All Empty States:** Ensure all three specified empty state scenarios (Nothing urgent, No follow-ups, Everything on track) are correctly implemented.
+-   **User is the Designer:** Adhere with high fidelity to the user's specifications regarding copy, logic, and visual presentation.
 
 **documents and test reports created in this job**
+- /app/test_reports/iteration_175.json
+- /app/test_reports/iteration_176.json
 - /app/memory/PRD.md
-- /app/test_reports/iteration_172.json
-- /app/test_reports/iteration_173.json
-- /app/test_reports/iteration_174.json
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **User (Msg 177):** Provided the current 7-part refinement request to improve the dual-mode UI's clarity and make it feel like an action-oriented assistant. (PENDING - **THIS IS THE CURRENT TASK**)
-- **Agent (Msg 175):** Finished the implementation of the dual-mode pipeline system.
-- **User (Msg 176):** Acknowledged the agent's summary.
-- **Agent (Msg 169-174):** Ran the testing agent, which passed, and updated the PRD.
-- **User (Msg 166-168):** Acknowledged screenshots and a final microcopy fix.
-- **Agent (Msg 165):** Successfully took a screenshot showing the Pipeline view working after a toggle click.
-- **User (Msg 164):** Received a failed screenshot due to a timeout.
-- **Agent (Msg 163):** Successfully took a screenshot of the Priority view with corrected action titles.
-- **User (Msg 162):** Acknowledged the screenshot.
-- **Agent (Msg 159-161):** Correctly diagnosed and fixed a bug where action titles were wrong due to a mismatch between API keys and frontend mappings.
+- **User (LATEST & PENDING):** Requested the explainability polish feature, including reasons, stable sorting, and intentional empty states. This is the current, active task.
+- **Agent:** Confirmed completion of the Attention Engine V2 implementation.
+- **Agent:** Viewed the successful test report for Attention Engine V2, confirming 15/15 features passed.
+- **Agent:** Called the testing agent for a thorough validation of the new Attention Engine.
+- **Agent:** Took a successful smoke test screenshot showing the UI was fixed and rendering correctly after a build error.
+- **Agent:** Diagnosed and fixed a blank-page rendering bug by restarting the webpack dev server.
+- **User:** Provided a screenshot showing the page was blank/stuck on loading after the Attention Engine V2 refactor.
+- **Agent:** Initiated the implementation of Attention Engine V2 by creating/overwriting four key files.
+- **User:** Provided a detailed spec for Attention Engine V2 to fix data inconsistencies between UI components.
+- **Agent:** Identified the root cause of two data inconsistency bugs and proposed a fix.
 
 **Project Health Check:**
 - Broken: None
 - Mocked: None
 
 **3rd Party Integrations**
-- **react-beautiful-dnd**: Core library for Kanban drag-and-drop.
-- **YouTube Data API**: Implemented and functional.
-- **College Scorecard API**: Integrated but pending user API key.
-- **Resend**: Existing integration for email.
-- **Stripe**: Existing integration for payments.
+- **react-beautiful-dnd**: Used for Kanban drag-and-drop.
+- **YouTube Data API**: Integrated.
+- **College Scorecard API**: Integrated.
+- **Resend**: Integrated.
+- **Stripe**: Integrated.
 
 **Testing status**
   - Testing agent used after significant changes: YES
@@ -150,4 +141,4 @@ Both views are rendered conditionally from the same data source, which is manage
 -   **Athlete:**  / 
 
 **What agent forgot to execute**
-- In a previous task (Kanban Redesign), the agent failed to correctly diagnose a rendering failure shown in a screenshot (Message #72). It claimed the UI was rendering correctly when it was blank, and proceeded as if the task was successful. The user's subsequent request for a different feature (Dual-Mode) overwrote the broken code, inadvertently fixing the problem. The agent should have debugged the rendering failure instead of misinterpreting the tool output.</analysis>
+- Nothing was forgotten in this session. The agent correctly identified a bug, fixed it, and completed the user's primary request (Attention Engine V2) before moving on to the next one. The historical note about a previous agent misinterpreting a screenshot remains a valuable cautionary tale.</analysis>
