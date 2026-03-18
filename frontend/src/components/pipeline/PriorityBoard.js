@@ -3,11 +3,8 @@ import { ATTENTION_META } from "./pipeline-constants";
 
 /* ── HIGH card: full-width, action-first task row ── */
 function HighCard({ item, navigate }) {
-  const { primaryAction, reasonShort, microSignal, timingLabel, owner, ctaLabel, program: prog } = item;
+  const { primaryAction, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
-  /* Hide reasonShort when it just restates timing already shown in top row */
-  const isTimingDupe = reasonShort && (/^Overdue by/i.test(reasonShort) || /^Due /i.test(reasonShort));
-  const metaReason = isTimingDupe ? null : reasonShort;
 
   return (
     <div
@@ -24,18 +21,12 @@ function HighCard({ item, navigate }) {
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      {/* Left: content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Top row: level + micro-signal  |  timing */}
+        {/* Top: ● HIGH  |  Overdue 10d */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
             <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#dc2626' }}>High</span>
-            {microSignal && (
-              <span style={{ fontSize: 9.5, fontWeight: 600, color: microSignal.color, opacity: 0.7 }} data-testid={`micro-signal-${prog.program_id}`}>
-                {'\u00b7'} {microSignal.text}
-              </span>
-            )}
           </div>
           {timingLabel && (
             <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', opacity: 0.7, flexShrink: 0 }} data-testid={`timing-label-${prog.program_id}`}>
@@ -44,7 +35,7 @@ function HighCard({ item, navigate }) {
           )}
         </div>
 
-        {/* Main action — largest text, max 2 lines */}
+        {/* Action — largest */}
         <div style={{
           fontSize: 14, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
           marginTop: 6, lineHeight: 1.35,
@@ -53,16 +44,13 @@ function HighCard({ item, navigate }) {
           {primaryAction}
         </div>
 
-        {/* Meta line: non-timing reason · owner */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }} data-testid={`priority-reason-${prog.program_id}`}>
-          {metaReason && (
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }}>{metaReason}</span>
-          )}
+        {/* Owner badge */}
+        <div style={{ marginTop: 5 }} data-testid={`priority-reason-${prog.program_id}`}>
           <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 6px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
       </div>
 
-      {/* Right: CTA */}
+      {/* CTA */}
       <button
         style={{
           padding: '7px 14px', borderRadius: 7,
@@ -81,10 +69,8 @@ function HighCard({ item, navigate }) {
 
 /* ── MED card: compact, amber tint ── */
 function MedCard({ item, navigate }) {
-  const { primaryAction, reasonShort, microSignal, timingLabel, owner, program: prog } = item;
+  const { primaryAction, timingLabel, owner, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
-  const isTimingDupe = reasonShort && (/^Overdue by/i.test(reasonShort) || /^Due /i.test(reasonShort));
-  const metaReason = isTimingDupe ? null : reasonShort;
 
   return (
     <div
@@ -100,16 +86,11 @@ function MedCard({ item, navigate }) {
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      {/* Top row */}
+      {/* Top: ● MED  |  Due today */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
           <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#92400e' }}>Med</span>
-          {microSignal && (
-            <span style={{ fontSize: 9, fontWeight: 600, color: microSignal.color, opacity: 0.65 }} data-testid={`micro-signal-${prog.program_id}`}>
-              {'\u00b7'} {microSignal.text}
-            </span>
-          )}
         </div>
         {timingLabel && (
           <span style={{ fontSize: 9.5, fontWeight: 600, color: '#92400e', opacity: 0.6, flexShrink: 0 }} data-testid={`timing-label-${prog.program_id}`}>
@@ -127,11 +108,8 @@ function MedCard({ item, navigate }) {
         {primaryAction}
       </div>
 
-      {/* Meta */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }} data-testid={`priority-reason-${prog.program_id}`}>
-        {metaReason && (
-          <span style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>{metaReason}</span>
-        )}
+      {/* Owner badge */}
+      <div style={{ marginTop: 4 }} data-testid={`priority-reason-${prog.program_id}`}>
         <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
       </div>
     </div>

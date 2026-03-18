@@ -182,18 +182,13 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       {/* SLIDE CONTENT */}
       <div className={`px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-6 relative z-[1] ${slideClass}`}>
 
-        {/* Row 1: Attention state + Timing label */}
+        {/* Row 1: ● HIGH  |  Overdue 10d */}
         <div className="flex items-center justify-between" data-testid="hero-status-row">
           <div className="flex items-center gap-2">
             <div className="w-[5px] h-[5px] rounded-full" style={{ background: style.accent, boxShadow: `0 0 6px ${style.accent}66` }} />
             <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider uppercase" style={{ color: style.accent }} data-testid="hero-category-label">
               {style.label}
             </span>
-            {current.microSignal && (
-              <span className="text-[9.5px] font-semibold" style={{ color: current.microSignal.color, opacity: 0.7 }} data-testid={`micro-signal-${p?.program_id}`}>
-                · {current.microSignal.text}
-              </span>
-            )}
           </div>
           {current.timingLabel && (
             <span className="text-[10px] sm:text-[11px] font-bold" style={{ color: style.accent, opacity: 0.7 }} data-testid="hero-timing-label">
@@ -239,13 +234,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           </div>
         </div>
 
-        {/* Meta line: non-timing reason · owner */}
+        {/* Owner badge */}
         <div className="flex items-center gap-2 mt-2" data-testid="hero-meta-line">
-          {current.reasonShort && !/^Overdue by/i.test(current.reasonShort) && !/^Due /i.test(current.reasonShort) && (
-            <span className="text-[11px] sm:text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.35)" }} data-testid="hero-reason-short">
-              {current.reasonShort}
-            </span>
-          )}
           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded" style={{ background: ownerLabel === 'You' ? 'rgba(13,148,136,0.15)' : 'rgba(99,102,241,0.15)', color: ownerLabel === 'You' ? '#5eead4' : '#a5b4fc' }}>
             {ownerLabel}
           </span>
