@@ -1,20 +1,19 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  ChevronRight, ChevronLeft, Loader2,
-  AlertTriangle, ArrowRight,
+  ChevronRight, Loader2,
+  AlertTriangle,
   Archive, RotateCcw, CheckSquare, Clock,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import UniversityLogo from "../../components/UniversityLogo";
-import { RAIL_STAGES } from "../../components/journey/constants";
-import { PulseIndicator, ProgressRail } from "../../components/journey";
 import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
 import { PipelineHealthBadge } from "../../components/PipelineHealthBadge";
+import PipelineHero from "../../components/pipeline/PipelineHero";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -31,12 +30,6 @@ function useIsMobile(breakpoint = 768) {
 /* ═══════════════════════════════════════════ */
 /* ── Helpers                                 */
 /* ═══════════════════════════════════════════ */
-
-function computeRail(journeyStage) {
-  const activeIdx = journeyStage ? RAIL_STAGES.findIndex(st => st.key === journeyStage) : 0;
-  const idx = activeIdx >= 0 ? activeIdx : 0;
-  return RAIL_STAGES.map((st, i) => ({ ...st, state: i < idx ? "past" : i === idx ? "active" : "future" }));
-}
 
 function getDueInfo(p) {
   if (p.next_action_due) {
@@ -62,7 +55,7 @@ const KANBAN_COLS = [
 ];
 
 function programToKanbanCol(p) {
-  if (p.recruiting_status === "Committed" || p.journey_stage === "committed") return null; // shown in banner
+  if (p.recruiting_status === "Committed" || p.journey_stage === "committed") return null;
   if (p.journey_stage === "campus_visit") return "campus_visit";
   if (p.journey_stage === "offer") return "offer";
   if (p.journey_stage === "in_conversation" || p.board_group === "in_conversation") return "in_conversation";
@@ -70,31 +63,9 @@ function programToKanbanCol(p) {
   return "added";
 }
 
-/* Status dot color for kanban cards */
-function getStatusDot(p) {
-  const due = getDueInfo(p);
-  if (due?.urgent) return "#dc2626"; // red
-  if (p.board_group === "overdue") return "#dc2626";
-  if (p.board_group === "waiting_on_reply") return "#f59e0b"; // amber
-  if (p.board_group === "in_conversation" || p.signals?.has_coach_reply) return "#22c55e"; // green
-  if (p.board_group === "needs_outreach") return "#22c55e";
-  return "#d1d5db"; // grey
-}
-
-/* Generate action items — now driven by topActionsMap from the Top Action Engine.
+/* Generate action items — driven by topActionsMap from the Top Action Engine.
    Falls back to legacy generation when topActionsMap is empty (loading).
 */
-const ALERT_CATEGORIES = {
-  coach_flag:     { label: "Coach Flag",         color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", priority: 0 },
-  director_action:{ label: "Director Action",    color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.22)",  priority: 1 },
-  past_due:       { label: "Past Due",           color: "#ef4444", bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.25)",  priority: 2 },
-  reply_needed:   { label: "Reply Needed",       color: "#d97706", bg: "rgba(217,119,6,0.12)",  border: "rgba(217,119,6,0.25)",  priority: 3 },
-  due_today:      { label: "Due Today",          color: "#d97706", bg: "rgba(217,119,6,0.10)",  border: "rgba(217,119,6,0.22)",  priority: 4 },
-  first_outreach: { label: "First Outreach",     color: "#3b82f6", bg: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.22)", priority: 5 },
-  cooling_off:    { label: "Re-engage",          color: "#fb923c", bg: "rgba(251,146,60,0.10)", border: "rgba(251,146,60,0.22)", priority: 6 },
-  on_track:       { label: "On Track",           color: "#22c55e", bg: "rgba(34,197,94,0.10)",  border: "rgba(34,197,94,0.22)",  priority: 7 },
-};
-
 function generateActions(programs, matchScores, tasks, healthMap, topActionsMap) {
   const active = programs.filter(p =>
     p.board_group !== "archived" && p.recruiting_status !== "Committed" && p.journey_stage !== "committed"
@@ -120,16 +91,16 @@ function generateActions(programs, matchScores, tasks, healthMap, topActionsMap)
           priority: ta.priority,
         });
       } else {
-        // Default action for schools with no specific alert
+        // On track — no specific action needed
         alerts.push({
           id: p.program_id,
           type: "school",
           program: p,
-          category: "cooling_off",
-          title: `${p.university_name} — Re-engage`,
-          context: "Keep the momentum going with this program.",
+          category: "on_track",
+          title: `${p.university_name} — On Track`,
+          context: "Everything looks good — keep the momentum going.",
           owner: "athlete",
-          cta: { label: "Re-engage", style: "primary" },
+          cta: { label: "View School", style: "primary" },
           matchScore: matchScores[p.program_id],
           due: getDueInfo(p),
           priority: 99,
@@ -172,276 +143,6 @@ function generateActions(programs, matchScores, tasks, healthMap, topActionsMap)
     }
   }
   return alerts;
-}
-
-
-/* ═══════════════════════════════════════════ */
-/* ── Hero Card = Actions Carousel           ── */
-/* ═══════════════════════════════════════════ */
-function HeroActionsCarousel({ actions, matchScores, navigate, schoolPct, usage, aiUsage }) {
-  const [idx, setIdx] = useState(0);
-  const [filter, setFilter] = useState("all");
-  const [seenCategories, setSeenCategories] = useState(new Set(["all"]));
-  const heroRef = useRef(null);
-  const callbacksRef = useRef({ prev: null, next: null, cta: null });
-
-  const handleFilter = (key) => {
-    setFilter(key);
-    setSeenCategories(prev => new Set([...prev, key]));
-  };
-
-  const filtered = useMemo(() => {
-    if (filter === "all") return actions;
-    return actions.filter(a => a.category === filter);
-  }, [actions, filter]);
-
-  const total = filtered.length;
-  const prevFilter = React.useRef(filter);
-  useEffect(() => { if (prevFilter.current !== filter) { setIdx(0); prevFilter.current = filter; } }, [filter]);
-
-  // Keyboard shortcuts: Arrow keys to navigate, Enter to execute CTA
-  useEffect(() => {
-    const handleKey = (e) => {
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      if (tag === "input" || tag === "textarea" || tag === "select") return;
-      const cb = callbacksRef.current;
-      if (e.key === "ArrowLeft" && cb.prev) { e.preventDefault(); cb.prev(); }
-      else if (e.key === "ArrowRight" && cb.next) { e.preventDefault(); cb.next(); }
-      else if (e.key === "Enter" && cb.cta) { e.preventDefault(); cb.cta(); }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, []);
-
-  if (actions.length === 0) return null;
-
-  const displayActions = total > 0 ? filtered : actions;
-  const displayTotal = displayActions.length;
-  const safeIdx = Math.min(idx, Math.max(0, displayTotal - 1));
-  const prev = () => setIdx(i => (i - 1 + displayTotal) % displayTotal);
-  const next = () => setIdx(i => (i + 1) % displayTotal);
-  const action = displayActions[safeIdx];
-  if (!action) return null;
-
-  const isSchool = action.type === "school";
-  const p = action.program;
-  const ms = isSchool ? (action.matchScore || matchScores[p?.program_id]) : null;
-  const matchPct = ms?.match_score ?? action.match_score;
-  const advice = action.context;
-  const stages = isSchool ? computeRail(p.journey_stage || (p.board_group === "needs_outreach" ? "added" : "outreach")) : null;
-  const stageLabels = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer", committed: "Committed" };
-  const cat = ALERT_CATEGORIES[action.category] || ALERT_CATEGORIES.past_due;
-  const isUrgent = action.priority <= 3;
-
-  const handleCTA = () => {
-    if (action.type === "growth") navigate("/schools");
-    else if (p) navigate(`/pipeline/${p.program_id}`);
-  };
-
-  // Keep refs up to date for keyboard handler
-  callbacksRef.current = { prev, next, cta: handleCTA };
-
-  const catCounts = {};
-  for (const a of actions) { catCounts[a.category] = (catCounts[a.category] || 0) + 1; }
-
-  const FILTER_PILLS = [
-    { key: "all", label: "All", count: actions.length },
-    { key: "coach_flag", label: "Coach Flags" },
-    { key: "director_action", label: "Director" },
-    { key: "past_due", label: "Past Due" },
-    { key: "reply_needed", label: "Reply Needed" },
-    { key: "due_today", label: "Due Today" },
-    { key: "first_outreach", label: "First Outreach" },
-    { key: "cooling_off", label: "Re-engage" },
-  ].filter(pill => pill.key === "all" || (catCounts[pill.key] || 0) > 0)
-   .map(pill => ({ ...pill, count: pill.key === "all" ? actions.length : catCounts[pill.key] || 0 }));
-
-  // Owner badge config
-  const owColors = { athlete: "#5eead4", parent: "#a78bfa", coach: "#fbbf24", shared: "#93c5fd" };
-  const oc = owColors[action.owner] || "rgba(255,255,255,0.5)";
-
-  return (
-    <div ref={heroRef} tabIndex={-1} style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)", borderRadius: 14, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)", outline: "none" }} data-testid="pipeline-hero-card">
-      {/* Accent bar — thicker for urgent */}
-      <div style={{ height: isUrgent ? 4 : 3, background: `linear-gradient(90deg, ${cat.color}, ${cat.color}66)` }} />
-      {/* Ambient glow — stronger for urgent */}
-      <div style={{ position: "absolute", top: "-30%", right: "-5%", width: 350, height: 350, background: `radial-gradient(circle, ${cat.color}${isUrgent ? "18" : "0a"} 0%, transparent 70%)`, pointerEvents: "none" }} />
-
-      <div style={{ padding: "10px 16px 0", position: "relative", zIndex: 1 }} className="pipeline-hero-card">
-        {/* Top row: Filter pills (left) + Carousel controls (right) — same line */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }} data-testid="hero-filter-pills">
-          <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-            {FILTER_PILLS.length > 1 && FILTER_PILLS.map(pill => {
-              const URGENT_CATS = new Set(["past_due", "due_today", "coach_flag"]);
-              const shouldPulse = pill.key !== "all" && URGENT_CATS.has(pill.key) && pill.count > 0 && !seenCategories.has(pill.key);
-              const pillCat = ALERT_CATEGORIES[pill.key];
-              return (
-                <button
-                  key={pill.key}
-                  onClick={() => handleFilter(pill.key)}
-                  data-testid={`hero-filter-${pill.key}`}
-                  style={{
-                    padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700,
-                    cursor: "pointer", transition: "all 0.15s", border: "1px solid", fontFamily: "inherit",
-                    background: filter === pill.key ? "rgba(13,148,136,0.15)" : "rgba(255,255,255,0.04)",
-                    borderColor: filter === pill.key ? "rgba(13,148,136,0.35)" : "rgba(255,255,255,0.08)",
-                    color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.4)",
-                    display: "flex", alignItems: "center", gap: 5, position: "relative",
-                  }}
-                >
-                  {shouldPulse && (
-                    <span style={{ position: "relative", width: 6, height: 6, flexShrink: 0 }}>
-                      <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: pillCat?.color || "#ef4444" }} />
-                      <span style={{ position: "absolute", inset: -2, borderRadius: "50%", border: `1.5px solid ${pillCat?.color || "#ef4444"}`, animation: "pillPulse 2s ease-out infinite", pointerEvents: "none" }} data-testid={`pill-pulse-${pill.key}`} />
-                    </span>
-                  )}
-                  {pill.label}
-                  <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 5px", borderRadius: 8, background: filter === pill.key ? "rgba(13,148,136,0.25)" : "rgba(255,255,255,0.06)", color: filter === pill.key ? "#5eead4" : "rgba(255,255,255,0.3)" }}>{pill.count}</span>
-                </button>
-              );
-            })}
-          </div>
-          {displayTotal > 1 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-              <button onClick={prev} style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.5)" }} data-testid="carousel-prev"><ChevronLeft style={{ width: 12, height: 12 }} /></button>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.45)", fontVariantNumeric: "tabular-nums", minWidth: 24, textAlign: "center" }} data-testid="carousel-counter">{safeIdx + 1}/{displayTotal}</span>
-              <button onClick={next} style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(255,255,255,0.5)" }} data-testid="carousel-next"><ChevronRight style={{ width: 12, height: 12 }} /></button>
-            </div>
-          )}
-        </div>
-
-        {/* Category label */}
-        <div style={{ marginBottom: 6 }}>
-          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: cat.color }}>{cat.label}</span>
-        </div>
-
-        {/* Row 1: Logo + School Name (left) | Progress Rail (right) */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 6 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-            {isSchool && p && (
-              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={ms?.logo_url} size={34} className="rounded-[8px] flex-shrink-0" />
-            )}
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: -0.3, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} data-testid="hero-school-name">
-              {isSchool && p ? p.university_name : (action.cta?.label || "Take Action")}
-            </h2>
-          </div>
-          {/* Progress Rail — wide with labels */}
-          {isSchool && stages && (
-            <div className="hidden sm:flex" data-testid="hero-progress-rail" style={{ display: "flex", flexDirection: "column", gap: 3, flexShrink: 0, flex: 1, maxWidth: 500 }}>
-              {/* Dots + connecting lines */}
-              <div style={{ display: "flex", alignItems: "center" }}>
-                {stages.map((s, i) => {
-                  const isActive = s.state === "active";
-                  const isPast = s.state === "past";
-                  const isFuture = s.state === "future";
-                  const lineActive = isPast || (stages[i - 1]?.state === "past" && isActive);
-                  return (
-                    <React.Fragment key={s.key}>
-                      {i > 0 && <div style={{ flex: 1, height: 2, background: lineActive ? "rgba(13,148,136,0.5)" : "rgba(255,255,255,0.08)", borderRadius: 1 }} />}
-                      <div style={{
-                        width: isActive ? 14 : 9,
-                        height: isActive ? 14 : 9,
-                        borderRadius: "50%",
-                        background: isActive ? "#0d9488" : isPast ? "rgba(148,163,184,0.6)" : "#1e1e2e",
-                        border: isFuture ? "1.5px solid rgba(255,255,255,0.12)" : isActive ? "2px solid rgba(13,148,136,0.3)" : "none",
-                        boxShadow: isActive ? "0 0 8px rgba(13,148,136,0.4)" : "none",
-                        flexShrink: 0,
-                      }} />
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Row 2: Metadata badges + social */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-          <PulseIndicator pulse={stages?.find(s => s.state === "active")?.pulse || "neutral"} />
-          {isSchool && p?.division && (
-            <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(13,148,136,0.2)", color: "#5eead4" }}>{p.division}</span>
-          )}
-          {matchPct != null && (
-            <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: "rgba(255,255,255,0.06)", color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "#94a3b8" }}>
-              {matchPct}% Match
-            </span>
-          )}
-          {isSchool && p?.conference && (
-            <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.4)" }}>{p.conference}</span>
-          )}
-          {isSchool && p?.social_links && typeof p.social_links === "object" && Object.keys(p.social_links).length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 4 }}>
-              {Object.entries(p.social_links).slice(0, 4).map(([platform, url]) => (
-                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.3)", display: "flex" }} title={platform}>
-                  {platform === "twitter" ? <span style={{ fontSize: 12, fontWeight: 700 }}>𝕏</span>
-                    : platform === "instagram" ? <span style={{ fontSize: 11 }}>◎</span>
-                    : platform === "facebook" ? <span style={{ fontSize: 11 }}>ⓕ</span>
-                    : <span style={{ fontSize: 10 }}>{platform[0].toUpperCase()}</span>}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Row 3: "What to do next" advice box + CTA */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 2 }}>
-          <div style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(13,148,136,0.35)", background: "rgba(13,148,136,0.08)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-              <span style={{ fontSize: 11 }}>💡</span>
-              <span style={{ fontSize: 9, fontWeight: 700, color: "#5eead4", letterSpacing: "0.03em" }}>What to do next</span>
-            </div>
-            <p style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.4, margin: 0 }} data-testid="hero-advice-text">
-              {advice || "Keep the momentum going with this program."}
-            </p>
-          </div>
-          <button onClick={handleCTA} style={{
-            padding: "7px 16px", borderRadius: 8, border: "none",
-            background: "#0d9488", color: "#fff",
-            fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex",
-            alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "inherit",
-            transition: "all 0.2s", flexShrink: 0, minWidth: 110,
-            boxShadow: "0 4px 16px rgba(13,148,136,0.3)",
-          }} data-testid="hero-cta-btn">
-            {action.cta.label}
-            <ArrowRight style={{ width: 14, height: 14 }} />
-          </button>
-        </div>
-      </div>
-
-      {/* Usage bar */}
-      <div style={{ padding: "6px 18px 10px", display: "flex", alignItems: "center", gap: 10, position: "relative", zIndex: 1 }} className="pipeline-hero-card" data-testid="hero-usage-bar">
-        <span style={{ fontSize: 10, fontWeight: 600, color: schoolPct >= 1 ? "rgba(245,158,11,0.8)" : "rgba(255,255,255,0.25)" }} data-testid="hero-school-usage">
-          {usage.unlimited ? `${usage.used} schools` : `${usage.used}/${usage.limit} schools`}
-        </span>
-        {!aiUsage.unlimited && aiUsage.limit > 0 && (
-          <>
-            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
-            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.25)" }} data-testid="hero-ai-usage">
-              {aiUsage.limit - aiUsage.used} AI drafts left
-            </span>
-          </>
-        )}
-        {aiUsage.limit === 0 && (
-          <>
-            <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
-            <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.2)" }} data-testid="hero-ai-usage">
-              AI drafts: Pro
-            </span>
-          </>
-        )}
-        {displayTotal > 1 && (
-          <span className="hidden md:inline-flex" style={{ marginLeft: "auto", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.18)", display: "inline-flex", alignItems: "center", gap: 4 }} data-testid="keyboard-hint">
-            <kbd style={{ padding: "1px 4px", borderRadius: 3, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 8, lineHeight: "12px" }}>&larr;</kbd>
-            <kbd style={{ padding: "1px 4px", borderRadius: 3, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 8, lineHeight: "12px" }}>&rarr;</kbd>
-            <span style={{ marginLeft: 2 }}>navigate</span>
-            <span style={{ margin: "0 2px", color: "rgba(255,255,255,0.1)" }}>|</span>
-            <kbd style={{ padding: "1px 4px", borderRadius: 3, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 8, lineHeight: "12px" }}>Enter</kbd>
-            <span style={{ marginLeft: 2 }}>open</span>
-          </span>
-        )}
-      </div>
-    </div>
-  );
 }
 
 
@@ -693,8 +394,6 @@ function CommittedBanner({ programs, navigate }) {
 function PipelineStyles() {
   return (
     <style>{`
-      @keyframes heroPulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
-      @keyframes pillPulse { 0%{opacity:0.8;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.8)} 100%{opacity:0;transform:scale(2.5)} }
       .kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
       .kanban-grid::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 4px; }
@@ -713,9 +412,6 @@ function PipelineStyles() {
           flex-shrink: 0 !important;
           scroll-snap-align: start !important;
         }
-        .pipeline-hero-card { padding: 14px 14px 0 !important; }
-        .hero-advice-row { flex-wrap: wrap !important; }
-        .hero-advice-row button { flex: 1 !important; min-width: 120px !important; }
         .pipeline-events-row { flex-direction: column !important; gap: 8px !important; }
       }
     `}</style>
@@ -846,12 +542,8 @@ export default function PipelinePage() {
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
 
-      {/* Hero Card = Actions Carousel */}
-      {actions.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <HeroActionsCarousel actions={actions} matchScores={matchScores} navigate={navigate} schoolPct={schoolPct} usage={usage} aiUsage={aiUsage} />
-        </div>
-      )}
+      {/* 2-Tier Pipeline Hero */}
+      <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} />
 
       {/* Upgrade prompt — shows at 80%+ of limit */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (

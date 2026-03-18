@@ -1,0 +1,90 @@
+{
+  "summary": "Pipeline Hero 2-Tier System - All tests pass. Backend: 16/16 tests (100%). Frontend: All elements rendered correctly. The new 2-tier hero system replaces the old single carousel with Tier 1 'Needs Attention Now' (urgent) and Tier 2 'Keep Momentum Going' (momentum), with on_track items shown as calm summary.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pipeline_hero.py",
+    "/app/test_reports/pytest/pytest_pipeline_hero.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PipelineHero.js correctly classifies actions into urgent (coach_flag, director_action, past_due, reply_needed, due_today) and momentum (cooling_off, first_outreach) categories",
+    "HeroSection.js implements horizontal scroll with snap behavior and navigation arrows that appear only when scrollable",
+    "HeroCard.js uses left accent border for urgency signal - red (#ef4444) for urgent, indigo (#6366f1) for momentum",
+    "On-track items are excluded from hero and shown as count summary with green checkmark",
+    "All interactive elements have data-testid attributes for testing"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pipeline_hero.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (All elements verified)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "athlete123"
+    }
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pipeline Hero 2-tier system is complete. Key data-testid attributes: pipeline-hero, pipeline-hero-title, pipeline-hero-summary, hero-section-urgent, hero-section-momentum, hero-card-{id}, hero-card-cta-{id}, hero-no-urgent, hero-on-track-summary, hero-dot-urgent, hero-dot-momentum, hero-count-urgent, hero-count-momentum. Test data: 1 urgent (University of Florida - coach_assigned_action), 2 momentum (Stanford, UCLA - cooling_off), 4 on-track.",
+  "verified_requirements": {
+    "pipeline_page_loads": "✅ PASS - Page loads without errors after login",
+    "2_tier_hero_structure": "✅ PASS - PipelineHero → HeroSection × 2 → HeroCard structure correct",
+    "tier1_needs_attention_now": "✅ PASS - Shows only urgent category items (coach_flag in test data)",
+    "tier2_keep_momentum_going": "✅ PASS - Shows only momentum category items (cooling_off)",
+    "on_track_summary": "✅ PASS - Shows '4 programs on track — no action needed' with green checkmark",
+    "hero_card_elements": "✅ PASS - Logo, name, match %, division/stage, explanation, owner label, CTA button all present",
+    "urgent_card_styling": "✅ PASS - Red left accent border, solid CTA button ('Take Action')",
+    "momentum_card_styling": "✅ PASS - Indigo left accent border, outline CTA button ('Re-engage')",
+    "card_click_navigation": "✅ PASS - Clicking card navigates to /pipeline/{programId}",
+    "cta_click_navigation": "✅ PASS - CTA button navigates to /pipeline/{programId}",
+    "header_summary_line": "✅ PASS - Shows '1 need attention · 2 losing momentum · 4 on track'",
+    "navigation_arrows": "✅ PASS - Scroll arrows present for horizontal navigation",
+    "kanban_board_renders": "✅ PASS - Kanban board visible below hero sections"
+  },
+  "tests_executed": {
+    "backend_pytest": {
+      "test_top_actions_endpoint_returns_200": "✅ PASS",
+      "test_top_actions_returns_all_active_programs": "✅ PASS",
+      "test_top_actions_category_classification": "✅ PASS",
+      "test_urgent_category_has_higher_priority_than_momentum": "✅ PASS",
+      "test_on_track_has_lowest_priority": "✅ PASS",
+      "test_owner_field_values": "✅ PASS",
+      "test_athlete_programs_endpoint": "✅ PASS",
+      "test_match_scores_endpoint": "✅ PASS",
+      "test_batch_metrics_endpoint": "✅ PASS",
+      "test_top_actions_sorted_by_priority": "✅ PASS",
+      "test_coach_flag_is_urgent": "✅ PASS",
+      "test_cooling_off_is_momentum": "✅ PASS",
+      "test_no_action_needed_is_on_track": "✅ PASS",
+      "test_top_actions_requires_auth": "✅ PASS",
+      "test_athlete_programs_requires_auth": "✅ PASS",
+      "test_match_scores_requires_auth": "✅ PASS"
+    },
+    "frontend_playwright": {
+      "pipeline_page_loads": "✅ PASS",
+      "pipeline_hero_container": "✅ PASS",
+      "hero_title_your_pipeline": "✅ PASS",
+      "hero_summary_counts": "✅ PASS",
+      "tier1_urgent_section": "✅ PASS",
+      "tier2_momentum_section": "✅ PASS",
+      "on_track_summary": "✅ PASS",
+      "urgent_dot_indicator": "✅ PASS",
+      "momentum_dot_indicator": "✅ PASS",
+      "count_badges": "✅ PASS",
+      "kanban_board": "✅ PASS",
+      "card_navigation": "✅ PASS"
+    }
+  }
+}
