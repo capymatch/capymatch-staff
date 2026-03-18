@@ -324,6 +324,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
     - Hover: translateY(-2px) + shadow (120ms) via CSS
     - Key file: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles updated)
   - Key files: `PipelineHero.js`, `PipelineHeroEmptyState.js`, `ComingUpTimeline.js`, `ComingUpTimelineEmptyState.js`, `PipelinePage.js`
+- **Kanban Drag-and-Drop Polish (Complete — 2026-03-18)**
+  - Card lift during drag: composed transform scale(1.03) rotate(0.5deg) appended to library positioning transform
+  - Elevated drag shadow: multi-layer shadow (20px+8px+1px ring) with teal accent
+  - Cursor: grab→grabbing state change during active drag
+  - Target lane activation: teal background tint (0.03), subtle border (0.12), inner glow shadow, top bar color glow
+  - Post-drop settle: justDroppedId state tracks last dropped card for 500ms, applies kanban-card-settled CSS class with teal glow→normal shadow keyframe (450ms)
+  - Toast confirmation + column count update on successful drop
+  - Click navigation preserved during drag (guarded with !snapshot.isDragging)
+  - All animations use transform+opacity only, 60fps, cubic-bezier(0.22,1,0.36,1)
+  - 7/7 features verified (iteration_168)
+  - Key files: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles), `pipeline-motion.css`
 
 ---
 
