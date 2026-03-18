@@ -509,6 +509,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 12/12 features verified (iteration_182)
   - Key files: `PriorityBoard.js`, `PipelinePage.js`
 
+- **School Logos in Priority List Rows (Complete — 2026-03-18)**
+  - Added 22px UniversityLogo (rounded square) to the left of every row in Next Actions, Coming Up, and On Track
+  - Uses Google favicon API with letter-avatar fallback (via existing UniversityLogo component)
+  - On Track logos wrapped with opacity 0.6 for muted, calm appearance
+  - Action text remains first and most prominent — school name stays inline after "—"
+  - Gap reduced from 14px to 10px for tighter, balanced row composition
+  - 10/10 features verified (iteration_183)
+  - Key files: `PriorityBoard.js`
+
 ---
 
 ## Backlog
