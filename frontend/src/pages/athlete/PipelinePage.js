@@ -273,15 +273,13 @@ function getEmptyColCopy(colKey) {
   return copy[colKey] || "No schools yet";
 }
 
-function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction, isHighlighted }) {
+function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction, isHighlighted, justDroppedId }) {
   const category = topAction?.category || "on_track";
-  const isActive = category !== "on_track" && category !== "first_outreach";
   const isPassive = category === "on_track" || category === "cooling_off" || category === "first_outreach";
   const sv = STATUS_VISUAL[category] || NEUTRAL_STATUS;
   const insight = getShortInsight(topAction);
   const inlineMeta = [p.division, p.conference].filter(Boolean).join(" \u00b7 ");
 
-  /* #1 Card depth + #4 balanced emphasis + #7 hero connection */
   const baseShadow = "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)";
   const activeBorder = sv.border !== "transparent" ? sv.border : "var(--cm-border, #e2e8f0)";
   const heroBorder = isHighlighted ? `${sv.chip || "rgba(13,148,136,0.3)"}` : null;
@@ -290,63 +288,77 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
   if (isHighlighted && !isPassive) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}, 0 0 8px ${heroBorder}22`;
   else if (isHighlighted) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}55`;
 
+  const isJustDropped = justDroppedId === p.program_id;
+
   return (
     <Draggable draggableId={p.program_id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          onClick={() => navigate(`/pipeline/${p.program_id}`)}
-          className="kanban-card"
-          style={{
-            background: "var(--cm-surface)",
-            borderRadius: 10,
-            padding: "12px 14px",
-            cursor: "grab",
-            border: `1px solid ${isPassive ? "var(--cm-border, #e8ecf1)" : activeBorder}`,
-            borderLeft: sv.border !== "transparent" ? `3px solid ${sv.border}` : undefined,
-            boxShadow: snapshot.isDragging ? "0 12px 28px rgba(0,0,0,0.15)" : cardShadow,
-            opacity: snapshot.isDragging ? 0.92 : isPassive && !isHighlighted ? 0.85 : 1,
-            ...provided.draggableProps.style,
-          }}
-          data-testid={`kanban-card-${p.program_id}`}
-        >
-          {/* Row 1: Logo + Name + Metadata */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-            <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={p.logo_url} size={28} className="rounded-[6px] mt-[2px] flex-shrink-0" />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
-              {inlineMeta && (
-                <div style={{ fontSize: 11, color: "var(--cm-text-4, var(--cm-text-3))", marginTop: 2 }}>{inlineMeta}</div>
-              )}
+      {(provided, snapshot) => {
+        const isActiveDrag = snapshot.isDragging && !snapshot.isDropAnimating;
+        const libStyle = provided.draggableProps.style || {};
+        const baseTransform = libStyle.transform || '';
+        const composedTransform = isActiveDrag
+          ? `${baseTransform} scale(1.03) rotate(0.5deg)`.trim()
+          : baseTransform || undefined;
+        const dragShadow = "0 20px 40px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.1), 0 0 0 1px rgba(13,148,136,0.1)";
+
+        return (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            onClick={() => !snapshot.isDragging && navigate(`/pipeline/${p.program_id}`)}
+            className={`kanban-card${isJustDropped ? ' kanban-card-settled' : ''}`}
+            style={{
+              ...libStyle,
+              transform: composedTransform,
+              background: "var(--cm-surface)",
+              borderRadius: 10,
+              padding: "12px 14px",
+              cursor: isActiveDrag ? "grabbing" : "grab",
+              border: `1px solid ${isActiveDrag ? "rgba(13,148,136,0.15)" : isPassive ? "var(--cm-border, #e8ecf1)" : activeBorder}`,
+              borderLeft: sv.border !== "transparent" && !isActiveDrag ? `3px solid ${sv.border}` : isActiveDrag ? "3px solid rgba(13,148,136,0.25)" : undefined,
+              boxShadow: isActiveDrag ? dragShadow : cardShadow,
+              opacity: isActiveDrag ? 1 : isPassive && !isHighlighted ? 0.85 : 1,
+              zIndex: isActiveDrag ? 9999 : undefined,
+            }}
+            data-testid={`kanban-card-${p.program_id}`}
+          >
+            {/* Row 1: Logo + Name + Metadata */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={p.logo_url} size={28} className="rounded-[6px] mt-[2px] flex-shrink-0" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
+                {inlineMeta && (
+                  <div style={{ fontSize: 11, color: "var(--cm-text-4, var(--cm-text-3))", marginTop: 2 }}>{inlineMeta}</div>
+                )}
+              </div>
             </div>
+
+            {/* Row 2: Status chip */}
+            {sv.label && category !== "on_track" && (
+              <div style={{ marginTop: 8 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+                  background: sv.chipBg, color: sv.chip,
+                  letterSpacing: "0.02em",
+                }}>{sv.label}</span>
+              </div>
+            )}
+
+            {/* Row 3: Short insight (max 1 line) */}
+            {insight && (
+              <div style={{ fontSize: 11, color: isPassive ? "var(--cm-text-4)" : "var(--cm-text-3)", marginTop: 6, lineHeight: 1.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {insight}
+              </div>
+            )}
           </div>
-
-          {/* Row 2: Status chip */}
-          {sv.label && category !== "on_track" && (
-            <div style={{ marginTop: 8 }}>
-              <span style={{
-                fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
-                background: sv.chipBg, color: sv.chip,
-                letterSpacing: "0.02em",
-              }}>{sv.label}</span>
-            </div>
-          )}
-
-          {/* Row 3: Short insight (max 1 line) */}
-          {insight && (
-            <div style={{ fontSize: 11, color: isPassive ? "var(--cm-text-4)" : "var(--cm-text-3)", marginTop: 6, lineHeight: 1.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {insight}
-            </div>
-          )}
-        </div>
-      )}
+        );
+      }}
     </Draggable>
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, topActionsMap, highlightedIds }) {
+function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, topActionsMap, highlightedIds, justDroppedId }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -376,15 +388,16 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   style={{
-                    background: snapshot.isDraggingOver ? "var(--cm-surface-3, rgba(13,148,136,0.02))" : "transparent",
+                    background: snapshot.isDraggingOver ? "rgba(13,148,136,0.03)" : "transparent",
                     borderRadius: 8, minHeight: 200, overflow: "hidden",
-                    transition: "background 0.2s ease",
-                    outline: snapshot.isDraggingOver ? "2px dashed rgba(13,148,136,0.2)" : "none",
+                    transition: "background 200ms cubic-bezier(0.22,1,0.36,1), box-shadow 200ms cubic-bezier(0.22,1,0.36,1), border-color 200ms cubic-bezier(0.22,1,0.36,1)",
+                    border: snapshot.isDraggingOver ? "1.5px solid rgba(13,148,136,0.12)" : "1.5px solid transparent",
+                    boxShadow: snapshot.isDraggingOver ? "inset 0 1px 12px rgba(13,148,136,0.05)" : "none",
                     ...colStyle,
                   }}
                 >
                   {/* Lane top bar */}
-                  <div style={{ height: 3, background: col.color, borderRadius: "8px 8px 0 0" }} />
+                  <div style={{ height: 3, background: col.color, borderRadius: "8px 8px 0 0", boxShadow: snapshot.isDraggingOver ? `0 0 8px ${col.color}44` : "none", transition: "box-shadow 200ms cubic-bezier(0.22,1,0.36,1)" }} />
 
                   {/* Header — #3 hierarchy: stage name strong, subtext muted */}
                   <div style={{ padding: "14px 10px 10px" }}>
@@ -410,6 +423,7 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                           healthMetrics={healthMap[p.program_id]}
                           topAction={topActionsMap[p.program_id]}
                           isHighlighted={hlSet.has(p.program_id)}
+                          justDroppedId={justDroppedId}
                         />
                       ))
                     ) : (
@@ -490,7 +504,8 @@ function PipelineStyles() {
       .kanban-card {
         transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1),
                     box-shadow 120ms cubic-bezier(0.22, 1, 0.36, 1),
-                    opacity 120ms cubic-bezier(0.22, 1, 0.36, 1);
+                    opacity 120ms cubic-bezier(0.22, 1, 0.36, 1),
+                    border-color 120ms cubic-bezier(0.22, 1, 0.36, 1);
       }
       .kanban-card:hover {
         transform: translateY(-2px);
@@ -498,6 +513,14 @@ function PipelineStyles() {
         opacity: 1 !important;
       }
       .kanban-card:active { transform: translateY(0); }
+      .kanban-card-settled {
+        animation: kanban-settle 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      @keyframes kanban-settle {
+        0%   { box-shadow: 0 0 0 3px rgba(13,148,136,0.22), 0 4px 20px rgba(13,148,136,0.1); }
+        60%  { box-shadow: 0 0 0 2px rgba(13,148,136,0.1), 0 2px 8px rgba(13,148,136,0.04); }
+        100% { box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02); }
+      }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
       .kanban-grid::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 4px; }
       @media (max-width: 768px) {
@@ -536,6 +559,7 @@ export default function PipelinePage() {
   const [topActionsMap, setTopActionsMap] = useState({});
   const [collapsedArchived, setCollapsedArchived] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [justDroppedId, setJustDroppedId] = useState(null);
   const navigate = useNavigate();
   const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
 
@@ -590,6 +614,10 @@ export default function PipelinePage() {
     const newCol = destination.droppableId;
     const stageUpdate = COL_TO_STAGE[newCol];
     if (!stageUpdate) return;
+
+    // Post-drop settle animation
+    setJustDroppedId(draggableId);
+    setTimeout(() => setJustDroppedId(null), 500);
 
     // Optimistic update
     setAllPrograms(prev => prev.map(p =>
@@ -745,7 +773,7 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} />
+      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} justDroppedId={justDroppedId} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (

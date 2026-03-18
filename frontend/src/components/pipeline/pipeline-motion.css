@@ -140,3 +140,16 @@
 .pm-nav-hover:hover {
   background: rgba(255,255,255,0.1) !important;
 }
+
+/* ══ Drag & Drop polish ══ */
+
+/* Post-drop settle glow */
+.kanban-card-settled {
+  animation: pm-drop-settle 450ms var(--pm-ease) both;
+}
+
+@keyframes pm-drop-settle {
+  0%   { box-shadow: 0 0 0 3px rgba(13,148,136,0.22), 0 4px 20px rgba(13,148,136,0.1); }
+  60%  { box-shadow: 0 0 0 2px rgba(13,148,136,0.1), 0 2px 8px rgba(13,148,136,0.04); }
+  100% { box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02); }
+}
