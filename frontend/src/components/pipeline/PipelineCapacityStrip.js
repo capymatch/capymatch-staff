@@ -1,8 +1,8 @@
 /**
- * PipelineCapacityStrip — Minimal inline capacity indicator.
+ * PipelineCapacityStrip — Inline capacity indicator for dark hero card.
  *
- * Shows: "7 / 20 programs on your board" with subtle progress bar.
- * Sits at the bottom of the hero as a distinct, thin horizontal strip.
+ * Shows: "7 / 20 programs on your board" with optional progress bar.
+ * Styled for dark background.
  */
 import React from "react";
 
@@ -15,29 +15,28 @@ export default function PipelineCapacityStrip({ current, limit }) {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 14,
-        padding: "14px 0 4px",
-        marginTop: 12,
-        borderTop: "1px solid var(--cm-border)",
+        gap: 12,
+        padding: "12px 0 2px",
+        marginTop: 4,
+        borderTop: "1px solid rgba(255,255,255,0.06)",
       }}
       data-testid="pipeline-capacity-strip"
     >
-      <span style={{ fontSize: 13, lineHeight: 1, color: "var(--cm-text-3)", opacity: 0.7 }}>
-        <span style={{ fontWeight: 700, color: "var(--cm-text)", opacity: 1 }}>
+      <span style={{ fontSize: 12, lineHeight: 1, color: "rgba(255,255,255,0.3)" }}>
+        <span style={{ fontWeight: 700, color: "rgba(255,255,255,0.6)" }}>
           {current}
           {!isUnlimited && <> / {limit}</>}
         </span>{" "}
         programs on your board
       </span>
 
-      {/* Subtle progress bar — only for limited plans */}
       {!isUnlimited && (
         <div
           style={{
-            width: 100,
+            width: 80,
             height: 3,
             borderRadius: 2,
-            background: "var(--cm-border)",
+            background: "rgba(255,255,255,0.08)",
             flexShrink: 0,
           }}
           data-testid="capacity-progress-bar"
@@ -47,7 +46,7 @@ export default function PipelineCapacityStrip({ current, limit }) {
               width: `${pct}%`,
               height: "100%",
               borderRadius: 2,
-              background: pct >= 90 ? "#f59e0b" : "var(--cm-accent)",
+              background: pct >= 90 ? "#f59e0b" : "#5eead4",
               transition: "width 0.3s ease",
             }}
           />

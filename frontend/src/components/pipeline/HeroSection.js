@@ -1,11 +1,6 @@
 /**
- * HeroSection — Scrollable horizontal section for a single tier of actions.
- *
- * Design rationale:
- * - Horizontal scroll with snap = natural mobile gesture, clean desktop layout
- * - Navigation arrows appear only when scrollable (no phantom controls)
- * - Section header uses a colored dot as the sole visual indicator of tier type
- * - Count badge provides at-a-glance volume without requiring counting
+ * HeroSection — Scrollable section inside the dark hero card.
+ * Styled for dark background. Navigation arrows in light/transparent style.
  */
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -36,27 +31,26 @@ export default function HeroSection({ title, count, dotColor, variant, children 
   const scroll = (dir) => {
     const el = scrollRef.current;
     if (!el) return;
-    const cardWidth = variant === "urgent" ? 336 : 296;
+    const cardWidth = variant === "urgent" ? 356 : 296;
     el.scrollBy({ left: dir * cardWidth, behavior: "smooth" });
   };
 
   return (
-    <div style={{ marginBottom: 20 }} data-testid={`hero-section-${variant}`}>
-      {/* ── Section header ── */}
+    <div style={{ marginBottom: 16 }} data-testid={`hero-section-${variant}`}>
+      {/* Section header */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 12,
-          padding: "0 2px",
+          marginBottom: 10,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div
             style={{
-              width: 8,
-              height: 8,
+              width: 7,
+              height: 7,
               borderRadius: "50%",
               background: dotColor,
               flexShrink: 0,
@@ -65,21 +59,22 @@ export default function HeroSection({ title, count, dotColor, variant, children 
           />
           <span
             style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: "var(--cm-text)",
-              letterSpacing: "-0.01em",
+              fontSize: 11,
+              fontWeight: 800,
+              color: "rgba(255,255,255,0.6)",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
             }}
           >
             {title}
           </span>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 700,
               padding: "1px 7px",
               borderRadius: 10,
-              background: `${dotColor}15`,
+              background: `${dotColor}20`,
               color: dotColor,
             }}
             data-testid={`hero-count-${variant}`}
@@ -88,7 +83,7 @@ export default function HeroSection({ title, count, dotColor, variant, children 
           </span>
         </div>
 
-        {/* Desktop navigation arrows */}
+        {/* Navigation arrows */}
         <div style={{ display: "flex", gap: 4 }} className="hero-nav-arrows">
           {[
             { dir: -1, can: canScrollLeft, id: "left", Icon: ChevronLeft },
@@ -100,37 +95,37 @@ export default function HeroSection({ title, count, dotColor, variant, children 
               disabled={!can}
               data-testid={`hero-scroll-${id}-${variant}`}
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: can ? "var(--cm-surface-2)" : "transparent",
-                border: can ? "1px solid var(--cm-border)" : "1px solid transparent",
+                width: 26,
+                height: 26,
+                borderRadius: 7,
+                background: can ? "rgba(255,255,255,0.06)" : "transparent",
+                border: can ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
                 cursor: can ? "pointer" : "default",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: can ? "var(--cm-text-2)" : "var(--cm-text-4)",
+                color: can ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)",
                 transition: "all 0.15s",
               }}
             >
-              <Icon style={{ width: 14, height: 14 }} />
+              <Icon style={{ width: 13, height: 13 }} />
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── Scrollable card container ── */}
+      {/* Scrollable container */}
       <div
         ref={scrollRef}
         className="hero-scroll-container"
         data-testid={`hero-scroll-${variant}`}
         style={{
           display: "flex",
-          gap: 16,
+          gap: 14,
           overflowX: "auto",
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
-          paddingBottom: 4,
+          paddingBottom: 2,
           scrollbarWidth: "none",
         }}
       >
