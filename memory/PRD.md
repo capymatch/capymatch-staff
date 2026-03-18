@@ -518,6 +518,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 10/10 features verified (iteration_183)
   - Key files: `PriorityBoard.js`
 
+- **Priority List UI Final Polish (Complete — 2026-03-18)**
+  - Standardized logos: 26px LogoBox container (rounded, subtle #f1f5f9 bg) wrapping 20px UniversityLogo; On Track logos muted at 0.55 opacity
+  - Fixed alignment: uniform 11px padding, consistent gap:10, center-aligned across all rows
+  - Reduced redundancy: `shortenName()` strips "University of", "University", "College" etc. — shows "— Florida" not "— University of Florida"
+  - CTA hierarchy: HIGH=red bold (0.8), MED=gray medium (0.7), LOW=muted light (0.6)
+  - Coming Up header opacity bumped to 0.92 for better readability
+  - On Track rows show a 5px green dot indicator before "On track" text
+  - Hover interaction: `.pb-row:hover` subtle background tint + `.pb-cta` brightens to opacity 1; all rows fully clickable
+  - 12/12 features verified (iteration_184)
+  - Key files: `PriorityBoard.js`
+
 ---
 
 ## Backlog
