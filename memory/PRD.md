@@ -540,6 +540,23 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 11/11 features verified (iteration_185)
   - Key files: `PriorityBoard.js`
 
+- **Unified Design System + Shared pipeline-design.js (Complete — 2026-03-18)**
+  - Created `pipeline-design.js` as single source of truth: LogoBox, StatusIndicator, OwnerTag, FONT tokens, PipelineRowStyles, shortenName, getTimingColor
+  - Both PriorityBoard and KanbanBoard import shared components — zero duplication
+  - Hero LEVEL_STYLE updated: "Needs attention"/"Needs action"/"On track" labels, amber accent #f59e0b
+  - Key files: `pipeline-design.js`, `PriorityBoard.js`, `KanbanBoard.js`, `PipelineHero.js`
+
+- **Kanban Strict Structure — Stage Visualization Only (Complete — 2026-03-18)**
+  - Strict 3-line card: logo+name → status dot+label → optional state context
+  - Removed all CTAs, timing labels, owner tags from Kanban (belongs in list only)
+  - `getCardContext()` filters timing info, only passes state context ("Coach assigned a task", "Ready for first contact")
+  - One signal per card: red/amber/green status only
+  - Equal spacing: 8px card padding, 2px card gap, 16px column gap
+  - Uppercase 800-weight column headers with muted subtitles
+  - Updated empty column copy: "No offers yet", "No visits scheduled", etc.
+  - 12/12 features verified (iteration_187)
+  - Key files: `KanbanBoard.js`, `pipeline-constants.js`
+
 ---
 
 ## Backlog
