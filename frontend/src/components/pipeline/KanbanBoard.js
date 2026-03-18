@@ -25,8 +25,6 @@ function getCardContext(reasonShort) {
 }
 
 /* ── Card: strict 3-line layout ── */
-const CARD_PAD = 8;
-
 function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
   const level = attn?.attentionLevel || 'low';
   const context = getCardContext(attn?.reasonShort);
@@ -61,16 +59,16 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
                 : isDropping
                   ? 'transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms ease-out'
                   : undefined,
-              padding: CARD_PAD,
+              padding: 12,
               cursor: isLifted ? 'grabbing' : 'grab',
-              background: isLifted ? '#fff' : 'transparent',
+              background: isLifted ? '#fff' : undefined,
               boxShadow: isLifted
-                ? '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)'
-                : 'none',
+                ? '0 12px 32px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06)'
+                : undefined,
+              borderColor: isLifted ? 'rgba(226,232,240,0.9)' : undefined,
               opacity: isFaded ? 0.4 : 1,
               zIndex: isLifted ? 9999 : undefined,
               pointerEvents: isFaded ? 'none' : undefined,
-              borderRadius: 6,
             }}
             data-testid={`kanban-card-${p.program_id}`}
           >
@@ -140,8 +138,18 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
   return (
     <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate} onDragStart={onDragStart}>
       <style>{`
-        .kb-card { transition: background 100ms ease-out, box-shadow 100ms ease-out; }
-        .kb-card:hover { background: rgba(241,245,249,0.5) !important; }
+        .kb-card {
+          transition: box-shadow 120ms ease-out, transform 80ms ease-out;
+          background: #fff;
+          border: 1px solid rgba(226,232,240,0.7);
+          border-radius: 10px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          cursor: grab;
+        }
+        .kb-card:hover {
+          box-shadow: 0 3px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+          border-color: rgba(226,232,240,0.9);
+        }
       `}</style>
       <div style={gridStyle} className="kanban-grid" data-testid="kanban-board">
         {KANBAN_COLS.map(col => {
@@ -194,12 +202,12 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                   </div>
 
                   {/* Cards */}
-                  <div style={{ padding: '0 6px 10px', display: 'flex', flexDirection: 'column', gap: 2, minHeight: 60 }}>
+                  <div style={{ padding: '0 6px 10px', display: 'flex', flexDirection: 'column', gap: 8, minHeight: 60 }}>
                     {count > 0 ? (
                       cards.map((p, idx) => (
                         <div key={p.program_id} style={{ position: 'relative' }}>
                           {insertAt === idx && (
-                            <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -2, left: 4, right: 4, height: 2, background: col.color, borderRadius: 1, zIndex: 10 }} />
+                            <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -5, left: 4, right: 4, height: 2, background: col.color, borderRadius: 1, zIndex: 10 }} />
                           )}
                           <KanbanCard
                             program={p}
