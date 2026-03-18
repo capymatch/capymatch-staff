@@ -14,7 +14,8 @@ import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
 import { PipelineHealthBadge } from "../../components/PipelineHealthBadge";
 import PipelineHero from "../../components/pipeline/PipelineHero";
-import ComingUpTimeline, { buildTimelineItems } from "../../components/pipeline/ComingUpTimeline";
+import ComingUpTimeline from "../../components/pipeline/ComingUpTimeline";
+import { computeAllAttention } from "../../lib/computeAttention";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -31,20 +32,6 @@ function useIsMobile(breakpoint = 768) {
 /* ═══════════════════════════════════════════ */
 /* ── Helpers                                 */
 /* ═══════════════════════════════════════════ */
-
-function getDueInfo(p) {
-  if (p.next_action_due) {
-    const today = new Date().toISOString().split("T")[0];
-    const diff = Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date(today + "T00:00:00")) / 86400000);
-    if (diff < 0) return { text: `Overdue ${Math.abs(diff)}d`, color: "#dc2626", urgent: true };
-    if (diff === 0) return { text: "Due today", color: "#d97706", urgent: true };
-    if (diff <= 3) return { text: `Due in ${diff}d`, color: "#d97706", urgent: false };
-  }
-  const sig = p.signals || {};
-  if (sig.days_since_activity != null && sig.days_since_activity > 0)
-    return { text: `${sig.days_since_activity}d ago`, color: "#94a3b8", urgent: false };
-  return null;
-}
 
 /* ── Kanban column config ── */
 const KANBAN_COLS = [
@@ -64,87 +51,6 @@ function programToKanbanCol(p) {
   return "added";
 }
 
-/* Generate action items — driven by topActionsMap from the Top Action Engine.
-   Falls back to legacy generation when topActionsMap is empty (loading).
-*/
-function generateActions(programs, matchScores, tasks, healthMap, topActionsMap) {
-  const active = programs.filter(p =>
-    p.board_group !== "archived" && p.recruiting_status !== "Committed" && p.journey_stage !== "committed"
-  );
-
-  // If top actions available, use them (skip "on_track" for hero)
-  if (topActionsMap && Object.keys(topActionsMap).length > 0) {
-    const alerts = [];
-    for (const p of active) {
-      const ta = topActionsMap[p.program_id];
-      if (ta && ta.action_key !== "no_action_needed") {
-        alerts.push({
-          id: p.program_id,
-          type: "school",
-          program: p,
-          category: ta.category,
-          title: `${p.university_name} — ${ta.label}`,
-          context: ta.explanation,
-          owner: ta.owner,
-          cta: { label: ta.cta_label, style: ta.priority <= 3 ? "warn" : "primary" },
-          matchScore: matchScores[p.program_id],
-          due: getDueInfo(p),
-          priority: ta.priority,
-        });
-      } else {
-        // On track — no specific action needed
-        alerts.push({
-          id: p.program_id,
-          type: "school",
-          program: p,
-          category: "on_track",
-          title: `${p.university_name} — On Track`,
-          context: "Everything looks good — no action needed right now.",
-          owner: "athlete",
-          cta: { label: "View School", style: "primary" },
-          matchScore: matchScores[p.program_id],
-          due: getDueInfo(p),
-          priority: 99,
-        });
-      }
-    }
-    alerts.sort((a, b) => a.priority - b.priority);
-    return alerts;
-  }
-
-  // Legacy fallback (during loading)
-  const seen = new Set();
-  const alerts = [];
-
-  for (const p of active) {
-    const due = getDueInfo(p);
-    if (due?.color === "#dc2626") {
-      seen.add(p.program_id);
-      const days = p.next_action_due ? Math.abs(Math.ceil((new Date(p.next_action_due + "T00:00:00") - new Date()) / 86400000)) : null;
-      alerts.push({
-        id: p.program_id, type: "school", program: p, category: "past_due",
-        title: `Follow up with ${p.university_name}`,
-        context: days ? `Overdue by ${days} day${days !== 1 ? "s" : ""}. A short follow-up keeps momentum going.` : "This follow-up is overdue.",
-        cta: { label: "Follow Up", style: "warn" },
-        matchScore: matchScores[p.program_id], due,
-      });
-    }
-  }
-  for (const p of active) {
-    if (seen.has(p.program_id)) continue;
-    if (p.board_group === "needs_outreach") {
-      seen.add(p.program_id);
-      alerts.push({
-        id: p.program_id, type: "school", program: p, category: "first_outreach",
-        title: `Send intro email to ${p.university_name}`,
-        context: "This school is on your board but hasn't been contacted yet.",
-        cta: { label: "Start Outreach", style: "primary" },
-        matchScore: matchScores[p.program_id], due: getDueInfo(p),
-      });
-    }
-  }
-  return alerts;
-}
 
 
 /* ═══════════════════════════════════════════ */
@@ -221,16 +127,6 @@ const COL_TO_STAGE = {
   offer: { journey_stage: "offer", recruiting_status: "Offer" },
 };
 
-/* ── Attention level system ── */
-const ATTENTION_HIGH = new Set(['coach_flag', 'director_action', 'past_due', 'due_today']);
-const ATTENTION_MED = new Set(['reply_needed', 'cooling_off', 'first_outreach']);
-
-function getAttentionLevel(topAction) {
-  if (!topAction || topAction.action_key === 'no_action_needed') return 'low';
-  if (ATTENTION_HIGH.has(topAction.category)) return 'high';
-  if (ATTENTION_MED.has(topAction.category)) return 'medium';
-  return 'low';
-}
 
 const ATTENTION_META = {
   high: { label: 'High', dot: '#ef4444', color: '#dc2626', bg: 'rgba(239,68,68,0.06)' },
@@ -238,66 +134,7 @@ const ATTENTION_META = {
   low: { label: 'Low', dot: '#10b981', color: '#047857', bg: 'rgba(16,185,129,0.05)' },
 };
 
-const ATTENTION_SORT = { high: 0, medium: 1, low: 2 };
-const ATTENTION_GROUP_LABEL = { high: 'Needs Attention', medium: 'Keep Moving', low: 'On Track' };
-
-function getCardReason(topAction) {
-  if (!topAction || topAction.action_key === 'no_action_needed') return 'No action needed';
-  const reasons = {
-    coach_assigned_action: 'Coach assigned a follow-up',
-    overdue_follow_up: 'Follow-up is overdue',
-    stale_reply: 'Awaiting coach reply',
-    first_outreach_needed: 'Ready for first contact',
-    send_intro_email: 'Ready for first contact',
-    relationship_cooling: 'No recent engagement',
-    reengage_relationship: 'No recent engagement',
-    due_today_follow_up: 'Follow-up due today',
-  };
-  return reasons[topAction.action_key] || topAction.label || 'Action needed';
-}
-
-function getActionTitle(topAction, schoolName) {
-  if (!topAction || topAction.action_key === 'no_action_needed') return `${schoolName} is on track`;
-  const map = {
-    coach_assigned_action: `Follow up with ${schoolName} coach`,
-    overdue_follow_up: `Follow up with ${schoolName}`,
-    stale_reply: `Follow up with ${schoolName}`,
-    first_outreach_needed: `Send intro to ${schoolName}`,
-    send_intro_email: `Send intro to ${schoolName}`,
-    relationship_cooling: `Re-engage ${schoolName}`,
-    reengage_relationship: `Re-engage ${schoolName}`,
-    due_today_follow_up: `Follow up with ${schoolName} today`,
-  };
-  return map[topAction.action_key] || `${topAction.cta_label || 'Take action'} — ${schoolName}`;
-}
-
-function getShortName(name) {
-  if (!name) return '';
-  return name
-    .replace(/^University of /i, '')
-    .replace(/^The /i, '')
-    .replace(/ University$/i, '')
-    .replace(/ College$/i, '')
-    .replace(/ Institute of Technology$/i, ' Tech');
-}
-
-function getTimingSignal(p, ta) {
-  const due = getDueInfo(p);
-  if (due?.urgent) return due.text;
-  if (due?.text) return due.text;
-  const days = p.signals?.days_since_activity;
-  if (days > 0) return `No response in ${days} day${days !== 1 ? 's' : ''}`;
-  if (ta?.category === 'first_outreach') return 'No contact yet';
-  return '';
-}
-
-function getMicroSignal(p, topAction) {
-  const due = getDueInfo(p);
-  if (due?.text?.startsWith('Overdue')) return { text: 'Now overdue', color: '#dc2626' };
-  if (due?.text === 'Due today') return { text: 'Due today', color: '#d97706' };
-  if (topAction?.category === 'first_outreach') return { text: 'New', color: '#94a3b8' };
-  return null;
-}
+const ATTENTION_LABEL = { high: 'Needs Attention', medium: 'Coming Up Soon', low: 'On Track' };
 
 /* ── Column header contextual insights ── */
 function getColInsight(colKey, count) {
@@ -324,10 +161,10 @@ function getEmptyColCopy(colKey) {
   return copy[colKey] || "No schools yet";
 }
 
-function KanbanCard({ program: p, navigate, index, topAction, justDroppedId, activeDragId }) {
-  const attention = getAttentionLevel(topAction);
-  const meta = ATTENTION_META[attention];
-  const ctaLabel = topAction?.cta_label;
+function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
+  const level = attn?.attentionLevel || 'low';
+  const meta = ATTENTION_META[level];
+  const ctaLabel = attn?.ctaLabel;
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
   const stageKey = programToKanbanCol(p);
@@ -395,10 +232,10 @@ function KanbanCard({ program: p, navigate, index, topAction, justDroppedId, act
                 {/* Line 3: Attention indicator */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
-                  <span style={{ fontSize: 10, fontWeight: 600, color: meta.color }} data-testid={`card-attention-${p.program_id}`}>{attention === 'high' ? 'High attention' : attention === 'medium' ? 'Needs action' : 'On track'}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: meta.color }} data-testid={`card-attention-${p.program_id}`}>{level === 'high' ? 'High attention' : level === 'medium' ? 'Needs action' : 'On track'}</span>
                 </div>
                 {/* Line 4: Action (actionable cards only) */}
-                {ctaLabel && attention !== 'low' && (
+                {ctaLabel && level !== 'low' && (
                   <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-2, #475569)', marginTop: 4 }} data-testid={`card-action-${p.program_id}`}>→ {ctaLabel}</div>
                 )}
               </>
@@ -410,7 +247,7 @@ function KanbanCard({ program: p, navigate, index, topAction, justDroppedId, act
   );
 }
 
-function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdate, onDragStart, topActionsMap, justDroppedId, dragDest, pulsingColumnId, activeDragId }) {
+function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdate, onDragStart, attentionMap, justDroppedId, dragDest, pulsingColumnId, activeDragId }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -420,12 +257,12 @@ function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdate, onDragStart,
     if (col && columns[col]) columns[col].push(p);
   }
 
-  // Sort each column by attention level (High → Medium → Low)
+  // Sort each column by attention score (highest first)
   for (const key of Object.keys(columns)) {
     columns[key].sort((a, b) => {
-      const aLvl = ATTENTION_SORT[getAttentionLevel(topActionsMap[a.program_id])] ?? 2;
-      const bLvl = ATTENTION_SORT[getAttentionLevel(topActionsMap[b.program_id])] ?? 2;
-      return aLvl - bLvl;
+      const aScore = attentionMap[a.program_id]?.attentionScore ?? 0;
+      const bScore = attentionMap[b.program_id]?.attentionScore ?? 0;
+      return bScore - aScore;
     });
   }
 
@@ -487,15 +324,15 @@ function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdate, onDragStart,
                   <div style={{ padding: "0 6px 12px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
                     {count > 0 ? (
                       cards.map((p, idx) => {
-                        const attention = getAttentionLevel(topActionsMap[p.program_id]);
-                        const showHeader = attention !== prevAttention;
-                        prevAttention = attention;
+                        const level = attentionMap[p.program_id]?.attentionLevel || 'low';
+                        const showHeader = level !== prevAttention;
+                        prevAttention = level;
 
                         return (
                           <div key={p.program_id} style={{ position: 'relative' }}>
                             {showHeader && (
-                              <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: ATTENTION_META[attention].color, padding: idx === 0 ? '0 2px 5px' : '8px 2px 5px', opacity: activeDragId ? 0 : 0.65, transition: 'opacity 100ms ease-out' }} data-testid={`group-header-${col.key}-${attention}`}>
-                                {ATTENTION_GROUP_LABEL[attention]}
+                              <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: ATTENTION_META[level].color, padding: idx === 0 ? '0 2px 5px' : '8px 2px 5px', opacity: activeDragId ? 0 : 0.65, transition: 'opacity 100ms ease-out' }} data-testid={`group-header-${col.key}-${level}`}>
+                                {ATTENTION_LABEL[level]}
                               </div>
                             )}
                             {insertAt === idx && (
@@ -505,7 +342,7 @@ function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdate, onDragStart,
                               program={p}
                               navigate={navigate}
                               index={idx}
-                              topAction={topActionsMap[p.program_id]}
+                              attention={attentionMap[p.program_id]}
                               justDroppedId={justDroppedId}
                               activeDragId={activeDragId}
                             />
@@ -588,47 +425,39 @@ function CommittedBanner({ programs, navigate }) {
 /* ── Priority View — Action Board            */
 /* ═══════════════════════════════════════════ */
 
-function PriorityCard({ program: p, topAction, navigate }) {
-  const attention = getAttentionLevel(topAction);
-  const meta = ATTENTION_META[attention];
-  const actionTitle = getActionTitle(topAction, p.university_name);
-  const owner = topAction?.owner;
+function PriorityCard({ item, navigate }) {
+  const { attentionLevel, primaryAction, timingLabel, microSignal, owner, ctaLabel, program: prog } = item;
+  const meta = ATTENTION_META[attentionLevel];
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
-  const due = getDueInfo(p);
-  const micro = getMicroSignal(p, topAction);
-  let timing = due?.text;
-  if (!timing && p.signals?.days_since_activity > 0) {
-    timing = `No response in ${p.signals.days_since_activity}d`;
-  }
 
   return (
     <div
-      onClick={() => navigate(`/pipeline/${p.program_id}`)}
+      onClick={() => navigate(`/pipeline/${prog.program_id}`)}
       className="kanban-card"
       style={{
         background: 'var(--cm-surface, #fff)',
         borderRadius: 8,
         padding: '10px 12px',
         cursor: 'pointer',
-        border: `1px solid ${attention === 'high' ? 'rgba(239,68,68,0.12)' : 'var(--cm-border, #e8ecf1)'}`,
-        boxShadow: attention === 'high' ? '0 1px 3px rgba(239,68,68,0.06)' : '0 1px 2px rgba(0,0,0,0.04)',
+        border: `1px solid ${attentionLevel === 'high' ? 'rgba(239,68,68,0.12)' : 'var(--cm-border, #e8ecf1)'}`,
+        boxShadow: attentionLevel === 'high' ? '0 1px 3px rgba(239,68,68,0.06)' : '0 1px 2px rgba(0,0,0,0.04)',
       }}
-      data-testid={`priority-card-${p.program_id}`}
+      data-testid={`priority-card-${prog.program_id}`}
     >
       {/* Line 1: Attention level + micro-signal */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
         <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: meta.color }}>{meta.label}</span>
-        {micro && <span style={{ fontSize: 9, fontWeight: 600, color: micro.color, opacity: 0.65 }} data-testid={`micro-signal-${p.program_id}`}>{'\u00b7'} {micro.text}</span>}
+        {microSignal && <span style={{ fontSize: 9, fontWeight: 600, color: microSignal.color, opacity: 0.65 }} data-testid={`micro-signal-${prog.program_id}`}>{'\u00b7'} {microSignal.text}</span>}
       </div>
-      {/* Line 2: Action title — plain language, answers "What should I do?" */}
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cm-text)', marginTop: 4, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`priority-action-${p.program_id}`}>
-        {actionTitle}
+      {/* Line 2: Action — plain language */}
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cm-text)', marginTop: 4, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`priority-action-${prog.program_id}`}>
+        {primaryAction}
       </div>
       {/* Line 3: Timing + owner */}
-      {attention !== 'low' && (timing || topAction?.cta_label) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }} data-testid={`priority-timing-${p.program_id}`}>
-          <span style={{ fontSize: 10.5, fontWeight: 600, color: due?.urgent ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>{'\u2192'} {timing || topAction?.cta_label}</span>
+      {attentionLevel !== 'low' && (timingLabel || ctaLabel) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }} data-testid={`priority-timing-${prog.program_id}`}>
+          <span style={{ fontSize: 10.5, fontWeight: 600, color: attentionLevel === 'high' ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>{'\u2192'} {timingLabel || ctaLabel}</span>
           <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
       )}
@@ -636,20 +465,15 @@ function PriorityCard({ program: p, topAction, navigate }) {
   );
 }
 
-function PriorityBoard({ programs, topActionsMap, navigate }) {
-  const high = [], medium = [], low = [];
-  for (const p of programs) {
-    if (p.board_group === 'archived') continue;
-    const level = getAttentionLevel(topActionsMap[p.program_id]);
-    if (level === 'high') high.push(p);
-    else if (level === 'medium') medium.push(p);
-    else low.push(p);
-  }
+function PriorityBoard({ items, navigate }) {
+  const high = items.filter(i => i.attentionLevel === 'high');
+  const medium = items.filter(i => i.attentionLevel === 'medium');
+  const low = items.filter(i => i.attentionLevel === 'low');
 
   const sections = [
-    { key: 'attention', label: 'Needs Attention', color: '#dc2626', programs: high, empty: 'Nothing urgent right now' },
-    { key: 'coming-up', label: 'Coming Up', color: '#d97706', programs: medium, empty: 'No upcoming actions' },
-    { key: 'on-track', label: 'On Track', color: '#10b981', programs: low, empty: 'No programs on track yet' },
+    { key: 'attention', label: 'Needs Attention', color: '#dc2626', items: high, empty: 'Nothing urgent right now' },
+    { key: 'coming-up', label: 'Coming Up Soon', color: '#d97706', items: medium, empty: 'No upcoming actions' },
+    { key: 'on-track', label: 'On Track', color: '#10b981', items: low, empty: 'No programs on track yet' },
   ];
 
   return (
@@ -659,12 +483,12 @@ function PriorityBoard({ programs, topActionsMap, navigate }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: sec.color }} />
             <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: sec.color }}>{sec.label}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--cm-text-3)' }}>{sec.programs.length}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--cm-text-3)' }}>{sec.items.length}</span>
           </div>
-          {sec.programs.length > 0 ? (
+          {sec.items.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
-              {sec.programs.map(p => (
-                <PriorityCard key={p.program_id} program={p} topAction={topActionsMap[p.program_id]} navigate={navigate} />
+              {sec.items.map(item => (
+                <PriorityCard key={item.programId} item={item} navigate={navigate} />
               ))}
             </div>
           ) : (
@@ -898,26 +722,20 @@ export default function PipelinePage() {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchAll} /></div>;
   }
 
-  const actions = generateActions(allPrograms, matchScores, tasks, healthMap, topActionsMap);
+  /* Attention Engine V2: single source of truth */
+  const allAttention = computeAllAttention(allPrograms, topActionsMap);
+  const attentionMap = {};
+  allAttention.forEach(a => { attentionMap[a.programId] = a; });
+  const heroItems = allAttention.filter(a => a.attentionLevel !== 'low').slice(0, 5);
+  const timelineItems = allAttention.filter(a => a.daysUntil !== null && a.daysUntil >= 0 && a.daysUntil <= 3);
+  const highCount = allAttention.filter(a => a.attentionLevel === 'high').length;
+  const medCount = allAttention.filter(a => a.attentionLevel === 'medium').length;
+  const lowCount = allAttention.filter(a => a.attentionLevel === 'low').length;
+
   const guidance = Object.values(matchScores).find(s => s.confidence_guidance)?.confidence_guidance;
   const usage = getUsage(subscription, "schools");
   const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;
   const nearLimit = schoolPct >= 0.8;
-
-  /* Classify for summary chips */
-  const URGENT_CATS = new Set(["coach_flag", "director_action", "past_due", "reply_needed", "due_today"]);
-  const MOMENTUM_CATS = new Set(["cooling_off", "first_outreach"]);
-  const urgentCount = actions.filter(a => URGENT_CATS.has(a.category)).length;
-  const momentumCount = actions.filter(a => MOMENTUM_CATS.has(a.category)).length;
-  const onTrackCount = actions.filter(a => a.category === "on_track").length;
-
-  /* Build timeline items for "Coming Up Next" */
-  const timelineItems = buildTimelineItems(allPrograms, topActionsMap, matchScores);
-
-  /* Build highlighted program IDs for board connection (#8) */
-  const heroIds = actions.filter(a => URGENT_CATS.has(a.category) || MOMENTUM_CATS.has(a.category)).map(a => a.program?.program_id).filter(Boolean);
-  const timelineIds = timelineItems.map(t => t.programId);
-  const highlightedIds = [...new Set([...heroIds, ...timelineIds])];
 
   return (
     <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
@@ -930,25 +748,25 @@ export default function PipelinePage() {
             Your Pipeline
           </h1>
           <div className="flex items-center gap-2 flex-wrap mt-1.5" data-testid="summary-chips">
-            {urgentCount > 0 && (
+            {highCount > 0 && (
               <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-attention"
                 style={{ color: "var(--cm-text-3, #94a3b8)" }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#ef4444" }} />
-                {urgentCount} needs attention
+                {highCount} needs attention
               </span>
             )}
-            {momentumCount > 0 && (
+            {medCount > 0 && (
               <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-momentum"
                 style={{ color: "var(--cm-text-3, #94a3b8)" }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#818cf8" }} />
-                {momentumCount} keep moving
+                {medCount} coming up
               </span>
             )}
-            {onTrackCount > 0 && (
+            {lowCount > 0 && (
               <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-on-track"
                 style={{ color: "var(--cm-text-3, #94a3b8)" }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10b981" }} />
-                {onTrackCount} on track
+                {lowCount} on track
               </span>
             )}
           </div>
@@ -966,7 +784,7 @@ export default function PipelinePage() {
       </div>
 
       {/* ═══ HERO: What to do now ═══ */}
-      <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} />
+      <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
 
       {/* ═══ COMING UP NEXT: What's next ═══ */}
       <div style={{ marginTop: 20, marginBottom: 0 }}>
@@ -1017,9 +835,9 @@ export default function PipelinePage() {
 
       {/* 4. Board — Priority or Pipeline based on toggle */}
       {viewMode === 'pipeline' ? (
-        <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} topActionsMap={topActionsMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
+        <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
       ) : (
-        <PriorityBoard programs={allPrograms} topActionsMap={topActionsMap} navigate={navigate} />
+        <PriorityBoard items={allAttention} navigate={navigate} />
       )}
 
       {/* Archived */}
