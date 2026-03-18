@@ -1,0 +1,141 @@
+{
+  "summary": "CapyMatch Kanban D&D Refinement Testing - All 10 features verified. CRITICAL: All teal accent colors successfully removed from drag/drop feedback. Replaced with neutral colors: white halo shadow, neutral borders, gradient column background, neutral settle animation. Verified: scale(1.04) rotate(1deg), white halo (rgba(255,255,255,0.5)), neutral shadows (rgba(0,0,0,...)), 220ms timing, 350ms settle, header unity color boosts, top bar 0.5→0.85 opacity.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_170.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "KanbanCard composedTransform correctly uses scale(1.04) rotate(1deg) - changed from 1.5deg to 1deg",
+    "dragShadow correctly uses white halo: '0 0 0 1px rgba(255,255,255,0.5), 0 28px 52px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.08)'",
+    "Card border during drag correctly uses neutral rgba(0,0,0,0.06) - NO teal",
+    "borderLeft correctly set to undefined during drag (no teal accent during drag)",
+    "Lane isDraggingOver correctly uses gradient: linear-gradient(180deg, rgba(0,0,0,0.004) 0%, rgba(0,0,0,0.016) 100%)",
+    "Lane border correctly transparent (no teal border): '1px solid transparent'",
+    "Lane inset shadow correctly neutral: 'inset 0 1px 24px rgba(0,0,0,0.025)'",
+    "Lane transform correctly scales to 1.008 on isDraggingOver",
+    "Header label color boosts to var(--cm-text, #0f172a) on isDraggingOver",
+    "Header count weight boosts to 700 and color to var(--cm-text-2, #475569) on isDraggingOver",
+    "Top bar default opacity 0.5, boosts to 0.85 with soft glow on isDraggingOver",
+    "All transitions use 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+    "Settle animation 350ms with NEUTRAL shadows - NO teal glow",
+    "pipeline-motion.css pm-drop-settle keyframe uses neutral rgba(0,0,0,...) shadows"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only)",
+    "frontend": "100% (10/10 features pass)"
+  },
+  "test_credentials": {
+    "athlete": {
+      "email": "emma.chen@athlete.capymatch.com",
+      "password": "athlete123"
+    }
+  },
+  "seed_data_creation": "None - used existing seed data. Note: Stanford moved from Added→Outreach during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Kanban D&D refinement fully verified. KEY CHANGE: All teal accent colors removed from drag/drop/settle - replaced with neutral colors. Verified values: scale(1.04) rotate(1deg), white halo shadow, neutral border rgba(0,0,0,0.06), gradient column bg, inset shadow 24px 0.025 opacity, scale(1.008), 220ms transitions, 350ms settle, header color boosts, top bar 0.5→0.85 opacity. Card positions after test: Added(0), Outreach(4: Stanford, U of Florida, Creighton, TEST_Dup), Talking(3: Emory, UCLA, Florida Atlantic), Visit(0), Offered(0).",
+  "verified_features": {
+    "kanban_board_5_lanes": "✅ PASS - All 5 lanes visible: Added, Outreach, Talking, Visit, Offered",
+    "drag_scale_104_rotate_1deg": "✅ PASS - Card transforms with scale(1.04) rotate(1deg) during drag",
+    "drag_white_halo_shadow": "✅ PASS - Shadow includes rgba(255,255,255,0.5) white halo at start",
+    "drag_neutral_border": "✅ PASS - Border uses rgba(0,0,0,0.06) during drag - NO teal",
+    "drag_no_teal_borderLeft": "✅ PASS - borderLeft is undefined during drag (no teal accent)",
+    "drag_cursor_grabbing": "✅ PASS - Cursor changes to 'grabbing' during drag",
+    "drag_zindex_9999": "✅ PASS - z-index 9999 applied during drag",
+    "column_gradient_bg": "✅ PASS - Lane uses linear-gradient(180deg, rgba(0,0,0,0.004) 0%, rgba(0,0,0,0.016) 100%)",
+    "column_transparent_border": "✅ PASS - Lane border is '1px solid transparent' - NO teal",
+    "column_neutral_inset_shadow": "✅ PASS - Inset shadow uses rgba(0,0,0,0.025) - verified 'inset 0 1px 24px rgba(0,0,0,0.025)'",
+    "column_scale_1008": "✅ PASS - Lane transforms to scale(1.008) on isDraggingOver",
+    "header_label_color_boost": "✅ PASS - Stage label color boosts to rgb(30,41,59)/#0f172a on isDraggingOver",
+    "header_count_weight_700": "✅ PASS - Count weight becomes 700 on isDraggingOver (verified from 600→700)",
+    "header_count_color_boost": "✅ PASS - Count color boosts to rgb(71,85,105)/#475569 on isDraggingOver",
+    "top_bar_default_05": "✅ PASS - All 5 top bars have opacity 0.5 by default",
+    "top_bar_boost_085": "✅ PASS - Top bar opacity boosts to 0.85 on isDraggingOver",
+    "top_bar_soft_glow": "✅ PASS - Top bar gets soft glow boxShadow '0 0 8px ${col.color}33' on isDraggingOver",
+    "settle_animation_350ms": "✅ PASS - kanban-card-settled uses 350ms animation",
+    "settle_neutral_shadows": "✅ PASS - Settle keyframes use NEUTRAL rgba(0,0,0,...) shadows only - NO teal glow",
+    "transitions_220ms": "✅ PASS - All transitions use 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+    "card_state_urgent_border": "✅ PASS - Urgent cards have 4px left border with status color",
+    "card_state_passive_opacity": "✅ PASS - Passive cards have 0.72 opacity",
+    "toast_moved_to_x": "✅ PASS - 'Moved to Outreach' toast appeared after drop",
+    "card_click_navigation": "✅ PASS - Card click navigates to /pipeline/{program_id}"
+  },
+  "refined_values_verification": {
+    "rotate": {
+      "old": "1.5deg",
+      "new": "1deg",
+      "verified": true
+    },
+    "drag_shadow": {
+      "old": "teal accents",
+      "new": "white halo (rgba(255,255,255,0.5)) + neutral (rgba(0,0,0,...))",
+      "verified": true
+    },
+    "lane_bg": {
+      "old": "solid teal tint rgba(13,148,136,0.05)",
+      "new": "gradient rgba(0,0,0,0.004→0.016)",
+      "verified": true
+    },
+    "lane_border": {
+      "old": "teal border rgba(13,148,136,0.2)",
+      "new": "transparent",
+      "verified": true
+    },
+    "lane_shadow": {
+      "old": "teal inset shadow",
+      "new": "neutral inset shadow rgba(0,0,0,0.025)",
+      "verified": true
+    },
+    "settle_animation": {
+      "old": "teal glow rgba(13,148,136,0.25)",
+      "new": "neutral shadows rgba(0,0,0,...)",
+      "verified": true
+    },
+    "transition_timing": {
+      "old": "200ms",
+      "new": "220ms",
+      "verified": true
+    },
+    "top_bar_opacity": {
+      "old": "0.65",
+      "new": "0.5 default, 0.85 on drag",
+      "verified": true
+    }
+  },
+  "code_locations_verified": {
+    "KanbanCard_drag_styles": "lines 301-304 (composedTransform, dragShadow)",
+    "KanbanCard_borderLeft_undefined": "line 321 (borderLeft: ... && !isActiveDrag)",
+    "KanbanBoard_lane_gradient": "lines 393-395 (linear-gradient background)",
+    "KanbanBoard_lane_shadow": "lines 399-400 (inset shadow rgba(0,0,0,0.025))",
+    "KanbanBoard_lane_scale": "line 402 (transform: scale(1.008))",
+    "KanbanBoard_header_colors": "lines 412-416 (label/count/subtext colors)",
+    "KanbanBoard_top_bar": "line 407 (opacity 0.5→0.85, boxShadow glow)",
+    "PipelineStyles_transitions": "lines 511-515 (220ms cubic-bezier)",
+    "PipelineStyles_settle_animation": "lines 523-530 (350ms, neutral shadows)",
+    "pipeline_motion_css": "lines 147-155 (pm-drop-settle keyframe neutral)"
+  },
+  "teal_removal_verification": {
+    "drag_shadow": "NO teal - uses rgba(0,0,0,...) and rgba(255,255,255,0.5)",
+    "drag_border": "NO teal - uses rgba(0,0,0,0.06)",
+    "drag_borderLeft": "NO teal - undefined during drag",
+    "lane_background": "NO teal - uses gradient rgba(0,0,0,...)",
+    "lane_border": "NO teal - transparent",
+    "lane_inset_shadow": "NO teal - uses rgba(0,0,0,0.025)",
+    "settle_animation": "NO teal - uses rgba(0,0,0,...) shadows only",
+    "colored_elements_allowed": [
+      "card status left borders (red/amber/indigo per category)",
+      "top color bars (using col.color)",
+      "status chips on cards"
+    ]
+  }
+}
