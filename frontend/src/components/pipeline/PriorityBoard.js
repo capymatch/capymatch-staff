@@ -49,7 +49,7 @@ function HighRow({ item, navigate, isLast }) {
   );
 }
 
-/* ── MED row: same list style, softer color ── */
+/* ── MED row: same list style, neutral timing color ── */
 function MedRow({ item, navigate, isLast }) {
   const { primaryAction, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
@@ -67,7 +67,6 @@ function MedRow({ item, navigate, isLast }) {
       data-testid={`priority-card-${prog.program_id}`}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Line 1: action — school */}
         <div style={{
           fontSize: 13, fontWeight: 600, color: 'var(--cm-text, #0f172a)',
           lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -75,16 +74,13 @@ function MedRow({ item, navigate, isLast }) {
           {primaryAction}
           <span style={{ fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)', marginLeft: 6 }}>— {prog.university_name}</span>
         </div>
-        {/* Line 2: metadata */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
           {timingLabel && (
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#92400e', opacity: 0.7 }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--cm-text-3, #94a3b8)' }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
           )}
           <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
       </div>
-
-      {/* CTA — subtler */}
       <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-3, #94a3b8)', flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
         {ctaLabel || 'View'} →
       </span>
@@ -92,8 +88,8 @@ function MedRow({ item, navigate, isLast }) {
   );
 }
 
-/* ── LOW card: minimal, no swipe ── */
-function LowCard({ item, navigate }) {
+/* ── LOW row: same list style, muted ── */
+function LowRow({ item, navigate, isLast }) {
   const { primaryAction, program: prog } = item;
 
   return (
@@ -101,26 +97,30 @@ function LowCard({ item, navigate }) {
       onClick={() => navigate(`/pipeline/${prog.program_id}`)}
       className="kanban-card"
       style={{
-        background: 'var(--cm-surface, #fff)',
-        borderRadius: 7,
-        padding: '8px 11px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '9px 4px',
         cursor: 'pointer',
-        border: '1px solid var(--cm-border, #e8ecf1)',
-        opacity: 0.7,
+        borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
+        background: 'transparent', borderRadius: 0,
+        opacity: 0.75,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
-        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#047857' }}>On track</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--cm-text-2, #475569)',
+          lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }} data-testid={`priority-action-${prog.program_id}`}>
+          {primaryAction}
+          <span style={{ fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)', marginLeft: 6 }}>— {prog.university_name}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(16,185,129,0.5)' }}>On track</span>
+        </div>
       </div>
-      <div style={{
-        fontSize: 12, fontWeight: 600, color: 'var(--cm-text-2, #475569)',
-        marginTop: 3, lineHeight: 1.3,
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }} data-testid={`priority-action-${prog.program_id}`}>
-        {primaryAction}
-      </div>
+      <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-4, #cbd5e1)', flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
+        View →
+      </span>
     </div>
   );
 }
@@ -173,7 +173,11 @@ function SwipePriorityCard({ item, navigate, section, cardIdx, isLast }) {
     );
   }
 
-  return <LowCard item={item} navigate={navigate} />;
+  return (
+    <div onClick={() => { if (prog?.program_id) navigate(`/pipeline/${prog.program_id}`); }}>
+      <LowRow item={item} navigate={navigate} isLast={isLast} />
+    </div>
+  );
 }
 
 export default function PriorityBoard({ items, navigate }) {
@@ -186,7 +190,7 @@ export default function PriorityBoard({ items, navigate }) {
   const GRID = {
     attention: { display: 'flex', flexDirection: 'column', gap: 0 },
     'coming-up': { display: 'flex', flexDirection: 'column', gap: 0 },
-    'on-track': { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 },
+    'on-track': { display: 'flex', flexDirection: 'column', gap: 0 },
   };
 
   const sections = [
