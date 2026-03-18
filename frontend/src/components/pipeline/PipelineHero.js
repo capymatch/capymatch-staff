@@ -258,10 +258,10 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
         style={{
           display: "grid",
           gridTemplateColumns: current ? "60% 1fr" : "1fr",
-          gap: 0,
+          gap: 12,
           minHeight: 340,
           overflow: "hidden",
-          padding: "8px 8px 8px 8px",
+          padding: "8px 10px 10px",
         }}
         className="hero-grid"
       >
@@ -446,7 +446,7 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
         {/* ─── RIGHT COLUMN: Queue + On-track + Capacity ─── */}
         <div
           style={{
-            padding: "24px 24px 20px",
+            padding: "16px 16px 16px 4px",
             display: "flex",
             flexDirection: "column",
             gap: 12,
