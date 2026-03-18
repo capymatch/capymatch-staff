@@ -497,6 +497,18 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 9/9 features verified (iteration_181)
   - Key files: `PriorityBoard.js`
 
+- **Pipeline Layout Final Refinement (Complete — 2026-03-18)**
+  - Reordered sections: Hero → Also → Next actions → Coming up → On track (removed standalone ComingUpTimeline between hero and board)
+  - Unified list layout: all 3 sections use identical row components (HighRow, MedRow, LowRow), no card containers
+  - Color system: Overdue=red (#dc2626), Due soon=neutral gray (#64748b, no orange), On track=soft green (#10b981)
+  - Sentence-case section headers with counts in parens: "Next actions (5)", "Coming up (1)", "On track (1)"
+  - Collapsible On Track section: ChevronRight toggle, defaults collapsed when > 3 items, expanded when <= 3
+  - Removed "MANAGE ALL PROGRAMS" separator text, kept subtle divider line
+  - SectionHeader component for consistent header rendering
+  - getTimingColor helper for HighRow timing label colors
+  - 12/12 features verified (iteration_182)
+  - Key files: `PriorityBoard.js`, `PipelinePage.js`
+
 ---
 
 ## Backlog
