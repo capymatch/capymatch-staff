@@ -245,32 +245,26 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
           </div>
         )}
 
-        {/* 5. "What to do next" box */}
-        <div className="rounded-lg sm:rounded-xl px-3 sm:px-5 py-3 sm:py-4 mb-4" data-testid="hero-advice-box"
+        {/* 5. "What to do next" box + CTA aligned */}
+        <div className="rounded-lg sm:rounded-xl px-3 sm:px-5 py-3 sm:py-4" data-testid="hero-advice-box"
           style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${style.accent}30` }}>
           <div className="text-[9px] sm:text-[10px] font-extrabold tracking-wider uppercase mb-1.5" style={{ color: style.accent }}>
             What to do next
           </div>
-          <p className="text-[13px] sm:text-[15px] font-medium leading-relaxed m-0" style={{ color: "rgba(255,255,255,0.8)" }} data-testid="hero-advice-text">
-            {current.context || "Review this program and take the next step."}
-          </p>
-        </div>
-
-        {/* 6 + 7. Owner badge + CTA */}
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] sm:text-[11px] font-extrabold px-3 py-1.5 rounded-lg tracking-wider" data-testid="hero-owner-badge"
-            style={{ background: "rgba(255,255,255,0.06)", color: owner.color }}>
-            {owner.text}
-          </span>
-          <button
-            onClick={handleCTA}
-            data-testid="hero-cta-btn"
-            className="flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-[13px] sm:text-[15px] font-bold text-white cursor-pointer transition-all"
-            style={{ background: style.accent, border: "none", fontFamily: "inherit", boxShadow: `0 4px 24px ${style.accent}50` }}
-          >
-            {current.cta?.label || "Take Action"}
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex items-end justify-between gap-4">
+            <p className="text-[13px] sm:text-[15px] font-medium leading-relaxed m-0 flex-1" style={{ color: "rgba(255,255,255,0.8)" }} data-testid="hero-advice-text">
+              {current.context || "Review this program and take the next step."}
+            </p>
+            <button
+              onClick={handleCTA}
+              data-testid="hero-cta-btn"
+              className="flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-[13px] sm:text-[15px] font-bold text-white cursor-pointer transition-all flex-shrink-0"
+              style={{ background: style.accent, border: "none", fontFamily: "inherit", boxShadow: `0 4px 24px ${style.accent}50` }}
+            >
+              {current.cta?.label || "Take Action"}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
