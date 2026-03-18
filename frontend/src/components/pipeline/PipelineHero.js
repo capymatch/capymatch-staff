@@ -7,9 +7,9 @@ import PipelineHeroEmptyState from "./PipelineHeroEmptyState";
 import "./pipeline-motion.css";
 
 const LEVEL_STYLE = {
-  high:   { accent: "#ef4444", glow: "rgba(239,68,68,0.12)", label: "Needs Attention" },
-  medium: { accent: "#d97706", glow: "rgba(217,119,6,0.08)", label: "Coming Up Soon" },
-  low:    { accent: "#10b981", glow: "rgba(16,185,129,0.06)", label: "On Track" },
+  high:   { accent: "#ef4444", glow: "rgba(239,68,68,0.12)", label: "High" },
+  medium: { accent: "#d97706", glow: "rgba(217,119,6,0.08)", label: "Med" },
+  low:    { accent: "#10b981", glow: "rgba(16,185,129,0.06)", label: "On track" },
 };
 
 function buildRail(program) {
@@ -51,10 +51,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
   const goTo = useCallback((dir) => {
     if (phase !== "idle") return;
-    transitionTo(() => setIdx(i => {
-      const len = document.querySelectorAll('[data-testid="pipeline-hero"]').length > 0 ? 999 : 999;
-      return dir === -1 ? Math.max(0, i - 1) : i + 1;
-    }));
+    transitionTo(() => setIdx(i => dir === -1 ? Math.max(0, i - 1) : i + 1));
   }, [phase, transitionTo]);
 
   useEffect(() => {
@@ -108,7 +105,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const matchPct = ms?.match_score;
   const style = LEVEL_STYLE[current.attentionLevel] || LEVEL_STYLE.low;
   const rail = buildRail(p);
-  const inlineMeta = [p?.division, p?.conference].filter(Boolean).join(" \u00b7 ");
+  const ownerLabel = current.owner === 'coach' ? 'Coach' : current.owner === 'director' ? 'Director' : 'You';
 
   const pills = [
     { key: "all", label: "All", count: heroItems.length },
@@ -135,7 +132,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       <div className="absolute inset-0 pointer-events-none pm-glow"
         style={{ background: `radial-gradient(ellipse at 20% 30%, ${style.glow} 0%, transparent 60%)` }} />
 
-      {/* TOP BAR */}
+      {/* TOP BAR: Filter pills + Carousel nav */}
       <div
         className="flex items-center justify-between px-4 sm:px-6 pt-3 pb-3 relative z-[1]"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
@@ -184,96 +181,98 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
       {/* SLIDE CONTENT */}
       <div className={`px-4 sm:px-7 pt-4 sm:pt-5 pb-5 sm:pb-6 relative z-[1] ${slideClass}`}>
-        {/* Level label */}
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
+
+        {/* Row 1: Attention state + Timing label */}
+        <div className="flex items-center justify-between" data-testid="hero-status-row">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ background: style.accent, boxShadow: `0 0 8px ${style.accent}66` }} />
+            <div className="w-[5px] h-[5px] rounded-full" style={{ background: style.accent, boxShadow: `0 0 6px ${style.accent}66` }} />
             <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider uppercase" style={{ color: style.accent }} data-testid="hero-category-label">
               {style.label}
             </span>
+            {current.microSignal && (
+              <span className="text-[9.5px] font-semibold" style={{ color: current.microSignal.color, opacity: 0.7 }} data-testid={`micro-signal-${p?.program_id}`}>
+                · {current.microSignal.text}
+              </span>
+            )}
           </div>
-          <span className="hidden sm:inline text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.25)" }}>
-            Top priority right now
-          </span>
+          {current.timingLabel && (
+            <span className="text-[10px] sm:text-[11px] font-bold" style={{ color: style.accent, opacity: 0.7 }} data-testid="hero-timing-label">
+              {current.timingLabel}
+            </span>
+          )}
         </div>
 
-        {/* School identity + Match score */}
-        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-1">
-          <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+        {/* Row 2: School name + logo  |  Match % */}
+        <div className="flex items-center justify-between gap-3 mt-3" data-testid="hero-school-row">
+          <div className="flex items-center gap-3 min-w-0">
             {p && (
               <UniversityLogo
                 name={p.university_name}
                 logoUrl={ms?.logo_url || p.logo_url}
                 domain={ms?.domain || p.domain}
-                size={44}
-                className="rounded-lg sm:rounded-xl flex-shrink-0"
+                size={32}
+                className="rounded-lg flex-shrink-0"
               />
             )}
-            <div className="min-w-0">
-              <h2 className="text-base sm:text-2xl font-extrabold text-white tracking-tight truncate" data-testid="hero-school-name">
-                {p?.university_name || "Take Action"}
-              </h2>
-              <div className="flex items-center gap-2 mt-1.5" data-testid="hero-metadata">
-                {inlineMeta && (
-                  <span className="text-[11px] sm:text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>
-                    {inlineMeta}
-                  </span>
-                )}
-                {current.timingLabel && (
-                  <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md"
-                    style={{ background: `${style.accent}18`, color: style.accent }}
-                    data-testid="hero-status-chip">
-                    {current.timingLabel}
-                  </span>
-                )}
-              </div>
-            </div>
+            <span className="text-[14px] sm:text-[16px] font-bold text-white truncate" data-testid="hero-school-name">
+              {p?.university_name || "Take Action"}
+            </span>
           </div>
           {matchPct != null && (
-            <div className="text-right flex-shrink-0" data-testid="hero-match-score">
-              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>Match</div>
-              <div className="flex items-baseline justify-end">
-                <span className="text-2xl sm:text-4xl font-extrabold leading-none" style={{ color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "#94a3b8" }}>
-                  {matchPct}
-                </span>
-                <span className="text-sm sm:text-lg font-semibold ml-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>%</span>
-              </div>
-            </div>
+            <span className="text-[13px] sm:text-[14px] font-bold flex-shrink-0" style={{ color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "#94a3b8" }} data-testid="hero-match-score">
+              {matchPct}% match
+            </span>
           )}
         </div>
 
-        {/* Progress rail */}
+        {/* Progress rail — reduced weight */}
         {rail && (
-          <div className="mt-2 sm:mt-3 max-w-md" data-testid="hero-progress-rail">
+          <div className="mt-2 max-w-xs" style={{ opacity: 0.45 }} data-testid="hero-progress-rail">
             <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
           </div>
         )}
 
-        {/* Action command — direct two-line format */}
-        <div className="mt-3 sm:mt-4 mb-3" data-testid="hero-advice-box">
-          <div className="text-[15px] sm:text-[18px] font-bold leading-snug" style={{ color: "rgba(255,255,255,0.92)" }} data-testid="hero-advice-text">
+        {/* Main action — LARGEST element */}
+        <div className="mt-4 sm:mt-5" data-testid="hero-advice-box">
+          <div className="text-[18px] sm:text-[22px] font-extrabold leading-tight" style={{ color: "#fff", display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} data-testid="hero-advice-text">
             {current.primaryAction}
           </div>
-          {current.reasonShort && (
-            <div className="text-[12px] sm:text-[13px] font-medium mt-1.5" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="hero-reason-short">
-              {current.reasonShort}
-            </div>
-          )}
         </div>
 
-        {/* CTA */}
-        <button
-          onClick={handleCTA}
-          data-testid="hero-cta-btn"
-          className={`flex items-center gap-2 px-6 sm:px-7 py-2.5 sm:py-3 rounded-full text-[13px] sm:text-[15px] font-bold text-white cursor-pointer pm-btn-hover ${ctaPressed ? "pm-cta-press" : ""}`}
-          style={{
-            background: style.accent, border: "none", fontFamily: "inherit",
-            boxShadow: `0 4px 24px ${style.accent}50`,
-          }}
-        >
-          {current.ctaLabel || "Take Action"}
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        {/* Meta line: reason · owner */}
+        <div className="flex items-center gap-2 mt-2" data-testid="hero-meta-line">
+          {current.reasonShort && (
+            <span className="text-[11px] sm:text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.35)" }} data-testid="hero-reason-short">
+              {current.reasonShort}
+            </span>
+          )}
+          <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded" style={{ background: ownerLabel === 'You' ? 'rgba(13,148,136,0.15)' : 'rgba(99,102,241,0.15)', color: ownerLabel === 'You' ? '#5eead4' : '#a5b4fc' }}>
+            {ownerLabel}
+          </span>
+        </div>
+
+        {/* CTA row: Primary + Secondary */}
+        <div className="flex items-center gap-3 mt-4 sm:mt-5" data-testid="hero-cta-row">
+          <button
+            onClick={handleCTA}
+            data-testid="hero-cta-btn"
+            className={`flex items-center gap-2 px-5 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[12px] sm:text-[13px] font-bold text-white cursor-pointer pm-btn-hover ${ctaPressed ? "pm-cta-press" : ""}`}
+            style={{
+              background: style.accent, border: "none", fontFamily: "inherit",
+              boxShadow: `0 4px 20px ${style.accent}40`,
+            }}
+          >
+            {current.ctaLabel || "Take Action"} <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => p && navigate(`/pipeline/${p.program_id}`)}
+            data-testid="hero-secondary-btn"
+            className="text-[11px] sm:text-[12px] font-semibold cursor-pointer pm-nav-hover"
+            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontFamily: "inherit", padding: '4px 0' }}
+          >
+            View details
+          </button>
+        </div>
       </div>
     </div>
 

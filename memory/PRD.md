@@ -455,6 +455,18 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Layout-only change — no data logic changes
   - Key file: `PriorityBoard.js`
 
+- **Hero Card Action-First Redesign (Complete — 2026-03-18)**
+  - Restructured slide content: status row → school row → rail → action → meta → CTA
+  - Row 1: "● HIGH · Now overdue" + timing label aligned right
+  - Row 2: logo + school name + match % inline (not oversized)
+  - Progress rail reduced: opacity 0.45, max-w-xs
+  - Main action is LARGEST element: 18-22px extrabold white, 2-line clamp
+  - Meta line: reasonShort + owner badge (consistent with Priority Cards)
+  - CTA row: primary button + "View details" secondary link
+  - Removed verbose copy: "Top priority right now", "What to do next"
+  - Level labels shortened: "High" / "Med" / "On track" (matches card terminology)
+  - Key file: `PipelineHero.js`
+
 ---
 
 ## Backlog
