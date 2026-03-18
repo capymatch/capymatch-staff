@@ -562,24 +562,24 @@ export default function PipelinePage() {
             One focused hero for what matters now, plus a forward-looking timeline for what's next.
           </p>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap flex-shrink-0" data-testid="summary-chips">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap flex-shrink-0" data-testid="summary-chips">
           {urgentCount > 0 && (
-            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl" data-testid="chip-attention"
-              style={{ color: "var(--cm-text-2, #64748b)", background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }}>
+            <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full" data-testid="chip-attention"
+              style={{ color: "var(--cm-text-3, #94a3b8)", background: "transparent" }}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#ef4444" }} />
               {urgentCount} needs attention
             </span>
           )}
           {momentumCount > 0 && (
-            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl" data-testid="chip-momentum"
-              style={{ color: "var(--cm-text-2, #64748b)", background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }}>
+            <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full" data-testid="chip-momentum"
+              style={{ color: "var(--cm-text-3, #94a3b8)", background: "transparent" }}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#818cf8" }} />
               {momentumCount} losing momentum
             </span>
           )}
           {onTrackCount > 0 && (
-            <span className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl" data-testid="chip-on-track"
-              style={{ color: "var(--cm-text-2, #64748b)", background: "var(--cm-surface, #fff)", border: "1px solid var(--cm-border, #e2e8f0)" }}>
+            <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full" data-testid="chip-on-track"
+              style={{ color: "var(--cm-text-3, #94a3b8)", background: "transparent" }}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10b981" }} />
               {onTrackCount} on track
             </span>

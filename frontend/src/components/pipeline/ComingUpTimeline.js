@@ -124,18 +124,18 @@ export default function ComingUpTimeline({ items }) {
               data-testid={`timeline-card-${item.programId}`}
             >
               {/* Time label — strongest visual */}
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dotColor }} />
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wide" style={{ color: dotColor }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}55` }} />
+                <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wide" style={{ color: dotColor }}>
                   {item.timeLabel}
                 </span>
               </div>
-              {/* School name — secondary emphasis */}
-              <div className="text-[14px] sm:text-[15px] font-bold mb-1.5 leading-snug group-hover:underline" style={{ color: "var(--cm-text, #0f172a)" }}>
+              {/* School name */}
+              <div className="text-[15px] sm:text-base font-bold mb-1 leading-snug group-hover:underline" style={{ color: "var(--cm-text, #0f172a)" }}>
                 {item.university}
               </div>
-              {/* Reason — supporting */}
-              <div className="text-[11px] sm:text-xs leading-relaxed" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+              {/* Reason — supporting, lower emphasis */}
+              <div className="text-[11px] sm:text-xs leading-relaxed" style={{ color: "var(--cm-text-3, #b0b8c4)" }}>
                 {item.reason}
               </div>
             </div>

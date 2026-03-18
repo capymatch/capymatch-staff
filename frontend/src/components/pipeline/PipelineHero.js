@@ -222,7 +222,7 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
             </span>
           </div>
           <span className="hidden sm:inline text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.25)" }}>
-            Top priority across your schools
+            Top priority right now
           </span>
         </div>
 
@@ -275,21 +275,21 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
 
         {/* Progress rail */}
         {rail && (
-          <div className="my-3 sm:my-4 max-w-md" data-testid="hero-progress-rail">
+          <div className="mt-2 sm:mt-3 max-w-md" data-testid="hero-progress-rail">
             <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
           </div>
         )}
 
-        {/* #2 LIGHTWEIGHT "What to do next" — no box, no border */}
-        <div className="mt-4 sm:mt-5 mb-4" data-testid="hero-advice-box">
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
+        {/* "What to do next" — lightweight, label is visual anchor */}
+        <div className="mt-3 sm:mt-4 mb-3" data-testid="hero-advice-box">
+          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>
             What to do next
           </span>
-          <p className="text-[14px] sm:text-[16px] font-semibold leading-snug mt-1.5 mb-0" style={{ color: "rgba(255,255,255,0.85)" }} data-testid="hero-advice-text">
+          <p className="text-[14px] sm:text-[16px] font-semibold leading-snug mt-1 mb-0" style={{ color: "rgba(255,255,255,0.85)" }} data-testid="hero-advice-text">
             {current.context || "Review this program and take the next step."}
           </p>
           {helperHint && (
-            <p className="text-[11px] sm:text-xs mt-1.5 mb-0" style={{ color: "rgba(255,255,255,0.28)" }}>
+            <p className="text-[11px] sm:text-xs mt-1 mb-0" style={{ color: "rgba(255,255,255,0.38)" }}>
               {helperHint}
             </p>
           )}
