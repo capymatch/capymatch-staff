@@ -142,11 +142,25 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
       style={{
         background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)",
         borderRadius: 14,
-        overflow: "hidden",
-        border: "1px solid rgba(255,255,255,0.04)",
+        borderLeft: `6px solid ${accent}`,
         marginBottom: 20,
+        position: "relative",
       }}
     >
+      {/* ── Ambient glow from accent ── */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "35%",
+          height: "100%",
+          background: `radial-gradient(ellipse at 0% 50%, ${accent}18 0%, ${accent}0a 35%, transparent 65%)`,
+          pointerEvents: "none",
+          zIndex: 0,
+          borderRadius: "14px 0 0 14px",
+        }}
+      />
       {/* ═══ TOP BAR: Filter pills + Carousel nav ═══ */}
       <div
         style={{
@@ -243,9 +257,10 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: current ? "1.15fr 1fr" : "1fr",
+          gridTemplateColumns: current ? "3fr 2fr" : "1fr",
           gap: 0,
           minHeight: 340,
+          overflow: "hidden",
         }}
         className="hero-grid"
       >
@@ -257,11 +272,12 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
               borderRight: "1px solid rgba(255,255,255,0.04)",
               display: "flex",
               flexDirection: "column",
+              position: "relative",
             }}
             data-testid="hero-left-col"
           >
             {/* Tier label */}
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20, position: "relative", zIndex: 1 }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: tierDotColor }} />
               <span style={{ fontSize: 11, fontWeight: 800, color: tierDotColor, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 {tierLabel}
@@ -269,7 +285,7 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
             </div>
 
             {/* School identity: logo + name + match % */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6, position: "relative", zIndex: 1 }}>
               {p && (
                 <UniversityLogo
                   domain={p.domain}
