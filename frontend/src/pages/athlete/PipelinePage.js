@@ -591,11 +591,9 @@ export default function PipelinePage() {
       <PipelineHero actions={actions} matchScores={matchScores} navigate={navigate} />
 
       {/* ═══ COMING UP NEXT: What's next ═══ */}
-      {timelineItems.length > 0 && (
-        <div style={{ marginTop: 20, marginBottom: 20 }}>
-          <ComingUpTimeline items={timelineItems} />
-        </div>
-      )}
+      <div style={{ marginTop: 20, marginBottom: 20 }}>
+        <ComingUpTimeline items={timelineItems} />
+      </div>
 
       {/* Upgrade prompt — shows at 80%+ of limit */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (

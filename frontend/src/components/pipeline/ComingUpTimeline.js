@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import ComingUpTimelineEmptyState from "./ComingUpTimelineEmptyState";
 
 /* ── Color per urgency ── */
 const URGENCY_DOT = {
@@ -101,7 +102,7 @@ const TIME_MARKS = [
 export default function ComingUpTimeline({ items }) {
   const navigate = useNavigate();
 
-  if (!items || items.length === 0) return null;
+  if (!items || items.length === 0) return <ComingUpTimelineEmptyState />;
 
   const maxDay = 7;
 

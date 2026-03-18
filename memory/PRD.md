@@ -293,13 +293,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 
 - **Pipeline Page Full Redesign — Smart Assistant Layout (Complete — 2026-03-18)**
   - Page header: "Your Pipeline" title + subtitle + summary chips (red=attention, purple=momentum, green=on track)
-  - Single-column dark gradient hero carousel: category label with glow, school identity (52px logo + 26px name + metadata pills), large match score (38px), ProgressRail, "What to do next" box, owner badge, CTA button
-  - Removed all side panels, capacity strip, multi-column layout from hero
+  - Single-column dark gradient hero carousel: category label with glow, school identity (52px logo + 26px name + metadata pills), large match score (38px), ProgressRail, "What to do next" box with aligned CTA, owner badge removed
   - Created `ComingUpTimeline.js`: horizontal timeline with forecast items for on-track programs
-  - Page flow: Overview (chips) → Focus (hero) → Foresight (timeline) → Management (Kanban board)
-  - **Mobile responsive**: Tailwind breakpoints for stacking, smaller text, single-col cards on mobile
-  - All 17 test features pass at 100% (test report: `/app/test_reports/iteration_167.json`)
-  - Key files: `PipelineHero.js`, `ComingUpTimeline.js`, `PipelinePage.js`
+  - **Empty states** (Complete — 2026-03-18):
+    - `PipelineHeroEmptyState.js`: Dark card, green glow, "You're in a great spot" + metric + CTAs
+    - `ComingUpTimelineEmptyState.js`: Light card, "Nothing needs attention soon" + reassuring copy
+    - Both independent, always render (never collapse or show "No data")
+  - **Mobile responsive**: Tailwind breakpoints for stacking, smaller text, single-col cards
+  - Key files: `PipelineHero.js`, `PipelineHeroEmptyState.js`, `ComingUpTimeline.js`, `ComingUpTimelineEmptyState.js`, `PipelinePage.js`
 
 ---
 

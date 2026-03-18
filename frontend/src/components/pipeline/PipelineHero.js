@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import UniversityLogo from "../UniversityLogo";
 import { ProgressRail } from "../journey/ProgressRail";
 import { RAIL_STAGES } from "../journey/constants";
+import PipelineHeroEmptyState from "./PipelineHeroEmptyState";
 
 /* ── Classification ── */
 const URGENT_CATS = new Set(["coach_flag", "director_action", "past_due", "reply_needed", "due_today"]);
@@ -80,14 +81,18 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!actions || actions.length === 0) return null;
+  if (!actions || actions.length === 0) {
+    return <PipelineHeroEmptyState onTrackCount={0} navigate={navigate} />;
+  }
 
-  const { urgent, momentum } = classifyActions(actions);
+  const { urgent, momentum, onTrackCount } = classifyActions(actions);
   const allActionable = [...urgent, ...momentum];
   const filtered = filter === "attention" ? urgent : filter === "momentum" ? momentum : allActionable;
   const total = filtered.length;
 
-  if (total === 0) return null;
+  if (total === 0) {
+    return <PipelineHeroEmptyState onTrackCount={onTrackCount} navigate={navigate} />;
+  }
 
   const safeIdx = Math.min(idx, total - 1);
   const current = filtered[safeIdx];
