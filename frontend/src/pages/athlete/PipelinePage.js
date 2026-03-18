@@ -8,7 +8,7 @@ import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
 import PipelineHero from "../../components/pipeline/PipelineHero";
-import ComingUpTimeline from "../../components/pipeline/ComingUpTimeline";
+// ComingUpTimeline removed — "Coming up" is now unified inside PriorityBoard
 import KanbanBoard from "../../components/pipeline/KanbanBoard";
 import PriorityBoard from "../../components/pipeline/PriorityBoard";
 import PipelineStyles from "../../components/pipeline/PipelineStyles";
@@ -149,7 +149,6 @@ export default function PipelinePage() {
   const attentionMap = {};
   allAttention.forEach(a => { attentionMap[a.programId] = a; });
   const heroItems = allAttention.filter(a => a.attentionLevel !== 'low').slice(0, 5);
-  const timelineItems = allAttention.filter(a => a.daysUntil !== null && a.daysUntil >= 0 && a.daysUntil <= 3);
   const highCount = allAttention.filter(a => a.attentionLevel === 'high').length;
   const medCount = allAttention.filter(a => a.attentionLevel === 'medium').length;
   const lowCount = allAttention.filter(a => a.attentionLevel === 'low').length;
@@ -201,15 +200,8 @@ export default function PipelinePage() {
       {/* ═══ HERO ═══ */}
       <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
 
-      {/* ═══ COMING UP ═══ */}
-      <div style={{ marginTop: 20, marginBottom: 0 }}>
-        <ComingUpTimeline items={timelineItems} />
-      </div>
-
       {/* ═══ BOARD SEPARATOR ═══ */}
-      <div className="flex items-center gap-3 my-5 sm:my-6 px-1" data-testid="board-separator">
-        <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
-        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex-shrink-0" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Manage all programs</span>
+      <div className="flex items-center gap-3 mt-5 sm:mt-6 mb-4 px-1" data-testid="board-separator">
         <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
       </div>
 
