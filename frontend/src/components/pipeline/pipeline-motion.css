@@ -204,3 +204,21 @@
   background: transparent;
   transition: color var(--pm-fast) var(--pm-ease);
 }
+
+/* ── Swipeable card animations ── */
+@keyframes swipe-panel-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes swipe-commit {
+  0%   { opacity: 0; }
+  40%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes swipe-check-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  50%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}

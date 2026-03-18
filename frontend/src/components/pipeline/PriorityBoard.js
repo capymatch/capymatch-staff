@@ -1,4 +1,9 @@
-import React from "react";
+import React, { useCallback } from "react";
+import axios from "axios";
+import { toast } from "sonner";
+import SwipeableCard from "./SwipeableCard";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 /* ── HIGH card: full-width, ghost CTA ── */
 function HighCard({ item, navigate, cardIdx }) {
@@ -8,7 +13,6 @@ function HighCard({ item, navigate, cardIdx }) {
 
   return (
     <div
-      onClick={() => navigate(`/pipeline/${prog.program_id}`)}
       className="kanban-card"
       style={{
         background: `rgba(239,68,68,${cardIdx === 0 ? 0.03 : 0.015})`,
@@ -53,14 +57,13 @@ function HighCard({ item, navigate, cardIdx }) {
   );
 }
 
-/* ── MED card: compact, amber, no CTA ── */
+/* ── MED card: compact, amber ── */
 function MedCard({ item, navigate }) {
   const { primaryAction, timingLabel, owner, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
 
   return (
     <div
-      onClick={() => navigate(`/pipeline/${prog.program_id}`)}
       className="kanban-card"
       style={{
         background: 'rgba(217,119,6,0.02)',
@@ -72,7 +75,6 @@ function MedCard({ item, navigate }) {
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      {/* Top: ● MED · Due today */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
         <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#92400e' }}>Med</span>
@@ -83,8 +85,6 @@ function MedCard({ item, navigate }) {
           </>
         )}
       </div>
-
-      {/* Action */}
       <div style={{
         fontSize: 13, fontWeight: 650, color: 'var(--cm-text, #0f172a)',
         marginTop: 4, lineHeight: 1.35,
@@ -92,8 +92,6 @@ function MedCard({ item, navigate }) {
       }} data-testid={`priority-action-${prog.program_id}`}>
         {primaryAction}
       </div>
-
-      {/* Owner */}
       <div style={{ marginTop: 4 }} data-testid={`priority-reason-${prog.program_id}`}>
         <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
       </div>
@@ -101,7 +99,7 @@ function MedCard({ item, navigate }) {
   );
 }
 
-/* ── LOW card: minimal ── */
+/* ── LOW card: minimal, no swipe ── */
 function LowCard({ item, navigate }) {
   const { primaryAction, program: prog } = item;
 
@@ -134,10 +132,64 @@ function LowCard({ item, navigate }) {
   );
 }
 
-/* ── Card router ── */
-function PriorityCard({ item, navigate, section, cardIdx }) {
-  if (section === 'attention') return <HighCard item={item} navigate={navigate} cardIdx={cardIdx} />;
-  if (section === 'coming-up') return <MedCard item={item} navigate={navigate} />;
+/* ── Swipeable wrapper for HIGH/MED cards ── */
+function SwipePriorityCard({ item, navigate, section, cardIdx }) {
+  const prog = item.program;
+  const programId = prog?.program_id;
+
+  const handleAction = useCallback(() => {
+    if (programId) navigate(`/pipeline/${programId}`);
+  }, [programId, navigate]);
+
+  const handleSnooze = useCallback(async (days) => {
+    if (!programId) return;
+    const snoozeDate = new Date();
+    snoozeDate.setDate(snoozeDate.getDate() + days);
+    const label = days === 1 ? 'tomorrow' : days === 3 ? 'in 3 days' : 'next week';
+    try {
+      await axios.put(`${API}/athlete/programs/${programId}`, {
+        snoozed_until: snoozeDate.toISOString(),
+      });
+      toast.success(`Snoozed to ${label}`);
+    } catch {
+      toast.error("Couldn't snooze — try again");
+    }
+  }, [programId]);
+
+  const handleTap = useCallback(() => {
+    if (programId) navigate(`/pipeline/${programId}`);
+  }, [programId, navigate]);
+
+  if (section === 'attention') {
+    return (
+      <SwipeableCard
+        onAction={handleAction}
+        onSnooze={handleSnooze}
+        actionLabel={item.ctaLabel || 'Take Action'}
+        programId={programId}
+      >
+        <div onClick={handleTap}>
+          <HighCard item={item} navigate={navigate} cardIdx={cardIdx} />
+        </div>
+      </SwipeableCard>
+    );
+  }
+
+  if (section === 'coming-up') {
+    return (
+      <SwipeableCard
+        onAction={handleAction}
+        onSnooze={handleSnooze}
+        actionLabel={item.ctaLabel || 'Take Action'}
+        programId={programId}
+      >
+        <div onClick={handleTap}>
+          <MedCard item={item} navigate={navigate} />
+        </div>
+      </SwipeableCard>
+    );
+  }
+
   return <LowCard item={item} navigate={navigate} />;
 }
 
@@ -179,7 +231,7 @@ export default function PriorityBoard({ items, navigate }) {
           {sec.items.length > 0 ? (
             <div style={GRID[sec.key]} className={sec.key === 'coming-up' ? 'priority-grid-coming-up' : undefined}>
               {sec.items.map((item, i) => (
-                <PriorityCard key={item.programId} item={item} navigate={navigate} section={sec.key} cardIdx={i} />
+                <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section={sec.key} cardIdx={i} />
               ))}
             </div>
           ) : (
