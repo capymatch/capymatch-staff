@@ -477,6 +477,17 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Peek row shortened: "Also:" prefix, timing label as action hint
   - Key files: `PipelineHero.js`, `PriorityBoard.js`
 
+- **Swipe Gestures on Priority Cards (Complete — 2026-03-18)**
+  - SwipeableCard.js: reusable swipe wrapper with touch+mouse support, axis lock, threshold=80px, 200ms snap-back
+  - Swipe RIGHT: reveals green action panel → navigates to program detail on commit
+  - Swipe LEFT: reveals amber snooze panel → Tomorrow / In 3 days / Next week / Cancel buttons
+  - Snooze: PUT /api/athlete/programs/{id} with snoozed_until date, toast confirmation
+  - Click suppression: didSwipe ref prevents tap navigation after swipe gesture
+  - Applied to HIGH and MED cards only, LOW cards unaffected
+  - CSS animations: swipe-panel-in, swipe-commit, swipe-check-pop in pipeline-motion.css
+  - 11/11 features verified (iteration_180)
+  - Key files: `SwipeableCard.js`, `PriorityBoard.js`, `pipeline-motion.css`
+
 ---
 
 ## Backlog
