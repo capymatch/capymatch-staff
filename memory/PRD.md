@@ -407,6 +407,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 15/15 features verified (iteration_176)
   - Key files: `computeAttention.js`, `PipelinePage.js`, `PipelineHero.js`, `ComingUpTimeline.js`
 
+- **Explainability Polish (Complete — 2026-03-18)**
+  - Added `reasonShort` field to `computeAttention()` — concise, human-readable reason for each program's attention score
+  - Values: "Coach assigned a task", "Overdue by X days", "Due today", "Due tomorrow", "Due in X days", "No response in X days", "Ready for first contact", "No recent engagement", "On track"
+  - Threaded `reasonShort` consistently across: Hero (secondary text), Peek Row ("School · reason"), Priority Cards (line 3), Coming Up Timeline (subtext)
+  - Stable sorting in `computeAllAttention()`: score → earliest due date → higher stage (offer>campus_visit>in_conversation>outreach>added) → alphabetical
+  - Intentional empty states: "Nothing urgent right now" (high), "No upcoming actions" (medium), "Everything is on track" banner when all programs are low
+  - 11/11 features verified (iteration_177)
+  - Key files: `computeAttention.js`, `PipelineHero.js`, `PipelinePage.js`, `ComingUpTimeline.js`
+
 ---
 
 ## Backlog
