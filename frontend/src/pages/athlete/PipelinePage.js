@@ -221,31 +221,37 @@ const COL_TO_STAGE = {
   offer: { journey_stage: "offer", recruiting_status: "Offer" },
 };
 
-/* ── Card status detection + visual cues ── */
-const STATUS_VISUAL = {
-  coach_flag:     { border: "rgba(239,68,68,0.22)", chip: "#ef4444", chipBg: "rgba(239,68,68,0.08)", label: "Coach task" },
-  director_action:{ border: "rgba(239,68,68,0.22)", chip: "#ef4444", chipBg: "rgba(239,68,68,0.08)", label: "Action needed" },
-  past_due:       { border: "rgba(239,68,68,0.22)", chip: "#ef4444", chipBg: "rgba(239,68,68,0.08)", label: "Overdue" },
-  reply_needed:   { border: "rgba(59,130,246,0.18)", chip: "#3b82f6", chipBg: "rgba(59,130,246,0.07)", label: "Awaiting reply" },
-  due_today:      { border: "rgba(245,158,11,0.22)", chip: "#d97706", chipBg: "rgba(245,158,11,0.08)", label: "Due today" },
-  cooling_off:    { border: "rgba(245,158,11,0.18)", chip: "#d97706", chipBg: "rgba(245,158,11,0.07)", label: "No recent engagement" },
-  first_outreach: { border: "rgba(129,140,248,0.18)", chip: "#818cf8", chipBg: "rgba(129,140,248,0.07)", label: "No contact yet" },
-  on_track:       { border: "transparent", chip: "#10b981", chipBg: "rgba(16,185,129,0.06)", label: "On track" },
-};
-const NEUTRAL_STATUS = { border: "transparent", chip: null, chipBg: null, label: null };
+/* ── Attention level system ── */
+const ATTENTION_HIGH = new Set(['coach_flag', 'director_action', 'past_due', 'due_today']);
+const ATTENTION_MED = new Set(['reply_needed', 'cooling_off', 'first_outreach']);
 
-/* ── Short insight from top action (max 1 line) ── */
-function getShortInsight(topAction) {
-  if (!topAction || topAction.action_key === "no_action_needed") return null;
-  const map = {
-    coach_assigned_action: "Coach assigned a follow-up",
-    overdue_follow_up: "Follow-up is overdue",
-    stale_reply: "Awaiting reply",
-    first_outreach_needed: "Ready for first contact",
-    relationship_cooling: "No recent engagement",
-    due_today_follow_up: "Follow-up due today",
+function getAttentionLevel(topAction) {
+  if (!topAction || topAction.action_key === 'no_action_needed') return 'low';
+  if (ATTENTION_HIGH.has(topAction.category)) return 'high';
+  if (ATTENTION_MED.has(topAction.category)) return 'medium';
+  return 'low';
+}
+
+const ATTENTION_META = {
+  high: { label: 'High', dot: '#ef4444', color: '#dc2626', bg: 'rgba(239,68,68,0.06)' },
+  medium: { label: 'Med', dot: '#d97706', color: '#92400e', bg: 'rgba(217,119,6,0.06)' },
+  low: { label: 'Low', dot: '#10b981', color: '#047857', bg: 'rgba(16,185,129,0.05)' },
+};
+
+const ATTENTION_SORT = { high: 0, medium: 1, low: 2 };
+const ATTENTION_GROUP_LABEL = { high: 'Needs Attention', medium: 'Keep Moving', low: 'On Track' };
+
+function getCardReason(topAction) {
+  if (!topAction || topAction.action_key === 'no_action_needed') return 'No action needed';
+  const reasons = {
+    coach_assigned_action: 'Coach assigned a follow-up',
+    overdue_follow_up: 'Follow-up is overdue',
+    stale_reply: 'Awaiting coach reply',
+    first_outreach_needed: 'Ready for first contact',
+    relationship_cooling: 'No recent engagement',
+    due_today_follow_up: 'Follow-up due today',
   };
-  return map[topAction.action_key] || topAction.label || null;
+  return reasons[topAction.action_key] || topAction.label || 'Action needed';
 }
 
 /* ── Column header contextual insights ── */
@@ -273,45 +279,28 @@ function getEmptyColCopy(colKey) {
   return copy[colKey] || "No schools yet";
 }
 
-function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction, isHighlighted, justDroppedId }) {
-  const category = topAction?.category || "on_track";
-  const isUrgent = ["coach_flag", "director_action", "past_due", "due_today"].includes(category);
-  const isPassive = !isUrgent && (category === "on_track" || category === "cooling_off" || category === "first_outreach");
-  const sv = STATUS_VISUAL[category] || NEUTRAL_STATUS;
-  const insight = getShortInsight(topAction);
-  const inlineMeta = [p.division, p.conference].filter(Boolean).join(" \u00b7 ");
-
-  const baseShadow = "0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)";
-  const activeBorder = sv.border !== "transparent" ? sv.border : "var(--cm-border, #e2e8f0)";
-  const heroBorder = isHighlighted ? `${sv.chip || "rgba(13,148,136,0.3)"}` : null;
-
-  let cardShadow = baseShadow;
-  if (isUrgent) cardShadow = `${baseShadow}, inset 0 0 0 1px ${sv.border}`;
-  else if (isHighlighted && !isPassive) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}, 0 0 8px ${heroBorder}22`;
-  else if (isHighlighted) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}55`;
-
+function KanbanCard({ program: p, navigate, index, topAction, justDroppedId, activeDragId }) {
+  const attention = getAttentionLevel(topAction);
+  const meta = ATTENTION_META[attention];
+  const reason = getCardReason(topAction);
+  const ctaLabel = topAction?.cta_label;
+  const owner = topAction?.owner;
+  const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
   const isJustDropped = justDroppedId === p.program_id;
+  const isFaded = activeDragId && activeDragId !== p.program_id;
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
       {(provided, snapshot) => {
-        const isActiveDrag = snapshot.isDragging && !snapshot.isDropAnimating;
-        const isDrop = snapshot.isDropAnimating;
-        const sourceCol = programToKanbanCol(p);
-        const isOverTarget = isActiveDrag && snapshot.draggingOver && snapshot.draggingOver !== sourceCol;
+        const isLifted = snapshot.isDragging && !snapshot.isDropAnimating;
+        const isDropping = snapshot.isDropAnimating;
         const libStyle = provided.draggableProps.style || {};
         const baseTransform = libStyle.transform || '';
-        const composedTransform = isActiveDrag
-          ? `${baseTransform} scale(1.02)`.trim()
-          : isDrop
-            ? `${baseTransform} scale(0.97)`.trim()
+        const composedTransform = isLifted
+          ? `${baseTransform} scale(1.03)`.trim()
+          : isDropping
+            ? `${baseTransform} scale(0.98)`.trim()
             : baseTransform || undefined;
-        const dragShadow = "0 0 0 1px rgba(255,255,255,0.5), 0 24px 48px rgba(0,0,0,0.1), 0 8px 20px rgba(0,0,0,0.06)";
-        const magneticTransition = isActiveDrag
-          ? `transform ${isOverTarget ? '80ms' : '50ms'} ease-out, box-shadow 220ms cubic-bezier(0.16,1,0.3,1), opacity 220ms cubic-bezier(0.16,1,0.3,1)`
-          : isDrop
-            ? 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1)'
-            : undefined;
 
         return (
           <div
@@ -323,46 +312,62 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
             style={{
               ...libStyle,
               transform: composedTransform,
-              transition: magneticTransition,
-              background: "var(--cm-surface)",
-              borderRadius: 10,
-              padding: "12px 14px",
-              cursor: isActiveDrag ? "grabbing" : "grab",
-              border: `1px solid ${isActiveDrag ? "rgba(0,0,0,0.06)" : isPassive ? "var(--cm-border, #e8ecf1)" : activeBorder}`,
-              borderLeft: sv.border !== "transparent" && !isActiveDrag ? `${isUrgent ? 4 : 3}px solid ${sv.border}` : undefined,
-              boxShadow: isActiveDrag ? dragShadow : cardShadow,
-              opacity: isActiveDrag ? 1 : isPassive && !isHighlighted ? 0.72 : 1,
-              zIndex: isActiveDrag ? 9999 : undefined,
+              transition: isLifted
+                ? 'transform 80ms ease-out, box-shadow 100ms ease-out'
+                : isDropping
+                  ? 'transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms ease-out'
+                  : undefined,
+              background: 'var(--cm-surface, #fff)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              cursor: isLifted ? 'grabbing' : 'grab',
+              border: `1px solid ${isLifted ? 'rgba(0,0,0,0.08)' : 'var(--cm-border, #e8ecf1)'}`,
+              boxShadow: isLifted
+                ? '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)'
+                : isJustDropped ? undefined
+                : '0 1px 2px rgba(0,0,0,0.04)',
+              opacity: isFaded ? 0.6 : 1,
+              zIndex: isLifted ? 9999 : undefined,
+              pointerEvents: isFaded ? 'none' : undefined,
             }}
             data-testid={`kanban-card-${p.program_id}`}
           >
-            {/* Row 1: Logo + Name + Metadata */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <UniversityLogo domain={p.domain} name={p.university_name} logoUrl={p.logo_url} size={28} className="rounded-[6px] mt-[2px] flex-shrink-0" />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)", lineHeight: 1.35 }}>{p.university_name}</div>
-                {inlineMeta && (
-                  <div style={{ fontSize: 11, color: "var(--cm-text-4, var(--cm-text-3))", marginTop: 2 }}>{inlineMeta}</div>
+            {isLifted ? (
+              /* Simplified floating preview */
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--cm-text)' }}>{p.university_name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: meta.dot, flexShrink: 0 }} />
+                  <span style={{ fontSize: 10.5, fontWeight: 600, color: meta.color }}>{meta.label}</span>
+                </div>
+              </>
+            ) : (
+              /* Full card: 3-4 lines max */
+              <>
+                {/* Line 1: Name + attention badge */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--cm-text)', lineHeight: 1.3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`card-name-${p.program_id}`}>{p.university_name}</div>
+                  {attention !== 'low' ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0, fontSize: 10, fontWeight: 600, color: meta.color, padding: '1px 6px', borderRadius: 4, background: meta.bg }} data-testid={`card-attention-${p.program_id}`}>
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
+                      {meta.label}
+                    </span>
+                  ) : (
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot, flexShrink: 0 }} data-testid={`card-attention-${p.program_id}`} />
+                  )}
+                </div>
+                {/* Line 2: Primary reason */}
+                {reason && (
+                  <div style={{ fontSize: 11, color: 'var(--cm-text-3, #64748b)', marginTop: 4, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`card-reason-${p.program_id}`}>{reason}</div>
                 )}
-              </div>
-            </div>
-
-            {/* Row 2: Status chip */}
-            {sv.label && category !== "on_track" && (
-              <div style={{ marginTop: 8 }}>
-                <span style={{
-                  fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
-                  background: sv.chipBg, color: sv.chip,
-                  letterSpacing: "0.02em",
-                }}>{sv.label}</span>
-              </div>
-            )}
-
-            {/* Row 3: Short insight (max 1 line) */}
-            {insight && (
-              <div style={{ fontSize: 11, color: isPassive ? "var(--cm-text-4)" : "var(--cm-text-3)", marginTop: 6, lineHeight: 1.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {insight}
-              </div>
+                {/* Line 3: Next action + owner (only for actionable cards) */}
+                {ctaLabel && attention !== 'low' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }} data-testid={`card-action-${p.program_id}`}>
+                    <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-2, #475569)' }}>→ {ctaLabel}</span>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         );
@@ -371,7 +376,7 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
   );
 }
 
-function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate, healthMap, topActionsMap, highlightedIds, justDroppedId, dragDest, pulsingColumnId }) {
+function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdate, onDragStart, topActionsMap, justDroppedId, dragDest, pulsingColumnId, activeDragId }) {
   const isMobile = useIsMobile();
   const columns = {};
   KANBAN_COLS.forEach(c => { columns[c.key] = []; });
@@ -381,80 +386,105 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, onDragUpdate,
     if (col && columns[col]) columns[col].push(p);
   }
 
+  // Sort each column by attention level (High → Medium → Low)
+  for (const key of Object.keys(columns)) {
+    columns[key].sort((a, b) => {
+      const aLvl = ATTENTION_SORT[getAttentionLevel(topActionsMap[a.program_id])] ?? 2;
+      const bLvl = ATTENTION_SORT[getAttentionLevel(topActionsMap[b.program_id])] ?? 2;
+      return aLvl - bLvl;
+    });
+  }
+
   const gridStyle = isMobile
     ? { display: "flex", gap: 12, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
-    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 };
+    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 };
 
   const colStyle = isMobile ? { minWidth: 240, flexShrink: 0, scrollSnapAlign: "start" } : {};
-  const hlSet = new Set(highlightedIds || []);
+
+  // Determine source column of dragged card
+  const activeSourceCol = activeDragId
+    ? Object.entries(columns).find(([, list]) => list.some(p => p.program_id === activeDragId))?.[0] || null
+    : null;
 
   return (
-    <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate}>
+    <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate} onDragStart={onDragStart}>
       <div style={gridStyle} className="kanban-grid" data-testid="kanban-board">
         {KANBAN_COLS.map(col => {
-          const count = columns[col.key].length;
+          const cards = columns[col.key];
+          const count = cards.length;
           const insight = getColInsight(col.key, count);
           const insertAt = dragDest && dragDest.droppableId === col.key && dragDest.sourceId !== col.key ? dragDest.index : null;
+          const isTarget = activeDragId && activeSourceCol !== col.key;
+
           return (
             <Droppable droppableId={col.key} key={col.key}>
               {(provided, snapshot) => {
-                const isReceiving = snapshot.isDraggingOver && !snapshot.draggingFromThisWith;
+                const isHovering = snapshot.isDraggingOver && !snapshot.draggingFromThisWith;
+                let prevAttention = null;
+
                 return (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   className={pulsingColumnId === col.key ? 'kanban-col-pulse' : ''}
                   style={{
-                    background: snapshot.isDraggingOver
-                      ? "linear-gradient(180deg, rgba(0,0,0,0.004) 0%, rgba(0,0,0,0.016) 100%)"
-                      : "transparent",
+                    background: isHovering ? 'rgba(0,0,0,0.012)' : 'transparent',
                     borderRadius: 10, minHeight: 200,
-                    transition: "transform 220ms cubic-bezier(0.16,1,0.3,1), background 220ms cubic-bezier(0.16,1,0.3,1), box-shadow 220ms cubic-bezier(0.16,1,0.3,1)",
-                    border: "1px solid transparent",
-                    boxShadow: snapshot.isDraggingOver
-                      ? "inset 0 1px 24px rgba(0,0,0,0.025)"
-                      : "none",
-                    transform: isReceiving ? "scale(1.008)" : "none",
+                    transition: 'background 120ms ease-out, border-color 120ms ease-out',
+                    border: `1px ${isTarget && !isHovering ? 'dashed' : 'solid'} ${isHovering ? 'rgba(0,0,0,0.1)' : isTarget ? 'rgba(0,0,0,0.06)' : 'transparent'}`,
                     ...colStyle,
                   }}
                 >
                   {/* Lane top bar */}
-                  <div style={{ height: 2, background: col.color, opacity: snapshot.isDraggingOver ? 0.85 : 0.5, borderRadius: "10px 10px 0 0", boxShadow: snapshot.isDraggingOver ? `0 0 8px ${col.color}33` : "none", transition: "opacity 220ms cubic-bezier(0.16,1,0.3,1), box-shadow 220ms cubic-bezier(0.16,1,0.3,1)" }} />
+                  <div style={{ height: 2, background: col.color, opacity: isHovering ? 0.85 : 0.4, borderRadius: "10px 10px 0 0", transition: "opacity 120ms ease-out" }} />
 
                   {/* Header */}
-                  <div style={{ padding: "16px 10px 14px" }}>
+                  <div style={{ padding: "14px 10px 10px" }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-                      <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: snapshot.isDraggingOver ? "var(--cm-text, #0f172a)" : "var(--cm-text-2, #475569)", transition: "color 220ms cubic-bezier(0.16,1,0.3,1)" }}>{col.label}</span>
-                      <span style={{ fontSize: 11.5, fontWeight: snapshot.isDraggingOver ? 700 : 600, color: snapshot.isDraggingOver ? "var(--cm-text-2, #475569)" : "var(--cm-text-3, #94a3b8)", transition: "color 220ms cubic-bezier(0.16,1,0.3,1)" }}>{count}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: isHovering ? "var(--cm-text)" : "var(--cm-text-2, #475569)", transition: "color 120ms ease-out" }}>{col.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3, #94a3b8)" }}>{count}</span>
                     </div>
-                    {insight && (
-                      <div style={{ fontSize: 10.5, color: snapshot.isDraggingOver ? "var(--cm-text-2, #64748b)" : "var(--cm-text-3, #94a3b8)", marginTop: 4, fontWeight: 500, transition: "color 220ms cubic-bezier(0.16,1,0.3,1)" }}>{insight}</div>
+                    {insight && !activeDragId && (
+                      <div style={{ fontSize: 10.5, color: "var(--cm-text-3, #94a3b8)", marginTop: 3, fontWeight: 500 }}>{insight}</div>
                     )}
                   </div>
 
                   {/* Cards */}
-                  <div style={{ padding: "0 6px 12px", display: "flex", flexDirection: "column", gap: 8, minHeight: 60 }}>
+                  <div style={{ padding: "0 6px 12px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
                     {count > 0 ? (
-                      columns[col.key].map((p, idx) => (
-                        <div key={p.program_id} style={{ position: 'relative' }}>
-                          {insertAt === idx && <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -5, left: 4, right: 4, height: 2, background: col.color, color: col.color, borderRadius: 1, zIndex: 10 }} />}
-                          <KanbanCard
-                            program={p}
-                            matchScore={matchScores[p.program_id]}
-                            navigate={navigate}
-                            index={idx}
-                            healthMetrics={healthMap[p.program_id]}
-                            topAction={topActionsMap[p.program_id]}
-                            isHighlighted={hlSet.has(p.program_id)}
-                            justDroppedId={justDroppedId}
-                          />
+                      cards.map((p, idx) => {
+                        const attention = getAttentionLevel(topActionsMap[p.program_id]);
+                        const showHeader = attention !== prevAttention;
+                        prevAttention = attention;
+
+                        return (
+                          <div key={p.program_id} style={{ position: 'relative' }}>
+                            {showHeader && (
+                              <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: ATTENTION_META[attention].color, padding: idx === 0 ? '0 2px 5px' : '8px 2px 5px', opacity: activeDragId ? 0 : 0.65, transition: 'opacity 100ms ease-out' }} data-testid={`group-header-${col.key}-${attention}`}>
+                                {ATTENTION_GROUP_LABEL[attention]}
+                              </div>
+                            )}
+                            {insertAt === idx && (
+                              <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: showHeader ? (idx === 0 ? 14 : 22) : -4, left: 4, right: 4, height: 2, background: col.color, color: col.color, borderRadius: 1, zIndex: 10 }} />
+                            )}
+                            <KanbanCard
+                              program={p}
+                              navigate={navigate}
+                              index={idx}
+                              topAction={topActionsMap[p.program_id]}
+                              justDroppedId={justDroppedId}
+                              activeDragId={activeDragId}
+                            />
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div style={{ padding: "24px 12px", textAlign: "center" }}>
+                        <div style={{ fontSize: 11, color: "var(--cm-text-4)", fontWeight: 500 }}>
+                          {isTarget ? 'Drop here' : getEmptyColCopy(col.key)}
                         </div>
-                      ))
-                    ) : insertAt === null ? (
-                      <div style={{ padding: "28px 12px", textAlign: "center" }}>
-                        <div style={{ fontSize: 11, color: "var(--cm-text-4)", fontWeight: 500 }}>{getEmptyColCopy(col.key)}</div>
                       </div>
-                    ) : null}
+                    )}
                     {insertAt !== null && insertAt >= count && <div className="kanban-insert-line" data-testid="insertion-line" style={{ height: 2, margin: '4px 4px 0', background: col.color, color: col.color, borderRadius: 1, position: 'relative', zIndex: 10 }} />}
                     {provided.placeholder}
                   </div>
@@ -527,55 +557,48 @@ function PipelineStyles() {
   return (
     <style>{`
       .kanban-card {
-        transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-                    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
-                    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
-                    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 100ms ease-out,
+                    box-shadow 100ms ease-out,
+                    opacity 100ms ease-out;
       }
       .kanban-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04) !important;
-        opacity: 1 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
       }
       .kanban-card:active { transform: translateY(0); }
       .kanban-insert-line {
-        animation: insert-line-in 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
-        box-shadow: 0 0 10px currentColor, 0 0 4px currentColor;
+        animation: insert-line-in 80ms ease-out both;
       }
       .kanban-insert-line::before,
       .kanban-insert-line::after {
         content: '';
         position: absolute;
         top: 50%;
-        width: 7px;
-        height: 7px;
+        width: 6px;
+        height: 6px;
         border-radius: 50%;
         background: inherit;
         transform: translateY(-50%);
-        box-shadow: 0 0 6px currentColor;
       }
-      .kanban-insert-line::before { left: -3px; }
-      .kanban-insert-line::after { right: -3px; }
+      .kanban-insert-line::before { left: -2px; }
+      .kanban-insert-line::after { right: -2px; }
       @keyframes insert-line-in {
         from { opacity: 0; }
-        to { opacity: 0.6; }
+        to { opacity: 0.5; }
       }
       .kanban-col-pulse {
-        animation: kanban-col-pulse 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation: kanban-col-pulse 160ms ease-out both;
       }
       @keyframes kanban-col-pulse {
-        0%   { box-shadow: inset 0 0 0 0 transparent; }
-        40%  { box-shadow: inset 0 0 24px rgba(0,0,0,0.025), inset 0 0 0 1px rgba(0,0,0,0.04); }
+        0%   { box-shadow: inset 0 0 16px rgba(0,0,0,0.02); }
         100% { box-shadow: none; }
       }
       .kanban-card-settled {
-        animation: kanban-settle 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation: kanban-settle 300ms ease-out both;
       }
       @keyframes kanban-settle {
-        0%   { box-shadow: 0 0 0 3px rgba(0,0,0,0.08), 0 8px 28px rgba(0,0,0,0.12); }
-        25%  { box-shadow: 0 0 0 2px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.08); }
-        60%  { box-shadow: 0 0 0 1px rgba(0,0,0,0.02), 0 3px 10px rgba(0,0,0,0.04); }
-        100% { box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03); }
+        0%   { box-shadow: 0 0 0 2px rgba(0,0,0,0.06), 0 6px 16px rgba(0,0,0,0.08); }
+        100% { box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
       }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
       .kanban-grid::-webkit-scrollbar-thumb { background: var(--cm-border); border-radius: 4px; }
@@ -618,6 +641,7 @@ export default function PipelinePage() {
   const [justDroppedId, setJustDroppedId] = useState(null);
   const [dragDest, setDragDest] = useState(null);
   const [pulsingColumnId, setPulsingColumnId] = useState(null);
+  const [activeDragId, setActiveDragId] = useState(null);
   const navigate = useNavigate();
   const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
 
@@ -665,6 +689,7 @@ export default function PipelinePage() {
 
   /* ── Drag & Drop handler ── */
   const handleDragEnd = useCallback(async (result) => {
+    setActiveDragId(null);
     setDragDest(null);
     const { destination, source, draggableId } = result;
     if (!destination) return;
@@ -674,13 +699,13 @@ export default function PipelinePage() {
     const stageUpdate = COL_TO_STAGE[newCol];
     if (!stageUpdate) return;
 
-    // Post-drop settle animation (1.2s for rich fade-out)
+    // Post-drop settle animation
     setJustDroppedId(draggableId);
-    setTimeout(() => setJustDroppedId(null), 1200);
+    setTimeout(() => setJustDroppedId(null), 400);
 
     // Column confirmation pulse
     setPulsingColumnId(newCol);
-    setTimeout(() => setPulsingColumnId(null), 400);
+    setTimeout(() => setPulsingColumnId(null), 200);
 
     // Optimistic update
     setAllPrograms(prev => prev.map(p =>
@@ -702,6 +727,10 @@ export default function PipelinePage() {
     setDragDest(update.destination
       ? { droppableId: update.destination.droppableId, index: update.destination.index, sourceId: update.source.droppableId }
       : null);
+  }, []);
+
+  const handleDragStart = useCallback((start) => {
+    setActiveDragId(start.draggableId);
   }, []);
 
   /* ── Add school with limit check ── */
@@ -842,7 +871,7 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Kanban Board (Drag & Drop) */}
-      <KanbanBoard programs={allPrograms} matchScores={matchScores} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} healthMap={healthMap} topActionsMap={topActionsMap} highlightedIds={highlightedIds} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} />
+      <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} topActionsMap={topActionsMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (
