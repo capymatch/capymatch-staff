@@ -261,18 +261,22 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
           gap: 0,
           minHeight: 340,
           overflow: "hidden",
+          padding: "8px 8px 8px 8px",
         }}
         className="hero-grid"
       >
-        {/* ─── LEFT COLUMN: Primary action detail ─── */}
+        {/* ─── LEFT COLUMN: Rounded card with gradient ─── */}
         {current && (
           <div
             style={{
               padding: "24px 28px 20px",
-              borderRight: "1px solid rgba(255,255,255,0.04)",
               display: "flex",
               flexDirection: "column",
               position: "relative",
+              borderRadius: 14,
+              background: `linear-gradient(165deg, ${accent}12 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.02) 100%)`,
+              border: "1px solid rgba(255,255,255,0.06)",
+              overflow: "hidden",
             }}
             data-testid="hero-left-col"
           >
