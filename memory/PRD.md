@@ -488,6 +488,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - 11/11 features verified (iteration_180)
   - Key files: `SwipeableCard.js`, `PriorityBoard.js`, `pipeline-motion.css`
 
+- **Unified Coming Up & On Track Sections (Complete — 2026-03-18)**
+  - Replaced old card-based/grid layouts in "Coming Up" and "On Track" sections with list-row components matching "Next Actions"
+  - Fixed critical bug: undefined `LowCard` reference replaced with `LowRow` component in SwipePriorityCard
+  - Changed "On Track" GRID from CSS grid to flex column layout (gap: 0)
+  - All three sections (Next Actions, Coming Up, On Track) now use HighRow/MedRow/LowRow with consistent spacing, typography, and action arrows
+  - Neutral color palette: no bright orange, muted headers with opacity hierarchy (1.0/0.7/0.55)
+  - 9/9 features verified (iteration_181)
+  - Key files: `PriorityBoard.js`
+
 ---
 
 ## Backlog
