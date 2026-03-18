@@ -7,8 +7,8 @@ import PipelineHeroEmptyState from "./PipelineHeroEmptyState";
 import "./pipeline-motion.css";
 
 const LEVEL_STYLE = {
-  high:   { accent: "#ef4444", glow: "rgba(239,68,68,0.10)", label: "High" },
-  medium: { accent: "#d97706", glow: "rgba(217,119,6,0.06)", label: "Med" },
+  high:   { accent: "#ef4444", glow: "rgba(239,68,68,0.10)", label: "Needs attention" },
+  medium: { accent: "#f59e0b", glow: "rgba(245,158,11,0.06)", label: "Needs action" },
   low:    { accent: "#10b981", glow: "rgba(16,185,129,0.04)", label: "On track" },
 };
 

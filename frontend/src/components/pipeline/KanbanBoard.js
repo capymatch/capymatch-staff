@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
-  KANBAN_COLS, ATTENTION_META,
-  programToKanbanCol, getColInsight, getEmptyColCopy,
+  KANBAN_COLS, programToKanbanCol, getColInsight, getEmptyColCopy,
 } from "./pipeline-constants";
-import UniversityLogo from "../UniversityLogo";
+import {
+  LogoBox, StatusIndicator, OwnerTag, PipelineRowStyles,
+  shortenName, getTimingColor, STATUS,
+  ROW_GAP, DIVIDER, FONT,
+} from "./pipeline-design";
 
 function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < breakpoint);
@@ -16,45 +19,16 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-/* ── Kanban-specific styles ── */
-function KanbanStyles() {
-  return (
-    <style>{`
-      .kb-card {
-        transition: box-shadow 120ms ease-out, transform 80ms ease-out, background 100ms ease-out;
-      }
-      .kb-card:hover {
-        box-shadow: 0 3px 10px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04) !important;
-        background: var(--cm-surface, #fff) !important;
-      }
-      .kb-card:hover .kb-ghost-cta {
-        opacity: 1 !important;
-      }
-    `}</style>
-  );
-}
-
-/* ── Logo container (matches list view) ── */
-function LogoBox({ domain, name }) {
-  return (
-    <div style={{
-      width: 24, height: 24, borderRadius: 5, flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--cm-surface-2, #f1f5f9)',
-    }}>
-      <UniversityLogo domain={domain} name={name} size={18} className="rounded-sm" />
-    </div>
-  );
-}
-
+/* ── Kanban card — uses SAME design system as list rows ── */
 function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
   const level = attn?.attentionLevel || 'low';
-  const meta = ATTENTION_META[level];
   const ctaLabel = attn?.ctaLabel;
+  const owner = attn?.owner;
+  const timingLabel = attn?.timingLabel;
+  const timingColor = getTimingColor(timingLabel);
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
-  const stageKey = programToKanbanCol(p);
-  const stageLabel = KANBAN_COLS.find(c => c.key === stageKey)?.label || '';
+  const short = shortenName(p.university_name);
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -64,7 +38,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
         const libStyle = provided.draggableProps.style || {};
         const baseTransform = libStyle.transform || '';
         const composedTransform = isLifted
-          ? `${baseTransform} scale(1.03)`.trim()
+          ? `${baseTransform} scale(1.02)`.trim()
           : isDropping
             ? `${baseTransform} scale(0.98)`.trim()
             : baseTransform || undefined;
@@ -75,7 +49,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
             {...provided.draggableProps}
             {...provided.dragHandleProps}
             onClick={() => !snapshot.isDragging && navigate(`/pipeline/${p.program_id}`)}
-            className={`kb-card${isJustDropped ? ' kanban-card-settled' : ''}`}
+            className="pb-row"
             style={{
               ...libStyle,
               transform: composedTransform,
@@ -84,77 +58,57 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
                 : isDropping
                   ? 'transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 160ms ease-out'
                   : undefined,
-              background: isLifted ? '#fff' : 'var(--cm-surface, #fafbfc)',
-              borderRadius: 10,
-              padding: '9px 10px',
+              display: 'flex', alignItems: 'flex-start', gap: ROW_GAP,
+              padding: '8px 4px',
               cursor: isLifted ? 'grabbing' : 'grab',
-              border: `1px solid ${isLifted ? 'rgba(0,0,0,0.06)' : 'rgba(226,232,240,0.7)'}`,
+              borderBottom: DIVIDER,
+              background: isLifted ? 'rgba(255,255,255,0.97)' : 'transparent',
               boxShadow: isLifted
-                ? '0 16px 40px rgba(0,0,0,0.14), 0 4px 14px rgba(0,0,0,0.08)'
-                : isJustDropped ? undefined
-                : '0 1px 3px rgba(0,0,0,0.03)',
-              opacity: isFaded ? 0.5 : 1,
+                ? '0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)'
+                : isJustDropped ? undefined : 'none',
+              opacity: isFaded ? 0.45 : 1,
               zIndex: isLifted ? 9999 : undefined,
               pointerEvents: isFaded ? 'none' : undefined,
+              borderRadius: isLifted ? 8 : undefined,
+              margin: isLifted ? 0 : undefined,
+              paddingLeft: isLifted ? '12px' : undefined,
+              paddingRight: isLifted ? '12px' : undefined,
             }}
             data-testid={`kanban-card-${p.program_id}`}
           >
-            {/* Row 1: Logo + School name */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <LogoBox domain={p.domain} name={p.university_name} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 12.5, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
-                  lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }} data-testid={`card-name-${p.program_id}`}>
-                  {p.university_name}
-                </div>
+            <div style={{ paddingTop: 1 }}>
+              <LogoBox domain={p.domain} name={p.university_name} muted={level === 'low'} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Line 1: School name (primary) */}
+              <div style={{
+                ...(level === 'high' ? FONT.actionHigh : level === 'medium' ? FONT.actionMed : FONT.actionLow),
+                lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }} data-testid={`card-name-${p.program_id}`}>
+                {p.university_name}
+              </div>
+
+              {/* Line 2: Status + timing + owner */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 1, flexWrap: 'wrap' }}>
+                <StatusIndicator level={level} />
+                {timingLabel && (
+                  <span style={{ fontSize: 10, fontWeight: 600, color: timingColor }}>{timingLabel}</span>
+                )}
+                {owner && <OwnerTag owner={owner} />}
               </div>
             </div>
 
-            {!isLifted && (
-              <>
-                {/* Row 2: Stage label */}
-                <div style={{
-                  fontSize: 10, color: 'var(--cm-text-3, #94a3b8)', marginTop: 4,
-                  fontWeight: 500, paddingLeft: 32,
-                }} data-testid={`card-stage-${p.program_id}`}>
-                  {stageLabel} stage
-                </div>
-
-                {/* Row 3: Status dot + label */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5, paddingLeft: 32 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot, flexShrink: 0 }} />
-                  <span style={{ fontSize: 10, fontWeight: 600, color: meta.color }} data-testid={`card-attention-${p.program_id}`}>
-                    {meta.label}
-                  </span>
-                </div>
-
-                {/* Row 4: Ghost CTA (only for high/medium) */}
-                {ctaLabel && level !== 'low' && (
-                  <div style={{ paddingLeft: 32, marginTop: 6 }}>
-                    <span className="kb-ghost-cta" style={{
-                      display: 'inline-block', fontSize: 10, fontWeight: 600,
-                      color: level === 'high' ? '#dc2626' : '#64748b',
-                      padding: '2px 8px', borderRadius: 4,
-                      background: level === 'high' ? 'rgba(220,38,38,0.05)' : 'rgba(100,116,139,0.05)',
-                      border: `1px solid ${level === 'high' ? 'rgba(220,38,38,0.1)' : 'rgba(100,116,139,0.08)'}`,
-                      opacity: 0.7,
-                      transition: 'opacity 100ms ease-out',
-                    }} data-testid={`card-action-${p.program_id}`}>
-                      {ctaLabel}
-                    </span>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Drag preview: simplified */}
-            {isLifted && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, paddingLeft: 32 }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot, flexShrink: 0 }} />
-                <span style={{ fontSize: 10, fontWeight: 600, color: meta.color }}>{meta.label}</span>
-              </div>
+            {/* CTA — same hierarchy as list */}
+            {!isLifted && ctaLabel && level !== 'low' && (
+              <span className="pb-cta" style={{
+                fontSize: level === 'high' ? 11 : 10.5,
+                fontWeight: level === 'high' ? 700 : 600,
+                color: level === 'high' ? '#dc2626' : 'var(--cm-text-3, #94a3b8)',
+                opacity: level === 'high' ? 0.85 : 0.65,
+                flexShrink: 0, whiteSpace: 'nowrap', paddingTop: 1,
+              }} data-testid={`card-action-${p.program_id}`}>
+                {ctaLabel} →
+              </span>
             )}
           </div>
         );
@@ -193,7 +147,7 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
 
   return (
     <DragDropContext onDragEnd={onDragEnd} onDragUpdate={onDragUpdate} onDragStart={onDragStart}>
-      <KanbanStyles />
+      <PipelineRowStyles />
       <div style={gridStyle} className="kanban-grid" data-testid="kanban-board">
         {KANBAN_COLS.map(col => {
           const cards = columns[col.key];
@@ -213,63 +167,55 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                   {...provided.droppableProps}
                   className={pulsingColumnId === col.key ? 'kanban-col-pulse' : ''}
                   style={{
-                    background: isHovering
-                      ? `linear-gradient(180deg, ${col.color}08 0%, ${col.color}03 100%)`
-                      : 'transparent',
-                    borderRadius: 10, minHeight: 200,
+                    background: isHovering ? 'rgba(241,245,249,0.55)' : 'transparent',
+                    borderRadius: 8, minHeight: 200,
                     transition: 'background 150ms ease-out, border-color 150ms ease-out',
-                    border: `1px ${isTarget && !isHovering ? 'dashed' : 'solid'} ${isHovering ? `${col.color}30` : isTarget ? 'rgba(0,0,0,0.04)' : 'transparent'}`,
+                    border: `1px ${isTarget && !isHovering ? 'dashed' : 'solid'} ${isHovering ? 'rgba(226,232,240,0.8)' : isTarget ? 'rgba(226,232,240,0.4)' : 'transparent'}`,
                     ...colStyle,
                   }}
                   data-testid={`kanban-col-${col.key}`}
                 >
                   {/* Accent line */}
                   <div style={{
-                    height: 2, borderRadius: '10px 10px 0 0',
+                    height: 2, borderRadius: '8px 8px 0 0',
                     background: col.color,
-                    opacity: isHovering ? 1 : 0.35,
+                    opacity: isHovering ? 0.8 : 0.3,
                     transition: 'opacity 150ms ease-out',
                   }} />
 
-                  {/* Column header */}
-                  <div style={{ padding: '12px 10px 8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                  {/* Column header — same typography scale as list section headers */}
+                  <div style={{ padding: '10px 10px 6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
                       <span style={{
-                        fontSize: 11, fontWeight: 800, textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
+                        fontSize: 11, fontWeight: 700, letterSpacing: '0.02em',
                         color: isHovering ? 'var(--cm-text, #0f172a)' : 'var(--cm-text-2, #475569)',
                         transition: 'color 120ms ease-out',
                       }}>{col.label}</span>
-                      <span style={{
-                        fontSize: 10, fontWeight: 600,
-                        color: 'var(--cm-text-4, #cbd5e1)',
-                      }}>{count}</span>
+                      <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>({count})</span>
                     </div>
                     {insight && !activeDragId && (
-                      <div style={{ fontSize: 10, color: 'var(--cm-text-3, #94a3b8)', marginTop: 2, fontWeight: 500 }}>{insight}</div>
+                      <div style={{ ...FONT.stage, marginTop: 1 }}>{insight}</div>
                     )}
                   </div>
 
-                  {/* Cards */}
-                  <div style={{ padding: '0 5px 10px', display: 'flex', flexDirection: 'column', gap: 5, minHeight: 60 }}>
+                  {/* Cards list */}
+                  <div style={{ padding: '0 4px 8px', display: 'flex', flexDirection: 'column', minHeight: 60 }}>
                     {count > 0 ? (
-                      cards.map((p, idx) => {
-                        return (
-                          <div key={p.program_id} style={{ position: 'relative' }}>
-                            {insertAt === idx && (
-                              <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -3, left: 4, right: 4, height: 2, background: col.color, borderRadius: 1, zIndex: 10 }} />
-                            )}
-                            <KanbanCard
-                              program={p}
-                              navigate={navigate}
-                              index={idx}
-                              attention={attentionMap[p.program_id]}
-                              justDroppedId={justDroppedId}
-                              activeDragId={activeDragId}
-                            />
-                          </div>
-                        );
-                      })
+                      cards.map((p, idx) => (
+                        <div key={p.program_id} style={{ position: 'relative' }}>
+                          {insertAt === idx && (
+                            <div className="kanban-insert-line" data-testid="insertion-line" style={{ position: 'absolute', top: -2, left: 4, right: 4, height: 2, background: col.color, borderRadius: 1, zIndex: 10 }} />
+                          )}
+                          <KanbanCard
+                            program={p}
+                            navigate={navigate}
+                            index={idx}
+                            attention={attentionMap[p.program_id]}
+                            justDroppedId={justDroppedId}
+                            activeDragId={activeDragId}
+                          />
+                        </div>
+                      ))
                     ) : (
                       <div style={{ padding: '20px 10px', textAlign: 'center' }}>
                         <div style={{ fontSize: 10.5, color: 'var(--cm-text-4, #cbd5e1)', fontWeight: 500 }}>
@@ -277,7 +223,7 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                         </div>
                       </div>
                     )}
-                    {insertAt !== null && insertAt >= count && <div className="kanban-insert-line" data-testid="insertion-line" style={{ height: 2, margin: '3px 4px 0', background: col.color, borderRadius: 1, position: 'relative', zIndex: 10 }} />}
+                    {insertAt !== null && insertAt >= count && <div className="kanban-insert-line" data-testid="insertion-line" style={{ height: 2, margin: '2px 4px 0', background: col.color, borderRadius: 1, position: 'relative', zIndex: 10 }} />}
                     {provided.placeholder}
                   </div>
                 </div>
