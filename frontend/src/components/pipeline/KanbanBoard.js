@@ -24,21 +24,28 @@ function getCardContext(reasonShort) {
   return reasonShort;
 }
 
-/* ── Time: normalized format ── */
+/* ── Time: normalized format + urgency level ── */
 function getCardTime(timingLabel) {
   if (!timingLabel) return null;
   const lower = timingLabel.toLowerCase();
   const m = lower.match(/overdue (\d+)d/);
-  if (m) return `${m[1]}d overdue`;
-  if (lower === 'due today') return 'Due today';
-  if (lower === 'tomorrow') return 'Due tomorrow';
+  if (m) return { text: `${m[1]}d overdue`, urgency: 'high' };
+  if (lower === 'due today') return { text: 'Due today', urgency: 'medium' };
+  if (lower === 'tomorrow') return { text: 'Due tomorrow', urgency: 'low' };
   const inM = lower.match(/in (\d+) days/);
-  if (inM) return `Due in ${inM[1]}d`;
+  if (inM) return { text: `Due in ${inM[1]}d`, urgency: 'none' };
   const nrM = lower.match(/no response in (\d+)/);
-  if (nrM) return `${nrM[1]}d since contact`;
-  if (lower === 'no contact yet') return 'No outreach yet';
+  if (nrM) return { text: `${nrM[1]}d since contact`, urgency: 'none' };
+  if (lower === 'no contact yet') return { text: 'No outreach yet', urgency: 'none' };
   return null;
 }
+
+const TIME_STYLE = {
+  high:   { color: '#dc2626', fontWeight: 600 },
+  medium: { color: '#d97706', fontWeight: 600 },
+  low:    { color: '#94a3b8', fontWeight: 500 },
+  none:   { color: 'rgba(148,163,184,0.55)', fontWeight: 500 },
+};
 
 /* ── Card: 4-line layout ── */
 function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
@@ -120,16 +127,23 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
               </div>
             )}
 
-            {/* Line 4: Time (optional, weakest) */}
-            {showTime && (
-              <div style={{
-                paddingLeft: 32, marginTop: showContext ? 1 : 3,
-                fontSize: 9, fontWeight: 500, color: 'var(--cm-text-4, rgba(148,163,184,0.55))',
-                lineHeight: 1.3,
-              }} data-testid={`card-time-${p.program_id}`}>
-                {time}
-              </div>
-            )}
+            {/* Line 4: Time — colored by urgency */}
+            {showTime && (() => {
+              const ts = TIME_STYLE[time.urgency] || TIME_STYLE.none;
+              return (
+                <div style={{
+                  paddingLeft: 32, marginTop: showContext ? 1 : 3,
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  fontSize: 9, fontWeight: ts.fontWeight, color: ts.color,
+                  lineHeight: 1.3,
+                }} data-testid={`card-time-${p.program_id}`}>
+                  {time.urgency !== 'none' && (
+                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: ts.color, flexShrink: 0, opacity: 0.7 }} />
+                  )}
+                  {time.text}
+                </div>
+              );
+            })()}
           </div>
         );
       }}
