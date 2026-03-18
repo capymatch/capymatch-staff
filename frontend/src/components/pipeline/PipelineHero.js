@@ -225,7 +225,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                     className="rounded flex-shrink-0"
                   />
                 )}
-                <span className="text-[12px] font-semibold text-white/60 truncate" data-testid="hero-school-name">
+                <span className="text-[14px] sm:text-[15px] font-bold text-white/80 truncate" data-testid="hero-school-name">
                   {p?.university_name || "School"}
                 </span>
                 {matchPct != null && (
@@ -237,7 +237,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             )}
 
             {/* Action — largest */}
-            <div className={compact ? "mt-1.5" : "mt-2"} data-testid="hero-advice-box">
+            <div className={compact ? "mt-1.5" : "mt-1"} data-testid="hero-advice-box">
               <div className={`${compact ? 'text-[15px]' : 'text-[16px] sm:text-[17px]'} font-extrabold leading-snug`}
                 style={{ color: "#fff", display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
                 data-testid="hero-advice-text"
