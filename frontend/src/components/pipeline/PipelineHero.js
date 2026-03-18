@@ -142,7 +142,7 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
       style={{
         background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)",
         borderRadius: 14,
-        borderLeft: `6px solid ${accent}`,
+        borderLeft: "none",
         marginBottom: 20,
         position: "relative",
       }}
@@ -257,7 +257,7 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: current ? "3fr 2fr" : "1fr",
+          gridTemplateColumns: current ? "60% 1fr" : "1fr",
           gap: 0,
           minHeight: 340,
           overflow: "hidden",
@@ -280,6 +280,19 @@ export default function PipelineHero({ actions, matchScores, navigate, usage }) 
             }}
             data-testid="hero-left-col"
           >
+            {/* Accent line — inside the left panel on its left edge */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: 4,
+                background: `linear-gradient(180deg, ${accent} 0%, ${accent}99 100%)`,
+                borderRadius: "14px 0 0 14px",
+                zIndex: 2,
+              }}
+            />
             {/* Tier label */}
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20, position: "relative", zIndex: 1 }}>
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: tierDotColor }} />
