@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -16,6 +16,7 @@ import { PipelineHealthBadge } from "../../components/PipelineHealthBadge";
 import PipelineHero from "../../components/pipeline/PipelineHero";
 import ComingUpTimeline from "../../components/pipeline/ComingUpTimeline";
 import { computeAllAttention } from "../../lib/computeAttention";
+import "../../components/pipeline/pipeline-motion.css";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -609,8 +610,12 @@ export default function PipelinePage() {
     try { return localStorage.getItem('capymatch_view_mode') || 'priority'; }
     catch { return 'priority'; }
   });
+  const [viewPhase, setViewPhase] = useState('idle');
+  const viewPendingRef = useRef(null);
   const navigate = useNavigate();
   const { subscription, refresh: refreshSub, loading: subLoading } = useSubscription();
+  const togglePriorityRef = useRef(null);
+  const togglePipelineRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -701,9 +706,18 @@ export default function PipelinePage() {
   }, []);
 
   const toggleView = useCallback((mode) => {
-    setViewMode(mode);
-    try { localStorage.setItem('capymatch_view_mode', mode); } catch {}
-  }, []);
+    if (mode === viewMode || viewPhase !== 'idle') return;
+    setViewPhase('exit');
+    viewPendingRef.current = mode;
+    setTimeout(() => {
+      const next = viewPendingRef.current;
+      viewPendingRef.current = null;
+      setViewMode(next);
+      try { localStorage.setItem('capymatch_view_mode', next); } catch {}
+      setViewPhase('enter');
+      setTimeout(() => setViewPhase('idle'), 220);
+    }, 140);
+  }, [viewMode, viewPhase]);
 
   /* ── Add school with limit check ── */
   const handleAddSchool = useCallback(() => {
@@ -781,13 +795,19 @@ export default function PipelinePage() {
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', background: 'var(--cm-surface-2, #f1f5f9)', borderRadius: 8, padding: 2, flexShrink: 0 }} data-testid="view-toggle">
-          <button onClick={() => toggleView('priority')} data-testid="toggle-priority"
-            style={{ padding: '5px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: viewMode === 'priority' ? 'var(--cm-surface, #fff)' : 'transparent', color: viewMode === 'priority' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)', border: 'none', cursor: 'pointer', transition: 'all 160ms ease-out', boxShadow: viewMode === 'priority' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', fontFamily: 'inherit' }}>
+        <div className="pm-toggle-track" style={{ background: 'var(--cm-surface-2, #f1f5f9)' }} data-testid="view-toggle">
+          <div className="pm-toggle-slider" style={{
+            left: viewMode === 'priority' ? 2 : (togglePriorityRef.current?.offsetWidth || 60) + 2,
+            width: viewMode === 'priority' ? (togglePriorityRef.current?.offsetWidth || 60) : (togglePipelineRef.current?.offsetWidth || 60),
+          }} />
+          <button ref={togglePriorityRef} onClick={() => toggleView('priority')} data-testid="toggle-priority"
+            className="pm-toggle-btn"
+            style={{ color: viewMode === 'priority' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)' }}>
             Priority
           </button>
-          <button onClick={() => toggleView('pipeline')} data-testid="toggle-pipeline"
-            style={{ padding: '5px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: viewMode === 'pipeline' ? 'var(--cm-surface, #fff)' : 'transparent', color: viewMode === 'pipeline' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)', border: 'none', cursor: 'pointer', transition: 'all 160ms ease-out', boxShadow: viewMode === 'pipeline' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', fontFamily: 'inherit' }}>
+          <button ref={togglePipelineRef} onClick={() => toggleView('pipeline')} data-testid="toggle-pipeline"
+            className="pm-toggle-btn"
+            style={{ color: viewMode === 'pipeline' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)' }}>
             Pipeline
           </button>
         </div>
@@ -844,11 +864,13 @@ export default function PipelinePage() {
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
       {/* 4. Board — Priority or Pipeline based on toggle */}
-      {viewMode === 'pipeline' ? (
-        <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
-      ) : (
-        <PriorityBoard items={allAttention} navigate={navigate} />
-      )}
+      <div className={`pm-view-${viewPhase}`} data-testid="board-view-container">
+        {viewMode === 'pipeline' ? (
+          <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
+        ) : (
+          <PriorityBoard items={allAttention} navigate={navigate} />
+        )}
+      </div>
 
       {/* Archived */}
       {archivedPrograms.length > 0 && (

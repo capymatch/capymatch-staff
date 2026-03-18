@@ -143,3 +143,64 @@
 
 /* ══ Drag & Drop polish ══ */
 /* kanban-card-settled and all D&D CSS defined in PipelineStyles (PipelinePage.js) */
+
+/* ── View morph: Priority ↔ Pipeline crossfade ── */
+.pm-view-exit {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.995);
+  transition: opacity var(--pm-fast) var(--pm-ease),
+              transform var(--pm-fast) var(--pm-ease);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.pm-view-enter {
+  animation: pm-view-in var(--pm-normal) var(--pm-ease) 30ms both;
+  will-change: transform, opacity;
+}
+
+.pm-view-idle {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes pm-view-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Toggle pill slider ── */
+.pm-toggle-track {
+  position: relative;
+  display: flex;
+  border-radius: 8px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.pm-toggle-slider {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 6px;
+  background: var(--cm-surface, #fff);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: left var(--pm-normal) var(--pm-ease),
+              width var(--pm-normal) var(--pm-ease);
+  will-change: left, width;
+  pointer-events: none;
+}
+
+.pm-toggle-btn {
+  position: relative;
+  z-index: 1;
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  background: transparent;
+  transition: color var(--pm-fast) var(--pm-ease);
+}
