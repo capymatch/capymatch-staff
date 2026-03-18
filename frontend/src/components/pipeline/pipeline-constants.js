@@ -20,12 +20,12 @@ export const COL_TO_STAGE = {
 };
 
 export const ATTENTION_META = {
-  high: { label: 'High', dot: '#ef4444', color: '#dc2626', bg: 'rgba(239,68,68,0.06)' },
-  medium: { label: 'Med', dot: '#d97706', color: '#92400e', bg: 'rgba(217,119,6,0.06)' },
-  low: { label: 'Low', dot: '#10b981', color: '#047857', bg: 'rgba(16,185,129,0.05)' },
+  high: { label: 'Needs attention', dot: '#ef4444', color: '#dc2626', bg: 'rgba(239,68,68,0.06)' },
+  medium: { label: 'Needs action', dot: '#f59e0b', color: '#b45309', bg: 'rgba(245,158,11,0.06)' },
+  low: { label: 'On track', dot: '#10b981', color: '#047857', bg: 'rgba(16,185,129,0.05)' },
 };
 
-export const ATTENTION_LABEL = { high: 'Needs Attention', medium: 'Coming Up Soon', low: 'On Track' };
+export const ATTENTION_LABEL = { high: 'Needs attention', medium: 'Needs action', low: 'On track' };
 
 export function programToKanbanCol(p) {
   if (p.recruiting_status === "Committed" || p.journey_stage === "committed") return null;
