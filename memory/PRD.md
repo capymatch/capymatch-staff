@@ -249,6 +249,14 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Added confidence tooltip on hover: High/Medium/Low each with 1-line explanation
   - All tests passed (iteration_163)
   - Key files: `CoachWatchCard.js`, `athlete_dashboard.py`
+- **Hero Orchestration Refactor (Complete — 2026-03-18)**
+  - Replaced stacked hero cards with orchestrated layout: ONE PrimaryHeroCard + ONE RadarStrip
+  - Created `heroOrchestrator.js` with priority-based selection: committed > coach_task > coach_flag > hot_opportunity > active_conversation > overdue > celebration > upcoming > questionnaire > next_step
+  - Suppressed lower-priority items shown in compact "Also on your radar" strip
+  - Empty state fallback: "Start outreach to this program"
+  - Special committed hero with gold celebration rendering + journey toggle
+  - All tests passed across 4 schools (iteration_164)
+  - Key files: `heroOrchestrator.js`, `PrimaryHeroCard.js`, `RadarStrip.js`, `JourneyPage.js`
 
 ---
 
