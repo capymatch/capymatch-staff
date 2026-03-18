@@ -5,8 +5,8 @@ import SwipeableCard from "./SwipeableCard";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-/* ── HIGH row: lightweight task list item ── */
-function HighRow({ item, navigate, cardIdx, isLast }) {
+/* ── HIGH row: action-first list item ── */
+function HighRow({ item, navigate, isLast }) {
   const { primaryAction, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
 
@@ -14,86 +14,80 @@ function HighRow({ item, navigate, cardIdx, isLast }) {
     <div
       className="kanban-card"
       style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '8px 4px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '10px 4px',
         cursor: 'pointer',
         borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
-        background: 'transparent',
-        borderRadius: 0,
+        background: 'transparent', borderRadius: 0,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      {/* Left: red dot */}
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
-
-      {/* Center: content */}
+      {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Line 1: urgency + school name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+        {/* Line 1: action — school */}
+        <div style={{
+          fontSize: 13, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
+          lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }} data-testid={`priority-action-${prog.program_id}`}>
+          {primaryAction}
+          <span style={{ fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)', marginLeft: 6 }}>— {prog.university_name}</span>
+        </div>
+        {/* Line 2: metadata */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
           {timingLabel && (
             <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626' }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
           )}
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cm-text-2, #475569)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {prog.university_name}
-          </span>
           <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
-        </div>
-        {/* Line 2: action */}
-        <div style={{
-          fontSize: 13, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
-          marginTop: 2, lineHeight: 1.3,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }} data-testid={`priority-action-${prog.program_id}`}>
-          {primaryAction}
         </div>
       </div>
 
-      {/* Right: text CTA */}
-      <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', opacity: 0.7, flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
+      {/* CTA */}
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', opacity: 0.75, flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
         {ctaLabel || 'Take Action'} →
       </span>
     </div>
   );
 }
 
-/* ── MED card: compact, amber ── */
-function MedCard({ item, navigate }) {
-  const { primaryAction, timingLabel, owner, program: prog } = item;
+/* ── MED row: same list style, softer color ── */
+function MedRow({ item, navigate, isLast }) {
+  const { primaryAction, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
 
   return (
     <div
       className="kanban-card"
       style={{
-        background: 'rgba(217,119,6,0.02)',
-        borderRadius: 8,
-        padding: '10px 12px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '10px 4px',
         cursor: 'pointer',
-        border: '1px solid rgba(217,119,6,0.08)',
-        borderLeft: '3px solid rgba(217,119,6,0.5)',
+        borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
+        background: 'transparent', borderRadius: 0,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
-        <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#92400e' }}>Med</span>
-        {timingLabel && (
-          <>
-            <span style={{ fontSize: 9.5, color: 'var(--cm-text-4, #cbd5e1)' }}>·</span>
-            <span style={{ fontSize: 9.5, fontWeight: 600, color: '#92400e', opacity: 0.6 }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
-          </>
-        )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Line 1: action — school */}
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: 'var(--cm-text, #0f172a)',
+          lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }} data-testid={`priority-action-${prog.program_id}`}>
+          {primaryAction}
+          <span style={{ fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)', marginLeft: 6 }}>— {prog.university_name}</span>
+        </div>
+        {/* Line 2: metadata */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+          {timingLabel && (
+            <span style={{ fontSize: 10, fontWeight: 600, color: '#92400e', opacity: 0.7 }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
+          )}
+          <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+        </div>
       </div>
-      <div style={{
-        fontSize: 13, fontWeight: 650, color: 'var(--cm-text, #0f172a)',
-        marginTop: 4, lineHeight: 1.35,
-        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-      }} data-testid={`priority-action-${prog.program_id}`}>
-        {primaryAction}
-      </div>
-      <div style={{ marginTop: 4 }} data-testid={`priority-reason-${prog.program_id}`}>
-        <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
-      </div>
+
+      {/* CTA — subtler */}
+      <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--cm-text-3, #94a3b8)', flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
+        {ctaLabel || 'View'} →
+      </span>
     </div>
   );
 }
@@ -131,7 +125,7 @@ function LowCard({ item, navigate }) {
   );
 }
 
-/* ── Swipeable wrapper for HIGH/MED cards ── */
+/* ── Swipeable wrapper ── */
 function SwipePriorityCard({ item, navigate, section, cardIdx, isLast }) {
   const prog = item.program;
   const programId = prog?.program_id;
@@ -161,14 +155,9 @@ function SwipePriorityCard({ item, navigate, section, cardIdx, isLast }) {
 
   if (section === 'attention') {
     return (
-      <SwipeableCard
-        onAction={handleAction}
-        onSnooze={handleSnooze}
-        actionLabel={item.ctaLabel || 'Take Action'}
-        programId={programId}
-      >
+      <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || 'Take Action'} programId={programId}>
         <div onClick={handleTap}>
-          <HighRow item={item} navigate={navigate} cardIdx={cardIdx} isLast={isLast} />
+          <HighRow item={item} navigate={navigate} isLast={isLast} />
         </div>
       </SwipeableCard>
     );
@@ -176,14 +165,9 @@ function SwipePriorityCard({ item, navigate, section, cardIdx, isLast }) {
 
   if (section === 'coming-up') {
     return (
-      <SwipeableCard
-        onAction={handleAction}
-        onSnooze={handleSnooze}
-        actionLabel={item.ctaLabel || 'Take Action'}
-        programId={programId}
-      >
+      <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || 'Take Action'} programId={programId}>
         <div onClick={handleTap}>
-          <MedCard item={item} navigate={navigate} />
+          <MedRow item={item} navigate={navigate} isLast={isLast} />
         </div>
       </SwipeableCard>
     );
@@ -201,13 +185,13 @@ export default function PriorityBoard({ items, navigate }) {
 
   const GRID = {
     attention: { display: 'flex', flexDirection: 'column', gap: 0 },
-    'coming-up': { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 },
+    'coming-up': { display: 'flex', flexDirection: 'column', gap: 0 },
     'on-track': { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 },
   };
 
   const sections = [
-    { key: 'attention', label: 'Up next', color: '#dc2626', items: high, empty: 'Nothing urgent right now', headerOpacity: 1 },
-    { key: 'coming-up', label: 'More actions', color: '#d97706', items: medium, empty: 'No upcoming actions', headerOpacity: 0.7 },
+    { key: 'attention', label: 'Next actions', color: '#64748b', items: high, empty: 'Nothing urgent right now', headerOpacity: 1 },
+    { key: 'coming-up', label: 'Coming up', color: '#94a3b8', items: medium, empty: 'No upcoming actions', headerOpacity: 0.7 },
     { key: 'on-track', label: 'On Track', color: '#10b981', items: low, empty: 'No programs on track yet', headerOpacity: 0.55 },
   ];
 
@@ -222,8 +206,7 @@ export default function PriorityBoard({ items, navigate }) {
       )}
       {sections.map(sec => (
         <div key={sec.key} data-testid={`priority-section-${sec.key}`}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: sec.key === 'attention' ? 10 : 8, opacity: sec.headerOpacity }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: sec.color }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, opacity: sec.headerOpacity }}>
             <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: sec.color }}>{sec.label}</span>
             <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--cm-text-4)' }}>{sec.items.length}</span>
           </div>
