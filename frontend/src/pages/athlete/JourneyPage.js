@@ -16,7 +16,7 @@ import {
 } from "../../components/ui/alert-dialog";
 import {
   ProgressRail, PulseIndicator, GettingStartedChecklist,
-  CommittedHero, CelebrationHero, NextStepCard, ConversationBubble,
+  ConversationBubble, computeHeroSelection, PrimaryHeroCard, RadarStrip,
   FloatingActionBar, StageLogModal, LogInteractionForm,
   EmailComposer, FollowUpScheduler, MarkAsRepliedModal, CoachForm,
 } from "../../components/journey";
@@ -349,6 +349,23 @@ export default function JourneyPage() {
   const logoUrl = matchScore?.logo_url || program.logo_url || null;
   const domain = matchScore?.domain || program.domain || null;
 
+  // ── Hero Orchestrator ──
+  const heroHandlers = {
+    onEmail: openGatedEmail,
+    onLog: () => { setShowLog(true); setActiveAction("log"); },
+    onFollowup: () => { setShowFollowup(true); setActiveAction("followup"); },
+    onMarkActionDone: markActionDone,
+    onCompleteFlag: handleCompleteFlag,
+    onNavigate: navigate,
+  };
+  const { featuredHero, radarItems } = computeHeroSelection({
+    assignedActions, coachFlags, coachWatch, program,
+    followUpOverdue, followUpUpcoming, daysOverdue, daysUntilDue,
+    hasCoachReply, isCommitted, latestEvent, nextStepDismissed,
+    coaches, questNudgeDismissed, completingFlag,
+    handlers: heroHandlers,
+  });
+
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
@@ -481,112 +498,20 @@ export default function JourneyPage() {
       {/* ─── MAIN CONTENT ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-4">
 
-        {/* Coach-Assigned Action Items Hero Card */}
-        {assignedActions.length > 0 && (
-          <div className="mb-4 space-y-3" data-testid="journey-assigned-actions">
-            {assignedActions.map(action => {
-              const aType = action.action_type || "general";
-              const ctaMap = {
-                send_email: { label: "Compose Email", icon: Mail, handler: () => { setShowEmail(true); setActiveAction("email"); } },
-                log_visit: { label: "Log Visit", icon: ClipboardCheck, handler: () => { setShowInteraction(true); } },
-                log_interaction: { label: "Log It", icon: ClipboardCheck, handler: () => { setShowInteraction(true); } },
-                reply: { label: "Reply", icon: Send, handler: () => navigate("/messages") },
-                profile_update: { label: "Update Profile", icon: User, handler: () => navigate("/profile") },
-                preparation: { label: "Mark Done", icon: Check, handler: () => markActionDone(action.id) },
-                research: { label: "Mark Done", icon: Check, handler: () => markActionDone(action.id) },
-                general: { label: "Mark Done", icon: Check, handler: () => markActionDone(action.id) },
-              };
-              const cta = ctaMap[aType] || ctaMap.general;
-              const CtaIcon = cta.icon;
-              return (
-                <div key={action.id} className="rounded-lg overflow-hidden"
-                  style={{ background: "#1e1e2e", border: "1px solid rgba(13,148,136,0.25)", borderRadius: 10 }}
-                  data-testid={`assigned-action-${action.id}`}>
-                  <div style={{ height: 2, background: "linear-gradient(90deg, #0d9488, rgba(13,148,136,0.2))" }} />
-                  <div className="p-4 sm:p-5">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ backgroundColor: "rgba(13,148,136,0.15)" }}>
-                        <ClipboardCheck className="w-5 h-5" style={{ color: "#0d9488" }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#0d9488" }}>
-                          Coach Task {action.due_date ? `\u00B7 Due ${new Date(action.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}
-                        </p>
-                        <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>
-                          {action.title}
-                        </h3>
-                        <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.5)" }}>
-                          Assigned by {action.created_by || "your coach"} for {action.school_name || program?.university_name}
-                        </p>
-                        <button
-                          onClick={cta.handler}
-                          className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors shadow-sm"
-                          style={{ backgroundColor: "#0d9488", color: "#fff" }}
-                          data-testid={`action-cta-${action.id}`}>
-                          <CtaIcon className="w-3.5 h-3.5" />
-                          {cta.label}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* ═══ ORCHESTRATED HERO SECTION ═══ */}
+        <PrimaryHeroCard hero={featuredHero} />
+        {radarItems.length > 0 && <RadarStrip items={radarItems} />}
 
-        {/* Coach Flag Card */}
-        {coachFlags.length > 0 && (
-          <div className="mb-4 space-y-4" data-testid="journey-coach-flags">
-            {coachFlags.map(flag => {
-              const dueLabel = flag.due === "today" ? "Due today"
-                : flag.due === "this_week" ? "Due this week"
-                : flag.due_date ? `Due ${flag.due_date}` : null;
-              return (
-                <div key={flag.flag_id} className="rounded-lg overflow-hidden"
-                  style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 10 }}
-                  data-testid={`journey-flag-${flag.flag_id}`}>
-                  <div style={{ height: 2, background: "linear-gradient(90deg, #f59e0b, rgba(245,158,11,0.2))" }} />
-                  <div className="p-4 sm:p-5">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ backgroundColor: "rgba(245,158,11,0.15)" }}>
-                        <Flag className="w-5 h-5" style={{ color: "#f59e0b" }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#f59e0b" }}>
-                          Coach Directive {dueLabel ? `\u00B7 ${dueLabel}` : ""}
-                        </p>
-                        <h3 className="text-sm font-bold mb-1" style={{ color: "var(--cm-text)" }}>
-                          {flag.reason_label}
-                        </h3>
-                        {flag.note && (
-                          <p className="text-xs mb-3" style={{ color: "var(--cm-text-2)" }}>
-                            {flag.note}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <button onClick={() => handleCompleteFlag(flag.flag_id)}
-                            disabled={completingFlag === flag.flag_id}
-                            className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors shadow-sm"
-                            style={{ backgroundColor: "#f59e0b", color: "#000", opacity: completingFlag === flag.flag_id ? 0.6 : 1 }}
-                            data-testid={`complete-flag-${flag.flag_id}`}>
-                            {completingFlag === flag.flag_id
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              : <Check className="w-3.5 h-3.5" />}
-                            Mark Complete
-                          </button>
-                          <span className="text-[10px] font-medium" style={{ color: "var(--cm-text-3)" }}>
-                            Flagged by {flag.flagged_by_name || "Coach"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+        {/* Committed toggle */}
+        {featuredHero?.type === "committed" && (
+          <div className="mb-4 flex justify-center">
+            <button onClick={() => setShowJourneyDetails(prev => !prev)}
+              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-medium transition-colors hover:bg-white/5"
+              style={{ color: "var(--cm-text-3)", borderColor: "var(--cm-border)" }}
+              data-testid="toggle-journey-details">
+              {showJourneyDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showJourneyDetails ? "Hide journey details" : "View full journey"}
+            </button>
           </div>
         )}
 
@@ -602,86 +527,7 @@ export default function JourneyPage() {
           </div>
         )}
 
-        {/* J1: Overdue Follow-Up Card (rich dark style) */}
-        {followUpOverdue && !activeAction && (
-          <div className="mb-4 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="overdue-followup-card">
-            <div style={{ height: 2, background: "linear-gradient(90deg, #f97316, rgba(249,115,22,0.2))" }} />
-            <div className="p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ backgroundColor: "rgba(249,115,22,0.15)" }}>
-                  <AlertCircle className="w-5 h-5" style={{ color: "#f97316" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#f97316" }}>
-                    {daysOverdue > 0 ? `${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue` : "Due today"}
-                  </p>
-                  <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>
-                    Follow up with {program.university_name}
-                  </h3>
-                  <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {program.next_action || "Send a follow-up to stay on their radar and show continued interest."}
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    <button onClick={openGatedEmail}
-                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium bg-orange-600 hover:bg-orange-700 text-white transition-colors shadow-md"
-                      data-testid="overdue-email-btn">
-                      <Mail className="w-3.5 h-3.5" /> Send Email
-                    </button>
-                    <button onClick={() => { setShowFollowup(true); setActiveAction("followup"); }}
-                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors"
-                      style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
-                      data-testid="overdue-reschedule-btn">
-                      <Clock className="w-3.5 h-3.5" /> Reschedule
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* J1: Upcoming Follow-Up Card (due within 5 days) */}
-        {followUpUpcoming && !followUpOverdue && !activeAction && (
-          <div className="mb-4 rounded-lg overflow-hidden" style={{ background: "#1e1e2e", borderRadius: 10 }} data-testid="upcoming-followup-card">
-            <div style={{ height: 2, background: "linear-gradient(90deg, #1a8a80, rgba(26,138,128,0.2))" }} />
-            <div className="p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ backgroundColor: "rgba(26,138,128,0.15)" }}>
-                  <Clock className="w-5 h-5" style={{ color: "#2dd4bf" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#2dd4bf" }}>
-                    {daysUntilDue === 0 ? "Due today" : daysUntilDue === 1 ? "Due tomorrow" : `Due in ${daysUntilDue} days`}
-                  </p>
-                  <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>
-                    Follow up with {program.university_name}
-                  </h3>
-                  <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {program.next_action || "You have a follow-up coming up. Get ahead of it to show coaches you're organized and committed."}
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    <button onClick={openGatedEmail}
-                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium text-white transition-colors shadow-md"
-                      style={{ backgroundColor: "#1a8a80" }}
-                      data-testid="upcoming-email-btn">
-                      <Mail className="w-3.5 h-3.5" /> Send Email
-                    </button>
-                    <button onClick={() => { setShowFollowup(true); setActiveAction("followup"); }}
-                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors"
-                      style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
-                      data-testid="upcoming-reschedule-btn">
-                      <Clock className="w-3.5 h-3.5" /> Reschedule
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* J1: Questionnaire Section */}
+        {/* Questionnaire Status (inline status section — not a hero card) */}
         {program.questionnaire_url && (
           <div className="mb-5 rounded-lg border p-4 sm:p-5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="questionnaire-section">
             <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
@@ -722,84 +568,6 @@ export default function JourneyPage() {
                 </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* J1: Questionnaire Nudge (incomplete) */}
-        {program.questionnaire_url && !program.questionnaire_completed && !questNudgeDismissed && !activeAction && (
-          <div className="mb-5 rounded-lg overflow-hidden relative"
-            style={{ borderColor: "rgba(245,158,11,0.3)", background: "#1e1e2e", border: "1px solid rgba(245,158,11,0.3)" }}
-            data-testid="questionnaire-nudge">
-            <button onClick={() => setQuestNudgeDismissed(true)}
-              className="absolute top-3 right-3 p-1 rounded-lg hover:bg-white/10 transition-colors"
-              style={{ color: "rgba(255,255,255,0.35)" }} data-testid="quest-nudge-dismiss">
-              <X className="w-4 h-4" />
-            </button>
-            <div className="p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ backgroundColor: "rgba(245,158,11,0.12)" }}>
-                  <ClipboardCheck className="w-5 h-5" style={{ color: "#f59e0b" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#f59e0b" }}>Action Required</p>
-                  <h3 className="text-sm font-bold mb-1" style={{ color: "#ffffff" }}>Complete {program.university_name}'s questionnaire</h3>
-                  <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    Filling out the recruiting questionnaire shows coaches you're genuinely interested. Most programs require it.
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white transition-colors shadow-md"
-                      data-testid="quest-nudge-open">
-                      <ExternalLink className="w-3.5 h-3.5" /> Open Questionnaire
-                    </a>
-                    <button onClick={toggleQuestionnaire}
-                      className="inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium transition-colors"
-                      style={{ color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}
-                      data-testid="quest-nudge-complete">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Mark as Done
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Contextual Hero Section */}
-        {isCommitted ? (
-          <div className="mb-6">
-            <CommittedHero program={program} />
-            {/* J4: View full journey toggle */}
-            <button onClick={() => setShowJourneyDetails(prev => !prev)}
-              className="mx-auto mt-4 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-medium transition-colors hover:bg-white/5"
-              style={{ color: "var(--cm-text-3)", borderColor: "var(--cm-border)" }}
-              data-testid="toggle-journey-details">
-              {showJourneyDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {showJourneyDetails ? "Hide journey details" : "View full journey"}
-            </button>
-          </div>
-        ) : hasCoachReply ? (
-          <div className="mb-8">
-            <CelebrationHero program={program} coaches={coaches}
-              onEmail={isBasic ? null : openGatedEmail}
-              onLog={() => { setShowLog(true); setActiveAction("log"); }}
-              onCall={() => { setShowLog(true); setActiveAction("log"); }}
-            />
-          </div>
-        ) : null}
-
-        {/* Next Step Automation Card */}
-        {latestEvent && !isCommitted && !nextStepDismissed && (
-          <div className="mb-8">
-            <NextStepCard
-              latestEvent={latestEvent}
-              universityName={program.university_name}
-              onEmail={openGatedEmail}
-              onLog={() => { setShowLog(true); setActiveAction("log"); }}
-              onFollowup={() => { setShowFollowup(true); setActiveAction("followup"); }}
-              onDismiss={() => setNextStepDismissed(true)}
-            />
           </div>
         )}
 

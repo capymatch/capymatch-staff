@@ -13,3 +13,6 @@ export { EmailComposer } from "./EmailComposer";
 export { FollowUpScheduler } from "./FollowUpScheduler";
 export { MarkAsRepliedModal } from "./MarkAsRepliedModal";
 export { STAGE_LABELS } from "./constants";
+export { computeHeroSelection } from "./heroOrchestrator";
+export { PrimaryHeroCard } from "./PrimaryHeroCard";
+export { RadarStrip } from "./RadarStrip";
