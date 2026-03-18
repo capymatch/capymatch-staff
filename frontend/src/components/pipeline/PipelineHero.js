@@ -57,21 +57,38 @@ const STATUS_CHIP = {
   cooling_off: "Cooling off", due_today: "Due today",
 };
 
-const HELPER_HINTS = {
-  coach_flag: "Coaches typically review follow-ups within 48 hours",
-  past_due: "Programs with recent follow-ups stay 2x more engaged",
-  reply_needed: "Responding within 24 hours shows strong interest",
-  first_outreach: "Early outreach builds the strongest recruiting relationships",
-  cooling_off: "A short check-in keeps things moving",
-  due_today: "Completing tasks on time keeps your pipeline healthy",
-};
-
 function getShortAction(action) {
   const map = {
     coach_flag: 'Follow up', past_due: 'Follow up', reply_needed: 'Follow up',
     due_today: 'Follow up today', first_outreach: 'Send intro', cooling_off: 'Re-engage',
   };
   return map[action?.category] || action?.cta?.label || 'Take action';
+}
+
+function getHeroAction(action) {
+  if (!action?.program) return 'Take action';
+  const name = action.program.university_name;
+  const map = {
+    coach_flag: `Follow up with ${name} coach`,
+    director_action: `Review ${name} — director flagged`,
+    past_due: `Follow up with ${name}`,
+    reply_needed: `Follow up with ${name}`,
+    due_today: `Follow up with ${name} today`,
+    first_outreach: `Send intro to ${name}`,
+    cooling_off: `Re-engage ${name}`,
+  };
+  return map[action.category] || action.cta?.label || 'Take action';
+}
+
+function getHeroTiming(action) {
+  if (!action) return '';
+  const due = action.due;
+  if (due?.urgent) return due.text;
+  if (due?.text) return due.text;
+  const days = action.program?.signals?.days_since_activity;
+  if (days > 0) return `No response in ${days} day${days !== 1 ? 's' : ''}`;
+  if (action.category === 'first_outreach') return 'No contact yet';
+  return '';
 }
 
 export default function PipelineHero({ actions, matchScores, navigate }) {
@@ -150,7 +167,7 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
   const rail = buildRail(p);
   const inlineMeta = [p?.division, p?.conference].filter(Boolean).join(" \u00b7 ");
   const statusChip = STATUS_CHIP[current?.category] || null;
-  const helperHint = HELPER_HINTS[current?.category] || null;
+  const heroTiming = getHeroTiming(current);
 
   const pills = [
     { key: "all", label: "All", count: allActionable.length },
@@ -295,18 +312,15 @@ export default function PipelineHero({ actions, matchScores, navigate }) {
           </div>
         )}
 
-        {/* What to do next */}
+        {/* Action command — direct two-line format */}
         <div className="mt-3 sm:mt-4 mb-3" data-testid="hero-advice-box">
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.5)" }}>
-            What to do next
-          </span>
-          <p className="text-[14px] sm:text-[16px] font-semibold leading-snug mt-1 mb-0" style={{ color: "rgba(255,255,255,0.85)" }} data-testid="hero-advice-text">
-            {current.context || "Review this program and take the next step."}
-          </p>
-          {helperHint && (
-            <p className="text-[11px] sm:text-xs mt-1 mb-0" style={{ color: "rgba(255,255,255,0.38)" }}>
-              {helperHint}
-            </p>
+          <div className="text-[15px] sm:text-[18px] font-bold leading-snug" style={{ color: "rgba(255,255,255,0.92)" }} data-testid="hero-advice-text">
+            {getHeroAction(current)}
+          </div>
+          {heroTiming && (
+            <div className="text-[12px] sm:text-[13px] font-medium mt-1.5" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="hero-timing-signal">
+              {heroTiming}
+            </div>
           )}
         </div>
 

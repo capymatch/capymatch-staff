@@ -39,13 +39,13 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
         const diff = Math.round((due - today) / (1000 * 60 * 60 * 24));
         if (diff >= 1 && diff <= 7) {
           daysUntil = diff;
-          reason = `Follow-up scheduled in ${diff} day${diff !== 1 ? "s" : ""}. Stay ahead of the deadline.`;
+          reason = `Follow up — due in ${diff} day${diff !== 1 ? "s" : ""}`;
         } else if (diff === 0) {
           daysUntil = 0;
-          reason = "Follow-up is due today and may become overdue if ignored.";
+          reason = "Follow up — due today";
         } else if (diff < 0 && diff >= -7) {
           daysUntil = Math.min(Math.abs(diff), 5);
-          reason = "Follow-up was recently due. A quick check-in keeps things on track.";
+          reason = "Check in — recently overdue";
         }
       }
     }
@@ -54,16 +54,16 @@ export function buildTimelineItems(programs, topActionsMap, matchScores) {
       const daysSince = sig.days_since_activity;
       if (daysSince >= 10) {
         daysUntil = Math.max(0, 14 - daysSince);
-        reason = "Relationship is starting to cool off. A check-in would help preserve momentum.";
+        reason = `Check in — no activity in ${daysSince} days`;
       } else if (daysSince >= 5) {
         daysUntil = Math.max(1, 10 - daysSince);
-        reason = "No recent touchpoints. Consider reaching out to maintain engagement.";
+        reason = `Reach out — ${daysSince} days since last contact`;
       }
     }
 
     if (daysUntil === null && sig.total_interactions === 0) {
       daysUntil = 3;
-      reason = "No contact yet. Making a first touchpoint early builds momentum.";
+      reason = "Send first message";
     }
 
     if (daysUntil !== null && reason) {
@@ -98,45 +98,35 @@ export default function ComingUpTimeline({ items }) {
   return (
     <div
       data-testid="coming-up-timeline"
-      className="rounded-xl sm:rounded-2xl p-4 sm:p-6"
-      style={{ background: "var(--cm-surface, #ffffff)", border: "1px solid var(--cm-border, #e2e8f0)" }}
+      className="px-1"
     >
-      {/* Header — compact */}
-      <div className="mb-4">
-        <div className="text-[10px] font-extrabold tracking-wider uppercase mb-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-          Coming Up Next
-        </div>
-        <h3 className="text-sm sm:text-base font-bold leading-tight" style={{ color: "var(--cm-text, #0f172a)" }}>
-          What may need attention soon
-        </h3>
+      <div className="mb-3">
+        <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>
+          Coming Up
+        </span>
       </div>
 
-      {/* #4 REMOVED duplicate chip row — cards only */}
-      {/* #6 STRONGER card hierarchy — time label dominant, more spacing */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {items.slice(0, 3).map(item => {
           const dotColor = URGENCY_DOT[item.urgency] || URGENCY_DOT.later;
           return (
             <div
               key={item.programId}
               onClick={() => navigate(`/pipeline/${item.programId}`)}
-              className="rounded-lg sm:rounded-xl p-3.5 sm:p-4 cursor-pointer pm-stagger-card pm-card-hover group"
-              style={{ background: `${dotColor}05`, border: `1px solid ${dotColor}14` }}
+              className="rounded-lg p-3 cursor-pointer pm-stagger-card pm-card-hover group"
+              style={{ background: `${dotColor}04`, border: `1px solid ${dotColor}10` }}
               data-testid={`timeline-card-${item.programId}`}
             >
-              {/* Time label — strongest visual */}
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dotColor, boxShadow: `0 0 6px ${dotColor}55` }} />
-                <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wide" style={{ color: dotColor }}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+                <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: dotColor, opacity: 0.8 }}>
                   {item.timeLabel}
                 </span>
               </div>
-              {/* School name */}
-              <div className="text-[15px] sm:text-base font-bold mb-1 leading-snug group-hover:underline" style={{ color: "var(--cm-text, #0f172a)" }}>
+              <div className="text-[13px] font-semibold leading-snug group-hover:underline" style={{ color: "var(--cm-text-2, #475569)" }}>
                 {item.university}
               </div>
-              {/* Reason — supporting, lower emphasis */}
-              <div className="text-[11px] sm:text-xs leading-relaxed" style={{ color: "var(--cm-text-3, #b0b8c4)" }}>
+              <div className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>
                 {item.reason}
               </div>
             </div>

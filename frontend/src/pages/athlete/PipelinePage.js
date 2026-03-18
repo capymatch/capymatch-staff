@@ -291,6 +291,14 @@ function getTimingSignal(p, ta) {
   return '';
 }
 
+function getMicroSignal(p, topAction) {
+  const due = getDueInfo(p);
+  if (due?.text?.startsWith('Overdue')) return { text: 'Now overdue', color: '#dc2626' };
+  if (due?.text === 'Due today') return { text: 'Due today', color: '#d97706' };
+  if (topAction?.category === 'first_outreach') return { text: 'New', color: '#94a3b8' };
+  return null;
+}
+
 /* ── Column header contextual insights ── */
 function getColInsight(colKey, count) {
   if (count === 0) return "";
@@ -587,6 +595,7 @@ function PriorityCard({ program: p, topAction, navigate }) {
   const owner = topAction?.owner;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
   const due = getDueInfo(p);
+  const micro = getMicroSignal(p, topAction);
   let timing = due?.text;
   if (!timing && p.signals?.days_since_activity > 0) {
     timing = `No response in ${p.signals.days_since_activity}d`;
@@ -606,19 +615,20 @@ function PriorityCard({ program: p, topAction, navigate }) {
       }}
       data-testid={`priority-card-${p.program_id}`}
     >
-      {/* Line 1: Attention level */}
+      {/* Line 1: Attention level + micro-signal */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
         <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: meta.color }}>{meta.label}</span>
+        {micro && <span style={{ fontSize: 9, fontWeight: 600, color: micro.color, opacity: 0.65 }} data-testid={`micro-signal-${p.program_id}`}>{'\u00b7'} {micro.text}</span>}
       </div>
-      {/* Line 2: Action title (includes school context) */}
+      {/* Line 2: Action title — plain language, answers "What should I do?" */}
       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cm-text)', marginTop: 4, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`priority-action-${p.program_id}`}>
         {actionTitle}
       </div>
-      {/* Line 3: Timing + owner (actionable cards only) */}
+      {/* Line 3: Timing + owner */}
       {attention !== 'low' && (timing || topAction?.cta_label) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }} data-testid={`priority-timing-${p.program_id}`}>
-          <span style={{ fontSize: 10.5, fontWeight: 600, color: due?.urgent ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>→ {timing || topAction?.cta_label}</span>
+          <span style={{ fontSize: 10.5, fontWeight: 600, color: due?.urgent ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>{'\u2192'} {timing || topAction?.cta_label}</span>
           <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
       )}
