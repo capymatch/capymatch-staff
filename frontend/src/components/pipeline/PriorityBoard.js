@@ -5,54 +5,53 @@ import SwipeableCard from "./SwipeableCard";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-/* ── HIGH card: full-width, ghost CTA ── */
-function HighCard({ item, navigate, cardIdx }) {
+/* ── HIGH row: lightweight task list item ── */
+function HighRow({ item, navigate, cardIdx, isLast }) {
   const { primaryAction, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
-  const fade = cardIdx === 0 ? 1 : cardIdx === 1 ? 0.95 : 0.88;
 
   return (
     <div
       className="kanban-card"
       style={{
-        background: `rgba(239,68,68,${cardIdx === 0 ? 0.03 : 0.015})`,
-        borderRadius: 10,
-        padding: '12px 14px',
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '8px 4px',
         cursor: 'pointer',
-        border: `1px solid rgba(239,68,68,${cardIdx === 0 ? 0.10 : 0.06})`,
-        borderLeft: `${cardIdx === 0 ? 4 : 3}px solid rgba(239,68,68,${fade})`,
-        opacity: fade,
+        borderBottom: isLast ? 'none' : '1px solid var(--cm-border, #e8ecf1)',
+        background: 'transparent',
+        borderRadius: 0,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
-      {/* Top: ● HIGH · Overdue 10d */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
-        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#dc2626' }}>High</span>
-        {timingLabel && (
-          <>
-            <span style={{ fontSize: 10, color: 'var(--cm-text-4, #cbd5e1)' }}>·</span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', opacity: 0.7 }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
-          </>
-        )}
+      {/* Left: red dot */}
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
+
+      {/* Center: content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Line 1: urgency + school name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+          {timingLabel && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626' }} data-testid={`timing-label-${prog.program_id}`}>{timingLabel}</span>
+          )}
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cm-text-2, #475569)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {prog.university_name}
+          </span>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: '0px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+        </div>
+        {/* Line 2: action */}
+        <div style={{
+          fontSize: 13, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
+          marginTop: 2, lineHeight: 1.3,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }} data-testid={`priority-action-${prog.program_id}`}>
+          {primaryAction}
+        </div>
       </div>
 
-      {/* Action — largest */}
-      <div style={{
-        fontSize: 14, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
-        marginTop: 5, lineHeight: 1.35,
-        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-      }} data-testid={`priority-action-${prog.program_id}`}>
-        {primaryAction}
-      </div>
-
-      {/* Owner + ghost CTA */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }} data-testid={`priority-reason-${prog.program_id}`}>
-        <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 6px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626', opacity: 0.75 }} data-testid={`cta-btn-${prog.program_id}`}>
-          {ctaLabel || 'Take Action'} →
-        </span>
-      </div>
+      {/* Right: text CTA */}
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', opacity: 0.7, flexShrink: 0, whiteSpace: 'nowrap' }} data-testid={`cta-btn-${prog.program_id}`}>
+        {ctaLabel || 'Take Action'} →
+      </span>
     </div>
   );
 }
@@ -133,7 +132,7 @@ function LowCard({ item, navigate }) {
 }
 
 /* ── Swipeable wrapper for HIGH/MED cards ── */
-function SwipePriorityCard({ item, navigate, section, cardIdx }) {
+function SwipePriorityCard({ item, navigate, section, cardIdx, isLast }) {
   const prog = item.program;
   const programId = prog?.program_id;
 
@@ -169,7 +168,7 @@ function SwipePriorityCard({ item, navigate, section, cardIdx }) {
         programId={programId}
       >
         <div onClick={handleTap}>
-          <HighCard item={item} navigate={navigate} cardIdx={cardIdx} />
+          <HighRow item={item} navigate={navigate} cardIdx={cardIdx} isLast={isLast} />
         </div>
       </SwipeableCard>
     );
@@ -201,7 +200,7 @@ export default function PriorityBoard({ items, navigate }) {
   const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0;
 
   const GRID = {
-    attention: { display: 'flex', flexDirection: 'column', gap: 8 },
+    attention: { display: 'flex', flexDirection: 'column', gap: 0 },
     'coming-up': { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 },
     'on-track': { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 },
   };
@@ -231,7 +230,7 @@ export default function PriorityBoard({ items, navigate }) {
           {sec.items.length > 0 ? (
             <div style={GRID[sec.key]} className={sec.key === 'coming-up' ? 'priority-grid-coming-up' : undefined}>
               {sec.items.map((item, i) => (
-                <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section={sec.key} cardIdx={i} />
+                <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section={sec.key} cardIdx={i} isLast={i === sec.items.length - 1} />
               ))}
             </div>
           ) : (
