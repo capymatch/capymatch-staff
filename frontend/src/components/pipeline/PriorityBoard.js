@@ -1,12 +1,141 @@
 import React from "react";
 import { ATTENTION_META } from "./pipeline-constants";
 
-function PriorityCard({ item, navigate, section }) {
-  const { attentionLevel, primaryAction, reasonShort, microSignal, owner, ctaLabel, program: prog } = item;
-  const meta = ATTENTION_META[attentionLevel];
+/* ── HIGH card: full-width, action-first task row ── */
+function HighCard({ item, navigate }) {
+  const { primaryAction, reasonShort, microSignal, timingLabel, owner, ctaLabel, program: prog } = item;
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
-  const isCompact = section === 'on-track';
-  const isSubdued = section === 'coming-up' || section === 'on-track';
+
+  return (
+    <div
+      onClick={() => navigate(`/pipeline/${prog.program_id}`)}
+      className="kanban-card"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        background: 'rgba(239,68,68,0.03)',
+        borderRadius: 10,
+        padding: '14px 16px',
+        cursor: 'pointer',
+        border: '1px solid rgba(239,68,68,0.10)',
+        borderLeft: '4px solid #ef4444',
+      }}
+      data-testid={`priority-card-${prog.program_id}`}
+    >
+      {/* Left: content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Top row: level + micro-signal  |  timing */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }} />
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#dc2626' }}>High</span>
+            {microSignal && (
+              <span style={{ fontSize: 9.5, fontWeight: 600, color: microSignal.color, opacity: 0.7 }} data-testid={`micro-signal-${prog.program_id}`}>
+                {'\u00b7'} {microSignal.text}
+              </span>
+            )}
+          </div>
+          {timingLabel && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#dc2626', opacity: 0.7, flexShrink: 0 }} data-testid={`timing-label-${prog.program_id}`}>
+              {timingLabel}
+            </span>
+          )}
+        </div>
+
+        {/* Main action — largest text, max 2 lines */}
+        <div style={{
+          fontSize: 14, fontWeight: 700, color: 'var(--cm-text, #0f172a)',
+          marginTop: 6, lineHeight: 1.35,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        }} data-testid={`priority-action-${prog.program_id}`}>
+          {primaryAction}
+        </div>
+
+        {/* Meta line: reason · owner */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }} data-testid={`priority-reason-${prog.program_id}`}>
+          {reasonShort && (
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }}>{reasonShort}</span>
+          )}
+          <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 6px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+        </div>
+      </div>
+
+      {/* Right: CTA */}
+      <button
+        style={{
+          padding: '7px 14px', borderRadius: 7,
+          fontSize: 11, fontWeight: 700,
+          background: '#ef4444', color: '#fff',
+          border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+          flexShrink: 0, whiteSpace: 'nowrap',
+        }}
+        data-testid={`cta-btn-${prog.program_id}`}
+      >
+        {ctaLabel || 'Take Action'} →
+      </button>
+    </div>
+  );
+}
+
+/* ── MED card: compact, amber tint ── */
+function MedCard({ item, navigate }) {
+  const { primaryAction, reasonShort, microSignal, timingLabel, owner, program: prog } = item;
+  const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
+
+  return (
+    <div
+      onClick={() => navigate(`/pipeline/${prog.program_id}`)}
+      className="kanban-card"
+      style={{
+        background: 'rgba(217,119,6,0.02)',
+        borderRadius: 8,
+        padding: '11px 13px',
+        cursor: 'pointer',
+        border: '1px solid rgba(217,119,6,0.10)',
+        borderLeft: '3px solid #d97706',
+      }}
+      data-testid={`priority-card-${prog.program_id}`}
+    >
+      {/* Top row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
+          <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#92400e' }}>Med</span>
+          {microSignal && (
+            <span style={{ fontSize: 9, fontWeight: 600, color: microSignal.color, opacity: 0.65 }} data-testid={`micro-signal-${prog.program_id}`}>
+              {'\u00b7'} {microSignal.text}
+            </span>
+          )}
+        </div>
+        {timingLabel && (
+          <span style={{ fontSize: 9.5, fontWeight: 600, color: '#92400e', opacity: 0.6, flexShrink: 0 }} data-testid={`timing-label-${prog.program_id}`}>
+            {timingLabel}
+          </span>
+        )}
+      </div>
+
+      {/* Action */}
+      <div style={{
+        fontSize: 13, fontWeight: 650, color: 'var(--cm-text, #0f172a)',
+        marginTop: 5, lineHeight: 1.35,
+        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+      }} data-testid={`priority-action-${prog.program_id}`}>
+        {primaryAction}
+      </div>
+
+      {/* Meta */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }} data-testid={`priority-reason-${prog.program_id}`}>
+        {reasonShort && (
+          <span style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>{reasonShort}</span>
+        )}
+        <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.06)' : 'rgba(99,102,241,0.06)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── LOW card: minimal, no CTA ── */
+function LowCard({ item, navigate }) {
+  const { primaryAction, program: prog } = item;
 
   return (
     <div
@@ -14,31 +143,34 @@ function PriorityCard({ item, navigate, section }) {
       className="kanban-card"
       style={{
         background: 'var(--cm-surface, #fff)',
-        borderRadius: 8,
-        padding: isCompact ? '8px 10px' : '10px 12px',
+        borderRadius: 7,
+        padding: '8px 11px',
         cursor: 'pointer',
-        border: `1px solid ${attentionLevel === 'high' ? 'rgba(239,68,68,0.12)' : 'var(--cm-border, #e8ecf1)'}`,
-        boxShadow: attentionLevel === 'high' ? '0 1px 3px rgba(239,68,68,0.06)' : '0 1px 2px rgba(0,0,0,0.04)',
-        opacity: isSubdued ? 0.88 : 1,
+        border: '1px solid var(--cm-border, #e8ecf1)',
+        opacity: 0.75,
       }}
       data-testid={`priority-card-${prog.program_id}`}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span style={{ width: 5, height: 5, borderRadius: '50%', background: meta.dot }} />
-        <span style={{ fontSize: isCompact ? 9.5 : 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: meta.color }}>{meta.label}</span>
-        {microSignal && <span style={{ fontSize: 9, fontWeight: 600, color: microSignal.color, opacity: 0.65 }} data-testid={`micro-signal-${prog.program_id}`}>{'\u00b7'} {microSignal.text}</span>}
+        <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
+        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#047857' }}>On track</span>
       </div>
-      <div style={{ fontSize: isCompact ? 12 : 13, fontWeight: 600, color: 'var(--cm-text)', marginTop: isCompact ? 3 : 4, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`priority-action-${prog.program_id}`}>
+      <div style={{
+        fontSize: 12, fontWeight: 600, color: 'var(--cm-text-2, #475569)',
+        marginTop: 3, lineHeight: 1.3,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }} data-testid={`priority-action-${prog.program_id}`}>
         {primaryAction}
       </div>
-      {attentionLevel !== 'low' && (reasonShort || ctaLabel) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: isCompact ? 3 : 4 }} data-testid={`priority-reason-${prog.program_id}`}>
-          <span style={{ fontSize: 10.5, fontWeight: 600, color: attentionLevel === 'high' ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>{'\u2192'} {reasonShort || ctaLabel}</span>
-          <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
-        </div>
-      )}
     </div>
   );
+}
+
+/* ── Card router ── */
+function PriorityCard({ item, navigate, section }) {
+  if (section === 'attention') return <HighCard item={item} navigate={navigate} />;
+  if (section === 'coming-up') return <MedCard item={item} navigate={navigate} />;
+  return <LowCard item={item} navigate={navigate} />;
 }
 
 export default function PriorityBoard({ items, navigate }) {

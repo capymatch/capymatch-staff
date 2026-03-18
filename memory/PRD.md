@@ -446,6 +446,15 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
   - Removed dead code: MeasurablesGuidanceBanner, DIV_TAG_STYLES, PipelineHealthBadge import, healthMap state
   - 12/12 regression features verified (iteration_179)
 
+- **Priority Card Action-First Redesign (Complete — 2026-03-18)**
+  - HIGH cards: full-width, 4px red left accent bar, light red bg, action as largest text (14px/700), timing label top-right, meta line (reasonShort + owner), red CTA button right-aligned
+  - MED cards: 3px amber left accent, amber tint bg, compact layout, timing label, no large CTA
+  - LOW cards: minimal, no CTA, 0.75 opacity, compact grid
+  - Card router pattern: PriorityCard delegates to HighCard/MedCard/LowCard by section
+  - Max 2-line clamp on action text, no paragraphs, 3-4 lines per card max
+  - Layout-only change — no data logic changes
+  - Key file: `PriorityBoard.js`
+
 ---
 
 ## Backlog
