@@ -258,7 +258,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
             {/* Progress rail — top right */}
             {!compact && rail && (
-              <div style={{ width: 240 }} data-testid="hero-progress-rail">
+              <div style={{ width: 320 }} data-testid="hero-progress-rail">
                 <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
               </div>
             )}
