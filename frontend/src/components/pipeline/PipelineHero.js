@@ -25,8 +25,9 @@ function buildRail(program) {
 
 function getShortAction(item) {
   if (!item) return 'Take action';
-  if (item.attentionLevel === 'high') return item.reason || 'Needs attention';
-  if (item.attentionLevel === 'medium') return item.reason || 'Coming up';
+  if (item.reasonShort) return item.reasonShort;
+  if (item.attentionLevel === 'high') return 'Needs attention';
+  if (item.attentionLevel === 'medium') return 'Coming up';
   return 'On track';
 }
 
@@ -253,9 +254,9 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           <div className="text-[15px] sm:text-[18px] font-bold leading-snug" style={{ color: "rgba(255,255,255,0.92)" }} data-testid="hero-advice-text">
             {current.primaryAction}
           </div>
-          {current.timingLabel && (
-            <div className="text-[12px] sm:text-[13px] font-medium mt-1.5" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="hero-timing-signal">
-              {current.timingLabel}
+          {current.reasonShort && (
+            <div className="text-[12px] sm:text-[13px] font-medium mt-1.5" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="hero-reason-short">
+              {current.reasonShort}
             </div>
           )}
         </div>

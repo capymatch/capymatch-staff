@@ -41,8 +41,8 @@ export default function ComingUpTimeline({ items }) {
               <div className="text-[13px] font-semibold leading-snug group-hover:underline" style={{ color: "var(--cm-text-2, #475569)" }}>
                 {item.program?.university_name}
               </div>
-              <div className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>
-                {item.reason}
+              <div className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-4, #cbd5e1)" }} data-testid={`timeline-reason-${item.programId}`}>
+                {item.reasonShort || item.reason}
               </div>
             </div>
           );

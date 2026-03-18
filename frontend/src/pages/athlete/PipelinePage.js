@@ -426,7 +426,7 @@ function CommittedBanner({ programs, navigate }) {
 /* ═══════════════════════════════════════════ */
 
 function PriorityCard({ item, navigate }) {
-  const { attentionLevel, primaryAction, timingLabel, microSignal, owner, ctaLabel, program: prog } = item;
+  const { attentionLevel, primaryAction, reasonShort, microSignal, owner, ctaLabel, program: prog } = item;
   const meta = ATTENTION_META[attentionLevel];
   const ownerLabel = owner === 'coach' ? 'Coach' : owner === 'director' ? 'Director' : 'You';
 
@@ -454,10 +454,10 @@ function PriorityCard({ item, navigate }) {
       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cm-text)', marginTop: 4, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} data-testid={`priority-action-${prog.program_id}`}>
         {primaryAction}
       </div>
-      {/* Line 3: Timing + owner */}
-      {attentionLevel !== 'low' && (timingLabel || ctaLabel) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }} data-testid={`priority-timing-${prog.program_id}`}>
-          <span style={{ fontSize: 10.5, fontWeight: 600, color: attentionLevel === 'high' ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>{'\u2192'} {timingLabel || ctaLabel}</span>
+      {/* Line 3: reasonShort + owner */}
+      {attentionLevel !== 'low' && (reasonShort || ctaLabel) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4 }} data-testid={`priority-reason-${prog.program_id}`}>
+          <span style={{ fontSize: 10.5, fontWeight: 600, color: attentionLevel === 'high' ? '#dc2626' : 'var(--cm-text-2, #475569)' }}>{'\u2192'} {reasonShort || ctaLabel}</span>
           <span style={{ fontSize: 9.5, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: ownerLabel === 'You' ? 'rgba(13,148,136,0.08)' : 'rgba(99,102,241,0.08)', color: ownerLabel === 'You' ? '#0d9488' : '#6366f1' }}>{ownerLabel}</span>
         </div>
       )}
@@ -470,6 +470,8 @@ function PriorityBoard({ items, navigate }) {
   const medium = items.filter(i => i.attentionLevel === 'medium');
   const low = items.filter(i => i.attentionLevel === 'low');
 
+  const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0;
+
   const sections = [
     { key: 'attention', label: 'Needs Attention', color: '#dc2626', items: high, empty: 'Nothing urgent right now' },
     { key: 'coming-up', label: 'Coming Up Soon', color: '#d97706', items: medium, empty: 'No upcoming actions' },
@@ -478,6 +480,14 @@ function PriorityBoard({ items, navigate }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} data-testid="priority-board">
+      {/* Global "everything on track" banner when no high or medium items */}
+      {allOnTrack && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderRadius: 10, background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.10)' }} data-testid="all-on-track-banner">
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--cm-text-2, #475569)' }}>Everything is on track</span>
+          <span style={{ fontSize: 11, color: 'var(--cm-text-3, #94a3b8)' }}>&mdash; no programs need immediate attention</span>
+        </div>
+      )}
       {sections.map(sec => (
         <div key={sec.key} data-testid={`priority-section-${sec.key}`}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
@@ -492,7 +502,7 @@ function PriorityBoard({ items, navigate }) {
               ))}
             </div>
           ) : (
-            <div style={{ padding: '16px', fontSize: 11, color: 'var(--cm-text-4)', fontWeight: 500 }}>
+            <div style={{ padding: '16px', fontSize: 11, color: 'var(--cm-text-4)', fontWeight: 500 }} data-testid={`empty-state-${sec.key}`}>
               {sec.empty}
             </div>
           )}

@@ -118,6 +118,33 @@ export function computeAttention(program, topAction) {
   else if (daysUntil === 0) microSignal = { text: 'Due today', color: '#d97706' };
   else if (ta?.category === 'first_outreach') microSignal = { text: 'New', color: '#94a3b8' };
 
+  // ── reasonShort — single human-readable reason shown everywhere ──
+  let reasonShort = null;
+  if (ta?.action_key === 'coach_assigned_action') {
+    reasonShort = 'Coach assigned a task';
+  } else if (ta?.category === 'coach_flag') {
+    reasonShort = 'Flagged by coach';
+  } else if (daysUntil !== null && daysUntil < 0) {
+    const abs = Math.abs(daysUntil);
+    reasonShort = `Overdue by ${abs} day${abs !== 1 ? 's' : ''}`;
+  } else if (daysUntil === 0) {
+    reasonShort = 'Due today';
+  } else if (daysUntil === 1) {
+    reasonShort = 'Due tomorrow';
+  } else if (daysUntil !== null && daysUntil <= 3) {
+    reasonShort = `Due in ${daysUntil} days`;
+  } else if (lastActivity !== null && lastActivity >= 7) {
+    reasonShort = `No response in ${lastActivity} days`;
+  } else if (lastActivity !== null && lastActivity >= 3) {
+    reasonShort = `${lastActivity} days since last activity`;
+  } else if (ta?.action_key === 'first_outreach_needed' || ta?.action_key === 'send_intro_email') {
+    reasonShort = 'Ready for first contact';
+  } else if (ta?.action_key === 'relationship_cooling' || ta?.action_key === 'reengage_relationship') {
+    reasonShort = 'No recent engagement';
+  } else if (attentionLevel === 'low') {
+    reasonShort = 'On track';
+  }
+
   return {
     programId: p.program_id,
     attentionScore: score,
@@ -125,6 +152,7 @@ export function computeAttention(program, topAction) {
     timingLabel,
     primaryAction,
     reason,
+    reasonShort,
     daysUntil,
     owner: ta?.owner || 'athlete',
     ctaLabel: ta?.cta_label || (attentionLevel === 'low' ? 'View School' : 'Take Action'),
@@ -135,7 +163,19 @@ export function computeAttention(program, topAction) {
 }
 
 /**
- * Compute attention for all active programs, sorted by score descending.
+ * Stage priority for stable sort tie-breaking (higher = more advanced).
+ */
+const STAGE_PRIORITY = {
+  offer: 5,
+  campus_visit: 4,
+  in_conversation: 3,
+  outreach: 2,
+  added: 1,
+};
+
+/**
+ * Compute attention for all active programs, sorted by score descending
+ * with stable tie-breaking: earliest due date → higher stage → alphabetical.
  */
 export function computeAllAttention(programs, topActionsMap) {
   const active = programs.filter(p =>
@@ -144,6 +184,21 @@ export function computeAllAttention(programs, topActionsMap) {
     p.journey_stage !== 'committed'
   );
   const results = active.map(p => computeAttention(p, topActionsMap[p.program_id]));
-  results.sort((a, b) => b.attentionScore - a.attentionScore);
+  results.sort((a, b) => {
+    // Primary: higher score first
+    if (b.attentionScore !== a.attentionScore) return b.attentionScore - a.attentionScore;
+    // Tie-break 1: earliest due date first (null = last)
+    const aDue = a.daysUntil ?? 9999;
+    const bDue = b.daysUntil ?? 9999;
+    if (aDue !== bDue) return aDue - bDue;
+    // Tie-break 2: higher-priority stage first
+    const aStage = STAGE_PRIORITY[a.program?.journey_stage] || 0;
+    const bStage = STAGE_PRIORITY[b.program?.journey_stage] || 0;
+    if (bStage !== aStage) return bStage - aStage;
+    // Tie-break 3: alphabetical by name
+    const aName = a.program?.university_name || '';
+    const bName = b.program?.university_name || '';
+    return aName.localeCompare(bName);
+  });
   return results;
 }
