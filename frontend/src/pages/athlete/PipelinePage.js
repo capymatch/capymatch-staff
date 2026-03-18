@@ -261,11 +261,34 @@ function getColInsight(colKey, count) {
   return insights[colKey] || "";
 }
 
+/* #6 Empty column helpful copy */
+function getEmptyColCopy(colKey) {
+  const copy = {
+    added: "Add schools to start building your list",
+    outreach: "Schools move here after first contact",
+    in_conversation: "Active conversations will appear here",
+    campus_visit: "No visits scheduled yet",
+    offer: "Offers will appear here when received",
+  };
+  return copy[colKey] || "No schools yet";
+}
+
 function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, topAction, isHighlighted }) {
   const category = topAction?.category || "on_track";
+  const isActive = category !== "on_track" && category !== "first_outreach";
+  const isPassive = category === "on_track" || category === "cooling_off" || category === "first_outreach";
   const sv = STATUS_VISUAL[category] || NEUTRAL_STATUS;
   const insight = getShortInsight(topAction);
   const inlineMeta = [p.division, p.conference].filter(Boolean).join(" \u00b7 ");
+
+  /* #1 Card depth + #4 balanced emphasis + #7 hero connection */
+  const baseShadow = "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)";
+  const activeBorder = sv.border !== "transparent" ? sv.border : "var(--cm-border, #e2e8f0)";
+  const heroBorder = isHighlighted ? `${sv.chip || "rgba(13,148,136,0.3)"}` : null;
+
+  let cardShadow = baseShadow;
+  if (isHighlighted && !isPassive) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}, 0 0 8px ${heroBorder}22`;
+  else if (isHighlighted) cardShadow = `${baseShadow}, 0 0 0 1px ${heroBorder}55`;
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -281,9 +304,10 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
             borderRadius: 10,
             padding: "12px 14px",
             cursor: "grab",
-            borderLeft: sv.border !== "transparent" ? `3px solid ${sv.border}` : "3px solid transparent",
-            boxShadow: snapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.12)" : isHighlighted ? `0 0 0 1px ${sv.border}` : "none",
-            opacity: snapshot.isDragging ? 0.95 : 1,
+            border: `1px solid ${isPassive ? "var(--cm-border, #e8ecf1)" : activeBorder}`,
+            borderLeft: sv.border !== "transparent" ? `3px solid ${sv.border}` : undefined,
+            boxShadow: snapshot.isDragging ? "0 12px 28px rgba(0,0,0,0.15)" : cardShadow,
+            opacity: snapshot.isDragging ? 0.92 : isPassive && !isHighlighted ? 0.85 : 1,
             ...provided.draggableProps.style,
           }}
           data-testid={`kanban-card-${p.program_id}`}
@@ -312,7 +336,7 @@ function KanbanCard({ program: p, matchScore, navigate, index, healthMetrics, to
 
           {/* Row 3: Short insight (max 1 line) */}
           {insight && (
-            <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 6, lineHeight: 1.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontSize: 11, color: isPassive ? "var(--cm-text-4)" : "var(--cm-text-3)", marginTop: 6, lineHeight: 1.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {insight}
             </div>
           )}
@@ -333,8 +357,8 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
   }
 
   const gridStyle = isMobile
-    ? { display: "flex", gap: 10, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
-    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 };
+    ? { display: "flex", gap: 12, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
+    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 };
 
   const colStyle = isMobile ? { minWidth: 240, flexShrink: 0, scrollSnapAlign: "start" } : {};
   const hlSet = new Set(highlightedIds || []);
@@ -362,19 +386,19 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                   {/* Lane top bar */}
                   <div style={{ height: 3, background: col.color, borderRadius: "8px 8px 0 0" }} />
 
-                  {/* Header with insight */}
-                  <div style={{ padding: "12px 8px 8px" }}>
+                  {/* Header — #3 hierarchy: stage name strong, subtext muted */}
+                  <div style={{ padding: "14px 10px 10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--cm-text-2)" }}>{col.label}</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-4)" }}>{count}</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--cm-text)" }}>{col.label}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "var(--cm-text-4)", padding: "0 5px", borderRadius: 4, background: "var(--cm-border, rgba(0,0,0,0.04))" }}>{count}</span>
                     </div>
                     {insight && (
-                      <div style={{ fontSize: 10, color: "var(--cm-text-4, var(--cm-text-3))", marginTop: 2, fontWeight: 500 }}>{insight}</div>
+                      <div style={{ fontSize: 10, color: "var(--cm-text-4)", marginTop: 3, fontWeight: 500 }}>{insight}</div>
                     )}
                   </div>
 
-                  {/* Cards */}
-                  <div style={{ padding: "0 4px 10px", display: "flex", flexDirection: "column", gap: 6, minHeight: 60 }}>
+                  {/* Cards — #5 more vertical spacing */}
+                  <div style={{ padding: "0 6px 12px", display: "flex", flexDirection: "column", gap: 8, minHeight: 60 }}>
                     {count > 0 ? (
                       columns[col.key].map((p, idx) => (
                         <KanbanCard
@@ -389,7 +413,9 @@ function KanbanBoard({ programs, matchScores, navigate, onDragEnd, healthMap, to
                         />
                       ))
                     ) : (
-                      <div style={{ padding: "28px 14px", textAlign: "center", fontSize: 11, color: "var(--cm-text-4)", fontWeight: 500, fontStyle: "italic" }}>No schools yet</div>
+                      <div style={{ padding: "28px 12px", textAlign: "center" }}>
+                        <div style={{ fontSize: 11, color: "var(--cm-text-4)", fontWeight: 500 }}>{getEmptyColCopy(col.key)}</div>
+                      </div>
                     )}
                     {provided.placeholder}
                   </div>
@@ -463,11 +489,13 @@ function PipelineStyles() {
     <style>{`
       .kanban-card {
         transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1),
-                    box-shadow 120ms cubic-bezier(0.22, 1, 0.36, 1);
+                    box-shadow 120ms cubic-bezier(0.22, 1, 0.36, 1),
+                    opacity 120ms cubic-bezier(0.22, 1, 0.36, 1);
       }
       .kanban-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04) !important;
+        opacity: 1 !important;
       }
       .kanban-card:active { transform: translateY(0); }
       .kanban-grid::-webkit-scrollbar { height: 4px; }
