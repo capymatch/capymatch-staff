@@ -1,74 +1,61 @@
-# CapyMatch — Product Requirements Document
+# CapyMatch - Athlete Pipeline Management Platform
 
-## Problem Statement
-CapyMatch is a full-stack recruiting platform for women's volleyball. It connects athletes, coaches, directors, and parents to streamline the college recruiting journey.
+## Original Problem Statement
+Build and iteratively refine an athlete pipeline management application focused on a "Director Mission Control" screen. The application helps directors manage athlete recruiting pipelines with intelligent prioritization, auto-nudges, and one-click action execution.
 
-## Core Users
-- **Athletes** — Track their recruiting pipeline, communicate with coaches, manage their profile
-- **Club Coaches** — Manage assigned athletes, track recruiting progress, send tasks/messages
-- **Club Directors** — Oversee all athletes and coaches, manage roster/teams, run events, triage issues
-- **Parents/Family** — (Planned) Support athletes in the recruiting process
-
-## Credentials
-- Admin: douglas@capymatch.com / demo2026
-- Director: director@capymatch.com / director123
-- Coach: coach.williams@capymatch.com / coach123
-- Athlete: emma.chen@athlete.capymatch.com / athlete123
+## Core Requirements
+1. **Unified Director Inbox**: Aggregated, prioritized feed of critical signals (escalations, advocacy, roster issues, inactivity)
+2. **Action-Oriented UI**: Guide directors to the most critical issue with clear, immediate suggested actions
+3. **High Signal, Low Noise**: Minimal, clean, scannable interface
+4. **Contextual Actions**: Actions tied to relevant athlete + school context
+5. **Progressive Disclosure**: High-level summary with details on interaction
 
 ## Architecture
-- **Frontend:** React (CRA) + Tailwind CSS + Shadcn/UI | Port 3000
-- **Backend:** FastAPI + Motor (async MongoDB) | Port 8001
-- **Database:** MongoDB (test_database)
+- **Frontend**: React + Tailwind + Shadcn/UI
+- **Backend**: FastAPI + MongoDB
+- **Key Libraries**: @hello-pangea/dnd (drag-drop), sonner (toasts), lucide-react (icons)
 
----
+## What's Been Implemented
 
-## Completed Features
+### Kanban Board
+- Redesigned from scratch with colored headers, drag-and-drop animations (tilt effect, ghost placeholder)
+- Mobile responsiveness fixes for PipelineHero and SwipeableCard
 
-### Sessions 1-10 (Previous)
-- Auth, pipeline, messaging, tasks, events, subscriptions, admin, knowledge base
-- Organization management, live events, school pod, health signals
-- Unified status model, decision-first UI, coach watch matrix
-- Pipeline hero, capacity strip, dual-mode pipeline (Priority + Kanban)
-- Attention engine V2, swipe gestures, unified design system
+### Director Mission Control (Phases 1-5)
+- **Phase 1**: GET /api/director-inbox endpoint + initial DirectorInbox component
+- **Phase 2**: Layout refactor - inbox-dominant design, compressed hero/KPI strip, collapsible sections
+- **Phase 3**: "Top Priority Right Now" card with client-side scoring + "Why this matters" explanations
+- **Phase 4**: Autopilot nudges, Approve & Send buttons, POST /api/autopilot/execute endpoint, Compose Modal
+- **Phase 5**: School context parsing, athlete aggregation (dedup by athlete_id), contextual row labels
 
-### Session 11 (2026-03-19)
-- **Kanban Task Board Redesign** — White columns, colored headers, compact 5-element cards, ghost placeholders, tilted drag
-- **Hero Mobile Responsiveness** — Stacked layout, hidden rail on mobile
-- **Swipe Panel Fix** — Opaque snooze background
-- **Director Sidebar** — Removed Social Spotlight for directors
+### P0 Fix (March 19, 2026) - Inbox Row Link Behavior
+- **Fixed**: Suggested action link (e.g., "Check in about University of Michigan →") now opens the Compose Modal
+- **Fixed**: Right-aligned CTA changed to "Open Pod →" for simple navigation to athlete pod
+- **Fixed**: "Assign coach" items navigate to /roster instead of opening modal
+- **Testing**: 7/7 frontend tests passed (iteration_196.json)
 
-### Session 12 (2026-03-19)
-- **Director Inbox Backend** — `GET /api/director-inbox` aggregates escalations, advocacy, roster, momentum
-- **Director Mission Control Redesign** — Compact context strip, dominant inbox, outbox strip, collapsible sections
+## Key API Endpoints
+- `GET /api/director-inbox` - Aggregated inbox items
+- `POST /api/autopilot/execute` - Execute one-click approval actions
+- `PUT /api/athlete/programs/{program_id}` - Update program stage (Kanban)
 
-### Session 13 (2026-03-19)
-- **Inbox Deduplication** — Group by athlete+school, merge issues into single row (8→5 items)
-- **Issue Language Standardization** — Human-readable labels (Needs attention, Awaiting reply, etc.)
-- **CTA Priority Hierarchy** — Primary (Open Pod) vs secondary (Review, Assign) opacity treatment
-- **Priority Grouping** — HIGH PRIORITY / AT RISK section labels
-- **3-Column Grid** — Strict alignment: dot, text, CTA
+## DB Collections Used
+- `director_actions`, `advocacy_recommendations`, `athletes`, `support_threads`, `support_messages`, `autopilot_log`
 
-### Session 14 (2026-03-19)
-- **Top Priority Right Now** — Client-side scoring (issue severity + boosts) selects ONE item, shows "why it matters" explanation
-- **Auto Nudges** — Rule-based suggested actions mapped to issues (Send follow-up, Check in, Assign coach, etc.)
-- **Inbox Hover Nudges** — Suggestions appear on row hover
-- **Autopilot Suggestions** — "Approve & Send" + "Edit" buttons on Top Priority
-  - Backend: `POST /api/autopilot/execute` — sends pre-templated messages via support_messages, logs to autopilot_log
-  - Safety: always requires human approval, Edit opens manual flow
-  - State: item removed from inbox after successful execution, smooth UI update
-  - 100% backend (8/8) + 100% frontend verified (iteration_195)
-  - Key files: `autopilot.py`, `DirectorInbox.js`
+## Test Credentials
+- **Director**: clara.morgan@director.capymatch.com / director123
+- **Athlete**: emma.chen@athlete.capymatch.com / athlete123
 
----
+## Backlog (Prioritized)
 
-## Backlog
+### P1 - Upcoming
+- CSV Import Tool: Bulk importing school/coach data
+- Bulk Approve mode for Director Inbox
+- Refactor DirectorInbox.js into smaller components (TopPriorityCard.js, InboxRow.js, ComposeModal.js)
 
-### P1 — Upcoming
-- **CSV Import Tool** — Bulk importing school/coach data
-- **Parent/Family Experience** — Dedicated UI for parents
-
-### P2 — Future
-- **AI-Powered Coach Summary** — LLM-generated recruiting pitches
-- **Club Billing** — Stripe subscription billing
-- **Multi-Agent Intelligence Pipeline** — Roster Stability, Scholarship, NIL agents
-- **Autopilot Phase 2** — Auto-send, scheduling, escalation rules, AI-generated messages
+### P2 - Future
+- Parent/Family Experience
+- AI-Powered Coach Summary
+- Club Billing (Stripe)
+- Multi-Agent Intelligence Pipeline
+- Kanban Keyboard Shortcuts
