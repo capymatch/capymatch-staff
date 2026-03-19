@@ -359,6 +359,8 @@ async def seed():
         "ai_conversations", "ai_school_insights",
         "athlete_user_links", "program_signals",
         "director_actions", "autopilot_log",
+        "email_tracking", "college_coaches",
+        "subscriptions",
     ]
     for c in collections_to_clear:
         r = await db[c].delete_many({})
@@ -473,6 +475,15 @@ async def seed():
 
         doc["missing_documents"] = missing_doc_map.get(a["id"], [])
         doc["profile_complete"] = a["id"] not in incomplete_profiles
+
+        # Recruiting profile (marks onboarding as done)
+        doc["recruiting_profile"] = {
+            "position": [a["position"]],
+            "division": ["D1"],
+            "priorities": ["coaching_style", "academic_reputation"],
+            "regions": [a["state"]],
+            "gpa": a["gpa"],
+        }
 
         await db.athletes.insert_one(doc)
     print(f"  Created {len(ATHLETES)} athlete profiles")
@@ -978,12 +989,174 @@ async def seed():
         })
     print(f"  Created {len(event_notes)} event notes")
 
-    # ─── SUMMARY ─────────────────────────────────────────────────
+    # ─── STEP 15: CREATE INTERACTIONS (drives journey rail + signals) ─
+    print("\n[STEP 15] Creating interactions (drives athlete-facing journey rail)...")
+
+    # Map recruiting_status to the interaction trail that PRODUCES that state
+    # Journey rail auto-detects: added (always), outreach (outreach_count>0), in_conversation (has_coach_reply)
+    # campus_visit, offer, committed require journey_stage manual override
+    JOURNEY_STAGE_MAP = {
+        "Campus Visit": "campus_visit",
+        "Visit Scheduled": "campus_visit",
+        "Visit": "campus_visit",
+        "Offer": "offer",
+        "Committed": "committed",
+    }
+
+    interaction_count = 0
+    for p in PROGRAMS:
+        pid = program_map[(p["athlete"], p["school"])]
+        a = next(x for x in ATHLETES if x["id"] == p["athlete"])
+        tenant_id = a["_tenant_id"]
+        status = p["status"]
+        reply = p["reply"]
+        contact_days = p["initial_contact_days"]
+
+        # Set journey_stage on the program for advanced stages
+        journey_stage = JOURNEY_STAGE_MAP.get(status)
+        if journey_stage:
+            await db.programs.update_one(
+                {"program_id": pid},
+                {"$set": {"journey_stage": journey_stage}}
+            )
+
+        if status == "Not Contacted":
+            continue  # No interactions for uncontacted schools
+
+        interactions = []
+
+        # 1. Initial outreach email
+        if contact_days > 0:
+            interactions.append({
+                "type": "Email Sent",
+                "outcome": "Sent",
+                "notes": f"Initial outreach email to {p['school']} coaching staff",
+                "date_time": ago(contact_days),
+            })
+
+        # 2. Follow-up outreach(es) based on staleness
+        fu_days = p["last_follow_up_days"]
+        if fu_days > 0 and fu_days < contact_days:
+            # Add a mid-point follow-up if there's a gap
+            mid = (contact_days + fu_days) // 2
+            if mid != contact_days and mid != fu_days:
+                interactions.append({
+                    "type": "Email Sent",
+                    "outcome": "Sent",
+                    "notes": f"Follow-up email to {p['school']}",
+                    "date_time": ago(mid),
+                })
+            # Most recent follow-up
+            interactions.append({
+                "type": "Email Sent",
+                "outcome": "Sent",
+                "notes": f"Follow-up email to {p['school']}",
+                "date_time": ago(fu_days),
+            })
+
+        # 3. Coach reply (if reply received)
+        if reply == "Reply Received" and contact_days > 3:
+            reply_day = max(1, contact_days - 5)
+            interactions.append({
+                "type": "coach_reply",
+                "outcome": "Positive",
+                "notes": f"Reply from {p['school']} coaching staff",
+                "date_time": ago(reply_day),
+            })
+
+        # 4. Advanced stage interactions
+        if status in ("Engaged", "Interested", "In Conversation"):
+            if reply != "Reply Received":
+                # Add a coach reply for engaged schools even if reply_status doesn't say so
+                interactions.append({
+                    "type": "coach_reply",
+                    "outcome": "Positive",
+                    "notes": f"Response from {p['school']} coach",
+                    "date_time": ago(max(1, contact_days - 8)),
+                })
+            interactions.append({
+                "type": "Phone Call",
+                "outcome": "Positive",
+                "notes": f"Phone call with {p['school']} coaching staff",
+                "date_time": ago(max(1, fu_days + 1) if fu_days > 0 else max(1, contact_days - 3)),
+            })
+
+        if status in ("Campus Visit", "Visit Scheduled", "Visit"):
+            if reply != "Reply Received":
+                interactions.append({
+                    "type": "coach_reply",
+                    "outcome": "Positive",
+                    "notes": f"Reply from {p['school']} coach",
+                    "date_time": ago(max(1, contact_days - 10)),
+                })
+            interactions.append({
+                "type": "Phone Call",
+                "outcome": "Positive",
+                "notes": f"Phone call with {p['school']} to discuss visit",
+                "date_time": ago(max(1, contact_days - 7)),
+            })
+            interactions.append({
+                "type": "Campus Visit",
+                "outcome": "Completed",
+                "notes": f"Campus visit at {p['school']}",
+                "date_time": ago(max(1, fu_days if fu_days > 0 else 5)),
+                "is_meaningful": True,
+            })
+
+        if status == "Offer":
+            if reply != "Reply Received":
+                interactions.append({
+                    "type": "coach_reply",
+                    "outcome": "Positive",
+                    "notes": f"Reply from {p['school']} coach",
+                    "date_time": ago(max(1, contact_days - 15)),
+                })
+            interactions.append({
+                "type": "Phone Call",
+                "outcome": "Positive",
+                "notes": f"Phone call with {p['school']} head coach",
+                "date_time": ago(max(1, contact_days - 10)),
+            })
+            interactions.append({
+                "type": "Campus Visit",
+                "outcome": "Completed",
+                "notes": f"Official visit at {p['school']}",
+                "date_time": ago(max(1, contact_days - 5)),
+                "is_meaningful": True,
+            })
+            interactions.append({
+                "type": "coach_reply",
+                "outcome": "Offer Extended",
+                "notes": f"Scholarship offer from {p['school']}",
+                "date_time": ago(max(1, fu_days if fu_days > 0 else 2)),
+                "is_meaningful": True,
+                "offer_signal": True,
+            })
+
+        # Insert all interactions for this program
+        for ix in interactions:
+            await db.interactions.insert_one({
+                "interaction_id": uid(),
+                "tenant_id": tenant_id,
+                "program_id": pid,
+                "university_name": p["school"],
+                "type": ix["type"],
+                "outcome": ix.get("outcome", ""),
+                "notes": ix.get("notes", ""),
+                "date_time": ix["date_time"],
+                "created_at": ix["date_time"],
+                "is_meaningful": ix.get("is_meaningful"),
+                "offer_signal": ix.get("offer_signal"),
+            })
+            interaction_count += 1
+
+    print(f"  Created {interaction_count} interactions across {len(PROGRAMS)} programs")
     print("\n" + "=" * 60)
     print("  SEED COMPLETE — Risk Engine v3 Scenarios")
     print("=" * 60)
     print(f"  {len(ATHLETES)} athletes")
     print(f"  {len(PROGRAMS)} programs (target schools)")
+    print(f"  {interaction_count} interactions (drives journey rail + signals)")
     print(f"  {len(actions_data)} pod actions")
     print(f"  {len(escalations)} escalations")
     print(f"  {len(recommendations)} recommendations")
