@@ -57,9 +57,9 @@ function getLastActivity(program) {
 
 /* ── Priority badge color ── */
 const PRIORITY_COLORS = {
-  'Top Choice': '#6366f1',
-  'High': '#0d9488',
-  'Medium': '#94a3b8',
+  'Top Choice': '#94a3b8',
+  'High': '#94a3b8',
+  'Medium': '#cbd5e1',
   'Low': '#cbd5e1',
 };
 
@@ -151,15 +151,20 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
               )}
             </div>
 
-            {/* ── ACTION: last activity + next step + time ── */}
+            {/* ── ACTION: next step + last activity + time ── */}
             <div style={{
-              marginTop: 8, paddingTop: 7, paddingLeft: 32,
-              borderTop: '1px solid rgba(226,232,240,0.5)',
-              display: 'flex', flexDirection: 'column', gap: 2,
+              marginTop: 8, paddingTop: 6, paddingLeft: 32,
+              borderTop: '1px solid rgba(226,232,240,0.25)',
+              display: 'flex', flexDirection: 'column', gap: 3,
             }} data-testid={`card-action-section-${p.program_id}`}>
+              {nextStep && level !== 'low' && (
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--cm-text-2, #475569)' }} data-testid={`card-next-${p.program_id}`}>
+                  Next: {nextStep}
+                </div>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>
-                  Last: {lastActivity}
+                <span style={{ fontSize: 8.5, fontWeight: 500, color: 'var(--cm-text-4, rgba(148,163,184,0.55))' }}>
+                  {lastActivity}
                 </span>
                 {time && (() => {
                   const ts = TIME_STYLE[time.urgency] || TIME_STYLE.none;
@@ -176,11 +181,6 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
                   );
                 })()}
               </div>
-              {nextStep && level !== 'low' && (
-                <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }} data-testid={`card-next-${p.program_id}`}>
-                  Next: {nextStep}
-                </div>
-              )}
             </div>
           </div>
         );
