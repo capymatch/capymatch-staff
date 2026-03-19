@@ -21,7 +21,7 @@ def _seed_recommendations():
     return [
         {
             "id": "rec_1",
-            "athlete_id": "athlete_4", "athlete_name": "Marcus Johnson",
+            "athlete_id": "athlete_3", "athlete_name": "Marcus Johnson",
             "school_id": "michigan", "school_name": "Michigan",
             "college_coach_name": "Coach Thompson",
             "status": "warm_response",
@@ -75,7 +75,7 @@ def _seed_recommendations():
         },
         {
             "id": "rec_3",
-            "athlete_id": "athlete_13", "athlete_name": "Lucas Rodriguez",
+            "athlete_id": "athlete_5", "athlete_name": "Lucas Rodriguez",
             "school_id": "virginia", "school_name": "Virginia",
             "college_coach_name": "Coach Davis",
             "status": "sent",
