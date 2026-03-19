@@ -9,7 +9,6 @@ import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
 import DirectorActionsPulse from "./DirectorActionsPulse";
 import DirectorInbox from "./DirectorInbox";
-import EscalationsCard from "./EscalationsCard";
 
 function getGreeting() {
   const h = new Date().getHours();

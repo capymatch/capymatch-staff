@@ -70,25 +70,37 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 - Kanban D&D Polish (Magnetic columns, insertion lines, etc.)
 
 ### Session 11 (2026-03-19)
-- **Kanban Board Task Board Redesign (Complete)**
-  - Rewrote `KanbanBoard.js` to match user-approved mockup (nTask/Trello hybrid design)
-  - White column containers with 36px colored header bars: Added (#e05555 red), Outreach (#2f80ed blue), Talking (#e8862a orange), Visit (#8b5cf6 purple), Offered (#27ae60 green)
-  - Count badges on headers (pill style with semi-transparent white bg)
-  - "+ Add New Task" row in each column with hover effect
-  - Compact 5-element cards:
-    1. School row: 24px circular logo + bold school name
-    2. Status line: colored dot + label (Needs attention / Needs action / On track)
-    3. Time line: "2d overdue", "Due today", etc. with color coding
-    4. Action line: bold, largest text ("Follow up", "Start outreach", "Take action", "Re-engage")
-    5. Owner line: colored avatar + label ("Owner: You", "Coach assigned task")
-  - Optional metrics row (last activity) on cards with recent activity
-  - Dashed "+ Add" column on the right
-  - Dense, scannable, operational layout
-  - Drag-and-drop preserved with @hello-pangea/dnd (card lift, insertion lines, column highlighting)
-  - Helper functions: getShortAction(), getTimeLine(), OwnerBadge component
+- **Kanban Board Task Board Redesign**
+  - White columns with 36px colored headers + count badges
+  - Compact 5-element cards (logo, status, time, action, owner)
+  - Ghost placeholder drop targets (dashed border)
+  - Tilted drag effect (rotate -3deg + scale 1.05)
   - Updated pipeline-constants.js column colors
-  - 10/10 features verified (iteration_192)
-  - Key files: `KanbanBoard.js` (REWRITTEN), `pipeline-constants.js` (UPDATED)
+  
+- **Hero Card Mobile Responsiveness**
+  - Stacked vertical layout on mobile (was side-by-side)
+  - Progress rail hidden on small screens
+  - CTA row becomes horizontal on mobile
+
+- **Swipe Panel Fix**
+  - Snooze panel uses opaque background (#fef3e2)
+  - Left swipe shows "Snooze" label only
+
+- **Director Sidebar Cleanup**
+  - Removed Social Spotlight from director's sidebar
+
+- **Director Inbox (NEW)**
+  - Backend: GET /api/director-inbox aggregates 4 data sources
+    - Escalations (from director_actions collection)
+    - Advocacy (awaiting_reply >5d, follow_up_needed)
+    - Roster (unassigned athletes, missing documents)
+    - Momentum (athletes inactive >7 days)
+  - Frontend: DirectorInbox component replaces EscalationsCard
+  - Priority sorting: high (red dot) first, then medium (amber dot)
+  - Minimal inbox-style rows: name, school, issue type, time ago, CTA
+  - Empty state: "No urgent issues"
+  - 13/13 backend tests passed, all frontend features verified (iteration_193)
+  - Key files: `routers/director_inbox.py`, `DirectorInbox.js`, `DirectorView.js`
 
 ---
 
