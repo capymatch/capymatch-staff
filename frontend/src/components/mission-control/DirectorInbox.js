@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Send, UserPlus, FileText, MessageCircle, RefreshCw, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Send, UserPlus, FileText, MessageCircle, RefreshCw, Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -189,13 +189,16 @@ function getTopPriority(items) {
   return scored[0];
 }
 
-/* ── Compose Modal ── */
+/* ── Compose Modal (Journey-style dark modal) ── */
 function ComposeModal({ nudge, item, onClose, onSent }) {
   const [body, setBody] = useState(nudge.template || "");
   const [sending, setSending] = useState(false);
   const subject = nudge.actionType === "follow_up" ? "Following up"
     : nudge.actionType === "request_doc" ? "Missing document needed"
     : "Quick check-in";
+
+  const inputCls = "w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 transition-colors";
+  const inputStyle = { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" };
 
   async function handleSend() {
     if (!body.trim() || sending) return;
@@ -219,88 +222,66 @@ function ComposeModal({ nudge, item, onClose, onSent }) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.4)" }}
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
       onClick={onClose}
       data-testid="compose-modal-overlay"
     >
-      <div
-        className="rounded-xl overflow-hidden w-full max-w-lg mx-4"
-        style={{ background: "#fff", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+      <div className="w-full max-w-[480px] rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+        style={{ background: "#161b25", border: "1px solid rgba(46, 196, 182, 0.15)", boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(26,138,128,0.08)" }}
         onClick={e => e.stopPropagation()}
         data-testid="compose-modal"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid #f1f5f9" }}>
-          <h3 className="text-[14px] font-semibold" style={{ color: "#1e293b", margin: 0 }}>
-            {nudge.label}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-[18px] cursor-pointer"
-            style={{ background: "none", border: "none", color: "#94a3b8", fontFamily: "inherit", lineHeight: 1 }}
-            data-testid="compose-modal-close"
-          >
-            &times;
-          </button>
-        </div>
-
-        {/* To + Subject */}
-        <div className="px-5 pt-3">
-          <div className="flex items-center gap-2 text-[12px]" style={{ color: "#64748b" }}>
-            <span className="font-semibold">To:</span>
-            <span style={{ color: "#1e293b", fontWeight: 600 }}>{item.athleteName}</span>
-          </div>
-          <div className="flex items-center gap-2 text-[12px] mt-1.5" style={{ color: "#64748b" }}>
-            <span className="font-semibold">Subject:</span>
-            <span style={{ color: "#1e293b" }}>{subject}</span>
+        <div className="p-5 pb-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              <nudge.Icon className="w-4 h-4 text-teal-400" />
+              {nudge.label}
+            </h2>
+            <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer" data-testid="compose-modal-close">
+              <X className="w-4 h-4 text-white/40" />
+            </button>
           </div>
         </div>
 
         {/* Body */}
-        <div className="px-5 py-3">
-          <textarea
-            value={body}
-            onChange={e => setBody(e.target.value)}
-            rows={4}
-            className="w-full rounded-lg"
-            style={{
-              padding: "10px 12px", border: "1px solid #e2e8f0", fontSize: 13,
-              resize: "vertical", outline: "none", fontFamily: "inherit",
-              lineHeight: 1.5, color: "#1e293b", minHeight: 80,
-            }}
-            data-testid="compose-modal-body"
-          />
+        <div className="p-5 space-y-3">
+          <div className="flex items-center gap-2 text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <span className="font-semibold">To:</span>
+            <span className="text-white font-semibold">{item.athleteName}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <span className="font-semibold">Subject:</span>
+            <span style={{ color: "#e2e8f0" }}>{subject}</span>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>Message</label>
+            <textarea
+              value={body}
+              onChange={e => setBody(e.target.value)}
+              rows={4}
+              className={`${inputCls} resize-none`}
+              style={inputStyle}
+              data-testid="compose-modal-body"
+            />
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3" style={{ borderTop: "1px solid #f1f5f9" }}>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-[12px] font-semibold cursor-pointer"
-            style={{ background: "transparent", border: "1px solid #e2e8f0", color: "#64748b", fontFamily: "inherit" }}
+        {/* Footer */}
+        <div className="p-4 flex items-center justify-between gap-3 flex-shrink-0" style={{ background: "rgba(15,18,25,0.5)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <button onClick={onClose}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-all hover:bg-white/5 cursor-pointer"
+            style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontFamily: "inherit" }}
             data-testid="compose-modal-cancel"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={!body.trim() || sending}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-semibold cursor-pointer"
-            style={{
-              background: sending ? "#e2e8f0" : "#0d9488",
-              color: sending ? "#94a3b8" : "#fff",
-              border: "none", fontFamily: "inherit",
-              opacity: !body.trim() || sending ? 0.6 : 1,
-            }}
+          >Cancel</button>
+          <button onClick={handleSend} disabled={!body.trim() || sending}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition-all hover:shadow-[0_0_20px_rgba(46,196,182,0.3)] cursor-pointer"
+            style={{ background: "linear-gradient(135deg, #0d9488, #0f766e)", border: "none", fontFamily: "inherit", opacity: !body.trim() || sending ? 0.5 : 1 }}
             data-testid="compose-modal-send"
           >
-            {sending ? (
-              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending...</>
-            ) : (
-              <><Send className="w-3.5 h-3.5" /> Send</>
-            )}
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            Send
           </button>
         </div>
       </div>
