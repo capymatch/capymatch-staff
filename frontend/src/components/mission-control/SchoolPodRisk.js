@@ -5,9 +5,9 @@ import axios from "axios";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const TRAJECTORY = {
-  worsening: { symbol: "\u2197", label: "Worsening", color: "#dc2626" },
+  worsening: { symbol: "\u2198", label: "Worsening", color: "#dc2626" },
   stable:    { symbol: "\u2192", label: "Stable",    color: "#94a3b8" },
-  improving: { symbol: "\u2198", label: "Improving", color: "#10b981" },
+  improving: { symbol: "\u2197", label: "Improving", color: "#10b981" },
 };
 
 const SEV_STYLE = {

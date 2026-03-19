@@ -9,9 +9,9 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const DOT_COLOR = { high: "#ef4444", medium: "#f59e0b", low: "#94a3b8" };
 
 const TRAJECTORY = {
-  worsening: { symbol: "\u2197", label: "Worsening", color: "#dc2626" },
+  worsening: { symbol: "\u2198", label: "Worsening", color: "#dc2626" },
   stable:    { symbol: "\u2192", label: "Stable",    color: "#94a3b8" },
-  improving: { symbol: "\u2198", label: "Improving", color: "#10b981" },
+  improving: { symbol: "\u2197", label: "Improving", color: "#10b981" },
 };
 
 function TrajectoryHint({ trajectory }) {
