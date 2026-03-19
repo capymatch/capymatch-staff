@@ -2,6 +2,9 @@
 
 Combines escalations, advocacy, roster, and momentum signals
 into a single prioritized list, grouped by athlete+school.
+
+v3: Enriched with Risk Engine — severity, trajectory, confidence,
+    interventionType, whyNow, recommendedActionByRole.
 """
 
 from datetime import datetime, timezone
@@ -10,6 +13,7 @@ from auth_middleware import get_current_user_dep
 from db_client import db
 from services.athlete_store import get_all as get_athletes
 from advocacy_engine import RECOMMENDATIONS
+from risk_engine import evaluate_risk
 
 router = APIRouter()
 
@@ -21,6 +25,8 @@ ISSUE_LABELS = {
     "no_activity":       "No activity",
     "missing_documents": "Missing requirement",
     "no_coach_assigned": "No coach assigned",
+    "stalled_stage":     "Stalled stage",
+    "event_blocker":     "Event/timeline blocker",
 }
 
 # Priority classification
@@ -67,6 +73,14 @@ def _time_ago_short(dt):
         return f"{hrs}h ago"
     days = int(hrs / 24)
     return f"{days}d ago"
+
+
+def _days_between(dt, now):
+    """Return days between dt and now, or None."""
+    if not dt:
+        return None
+    diff = now - dt
+    return max(0, int(diff.total_seconds() / 86400))
 
 
 @router.get("/director-inbox")
@@ -178,7 +192,52 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
                 "ctaUrl": f"/support-pods/{ath['id']}",
             })
 
+    # ── Fetch recent autopilot actions (for trajectory inference) ──
+    seven_days_ago = (now - __import__("datetime").timedelta(days=7)).isoformat()
+    recent_autopilot = await db.autopilot_log.find(
+        {"executed_at": {"$gte": seven_days_ago}},
+        {"_id": 0, "athlete_id": 1},
+    ).to_list(200)
+    recent_action_counts = {}
+    for ra in recent_autopilot:
+        aid = ra.get("athlete_id", "")
+        recent_action_counts[aid] = recent_action_counts.get(aid, 0) + 1
+
+    # ── Fetch programs for stage context ──
+    athlete_ids = list(set(item["athleteId"] for item in raw_items))
+    programs = []
+    if athlete_ids:
+        programs = await db.programs.find(
+            {"athlete_id": {"$in": athlete_ids}},
+            {"_id": 0, "athlete_id": 1, "recruiting_status": 1, "stage_entered_at": 1, "university_name": 1},
+        ).to_list(500)
+
+    # Build athlete -> best stage mapping
+    athlete_stage_map = {}  # aid -> {best_stage, stage_entered_days_ago}
+    for p in programs:
+        aid = p["athlete_id"]
+        status = (p.get("recruiting_status") or "Prospect").strip()
+        from services.athlete_store import STAGE_WEIGHTS
+        weight = STAGE_WEIGHTS.get(status, 10)
+
+        entered = _iso_or_none(p.get("stage_entered_at"))
+        entered_days = _days_between(entered, now) if entered else None
+
+        if aid not in athlete_stage_map or weight > STAGE_WEIGHTS.get(athlete_stage_map[aid]["best_stage"], 0):
+            athlete_stage_map[aid] = {
+                "best_stage": status,
+                "stage_entered_days_ago": entered_days,
+            }
+
+    # Build athlete -> days inactive mapping
+    athlete_days_inactive = {}
+    for ath in athletes:
+        athlete_days_inactive[ath["id"]] = ath.get("days_since_activity", 0)
+
     # ── AGGREGATE by athlete (one row per athlete) ──
+    ISSUE_SEVERITY = {"escalation": 6, "missing_documents": 5, "no_coach_assigned": 5,
+                      "awaiting_reply": 3, "no_activity": 3, "follow_up": 2}
+
     athlete_groups = {}
     for item in raw_items:
         aid = item["athleteId"]
@@ -186,8 +245,8 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
             athlete_groups[aid] = {
                 "athleteId": aid,
                 "athleteName": item["athleteName"],
-                "school_issues": [],       # [{school, issueKey, issueLabel, timestamp}]
-                "general_issues": [],      # [{issueKey, issueLabel, timestamp}]
+                "school_issues": [],
+                "general_issues": [],
                 "all_timestamps": [],
                 "ctaLabel": item["ctaLabel"],
                 "ctaUrl": item["ctaUrl"],
@@ -198,7 +257,6 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
 
         if item.get("schoolName"):
             entry["school"] = item["schoolName"]
-            # Deduplicate same school+issue
             if not any(s["school"] == item["schoolName"] and s["issueKey"] == item["issueKey"] for s in ag["school_issues"]):
                 ag["school_issues"].append(entry)
         else:
@@ -206,21 +264,17 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
                 ag["general_issues"].append(entry)
 
         ag["all_timestamps"].append(item["timestamp"])
-        # Prefer primary CTA
         cta_priority = {"Open Pod": 0, "Review": 1, "Assign": 2}
         if cta_priority.get(item["ctaLabel"], 9) < cta_priority.get(ag["ctaLabel"], 9):
             ag["ctaLabel"] = item["ctaLabel"]
             ag["ctaUrl"] = item["ctaUrl"]
 
-    # ── Build final items (one per athlete) ──
-    ISSUE_SEVERITY = {"escalation": 6, "missing_documents": 5, "no_coach_assigned": 5,
-                      "awaiting_reply": 3, "no_activity": 3, "follow_up": 2}
+    # ── Build final items with Risk Engine v3 enrichment ──
     merged = []
     for ag in athlete_groups.values():
         all_issues = ag["general_issues"] + ag["school_issues"]
         all_issue_keys = set(i["issueKey"] for i in all_issues)
         has_high = bool(all_issue_keys & HIGH_ISSUES)
-        priority = "high" if has_high else "medium"
         most_urgent_ts = min(ag["all_timestamps"])
 
         # Unique schools involved
@@ -231,7 +285,7 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
         sorted_issues = sorted(all_issues, key=lambda i: ISSUE_SEVERITY.get(i["issueKey"], 0), reverse=True)
         primary_label = sorted_issues[0]["issueLabel"] if sorted_issues else "Needs attention"
 
-        # Unique issue labels for summary
+        # Unique issue labels
         seen_labels = set()
         unique_labels = []
         for si in sorted_issues:
@@ -239,7 +293,7 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
                 seen_labels.add(si["issueLabel"])
                 unique_labels.append(si["issueLabel"])
 
-        # School breakdown: [{school, issue}] for "Also affected" display
+        # School breakdown
         school_breakdown = []
         for si in ag["school_issues"]:
             school_breakdown.append({"school": si["school"], "issue": si["issueLabel"]})
@@ -255,6 +309,35 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
             school_name = None
             title_suffix = f"Across {school_count} schools"
 
+        # ── RISK ENGINE v3 ──
+        issue_keys_list = [i["issueKey"] for i in sorted_issues]
+        # Deduplicate keys while preserving severity order
+        seen_keys = set()
+        deduped_keys = []
+        for k in issue_keys_list:
+            if k not in seen_keys:
+                seen_keys.add(k)
+                deduped_keys.append(k)
+
+        aid = ag["athleteId"]
+        stage_info = athlete_stage_map.get(aid, {})
+        days_inactive = athlete_days_inactive.get(aid, 0)
+        issue_age = _days_between(most_urgent_ts, now)
+
+        risk = evaluate_risk(
+            issue_keys=deduped_keys,
+            best_stage=stage_info.get("best_stage"),
+            school_name=school_name or (schools[0] if schools else None),
+            days_inactive=days_inactive if days_inactive > 0 else None,
+            issue_age_days=issue_age,
+            recent_actions_count=recent_action_counts.get(aid, 0),
+            stage_entered_days_ago=stage_info.get("stage_entered_days_ago"),
+        )
+
+        # Legacy priority field still driven by risk engine severity
+        severity_to_priority = {"critical": "high", "high": "high", "medium": "medium", "low": "low"}
+        priority = severity_to_priority.get(risk["severity"], "medium")
+
         merged.append({
             "id": f"inbox_{ag['athleteId']}",
             "athleteId": ag["athleteId"],
@@ -266,7 +349,7 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
             "primaryRisk": primary_label,
             "schoolBreakdown": school_breakdown,
             "priority": priority,
-            "group": "high" if has_high else "at_risk",
+            "group": "high" if priority == "high" else "at_risk",
             "timestamp": most_urgent_ts.isoformat(),
             "timeAgo": _time_ago_short(most_urgent_ts),
             "ctaPrimary": ag["ctaLabel"] in PRIMARY_CTAS,
@@ -274,14 +357,21 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
                 "label": ag["ctaLabel"],
                 "url": ag["ctaUrl"],
             },
+            # ── Risk Engine v3 fields ──
+            "riskScore": risk["riskScore"],
+            "severity": risk["severity"],
+            "trajectory": risk["trajectory"],
+            "confidence": risk["confidence"],
+            "interventionType": risk["interventionType"],
+            "riskSignals": risk["riskSignals"],
+            "explanationShort": risk["explanationShort"],
+            "whyNow": risk["whyNow"],
+            "recommendedActionByRole": risk["recommendedActionByRole"],
+            "secondaryRisks": risk["secondaryRisks"],
         })
 
-    # ── SORT: high first, then oldest ──
-    priority_rank = {"high": 0, "medium": 1}
-    merged.sort(key=lambda x: (
-        priority_rank.get(x["priority"], 2),
-        x["timestamp"],
-    ))
+    # ── SORT: by riskScore descending (v3), then by timestamp ──
+    merged.sort(key=lambda x: (-x["riskScore"], x["timestamp"]))
 
     high_count = sum(1 for m in merged if m["priority"] == "high")
     return {"items": merged, "count": len(merged), "highCount": high_count}
