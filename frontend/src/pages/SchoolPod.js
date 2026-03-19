@@ -17,6 +17,7 @@ import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpSc
 import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
 import { CoachNotesSidebar } from "@/components/support-pod/CoachNotesSidebar";
 import ActionPlan from "@/components/support-pod/ActionPlan";
+import SchoolPodRisk from "@/components/mission-control/SchoolPodRisk";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const token = () => localStorage.getItem("capymatch_token");
@@ -827,6 +828,9 @@ export default function SchoolPod() {
                 </div>
               </div>
             </div>
+
+            {/* Risk Engine v3 Context */}
+            <SchoolPodRisk programId={programId} />
 
             {/* Quick Action Buttons */}
             <div className="flex flex-wrap gap-2" data-testid="quick-actions">

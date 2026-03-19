@@ -314,6 +314,123 @@ def _school_playbook_advance(school, coach, athlete, status, stalled):
     }
 
 
+
+# ─── GET /api/school-pod-risk/:programId — Risk Engine v3 context for a school pod ───
+@router.get("/school-pod-risk/{program_id}")
+async def get_school_pod_risk(program_id: str, current_user: dict = get_current_user_dep()):
+    """Return Risk Engine v3 context for a single athlete-school pair.
+
+    Returns role-neutral risk context + role-specific recommended actions,
+    so the same endpoint can later support family/director views.
+    """
+    from risk_engine import evaluate_risk
+    from services.athlete_store import get_all as get_athletes, STAGE_WEIGHTS
+
+    program = await db.programs.find_one({"program_id": program_id}, {"_id": 0})
+    if not program:
+        raise HTTPException(status_code=404, detail="Program not found")
+
+    athlete_id = program.get("athlete_id", "")
+    if not can_access_athlete(current_user, athlete_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    school_name = program.get("university_name", "")
+    recruiting_status = (program.get("recruiting_status") or "Prospect").strip()
+
+    # Get athlete data
+    athletes = get_athletes()
+    athlete = next((a for a in athletes if a["id"] == athlete_id), None)
+    days_inactive = (athlete or {}).get("days_since_activity", 0)
+
+    # Get metrics
+    metrics = await db.program_metrics.find_one(
+        {"program_id": program_id, "athlete_id": athlete_id}, {"_id": 0}
+    )
+
+    # Build issue keys from school-specific signals
+    issue_keys = []
+    if metrics:
+        overdue = metrics.get("overdue_followups", 0)
+        freshness = metrics.get("engagement_freshness_label", "")
+        stalled = metrics.get("stage_stalled_days", 0)
+        reply = program.get("reply_status", "")
+        is_early = recruiting_status in ("Prospect", "Not Contacted", "Added", "")
+
+        if not is_early:
+            if overdue > 0:
+                issue_keys.append("follow_up")
+            if freshness == "no_recent_engagement" and days_inactive > 7:
+                issue_keys.append("no_activity")
+            if reply in ("No Reply", "Awaiting Reply") and recruiting_status in ("Contacted", "In Conversation"):
+                issue_keys.append("awaiting_reply")
+            if stalled > 14:
+                issue_keys.append("stalled_stage")
+
+    # Check for escalations on this athlete-school
+    esc_count = await db.director_actions.count_documents({
+        "athlete_id": athlete_id, "status": {"$in": ["open", "acknowledged"]},
+        "type": "coach_escalation",
+    })
+    if esc_count > 0:
+        issue_keys.append("escalation")
+
+    # Check missing docs
+    if athlete and (athlete.get("missing_documents") or not athlete.get("profile_complete", True)):
+        issue_keys.append("missing_documents")
+
+    # Check coach assignment
+    if athlete and not athlete.get("primary_coach_id"):
+        issue_keys.append("no_coach_assigned")
+
+    # Stage context
+    entered = program.get("stage_entered_at")
+    entered_days = None
+    if entered:
+        try:
+            ed = datetime.fromisoformat(str(entered).replace("Z", "+00:00"))
+            entered_days = max(0, int((datetime.now(timezone.utc) - ed).total_seconds() / 86400))
+        except (ValueError, TypeError):
+            pass
+
+    # Recent actions
+    seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent_count = await db.autopilot_log.count_documents({
+        "athlete_id": athlete_id, "executed_at": {"$gte": seven_days_ago},
+    })
+
+    # Evaluate risk
+    risk = evaluate_risk(
+        issue_keys=issue_keys,
+        best_stage=recruiting_status,
+        school_name=school_name,
+        days_inactive=days_inactive if days_inactive > 0 else None,
+        issue_age_days=None,
+        recent_actions_count=recent_count,
+        stage_entered_days_ago=entered_days,
+    )
+
+    return {
+        "program_id": program_id,
+        "athlete_id": athlete_id,
+        "school_name": school_name,
+        "recruiting_status": recruiting_status,
+        # Role-neutral risk context
+        "primaryRisk": risk["primaryRisk"],
+        "severity": risk["severity"],
+        "trajectory": risk["trajectory"],
+        "interventionType": risk["interventionType"],
+        "whyNow": risk["whyNow"],
+        "secondaryRisks": risk["secondaryRisks"],
+        "riskSignals": risk["riskSignals"],
+        "explanationShort": risk["explanationShort"],
+        # Role-specific actions (supports future family/director views)
+        "recommendedActionByRole": risk["recommendedActionByRole"],
+        "recommendedNextAction": risk["recommendedActionByRole"].get(
+            current_user.get("role", "coach"), risk["recommendedActionByRole"].get("coach", "")
+        ),
+    }
+
+
 # ─── GET /api/support-pods/:athleteId/schools ─────────────────
 @router.get("/support-pods/{athlete_id}/schools")
 async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), current_user: dict = get_current_user_dep()):

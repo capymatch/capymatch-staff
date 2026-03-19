@@ -6,6 +6,7 @@ import RosterSection from "./RosterSection";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
 import AthletePipelinePanel from "./AthletePipelinePanel";
+import CoachInbox from "./CoachInbox";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -296,6 +297,9 @@ export default function CoachView({ data, userName }) {
           {focusMode ? "Focus Mode On" : "Focus Mode"}
         </button>
       </div>
+
+      {/* ── Risk Engine v3 Coach Inbox ── */}
+      <CoachInbox />
 
       {/* ── Athletes Requiring Attention + On Track + Event Prep ── */}
       <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} />

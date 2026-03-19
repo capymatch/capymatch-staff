@@ -1,0 +1,76 @@
+{
+  "summary": "Risk Engine v3 Coach Dashboard + School Pod testing complete. All 19 backend tests pass (100%). Frontend UI verified - Coach Dashboard shows Top Priority card with CRITICAL severity label, ↘Improving trajectory indicator, whyNow text, coach-specific CTAs (Open Pod for review intervention). School Pod Risk component displays primaryRisk, severity, trajectory, whyNow, recommended action, and 'Also watching' secondary risks. No riskScore/confidence exposed in UI. Coach escalation creates entries visible in Director Inbox. Director view continues working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_coach_inbox_risk_v3.py",
+    "/app/test_reports/pytest/pytest_coach_inbox_risk_v3.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Coach inbox correctly filters out 'monitor' intervention items (coach sees only actionable)",
+    "Coach inbox properly scoped to coach's assigned athletes only",
+    "CTA labels match intervention type: review→'Open Pod', escalate→'Request director help'",
+    "School Pod Risk component displays all required v3 fields without riskScore/confidence",
+    "Escalation flow creates entry in director_actions collection visible in Director Inbox",
+    "Coach inbox items sorted by riskScore descending",
+    "Secondary risks properly shown in 'Also watching' section (up to 2)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_coach_inbox_risk_v3.py"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100% (all data-testids verified)"
+  },
+  "test_credentials": {
+    "coach": {
+      "email": "coach.williams@capymatch.com",
+      "password": "coach123"
+    },
+    "director": {
+      "email": "director@capymatch.com",
+      "password": "director123"
+    }
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Risk Engine v3 Coach Dashboard + School Pod fully implemented and tested. Backend test file at /app/backend/tests/test_coach_inbox_risk_v3.py covers: (1) Coach inbox returns 200 with v3 fields, (2) Filters out monitor intervention, (3) Scoped to coach's athletes, (4) CTA labels match intervention type, (5) Sorted by riskScore, (6) School pod risk endpoint returns all fields, (7) Coach escalation creates director action. Frontend test IDs: coach-inbox-section, coach-top-priority, coach-severity-label, coach-why-now, coach-top-priority-cta, coach-needs-attention, coach-inbox-row-{id}, coach-cta-{id}, school-pod-risk, pod-risk-severity, pod-risk-primary, pod-risk-why-now, pod-risk-action, pod-trajectory-{trajectory}, escalate-modal, escalate-note-input, escalate-confirm-btn.",
+  "verified_features": {
+    "1_coach_inbox_returns_200": "PASS - GET /api/coach-inbox returns 200",
+    "2_coach_inbox_v3_fields": "PASS - All v3 fields present: riskScore, severity, trajectory, interventionType, riskSignals, whyNow, coachAction, secondaryRisks, explanationShort",
+    "3_coach_inbox_filters_monitor": "PASS - No 'monitor' intervention items in coach inbox",
+    "4_coach_inbox_scoped": "PASS - Items scoped to coach's athletes only",
+    "5_cta_labels_match_intervention": "PASS - review→'Open Pod', escalate→'Request director help'",
+    "6_sorted_by_risk_score": "PASS - Items sorted by riskScore descending",
+    "7_severity_values_valid": "PASS - All severity in [critical, high, medium, low]",
+    "8_trajectory_values_valid": "PASS - All trajectory in [improving, stable, worsening]",
+    "9_school_pod_risk_200": "PASS - GET /api/school-pod-risk/{id} returns 200",
+    "10_school_pod_risk_fields": "PASS - Has primaryRisk, severity, trajectory, whyNow, recommendedActionByRole, recommendedNextAction",
+    "11_school_pod_role_actions": "PASS - recommendedActionByRole has coach/director/family keys",
+    "12_coach_escalate_creates_entry": "PASS - POST /api/coach/escalate creates entry in director_actions",
+    "13_escalation_visible_director": "PASS - Coach escalation appears in Director Inbox",
+    "14_director_inbox_still_works": "PASS - GET /api/director-inbox returns 200",
+    "15_ui_top_priority_card": "PASS - coach-top-priority card displayed with CRITICAL label",
+    "16_ui_trajectory_indicator": "PASS - Trajectory ↘Improving shown",
+    "17_ui_why_now_text": "PASS - whyNow text 'Escalated and inactive — needs immediate attention'",
+    "18_ui_needs_attention_list": "PASS - coach-needs-attention list with 2 items",
+    "19_ui_school_pod_risk": "PASS - school-pod-risk component shows all v3 fields",
+    "20_ui_also_watching": "PASS - Secondary risks in 'Also watching' section",
+    "21_ui_no_riskscore_displayed": "PASS - riskScore/confidence NOT exposed in UI"
+  },
+  "api_data_verified": {
+    "coach_inbox_endpoint": "GET /api/coach-inbox",
+    "coach_inbox_items": 3,
+    "school_pod_risk_endpoint": "GET /api/school-pod-risk/ac37f39c-1727-4eac-8a6c-8055db9f5df5",
+    "coach_escalate_endpoint": "POST /api/coach/escalate"
+  }
+}
