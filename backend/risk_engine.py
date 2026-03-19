@@ -50,14 +50,14 @@ STAGE_MULTIPLIER = {
 
 # Compound risk interaction rules: (signal_a, signal_b) -> multiplier
 COMPOUND_RULES = [
-    ({"no_activity", "awaiting_reply"},       1.40, "Inactive and waiting — risk of going cold"),
-    ({"missing_documents", "event_blocker"},  1.50, "Missing requirement near deadline"),
-    ({"no_coach_assigned", "no_activity"},    1.35, "Unmanaged and inactive — structural risk"),
-    ({"escalation", "no_activity"},           1.30, "Escalated and inactive — needs immediate attention"),
-    ({"escalation", "awaiting_reply"},        1.25, "Escalated with pending reply"),
-    ({"no_activity", "follow_up"},            1.20, "Inactive with overdue follow-up"),
-    ({"missing_documents", "no_activity"},    1.25, "Missing docs and no momentum"),
-    ({"stalled_stage", "no_activity"},        1.30, "Stalled and inactive — momentum lost"),
+    ({"no_activity", "awaiting_reply"},       1.40, "Conversation has stalled — risk of losing momentum"),
+    ({"missing_documents", "event_blocker"},  1.50, "Missing requirement may block an upcoming deadline"),
+    ({"no_coach_assigned", "no_activity"},    1.35, "No coach and no activity — athlete is drifting without support"),
+    ({"escalation", "no_activity"},           1.30, "Escalated issue with no recent engagement — momentum at risk"),
+    ({"escalation", "awaiting_reply"},        1.25, "Escalated with a pending reply — response delay may hurt"),
+    ({"no_activity", "follow_up"},            1.20, "Overdue follow-up with no recent activity"),
+    ({"missing_documents", "no_activity"},    1.25, "Missing docs and no momentum — progress likely blocked"),
+    ({"stalled_stage", "no_activity"},        1.30, "Pipeline stalled with no engagement — relationship cooling"),
 ]
 
 # Severity bands
@@ -174,46 +174,46 @@ def _why_now(primary_signal, secondary_signals, severity, trajectory, best_stage
     # Signal-specific
     if primary_signal == "escalation":
         if trajectory == "worsening":
-            return f"Escalated issue is unresolved and aging — needs immediate attention."
-        return f"Coach escalation needs director review."
+            return f"Unresolved escalation — engagement may slip further."
+        return f"Coach flagged an issue that needs review."
 
     if primary_signal == "no_coach_assigned":
         if "no_activity" in secondary_signals:
-            return f"No coach assigned and no recent activity — athlete is drifting."
-        return f"Athlete has no coach assigned and cannot receive guided support."
+            return f"No coach and no recent activity — athlete is drifting."
+        return f"Without a coach, this athlete can't get guided support."
 
     if primary_signal == "missing_documents":
         if best_stage in ("Offer", "Campus Visit", "Visit", "Visit Scheduled"):
-            return f"Missing requirement may block {stage_ctx} progress with {school_ctx}."
-        return f"Missing requirement could delay recruiting progress."
+            return f"Missing requirement could block {stage_ctx} progress."
+        return f"Missing requirement may delay next steps."
 
     if primary_signal == "no_activity":
         if best_stage in ("Offer", "Campus Visit", "Visit", "In Conversation", "Engaged"):
-            return f"{stage_ctx.capitalize()} relationship with {school_ctx} is at risk of going cold."
+            return f"Relationship with {school_ctx} is at risk of going cold."
         if days_inactive and days_inactive > 21:
-            return f"No activity in {days_inactive} days — recruiting momentum is fading."
-        return f"Inactivity may cause recruiting momentum to slip."
+            return f"No activity in {days_inactive} days — momentum is fading."
+        return f"No recent engagement — momentum may drop."
 
     if primary_signal == "awaiting_reply":
         if days_inactive and days_inactive > 10:
-            return f"Reply overdue — opportunity with {school_ctx} may go cold."
-        return f"Pending reply — don't let {school_ctx} conversation stall."
+            return f"Reply is overdue — conversation with {school_ctx} may go cold."
+        return f"Pending reply — delay reduces response likelihood."
 
     if primary_signal == "follow_up":
-        return f"Assigned follow-up is overdue — conversation may stall."
+        return f"Follow-up delay may reduce response likelihood."
 
     if primary_signal == "stalled_stage":
-        return f"Pipeline stalled at {stage_ctx} — no movement detected."
+        return f"No movement at {stage_ctx} — relationship may be cooling."
 
     if primary_signal == "event_blocker":
-        return f"Upcoming event requires action to avoid missed opportunity."
+        return f"Upcoming event requires prep to avoid a missed opportunity."
 
     # Fallback based on severity
     if severity == "critical":
-        return f"Multiple risk signals require immediate attention."
+        return f"Multiple signals suggest this needs attention now."
     if trajectory == "worsening":
-        return f"Situation is deteriorating — action needed soon."
-    return f"This item needs your attention."
+        return f"Situation is trending the wrong way — act soon."
+    return f"Worth checking in to keep things on track."
 
 
 # ═══════════════════════════════════════════════════════════════

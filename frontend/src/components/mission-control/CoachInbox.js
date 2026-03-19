@@ -141,11 +141,12 @@ function CoachTopPriority({ item }) {
       ? `${item.athleteName} — ${item.titleSuffix}`
       : item.athleteName;
 
-  const ctaConfig = COACH_CTA_CONFIG[item.cta.label] || COACH_CTA_CONFIG["Open Pod"];
-  const CtaIcon = ctaConfig.icon;
+  /* CTA: derive from intervention + signal, align label to coachAction */
+  const topCta = getRowCta(item);
+  const CtaIcon = (COACH_CTA_CONFIG[topCta.label] || COACH_CTA_CONFIG["Open Pod"]).icon;
 
   function handleCta() {
-    if (item.interventionType === "escalate" || item.cta.label === "Request director help") {
+    if (item.interventionType === "escalate" || topCta.label === "Request help") {
       setShowEscalate(true);
     } else {
       navigate(item.cta.url);
@@ -183,11 +184,11 @@ function CoachTopPriority({ item }) {
             <button
               onClick={handleCta}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold cursor-pointer text-white"
-              style={{ background: ctaConfig.bg, border: "none", fontFamily: "inherit" }}
+              style={{ background: topCta.color, border: "none", fontFamily: "inherit" }}
               data-testid="coach-top-priority-cta"
             >
               <CtaIcon className="w-3 h-3" />
-              {item.cta.label}
+              {topCta.label}
             </button>
           </div>
         </div>
@@ -206,13 +207,30 @@ const SEV_DOT = { critical: "#ef4444", high: "#f59e0b", medium: "#94a3b8", low: 
 
 const GENERIC_LABELS = new Set(["Needs attention", "Needs follow-up"]);
 
-/* Intervention → CTA label + color */
+/* Signal-aware CTA: intervention + primary signal → specific label */
+const SIGNAL_CTA = {
+  "No activity":         { label: "Check in",       color: "#0d9488" },
+  "Awaiting reply":      { label: "Send follow-up", color: "#0d9488" },
+  "Missing requirement": { label: "Review blocker", color: "#b45309" },
+  "No coach assigned":   { label: "Assign coach",   color: "#b45309" },
+  "Stalled stage":       { label: "Review status",  color: "#3b82f6" },
+};
+
 const INTERVENTION_CTA = {
   nudge:    { label: "Check in",       color: "#0d9488" },
   review:   { label: "Open Pod",       color: "#3b82f6" },
   escalate: { label: "Request help",   color: "#dc2626" },
   blocker:  { label: "Review blocker", color: "#b45309" },
 };
+
+function getRowCta(item) {
+  /* escalate always uses its own CTA */
+  if (item.interventionType === "escalate") return INTERVENTION_CTA.escalate;
+  if (item.interventionType === "blocker") return INTERVENTION_CTA.blocker;
+  /* signal-specific CTA takes priority over generic intervention CTA */
+  const issue = getSpecificIssue(item);
+  return SIGNAL_CTA[issue] || INTERVENTION_CTA[item.interventionType] || INTERVENTION_CTA.review;
+}
 
 function getSpecificIssue(item) {
   const signals = item.riskSignals || item.issues || [];
@@ -238,14 +256,17 @@ function UpNextRow({ item, onDismiss }) {
   const traj = TRAJECTORY[item.trajectory];
   const showTraj = item.trajectory && item.trajectory !== "stable" && traj;
 
-  /* Line 2: WHY — whyNow (skip if it just repeats the issue) */
+  /* Line 2: WHY — whyNow (skip if empty) */
   const whyNow = item.whyNow || "";
 
-  /* CTA from interventionType */
-  const intv = INTERVENTION_CTA[item.interventionType] || INTERVENTION_CTA.review;
+  /* CTA from signal + intervention */
+  const intv = getRowCta(item);
 
-  /* Secondary risks for hover */
-  const secondary = (item.secondaryRisks || []).filter(s => !GENERIC_LABELS.has(s)).slice(0, 2);
+  /* Secondary risks for hover — exclude primary + generic */
+  const primaryIssue = issue;
+  const secondary = (item.secondaryRisks || [])
+    .filter(s => !GENERIC_LABELS.has(s) && s !== primaryIssue)
+    .slice(0, 2);
 
   function handleCta(e) {
     e.stopPropagation();
@@ -265,7 +286,7 @@ function UpNextRow({ item, onDismiss }) {
   return (
     <>
       <div
-        className="px-4 py-3 transition-all duration-300"
+        className="px-4 py-2 transition-all duration-300"
         style={{
           borderBottom: "1px solid #f1f5f9",
           opacity: exiting ? 0 : 1,
