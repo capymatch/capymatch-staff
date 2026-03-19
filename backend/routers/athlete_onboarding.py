@@ -9,19 +9,58 @@ from datetime import datetime, timezone
 from auth_middleware import get_current_user_dep
 from db_client import db
 
+import uuid
+
+
 router = APIRouter()
 
 
 # ── Adapter ─────────────────────────────────────────────────────────────
 
-async def _get_athlete(current_user: dict) -> dict:
+async def _get_or_create_athlete(current_user: dict) -> dict:
+    """Find athlete by user_id, or auto-create one for onboarding."""
     if current_user["role"] not in ("athlete", "parent"):
         raise HTTPException(403, "Only athletes/parents can access this")
     athlete = await db.athletes.find_one(
         {"user_id": current_user["id"]}, {"_id": 0}
     )
     if not athlete:
-        raise HTTPException(404, "No claimed athlete profile found")
+        # Auto-create a minimal athlete record for new users
+        athlete_id = str(uuid.uuid4())
+        name = current_user.get("name", "")
+        parts = name.split(" ", 1)
+        now = datetime.now(timezone.utc).isoformat()
+        athlete = {
+            "id": athlete_id,
+            "user_id": current_user["id"],
+            "tenant_id": f"tenant-{current_user['id']}",
+            "org_id": current_user.get("org_id", "org-capymatch-default"),
+            "first_name": parts[0] if parts else "",
+            "last_name": parts[1] if len(parts) > 1 else "",
+            "full_name": name,
+            "email": current_user.get("email", ""),
+            "recruiting_stage": "exploring",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.athletes.insert_one(athlete)
+        # Link athlete to user
+        await db.athlete_user_links.insert_one({
+            "athlete_id": athlete_id,
+            "user_id": current_user["id"],
+            "relationship_type": "athlete",
+            "permissions": ["full"],
+            "created_at": now,
+        })
+        # Set athlete_id on user doc
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$set": {"athlete_id": athlete_id}},
+        )
+        # Re-fetch without _id
+        athlete = await db.athletes.find_one(
+            {"id": athlete_id}, {"_id": 0}
+        )
     return athlete
 
 
@@ -49,7 +88,7 @@ async def get_onboarding_status(current_user: dict = get_current_user_dep()):
 @router.post("/athlete/recruiting-profile")
 async def save_recruiting_profile(body: dict, current_user: dict = get_current_user_dep()):
     """Save the onboarding quiz answers as recruiting preferences."""
-    athlete = await _get_athlete(current_user)
+    athlete = await _get_or_create_athlete(current_user)
 
     recruiting_profile = {
         "position": body.get("position", []),
@@ -96,7 +135,7 @@ async def get_suggested_schools(
     limit: int = Query(3, ge=1, le=10),
 ):
     """Return KB schools matched against the athlete's recruiting profile."""
-    athlete = await _get_athlete(current_user)
+    athlete = await _get_or_create_athlete(current_user)
     rp = athlete.get("recruiting_profile")
     if not rp:
         return {"suggestions": []}
