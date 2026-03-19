@@ -27,7 +27,7 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 
 ## Completed Features
 
-### Sessions 1-7 (Previous)
+### Sessions 1-10 (Previous)
 - Full authentication system (JWT)
 - Athlete pipeline (school targets, recruiting stages)
 - Messaging module (coach-athlete communication)
@@ -40,538 +40,62 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 - Live Event workflow overhaul
 - Social Spotlight scaffolding (UI + routing)
 - School Pod Overhaul (two-column layout, relationship tracker, sliding notes panel)
-- Widespread z-index + layout fixes
+- Unified Health Signal Logic
+- Dashboard-to-School-Pod Alert Consistency
+- Pipeline-Based Momentum Model
+- Unified Status Model (Journey State + Attention Status)
+- Director Pod Access & Dashboard Deduplication
+- Journey Page Right Rail Refinement
+- Engagement Data Transformation
+- Per-Message Engagement Tracking on Timeline
+- School Intelligence Unification + Drawer
+- Decision-First UI Refactor
+- Coach Watch 10-State Matrix + State-Copy Matrix
+- Hero Orchestration Refactor
+- Pipeline 2-Tier Hero System
+- Pipeline Capacity Strip
+- Dual-Mode Pipeline System (Priority + Kanban)
+- Attention Engine V2
+- Explainability Polish
+- Animated View Morphing
+- Priority Board Layout + Card Redesign
+- Swipe Gestures on Priority Cards
+- PipelinePage.js Refactoring (6 components extracted)
+- Unified Coming Up & On Track Sections
+- School Logos in Priority List
+- Priority List UI Final Polish
+- Unified Design System (pipeline-design.js)
+- Kanban Strict Structure (Stage Visualization Only)
+- Kanban Board Interaction Redesign (Attention-level system)
+- Kanban D&D Polish (Magnetic columns, insertion lines, etc.)
 
-### Session 8 (2026-03-16)
-- **P0 FIX: Unified Health Signal Logic**
-  - Refactored `classify_school_health()` to accept `actual_days_since_contact` and `playbook_complete` parameters
-  - List endpoint now queries `pod_action_events` and `playbook_progress` for real-time contact days per school
-  - Detail endpoint computes health AFTER signal suppression, ensuring hero card matches badge
-  - Added `hero_status` field to detail API response — single source of truth for frontend
-  - Frontend `SchoolPod.js` now uses backend-provided `hero_status` instead of independently computing
-  - Added `cooling_off` and `needs_follow_up` health states to both backend and frontend
-  - 23/23 backend tests passed, all frontend UI verifications passed
-  - Key files: `school_pod.py`, `SchoolPod.js`, `SupportPod.js`
-- **Bug Fix: 999 Days Fallback**
-  - Early-stage schools (Prospect, Not Contacted, Added) no longer show engagement-based alerts
-  - The 999-day fallback is clamped and never surfaces in UI
-  - Contact health shows "Not yet contacted — school just added to pipeline" for early stages
-  - Frontend guards against displaying days >= 999
-- **Dashboard-to-School-Pod Alert Consistency**
-  - Added async `_enrich_roster_with_school_alerts()` in mission_control.py
-  - Dashboard now queries `programs`, `program_metrics`, and `pod_action_events` per athlete
-  - School-level alerts (at_risk, cooling_off, needs_attention) surface on dashboard roster
-  - New `school_alert` category auto-promotes athletes without existing categories
-  - Frontend RosterSection shows "N schools need attention" in red for affected athletes
-  - SupportPod filter includes cooling_off and needs_follow_up states in "needs attention" count
-  - 15/15 backend tests passed, all frontend verified
-- **Pipeline-Based Momentum Model (replaces activity-based)**
-  - Momentum now reflects RECRUITING PROGRESS via stage weights (Prospect=10, Contact=20, Visit=70, Offer=90, Committed=100)
-  - Uses highest stage across all schools + breadth bonus (up to +10 for multiple advanced schools)
-  - `detect_momentum_drop()` now only triggers when pipeline_momentum < 30 AND days inactive >= 14
-  - Auto-resolves stale momentum_drop pod_issues when pipeline momentum >= 50
-  - Dashboard shows pipeline_best_stage and momentum/100 for each athlete
-  - 9/9 backend tests passed, all frontend verified (iteration 143)
-- **Unified Status Model: Journey State + Attention Status**
-  - Separated athlete status into two independent dimensions:
-    - Journey State: recruiting progress (Committed, Offer Received, Visiting Schools, Building Interest, Reaching Out, Getting Started)
-    - Attention Status: most urgent action needed (Blocker, Urgent Follow-up, At Risk, Needs Review, All Clear)
-  - All signals from 3 sources (decision engine, school health, pod issues) collected, normalized, scored by urgency
-  - Configurable weights: severity=40%, time_sensitivity=30%, opportunity_cost=20%, pipeline_impact=10%
-  - Blockers always outrank follow-ups at equal time sensitivity
-  - Secondary signals shown as "+N more issues" expandable
-  - 16/16 backend + 100% frontend tests passed (iteration 144)
-  - Key files: `unified_status.py`, `mission_control.py`, `RosterSection.js`
-- **Status Intelligence in Support Pod Detail View**
-  - Added `status_intelligence` field to `/api/support-pods/{athlete_id}` response
-  - Two-column layout: Journey State (calm, explanatory) + Attention Status (action-oriented, with reason)
-  - Secondary signals expandable with color-coded nature tags (Blocker, Follow-up, At Risk, Review)
-  - Human-readable explanations generated by `_explain_journey()` and `_explain_attention()`
-  - Key files: `support_pods.py`, `StatusIntelligence.js`
-- **UI Refinement Pass (2026-03-16)**
-  - Reduced repetition: Old full-height AthleteHero alert replaced with compact ActionBar (issue title + action buttons only)
-  - StatusIntelligence now shown first as the authoritative status display on athlete detail page
-  - Renamed "N additional signals detected" → "Also worth watching (N)" with Eye icon and Show/Hide toggle
-  - Journey badge: calm styling (grey icon, font-medium). Attention badge: bold, action-oriented (colored icon, font-bold, uppercase)
-  - Improved expandable affordance: +N more buttons with ChevronDown/Up icons, expanded list with left border styling
-  - Header badge now derives from `status_intelligence.attention` instead of old `pod_health`
-  - Key files: `StatusIntelligence.js`, `SupportPod.js`, `RosterSection.js`
-- **Terminology Audit (2026-03-16)**
-  - Replaced all user-facing "Momentum Drop" labels → "Needs Review" (NeedsAttentionCard, RosterPage, ProgramIntelligence)
-  - Replaced "Engagement Drop" labels → "At Risk" (NeedsAttentionCard, ProgramIntelligence)
-  - Replaced "Momentum drop" escalation reason → "Activity stalled" (AthletePipelinePanel)
-  - Updated toast notification from "momentum dropped" → "activity has declined — review needed" (CoachView)
-  - Removed old `pod_health` usage from SupportPod header, now derives from `status_intelligence.attention`
-  - Internal keys (`momentum_drop`, `engagement_drop`) preserved for backend compatibility
-  - Key files: `NeedsAttentionCard.js`, `ProgramIntelligence.js`, `AthletePipelinePanel.js`, `CoachView.js`, `RosterPage.js`
-- **Task Row Redesign (2026-03-16)**
-  - Replaced always-visible row CTAs with clean, scannable task rows
-  - "+ Add" modal is the primary place for task creation, owner assignment, and type selection
-  - Owner badges: Coach (indigo), Athlete (teal), Director (purple)
-  - Overflow menu (⋯) on hover with contextual actions: Edit, Mark Complete, Reassign, Follow Up
-  - Inline edit mode for task title (Save/Esc)
-  - OVERDUE badge + visible "Nudge" CTA only for overdue athlete-owned tasks
-  - Custom dark-themed dropdown replacing native `<select>` in Add Task modal
-  - Backend PATCH endpoint extended to support title updates
-  - Key files: `SchoolPod.js` (TaskItem, AddTaskModal), `school_pod.py`
-- **Social Spotlight Feature Fixed (2026-03-16)**
-  - Added YouTube Data API key, fixed tenant_id lookup for coaches using ownership model
-  - Seeded YouTube channel URLs for pipeline schools
-  - Added coach/director access to route, sidebar, and subscription gate bypass
-  - Key files: `youtube_feed.py`, `SocialSpotlight.js`, `Sidebar.js`, `App.js`
-
-### Session 9 (2026-03-16/17)
-- **Director Pod Access (Complete)**
-  - Backend: `/api/director/actions` CRUD, `/api/support-pods/{id}/director-notes`, `/api/support-pods/{id}/director-tasks`
-  - Frontend: EscalationsCard on DirectorView (escalation-first), EscalationBanner on SupportPod with acknowledge/guidance/task/resolve actions
-  - Role-based: Directors see DirectorView + EscalationBanner expanded; Coaches see CoachView + chip mode
-  - Fixed field mismatch (`action_id` vs `id`), resolve payload (`note` vs `resolution_note`), action buttons for acknowledged state
-  - 38 backend + 14 frontend tests passed (iteration_147)
-- **Director Dashboard Deduplication (Complete)**
-  - Identified 100% record overlap between EscalationsCard and DirectorActionsCard
-  - EscalationsCard now filtered to `coach_escalation` only — director's inbound triage inbox
-  - Removed full DirectorActionsCard from dashboard — replaced with compact "Your Outbox" pulse bar
-  - Your Outbox tracks director-created actions only (`review_request` + `pipeline_escalation`)
-  - 14 backend + 11 frontend tests passed (iteration_148)
-- **Journey Page Right Rail Refinement (Complete)**
-  - Restructured into 5-section decision hierarchy: Coach Watch (HIGH) > Key Contacts (MED) > Communication & Activity (LOW) > School Insight (LOW) > AI Assist (MIN)
-  - Key Contacts: max 2 shown, "View all staff" overflow, signal-aware status lines
-  - Communication & Activity: compact 4-column row (Outreach/Replies/Interactions/Last Active)
-  - School Insight: collapsed preview only (Engagement Outlook + Recruiting Timeline REMOVED)
-  - AI Assist: renamed from "AI Insights", lightweight buttons with helper text
-  - 22 frontend tests passed (iteration_150)
-  - Key files: `CoachWatchCard.js`, `JourneyPage.js`
-- **Engagement Data Transformation (Complete)**
-  - Converted raw email metrics (Opens/Clicks/Unique) into plain-language signals
-  - Coach Watch signals: "Coach opened your message", "Coach engaged with your content", "No engagement with your last message"
-  - Key Contacts: "Opened your last message", "Engaged with your highlight link", "No engagement yet"
-  - Removed all raw metric displays; engagement strip header row eliminated
-  - 18 frontend tests passed (iteration_151)
-- **Per-Message Engagement Tracking on Timeline (Complete)**
-  - Backend: Journey endpoint enriches timeline events with opens/clicks from `email_tracking` collection
-  - Frontend: Inline signal badges on "Your Message" bubbles — "Opened", "Opened 3x", "Link clicked"
-  - Coach messages show no badges; zero-engagement messages show nothing
-  - Seeded sample tracking data on Stanford messages for demo
-  - All backend + frontend tests passed (iteration_152)
-- **School Intelligence Unification (Complete)**
-  - "School Intelligence" in main column = single source of truth (enhanced with match score summary + "View full analysis →" CTA)
-  - Removed duplicate "School Insight" card from right panel
-  - Replaced with compact "School Fit" preview that scrolls to main column School Intelligence
-  - AI Assist renamed "Analyze School Fit" → "Explore School Intelligence"
-  - 13 frontend tests passed (iteration_153)
-  - Key files: `ConversationBubble.js`, `athlete_dashboard.py`
-
-### Session 10 (2026-03-17)
-- **Unified School Intelligence Panel (Complete)**
-  - Merged School Knowledge Base (Fit UI) + School Intelligence/Coach Watch into single "School Intelligence" panel in main column
-  - PRESERVED: Header (score, fit label, confidence), Score Breakdown bars (division, region, priorities, academics, measurables), Strengths from match_reasons, Risks/Gaps from risk_badges
-  - ADDED: 1-line contextual summary, Opportunity & Timing section (opportunity level + timing window + signal bullets), Coach Signals section (engagement-derived insights), Recommended Strategy section (decision label + explanation + next action), expanded action buttons (Email Coach, Generate Follow-up, View School Details)
-  - Right panel School Fit preview now shows match score percentage and scrolls to main column panel
-  - AI Assist "Explore School Intelligence" now scrolls to panel (no separate API call)
-  - All data derived client-side from existing endpoints (match-scores, engagement, coach-watch) — no new backend needed
-  - 24 tests passed across UCLA + Stanford (iteration_154)
-- **School Intelligence Drawer (Complete)**
-  - Converted large inline SchoolIntelligencePanel into a right-side expandable drawer
-  - Compact preview card in main column: score circle + fit label + 1-line summary + "View Full Analysis" CTA
-  - Drawer: 480px wide, slides from right with 250ms animation, dimmed backdrop with blur, closes on X/ESC/click-outside
-  - Three unified entry points: compact preview click, right panel "School Fit" CTA, AI Assist "Explore School Intelligence"
-  - Action buttons in drawer (Email Coach, etc.) close drawer first then trigger their actions
-  - Body scroll lock when drawer open, proper cleanup on close
-  - Main page now much cleaner — timeline and Coach Watch are primary focus
-  - 14/14 tests passed (iteration_155)
-  - Key files: `SchoolIntelligenceDrawer.js` (NEW), `JourneyPage.js` (MODIFIED)
-- **Decision-First UI Refactor (Complete)**
-  - Restructured SchoolIntelligencePanel from report-heavy to decision-first layout
-  - Strategy moved to TOP: badge (Continue Pursuing / High Priority / Reconsider) + explanation + directive
-  - Dynamic CTAs: No signals → "Send First Email" + "Generate Follow-up"; Has engagement → "Follow Up" + "Email Coach"
-  - Merged Opportunity & Timing + Coach Signals → single "Engagement Status" (3 states: active/stale/none)
-  - Fit Summary: score + label + inline strengths (green checks) + gaps (amber warnings), max 3 each
-  - Score Breakdown: collapsible (default CLOSED), "View Full Breakdown" toggle
-  - Replaced "Low confidence" → "Needs more data (No coach engagement yet)"
-  - Removed 4 standalone sections — content merged into summary + engagement
-  - 16/16 tests passed across UCLA + Stanford (iteration_156)
-  - Key files: `SchoolIntelligencePanel.js` (REFACTORED)
-- **Content + UX Clarity Refinement (Complete)**
-  - Eliminated duplicate messaging: top block is now single source of truth with engagement context + fit + timing + action
-  - Human language: "No coach engagement yet. This is a strong-fit school, but interest has not been activated." (not generic AI text)
-  - Added "Best time to act: Now" timing signal
-  - Fixed CTA logic: no outreach → "Send First Email" + "Generate Message"; has outreach → "Follow Up" + "Generate Follow-up"
-  - Engagement section hidden when no signals (prevents redundant "no activity" text)
-  - Replaced "Needs more data (No coach engagement yet)" → just "No coach engagement yet"
-  - Added "Why this is a strong fit:" heading above strengths list
-  - 13/13 requirements verified, 100% pass (iteration_157)
-  - Key files: `SchoolIntelligencePanel.js` (REFINED)
-- **Journey Timeline Data Integrity Fix (Complete)**
-  - Removed unfiltered support_messages from per-school journey timeline
-  - Key files: `athlete_dashboard.py`
-- **Coach Watch Relationship State Engine (Complete)**
-  - Backend `/api/coach-watch/{program_id}`: 4-bucket weighted scoring with time decay
-  - Interest: Not started / No signals yet / Emerging / Medium / High (High only with coach signal)
-  - Trends: Not started / Increasing / Stable / Cooling / Reactivated
-  - State-based CTAs aligned with outreach status
-  - Frontend CoachWatchCard rewritten for structured backend output
-  - SI panel uses coachWatch.meta for consistency — no conflicting states
-  - 24/24 backend + all frontend tests passed (iteration_158)
-  - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`, `SchoolIntelligencePanel.js`, `JourneyPage.js`
-- **Coach Watch 10-State Matrix (Complete — 2026-03-17)**
-  - Implemented definitive 10-state relationship matrix: no_signals, waiting, follow_up_window, emerging, active_conversation, hot_opportunity, cooling, re_engaged, stalled, deprioritize
-  - Each state produces consistent: interestLevel, trend, summary, recommendedAction, primaryCta, secondaryCta
-  - Priority order enforced: hot > active > re_engaged > emerging > cooling > stalled > follow_up > waiting > deprioritize > no_signals
-  - Verified across 4 school profiles: Stanford=hot_opportunity, Florida=deprioritize, Creighton=no_signals, UCLA=active_conversation
-  - 26/26 backend + all frontend tests passed (iteration_159)
-  - Key files: `athlete_dashboard.py` (lines 128-400), `CoachWatchCard.js`, `SchoolIntelligencePanel.js`
-- **Coach Watch State-Copy Matrix & Transition Explanations (Complete — 2026-03-17)**
-  - Standardized UI copy for all 10 states: headline, summary, why line, primary CTA, secondary CTA
-  - State names refined: waiting → waiting_for_signal, follow_up_window → follow_up_window_open, emerging → emerging_interest
-  - Added state transition tracking: previousState, currentState, stateChangedAt, stateChangeReason, whatChangedCopy
-  - Backend persists state per program in coach_watch_states collection; computes transition explanations from _TRANSITION_COPY dict
-  - Frontend CoachWatchCard shows headline (prominent), why line (subtle), and conditional "What changed" block on state transitions
-  - 27/27 backend + all frontend tests passed (iteration_160)
-  - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`
-- **Hero Pulse Indicator → Coach Watch Badge (Complete — 2026-03-17)**
-  - Replaced legacy Pulse Indicator (Neutral/Warm/Hot/Cold based on days_since_activity) with Coach Watch-derived badge
-  - 10 compact labels: No Signals, Waiting, Follow Up, Emerging, Active, Hot Opportunity, Cooling, Re-engaged, Stalled, Low Priority
-  - State-based colors (green for hot, blue for active, teal for emerging/re-engaged, amber for cooling/stalled/follow-up, gray for no_signals/deprioritize)
-  - Animated dot for active states (hot_opportunity, active_conversation, emerging_interest, re_engaged)
-  - Backward compatible: PipelinePage still uses legacy pulse prop
-  - All frontend + backend tests passed (iteration_161)
-  - Key files: `PulseIndicator.js`, `JourneyPage.js`
-- **Coach Watch Persuasion & Confidence Layers (Complete — 2026-03-17)**
-  - Added "Why this matters" persuasion copy for all 10 states (italic, 1-line, below why line)
-  - Added confidence level badge: high (green ShieldCheck), medium (amber Shield), low (gray ShieldAlert)
-  - Mapping: hot_opportunity/active_conversation → high, no_signals/deprioritize → low, all others → medium
-  - Backend returns new fields: whyThisMatters, confidenceLevel
-  - All tests passed (iteration_162)
-  - Key files: `athlete_dashboard.py`, `CoachWatchCard.js`
-- **Coach Watch UI Polish — Action Copy + Confidence Tooltip (Complete — 2026-03-17)**
-  - Removed italics from persuasion text, changed to font-medium for scanability
-  - Renamed "Why this matters" → "What to do now" with action-oriented copy for all 10 states
-  - Added confidence tooltip on hover: High/Medium/Low each with 1-line explanation
-  - All tests passed (iteration_163)
-  - Key files: `CoachWatchCard.js`, `athlete_dashboard.py`
-- **Hero Orchestration Refactor (Complete — 2026-03-18)**
-  - Replaced stacked hero cards with orchestrated layout: ONE PrimaryHeroCard + ONE RadarStrip
-  - Created `heroOrchestrator.js` with priority-based selection: committed > coach_task > coach_flag > hot_opportunity > active_conversation > overdue > celebration > upcoming > questionnaire > next_step
-  - Suppressed lower-priority items shown in compact "Also on your radar" strip
-  - Empty state fallback: "Start outreach to this program"
-  - Special committed hero with gold celebration rendering + journey toggle
-  - All tests passed across 4 schools (iteration_164)
-  - Key files: `heroOrchestrator.js`, `PrimaryHeroCard.js`, `RadarStrip.js`, `JourneyPage.js`
-- **Pipeline 2-Tier Hero System (Complete — 2026-03-18)**
-  - Replaced single carousel hero (HeroActionsCarousel) with 2-tier system
-  - Tier 1 "Needs Attention Now": urgent actions (coach_flag, director_action, past_due, reply_needed, due_today) with red accent, solid CTAs
-  - Tier 2 "Keep Momentum Going": momentum actions (cooling_off, first_outreach) with indigo accent, outline CTAs
-  - Excluded "on_track" from hero — shown as calm summary ("N programs on track — no action needed")
-  - Dynamic header: "Your Pipeline" + summary line ("1 need attention · 2 losing momentum · 4 on track")
-  - Empty urgent state: "You're on track. Nothing urgent right now."
-  - Horizontal scroll with snap + desktop navigation arrows
-  - Fixed generateActions to tag no_action_needed as "on_track" instead of "cooling_off"
-  - Removed legacy HeroActionsCarousel, ALERT_CATEGORIES, computeRail, getStatusDot
-  - Cleaned PipelineStyles (removed hero-specific keyframes/CSS)
-  - 16/16 backend + all frontend tests passed (iteration_165)
-  - Key files: `PipelineHero.js`, `HeroSection.js`, `HeroCard.js`, `PipelinePage.js`
-- **Pipeline Capacity Strip (Complete — 2026-03-18)**
-  - Replaced boxed Quick Context section with minimal inline capacity strip
-  - Shows "7 / 20 programs on your board" (or just count for unlimited plans)
-  - Subtle progress bar for limited plans (amber at 90%+)
-  - Removed AI drafts, keyboard hints, boxed metrics from hero
-  - Key files: `PipelineCapacityStrip.js`, `PipelineHero.js`, `PipelinePage.js`
-- **Pipeline Hero Two-Column Dark Card (Complete — 2026-03-18)**
-  - Rebuilt hero to match reference design: dark gradient card with two-column grid layout
-  - Top bar: filter pills (All/Needs Attention/Losing Momentum) + carousel navigation (< 1/3 >)
-  - Left column: tier label, school identity + match %, progress rail, "What to do next" box, owner badge, CTA
-  - Right column: "Up Next in Queue" compact rows, on-track summary, capacity strip
-  - Filter pills switch between categories, carousel navigates within filtered set
-  - Keyboard shortcuts (arrow keys) for navigation
-  - Mobile responsive (collapses to single column)
-  - 100% frontend tests passed (iteration_166)
-  - Key files: `PipelineHero.js`, `PipelineCapacityStrip.js`
-- **Hero Accent Bar + 60/40 Layout (Complete & Reverted — 2026-03-18)**
-  - Built but reverted per user feedback in favor of single-carousel design
-- **Pipeline Hero Restyled to Match Journey Page Header (Complete — 2026-03-18)**
-  - **SUPERSEDED** by full Pipeline page redesign below.
-
-- **Pipeline Page Full Redesign — Smart Assistant Layout (Complete — 2026-03-18)**
-  - Page header: "Your Pipeline" title + subtitle + summary chips (red=attention, purple=momentum, green=on track)
-  - Single-column dark gradient hero carousel: category label with glow, school identity (52px logo + 26px name + metadata pills), large match score (38px), ProgressRail, "What to do next" box with aligned CTA, owner badge removed
-  - Created `ComingUpTimeline.js`: horizontal timeline with forecast items for on-track programs
-  - **Empty states** (Complete — 2026-03-18):
-    - `PipelineHeroEmptyState.js`: Dark card, green glow, "You're in a great spot" + metric + CTAs
-    - `ComingUpTimelineEmptyState.js`: Light card, "Nothing needs attention soon" + reassuring copy
-    - Both independent, always render (never collapse or show "No data")
-  - **Refinement pass (Complete — 2026-03-18)**:
-    - #1 Simplified metadata: "D1 · SEC" inline + max 1 status chip (not 4 stacked pills)
-    - #2 Lightweight task text: no box/border, just label + primary text + AI helper hint
-    - #3 CTA dominance: strongest visual element, clearly separated
-    - #4 Removed duplicate timeline chip row (cards only)
-    - #5 Human time labels: "Tomorrow", "In 2 days" (not "IN 1 DAY")
-    - #6 Stronger card hierarchy: time label dominant, bold school, supportive text
-    - #7 Board separator: "MANAGE ALL PROGRAMS" divider between timeline and Kanban
-    - #8 Filter counts in pills: "All 2", "Attention 1", "Momentum 1"
-  - **Motion system (Complete — 2026-03-18)**:
-    - `pipeline-motion.css`: Reusable CSS keyframes + classes for all pipeline animations
-    - Hero 2-phase exit/enter: exit (opacity→0, translateY→-8px, 140ms) → enter (opacity 0→1, translateY 8px→0, 180ms, 40ms delay)
-    - Ambient glow crossfade (220ms), filter pill transitions (120ms), CTA press feedback (scale 0.96, 120ms)
-    - Timeline card stagger entry (translateX 16px→0, 40ms stagger), card hover lift (-2px)
-    - Empty state scale-in entrance (0.98→1), timeline empty fade-up
-    - All using transform+opacity only, cubic-bezier(0.22,1,0.36,1), 60fps
-  - **Kanban board refinement (Complete — 2026-03-18)**:
-    - Lanes: transparent column bg (no heavy boxes), top color bar, more whitespace
-    - State-based cards: left border color by status (red=urgent, blue=reply, amber=cooling), status chips
-    - Simplified content: Logo + Name + "D1 · SEC" inline + 1 status chip + short insight (no heavy action boxes)
-    - Smart column headers: "3 ready to outreach", "2 waiting on coaches", "Active conversations"
-    - Connected: hero/timeline programs get `isHighlighted` flag in board cards
-    - Hover: translateY(-2px) + shadow (120ms) via CSS
-    - Key file: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles updated)
-  - Key files: `PipelineHero.js`, `PipelineHeroEmptyState.js`, `ComingUpTimeline.js`, `ComingUpTimelineEmptyState.js`, `PipelinePage.js`
-- **Kanban Drag-and-Drop Polish (Complete — 2026-03-18)**
-  - Card lift during drag: composed transform scale(1.03) rotate(0.5deg) appended to library positioning transform
-  - Elevated drag shadow: multi-layer shadow (20px+8px+1px ring) with teal accent
-  - Cursor: grab→grabbing state change during active drag
-  - Target lane activation: teal background tint (0.03), subtle border (0.12), inner glow shadow, top bar color glow
-  - Post-drop settle: justDroppedId state tracks last dropped card for 500ms, applies kanban-card-settled CSS class with teal glow→normal shadow keyframe (450ms)
-  - Toast confirmation + column count update on successful drop
-  - Click navigation preserved during drag (guarded with !snapshot.isDragging)
-  - All animations use transform+opacity only, 60fps, cubic-bezier(0.22,1,0.36,1)
-  - 7/7 features verified (iteration_168)
-  - Key files: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles), `pipeline-motion.css`
-- **Kanban Board Premium Refinement Pass (Complete — 2026-03-18)**
-  - Column headers: simplified inline count (no pill badge), baseline-aligned label+count, tighter gap, subtext at readable contrast
-  - Drag interaction: scale(1.04) rotate(1.5deg) for physical lift, soft diffuse shadow (24px+8px blur), cursor grabbing, z-index 9999
-  - Column drop state: stronger teal tint (0.05), visible border (0.2), inner glow (20px), header contrast boost, top bar glow to full opacity
-  - Card state hierarchy: urgent (4px left border + inset shadow), inactive (0.72 opacity), normal (clean base)
-  - Visual consistency: 200-250ms transitions with hero-matched cubic-bezier(0.22,1,0.36,1), softer hover shadows (6px+2px)
-  - Post-drop settle: 400ms animation with 0.25 teal glow → normal
-  - Lane border radius: 8→10px matching card radius
-  - Top color bars: 0.65 default opacity → 1.0 on drag-over with glow
-  - 10/10 features verified (iteration_169)
-  - Key files: `PipelinePage.js` (KanbanCard, KanbanBoard, PipelineStyles)
-- **Kanban D&D Magnetic Interaction System (Complete — 2026-03-18)**
-  - Magnetic columns: scale(1.008) on isDraggingOver — column "reaches" toward dragged card
-  - Column reaction: replaced solid teal tint with subtle gradient overlay (rgba(0,0,0,0.004→0.016)) + neutral inner glow (inset 24px rgba(0,0,0,0.025)), transparent border — no boxy feel
-  - Header+column unity: stage label contrast boosts, count weight 600→700 + color boost, subtext color boost — entire column reacts as one connected surface
-  - Dragged card: rotate(1deg) intentional not playful, white halo shadow (rgba(255,255,255,0.5)) + neutral blur (28px+8px), neutral border (rgba(0,0,0,0.06)), no teal borderLeft during drag
-  - Reduced accent noise: ALL teal removed from drag/drop/settle feedback — neutral shadows only. Colored elements limited to card status borders, top bars, status chips
-  - Motion system: 220ms cubic-bezier(0.16,1,0.3,1) ease-out everywhere, settle 350ms, smooth and intentional
-  - Top color bars: 0.5 default → 0.85 on drag-over with soft glow
-  - 10/10 features + teal removal audit verified (iteration_170)
-  - Key files: `PipelinePage.js`, `pipeline-motion.css`
-- **Kanban Precise Insertion Line System (Complete — 2026-03-18)**
-  - Insertion line: 2px colored line at exact insertion position with 6px dot endpoints (Notion-style), 120ms fade-in, column accent color at 45% opacity
-  - Cross-column only: insertion line filtered by sourceId !== col.key — no misleading same-column indicators
-  - Tracks destination via onDragUpdate + dragDest state (droppableId, index, sourceId)
-  - Card drag refined: scale 1.02 (from 1.04), NO rotation (from 1deg), flat and controlled
-  - Empty column handling: empty state hidden when insertion line appears, restored when card leaves
-  - Drop settle: 350ms neutral glow animation + toast confirmation
-  - Fixed card disappearing bug: removed overflow:hidden, transform:scale(1)→none to prevent CSS containing block
-  - 10/10 features verified (iteration_171)
-
-- **Kanban D&D Final Polish — 6-Point Interaction System (Complete — 2026-03-18)**
-  - SUPERSEDED by Kanban Board Interaction Redesign below.
-
-- **Kanban Board Interaction Redesign (Complete — 2026-03-18)**
-  - Full redesign focused on: fast scanning, clean dragging, reduced cognitive load
-  - **Attention-level system**: Cards classified as High (coach_flag, director_action, past_due, due_today), Medium (reply_needed, cooling_off, first_outreach), Low (on_track)
-  - **Card design**: Max 3-4 lines — school name + attention badge, primary reason, next action → owner. No logos, no dense stats.
-  - **Attention grouping**: Cards sorted by attention level within each column. Group headers ("Needs Attention", "Keep Moving", "On Track") between groups. Headers fade during drag.
-  - **Drag behavior**: Simplified floating preview (name + attention only), scale(1.03), elevated shadow. Background cards fade to 60% opacity. Columns show dashed borders as drop zones.
-  - **Drop interaction**: Column highlight on hover, insertion line with dot endpoints (80ms), snap animation (160ms), column pulse (160ms), card settle (300ms)
-  - **Motion**: All animations 80-160ms (settle 300ms). No 220ms+ timings. Clarity over decoration.
-  - **Code cleanup**: Removed STATUS_VISUAL, NEUTRAL_STATUS, getShortInsight. Added getAttentionLevel, ATTENTION_META, ATTENTION_SORT, ATTENTION_GROUP_LABEL, getCardReason. Removed matchScore/healthMetrics/isHighlighted props from cards.
-  - 10/10 features verified (iteration_173)
-  - Key files: `PipelinePage.js`, `pipeline-motion.css`
-
-- **Dual-Mode Pipeline System (Complete — 2026-03-18)**
-  - Built a complete dual-mode recruiting OS: Priority View (default) + Pipeline View
-  - **Toggle**: [Priority] [Pipeline] at top-right, persists to localStorage, instant switch
-  - **Priority View**: Action Board with 3 sections (Needs Attention, Coming Up, On Track), responsive grid layout
-  - **Priority Cards**: Action-first, max 3 lines (● HIGH/MED/LOW, action title with school name, → timing + owner)
-  - **Pipeline Cards**: 4-line format (school name, stage label, attention indicator, action)
-  - **Peek Row**: "Also needs attention" — 2-4 items below hero, format "School · Action", excludes current hero, click switches hero
-  - **Shared Components**: Hero, peek row, Coming Up timeline shared between both views — same data source, zero duplication
-  - **Microcopy cleanup**: Removed "Coach task open" → "Follow up needed", "Keep Momentum Going" → "Keep Moving", "losing momentum" → "keep moving"
-  - **New helpers**: getActionTitle, getShortAction; updated getCardReason with correct API action_keys (send_intro_email, reengage_relationship)
-  - 10/10 features verified (iteration_174)
-  - Key files: `PipelinePage.js`, `PipelineHero.js`
-
-- **Attention Engine V2 (Complete — 2026-03-18)**
-  - Created `computeAttention(program, topAction)` — single source of truth for all classification
-  - Scoring: coach signals (+100/+90), due date (-1→+80, 0→+70, 1→+50, ≤3→+30), activity (≥7d→+40, ≥3d→+20), stage bonus (+10/+15)
-  - Levels: ≥80→high, ≥40→medium, else low
-  - CRITICAL RULE: daysUntil≤0 → minimum score 40 (never "on track")
-  - Fixed Florida Atlantic bug (was On Track + Coming Up Today → now consistently "Coming Up Soon")
-  - Fixed duplication inconsistency (same program, same computed state everywhere)
-  - Removed: getDueInfo, generateActions, getAttentionLevel, ATTENTION_HIGH/MED, buildTimelineItems, getCardReason, getActionTitle, getShortName, getTimingSignal, getMicroSignal
-  - Added: computeAttention.js, computeAllAttention(), ATTENTION_LABEL
-  - UI integration: Hero=top 5 by score, Peek=next 2-4, Board=high/medium/low, Timeline=daysUntil 0-3
-  - 15/15 features verified (iteration_176)
-  - Key files: `computeAttention.js`, `PipelinePage.js`, `PipelineHero.js`, `ComingUpTimeline.js`
-
-- **Explainability Polish (Complete — 2026-03-18)**
-  - Added `reasonShort` field to `computeAttention()` — concise, human-readable reason for each program's attention score
-  - Values: "Coach assigned a task", "Overdue by X days", "Due today", "Due tomorrow", "Due in X days", "No response in X days", "Ready for first contact", "No recent engagement", "On track"
-  - Threaded `reasonShort` consistently across: Hero (secondary text), Peek Row ("School · reason"), Priority Cards (line 3), Coming Up Timeline (subtext)
-  - Stable sorting in `computeAllAttention()`: score → earliest due date → higher stage (offer>campus_visit>in_conversation>outreach>added) → alphabetical
-  - Intentional empty states: "Nothing urgent right now" (high), "No upcoming actions" (medium), "Everything is on track" banner when all programs are low
-  - 11/11 features verified (iteration_177)
-  - Key files: `computeAttention.js`, `PipelineHero.js`, `PipelinePage.js`, `ComingUpTimeline.js`
-
-- **Animated View Morphing (Complete — 2026-03-18)**
-  - Smooth crossfade transition between Priority ↔ Pipeline views: 140ms exit (opacity→0, translateY→-6px, scale→0.995) → 180ms enter (fade in from translateY 6px)
-  - Animated pill slider on toggle: white indicator slides between Priority/Pipeline with 180ms easing
-  - Debounced rapid clicks: toggle ignores clicks during in-flight animation
-  - View mode persists to localStorage across sessions
-  - Non-blocking: page remains interactive during transition
-  - Kanban drag-and-drop still works after morph animation
-  - CSS-only animations using existing motion system (transform+opacity only, 60fps)
-  - 11/11 features verified (iteration_178)
-  - Key files: `PipelinePage.js`, `pipeline-motion.css`
-
-- **Priority Board Layout Refinement (Complete — 2026-03-18)**
-  - Needs Attention: single-column full-width layout (task-list feel), 10px card gap, 12px header margin
-  - Coming Up Soon: 2-column grid desktop, collapses to 1-column on mobile via `.priority-grid-coming-up` media query
-  - On Track: compact grid (minmax 220px), tighter 6px gap, smaller card padding
-  - Visual hierarchy: 28px section gap, header opacity 1.0/0.75/0.6 for high/med/low, card opacity 0.88 for subdued sections
-  - No data/logic/content changes — layout and spacing only
-  - Key files: `PipelinePage.js` (PriorityBoard, PriorityCard, PipelineStyles)
-
-- **PipelinePage.js Refactoring (Complete — 2026-03-18)**
-  - Extracted 6 components from 921-line monolith → 279-line orchestrator
-  - KanbanBoard.js (213 lines): KanbanCard + KanbanBoard with drag-and-drop
-  - PriorityBoard.js (95 lines): PriorityCard + PriorityBoard with 3 sections
-  - PipelineStyles.js (73 lines): CSS-in-JS animations
-  - UpcomingTasksSection.js (52 lines): Tasks section
-  - CommittedBanner.js (31 lines): Committed programs banner
-  - pipeline-constants.js (61 lines): Shared KANBAN_COLS, COL_TO_STAGE, ATTENTION_META, helpers
-  - Removed dead code: MeasurablesGuidanceBanner, DIV_TAG_STYLES, PipelineHealthBadge import, healthMap state
-  - 12/12 regression features verified (iteration_179)
-
-- **Priority Card Action-First Redesign (Complete — 2026-03-18)**
-  - HIGH cards: full-width, 4px red left accent bar, light red bg, action as largest text (14px/700), timing label top-right, meta line (reasonShort + owner), red CTA button right-aligned
-  - MED cards: 3px amber left accent, amber tint bg, compact layout, timing label, no large CTA
-  - LOW cards: minimal, no CTA, 0.75 opacity, compact grid
-  - Card router pattern: PriorityCard delegates to HighCard/MedCard/LowCard by section
-  - Max 2-line clamp on action text, no paragraphs, 3-4 lines per card max
-  - Layout-only change — no data logic changes
-  - Key file: `PriorityBoard.js`
-
-- **Hero Card Action-First Redesign (Complete — 2026-03-18)**
-  - Restructured slide content: status row → school row → rail → action → meta → CTA
-  - Row 1: "● HIGH · Now overdue" + timing label aligned right
-  - Row 2: logo + school name + match % inline (not oversized)
-  - Progress rail reduced: opacity 0.45, max-w-xs
-  - Main action is LARGEST element: 18-22px extrabold white, 2-line clamp
-  - Meta line: reasonShort + owner badge (consistent with Priority Cards)
-  - CTA row: primary button + "View details" secondary link
-  - Removed verbose copy: "Top priority right now", "What to do next"
-  - Level labels shortened: "High" / "Med" / "On track" (matches card terminology)
-  - Key file: `PipelineHero.js`
-
-- **Unified Hero + Card System (Complete — 2026-03-18)**
-  - Hero restructured: single-line status `● HIGH · Overdue 10d` (matches card pattern exactly)
-  - School info + match % + rail are hero-only enhancements, visually subdued
-  - Ghost CTAs everywhere: text-only "Take Action →" replaces solid red buttons
-  - Section labels: "Up next" (high), "More actions" (medium), "On Track" (low)
-  - Visual hierarchy fade: card[0]=1.0, card[1]=0.95, card[2+]=0.88 opacity + thinner accent bars
-  - Scroll-based compact hero: IntersectionObserver reduces padding, hides rail+school on scroll
-  - Peek row shortened: "Also:" prefix, timing label as action hint
-  - Key files: `PipelineHero.js`, `PriorityBoard.js`
-
-- **Swipe Gestures on Priority Cards (Complete — 2026-03-18)**
-  - SwipeableCard.js: reusable swipe wrapper with touch+mouse support, axis lock, threshold=80px, 200ms snap-back
-  - Swipe RIGHT: reveals green action panel → navigates to program detail on commit
-  - Swipe LEFT: reveals amber snooze panel → Tomorrow / In 3 days / Next week / Cancel buttons
-  - Snooze: PUT /api/athlete/programs/{id} with snoozed_until date, toast confirmation
-  - Click suppression: didSwipe ref prevents tap navigation after swipe gesture
-  - Applied to HIGH and MED cards only, LOW cards unaffected
-  - CSS animations: swipe-panel-in, swipe-commit, swipe-check-pop in pipeline-motion.css
-  - 11/11 features verified (iteration_180)
-  - Key files: `SwipeableCard.js`, `PriorityBoard.js`, `pipeline-motion.css`
-
-- **Unified Coming Up & On Track Sections (Complete — 2026-03-18)**
-  - Replaced old card-based/grid layouts in "Coming Up" and "On Track" sections with list-row components matching "Next Actions"
-  - Fixed critical bug: undefined `LowCard` reference replaced with `LowRow` component in SwipePriorityCard
-  - Changed "On Track" GRID from CSS grid to flex column layout (gap: 0)
-  - All three sections (Next Actions, Coming Up, On Track) now use HighRow/MedRow/LowRow with consistent spacing, typography, and action arrows
-  - Neutral color palette: no bright orange, muted headers with opacity hierarchy (1.0/0.7/0.55)
-  - 9/9 features verified (iteration_181)
-  - Key files: `PriorityBoard.js`
-
-- **Pipeline Layout Final Refinement (Complete — 2026-03-18)**
-  - Reordered sections: Hero → Also → Next actions → Coming up → On track (removed standalone ComingUpTimeline between hero and board)
-  - Unified list layout: all 3 sections use identical row components (HighRow, MedRow, LowRow), no card containers
-  - Color system: Overdue=red (#dc2626), Due soon=neutral gray (#64748b, no orange), On track=soft green (#10b981)
-  - Sentence-case section headers with counts in parens: "Next actions (5)", "Coming up (1)", "On track (1)"
-  - Collapsible On Track section: ChevronRight toggle, defaults collapsed when > 3 items, expanded when <= 3
-  - Removed "MANAGE ALL PROGRAMS" separator text, kept subtle divider line
-  - SectionHeader component for consistent header rendering
-  - getTimingColor helper for HighRow timing label colors
-  - 12/12 features verified (iteration_182)
-  - Key files: `PriorityBoard.js`, `PipelinePage.js`
-
-- **School Logos in Priority List Rows (Complete — 2026-03-18)**
-  - Added 22px UniversityLogo (rounded square) to the left of every row in Next Actions, Coming Up, and On Track
-  - Uses Google favicon API with letter-avatar fallback (via existing UniversityLogo component)
-  - On Track logos wrapped with opacity 0.6 for muted, calm appearance
-  - Action text remains first and most prominent — school name stays inline after "—"
-  - Gap reduced from 14px to 10px for tighter, balanced row composition
-  - 10/10 features verified (iteration_183)
-  - Key files: `PriorityBoard.js`
-
-- **Priority List UI Final Polish (Complete — 2026-03-18)**
-  - Standardized logos: 26px LogoBox container (rounded, subtle #f1f5f9 bg) wrapping 20px UniversityLogo; On Track logos muted at 0.55 opacity
-  - Fixed alignment: uniform 11px padding, consistent gap:10, center-aligned across all rows
-  - Reduced redundancy: `shortenName()` strips "University of", "University", "College" etc. — shows "— Florida" not "— University of Florida"
-  - CTA hierarchy: HIGH=red bold (0.8), MED=gray medium (0.7), LOW=muted light (0.6)
-  - Coming Up header opacity bumped to 0.92 for better readability
-  - On Track rows show a 5px green dot indicator before "On track" text
-  - Hover interaction: `.pb-row:hover` subtle background tint + `.pb-cta` brightens to opacity 1; all rows fully clickable
-  - 12/12 features verified (iteration_184)
-  - Key files: `PriorityBoard.js`
-
-- **Pipeline List Visual Polish V2 (Complete — 2026-03-18)**
-  - 24px logo containers (down from 26px) with 18px inner logo, rounded-sm corners
-  - Tighter density: 8px row padding (from 11px), marginTop:1 for metadata, more rows visible per viewport
-  - CTA alignment: `alignItems: flex-start` + `paddingTop: 1` on logo/CTA to align with action text baseline
-  - Coming Up distinction: subtle bg tint (rgba(241,245,249,0.35)) with 8px border-radius, padding, negative margin
-  - Softer separators: rgba(226,232,240,0.6) — reduced from solid borders
-  - OwnerTag component: 8px font, 0.6 opacity colors — smaller/less dominant
-  - Normalized spacing: 24px uniform gap between sections (down from 28px)
-  - 11/11 features verified (iteration_185)
-  - Key files: `PriorityBoard.js`
-
-- **Unified Design System + Shared pipeline-design.js (Complete — 2026-03-18)**
-  - Created `pipeline-design.js` as single source of truth: LogoBox, StatusIndicator, OwnerTag, FONT tokens, PipelineRowStyles, shortenName, getTimingColor
-  - Both PriorityBoard and KanbanBoard import shared components — zero duplication
-  - Hero LEVEL_STYLE updated: "Needs attention"/"Needs action"/"On track" labels, amber accent #f59e0b
-  - Key files: `pipeline-design.js`, `PriorityBoard.js`, `KanbanBoard.js`, `PipelineHero.js`
-
-- **Kanban Strict Structure — Stage Visualization Only (Complete — 2026-03-18)**
-  - Strict 3-line card: logo+name → status dot+label → optional state context
-  - Removed all CTAs, timing labels, owner tags from Kanban (belongs in list only)
-  - `getCardContext()` filters timing info, only passes state context ("Coach assigned a task", "Ready for first contact")
-  - One signal per card: red/amber/green status only
-  - Equal spacing: 8px card padding, 2px card gap, 16px column gap
-  - Uppercase 800-weight column headers with muted subtitles
-  - Updated empty column copy: "No offers yet", "No visits scheduled", etc.
-  - 12/12 features verified (iteration_187)
-  - Key files: `KanbanBoard.js`, `pipeline-constants.js`
-
-- **Kanban Card Container Affordance Restored (Complete — 2026-03-18)**
-  - White bg, 10px border-radius, subtle border + box-shadow (0 1px 2px)
-  - 12px card padding, 8px gap between cards, cursor:grab
-  - Hover: increased shadow + border-color
-  - Drag: scale(1.02) + elevated shadow (12px+4px blur)
-  - Content unchanged: logo + name + status + optional context only
-  - 11/11 features verified (iteration_188)
-  - Key files: `KanbanBoard.js`
+### Session 11 (2026-03-19)
+- **Kanban Board Task Board Redesign (Complete)**
+  - Rewrote `KanbanBoard.js` to match user-approved mockup (nTask/Trello hybrid design)
+  - White column containers with 36px colored header bars: Added (#e05555 red), Outreach (#2f80ed blue), Talking (#e8862a orange), Visit (#8b5cf6 purple), Offered (#27ae60 green)
+  - Count badges on headers (pill style with semi-transparent white bg)
+  - "+ Add New Task" row in each column with hover effect
+  - Compact 5-element cards:
+    1. School row: 24px circular logo + bold school name
+    2. Status line: colored dot + label (Needs attention / Needs action / On track)
+    3. Time line: "2d overdue", "Due today", etc. with color coding
+    4. Action line: bold, largest text ("Follow up", "Start outreach", "Take action", "Re-engage")
+    5. Owner line: colored avatar + label ("Owner: You", "Coach assigned task")
+  - Optional metrics row (last activity) on cards with recent activity
+  - Dashed "+ Add" column on the right
+  - Dense, scannable, operational layout
+  - Drag-and-drop preserved with @hello-pangea/dnd (card lift, insertion lines, column highlighting)
+  - Helper functions: getShortAction(), getTimeLine(), OwnerBadge component
+  - Updated pipeline-constants.js column colors
+  - 10/10 features verified (iteration_192)
+  - Key files: `KanbanBoard.js` (REWRITTEN), `pipeline-constants.js` (UPDATED)
 
 ---
 
 ## Backlog
 
 ### P0 — Immediate
-- ~~**YouTube API Key** — DONE~~
+- (None currently)
 
 ### P1 — Upcoming
 - **CSV Import Tool** — For manually gathered school/coach data from university sites
@@ -582,3 +106,4 @@ CapyMatch is a full-stack recruiting platform for women's volleyball. It connect
 - **AI-Powered Coach Summary** — LLM-generated recruiting pitches from athlete data
 - **Club Billing** — Stripe subscription billing for organizations
 - **Multi-Agent Intelligence Pipeline** — Roster Stability, Scholarship, NIL Readiness agents
+- **Kanban Keyboard Shortcuts**
