@@ -251,17 +251,17 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
           50% { box-shadow: 0 1px 12px rgba(0,0,0,0.12); }
           100% { box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
         }
-        .kb-insert-line {
-          height: 2px;
-          border-radius: 1px;
-          margin: 2px 4px;
-          position: relative;
-          z-index: 10;
-          animation: kb-line-in 80ms ease-out;
+        .kb-ghost-placeholder {
+          border: 2px dashed #c1c7d0;
+          border-radius: 5px;
+          background: #f4f5f7;
+          min-height: 72px;
+          margin: 3px 0;
+          animation: kb-ghost-in 120ms ease-out;
         }
-        @keyframes kb-line-in {
-          from { opacity: 0; transform: scaleX(0.5); }
-          to { opacity: 1; transform: scaleX(1); }
+        @keyframes kb-ghost-in {
+          from { opacity: 0; min-height: 0; }
+          to { opacity: 1; min-height: 72px; }
         }
       `}</style>
 
@@ -324,7 +324,7 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                         cards.map((p, idx) => (
                           <div key={p.program_id} style={{ position: "relative" }}>
                             {insertAt === idx && (
-                              <div className="kb-insert-line" style={{ background: col.color }} data-testid="insertion-line" />
+                              <div className="kb-ghost-placeholder" data-testid="insertion-ghost" />
                             )}
                             <KanbanCard
                               program={p}
@@ -336,15 +336,17 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                           </div>
                         ))
                       ) : (
-                        !isTarget && (
+                        isHovering ? (
+                          <div className="kb-ghost-placeholder" data-testid="insertion-ghost" />
+                        ) : !isTarget ? (
                           <div style={{ padding: "20px 12px", textAlign: "center", fontSize: 11, color: "#c1c7d0", fontWeight: 500 }}
                             data-testid={`empty-col-${col.key}`}>
                             {getEmptyColCopy(col.key)}
                           </div>
-                        )
+                        ) : null
                       )}
                       {insertAt !== null && insertAt >= count && (
-                        <div className="kb-insert-line" style={{ background: col.color }} data-testid="insertion-line" />
+                        <div className="kb-ghost-placeholder" data-testid="insertion-ghost" />
                       )}
                       {provided.placeholder}
                     </div>
