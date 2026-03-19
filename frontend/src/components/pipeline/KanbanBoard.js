@@ -15,7 +15,7 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-/* ── Context: state-only, describes what's happening ── */
+/* ── Context: state-only ── */
 function getCardContext(reasonShort) {
   if (!reasonShort) return null;
   const lower = reasonShort.toLowerCase();
@@ -33,10 +33,10 @@ function getCardTime(timingLabel) {
   if (lower === 'due today') return { text: 'Due today', urgency: 'medium' };
   if (lower === 'tomorrow') return { text: 'Due tomorrow', urgency: 'low' };
   const inM = lower.match(/in (\d+) days/);
-  if (inM) return { text: `Due in ${inM[1]}d`, urgency: 'none' };
+  if (inM) return { text: `In ${inM[1]}d`, urgency: 'none' };
   const nrM = lower.match(/no response in (\d+)/);
-  if (nrM) return { text: `${nrM[1]}d since contact`, urgency: 'none' };
-  if (lower === 'no contact yet') return { text: 'No outreach yet', urgency: 'none' };
+  if (nrM) return { text: `${nrM[1]}d no reply`, urgency: 'none' };
+  if (lower === 'no contact yet') return { text: 'No outreach', urgency: 'none' };
   return null;
 }
 
@@ -44,17 +44,34 @@ const TIME_STYLE = {
   high:   { color: '#dc2626', fontWeight: 600 },
   medium: { color: '#d97706', fontWeight: 600 },
   low:    { color: '#94a3b8', fontWeight: 500 },
-  none:   { color: 'rgba(148,163,184,0.55)', fontWeight: 500 },
+  none:   { color: 'rgba(148,163,184,0.5)', fontWeight: 500 },
 };
 
-/* ── Card: 4-line layout ── */
+/* ── Last activity helper ── */
+function getLastActivity(program) {
+  const d = program.signals?.days_since_activity;
+  if (d === null || d === undefined) return 'No activity';
+  if (d === 0) return 'Active today';
+  return `${d}d ago`;
+}
+
+/* ── Priority badge color ── */
+const PRIORITY_COLORS = {
+  'Top Choice': '#6366f1',
+  'High': '#0d9488',
+  'Medium': '#94a3b8',
+  'Low': '#cbd5e1',
+};
+
+/* ── Card: 3-section layout ── */
 function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedId, activeDragId }) {
   const level = attn?.attentionLevel || 'low';
   const context = getCardContext(attn?.reasonShort);
   const time = getCardTime(attn?.timingLabel);
-  // Max 2 lines below status: show context OR time, or both if both exist
-  const showContext = !!context;
-  const showTime = !!time;
+  const lastActivity = getLastActivity(p);
+  const nextStep = attn?.ctaLabel || null;
+  const priority = p.priority;
+  const priorityColor = PRIORITY_COLORS[priority] || '#cbd5e1';
   const isJustDropped = justDroppedId === p.program_id;
   const isFaded = activeDragId && activeDragId !== p.program_id;
 
@@ -99,7 +116,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
             }}
             data-testid={`kanban-card-${p.program_id}`}
           >
-            {/* Line 1: Logo + School name */}
+            {/* ── HEADER: Logo + Name + Priority ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <LogoBox domain={p.domain} name={p.university_name} muted={level === 'low'} />
               <div style={{
@@ -109,41 +126,62 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
               }} data-testid={`card-name-${p.program_id}`}>
                 {p.university_name}
               </div>
+              {priority && (
+                <span style={{
+                  fontSize: 8, fontWeight: 700, color: priorityColor,
+                  flexShrink: 0, letterSpacing: '0.02em',
+                }} data-testid={`card-priority-${p.program_id}`}>
+                  {priority === 'Top Choice' ? 'TOP' : priority.toUpperCase()}
+                </span>
+              )}
             </div>
 
-            {/* Line 2: Status */}
-            <div style={{ paddingLeft: 32, marginTop: 5 }} data-testid={`card-status-${p.program_id}`}>
-              <StatusIndicator level={level} />
-            </div>
-
-            {/* Line 3: Context (optional, clearly secondary) */}
-            {showContext && (
-              <div style={{
-                paddingLeft: 32, marginTop: 3,
-                fontSize: 9.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
-                lineHeight: 1.3,
-              }} data-testid={`card-context-${p.program_id}`}>
-                {context}
+            {/* ── STATUS: dot + label + optional context ── */}
+            <div style={{ paddingLeft: 32, marginTop: 6 }}>
+              <div data-testid={`card-status-${p.program_id}`}>
+                <StatusIndicator level={level} />
               </div>
-            )}
-
-            {/* Line 4: Time — colored by urgency */}
-            {showTime && (() => {
-              const ts = TIME_STYLE[time.urgency] || TIME_STYLE.none;
-              return (
+              {context && (
                 <div style={{
-                  paddingLeft: 32, marginTop: showContext ? 1 : 3,
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  fontSize: 9, fontWeight: ts.fontWeight, color: ts.color,
-                  lineHeight: 1.3,
-                }} data-testid={`card-time-${p.program_id}`}>
-                  {time.urgency !== 'none' && (
-                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: ts.color, flexShrink: 0, opacity: 0.7 }} />
-                  )}
-                  {time.text}
+                  fontSize: 9.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
+                  marginTop: 2, lineHeight: 1.3,
+                }} data-testid={`card-context-${p.program_id}`}>
+                  {context}
                 </div>
-              );
-            })()}
+              )}
+            </div>
+
+            {/* ── ACTION: last activity + next step + time ── */}
+            <div style={{
+              marginTop: 8, paddingTop: 7, paddingLeft: 32,
+              borderTop: '1px solid rgba(226,232,240,0.5)',
+              display: 'flex', flexDirection: 'column', gap: 2,
+            }} data-testid={`card-action-section-${p.program_id}`}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)' }}>
+                  Last: {lastActivity}
+                </span>
+                {time && (() => {
+                  const ts = TIME_STYLE[time.urgency] || TIME_STYLE.none;
+                  return (
+                    <span style={{
+                      fontSize: 9, fontWeight: ts.fontWeight, color: ts.color,
+                      display: 'flex', alignItems: 'center', gap: 3,
+                    }} data-testid={`card-time-${p.program_id}`}>
+                      {time.urgency !== 'none' && (
+                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: ts.color, opacity: 0.7 }} />
+                      )}
+                      {time.text}
+                    </span>
+                  );
+                })()}
+              </div>
+              {nextStep && level !== 'low' && (
+                <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--cm-text-3, #94a3b8)' }} data-testid={`card-next-${p.program_id}`}>
+                  Next: {nextStep}
+                </div>
+              )}
+            </div>
           </div>
         );
       }}
