@@ -95,6 +95,10 @@ export function computeAttention(program, topAction) {
   if (daysUntil !== null && daysUntil <= 0 && ta?.action_key === 'no_action_needed') {
     primaryAction = daysUntil < 0 ? `Follow up with ${name}` : `Follow up with ${name} today`;
   }
+  // Override for upcoming items that have timing but show "is on track"
+  if (daysUntil !== null && daysUntil > 0 && daysUntil <= 7 && primaryAction.endsWith('is on track')) {
+    primaryAction = p.next_action ? `${p.next_action} — ${name}` : `Follow up with ${name}`;
+  }
 
   // ── Reason ──
   const reasonMap = {
