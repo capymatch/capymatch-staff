@@ -157,7 +157,7 @@ export default function SwipeableCard({ children, onAction, onSnooze, actionLabe
             fontSize: 11, fontWeight: 700, color: '#92400e',
             opacity: leftPct,
             transition: isMoving ? 'none' : `opacity ${SNAP_MS}ms ease-out`,
-          }}>Snooze · {actionLabel || 'This task'}</span>
+          }}>Snooze</span>
           <div style={{
             width: 28, height: 28, borderRadius: '50%',
             background: `rgba(217,119,6,${0.15 + leftPct * 0.35})`,
