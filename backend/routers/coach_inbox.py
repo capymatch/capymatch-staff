@@ -16,7 +16,7 @@ from risk_engine import evaluate_risk
 router = APIRouter()
 
 ISSUE_LABELS = {
-    "escalation":        "Needs attention",
+    "escalation":        "Escalated issue",
     "awaiting_reply":    "Awaiting reply",
     "follow_up":         "Needs follow-up",
     "no_activity":       "No activity",

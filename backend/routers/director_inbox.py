@@ -19,7 +19,7 @@ router = APIRouter()
 
 # Standardised issue labels
 ISSUE_LABELS = {
-    "escalation":        "Needs attention",
+    "escalation":        "Escalated issue",
     "awaiting_reply":    "Awaiting reply",
     "follow_up":         "Needs follow-up",
     "no_activity":       "No activity",

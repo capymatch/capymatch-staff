@@ -84,7 +84,7 @@ CONFIDENCE_MAP = {
 
 # Human-readable signal labels
 SIGNAL_LABELS = {
-    "escalation":        "Needs attention",
+    "escalation":        "Escalated issue",
     "awaiting_reply":    "Awaiting reply",
     "follow_up":         "Needs follow-up",
     "no_activity":       "No activity",
@@ -162,20 +162,32 @@ def _role_actions(intervention_type, primary_signal, school_name=None):
 # ═══════════════════════════════════════════════════════════════
 
 def _why_now(primary_signal, secondary_signals, severity, trajectory, best_stage, school_name, days_inactive, compound_desc):
-    """Generate a concise one-sentence urgency explanation."""
+    """Generate a concise one-sentence urgency explanation.
+
+    CRITICAL RULE: whyNow must never contradict the trajectory.
+    - If trajectory=improving, acknowledge the recent action but note residual risk.
+    - If trajectory=worsening, emphasise deterioration.
+    - If trajectory=stable, state current risk plainly.
+    """
 
     stage_ctx = f"{best_stage}-stage" if best_stage else ""
-    school_ctx = school_name or "this"
+    school_ctx = school_name or "this school"
 
-    # Compound-risk driven why-now
+    # ── Improving: always acknowledge the positive signal first ──
+    if trajectory == "improving":
+        base = _why_now_improving(primary_signal, secondary_signals, stage_ctx, school_ctx, days_inactive, severity)
+        if base:
+            return base
+
+    # ── Compound-risk driven why-now ──
     if compound_desc:
         return compound_desc
 
-    # Signal-specific
+    # ── Signal-specific (stable / worsening) ──
     if primary_signal == "escalation":
         if trajectory == "worsening":
             return f"Unresolved escalation — engagement may slip further."
-        return f"Coach flagged an issue that needs review."
+        return f"Escalated issue awaiting review."
 
     if primary_signal == "no_coach_assigned":
         if "no_activity" in secondary_signals:
@@ -188,11 +200,13 @@ def _why_now(primary_signal, secondary_signals, severity, trajectory, best_stage
         return f"Missing requirement may delay next steps."
 
     if primary_signal == "no_activity":
+        if trajectory == "worsening" and days_inactive and days_inactive > 21:
+            return f"No activity in {days_inactive} days and getting worse."
         if best_stage in ("Offer", "Campus Visit", "Visit", "In Conversation", "Engaged"):
             return f"Relationship with {school_ctx} is at risk of going cold."
         if days_inactive and days_inactive > 21:
             return f"No activity in {days_inactive} days — momentum is fading."
-        return f"No recent engagement — momentum may drop."
+        return f"Inactivity may cause momentum to drop."
 
     if primary_signal == "awaiting_reply":
         if days_inactive and days_inactive > 10:
@@ -208,12 +222,47 @@ def _why_now(primary_signal, secondary_signals, severity, trajectory, best_stage
     if primary_signal == "event_blocker":
         return f"Upcoming event requires prep to avoid a missed opportunity."
 
-    # Fallback based on severity
+    # Fallback
     if severity == "critical":
         return f"Multiple signals suggest this needs attention now."
     if trajectory == "worsening":
         return f"Situation is trending the wrong way — act soon."
     return f"Worth checking in to keep things on track."
+
+
+def _why_now_improving(primary, secondary, stage_ctx, school_ctx, days_inactive, severity):
+    """Generate whyNow text that acknowledges recent positive action
+    while making clear the underlying risk is not resolved."""
+
+    if primary == "escalation":
+        if "no_activity" in secondary:
+            return f"Recent action taken, but long inactivity means risk remains."
+        return f"Recent action taken on escalation — monitor for resolution."
+
+    if primary == "no_activity":
+        if days_inactive and days_inactive > 14:
+            return f"Recent follow-up sent after {days_inactive} days of silence — still at risk."
+        return f"Recent action taken, but momentum remains low."
+
+    if primary == "awaiting_reply":
+        return f"Follow-up sent to {school_ctx} — awaiting response."
+
+    if primary == "missing_documents":
+        return f"Progress on requirements, but not yet complete."
+
+    if primary == "stalled_stage":
+        return f"Recent movement, but {stage_ctx} pipeline was stalled."
+
+    if primary == "no_coach_assigned":
+        return f"Assignment in progress — athlete still needs a coach."
+
+    if primary == "follow_up":
+        return f"Follow-up was sent recently — watch for response."
+
+    # Generic improving fallback
+    if severity in ("critical", "high"):
+        return f"Recent action taken, but underlying risk is still serious."
+    return f"Trending in the right direction — keep monitoring."
 
 
 # ═══════════════════════════════════════════════════════════════

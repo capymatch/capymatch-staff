@@ -186,7 +186,7 @@ function CoachTopPriority({ item }) {
             </p>
           </div>
           <p className="text-[12px] font-medium mt-1" style={{ color: issueColor, margin: 0 }}>
-            {(item.riskSignals || item.issues || []).filter(s => s !== "Needs attention" && s !== "Needs follow-up").join(" · ") || item.primaryRisk} {item.timeAgo && `· ${item.timeAgo}`}
+            {(item.riskSignals || item.issues || []).filter(s => s !== "Needs follow-up").join(" · ") || item.primaryRisk} {item.timeAgo && `· ${item.timeAgo}`}
           </p>
           <p className="text-[11.5px] mt-1.5" style={{ color: "#78716c", margin: 0, lineHeight: 1.4 }} data-testid="coach-why-now">
             {item.whyNow}

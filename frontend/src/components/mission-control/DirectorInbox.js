@@ -66,7 +66,7 @@ const NUDGE_MAP = {
     getUrl: () => "/advocacy",
     getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""} on our last conversation. Let us know how things are progressing.`,
   },
-  "Needs attention": {
+  "Escalated issue": {
     label: "Review and take action",
     icon: RefreshCw,
     actionType: "check_in",
@@ -81,7 +81,7 @@ function extractAthleteId(item) {
 
 function getNudge(item) {
   const issues = item.issues || [];
-  const order = ["No coach assigned", "Missing requirement", "Awaiting reply", "No activity", "Needs follow-up", "Needs attention"];
+  const order = ["No coach assigned", "Missing requirement", "Awaiting reply", "No activity", "Needs follow-up", "Escalated issue"];
   for (const key of order) {
     if (issues.includes(key) && NUDGE_MAP[key]) {
       const n = NUDGE_MAP[key];
@@ -100,7 +100,7 @@ function getNudge(item) {
 /* ── Inbox Row ── */
 /* ── Short explanation for high priority rows ── */
 const WHY_SHORT = {
-  "Needs attention": "Momentum may be dropping",
+  "Escalated issue": "Momentum may be dropping",
   "No activity": "Momentum may be dropping",
   "Awaiting reply": "Waiting for response",
   "Missing requirement": "Blocking progress",
@@ -137,7 +137,7 @@ function InboxRow({ item }) {
       : item.athleteName;
 
   /* Subtitle: primary issue — context · time (no "Needs attention") */
-  const issues = (item.issues || []).filter(i => i !== "Needs attention");
+  const issues = (item.issues || []).filter(i => i !== "Escalated issue");
   const primary = issues[0] || item.primaryRisk || "";
   const context = item.schoolName || (item.schoolCount > 1 ? `across ${item.schoolCount} schools` : "");
   let subtitle = primary;
@@ -220,7 +220,7 @@ function GroupLabel({ label }) {
 }
 
 /* ── Scoring + "why" logic for Top Priority ── */
-const HIGH_ISSUES = new Set(["Needs attention", "Missing requirement", "No coach assigned"]);
+const HIGH_ISSUES = new Set(["Escalated issue", "Missing requirement", "No coach assigned"]);
 const MED_ISSUES = new Set(["Awaiting reply", "No activity"]);
 const LOW_ISSUES = new Set(["Needs follow-up"]);
 
@@ -247,9 +247,9 @@ function generateWhy(item) {
 
   if (has("No activity") && has("No coach assigned"))
     return "No activity and no coach assigned — athlete is at risk of falling behind.";
-  if (has("Needs attention") && has("No activity"))
+  if (has("Escalated issue") && has("No activity"))
     return `Flagged and inactive ${daysStr ? "for " + daysStr.replace(" ago", "") : ""} — momentum may be dropping.`.replace("for now", "");
-  if (has("Needs attention") && has("Missing requirement"))
+  if (has("Escalated issue") && has("Missing requirement"))
     return "Flagged with missing requirements — may block applications.";
   if (has("No coach assigned"))
     return "No coach assigned — athlete is not being actively managed.";
@@ -261,7 +261,7 @@ function generateWhy(item) {
     return `No activity ${daysStr ? "in " + daysStr.replace(" ago", "") : ""} — recruiting momentum may be dropping.`.replace("in now", "recently");
   if (has("Needs follow-up"))
     return "Follow-up needed — don't let this conversation stall.";
-  if (has("Needs attention"))
+  if (has("Escalated issue"))
     return "Flagged for attention — review and take action.";
   return "This item needs your attention.";
 }
