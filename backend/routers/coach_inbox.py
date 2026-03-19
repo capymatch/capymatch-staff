@@ -110,7 +110,7 @@ async def get_coach_inbox(current_user: dict = get_current_user_dep()):
                     "schoolName": r.get("school_name"),
                     "issueKey": "awaiting_reply",
                     "timestamp": sent or now,
-                    "ctaUrl": "/advocacy",
+                    "ctaUrl": f"/support-pods/{r.get('athlete_id', '')}",
                 })
         elif r.get("status") == "follow_up_needed":
             ts = _iso_or_none(r.get("response_at") or r.get("sent_at"))
@@ -120,7 +120,7 @@ async def get_coach_inbox(current_user: dict = get_current_user_dep()):
                 "schoolName": r.get("school_name"),
                 "issueKey": "follow_up",
                 "timestamp": ts or now,
-                "ctaUrl": "/advocacy",
+                "ctaUrl": f"/support-pods/{r.get('athlete_id', '')}",
             })
 
     # ── 3. MISSING DOCUMENTS (coach's athletes) ──
