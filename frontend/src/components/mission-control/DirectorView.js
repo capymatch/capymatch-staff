@@ -1,13 +1,11 @@
 import { useState } from "react";
-import { Users, BarChart3, Calendar, UserX, Target, MessageCircle, Mail, Clock, AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChevronRight, Target, MessageCircle, AlertTriangle, Mail, Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import AIProgramBrief from "./AIProgramBrief";
-import NeedsAttentionCard from "./NeedsAttentionCard";
 import CoachHealthCard from "./CoachHealthCard";
 import UpcomingEventsCard from "./UpcomingEventsCard";
 import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
-import DirectorActionsPulse from "./DirectorActionsPulse";
 import DirectorInbox from "./DirectorInbox";
 
 function getGreeting() {
@@ -21,11 +19,63 @@ function getDateLabel() {
   return new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
-const MOMENTUM_CONFIG = {
-  improving: { label: "Improving", icon: TrendingUp, color: "#30C5BE", textColor: "text-emerald-400" },
-  stable: { label: "Stable", icon: Minus, color: "#8A92A3", textColor: "text-slate-400" },
-  declining: { label: "Declining", icon: TrendingDown, color: "#FF6B6B", textColor: "text-red-400" },
+const MOM_CFG = {
+  improving: { label: "Improving", icon: TrendingUp, color: "#30C5BE" },
+  stable: { label: "Stable", icon: Minus, color: "#8A92A3" },
+  declining: { label: "Declining", icon: TrendingDown, color: "#FF6B6B" },
 };
+
+/* ── Collapsible wrapper for secondary sections ── */
+function CollapsibleSection({ title, children, defaultOpen = false, testId }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div data-testid={testId}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-3 cursor-pointer group"
+        style={{ background: "none", border: "none", fontFamily: "inherit" }}
+        data-testid={`${testId}-toggle`}
+      >
+        <span className="text-[13px] font-semibold" style={{ color: "#CBD5E1" }}>{title}</span>
+        <ChevronRight
+          className="w-4 h-4 transition-transform duration-150"
+          style={{ color: "#64748B", transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
+        />
+      </button>
+      {open && <div className="pb-2">{children}</div>}
+    </div>
+  );
+}
+
+/* ── Outbox strip ── */
+function OutboxStrip({ summary }) {
+  if (!summary) return null;
+  const { awaiting_response, critical_pending, in_progress, resolved_this_week } = summary;
+  if (!awaiting_response && !critical_pending && !in_progress && !resolved_this_week) return null;
+
+  const parts = [];
+  if (awaiting_response > 0) parts.push(`${awaiting_response} awaiting response`);
+  if (critical_pending > 0) parts.push(`${critical_pending} critical pending`);
+  if (in_progress > 0) parts.push(`${in_progress} in progress`);
+  if (resolved_this_week > 0) parts.push(`${resolved_this_week} resolved this week`);
+
+  return (
+    <div
+      className="flex items-center justify-between px-4 py-2.5 rounded-lg"
+      style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
+      data-testid="outbox-strip"
+    >
+      <p className="text-[12px] font-medium" style={{ color: "#64748B" }}>
+        <span className="font-semibold" style={{ color: "#475569" }}>Outbox</span>
+        <span className="mx-1.5" style={{ color: "#cbd5e1" }}>—</span>
+        {parts.join(" · ")}
+      </p>
+      <span className="text-[11px] font-semibold flex items-center gap-0.5 cursor-pointer" style={{ color: "#0d9488" }}>
+        View details <ChevronRight className="w-3 h-3" />
+      </span>
+    </div>
+  );
+}
 
 export default function DirectorView({ data, userName }) {
   const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
@@ -34,174 +84,100 @@ export default function DirectorView({ data, userName }) {
   const trend = data.trendData || {};
   const momentum = trend.momentum || { state: "stable", engagementDelta: 0 };
   const needDelta = trend.needAttentionDelta || 0;
-  const momConfig = MOMENTUM_CONFIG[momentum.state] || MOMENTUM_CONFIG.stable;
-  const MomIcon = momConfig.icon;
+  const momCfg = MOM_CFG[momentum.state] || MOM_CFG.stable;
+  const MomIcon = momCfg.icon;
 
   const kpis = [
-    {
-      value: ps.totalAthletes || 0,
-      label: "ATHLETES",
-      subtitle: "In program",
-      color: "#30C5BE",
-      icon: Target,
-      iconBg: "#363D59",
-    },
-    {
-      value: ps.activeCoaches || 0,
-      label: "COACHES",
-      subtitle: "Active in program",
-      color: "#7F92FF",
-      icon: MessageCircle,
-      iconBg: "#363D59",
-    },
-    {
-      value: ps.needingAttention || 0,
-      label: "NEED ATTENTION",
-      subtitle: "Require intervention",
-      color: "#FF6B6B",
-      icon: AlertTriangle,
-      iconBg: "#4A2C2C",
-      emphasized: ps.needingAttention > 0,
-      trend: needDelta,
-    },
-    {
-      value: ps.upcomingEvents || 0,
-      label: "EVENTS AHEAD",
-      subtitle: "Next 14 days",
-      color: "#30C5BE",
-      icon: Mail,
-      iconBg: "#363D59",
-    },
-    {
-      value: ps.unassignedCount || 0,
-      label: "UNASSIGNED",
-      subtitle: ps.unassignedCount > 0 ? "Need coach assignment" : "All assigned",
-      color: ps.unassignedCount > 0 ? "#FFC649" : "#30C5BE",
-      icon: Clock,
-      iconBg: ps.unassignedCount > 0 ? "#4A3C36" : "#363D59",
-    },
+    { value: ps.totalAthletes || 0, label: "Athletes", color: "#30C5BE", icon: Target },
+    { value: ps.activeCoaches || 0, label: "Coaches", color: "#7F92FF", icon: MessageCircle },
+    { value: ps.needingAttention || 0, label: "Need Attention", color: "#FF6B6B", icon: AlertTriangle, emphasized: ps.needingAttention > 0, trend: needDelta },
+    { value: ps.upcomingEvents || 0, label: "Events", color: "#30C5BE", icon: Mail },
+    { value: ps.unassignedCount || 0, label: "Unassigned", color: ps.unassignedCount > 0 ? "#FFC649" : "#30C5BE", icon: Clock },
   ];
 
   return (
-    <div className="space-y-8 overflow-x-hidden" data-testid="director-mission-control">
-      {/* 1. PROGRAM OVERVIEW */}
+    <div className="space-y-6 overflow-x-hidden" data-testid="director-mission-control" style={{ maxWidth: 960 }}>
+
+      {/* ═══ 1. COMPACT CONTEXT STRIP ═══ */}
       <section
-        className="relative rounded-[10px] overflow-hidden"
+        className="rounded-lg overflow-hidden"
         style={{ backgroundColor: "#1E213A" }}
         data-testid="director-hero"
       >
-        <div className="px-4 py-5 sm:px-7 sm:py-6">
-          <div className="absolute hidden sm:block" style={{ top: 20, right: 20 }}>
-            <span
-              className="inline-block font-medium text-xs sm:text-[13px]"
-              style={{ backgroundColor: "#363D59", color: "#E5E5E5", padding: "6px 12px", borderRadius: 6 }}
-            >
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5">
+          {/* Row 1: Greeting + date */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-[15px] sm:text-[17px] font-semibold text-white leading-tight">
+              {getGreeting()}, <span style={{ color: "#30C5BE" }}>{firstName}</span>
+            </h2>
+            <span className="text-[10px] font-medium px-2 py-1 rounded" style={{ background: "#2D3548", color: "#94a3b8" }}>
               {getDateLabel()}
             </span>
           </div>
 
-          <h2 className="text-lg sm:text-2xl" style={{ fontWeight: 600, color: "#FFFFFF", marginBottom: 2 }}>
-            {getGreeting()},{" "}
-            <span style={{ color: "#30C5BE" }}>{firstName}</span>
-          </h2>
-          <p className="text-xs sm:text-sm" style={{ color: "#8A92A3", marginBottom: 0 }}>
-            Here's your program overview for today
-          </p>
-
-          <div style={{ borderTop: "1px solid #363D59", margin: "14px 0 16px 0" }} />
-
-        {/* KPI Row — 2 cols on mobile, 3 on tablet, flex on desktop */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:flex lg:gap-0">
-          {kpis.map((kpi, idx) => {
-            const Icon = kpi.icon;
-            return (
-              <div key={kpi.label} className={`flex flex-1 min-w-0 lg:pr-5 lg:mr-5 ${idx === kpis.length - 1 ? "col-span-2 sm:col-span-1" : ""}`} style={{ borderRight: idx < kpis.length - 1 ? undefined : "none" }}>
-                <div className="flex items-start justify-between w-full" style={idx < kpis.length - 1 ? {} : {}}>
-                  <div>
-                    <p className="text-2xl sm:text-3xl" style={{
-                      fontWeight: 700,
-                      color: kpi.color,
-                      lineHeight: 1,
-                      marginBottom: 6,
-                    }}>
-                      {kpi.value}
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      {kpi.emphasized && <AlertTriangle style={{ width: 11, height: 11, color: kpi.color }} />}
-                      <p className="text-[10px] sm:text-[11px]" style={{ fontWeight: 700, color: kpi.emphasized ? kpi.color : "#8A92A3", letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 0 }}>
-                        {kpi.label}
-                      </p>
-                    </div>
-                    {kpi.trend !== undefined && kpi.trend !== 0 && (
-                      <p data-testid="need-attention-trend" className="text-[10px] sm:text-[11px]" style={{ fontWeight: 500, color: kpi.trend > 0 ? "#FF6B6B" : "#30C5BE", marginTop: 3, display: "flex", alignItems: "center", gap: 3 }}>
-                        {kpi.trend > 0 ? "\u2191" : "\u2193"} {kpi.trend > 0 ? "+" : ""}{kpi.trend} this week
-                      </p>
-                    )}
-                    {kpi.trend !== undefined && kpi.trend === 0 && (
-                      <p className="text-[10px] sm:text-[11px]" style={{ fontWeight: 500, color: "#8A92A3", marginTop: 3 }}>
-                        No change this week
-                      </p>
-                    )}
-                    {kpi.trend === undefined && (
-                      <p className="text-[11px] sm:text-[13px] hidden sm:block" style={{ fontWeight: 400, color: "#8A92A3", marginTop: 3 }}>{kpi.subtitle}</p>
-                    )}
-                  </div>
-                  <div className="items-center justify-center shrink-0 hidden sm:flex" style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: kpi.iconBg, marginTop: 2 }}>
-                    <Icon style={{ width: 16, height: 16, color: kpi.color }} />
-                  </div>
+          {/* Row 2: KPI metrics — single tight row */}
+          <div className="flex items-center gap-4 sm:gap-6 mt-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            {kpis.map((kpi, idx) => (
+              <div key={kpi.label} className="flex items-center gap-1.5 flex-shrink-0">
+                <span className="text-[18px] sm:text-[20px] font-bold tabular-nums" style={{ color: kpi.color, lineHeight: 1 }}>
+                  {kpi.value}
+                </span>
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider block" style={{ color: kpi.emphasized ? kpi.color : "#8A92A3", lineHeight: 1.2 }}>
+                    {kpi.label}
+                  </span>
+                  {kpi.trend !== undefined && kpi.trend !== 0 && (
+                    <span className="text-[9px] font-medium" style={{ color: kpi.trend > 0 ? "#FF6B6B" : "#30C5BE" }}>
+                      {kpi.trend > 0 ? "+" : ""}{kpi.trend} this week
+                    </span>
+                  )}
                 </div>
-                {/* Desktop-only vertical divider */}
-                {idx < kpis.length - 1 && <div className="hidden lg:block w-px bg-[#363D59] ml-5 self-stretch" />}
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
 
-        {/* Program Momentum Indicator */}
-        <div style={{ borderTop: "1px solid #363D59", marginTop: 14, paddingTop: 10 }} data-testid="program-momentum">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <span className="text-[10px]" style={{ fontWeight: 700, color: "#8A92A3", letterSpacing: 1.2, textTransform: "uppercase" }}>
-              Program Momentum
-            </span>
-            <div className="flex items-center gap-1.5">
-              <MomIcon style={{ width: 13, height: 13, color: momConfig.color }} />
-              <span className="text-xs" style={{ fontWeight: 600, color: momConfig.color }}>
-                {momConfig.label}
-              </span>
-            </div>
+          {/* Row 3: Momentum — subtle bottom line */}
+          <div className="flex items-center gap-2 mt-2.5 pt-2" style={{ borderTop: "1px solid #2D3548" }}>
+            <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#64748B" }}>Momentum</span>
+            <MomIcon className="w-3 h-3" style={{ color: momCfg.color }} />
+            <span className="text-[11px] font-semibold" style={{ color: momCfg.color }}>{momCfg.label}</span>
             {momentum.engagementDelta !== 0 && (
-              <span className="text-[11px] hidden sm:inline" style={{ color: "#8A92A3" }}>
-                Recruiting engagement {momentum.engagementDelta > 0 ? "+" : ""}{momentum.engagementDelta}% this week
+              <span className="text-[10px] hidden sm:inline" style={{ color: "#64748B" }}>
+                {momentum.engagementDelta > 0 ? "+" : ""}{momentum.engagementDelta}% engagement
               </span>
             )}
           </div>
         </div>
-        </div>
       </section>
 
-      {/* 2. DIRECTOR INBOX — unified "Needs Attention" feed (replaces Escalations) */}
+      {/* ═══ 2. DIRECTOR INBOX — DOMINANT ═══ */}
       <DirectorInbox />
 
-      {/* 3. YOUR OUTBOX — outbound tracking summary */}
-      <DirectorActionsPulse outboxSummary={data.outbox_summary} />
+      {/* ═══ 3. OUTBOX STRIP ═══ */}
+      <OutboxStrip summary={data.outbox_summary} />
 
-      {/* 4. AI PROGRAM BRIEF */}
-      <AIProgramBrief />
+      {/* ═══ 4. SECONDARY SECTIONS — ALL COLLAPSED ═══ */}
+      <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
+        <CollapsibleSection title="Program Insights" testId="section-program-insights">
+          <AIProgramBrief />
+        </CollapsibleSection>
 
-      {/* 5. RECRUITING SIGNALS */}
-      <RecruitingSignalsCard signals={data.recruitingSignals} />
+        <CollapsibleSection title="Recruiting Signals" testId="section-recruiting-signals">
+          <RecruitingSignalsCard signals={data.recruitingSignals} />
+        </CollapsibleSection>
 
-      {/* 6. NEEDS ATTENTION */}
-      <NeedsAttentionCard items={data.needsAttention || []} onViewPipeline={setPipelineAthleteId} />
+        <CollapsibleSection title="Coach Health" testId="section-coach-health">
+          <CoachHealthCard coaches={data.coachHealth || []} />
+        </CollapsibleSection>
 
-      {/* 5. COACH HEALTH */}
-      <CoachHealthCard coaches={data.coachHealth || []} />
+        <CollapsibleSection title="Upcoming Events" testId="section-upcoming-events">
+          <UpcomingEventsCard events={data.upcomingEvents || []} />
+        </CollapsibleSection>
 
-      {/* 6. UPCOMING EVENTS */}
-      <UpcomingEventsCard events={data.upcomingEvents || []} />
-
-      {/* 7. PROGRAM ACTIVITY */}
-      <ActivityFeed items={data.programActivity || []} title="Program Activity" />
+        <CollapsibleSection title="Activity" testId="section-activity">
+          <ActivityFeed items={data.programActivity || []} title="Program Activity" />
+        </CollapsibleSection>
+      </div>
 
       {/* Pipeline Panel */}
       {pipelineAthleteId && (
