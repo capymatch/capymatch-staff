@@ -31,6 +31,11 @@ Build and iteratively refine an athlete pipeline management application with Dir
 - RosterSection simplified to "All Clear" + "Events Requiring Prep" only
 - Testing: 100% pass rate (iteration_200)
 
+### UI Cleanup — SupportPod (March 19, 2026)
+- Removed duplicate ActionBar card from athlete profile page (SupportPod.js)
+- The card repeated the same issue info already shown in StatusIntelligence Attention section
+- Cleaned up unused imports (MessageSquare) and destructured variables (current_issue, recruiting_signals)
+
 ## Key API Endpoints
 - `GET /api/director-inbox` — Director-scoped risk inbox
 - `GET /api/coach-inbox` — Coach-scoped risk inbox
