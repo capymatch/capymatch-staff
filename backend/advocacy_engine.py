@@ -48,7 +48,7 @@ def _seed_recommendations():
         },
         {
             "id": "rec_2",
-            "athlete_id": "athlete_5", "athlete_name": "Olivia Anderson",
+            "athlete_id": "athlete_2", "athlete_name": "Olivia Anderson",
             "school_id": "stanford", "school_name": "Stanford",
             "college_coach_name": "Coach Williams",
             "status": "awaiting_reply",
@@ -101,7 +101,7 @@ def _seed_recommendations():
         },
         {
             "id": "rec_4",
-            "athlete_id": "athlete_5", "athlete_name": "Olivia Anderson",
+            "athlete_id": "athlete_2", "athlete_name": "Olivia Anderson",
             "school_id": "ucla", "school_name": "UCLA",
             "college_coach_name": "",
             "status": "draft",
