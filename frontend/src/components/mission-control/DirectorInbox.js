@@ -5,60 +5,42 @@ import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const PRIORITY_DOT = { high: "#ef4444", medium: "#f59e0b" };
-
-/* Human-readable issue labels */
-const ISSUE_LABEL = {
-  "Escalation": "Needs follow-up",
-  "Awaiting reply": "Awaiting reply",
-  "Needs follow-up": "Needs follow-up",
-  "No coach assigned": "No coach assigned",
-  "Missing documents": "Missing transcript",
-  "No activity": "Stalled",
-};
+const DOT_COLOR = { high: "#ef4444", medium: "#f59e0b" };
 
 function InboxRow({ item }) {
   const navigate = useNavigate();
-  const dot = PRIORITY_DOT[item.priority] || "#94a3b8";
-  const label = ISSUE_LABEL[item.issueType] || item.issueType;
+  const dot = DOT_COLOR[item.priority] || "#94a3b8";
+  const isPrimary = item.ctaPrimary;
 
-  /* Compose Line 1: "Olivia Anderson — Stanford" */
-  const nameLine = item.schoolName
+  /* Line 1: "Olivia Anderson — Stanford" */
+  const title = item.schoolName
     ? `${item.athleteName} — ${item.schoolName}`
     : item.athleteName;
 
-  /* Compose Line 2: "Awaiting reply · 10d ago" */
-  const detail = item.timeAgo ? `${label} · ${item.timeAgo}` : label;
+  /* Line 2: "Needs attention · Awaiting reply · 10d ago" */
+  const parts = [...(item.issues || [])];
+  if (item.timeAgo) parts.push(item.timeAgo);
+  const subtitle = parts.join(" · ");
 
   return (
     <div
-      className="flex items-center gap-3.5 px-5 cursor-pointer transition-colors duration-100"
-      style={{ height: 66, borderBottom: "1px solid #f1f5f9" }}
+      className="inbox-row"
       onClick={() => navigate(item.cta.url)}
-      onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
       data-testid={`inbox-row-${item.id}`}
     >
-      {/* Priority dot */}
-      <span
-        className="w-[7px] h-[7px] rounded-full flex-shrink-0"
-        style={{ background: dot }}
-      />
+      {/* Col 1: dot */}
+      <span className="inbox-dot" style={{ background: dot }} />
 
-      {/* Center — two lines */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold truncate" style={{ color: "#1e293b", lineHeight: 1.3 }}>
-          {nameLine}
-        </p>
-        <p className="text-[11.5px] font-medium mt-0.5 truncate" style={{ color: "#94a3b8" }}>
-          {detail}
-        </p>
+      {/* Col 2: text */}
+      <div className="inbox-text">
+        <p className="inbox-title">{title}</p>
+        <p className="inbox-subtitle">{subtitle}</p>
       </div>
 
-      {/* CTA */}
+      {/* Col 3: CTA */}
       <span
-        className="text-[11.5px] font-semibold flex items-center gap-1 flex-shrink-0"
-        style={{ color: "#0d9488", whiteSpace: "nowrap" }}
+        className="inbox-cta"
+        style={{ opacity: isPrimary ? 1 : 0.6 }}
       >
         {item.cta.label} <ArrowRight className="w-3 h-3" />
       </span>
@@ -66,16 +48,27 @@ function InboxRow({ item }) {
   );
 }
 
+function GroupLabel({ label }) {
+  return (
+    <div className="px-5 pt-4 pb-1.5">
+      <span className="text-[9.5px] font-bold uppercase tracking-[0.12em]" style={{ color: "#94a3b8" }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export default function DirectorInbox() {
-  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     const fetchInbox = async () => {
       try {
         const res = await axios.get(`${API}/director-inbox`);
         setItems(res.data.items || []);
+        setTotalCount(res.data.count || 0);
       } catch (err) {
         console.error("Failed to load director inbox:", err);
       } finally {
@@ -87,15 +80,11 @@ export default function DirectorInbox() {
 
   if (loading) {
     return (
-      <section
-        className="rounded-lg border overflow-hidden"
-        style={{ background: "#fff", borderColor: "#e2e8f0" }}
-        data-testid="director-inbox"
-      >
-        <div className="px-5 py-4">
+      <section className="inbox-container" data-testid="director-inbox">
+        <div className="px-5 py-5">
           <div className="h-4 w-40 rounded bg-slate-100 animate-pulse" />
-          <div className="h-3 w-56 rounded bg-slate-50 animate-pulse mt-3" />
-          <div className="h-3 w-48 rounded bg-slate-50 animate-pulse mt-2" />
+          <div className="h-12 w-full rounded bg-slate-50 animate-pulse mt-4" />
+          <div className="h-12 w-full rounded bg-slate-50 animate-pulse mt-2" />
         </div>
       </section>
     );
@@ -103,11 +92,7 @@ export default function DirectorInbox() {
 
   if (items.length === 0) {
     return (
-      <section
-        className="rounded-lg border overflow-hidden"
-        style={{ background: "#fff", borderColor: "#e2e8f0" }}
-        data-testid="director-inbox"
-      >
+      <section className="inbox-container" data-testid="director-inbox">
         <div className="px-5 py-10 text-center">
           <h3 className="text-[14px] font-semibold" style={{ color: "#1e293b" }}>No urgent issues</h3>
           <p className="text-[12px] mt-1" style={{ color: "#94a3b8" }}>
@@ -118,26 +103,87 @@ export default function DirectorInbox() {
     );
   }
 
-  const highCount = items.filter(i => i.priority === "high").length;
+  const highItems = items.filter(i => i.group === "high");
+  const atRiskItems = items.filter(i => i.group === "at_risk");
 
   return (
-    <section
-      className="rounded-lg border overflow-hidden"
-      style={{ background: "#fff", borderColor: "#e2e8f0" }}
-      data-testid="director-inbox"
-    >
+    <section className="inbox-container" data-testid="director-inbox">
+      <style>{`
+        .inbox-container {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .inbox-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 20px;
+          border-bottom: 1px solid #f1f5f9;
+        }
+        .inbox-row {
+          display: grid;
+          grid-template-columns: 18px 1fr auto;
+          align-items: center;
+          gap: 0;
+          padding: 0 20px;
+          height: 66px;
+          cursor: pointer;
+          transition: background 80ms ease-out;
+          border-bottom: 1px solid #f8fafc;
+        }
+        .inbox-row:last-child { border-bottom: none; }
+        .inbox-row:hover { background: #f8fafc; }
+        .inbox-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          justify-self: start;
+        }
+        .inbox-text {
+          min-width: 0;
+          padding-right: 16px;
+        }
+        .inbox-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: #1e293b;
+          line-height: 1.3;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin: 0;
+        }
+        .inbox-subtitle {
+          font-size: 11.5px;
+          font-weight: 500;
+          color: #94a3b8;
+          line-height: 1.3;
+          margin: 2px 0 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .inbox-cta {
+          font-size: 11.5px;
+          font-weight: 600;
+          color: #0d9488;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+        }
+      `}</style>
+
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid #f1f5f9" }}>
+      <div className="inbox-header">
         <div className="flex items-center gap-2">
-          <h3 className="text-[14px] font-bold" style={{ color: "#1e293b" }}>Needs Attention</h3>
-          <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={{
-              background: highCount > 0 ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)",
-              color: highCount > 0 ? "#ef4444" : "#f59e0b",
-            }}
-          >
-            {items.length}
+          <h3 className="text-[14px] font-bold" style={{ color: "#1e293b", margin: 0 }}>
+            Needs Attention
+          </h3>
+          <span className="text-[12px] font-medium" style={{ color: "#94a3b8" }}>
+            ({totalCount})
           </span>
         </div>
         <span
@@ -148,12 +194,29 @@ export default function DirectorInbox() {
         </span>
       </div>
 
-      {/* Rows */}
-      <div data-testid="inbox-list">
-        {items.map(item => (
-          <InboxRow key={item.id} item={item} />
-        ))}
-      </div>
+      {/* HIGH PRIORITY group */}
+      {highItems.length > 0 && (
+        <>
+          <GroupLabel label="High Priority" />
+          <div data-testid="inbox-group-high">
+            {highItems.map(item => (
+              <InboxRow key={item.id} item={item} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* AT RISK group */}
+      {atRiskItems.length > 0 && (
+        <>
+          <GroupLabel label="At Risk" />
+          <div data-testid="inbox-group-at-risk">
+            {atRiskItems.map(item => (
+              <InboxRow key={item.id} item={item} />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
