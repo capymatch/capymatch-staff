@@ -6,8 +6,6 @@ import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const DOT_COLOR = { high: "#ef4444", medium: "#f59e0b", low: "#94a3b8" };
-
 const TRAJECTORY = {
   worsening: { symbol: "\u2198", label: "Worsening", color: "#dc2626" },
   stable:    { symbol: "\u2192", label: "Stable",    color: "#94a3b8" },
@@ -202,12 +200,15 @@ function CoachTopPriority({ item }) {
 }
 
 /* ═══════════════════════════════════════════════ */
-/* Inbox Row (Coach variant)                       */
+/* Up Next Row — mini Top Priority style           */
 /* ═══════════════════════════════════════════════ */
-function CoachInboxRow({ item, isTopPriority }) {
+const SEV_DOT = { critical: "#ef4444", high: "#f59e0b", medium: "#94a3b8", low: "#cbd5e1" };
+
+function UpNextRow({ item, onDismiss }) {
   const navigate = useNavigate();
   const [showEscalate, setShowEscalate] = useState(false);
-  const dot = DOT_COLOR[item.priority] || "#94a3b8";
+  const [exiting, setExiting] = useState(false);
+  const dot = SEV_DOT[item.severity] || "#94a3b8";
 
   const title = item.schoolName
     ? `${item.athleteName} — ${item.schoolName}`
@@ -215,10 +216,8 @@ function CoachInboxRow({ item, isTopPriority }) {
       ? `${item.athleteName} — ${item.titleSuffix}`
       : item.athleteName;
 
-  const primary = (item.issues || [])[0] || item.primaryRisk || "";
-  let subtitle = primary;
-  if (item.schoolName) subtitle += ` — ${item.schoolName}`;
-  if (item.timeAgo) subtitle += ` · ${item.timeAgo}`;
+  const primary = item.primaryRisk || (item.issues || [])[0] || "";
+  const issueLine = item.timeAgo ? `${primary} · ${item.timeAgo}` : primary;
 
   const ctaConfig = COACH_CTA_CONFIG[item.cta.label] || COACH_CTA_CONFIG["Open Pod"];
 
@@ -231,30 +230,50 @@ function CoachInboxRow({ item, isTopPriority }) {
     }
   }
 
-  if (isTopPriority) return null;
+  function handleEscalated() {
+    setShowEscalate(false);
+    setExiting(true);
+    setTimeout(() => onDismiss && onDismiss(item.id), 300);
+  }
 
   return (
     <>
-      <div className="flex items-center gap-3 px-4 py-3 border-b transition-colors hover:bg-slate-50/50" style={{ borderColor: "#f1f5f9" }} data-testid={`coach-inbox-row-${item.id}`}>
-        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dot }} />
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold truncate" style={{ color: "#1e293b" }}>{title}</p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-[11px] truncate" style={{ color: "#94a3b8", margin: 0 }}>{subtitle}</p>
-            {item.trajectory && item.trajectory !== "stable" && <TrajectoryHint trajectory={item.trajectory} />}
+      <div
+        className="px-4 py-3 transition-all duration-300"
+        style={{
+          borderBottom: "1px solid #f1f5f9",
+          opacity: exiting ? 0 : 1,
+          maxHeight: exiting ? 0 : 200,
+          overflow: "hidden",
+        }}
+        data-testid={`coach-inbox-row-${item.id}`}
+      >
+        <div className="flex items-start gap-3">
+          <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: dot }} data-testid={`severity-dot-${item.severity}`} />
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold" style={{ color: "#1e293b", lineHeight: 1.3 }}>{title}</p>
+            <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>{issueLine}</p>
+            {item.whyNow && (
+              <p className="text-[11px] mt-1" style={{ color: "#94a3b8", lineHeight: 1.4 }} data-testid={`why-now-${item.id}`}>{item.whyNow}</p>
+            )}
+            {item.trajectory && item.trajectory !== "stable" && (
+              <div className="mt-1">
+                <TrajectoryHint trajectory={item.trajectory} />
+              </div>
+            )}
           </div>
+          <button
+            onClick={handleCta}
+            className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold transition-opacity hover:opacity-70 mt-1"
+            style={{ color: ctaConfig.color }}
+            data-testid={`coach-cta-${item.id}`}
+          >
+            {item.cta.label} <ArrowRight className="w-3 h-3" />
+          </button>
         </div>
-        <button
-          onClick={handleCta}
-          className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold transition-opacity hover:opacity-70"
-          style={{ color: ctaConfig.color }}
-          data-testid={`coach-cta-${item.id}`}
-        >
-          {item.cta.label} <ArrowRight className="w-3 h-3" />
-        </button>
       </div>
       {showEscalate && (
-        <EscalateModal item={item} onClose={() => setShowEscalate(false)} onSent={() => setShowEscalate(false)} />
+        <EscalateModal item={item} onClose={() => setShowEscalate(false)} onSent={handleEscalated} />
       )}
     </>
   );
@@ -266,8 +285,9 @@ function CoachInboxRow({ item, isTopPriority }) {
 export default function CoachInbox() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dismissed, setDismissed] = useState(new Set());
 
-  const fetch = useCallback(async () => {
+  const fetchItems = useCallback(async () => {
     try {
       const token = localStorage.getItem("capymatch_token");
       const res = await axios.get(`${API}/coach-inbox`, { headers: { Authorization: `Bearer ${token}` } });
@@ -276,30 +296,36 @@ export default function CoachInbox() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  function handleDismiss(id) {
+    setDismissed(prev => new Set([...prev, id]));
+  }
 
   if (loading) return null;
-  if (items.length === 0) return null;
 
-  const topItem = items[0];
-  const rest = items.slice(1);
+  const visible = items.filter(i => !dismissed.has(i.id));
+  if (visible.length === 0) return null;
+
+  const topItem = visible[0];
+  const rest = visible.slice(1);
 
   return (
     <div className="space-y-4" data-testid="coach-inbox-section">
       {/* Top Priority */}
       <CoachTopPriority item={topItem} />
 
-      {/* Needs Attention List */}
+      {/* Up Next — action queue */}
       {rest.length > 0 && (
-        <div className="rounded-lg overflow-hidden border" style={{ borderColor: "#e2e8f0", backgroundColor: "#fff" }} data-testid="coach-needs-attention">
-          <div className="px-4 py-2.5" style={{ borderBottom: "1px solid #f1f5f9" }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "#94a3b8" }}>
-              Needs Attention · {rest.length}
-            </p>
+        <div data-testid="coach-up-next">
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] mb-2" style={{ color: "#94a3b8" }}>
+            Up Next
+          </p>
+          <div className="rounded-lg overflow-hidden border" style={{ borderColor: "#e2e8f0", backgroundColor: "#fff" }}>
+            {rest.map((item) => (
+              <UpNextRow key={item.id} item={item} onDismiss={handleDismiss} />
+            ))}
           </div>
-          {rest.map((item) => (
-            <CoachInboxRow key={item.id} item={item} isTopPriority={false} />
-          ))}
         </div>
       )}
     </div>
