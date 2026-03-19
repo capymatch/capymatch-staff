@@ -213,7 +213,7 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
   const COL_GAP = 16;
   const gridStyle = isMobile
     ? { display: "flex", gap: COL_GAP, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory", paddingBottom: 8 }
-    : { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: COL_GAP };
+    : { display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: COL_GAP };
 
   const colStyle = isMobile ? { minWidth: 240, flexShrink: 0, scrollSnapAlign: "start" } : {};
 
