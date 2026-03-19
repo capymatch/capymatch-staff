@@ -189,11 +189,130 @@ function getTopPriority(items) {
   return scored[0];
 }
 
+/* ── Compose Modal ── */
+function ComposeModal({ nudge, item, onClose, onSent }) {
+  const [body, setBody] = useState(nudge.template || "");
+  const [sending, setSending] = useState(false);
+  const subject = nudge.actionType === "follow_up" ? "Following up"
+    : nudge.actionType === "request_doc" ? "Missing document needed"
+    : "Quick check-in";
+
+  async function handleSend() {
+    if (!body.trim() || sending) return;
+    setSending(true);
+    try {
+      const res = await axios.post(`${API}/autopilot/execute`, {
+        action_type: nudge.actionType,
+        athlete_id: extractAthleteId(item),
+        athlete_name: item.athleteName,
+        school_name: item.schoolName || null,
+        message_body: body.trim(),
+      });
+      toast.success(res.data.detail || res.data.message || "Message sent");
+      onSent();
+    } catch (err) {
+      toast.error("Failed to send — try again");
+      console.error(err);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.4)" }}
+      onClick={onClose}
+      data-testid="compose-modal-overlay"
+    >
+      <div
+        className="rounded-xl overflow-hidden w-full max-w-lg mx-4"
+        style={{ background: "#fff", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+        onClick={e => e.stopPropagation()}
+        data-testid="compose-modal"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid #f1f5f9" }}>
+          <h3 className="text-[14px] font-semibold" style={{ color: "#1e293b", margin: 0 }}>
+            {nudge.label}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-[18px] cursor-pointer"
+            style={{ background: "none", border: "none", color: "#94a3b8", fontFamily: "inherit", lineHeight: 1 }}
+            data-testid="compose-modal-close"
+          >
+            &times;
+          </button>
+        </div>
+
+        {/* To + Subject */}
+        <div className="px-5 pt-3">
+          <div className="flex items-center gap-2 text-[12px]" style={{ color: "#64748b" }}>
+            <span className="font-semibold">To:</span>
+            <span style={{ color: "#1e293b", fontWeight: 600 }}>{item.athleteName}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[12px] mt-1.5" style={{ color: "#64748b" }}>
+            <span className="font-semibold">Subject:</span>
+            <span style={{ color: "#1e293b" }}>{subject}</span>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-3">
+          <textarea
+            value={body}
+            onChange={e => setBody(e.target.value)}
+            rows={4}
+            className="w-full rounded-lg"
+            style={{
+              padding: "10px 12px", border: "1px solid #e2e8f0", fontSize: 13,
+              resize: "vertical", outline: "none", fontFamily: "inherit",
+              lineHeight: 1.5, color: "#1e293b", minHeight: 80,
+            }}
+            data-testid="compose-modal-body"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-2 px-5 py-3" style={{ borderTop: "1px solid #f1f5f9" }}>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-[12px] font-semibold cursor-pointer"
+            style={{ background: "transparent", border: "1px solid #e2e8f0", color: "#64748b", fontFamily: "inherit" }}
+            data-testid="compose-modal-cancel"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSend}
+            disabled={!body.trim() || sending}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-semibold cursor-pointer"
+            style={{
+              background: sending ? "#e2e8f0" : "#0d9488",
+              color: sending ? "#94a3b8" : "#fff",
+              border: "none", fontFamily: "inherit",
+              opacity: !body.trim() || sending ? 0.6 : 1,
+            }}
+            data-testid="compose-modal-send"
+          >
+            {sending ? (
+              <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Sending...</>
+            ) : (
+              <><Send className="w-3.5 h-3.5" /> Send</>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Top Priority Card (with Autopilot) ── */
 function TopPriorityCard({ item, onActionComplete }) {
   const navigate = useNavigate();
-  const [executing, setExecuting] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [showCompose, setShowCompose] = useState(false);
 
   if (!item || completed) return null;
 
@@ -208,38 +327,25 @@ function TopPriorityCard({ item, onActionComplete }) {
   const nudge = getNudge(item);
   const canAutoExecute = nudge && nudge.actionType !== "assign_coach";
 
-  async function handleApprove(e) {
+  function handleApprove(e) {
     e.stopPropagation();
-    if (!nudge || executing) return;
-
+    if (!nudge) return;
     if (nudge.actionType === "assign_coach") {
       navigate("/roster");
       return;
     }
-
-    setExecuting(true);
-    try {
-      const res = await axios.post(`${API}/autopilot/execute`, {
-        action_type: nudge.actionType,
-        athlete_id: extractAthleteId(item),
-        athlete_name: item.athleteName,
-        school_name: item.schoolName || null,
-        message_body: nudge.template,
-      });
-      toast.success(res.data.detail || res.data.message || "Action completed");
-      setCompleted(true);
-      if (onActionComplete) onActionComplete(item.id);
-    } catch (err) {
-      toast.error("Failed to execute — try manually");
-      console.error(err);
-    } finally {
-      setExecuting(false);
-    }
+    setShowCompose(true);
   }
 
   function handleEdit(e) {
     e.stopPropagation();
     if (nudge) navigate(nudge.url);
+  }
+
+  function handleSent() {
+    setShowCompose(false);
+    setCompleted(true);
+    if (onActionComplete) onActionComplete(item.id);
   }
 
   return (
@@ -274,38 +380,20 @@ function TopPriorityCard({ item, onActionComplete }) {
                 {nudge.label}
               </span>
             </div>
-            {/* Message preview */}
-            {canAutoExecute && nudge.template && (
-              <div
-                className="mb-2.5 px-3 py-2 rounded"
-                style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(254,240,138,0.5)" }}
-                data-testid="autopilot-message-preview"
-              >
-                <p className="text-[11px] font-medium" style={{ color: "#1e293b", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
-                  {nudge.template}
-                </p>
-              </div>
-            )}
             <div className="flex items-center gap-2">
               {canAutoExecute && (
                 <button
                   onClick={handleApprove}
-                  disabled={executing}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold cursor-pointer transition-all duration-100"
                   style={{
-                    background: executing ? "#e2e8f0" : "#0d9488",
-                    color: executing ? "#94a3b8" : "#fff",
+                    background: "#0d9488",
+                    color: "#fff",
                     border: "none",
                     fontFamily: "inherit",
-                    opacity: executing ? 0.7 : 1,
                   }}
                   data-testid="autopilot-approve-btn"
                 >
-                  {executing ? (
-                    <><Loader2 className="w-3 h-3 animate-spin" /> Sending...</>
-                  ) : (
-                    <><Check className="w-3 h-3" /> Approve & Send</>
-                  )}
+                  <Check className="w-3 h-3" /> Approve & Send
                 </button>
               )}
               <button
@@ -335,6 +423,16 @@ function TopPriorityCard({ item, onActionComplete }) {
           {item.cta.label} <ArrowRight className="w-3 h-3" />
         </span>
       </div>
+
+      {/* Compose Modal */}
+      {showCompose && nudge && (
+        <ComposeModal
+          nudge={nudge}
+          item={item}
+          onClose={() => setShowCompose(false)}
+          onSent={handleSent}
+        />
+      )}
     </div>
   );
 }
