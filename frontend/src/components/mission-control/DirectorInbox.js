@@ -287,7 +287,7 @@ function ComposeModal({ nudge, item, onClose, onSent }) {
       onClick={onClose}
       data-testid="compose-modal-overlay"
     >
-      <div className="w-full max-w-[480px] rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+      <div className="w-full max-w-[640px] rounded-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
         style={{ background: "#161b25", border: "1px solid rgba(46, 196, 182, 0.15)", boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(26,138,128,0.08)" }}
         onClick={e => e.stopPropagation()}
         data-testid="compose-modal"
@@ -345,7 +345,7 @@ function ComposeModal({ nudge, item, onClose, onSent }) {
             <textarea
               value={body}
               onChange={e => setBody(e.target.value)}
-              rows={4}
+              rows={6}
               className={`${inputCls} resize-none`}
               style={inputStyle}
               data-testid="compose-modal-body"
