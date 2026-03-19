@@ -1,54 +1,76 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Send, UserPlus, FileText, MessageCircle, RefreshCw } from "lucide-react";
+import { ArrowRight, Send, UserPlus, FileText, MessageCircle, RefreshCw, Check, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const DOT_COLOR = { high: "#ef4444", medium: "#f59e0b" };
 
-/* ── Nudge mapping: issue → suggestion + icon + route ── */
+/* ── Nudge mapping: issue → suggestion + icon + route + autopilot action ── */
 const NUDGE_MAP = {
   "Awaiting reply": {
     label: "Send follow-up message",
     icon: Send,
-    getUrl: (item) => `/messages?to=${encodeURIComponent(item.athleteName)}&draft=${encodeURIComponent(`Hi ${item.athleteName.split(" ")[0]}, just checking in — would love to hear your thoughts. Let us know if you had a chance to review.`)}`,
+    actionType: "follow_up",
+    getUrl: (item) => `/messages?to=${encodeURIComponent(item.athleteName)}&draft=${encodeURIComponent(`Hi ${item.athleteName.split(" ")[0]}, just following up — would love to hear your thoughts. Let us know if you had a chance to review.`)}`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up — would love to hear your thoughts. Let us know if you had a chance to review.`,
   },
   "No activity": {
     label: "Check in with athlete",
     icon: MessageCircle,
-    getUrl: (item) => `/support-pods/${item.id.replace(/^inbox_/, "").split("_")[0]}`,
+    actionType: "check_in",
+    getUrl: (item) => `/support-pods/${extractAthleteId(item)}`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in — wanted to see how things are going on your end. Let us know if there's anything you need.`,
   },
   "Missing requirement": {
     label: "Request missing document",
     icon: FileText,
-    getUrl: (item) => `/support-pods/${item.id.replace(/^inbox_/, "").split("_")[0]}`,
+    actionType: "request_doc",
+    getUrl: (item) => `/support-pods/${extractAthleteId(item)}`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, we noticed a required document is still missing from your profile. Please upload it at your earliest convenience so we can keep things moving.`,
   },
   "No coach assigned": {
     label: "Assign coach",
     icon: UserPlus,
+    actionType: "assign_coach",
     getUrl: () => "/roster",
+    getTemplate: () => null,
   },
   "Needs follow-up": {
     label: "Review and follow up",
     icon: RefreshCw,
+    actionType: "follow_up",
     getUrl: () => "/advocacy",
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up on our last conversation. Let us know how things are progressing.`,
   },
   "Needs attention": {
     label: "Review and take action",
     icon: RefreshCw,
+    actionType: "check_in",
     getUrl: (item) => item.cta.url,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in — wanted to see how things are going. Let us know if there's anything you need.`,
   },
 };
 
+function extractAthleteId(item) {
+  return (item.id || "").replace(/^inbox_/, "").split("_")[0];
+}
+
 function getNudge(item) {
   const issues = item.issues || [];
-  // Pick highest-priority nudge
   const order = ["No coach assigned", "Missing requirement", "Awaiting reply", "No activity", "Needs follow-up", "Needs attention"];
   for (const key of order) {
     if (issues.includes(key) && NUDGE_MAP[key]) {
       const n = NUDGE_MAP[key];
-      return { label: n.label, Icon: n.icon, url: n.getUrl(item) };
+      return {
+        label: n.label,
+        Icon: n.icon,
+        url: n.getUrl(item),
+        actionType: n.actionType,
+        template: n.getTemplate ? n.getTemplate(item) : null,
+      };
     }
   }
   return null;
@@ -167,10 +189,13 @@ function getTopPriority(items) {
   return scored[0];
 }
 
-/* ── Top Priority Card ── */
-function TopPriorityCard({ item }) {
+/* ── Top Priority Card (with Autopilot) ── */
+function TopPriorityCard({ item, onActionComplete }) {
   const navigate = useNavigate();
-  if (!item) return null;
+  const [executing, setExecuting] = useState(false);
+  const [completed, setCompleted] = useState(false);
+
+  if (!item || completed) return null;
 
   const title = item.schoolName
     ? `${item.athleteName} — ${item.schoolName}`
@@ -181,6 +206,41 @@ function TopPriorityCard({ item }) {
   const issueLine = parts.join(" · ");
   const why = generateWhy(item);
   const nudge = getNudge(item);
+  const canAutoExecute = nudge && nudge.actionType !== "assign_coach";
+
+  async function handleApprove(e) {
+    e.stopPropagation();
+    if (!nudge || executing) return;
+
+    if (nudge.actionType === "assign_coach") {
+      navigate("/roster");
+      return;
+    }
+
+    setExecuting(true);
+    try {
+      const res = await axios.post(`${API}/autopilot/execute`, {
+        action_type: nudge.actionType,
+        athlete_id: extractAthleteId(item),
+        athlete_name: item.athleteName,
+        school_name: item.schoolName || null,
+        message_body: nudge.template,
+      });
+      toast.success(res.data.detail || res.data.message || "Action completed");
+      setCompleted(true);
+      if (onActionComplete) onActionComplete(item.id);
+    } catch (err) {
+      toast.error("Failed to execute — try manually");
+      console.error(err);
+    } finally {
+      setExecuting(false);
+    }
+  }
+
+  function handleEdit(e) {
+    e.stopPropagation();
+    if (nudge) navigate(nudge.url);
+  }
 
   return (
     <div
@@ -202,32 +262,65 @@ function TopPriorityCard({ item }) {
           {why}
         </p>
 
-        {/* Suggested Action (nudge) */}
+        {/* Suggested Action with Approve/Edit */}
         {nudge && (
           <div className="mt-3 pt-2.5" style={{ borderTop: "1px solid rgba(254,240,138,0.6)" }}>
             <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: "#a16207", opacity: 0.6, margin: 0 }}>
               Suggested action
             </p>
-            <span
-              className="inline-flex items-center gap-1.5 text-[12px] font-semibold cursor-pointer"
-              style={{ color: "#0d9488" }}
-              onClick={(e) => { e.stopPropagation(); navigate(nudge.url); }}
-              data-testid="top-priority-nudge"
-            >
-              <nudge.Icon className="w-3.5 h-3.5" />
-              {nudge.label} <ArrowRight className="w-3 h-3" />
-            </span>
+            <div className="flex items-center gap-1.5 mb-2">
+              <nudge.Icon className="w-3.5 h-3.5" style={{ color: "#0d9488" }} />
+              <span className="text-[12px] font-semibold" style={{ color: "#1e293b" }}>
+                {nudge.label}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {canAutoExecute && (
+                <button
+                  onClick={handleApprove}
+                  disabled={executing}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold cursor-pointer transition-all duration-100"
+                  style={{
+                    background: executing ? "#e2e8f0" : "#0d9488",
+                    color: executing ? "#94a3b8" : "#fff",
+                    border: "none",
+                    fontFamily: "inherit",
+                    opacity: executing ? 0.7 : 1,
+                  }}
+                  data-testid="autopilot-approve-btn"
+                >
+                  {executing ? (
+                    <><Loader2 className="w-3 h-3 animate-spin" /> Sending...</>
+                  ) : (
+                    <><Check className="w-3 h-3" /> Approve & Send</>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={handleEdit}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[11.5px] font-semibold cursor-pointer transition-colors duration-100"
+                style={{
+                  background: "transparent",
+                  color: "#64748b",
+                  border: "1px solid #e2e8f0",
+                  fontFamily: "inherit",
+                }}
+                data-testid="autopilot-edit-btn"
+              >
+                Edit
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Primary CTA */}
+        {/* Secondary CTA — Open Pod */}
         <span
-          className="inline-flex items-center gap-1 mt-2.5 text-[12px] font-semibold cursor-pointer"
-          style={{ color: "#0d9488", opacity: 0.6 }}
+          className="inline-flex items-center gap-1 mt-2.5 text-[11px] font-medium cursor-pointer"
+          style={{ color: "#94a3b8" }}
           onClick={(e) => { e.stopPropagation(); navigate(item.cta.url); }}
           data-testid="top-priority-cta"
         >
-          {item.cta.label} <ArrowRight className="w-3.5 h-3.5" />
+          {item.cta.label} <ArrowRight className="w-3 h-3" />
         </span>
       </div>
     </div>
@@ -240,19 +333,27 @@ export default function DirectorInbox() {
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    const fetchInbox = async () => {
-      try {
-        const res = await axios.get(`${API}/director-inbox`);
-        setItems(res.data.items || []);
-        setTotalCount(res.data.count || 0);
-      } catch (err) {
-        console.error("Failed to load director inbox:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInbox();
+  const fetchInbox = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/director-inbox`);
+      setItems(res.data.items || []);
+      setTotalCount(res.data.count || 0);
+    } catch (err) {
+      console.error("Failed to load director inbox:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchInbox(); }, [fetchInbox]);
+
+  const handleActionComplete = useCallback((itemId) => {
+    // Remove completed item and recompute
+    setItems(prev => {
+      const next = prev.filter(i => i.id !== itemId);
+      setTotalCount(next.length);
+      return next;
+    });
   }, []);
 
   const topItem = getTopPriority(items);
@@ -375,7 +476,7 @@ export default function DirectorInbox() {
       `}</style>
 
       {/* ═══ TOP PRIORITY ═══ */}
-      <TopPriorityCard item={topItem} />
+      <TopPriorityCard item={topItem} onActionComplete={handleActionComplete} />
 
       {/* ═══ INBOX ═══ */}
       <section className="inbox-container" data-testid="director-inbox">
