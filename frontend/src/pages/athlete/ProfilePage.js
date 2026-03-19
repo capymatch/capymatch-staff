@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import {
   User, Camera, Check, Copy, ExternalLink, ChevronDown,
-  Eye, EyeOff, Share2, Loader2, AlertTriangle,
+  Eye, EyeOff, Share2, Loader2, AlertTriangle, ChevronRight, ArrowRight,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -109,11 +110,15 @@ function Field({ label, value, onChange, placeholder, type = "text", coachVisibl
 
 /* ═══════════ MAIN COMPONENT ═══════════ */
 export default function ProfilePage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const fromOnboarding = searchParams.get("from") === "onboarding";
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [shareLink, setShareLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
+  const [schoolCount, setSchoolCount] = useState(null);
   const photoRef = useRef(null);
   const saveTimer = useRef(null);
   const profileRef = useRef(profile);
@@ -123,11 +128,14 @@ export default function ProfilePage() {
     Promise.all([
       axios.get(`${API}/athlete/profile`),
       axios.get(`${API}/athlete/share-link`),
+      axios.get(`${API}/athlete/programs`).catch(() => ({ data: [] })),
     ])
-      .then(([profRes, linkRes]) => {
+      .then(([profRes, linkRes, progRes]) => {
         setProfile(profRes.data);
         const tid = linkRes.data.tenant_id;
         setShareLink(`${window.location.origin}/s/${tid.replace("tenant-", "").replace("tenant_", "")}`);
+        const programs = Array.isArray(progRes.data) ? progRes.data : (progRes.data?.programs || []);
+        setSchoolCount(programs.length);
       })
       .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
@@ -183,6 +191,17 @@ export default function ProfilePage() {
   );
 
   const comp = getCompleteness(profile);
+
+  /* Onboarding: match the same essential-field logic as EmptyBoardState */
+  const essentialFields = [
+    profile.athlete_name, profile.graduation_year, profile.position,
+    profile.height, profile.city || profile.state,
+    profile.club_team || profile.high_school,
+  ];
+  const essentialFilled = essentialFields.filter(Boolean).length;
+  const profileReady = essentialFilled >= 5;
+  const showOnboardingBanner = fromOnboarding || (schoolCount === 0 && schoolCount !== null);
+
   const sectionStatus = (keys) => {
     const filled = keys.filter((k) => profile[k]).length;
     if (filled === keys.length) return "complete";
@@ -197,6 +216,69 @@ export default function ProfilePage() {
 
   return (
     <div data-testid="profile-page" className="max-w-2xl">
+
+      {/* Onboarding Banner */}
+      {showOnboardingBanner && (
+        <div
+          data-testid="onboarding-banner"
+          className="rounded-xl border mb-4 overflow-hidden"
+          style={{
+            backgroundColor: profileReady ? "rgba(13,148,136,0.06)" : "var(--cm-surface)",
+            borderColor: profileReady ? "rgba(13,148,136,0.25)" : "var(--cm-border)",
+          }}
+        >
+          {/* Progress strip */}
+          <div className="flex items-center gap-3 px-4 py-2 border-b text-[10px] font-bold uppercase tracking-wider"
+            style={{ borderColor: profileReady ? "rgba(13,148,136,0.15)" : "var(--cm-border)", color: "var(--cm-text-3)" }}>
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold"
+              style={{ backgroundColor: profileReady ? "#0d9488" : "rgba(13,148,136,0.15)", color: profileReady ? "white" : "#0d9488" }}>
+              {profileReady ? "\u2713" : "1"}
+            </span>
+            <span>Create Profile</span>
+            <div className="w-4 h-px" style={{ backgroundColor: "#94a3b8" }} />
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] border"
+              style={{ borderColor: "#94a3b8", color: "#94a3b8" }}>2</span>
+            <span style={{ color: "#94a3b8" }}>Gmail</span>
+            <div className="w-4 h-px" style={{ backgroundColor: "#94a3b8" }} />
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] border"
+              style={{ borderColor: "#94a3b8", color: "#94a3b8" }}>3</span>
+            <span style={{ color: "#94a3b8" }}>Add Schools</span>
+          </div>
+
+          <div className="px-4 py-3 flex items-center justify-between gap-3">
+            {profileReady ? (
+              <>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: "#0d9488" }}>Profile looks great!</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3)" }}>Continue setting up your recruiting pipeline.</p>
+                </div>
+                <button
+                  data-testid="continue-to-pipeline-btn"
+                  onClick={() => navigate("/pipeline")}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white shrink-0 transition-all hover:opacity-90 shadow-sm"
+                  style={{ backgroundColor: "#0d9488" }}
+                >
+                  Continue <ArrowRight className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>Complete your profile to continue</p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3)" }}>
+                    Fill in {5 - essentialFilled} more field{5 - essentialFilled !== 1 ? "s" : ""} (name, position, grad year, height, location)
+                  </p>
+                </div>
+                <span className="text-xs font-semibold px-2 py-1 rounded-md shrink-0"
+                  style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#d97706" }}>
+                  {essentialFilled}/5
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div className="flex items-center justify-end mb-4">
         {autoSaved && (

@@ -36,7 +36,13 @@ Build and iteratively refine an athlete pipeline management application with Dir
 - The card repeated the same issue info already shown in StatusIntelligence Attention section
 - Cleaned up unused imports (MessageSquare) and destructured variables (current_issue, recruiting_signals)
 
-### Database Reset & Comprehensive Seed Data (March 19, 2026)
+### Onboarding Flow — Profile → Pipeline Return (March 19, 2026)
+- Added onboarding progress banner to ProfilePage.js that shows when `?from=onboarding` is in the URL or when the user has 0 tracked schools
+- Banner shows 3-step progress strip (Create Profile → Gmail → Add Schools)
+- Before profile is complete: shows "Complete your profile to continue — Fill in X more fields" with essential field counter (X/5)
+- After 5+ essential fields filled: shows "Profile looks great!" with green checkmark and prominent "Continue →" button back to /pipeline
+- Banner does NOT show for athletes who already have schools tracked (completed onboarding)
+- Fixed `_get_athlete` → `_get_or_create_athlete` in athlete_onboarding.py to auto-create athlete records during onboarding instead of 404ing
 - Wiped all athlete/event/action data and created 10 interconnected athletes
 - Each athlete designed to trigger a specific Risk Engine v3 scenario:
   1. Emma Chen — Hot prospect, improving trajectory (recent actions)
@@ -56,6 +62,8 @@ Build and iteratively refine an athlete pipeline management application with Dir
 - `GET /api/director-inbox` — Director-scoped risk inbox
 - `GET /api/coach-inbox` — Coach-scoped risk inbox
 - `GET /api/school-pod-risk/{program_id}` — School pod risk context
+
+### Database Reset & Comprehensive Seed Data (March 19, 2026)
 - `POST /api/coach/escalate` — Coach → Director escalation
 - `POST /api/autopilot/execute` — One-click approval actions
 
