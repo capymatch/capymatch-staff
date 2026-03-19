@@ -68,6 +68,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
   }, [user]);
 
   let navItems = isAthlete ? ATHLETE_NAV : [...STAFF_NAV, ...(isDirector ? DIRECTOR_EXTRA : [])];
+  if (isDirector) navItems = navItems.filter(n => n.id !== "spotlight");
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + "/");
 
