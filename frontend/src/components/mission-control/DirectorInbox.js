@@ -14,22 +14,22 @@ const NUDGE_MAP = {
     label: "Send follow-up message",
     icon: Send,
     actionType: "follow_up",
-    getUrl: (item) => `/messages?to=${encodeURIComponent(item.athleteName)}&draft=${encodeURIComponent(`Hi ${item.athleteName.split(" ")[0]}, just following up — would love to hear your thoughts. Let us know if you had a chance to review.`)}`,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up — would love to hear your thoughts. Let us know if you had a chance to review.`,
+    getUrl: (item) => `/messages?to=${encodeURIComponent(item.athleteName)}&draft=${encodeURIComponent(`Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""} — would love to hear your thoughts. Let us know if you had a chance to review.`)}`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""} — would love to hear your thoughts. Let us know if you had a chance to review.`,
   },
   "No activity": {
     label: "Check in with athlete",
     icon: MessageCircle,
     actionType: "check_in",
     getUrl: (item) => `/support-pods/${extractAthleteId(item)}`,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in — wanted to see how things are going on your end. Let us know if there's anything you need.`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in${item.schoolName ? ` regarding ${item.schoolName}` : ""} — wanted to see how things are going on your end. Let us know if there's anything you need.`,
   },
   "Missing requirement": {
     label: "Request missing document",
     icon: FileText,
     actionType: "request_doc",
     getUrl: (item) => `/support-pods/${extractAthleteId(item)}`,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, we noticed a required document is still missing from your profile. Please upload it at your earliest convenience so we can keep things moving.`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, we noticed a required document is still missing${item.schoolName ? ` for ${item.schoolName}` : ""} from your profile. Please upload it at your earliest convenience so we can keep things moving.`,
   },
   "No coach assigned": {
     label: "Assign coach",
@@ -43,14 +43,14 @@ const NUDGE_MAP = {
     icon: RefreshCw,
     actionType: "follow_up",
     getUrl: () => "/advocacy",
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up on our last conversation. Let us know how things are progressing.`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""} on our last conversation. Let us know how things are progressing.`,
   },
   "Needs attention": {
     label: "Review and take action",
     icon: RefreshCw,
     actionType: "check_in",
     getUrl: (item) => item.cta.url,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in — wanted to see how things are going. Let us know if there's anything you need.`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in${item.schoolName ? ` regarding ${item.schoolName}` : ""} — wanted to see how things are going. Let us know if there's anything you need.`,
   },
 };
 
@@ -251,6 +251,16 @@ function ComposeModal({ nudge, item, onClose, onSent }) {
             <span className="font-semibold">To:</span>
             <span className="text-white font-semibold">{item.athleteName}</span>
           </div>
+          {item.schoolName && (
+            <div className="flex items-center gap-2 text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <span className="font-semibold">School:</span>
+              <span style={{ color: "#e2e8f0" }}>{item.schoolName}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <span className="font-semibold">Reason:</span>
+            <span style={{ color: "#e2e8f0" }}>{(item.issues || []).join(" · ")}{item.timeAgo ? ` · ${item.timeAgo}` : ""}</span>
+          </div>
           <div className="flex items-center gap-2 text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
             <span className="font-semibold">Subject:</span>
             <span style={{ color: "#e2e8f0" }}>{subject}</span>
@@ -355,6 +365,11 @@ function TopPriorityCard({ item, onActionComplete }) {
             <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: "#a16207", opacity: 0.6, margin: 0 }}>
               Suggested action
             </p>
+            {item.schoolName && (
+              <p className="text-[11px] font-medium mb-1" style={{ color: "#a16207", opacity: 0.7, margin: 0 }}>
+                Regarding {item.schoolName} outreach
+              </p>
+            )}
             <div className="flex items-center gap-1.5 mb-2">
               <nudge.Icon className="w-3.5 h-3.5" style={{ color: "#0d9488" }} />
               <span className="text-[12px] font-semibold" style={{ color: "#1e293b" }}>
