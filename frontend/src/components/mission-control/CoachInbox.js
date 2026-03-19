@@ -291,7 +291,7 @@ export default function CoachInbox() {
 
       {/* Needs Attention List */}
       {rest.length > 0 && (
-        <div className="rounded-lg overflow-hidden border" style={{ borderColor: "#e2e8f0" }} data-testid="coach-needs-attention">
+        <div className="rounded-lg overflow-hidden border" style={{ borderColor: "#e2e8f0", backgroundColor: "#fff" }} data-testid="coach-needs-attention">
           <div className="px-4 py-2.5" style={{ borderBottom: "1px solid #f1f5f9" }}>
             <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "#94a3b8" }}>
               Needs Attention · {rest.length}
