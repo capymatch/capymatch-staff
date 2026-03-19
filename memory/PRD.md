@@ -36,6 +36,22 @@ Build and iteratively refine an athlete pipeline management application with Dir
 - The card repeated the same issue info already shown in StatusIntelligence Attention section
 - Cleaned up unused imports (MessageSquare) and destructured variables (current_issue, recruiting_signals)
 
+### Database Reset & Comprehensive Seed Data (March 19, 2026)
+- Wiped all athlete/event/action data and created 10 interconnected athletes
+- Each athlete designed to trigger a specific Risk Engine v3 scenario:
+  1. Emma Chen — Hot prospect, improving trajectory (recent actions)
+  2. Olivia Anderson — Missing docs blocker (2025 grad, transcript missing)
+  3. Marcus Johnson — Critical/worsening (25d inactive, stalled at Campus Visit)
+  4. Sarah Martinez — Early stage, narrow list (2027 grad, exploring)
+  5. Lucas Rodriguez — Healthy, all clear (has USC offer, strong momentum)
+  6. Ava Thompson — Escalation + awaiting reply compound risk
+  7. Noah Davis — Event blocker + missing docs compound risk (2025 grad)
+  8. Isabella Wilson — No activity + awaiting reply compound, worsening
+  9. Liam Moore — No coach assigned + no activity compound, worsening
+  10. Sophia Garcia — Follow-up + no activity but improving (recent action)
+- Created 40 programs, 22 pod actions, 2 escalations, 4 recommendations, 3 events, 5 event notes
+- Testing: 100% frontend, 87.5%+ backend (all critical paths pass)
+
 ## Key API Endpoints
 - `GET /api/director-inbox` — Director-scoped risk inbox
 - `GET /api/coach-inbox` — Coach-scoped risk inbox

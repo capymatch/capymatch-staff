@@ -791,13 +791,13 @@ async def seed():
                 {"type": "follow_up", "date": ago(3), "text": "No response after 4 days -- follow-up sent"},
             ],
         },
-        # Lucas → Pepperdine — follow_up_needed
+        # Lucas → Pepperdine — closed (positive outcome)
         {
             "id": "rec_3",
             "athlete_id": "athlete_5", "athlete_name": "Lucas Rodriguez",
             "school_id": "pepperdine", "school_name": "Pepperdine",
             "college_coach_name": "Coach Wong",
-            "status": "follow_up_needed",
+            "status": "closed",
             "fit_reasons": ["athletic_ability", "campus_culture"],
             "fit_note": "Lucas's power hitting would strengthen Pepperdine's offense",
             "fit_summary": "Power hitter, great campus fit",
@@ -810,11 +810,12 @@ async def seed():
             "response_status": "warm",
             "response_note": "Pepperdine wants to schedule a campus visit.",
             "response_at": ago(4),
-            "follow_up_count": 0, "last_follow_up_at": None,
-            "closed_at": None, "closed_reason": None,
+            "follow_up_count": 1, "last_follow_up_at": ago(2),
+            "closed_at": ago(1), "closed_reason": "positive_outcome",
             "response_history": [
                 {"type": "sent", "date": ago(8), "text": "Recommendation sent to Pepperdine"},
                 {"type": "response", "date": ago(4), "text": "Pepperdine wants campus visit"},
+                {"type": "closed", "date": ago(1), "text": "Closed — campus visit scheduled"},
             ],
         },
         # Ava → Clemson — awaiting reply (escalation scenario)
