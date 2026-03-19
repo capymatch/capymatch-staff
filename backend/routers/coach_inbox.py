@@ -185,8 +185,10 @@ async def get_coach_inbox(current_user: dict = get_current_user_dep()):
             athlete_stage_map[aid] = {"best_stage": status, "stage_entered_days_ago": entered_days}
 
     athlete_days_inactive = {}
+    athlete_photos = {}
     for ath in athletes:
         athlete_days_inactive[ath["id"]] = ath.get("days_since_activity", 0)
+        athlete_photos[ath["id"]] = ath.get("photo_url", "")
 
     # ── Aggregate by athlete ──
     ISSUE_SEVERITY = {"escalation": 6, "missing_documents": 5, "no_coach_assigned": 5,
@@ -265,6 +267,7 @@ async def get_coach_inbox(current_user: dict = get_current_user_dep()):
             "id": f"inbox_{ag['athleteId']}",
             "athleteId": ag["athleteId"],
             "athleteName": ag["athleteName"],
+            "photoUrl": athlete_photos.get(ag["athleteId"], ""),
             "schoolName": school_name,
             "titleSuffix": title_suffix,
             "schoolCount": school_count,

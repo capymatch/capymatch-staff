@@ -6,6 +6,22 @@ import { toast } from "sonner";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const INITIALS_COLORS = ["#0d9488", "#6366f1", "#2563eb", "#dc2626", "#d97706", "#7c3aed", "#059669"];
+
+function Avatar({ name, photoUrl, size = 32 }) {
+  const initials = (name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  const colorIdx = (name || "").length % INITIALS_COLORS.length;
+  if (photoUrl) {
+    return <img src={photoUrl} alt={name} className="rounded-full object-cover shrink-0" style={{ width: size, height: size }} />;
+  }
+  return (
+    <div className="rounded-full flex items-center justify-center shrink-0 font-bold text-white"
+      style={{ width: size, height: size, backgroundColor: INITIALS_COLORS[colorIdx], fontSize: size * 0.38 }}>
+      {initials}
+    </div>
+  );
+}
+
 const TRAJECTORY = {
   worsening: { symbol: "\u2198", label: "Worsening", color: "#dc2626" },
   stable:    { symbol: "\u2192", label: "Stable",    color: "#94a3b8" },
@@ -163,9 +179,12 @@ function CoachTopPriority({ item }) {
             </p>
             {item.trajectory && <TrajectoryHint trajectory={item.trajectory} />}
           </div>
-          <p className="text-[15px] font-bold mt-1.5" style={{ color: "#1e293b", margin: 0, lineHeight: 1.3 }}>
-            {title}
-          </p>
+          <div className="flex items-center gap-2.5 mt-1.5">
+            <Avatar name={item.athleteName} photoUrl={item.photoUrl} size={28} />
+            <p className="text-[15px] font-bold" style={{ color: "#1e293b", margin: 0, lineHeight: 1.3 }}>
+              {title}
+            </p>
+          </div>
           <p className="text-[12px] font-medium mt-1" style={{ color: issueColor, margin: 0 }}>
             {(item.riskSignals || item.issues || []).filter(s => s !== "Needs attention" && s !== "Needs follow-up").join(" · ") || item.primaryRisk} {item.timeAgo && `· ${item.timeAgo}`}
           </p>
@@ -298,7 +317,8 @@ function UpNextRow({ item, onDismiss }) {
         data-testid={`coach-inbox-row-${item.id}`}
       >
         <div className="flex items-start gap-3">
-          <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: dot }} data-testid={`severity-dot-${item.severity}`} />
+          <Avatar name={item.athleteName} photoUrl={item.photoUrl} size={28} />
+          <span className="w-2 h-2 rounded-full shrink-0 mt-2.5" style={{ background: dot }} data-testid={`severity-dot-${item.severity}`} />
           <div className="flex-1 min-w-0">
             {/* Title */}
             <p className="text-[13px] font-semibold" style={{ color: "#1e293b", lineHeight: 1.3 }}>{title}</p>
