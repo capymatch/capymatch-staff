@@ -203,6 +203,8 @@ export default function PipelinePage() {
       {/* ═══ BOARD SEPARATOR ═══ */}
       <div className="flex items-center gap-3 mt-5 sm:mt-6 mb-4 px-1" data-testid="board-separator">
         <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
+        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex-shrink-0" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Manage all programs</span>
+        <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
       </div>
 
       {/* ═══ UPGRADE PROMPT ═══ */}
