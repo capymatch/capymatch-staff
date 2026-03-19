@@ -550,3 +550,4 @@ def get_event_context(athlete_id, school_id=None):
         "event_notes": context_notes,
         "athlete_snapshot": athlete_snapshot,
     }
+# force reload
