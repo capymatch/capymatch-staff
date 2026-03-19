@@ -6,192 +6,334 @@
 <title>Pipeline Board Mockup</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; min-height: 100vh; padding: 24px; }
-
-  .board-title { font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 20px; }
-
-  .board {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 16px;
-    align-items: start;
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f4f5f7;
+    min-height: 100vh;
+    color: #172b4d;
   }
 
-  /* ── Column ── */
-  .col {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    overflow: hidden;
-    min-height: 400px;
-  }
-
-  .col-header {
-    padding: 10px 14px;
+  /* ── TOP BAR ── */
+  .top-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
-  }
-  .col-header .count {
-    font-size: 12px;
-    font-weight: 600;
-    opacity: 0.85;
-    margin-left: 6px;
-  }
-  .col-header .dots {
-    font-size: 16px;
-    cursor: pointer;
-    opacity: 0.7;
-    letter-spacing: 1px;
-  }
-
-  .col.added .col-header { background: #ef4444; }
-  .col.outreach .col-header { background: #f59e0b; }
-  .col.talking .col-header { background: #3b82f6; }
-  .col.visit .col-header { background: #8b5cf6; }
-  .col.offered .col-header { background: #10b981; }
-
-  .col-body {
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  /* ── Card ── */
-  .card {
+    padding: 10px 20px;
     background: #fff;
-    border: 1px solid #e8ecf1;
-    border-radius: 8px;
-    padding: 12px;
-    cursor: grab;
-    transition: box-shadow 150ms ease, transform 150ms ease;
-    position: relative;
-    border-left: 3px solid transparent;
+    border-bottom: 1px solid #e1e4e8;
   }
-  .card:hover {
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-    transform: translateY(-1px);
+  .top-bar h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #172b4d;
+    letter-spacing: -0.01em;
   }
-  .card.status-red { border-left-color: #ef4444; }
-  .card.status-amber { border-left-color: #f59e0b; }
-  .card.status-green { border-left-color: #10b981; }
-
-  .card .school-row {
+  .top-bar-controls {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .card .logo {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
+  .top-btn {
+    font-size: 12px;
+    font-weight: 500;
+    color: #5e6c84;
+    background: #f4f5f7;
+    border: 1px solid #dfe1e6;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .top-btn:hover { background: #ebecf0; }
+  .top-btn svg { width: 14px; height: 14px; fill: #5e6c84; }
+  .icon-btn {
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #f4f5f7;
+    border: 1px solid #dfe1e6;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #5e6c84;
+    font-size: 14px;
+  }
+  .icon-btn:hover { background: #ebecf0; }
+
+  /* ── BOARD ── */
+  .board {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    align-items: flex-start;
+    min-height: calc(100vh - 50px);
+  }
+
+  /* ── COLUMN ── */
+  .col {
+    min-width: 256px;
+    max-width: 256px;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .col.add-col {
+    background: transparent;
+    border: 2px dashed #d5d9e0;
+    box-shadow: none;
+    min-height: 120px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 150ms;
+  }
+  .col.add-col:hover { opacity: 0.9; }
+  .col.add-col span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8993a4;
+  }
+
+  /* Column header */
+  .col-header {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+  }
+  .col-header .count {
+    background: rgba(255,255,255,0.25);
+    padding: 1px 7px;
+    border-radius: 10px;
     font-size: 11px;
+    font-weight: 600;
+  }
+  .col.not-started .col-header { background: #e05555; }
+  .col.in-progress .col-header { background: #2f80ed; }
+  .col.in-review .col-header { background: #e8862a; }
+  .col.completed .col-header { background: #27ae60; }
+
+  /* Add task row */
+  .add-task-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #8993a4;
+    border-bottom: 1px solid #f0f1f3;
+    cursor: pointer;
+    transition: background 100ms;
+  }
+  .add-task-row:hover { background: #f9fafb; color: #5e6c84; }
+  .add-task-row .plus { font-size: 14px; font-weight: 400; }
+
+  /* Column body */
+  .col-body {
+    padding: 6px 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 5px;
+    padding: 9px 10px;
+    cursor: grab;
+    transition: box-shadow 120ms ease, transform 120ms ease;
+    position: relative;
+  }
+  .card:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+  }
+
+  /* Card: School row */
+  .card .school-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .card .logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
     font-weight: 800;
     color: #fff;
     flex-shrink: 0;
+    letter-spacing: -0.02em;
   }
   .card .school-name {
     font-size: 13px;
     font-weight: 700;
-    color: #1e293b;
-    line-height: 1.3;
+    color: #172b4d;
+    line-height: 1.2;
     flex: 1;
     min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .card .priority {
-    font-size: 8px;
-    font-weight: 800;
-    padding: 2px 5px;
-    border-radius: 3px;
-    flex-shrink: 0;
-    letter-spacing: 0.04em;
-  }
-  .card .priority.top { background: rgba(99,102,241,0.08); color: #6366f1; }
-  .card .priority.high { background: rgba(13,148,136,0.06); color: #0d9488; }
-  .card .priority.med { background: rgba(148,163,184,0.1); color: #94a3b8; }
 
-  .card .meta-row {
+  /* Card: Status line */
+  .card .status-line {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    padding-left: 36px;
-    font-size: 10px;
-    color: #94a3b8;
+    gap: 5px;
+    margin-top: 5px;
+    font-size: 11px;
     font-weight: 500;
   }
-  .card .meta-row .dot { width: 3px; height: 3px; border-radius: 50%; background: #cbd5e1; }
-
-  .card .action-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 10px;
-    padding-top: 8px;
-    padding-left: 36px;
-    border-top: 1px solid #f1f5f9;
-  }
-  .card .next-action {
-    font-size: 11px;
-    font-weight: 600;
-    color: #475569;
-  }
-  .card .time-badge {
-    font-size: 9px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 4px;
+  .card .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
     flex-shrink: 0;
   }
-  .card .time-badge.red { background: rgba(239,68,68,0.06); color: #dc2626; }
-  .card .time-badge.amber { background: rgba(245,158,11,0.06); color: #d97706; }
-  .card .time-badge.green { background: rgba(16,185,129,0.05); color: #047857; }
-  .card .time-badge.neutral { background: #f8fafc; color: #94a3b8; }
+  .status-dot.red { background: #e05555; }
+  .status-dot.amber { background: #e8862a; }
+  .status-dot.green { background: #27ae60; }
+  .status-label.red { color: #c0392b; }
+  .status-label.amber { color: #c06b18; }
+  .status-label.green { color: #1e8449; }
 
-  /* ── Minimal card (just title) ── */
-  .card.minimal {
-    padding: 10px 12px;
-  }
-  .card.minimal .school-name {
-    font-size: 12.5px;
-    font-weight: 600;
+  /* Card: Time line */
+  .card .time-line {
+    margin-top: 3px;
+    font-size: 10.5px;
+    color: #8993a4;
+    font-weight: 500;
+    padding-left: 12px;
   }
 
-  /* ── Dragging state demo ── */
-  .card.dragging {
-    transform: rotate(-2deg) scale(1.04) !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10) !important;
+  /* Card: Action line */
+  .card .action-line {
+    margin-top: 5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #172b4d;
+    line-height: 1.3;
+  }
+
+  /* Card: Owner / context line */
+  .card .owner-line {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    font-size: 10.5px;
+    color: #8993a4;
+    font-weight: 500;
+  }
+  .card .owner-avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .avatar-stack {
+    display: flex;
+  }
+  .avatar-stack .owner-avatar {
+    margin-left: -5px;
+    border: 1.5px solid #fff;
+  }
+  .avatar-stack .owner-avatar:first-child { margin-left: 0; }
+
+  /* Card: Metrics row (optional) */
+  .card .metrics-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px solid #f3f4f6;
+    font-size: 10px;
+    color: #8993a4;
+    font-weight: 500;
+  }
+  .card .metric {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .card .metric svg {
+    width: 11px;
+    height: 11px;
+    fill: #a0aec0;
+  }
+
+  /* ── Floating card (realism) ── */
+  .floating-card {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    transform: rotate(-3deg) scale(1.04);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.18), 0 6px 16px rgba(0,0,0,0.10);
     z-index: 100;
-    opacity: 0.95;
+    opacity: 0.92;
+    pointer-events: none;
+    width: 240px;
+    border: 1px solid #e0e3e8;
+    border-radius: 5px;
+    background: #fff;
+    padding: 9px 10px;
     cursor: grabbing;
   }
-
-  .card.ghost {
-    opacity: 0.25;
-    border: 2px dashed #cbd5e1;
-    background: #f8fafc;
+  .floating-card .school-row,
+  .floating-card .status-line,
+  .floating-card .time-line,
+  .floating-card .action-line,
+  .floating-card .owner-line {
+    /* inherit card styles */
   }
-  .card.ghost * { visibility: hidden; }
-
-  /* ── Drop target highlight ── */
-  .col.drop-target .col-body {
-    background: rgba(59,130,246,0.03);
-    border-radius: 0 0 12px 12px;
+  .floating-label {
+    position: fixed;
+    bottom: 20px;
+    right: 40px;
+    font-size: 10px;
+    color: #a0aec0;
+    font-weight: 500;
+    z-index: 101;
+    pointer-events: none;
+    letter-spacing: 0.02em;
   }
 
   /* ── Empty state ── */
   .empty-state {
-    padding: 30px 16px;
+    padding: 20px 12px;
     text-align: center;
     font-size: 11px;
-    color: #cbd5e1;
+    color: #c1c7d0;
     font-weight: 500;
   }
 
@@ -203,320 +345,347 @@
   .logo.fau { background: #003366; }
   .logo.creighton { background: #005CA9; }
   .logo.test { background: #64748b; }
-
-  /* ── Demo instructions ── */
-  .instructions {
-    margin-bottom: 20px;
-    padding: 10px 16px;
-    background: #fff;
-    border-radius: 8px;
-    font-size: 11px;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .instructions strong { color: #1e293b; }
+  .logo.duke { background: #003087; }
+  .logo.penn { background: #011F5B; }
+  .logo.rice { background: #00205B; }
+  .logo.tulane { background: #006747; }
+  .logo.usc { background: #990000; }
+  .logo.owner-you { background: #7c3aed; }
+  .logo.owner-coach { background: #2563eb; }
+  .logo.owner-athlete { background: #0d9488; }
 </style>
 </head>
 <body>
 
-<div class="board-title">My Schools — Pipeline</div>
-
-<div class="instructions">
-  <strong>Try it:</strong> Click and drag any card to move it between columns. Cards tilt and lift when dragged.
+<!-- ═══ TOP BAR ═══ -->
+<div class="top-bar">
+  <h1>CapyMatch Task Boards</h1>
+  <div class="top-bar-controls">
+    <button class="top-btn">
+      <svg viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>
+      Customize
+    </button>
+    <button class="top-btn">Show: All</button>
+    <button class="icon-btn" title="Sort">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="#5e6c84"><path d="M3 2v10.293l-1.646-1.647-.708.708L3.5 14.207l2.854-2.853-.708-.708L4 12.293V2H3zm5 0v1h7V2H8zm0 3v1h5V5H8zm0 3v1h3V8H8z"/></svg>
+    </button>
+    <button class="icon-btn" title="Activity">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="#5e6c84"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.399l-.302.004.066-.312L8.627 6h.926l-.614 2.87z"/><circle cx="8" cy="4.5" r="1"/></svg>
+    </button>
+  </div>
 </div>
 
-<div class="board" id="board">
+<!-- ═══ BOARD ═══ -->
+<div class="board">
 
-  <!-- ═══ ADDED ═══ -->
-  <div class="col added" data-col="added">
+  <!-- ═══ NOT STARTED ═══ -->
+  <div class="col not-started">
     <div class="col-header">
-      <span>Added <span class="count">3</span></span>
-      <span class="dots">⋮</span>
+      <span>Not Started</span>
+      <span class="count">4</span>
     </div>
-    <div class="col-body" data-droppable="added">
+    <div class="add-task-row">
+      <span>+ Add New Task</span>
+      <span class="plus">&#8942;</span>
+    </div>
+    <div class="col-body">
 
-      <div class="card status-red" draggable="true" data-id="test">
+      <div class="card">
         <div class="school-row">
           <div class="logo test">T</div>
           <div class="school-name">TEST_Dup</div>
-          <span class="priority med">MED</span>
         </div>
-        <div class="meta-row">
-          <span>D1</span>
-          <span class="dot"></span>
-          <span>Not Contacted</span>
+        <div class="status-line">
+          <span class="status-dot red"></span>
+          <span class="status-label red">Needs attention</span>
         </div>
-        <div class="action-row">
-          <span class="next-action">Start Outreach</span>
-          <span class="time-badge red">2d overdue</span>
+        <div class="time-line">2d overdue</div>
+        <div class="action-line">Start outreach</div>
+        <div class="owner-line">
+          <div class="owner-avatar logo owner-you">Y</div>
+          Owner: You
         </div>
       </div>
 
-      <div class="card status-amber" draggable="true" data-id="fau">
+      <div class="card">
         <div class="school-row">
           <div class="logo fau">FA</div>
-          <div class="school-name">Florida Atlantic University</div>
-          <span class="priority med">MED</span>
+          <div class="school-name">Florida Atlantic</div>
         </div>
-        <div class="meta-row">
-          <span>D1</span>
-          <span class="dot"></span>
-          <span>AAC</span>
-          <span class="dot"></span>
-          <span>Not Contacted</span>
+        <div class="status-line">
+          <span class="status-dot amber"></span>
+          <span class="status-label amber">Needs action</span>
         </div>
-        <div class="action-row">
-          <span class="next-action">Start Outreach</span>
-          <span class="time-badge amber">Due today</span>
+        <div class="time-line">Due today</div>
+        <div class="action-line">Start outreach</div>
+        <div class="owner-line">
+          <div class="owner-avatar logo owner-you">Y</div>
+          Owner: You
         </div>
       </div>
 
-      <div class="card status-green" draggable="true" data-id="creighton">
+      <div class="card">
         <div class="school-row">
           <div class="logo creighton">C</div>
-          <div class="school-name">Creighton University</div>
+          <div class="school-name">Creighton</div>
         </div>
-        <div class="meta-row">
-          <span>D1</span>
-          <span class="dot"></span>
-          <span>Big East</span>
+        <div class="status-line">
+          <span class="status-dot green"></span>
+          <span class="status-label green">On track</span>
         </div>
-        <div class="action-row">
-          <span class="next-action" style="color: #94a3b8; font-weight: 500;">No action needed</span>
-          <span class="time-badge green">On track</span>
+        <div class="time-line">No deadline set</div>
+        <div class="action-line">Ready for first contact</div>
+        <div class="owner-line">
+          <div class="owner-avatar logo owner-you">Y</div>
+          Owner: You
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="school-row">
+          <div class="logo duke">D</div>
+          <div class="school-name">Duke</div>
+        </div>
+        <div class="status-line">
+          <span class="status-dot green"></span>
+          <span class="status-label green">On track</span>
+        </div>
+        <div class="time-line">Jan 12 - Jan 20</div>
+        <div class="action-line">Research program</div>
+        <div class="owner-line">
+          <div class="avatar-stack">
+            <div class="owner-avatar logo owner-you">Y</div>
+            <div class="owner-avatar logo owner-coach">C</div>
+          </div>
+          You + Coach
         </div>
       </div>
 
     </div>
   </div>
 
-  <!-- ═══ OUTREACH ═══ -->
-  <div class="col outreach" data-col="outreach">
+  <!-- ═══ IN PROGRESS ═══ -->
+  <div class="col in-progress">
     <div class="col-header">
-      <span>Outreach <span class="count">2</span></span>
-      <span class="dots">⋮</span>
+      <span>In Progress</span>
+      <span class="count">3</span>
     </div>
-    <div class="col-body" data-droppable="outreach">
+    <div class="add-task-row">
+      <span>+ Add New Task</span>
+      <span class="plus">&#8942;</span>
+    </div>
+    <div class="col-body">
 
-      <div class="card status-red" draggable="true" data-id="emory">
+      <div class="card">
         <div class="school-row">
           <div class="logo emory">E</div>
-          <div class="school-name">Emory University</div>
-          <span class="priority med">MED</span>
+          <div class="school-name">Emory</div>
         </div>
-        <div class="meta-row">
-          <span>D3</span>
-          <span class="dot"></span>
-          <span>UAA</span>
-          <span class="dot"></span>
-          <span>Contacted</span>
+        <div class="status-line">
+          <span class="status-dot red"></span>
+          <span class="status-label red">Needs attention</span>
         </div>
-        <div class="action-row">
-          <span class="next-action">Re-engage</span>
-          <span class="time-badge red">16d overdue</span>
+        <div class="time-line">16d overdue</div>
+        <div class="action-line">Re-engage coach</div>
+        <div class="owner-line">
+          <div class="owner-avatar logo owner-you">Y</div>
+          Owner: You
+        </div>
+        <div class="metrics-row">
+          <span class="metric">
+            <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 11.5v-8z"/></svg>
+            2 emails
+          </span>
+          <span class="metric">
+            <svg viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm.5-11v4.793l2.854 2.853-.708.708L7.5 9.207V4h1z"/></svg>
+            3d ago
+          </span>
         </div>
       </div>
 
-      <div class="card status-red" draggable="true" data-id="ucla">
+      <div class="card">
         <div class="school-row">
           <div class="logo ucla">UC</div>
           <div class="school-name">UCLA</div>
-          <span class="priority high">HIGH</span>
         </div>
-        <div class="meta-row">
-          <span>D1</span>
-          <span class="dot"></span>
-          <span>Pac-12</span>
-          <span class="dot"></span>
-          <span>Contacted</span>
+        <div class="status-line">
+          <span class="status-dot red"></span>
+          <span class="status-label red">Needs attention</span>
         </div>
-        <div class="action-row">
-          <span class="next-action">Re-engage</span>
-          <span class="time-badge red">3d overdue</span>
+        <div class="time-line">3d overdue</div>
+        <div class="action-line">Re-engage</div>
+        <div class="owner-line">
+          <div class="avatar-stack">
+            <div class="owner-avatar logo owner-you">Y</div>
+            <div class="owner-avatar logo owner-coach">C</div>
+          </div>
+          You + Coach
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="school-row">
+          <div class="logo penn">P</div>
+          <div class="school-name">Penn State</div>
+        </div>
+        <div class="status-line">
+          <span class="status-dot amber"></span>
+          <span class="status-label amber">Needs action</span>
+        </div>
+        <div class="time-line">Due tomorrow</div>
+        <div class="action-line">Send follow-up email</div>
+        <div class="owner-line">
+          <div class="owner-avatar logo owner-coach">C</div>
+          Coach assigned task
         </div>
       </div>
 
     </div>
   </div>
 
-  <!-- ═══ TALKING ═══ -->
-  <div class="col talking" data-col="talking">
+  <!-- ═══ IN REVIEW ═══ -->
+  <div class="col in-review">
     <div class="col-header">
-      <span>Talking <span class="count">1</span></span>
-      <span class="dots">⋮</span>
+      <span>In Review</span>
+      <span class="count">2</span>
     </div>
-    <div class="col-body" data-droppable="talking">
+    <div class="add-task-row">
+      <span>+ Add New Task</span>
+      <span class="plus">&#8942;</span>
+    </div>
+    <div class="col-body">
 
-      <div class="card status-red" draggable="true" data-id="florida">
+      <div class="card">
         <div class="school-row">
           <div class="logo florida">UF</div>
           <div class="school-name">University of Florida</div>
-          <span class="priority high">HIGH</span>
         </div>
-        <div class="meta-row">
-          <span>D1</span>
-          <span class="dot"></span>
-          <span>SEC</span>
-          <span class="dot"></span>
-          <span>Coach assigned task</span>
+        <div class="status-line">
+          <span class="status-dot red"></span>
+          <span class="status-label red">Needs attention</span>
         </div>
-        <div class="action-row">
-          <span class="next-action">Take Action</span>
-          <span class="time-badge red">11d overdue</span>
+        <div class="time-line">11d overdue</div>
+        <div class="action-line">Take action</div>
+        <div class="owner-line">
+          <div class="owner-avatar logo owner-coach">C</div>
+          Coach assigned task
+        </div>
+        <div class="metrics-row">
+          <span class="metric">
+            <svg viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v8a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 11.5v-8z"/></svg>
+            5 emails
+          </span>
+          <span class="metric">
+            <svg viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12z"/></svg>
+            2 notes
+          </span>
+          <span class="metric">
+            <svg viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm.5-11v4.793l2.854 2.853-.708.708L7.5 9.207V4h1z"/></svg>
+            1d ago
+          </span>
         </div>
       </div>
 
-    </div>
-  </div>
-
-  <!-- ═══ VISIT ═══ -->
-  <div class="col visit" data-col="visit">
-    <div class="col-header">
-      <span>Visit <span class="count">1</span></span>
-      <span class="dots">⋮</span>
-    </div>
-    <div class="col-body" data-droppable="visit">
-
-      <div class="card status-red" draggable="true" data-id="stanford">
+      <div class="card">
         <div class="school-row">
           <div class="logo stanford">S</div>
-          <div class="school-name">Stanford University</div>
-          <span class="priority top">TOP</span>
+          <div class="school-name">Stanford</div>
         </div>
-        <div class="meta-row">
-          <span>D1</span>
-          <span class="dot"></span>
-          <span>Pac-12</span>
-          <span class="dot"></span>
-          <span>Offer</span>
+        <div class="status-line">
+          <span class="status-dot red"></span>
+          <span class="status-label red">Needs attention</span>
         </div>
-        <div class="action-row">
-          <span class="next-action">Re-engage</span>
-          <span class="time-badge red">3d overdue</span>
+        <div class="time-line">3d overdue</div>
+        <div class="action-line">Re-engage</div>
+        <div class="owner-line">
+          <div class="avatar-stack">
+            <div class="owner-avatar logo owner-you">Y</div>
+            <div class="owner-avatar logo owner-athlete">A</div>
+          </div>
+          You + Athlete
         </div>
       </div>
 
     </div>
   </div>
 
-  <!-- ═══ OFFERED ═══ -->
-  <div class="col offered" data-col="offered">
+  <!-- ═══ COMPLETED ═══ -->
+  <div class="col completed">
     <div class="col-header">
-      <span>Offered <span class="count">0</span></span>
-      <span class="dots">⋮</span>
+      <span>Completed</span>
+      <span class="count">2</span>
     </div>
-    <div class="col-body" data-droppable="offered">
-      <div class="empty-state">No offers yet</div>
+    <div class="add-task-row">
+      <span>+ Add New Task</span>
+      <span class="plus">&#8942;</span>
     </div>
+    <div class="col-body">
+
+      <div class="card">
+        <div class="school-row">
+          <div class="logo rice">R</div>
+          <div class="school-name">Rice</div>
+        </div>
+        <div class="status-line">
+          <span class="status-dot green"></span>
+          <span class="status-label green">On track</span>
+        </div>
+        <div class="time-line">Completed Jan 8</div>
+        <div class="action-line">Visit scheduled</div>
+        <div class="owner-line">
+          <div class="owner-avatar logo owner-you">Y</div>
+          Owner: You
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="school-row">
+          <div class="logo tulane">T</div>
+          <div class="school-name">Tulane</div>
+        </div>
+        <div class="status-line">
+          <span class="status-dot green"></span>
+          <span class="status-label green">On track</span>
+        </div>
+        <div class="time-line">Completed Jan 5</div>
+        <div class="action-line">Initial outreach sent</div>
+        <div class="owner-line">
+          <div class="avatar-stack">
+            <div class="owner-avatar logo owner-you">Y</div>
+            <div class="owner-avatar logo owner-coach">C</div>
+          </div>
+          You + Coach
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ + ADD NEW ═══ -->
+  <div class="col add-col">
+    <span>+ Add New</span>
   </div>
 
 </div>
 
-<script>
-// ── Drag & Drop with tilt + lift ──
-let draggedEl = null;
-let ghostEl = null;
-
-document.querySelectorAll('.card[draggable]').forEach(card => {
-  card.addEventListener('dragstart', e => {
-    draggedEl = card;
-    // Create ghost placeholder
-    ghostEl = card.cloneNode(true);
-    ghostEl.classList.add('ghost');
-    ghostEl.classList.remove('dragging');
-    ghostEl.removeAttribute('draggable');
-
-    // Lift + tilt the original
-    requestAnimationFrame(() => {
-      card.classList.add('dragging');
-    });
-
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', card.dataset.id);
-
-    // Highlight potential drop targets
-    document.querySelectorAll('.col').forEach(col => {
-      if (!col.contains(card)) col.classList.add('drop-target');
-    });
-  });
-
-  card.addEventListener('dragend', () => {
-    card.classList.remove('dragging');
-    if (ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
-    ghostEl = null;
-    draggedEl = null;
-    document.querySelectorAll('.col').forEach(col => col.classList.remove('drop-target'));
-  });
-});
-
-document.querySelectorAll('[data-droppable]').forEach(dropzone => {
-  dropzone.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-
-    // Find insert position
-    const cards = [...dropzone.querySelectorAll('.card:not(.ghost):not(.dragging)')];
-    const afterEl = cards.find(c => {
-      const rect = c.getBoundingClientRect();
-      return e.clientY < rect.top + rect.height / 2;
-    });
-
-    // Remove old ghost
-    if (ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
-
-    if (afterEl) {
-      dropzone.insertBefore(ghostEl, afterEl);
-    } else {
-      // Remove empty state if present
-      const empty = dropzone.querySelector('.empty-state');
-      if (empty) dropzone.insertBefore(ghostEl, empty);
-      else dropzone.appendChild(ghostEl);
-    }
-  });
-
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault();
-    if (!draggedEl) return;
-
-    // Insert the real card where ghost is
-    if (ghostEl && ghostEl.parentNode) {
-      ghostEl.parentNode.insertBefore(draggedEl, ghostEl);
-      ghostEl.parentNode.removeChild(ghostEl);
-    }
-
-    // Remove empty states from the target
-    const empty = dropzone.querySelector('.empty-state');
-    if (empty && dropzone.querySelectorAll('.card').length > 0) {
-      empty.remove();
-    }
-
-    // Add empty state to source if now empty
-    document.querySelectorAll('[data-droppable]').forEach(dz => {
-      if (dz.querySelectorAll('.card').length === 0 && !dz.querySelector('.empty-state')) {
-        const emptyDiv = document.createElement('div');
-        emptyDiv.className = 'empty-state';
-        emptyDiv.textContent = 'Drop here';
-        dz.appendChild(emptyDiv);
-      }
-    });
-
-    // Update counts
-    document.querySelectorAll('.col').forEach(col => {
-      const body = col.querySelector('.col-body');
-      const count = body.querySelectorAll('.card').length;
-      col.querySelector('.count').textContent = count;
-    });
-
-    draggedEl.classList.remove('dragging');
-    ghostEl = null;
-    draggedEl = null;
-    document.querySelectorAll('.col').forEach(col => col.classList.remove('drop-target'));
-  });
-});
-</script>
+<!-- ═══ FLOATING CARD (realism) ═══ -->
+<div class="floating-card" style="transform: rotate(-3deg) scale(1.04);">
+  <div class="school-row" style="display:flex;align-items:center;gap:7px;">
+    <div class="logo usc" style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;">US</div>
+    <div style="font-size:13px;font-weight:700;color:#172b4d;">USC</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:11px;font-weight:500;">
+    <span class="status-dot amber" style="width:7px;height:7px;border-radius:50%;flex-shrink:0;"></span>
+    <span class="status-label amber">Needs action</span>
+  </div>
+  <div style="margin-top:3px;font-size:10.5px;color:#8993a4;font-weight:500;padding-left:12px;">Due in 2 days</div>
+  <div style="margin-top:5px;font-size:12px;font-weight:700;color:#172b4d;">Send intro email</div>
+  <div style="display:flex;align-items:center;gap:5px;margin-top:5px;font-size:10.5px;color:#8993a4;font-weight:500;">
+    <div style="width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;background:#7c3aed;">Y</div>
+    Owner: You
+  </div>
+</div>
+<div class="floating-label">Dragging...</div>
 
 </body>
 </html>
