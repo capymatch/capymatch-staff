@@ -187,16 +187,16 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         )}
       </div>
 
-      {/* SLIDE CONTENT — 2-column: info left, CTA right */}
+      {/* SLIDE CONTENT — responsive: stacked on mobile, side-by-side on desktop */}
       <div className={`relative z-[1] ${slideClass}`}
         style={{
           padding: compact ? '8px 14px 10px' : '10px 16px 12px',
           transition: 'padding 180ms ease-out',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-          {/* LEFT — 70%: urgency → school → action → owner */}
-          <div style={{ flex: '1 1 0%', minWidth: 0 }}>
+        <div className="hero-slide-grid">
+          {/* LEFT — urgency → school → action → owner */}
+          <div style={{ minWidth: 0 }}>
             {/* Urgency: ● HIGH · Overdue 10d */}
             <div className="flex items-center gap-1.5" data-testid="hero-status-row">
               <div className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: style.accent }} />
@@ -255,10 +255,10 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           </div>
 
           {/* RIGHT — CTA + progress rail */}
-          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-            {/* Progress rail — top right */}
+          <div className="hero-right-col">
+            {/* Progress rail — hidden on mobile, shown on desktop */}
             {!compact && rail && (
-              <div style={{ width: 320 }} data-testid="hero-progress-rail">
+              <div className="hero-rail-wrapper" data-testid="hero-progress-rail">
                 <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
               </div>
             )}
