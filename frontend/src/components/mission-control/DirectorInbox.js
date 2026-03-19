@@ -274,6 +274,18 @@ function TopPriorityCard({ item, onActionComplete }) {
                 {nudge.label}
               </span>
             </div>
+            {/* Message preview */}
+            {canAutoExecute && nudge.template && (
+              <div
+                className="mb-2.5 px-3 py-2 rounded"
+                style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(254,240,138,0.5)" }}
+                data-testid="autopilot-message-preview"
+              >
+                <p className="text-[11px] font-medium" style={{ color: "#1e293b", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                  {nudge.template}
+                </p>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               {canAutoExecute && (
                 <button
