@@ -71,16 +71,18 @@ async def execute_autopilot(action: AutopilotAction, current_user: dict = get_cu
         doc.pop("_id", None)
 
         # Update thread metadata
-        await db.message_threads.update_one(
+        await db.support_threads.update_one(
             {"id": thread_id},
             {"$set": {
                 "id": thread_id,
+                "thread_id": thread_id,
                 "athlete_id": action.athlete_id,
                 "subject": subject,
                 "last_message_at": now,
                 "last_sender_id": current_user["id"],
                 "last_snippet": body[:80],
                 "participant_ids": [current_user["id"], action.athlete_id],
+                "created_by": current_user["id"],
                 "created_at": now,
             }},
             upsert=True,
