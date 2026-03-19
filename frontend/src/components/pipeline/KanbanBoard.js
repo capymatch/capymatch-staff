@@ -86,7 +86,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, activeDragId
         const libStyle = provided.draggableProps.style || {};
         const baseTransform = libStyle.transform || "";
         const composedTransform = isLifted
-          ? `${baseTransform} scale(1.03)`.trim()
+          ? `${baseTransform} rotate(-3deg) scale(1.05)`.trim()
           : isDropping
             ? `${baseTransform} scale(0.98)`.trim()
             : baseTransform || undefined;
@@ -108,7 +108,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, activeDragId
                   : undefined,
               cursor: isLifted ? "grabbing" : "grab",
               boxShadow: isLifted
-                ? "0 18px 50px rgba(0,0,0,0.18), 0 6px 16px rgba(0,0,0,0.10)"
+                ? "0 20px 50px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10)"
                 : undefined,
               borderColor: isLifted ? "#e0e3e8" : undefined,
               opacity: isFaded ? 0.35 : 1,
