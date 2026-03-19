@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priority Board — Redesign Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+  :root {
+    --bg: #fafbfc;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
+    --text-4: #cbd5e1;
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,0.06);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245,158,11,0.06);
+    --teal: #0d9488;
+    --teal-soft: rgba(13,148,136,0.06);
+    --green: #10b981;
+    --green-soft: rgba(16,185,129,0.06);
+    --blue: #3b82f6;
+    --blue-soft: rgba(59,130,246,0.06);
+    --purple: #8b5cf6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 24px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Section */
+  .section { margin-bottom: 28px; }
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px; padding: 0 2px;
+  }
+  .section-icon {
+    width: 20px; height: 20px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+  }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .section-count { font-size: 10px; font-weight: 500; color: var(--text-3); }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0;
+    overflow: hidden;
+    transition: box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .card:hover {
+    box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+    border-color: #cbd5e1;
+  }
+  .card + .card { margin-top: 8px; }
+
+  .card-accent {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 14px 0 0 14px;
+  }
+
+  .card-inner {
+    position: relative;
+    padding: 14px 16px 12px;
+  }
+
+  /* Top row: logo + school + badge */
+  .card-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+
+  .logo-ring {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0,0,0,0.04);
+  }
+  .logo-ring img { width: 24px; height: 24px; object-fit: contain; }
+  .logo-ring .initials {
+    font-size: 11px; font-weight: 700; color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+
+  .school-info { flex: 1; min-width: 0; }
+  .school-name {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .school-meta {
+    font-size: 10px; color: var(--text-3); font-weight: 500;
+    display: flex; align-items: center; gap: 6px; margin-top: 1px;
+  }
+  .school-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-4); }
+
+  .stage-pill {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.03em;
+    padding: 2px 7px; border-radius: 5px; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* Action row */
+  .action-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 12px; margin: 0 -16px;
+    border-top: 1px solid rgba(226,232,240,0.5);
+    background: rgba(248,250,252,0.6);
+  }
+  .action-icon {
+    width: 18px; height: 18px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px; font-size: 9px;
+  }
+  .action-text {
+    flex: 1; font-size: 12px; font-weight: 600; line-height: 1.35;
+    color: var(--text-2);
+  }
+  .action-timing {
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    padding: 2px 6px; border-radius: 5px; margin-top: 1px;
+  }
+
+  /* CTA button */
+  .cta-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; margin: 0 -16px -12px;
+    border-top: 1px solid rgba(226,232,240,0.5);
+  }
+  .cta-owner {
+    font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .cta-btn {
+    font-size: 11px; font-weight: 700; border: none; cursor: pointer;
+    padding: 5px 12px; border-radius: 8px;
+    display: flex; align-items: center; gap: 4px;
+    transition: opacity 150ms;
+  }
+  .cta-btn:hover { opacity: 0.85; }
+  .cta-btn svg { width: 12px; height: 12px; }
+
+  /* Journey mini-rail */
+  .mini-rail {
+    display: flex; align-items: center; gap: 0; margin-top: 6px;
+  }
+  .rail-step {
+    width: 32px; height: 3px; border-radius: 2px;
+    transition: background 200ms;
+  }
+  .rail-step + .rail-step { margin-left: 2px; }
+  .rail-step.done { background: var(--teal); }
+  .rail-step.active { background: var(--teal); opacity: 0.5; }
+  .rail-step.future { background: var(--surface-2); }
+
+  /* Compact on-track rows */
+  .compact-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    transition: background 150ms;
+    cursor: pointer;
+  }
+  .compact-row:hover { background: rgba(241,245,249,0.65); }
+  .compact-row + .compact-row { border-top: 1px solid rgba(226,232,240,0.4); }
+  .compact-logo {
+    width: 28px; height: 28px; border-radius: 8px; background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.03);
+  }
+  .compact-logo .initials { font-size: 9px; font-weight: 700; color: var(--text-3); }
+  .compact-info { flex: 1; min-width: 0; }
+  .compact-name { font-size: 12px; font-weight: 600; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compact-status { font-size: 10px; color: var(--text-3); font-weight: 500; display: flex; align-items: center; gap: 4px; margin-top: 1px; }
+  .compact-status .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+  .compact-cta { font-size: 10px; font-weight: 600; color: var(--text-3); flex-shrink: 0; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 24px 16px;
+    background: var(--surface); border: 1px dashed var(--border); border-radius: 14px;
+  }
+  .empty-icon { font-size: 24px; margin-bottom: 6px; opacity: 0.4; }
+  .empty-text { font-size: 12px; color: var(--text-3); font-weight: 500; }
+
+  /* On-track section toggle */
+  .toggle-header {
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer; padding: 4px 2px; margin-bottom: 8px;
+  }
+  .toggle-chevron {
+    width: 14px; height: 14px; color: var(--green);
+    transition: transform 200ms;
+  }
+
+  /* Section title label */
+  .title-bar {
+    text-align: center; padding: 4px 0 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-3);
+  }
+</style>
+</head>
+<body>
+
+<div class="title-bar">MANAGE ALL PROGRAMS</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION: NEXT ACTIONS (HIGH PRIORITY)          -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background: var(--red-soft); color: var(--red);">!</div>
+    <span class="section-label" style="color: var(--text-2);">Next actions</span>
+    <span class="section-count">(1)</span>
+  </div>
+
+  <!-- Card: Emory — needs follow-up, overdue -->
+  <div class="card" style="border-color: rgba(239,68,68,0.15);">
+    <div class="card-inner">
+      <div class="card-accent" style="background: var(--red);"></div>
+
+      <div class="card-top">
+        <div class="logo-ring">
+          <span class="initials">EM</span>
+        </div>
+        <div class="school-info">
+          <div class="school-name">Emory University</div>
+          <div class="school-meta">
+            <span>D3 &middot; UAA</span>
+            <span class="dot"></span>
+            <span>Atlanta, GA</span>
+          </div>
+        </div>
+        <span class="stage-pill" style="background: rgba(59,130,246,0.08); color: var(--blue);">Outreach</span>
+      </div>
+
+      <!-- Mini journey rail -->
+      <div class="mini-rail">
+        <div class="rail-step done"></div>
+        <div class="rail-step active"></div>
+        <div class="rail-step future"></div>
+        <div class="rail-step future"></div>
+        <div class="rail-step future"></div>
+      </div>
+
+      <div class="action-row" style="margin-top: 10px;">
+        <div class="action-icon" style="background: var(--red-soft); color: var(--red);">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <span class="action-text">Follow up — no reply after initial outreach</span>
+        <span class="action-timing" style="background: rgba(239,68,68,0.08); color: var(--red);">Overdue 2d</span>
+      </div>
+
+      <div class="cta-row" style="margin-top: 10px;">
+        <span class="cta-owner" style="background: var(--teal-soft); color: var(--teal);">You</span>
+        <button class="cta-btn" style="background: var(--red-soft); color: var(--red);">
+          Send Follow-up
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION: COMING UP (MEDIUM)                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background: var(--amber-soft); color: var(--amber);">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <span class="section-label" style="color: var(--text-2);">Coming up</span>
+    <span class="section-count">(3)</span>
+  </div>
+
+  <!-- Card: Stanford — campus visit, respond to coach -->
+  <div class="card">
+    <div class="card-inner">
+      <div class="card-top">
+        <div class="logo-ring" style="border-color: rgba(200,16,46,0.1);">
+          <span class="initials" style="color: #c8102e; font-weight: 800;">SU</span>
+        </div>
+        <div class="school-info">
+          <div class="school-name">Stanford University</div>
+          <div class="school-meta">
+            <span>D1 &middot; Pac-12</span>
+            <span class="dot"></span>
+            <span>Stanford, CA</span>
+          </div>
+        </div>
+        <span class="stage-pill" style="background: rgba(13,148,136,0.08); color: var(--teal);">Visit</span>
+      </div>
+
+      <div class="mini-rail">
+        <div class="rail-step done"></div>
+        <div class="rail-step done"></div>
+        <div class="rail-step done"></div>
+        <div class="rail-step active"></div>
+        <div class="rail-step future"></div>
+      </div>
+
+      <div class="action-row" style="margin-top: 10px;">
+        <div class="action-icon" style="background: var(--amber-soft); color: var(--amber);">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span class="action-text">Reply to coach — follow up on campus visit</span>
+        <span class="action-timing" style="background: rgba(245,158,11,0.08); color: #b45309;">In 3 days</span>
+      </div>
+
+      <div class="cta-row" style="margin-top: 10px;">
+        <span class="cta-owner" style="background: var(--teal-soft); color: var(--teal);">You</span>
+        <button class="cta-btn" style="background: var(--teal-soft); color: var(--teal);">
+          View School
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card: UCLA — in conversation -->
+  <div class="card">
+    <div class="card-inner">
+      <div class="card-top">
+        <div class="logo-ring">
+          <span class="initials" style="color: #2774AE; font-weight: 800;">UC</span>
+        </div>
+        <div class="school-info">
+          <div class="school-name">UCLA</div>
+          <div class="school-meta">
+            <span>D1 &middot; Pac-12</span>
+            <span class="dot"></span>
+            <span>Los Angeles, CA</span>
+          </div>
+        </div>
+        <span class="stage-pill" style="background: rgba(59,130,246,0.08); color: var(--blue);">Talking</span>
+      </div>
+
+      <div class="mini-rail">
+        <div class="rail-step done"></div>
+        <div class="rail-step done"></div>
+        <div class="rail-step active"></div>
+        <div class="rail-step future"></div>
+        <div class="rail-step future"></div>
+      </div>
+
+      <div class="action-row" style="margin-top: 10px;">
+        <div class="action-icon" style="background: var(--amber-soft); color: var(--amber);">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <span class="action-text">Send follow-up email to assistant coach</span>
+        <span class="action-timing" style="background: rgba(245,158,11,0.08); color: #b45309;">In 3 days</span>
+      </div>
+
+      <div class="cta-row" style="margin-top: 10px;">
+        <span class="cta-owner" style="background: var(--teal-soft); color: var(--teal);">You</span>
+        <button class="cta-btn" style="background: var(--teal-soft); color: var(--teal);">
+          View School
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card: Florida — in conversation -->
+  <div class="card">
+    <div class="card-inner">
+      <div class="card-top">
+        <div class="logo-ring">
+          <span class="initials" style="color: #FA4616; font-weight: 800;">UF</span>
+        </div>
+        <div class="school-info">
+          <div class="school-name">University of Florida</div>
+          <div class="school-meta">
+            <span>D1 &middot; SEC</span>
+            <span class="dot"></span>
+            <span>Gainesville, FL</span>
+          </div>
+        </div>
+        <span class="stage-pill" style="background: rgba(59,130,246,0.08); color: var(--blue);">Talking</span>
+      </div>
+
+      <div class="mini-rail">
+        <div class="rail-step done"></div>
+        <div class="rail-step done"></div>
+        <div class="rail-step active"></div>
+        <div class="rail-step future"></div>
+        <div class="rail-step future"></div>
+      </div>
+
+      <div class="action-row" style="margin-top: 10px;">
+        <div class="action-icon" style="background: var(--amber-soft); color: var(--amber);">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <span class="action-text">Schedule unofficial visit with recruiting coordinator</span>
+        <span class="action-timing" style="background: rgba(245,158,11,0.08); color: #b45309;">In 3 days</span>
+      </div>
+
+      <div class="cta-row" style="margin-top: 10px;">
+        <span class="cta-owner" style="background: var(--teal-soft); color: var(--teal);">You</span>
+        <button class="cta-btn" style="background: var(--teal-soft); color: var(--teal);">
+          View School
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION: ON TRACK (LOW)                        -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="toggle-header">
+    <svg class="toggle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transform: rotate(90deg);">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+    <span style="font-size: 11px; font-weight: 700; color: var(--green); letter-spacing: 0.02em;">On track</span>
+    <span class="section-count">(2)</span>
+  </div>
+
+  <!-- Compact: USC — has offer -->
+  <div class="compact-row">
+    <div class="compact-logo">
+      <span class="initials" style="color: #9D2235; font-weight: 800; font-size: 8px;">USC</span>
+    </div>
+    <div class="compact-info">
+      <div class="compact-name">University of Southern California</div>
+      <div class="compact-status">
+        <span class="dot"></span>
+        <span>On track &middot; Offer stage</span>
+      </div>
+    </div>
+    <span class="compact-cta">View &rarr;</span>
+  </div>
+
+  <!-- Compact: Creighton — early -->
+  <div class="compact-row">
+    <div class="compact-logo">
+      <span class="initials">CU</span>
+    </div>
+    <div class="compact-info">
+      <div class="compact-name">Creighton University</div>
+      <div class="compact-status">
+        <span class="dot"></span>
+        <span>On track &middot; Just added</span>
+      </div>
+    </div>
+    <span class="compact-cta">View &rarr;</span>
+  </div>
+</div>
+
+</body>
+</html>
