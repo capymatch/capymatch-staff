@@ -83,9 +83,11 @@ function InboxRow({ item }) {
   const isPrimary = item.ctaPrimary;
   const nudge = getNudge(item);
 
-  const title = item.schoolName
-    ? `${item.athleteName} — ${item.schoolName}`
-    : item.athleteName;
+  const title = item.titleSuffix
+    ? `${item.athleteName} — ${item.titleSuffix}`
+    : item.schoolName
+      ? `${item.athleteName} — ${item.schoolName}`
+      : item.athleteName;
 
   const parts = [...(item.issues || [])];
   if (item.timeAgo) parts.push(item.timeAgo);
@@ -257,6 +259,21 @@ function ComposeModal({ nudge, item, onClose, onSent }) {
               <span style={{ color: "#e2e8f0" }}>{item.schoolName}</span>
             </div>
           )}
+          {item.schoolCount > 1 && (
+            <div className="text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <span className="font-semibold">Scope:</span>
+              <span style={{ color: "#e2e8f0" }}> Across {item.schoolCount} schools</span>
+              {(item.schoolBreakdown || []).length > 0 && (
+                <div className="mt-1.5 ml-1 space-y-0.5">
+                  {(item.schoolBreakdown || []).slice(0, 3).map((b, i) => (
+                    <p key={i} className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)", margin: 0 }}>
+                      {b.school} — <span style={{ color: "rgba(255,255,255,0.3)" }}>{b.issue}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-2 text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
             <span className="font-semibold">Reason:</span>
             <span style={{ color: "#e2e8f0" }}>{(item.issues || []).join(" · ")}{item.timeAgo ? ` · ${item.timeAgo}` : ""}</span>
@@ -307,9 +324,11 @@ function TopPriorityCard({ item, onActionComplete }) {
 
   if (!item || completed) return null;
 
-  const title = item.schoolName
-    ? `${item.athleteName} — ${item.schoolName}`
-    : item.athleteName;
+  const title = item.titleSuffix
+    ? `${item.athleteName} — ${item.titleSuffix}`
+    : item.schoolName
+      ? `${item.athleteName} — ${item.schoolName}`
+      : item.athleteName;
 
   const parts = [...(item.issues || [])];
   if (item.timeAgo) parts.push(item.timeAgo);
@@ -317,6 +336,7 @@ function TopPriorityCard({ item, onActionComplete }) {
   const why = generateWhy(item);
   const nudge = getNudge(item);
   const canAutoExecute = nudge && nudge.actionType !== "assign_coach";
+  const breakdown = item.schoolBreakdown || [];
 
   function handleApprove(e) {
     e.stopPropagation();
@@ -359,15 +379,30 @@ function TopPriorityCard({ item, onActionComplete }) {
           {why}
         </p>
 
+        {/* School breakdown — "Also affected" */}
+        {breakdown.length > 1 && (
+          <div className="mt-2">
+            <p className="text-[9.5px] font-bold uppercase tracking-[0.08em]" style={{ color: "#a16207", opacity: 0.5, margin: "0 0 4px" }}>
+              Also affected
+            </p>
+            {breakdown.slice(0, 3).map((b, i) => (
+              <p key={i} className="text-[11px] font-medium" style={{ color: "#78716c", margin: "1px 0", lineHeight: 1.4 }}>
+                <span style={{ color: "#92400e" }}>{b.issue}</span>
+                <span style={{ color: "#a8a29e" }}> — {b.school}</span>
+              </p>
+            ))}
+          </div>
+        )}
+
         {/* Suggested Action with Approve/Edit */}
         {nudge && (
           <div className="mt-3 pt-2.5" style={{ borderTop: "1px solid rgba(254,240,138,0.6)" }}>
             <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: "#a16207", opacity: 0.6, margin: 0 }}>
               Suggested action
             </p>
-            {item.schoolName && (
+            {(item.schoolName || item.titleSuffix) && (
               <p className="text-[11px] font-medium mb-1" style={{ color: "#a16207", opacity: 0.7, margin: 0 }}>
-                Regarding {item.schoolName} outreach
+                {item.schoolName ? `Regarding ${item.schoolName} outreach` : `${item.titleSuffix}`}
               </p>
             )}
             <div className="flex items-center gap-1.5 mb-2">

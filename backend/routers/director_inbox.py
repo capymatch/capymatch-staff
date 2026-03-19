@@ -178,54 +178,101 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
                 "ctaUrl": f"/support-pods/{ath['id']}",
             })
 
-    # ── DEDUPLICATE by athlete+school ──
-    groups = {}
+    # ── AGGREGATE by athlete (one row per athlete) ──
+    athlete_groups = {}
     for item in raw_items:
-        key = f"{item['athleteId']}||{item.get('schoolName') or '_none_'}"
-        if key not in groups:
-            groups[key] = {
-                "athleteId": item["athleteId"],
+        aid = item["athleteId"]
+        if aid not in athlete_groups:
+            athlete_groups[aid] = {
+                "athleteId": aid,
                 "athleteName": item["athleteName"],
-                "schoolName": item["schoolName"],
-                "issues": [],
-                "timestamps": [],
+                "school_issues": [],       # [{school, issueKey, issueLabel, timestamp}]
+                "general_issues": [],      # [{issueKey, issueLabel, timestamp}]
+                "all_timestamps": [],
                 "ctaLabel": item["ctaLabel"],
                 "ctaUrl": item["ctaUrl"],
-                "sources": set(),
             }
-        g = groups[key]
-        issue_key = item["issueKey"]
-        if issue_key not in [i["key"] for i in g["issues"]]:
-            g["issues"].append({"key": issue_key, "label": ISSUE_LABELS.get(issue_key, issue_key)})
-        g["timestamps"].append(item["timestamp"])
-        g["sources"].add(item["source"])
-        # Prefer primary CTA (Open Pod > Review > Assign)
-        cta_priority = {"Open Pod": 0, "Review": 1, "Assign": 2}
-        if cta_priority.get(item["ctaLabel"], 9) < cta_priority.get(g["ctaLabel"], 9):
-            g["ctaLabel"] = item["ctaLabel"]
-            g["ctaUrl"] = item["ctaUrl"]
+        ag = athlete_groups[aid]
+        label = ISSUE_LABELS.get(item["issueKey"], item["issueKey"])
+        entry = {"issueKey": item["issueKey"], "issueLabel": label, "timestamp": item["timestamp"]}
 
-    # ── Build final items ──
+        if item.get("schoolName"):
+            entry["school"] = item["schoolName"]
+            # Deduplicate same school+issue
+            if not any(s["school"] == item["schoolName"] and s["issueKey"] == item["issueKey"] for s in ag["school_issues"]):
+                ag["school_issues"].append(entry)
+        else:
+            if not any(g["issueKey"] == item["issueKey"] for g in ag["general_issues"]):
+                ag["general_issues"].append(entry)
+
+        ag["all_timestamps"].append(item["timestamp"])
+        # Prefer primary CTA
+        cta_priority = {"Open Pod": 0, "Review": 1, "Assign": 2}
+        if cta_priority.get(item["ctaLabel"], 9) < cta_priority.get(ag["ctaLabel"], 9):
+            ag["ctaLabel"] = item["ctaLabel"]
+            ag["ctaUrl"] = item["ctaUrl"]
+
+    # ── Build final items (one per athlete) ──
+    ISSUE_SEVERITY = {"escalation": 6, "missing_documents": 5, "no_coach_assigned": 5,
+                      "awaiting_reply": 3, "no_activity": 3, "follow_up": 2}
     merged = []
-    for g in groups.values():
-        has_high = any(i["key"] in HIGH_ISSUES for i in g["issues"])
+    for ag in athlete_groups.values():
+        all_issues = ag["general_issues"] + ag["school_issues"]
+        all_issue_keys = set(i["issueKey"] for i in all_issues)
+        has_high = bool(all_issue_keys & HIGH_ISSUES)
         priority = "high" if has_high else "medium"
-        most_urgent_ts = min(g["timestamps"])
-        issue_labels = [i["label"] for i in g["issues"]]
+        most_urgent_ts = min(ag["all_timestamps"])
+
+        # Unique schools involved
+        schools = list(dict.fromkeys(s["school"] for s in ag["school_issues"]))
+        school_count = len(schools)
+
+        # Primary risk = highest severity issue
+        sorted_issues = sorted(all_issues, key=lambda i: ISSUE_SEVERITY.get(i["issueKey"], 0), reverse=True)
+        primary_label = sorted_issues[0]["issueLabel"] if sorted_issues else "Needs attention"
+
+        # Unique issue labels for summary
+        seen_labels = set()
+        unique_labels = []
+        for si in sorted_issues:
+            if si["issueLabel"] not in seen_labels:
+                seen_labels.add(si["issueLabel"])
+                unique_labels.append(si["issueLabel"])
+
+        # School breakdown: [{school, issue}] for "Also affected" display
+        school_breakdown = []
+        for si in ag["school_issues"]:
+            school_breakdown.append({"school": si["school"], "issue": si["issueLabel"]})
+
+        # Title + schoolName logic
+        if school_count == 0:
+            school_name = None
+            title_suffix = None
+        elif school_count == 1:
+            school_name = schools[0]
+            title_suffix = None
+        else:
+            school_name = None
+            title_suffix = f"Across {school_count} schools"
 
         merged.append({
-            "id": f"inbox_{g['athleteId']}_{(g['schoolName'] or 'none').replace(' ', '_')[:20]}",
-            "athleteName": g["athleteName"],
-            "schoolName": g["schoolName"],
-            "issues": issue_labels,
+            "id": f"inbox_{ag['athleteId']}",
+            "athleteId": ag["athleteId"],
+            "athleteName": ag["athleteName"],
+            "schoolName": school_name,
+            "titleSuffix": title_suffix,
+            "schoolCount": school_count,
+            "issues": unique_labels,
+            "primaryRisk": primary_label,
+            "schoolBreakdown": school_breakdown,
             "priority": priority,
             "group": "high" if has_high else "at_risk",
             "timestamp": most_urgent_ts.isoformat(),
             "timeAgo": _time_ago_short(most_urgent_ts),
-            "ctaPrimary": g["ctaLabel"] in PRIMARY_CTAS,
+            "ctaPrimary": ag["ctaLabel"] in PRIMARY_CTAS,
             "cta": {
-                "label": g["ctaLabel"],
-                "url": g["ctaUrl"],
+                "label": ag["ctaLabel"],
+                "url": ag["ctaUrl"],
             },
         })
 
