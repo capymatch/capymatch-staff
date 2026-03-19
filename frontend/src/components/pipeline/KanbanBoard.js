@@ -355,20 +355,7 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
           );
         })}
 
-        {/* Add New Column */}
-        <div style={{
-          minWidth: isMobile ? 100 : 80, flex: isMobile ? "0 0 100px" : "0 0 80px",
-          background: "transparent", border: "2px dashed #d5d9e0", borderRadius: 6,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          minHeight: 120, cursor: "pointer", opacity: 0.5,
-          transition: "opacity 150ms",
-        }}
-          onMouseEnter={e => e.currentTarget.style.opacity = 0.8}
-          onMouseLeave={e => e.currentTarget.style.opacity = 0.5}
-          data-testid="kanban-add-col"
-        >
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#8993a4" }}>+</span>
-        </div>
+        {/* end columns */}
       </div>
     </DragDropContext>
   );
