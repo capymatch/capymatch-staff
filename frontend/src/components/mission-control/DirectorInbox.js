@@ -1,16 +1,65 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Send, UserPlus, FileText, MessageCircle, RefreshCw } from "lucide-react";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const DOT_COLOR = { high: "#ef4444", medium: "#f59e0b" };
 
+/* ── Nudge mapping: issue → suggestion + icon + route ── */
+const NUDGE_MAP = {
+  "Awaiting reply": {
+    label: "Send follow-up message",
+    icon: Send,
+    getUrl: (item) => `/messages?to=${encodeURIComponent(item.athleteName)}&draft=${encodeURIComponent(`Hi ${item.athleteName.split(" ")[0]}, just checking in — would love to hear your thoughts. Let us know if you had a chance to review.`)}`,
+  },
+  "No activity": {
+    label: "Check in with athlete",
+    icon: MessageCircle,
+    getUrl: (item) => `/support-pods/${item.id.replace(/^inbox_/, "").split("_")[0]}`,
+  },
+  "Missing requirement": {
+    label: "Request missing document",
+    icon: FileText,
+    getUrl: (item) => `/support-pods/${item.id.replace(/^inbox_/, "").split("_")[0]}`,
+  },
+  "No coach assigned": {
+    label: "Assign coach",
+    icon: UserPlus,
+    getUrl: () => "/roster",
+  },
+  "Needs follow-up": {
+    label: "Review and follow up",
+    icon: RefreshCw,
+    getUrl: () => "/advocacy",
+  },
+  "Needs attention": {
+    label: "Review and take action",
+    icon: RefreshCw,
+    getUrl: (item) => item.cta.url,
+  },
+};
+
+function getNudge(item) {
+  const issues = item.issues || [];
+  // Pick highest-priority nudge
+  const order = ["No coach assigned", "Missing requirement", "Awaiting reply", "No activity", "Needs follow-up", "Needs attention"];
+  for (const key of order) {
+    if (issues.includes(key) && NUDGE_MAP[key]) {
+      const n = NUDGE_MAP[key];
+      return { label: n.label, Icon: n.icon, url: n.getUrl(item) };
+    }
+  }
+  return null;
+}
+
+/* ── Inbox Row ── */
 function InboxRow({ item }) {
   const navigate = useNavigate();
   const dot = DOT_COLOR[item.priority] || "#94a3b8";
   const isPrimary = item.ctaPrimary;
+  const nudge = getNudge(item);
 
   const title = item.schoolName
     ? `${item.athleteName} — ${item.schoolName}`
@@ -21,19 +70,32 @@ function InboxRow({ item }) {
   const subtitle = parts.join(" · ");
 
   return (
-    <div
-      className="inbox-row"
-      onClick={() => navigate(item.cta.url)}
-      data-testid={`inbox-row-${item.id}`}
-    >
-      <span className="inbox-dot" style={{ background: dot }} />
-      <div className="inbox-text">
-        <p className="inbox-title">{title}</p>
-        <p className="inbox-subtitle">{subtitle}</p>
+    <div className="inbox-row-wrap" data-testid={`inbox-row-${item.id}`}>
+      <div
+        className="inbox-row"
+        onClick={() => navigate(item.cta.url)}
+      >
+        <span className="inbox-dot" style={{ background: dot }} />
+        <div className="inbox-text">
+          <p className="inbox-title">{title}</p>
+          <p className="inbox-subtitle">{subtitle}</p>
+        </div>
+        <span className="inbox-cta" style={{ opacity: isPrimary ? 1 : 0.6 }}>
+          {item.cta.label} <ArrowRight className="w-3 h-3" />
+        </span>
       </div>
-      <span className="inbox-cta" style={{ opacity: isPrimary ? 1 : 0.6 }}>
-        {item.cta.label} <ArrowRight className="w-3 h-3" />
-      </span>
+      {/* Nudge on hover */}
+      {nudge && (
+        <div
+          className="inbox-nudge"
+          onClick={(e) => { e.stopPropagation(); navigate(nudge.url); }}
+          data-testid={`nudge-${item.id}`}
+        >
+          <nudge.Icon className="w-3 h-3" />
+          <span>{nudge.label}</span>
+          <ArrowRight className="w-2.5 h-2.5" style={{ opacity: 0.5 }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -60,7 +122,6 @@ function scoreItem(item) {
     else if (MED_ISSUES.has(issue)) score += 2;
     else if (LOW_ISSUES.has(issue)) score += 1;
   }
-  // Boosts
   if ((item.issues || []).length > 1) score += 1;
   if (item.timestamp) {
     const age = Date.now() - new Date(item.timestamp).getTime();
@@ -106,7 +167,7 @@ function getTopPriority(items) {
   return scored[0];
 }
 
-/* ── Top Priority component ── */
+/* ── Top Priority Card ── */
 function TopPriorityCard({ item }) {
   const navigate = useNavigate();
   if (!item) return null;
@@ -119,12 +180,12 @@ function TopPriorityCard({ item }) {
   if (item.timeAgo) parts.push(item.timeAgo);
   const issueLine = parts.join(" · ");
   const why = generateWhy(item);
+  const nudge = getNudge(item);
 
   return (
     <div
-      className="rounded-lg overflow-hidden cursor-pointer"
+      className="rounded-lg overflow-hidden"
       style={{ background: "#fefce8", border: "1px solid #fef08a" }}
-      onClick={() => navigate(item.cta.url)}
       data-testid="top-priority-card"
     >
       <div className="px-5 py-3.5">
@@ -140,9 +201,30 @@ function TopPriorityCard({ item }) {
         <p className="text-[11.5px] mt-1.5" style={{ color: "#78716c", margin: 0, lineHeight: 1.4 }}>
           {why}
         </p>
+
+        {/* Suggested Action (nudge) */}
+        {nudge && (
+          <div className="mt-3 pt-2.5" style={{ borderTop: "1px solid rgba(254,240,138,0.6)" }}>
+            <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: "#a16207", opacity: 0.6, margin: 0 }}>
+              Suggested action
+            </p>
+            <span
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold cursor-pointer"
+              style={{ color: "#0d9488" }}
+              onClick={(e) => { e.stopPropagation(); navigate(nudge.url); }}
+              data-testid="top-priority-nudge"
+            >
+              <nudge.Icon className="w-3.5 h-3.5" />
+              {nudge.label} <ArrowRight className="w-3 h-3" />
+            </span>
+          </div>
+        )}
+
+        {/* Primary CTA */}
         <span
-          className="inline-flex items-center gap-1 mt-2.5 text-[12px] font-semibold"
-          style={{ color: "#0d9488" }}
+          className="inline-flex items-center gap-1 mt-2.5 text-[12px] font-semibold cursor-pointer"
+          style={{ color: "#0d9488", opacity: 0.6 }}
+          onClick={(e) => { e.stopPropagation(); navigate(item.cta.url); }}
           data-testid="top-priority-cta"
         >
           {item.cta.label} <ArrowRight className="w-3.5 h-3.5" />
@@ -152,9 +234,8 @@ function TopPriorityCard({ item }) {
   );
 }
 
-/* ── Main export: renders TopPriority + Inbox ── */
+/* ── Main export ── */
 export default function DirectorInbox() {
-  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -221,6 +302,11 @@ export default function DirectorInbox() {
           padding: 12px 20px;
           border-bottom: 1px solid #f1f5f9;
         }
+        .inbox-row-wrap {
+          position: relative;
+          border-bottom: 1px solid #f8fafc;
+        }
+        .inbox-row-wrap:last-child { border-bottom: none; }
         .inbox-row {
           display: grid;
           grid-template-columns: 18px 1fr auto;
@@ -230,9 +316,7 @@ export default function DirectorInbox() {
           height: 66px;
           cursor: pointer;
           transition: background 80ms ease-out;
-          border-bottom: 1px solid #f8fafc;
         }
-        .inbox-row:last-child { border-bottom: none; }
         .inbox-row:hover { background: #f8fafc; }
         .inbox-dot {
           width: 7px;
@@ -273,6 +357,21 @@ export default function DirectorInbox() {
           align-items: center;
           gap: 3px;
         }
+        /* Nudge — visible on hover */
+        .inbox-nudge {
+          display: none;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 20px 8px 38px;
+          font-size: 11px;
+          font-weight: 500;
+          color: #0d9488;
+          opacity: 0.7;
+          cursor: pointer;
+          transition: opacity 80ms;
+        }
+        .inbox-nudge:hover { opacity: 1; }
+        .inbox-row-wrap:hover .inbox-nudge { display: flex; }
       `}</style>
 
       {/* ═══ TOP PRIORITY ═══ */}
