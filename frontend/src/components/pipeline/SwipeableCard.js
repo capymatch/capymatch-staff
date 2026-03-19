@@ -174,9 +174,10 @@ export default function SwipeableCard({ children, onAction, onSnooze, actionLabe
       {snoozeOpen && (
         <div style={{
           position: 'absolute', inset: 0, borderRadius: 10,
-          background: 'rgba(217,119,6,0.06)',
+          background: '#fef3e2',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           animation: 'swipe-panel-in 180ms ease-out both',
+          zIndex: 3,
         }} data-testid={`snooze-panel-${programId}`}>
           {SNOOZE_OPTIONS.map(opt => (
             <button
