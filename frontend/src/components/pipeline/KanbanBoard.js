@@ -136,51 +136,54 @@ function KanbanCard({ program: p, navigate, index, attention: attn, justDroppedI
               )}
             </div>
 
-            {/* ── STATUS: dot + label + optional context ── */}
-            <div style={{ paddingLeft: 32, marginTop: 6 }}>
-              <div data-testid={`card-status-${p.program_id}`}>
-                <StatusIndicator level={level} />
-              </div>
-              {context && (
-                <div style={{
-                  fontSize: 9.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
-                  marginTop: 2, lineHeight: 1.3,
-                }} data-testid={`card-context-${p.program_id}`}>
-                  {context}
-                </div>
-              )}
+            {/* ── STATUS: single line ── */}
+            <div style={{ paddingLeft: 32, marginTop: 5, overflow: 'hidden', whiteSpace: 'nowrap' }} data-testid={`card-status-${p.program_id}`}>
+              <StatusIndicator level={level} />
             </div>
 
-            {/* ── ACTION: next step + last activity + time ── */}
+            {/* ── CONTEXT: single line, max 1 ── */}
+            {context && (
+              <div style={{
+                paddingLeft: 32, marginTop: 2,
+                fontSize: 9.5, fontWeight: 500, color: 'var(--cm-text-4, #cbd5e1)',
+                lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }} data-testid={`card-context-${p.program_id}`}>
+                {context}
+              </div>
+            )}
+
+            {/* ── BOTTOM: Next left + Time right ── */}
             <div style={{
               marginTop: 8, paddingTop: 6, paddingLeft: 32,
-              borderTop: '1px solid rgba(226,232,240,0.25)',
-              display: 'flex', flexDirection: 'column', gap: 3,
+              borderTop: '1px solid rgba(226,232,240,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }} data-testid={`card-action-section-${p.program_id}`}>
-              {nextStep && level !== 'low' && (
-                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--cm-text-2, #475569)' }} data-testid={`card-next-${p.program_id}`}>
-                  Next: {nextStep}
-                </div>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 8.5, fontWeight: 500, color: 'var(--cm-text-4, rgba(148,163,184,0.55))' }}>
-                  {lastActivity}
+              {nextStep && level !== 'low' ? (
+                <span style={{
+                  fontSize: 10, fontWeight: 600, color: 'var(--cm-text-2, #475569)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  flex: 1, minWidth: 0,
+                }} data-testid={`card-next-${p.program_id}`}>
+                  {nextStep}
                 </span>
-                {time && (() => {
-                  const ts = TIME_STYLE[time.urgency] || TIME_STYLE.none;
-                  return (
-                    <span style={{
-                      fontSize: 9, fontWeight: ts.fontWeight, color: ts.color,
-                      display: 'flex', alignItems: 'center', gap: 3,
-                    }} data-testid={`card-time-${p.program_id}`}>
-                      {time.urgency !== 'none' && (
-                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: ts.color, opacity: 0.7 }} />
-                      )}
-                      {time.text}
-                    </span>
-                  );
-                })()}
-              </div>
+              ) : (
+                <span />
+              )}
+              {time && (() => {
+                const ts = TIME_STYLE[time.urgency] || TIME_STYLE.none;
+                return (
+                  <span style={{
+                    fontSize: 9, fontWeight: ts.fontWeight, color: ts.color,
+                    display: 'flex', alignItems: 'center', gap: 3,
+                    flexShrink: 0, whiteSpace: 'nowrap', marginLeft: 8,
+                  }} data-testid={`card-time-${p.program_id}`}>
+                    {time.urgency !== 'none' && (
+                      <span style={{ width: 4, height: 4, borderRadius: '50%', background: ts.color, opacity: 0.7 }} />
+                    )}
+                    {time.text}
+                  </span>
+                );
+              })()}
             </div>
           </div>
         );
