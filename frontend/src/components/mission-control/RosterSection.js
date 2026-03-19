@@ -24,114 +24,8 @@ function AthleteAvatar({ name, photoUrl, size = 32 }) {
   );
 }
 
-function AthleteRow({ athlete, isLast }) {
-  const navigate = useNavigate();
-  const [expanded, setExpanded] = useState(false);
-
-  const journey = athlete.journey_state || {};
-  const attention = athlete.attention_status || {};
-  const primary = attention.primary;
-  const secondary = attention.secondary || [];
-  const totalIssues = attention.total_issues || 0;
-
-  return (
-    <div
-      data-testid={`roster-athlete-${athlete.id}`}
-      className="px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-slate-50/60 transition-colors group"
-      style={{ borderBottom: isLast ? "none" : "1px solid var(--cm-border)" }}
-      onClick={() => navigate(`/support-pods/${athlete.id}`)}
-    >
-      <div className="flex items-start gap-2 sm:gap-3">
-        {/* Avatar */}
-        <div className="shrink-0 mt-0.5">
-          <AthleteAvatar name={athlete.name} photoUrl={athlete.photo_url} size={34} />
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Row 1: Name + Journey badge */}
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            <span className="text-xs sm:text-sm font-semibold group-hover:text-primary transition-colors" style={{ color: "var(--cm-text)" }}>
-              {athlete.name}
-            </span>
-            {journey.label && (
-              <span data-testid={`journey-badge-${athlete.id}`}
-                className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-medium"
-                style={{ backgroundColor: journey.bg, color: journey.color }}>
-                {journey.label}
-              </span>
-            )}
-          </div>
-
-          {/* Row 2: Attention status (only if issues exist) */}
-          {primary && (
-            <div className="mt-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span data-testid={`attention-badge-${athlete.id}`}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider"
-                  style={{ backgroundColor: primary.bg, color: primary.color, border: `1px solid ${primary.color}22` }}>
-                  {primary.label}
-                </span>
-                <span className="text-[10px] sm:text-[11px] truncate" style={{ color: "var(--cm-text-2)" }}>
-                  {primary.reason}
-                </span>
-              </div>
-
-              {/* Secondary: expandable list */}
-              {secondary.length > 0 && (
-                <button
-                  data-testid={`more-issues-${athlete.id}`}
-                  className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-medium transition-colors"
-                  style={{
-                    color: "var(--cm-text-3)",
-                    backgroundColor: expanded ? "rgba(241,245,249,0.8)" : "rgba(241,245,249,0.4)",
-                  }}
-                  onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-                >
-                  <span>+{secondary.length} more</span>
-                  {expanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
-                </button>
-              )}
-
-              {/* Expanded secondary issues */}
-              {expanded && secondary.length > 0 && (
-                <div className="mt-1.5 pl-1 space-y-1 border-l-2" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} onClick={(e) => e.stopPropagation()}>
-                  {secondary.map((s, i) => (
-                    <p key={i} className="text-[9px] sm:text-[10px] pl-2" style={{ color: "var(--cm-text-3)" }}>
-                      {s.reason}
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-          <span className="hidden sm:block"><QuickNote athleteId={athlete.id} athleteName={athlete.name} compact /></span>
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athlete.id}`); }}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all sm:opacity-0 sm:group-hover:opacity-100"
-            style={{
-              backgroundColor: primary ? "rgba(13,148,136,0.1)" : "transparent",
-              color: "#0d9488",
-              border: "1px solid rgba(13,148,136,0.2)",
-            }}
-            data-testid={`open-pod-${athlete.id}`}
-          >
-            <span className="hidden sm:inline">Open Pod</span>
-            <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function AllClearRow({ athlete, isLast }) {
   const navigate = useNavigate();
-  const journey = athlete.journey_state || {};
 
   return (
     <div
@@ -146,13 +40,6 @@ function AllClearRow({ athlete, isLast }) {
           {athlete.name}
         </span>
       </div>
-      {journey.label && (
-        <span data-testid={`journey-badge-${athlete.id}`}
-          className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium shrink-0"
-          style={{ backgroundColor: journey.bg, color: journey.color }}>
-          {journey.label}
-        </span>
-      )}
       <ChevronRight className="w-3 h-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0" style={{ color: "var(--cm-text-3)" }} />
     </div>
   );
@@ -162,44 +49,11 @@ export default function RosterSection({ athletes = [], eventPrep = [] }) {
   const navigate = useNavigate();
   const [allClearOpen, setAllClearOpen] = useState(true);
 
-  const needsAction = athletes.filter(a => a.attention_status?.primary);
+  /* Only show athletes NOT needing action — the v3 CoachInbox handles attention items */
   const allClear = athletes.filter(a => !a.attention_status?.primary);
-
-  // Sort needs-action by urgency score descending
-  needsAction.sort((a, b) => (b.attention_status?.primary?.score || 0) - (a.attention_status?.primary?.score || 0));
 
   return (
     <section data-testid="roster-section">
-      {/* Athletes Needing Attention */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2.5">
-          {needsAction.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
-          <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
-            Needs Attention
-          </span>
-          {needsAction.length > 0 && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
-              {needsAction.length}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {needsAction.length > 0 ? (
-        <div className="rounded-xl border overflow-hidden mb-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-          {needsAction.map((athlete, idx) => (
-            <AthleteRow key={athlete.id} athlete={athlete} isLast={idx === needsAction.length - 1} />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-xl border px-5 py-6 text-center mb-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: "rgba(16,185,129,0.1)" }}>
-            <CheckCircle className="w-4 h-4" style={{ color: "#10b981" }} />
-          </div>
-          <p className="text-sm font-medium" style={{ color: "var(--cm-text-2)" }}>All athletes are on track</p>
-        </div>
-      )}
-
       {/* All Clear */}
       {allClear.length > 0 && (
         <div className="mb-4">
