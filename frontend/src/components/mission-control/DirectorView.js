@@ -8,6 +8,7 @@ import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
 import DirectorActionsPulse from "./DirectorActionsPulse";
+import DirectorInbox from "./DirectorInbox";
 import EscalationsCard from "./EscalationsCard";
 
 function getGreeting() {
@@ -179,8 +180,8 @@ export default function DirectorView({ data, userName }) {
         </div>
       </section>
 
-      {/* 2. ESCALATIONS — director's inbound triage inbox */}
-      <EscalationsCard escalations={data.escalations || []} />
+      {/* 2. DIRECTOR INBOX — unified "Needs Attention" feed (replaces Escalations) */}
+      <DirectorInbox />
 
       {/* 3. YOUR OUTBOX — outbound tracking summary */}
       <DirectorActionsPulse outboxSummary={data.outbox_summary} />
