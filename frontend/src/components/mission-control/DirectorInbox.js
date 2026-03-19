@@ -1,12 +1,33 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Send, UserPlus, FileText, MessageCircle, RefreshCw, Check, Loader2, X } from "lucide-react";
+import { ArrowRight, Send, UserPlus, FileText, MessageCircle, RefreshCw, Check, Loader2, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const DOT_COLOR = { high: "#ef4444", medium: "#f59e0b" };
+
+/* ── Trajectory display ── */
+const TRAJECTORY = {
+  worsening: { symbol: "\u2197", label: "Worsening", color: "#dc2626" },
+  stable:    { symbol: "\u2192", label: "Stable",    color: "#94a3b8" },
+  improving: { symbol: "\u2198", label: "Improving", color: "#10b981" },
+};
+
+function TrajectoryHint({ trajectory, style }) {
+  const t = TRAJECTORY[trajectory];
+  if (!t) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-0.5"
+      style={{ fontSize: 10, fontWeight: 600, color: t.color, letterSpacing: "0.01em", ...style }}
+      data-testid={`trajectory-${trajectory}`}
+    >
+      {t.symbol} {t.label}
+    </span>
+  );
+}
 
 /* ── Nudge mapping: issue → suggestion + icon + route + autopilot action ── */
 const NUDGE_MAP = {
@@ -106,8 +127,8 @@ function InboxRow({ item }) {
   const [showCompose, setShowCompose] = useState(false);
   const dot = DOT_COLOR[item.priority] || "#94a3b8";
   const nudge = getNudge(item);
-  const isHigh = item.priority === "high";
   const canCompose = nudge && nudge.actionType !== "assign_coach" && nudge.template;
+  const intervention = item.interventionType || "nudge";
 
   const title = item.titleSuffix
     ? `${item.athleteName} — ${item.titleSuffix}`
@@ -123,13 +144,19 @@ function InboxRow({ item }) {
   if (context) subtitle += ` — ${context}`;
   if (item.timeAgo) subtitle += ` · ${item.timeAgo}`;
 
-  /* Explanation for high priority */
-  const explanation = isHigh ? (WHY_SHORT[item.primaryRisk] || WHY_SHORT[primary]) : null;
-
   const suggestedLabel = ctaWithContext(item);
+
+  /* Intervention-based CTA logic */
+  const showSuggestedAction = intervention !== "monitor";
+  const isBlocker = intervention === "blocker";
+  const isEscalate = intervention === "escalate";
 
   function handleSuggestedClick(e) {
     e.stopPropagation();
+    if (intervention === "review") {
+      navigate(item.cta.url);
+      return;
+    }
     if (canCompose) {
       setShowCompose(true);
     } else if (nudge) {
@@ -139,23 +166,23 @@ function InboxRow({ item }) {
 
   return (
     <div className="inbox-row-wrap" data-testid={`inbox-row-${item.id}`}>
-      <div
-        className="inbox-row"
-        style={{ height: explanation ? 80 : 72 }}
-      >
+      <div className="inbox-row" style={{ height: 76 }}>
         <span className="inbox-dot" style={{ background: dot }} />
         <div className="inbox-text">
           <p className="inbox-title">{title}</p>
-          <p className="inbox-subtitle">{subtitle}</p>
-          {explanation && (
-            <p className="inbox-explain">{explanation}</p>
-          )}
-          {nudge && (
+          <div className="flex items-center gap-2" style={{ marginTop: 2 }}>
+            <p className="inbox-subtitle" style={{ margin: 0 }}>{subtitle}</p>
+            {item.trajectory && item.trajectory !== "stable" && (
+              <TrajectoryHint trajectory={item.trajectory} />
+            )}
+          </div>
+          {showSuggestedAction && nudge && (
             <span
-              className="inbox-action-link"
+              className={`inbox-action-link${isBlocker ? " inbox-action-blocker" : ""}${isEscalate ? " inbox-action-escalate" : ""}`}
               onClick={handleSuggestedClick}
               data-testid={`suggested-action-${item.id}`}
             >
+              {isBlocker && <AlertTriangle className="w-3 h-3" />}
               {suggestedLabel} <ArrowRight className="w-3 h-3" />
             </span>
           )}
@@ -239,14 +266,10 @@ function generateWhy(item) {
   return "This item needs your attention.";
 }
 
+/* ── Top Priority: use riskScore from API (items already sorted by score desc) ── */
 function getTopPriority(items) {
   if (!items || items.length === 0) return null;
-  const scored = items.map(i => ({ ...i, _score: scoreItem(i) }));
-  scored.sort((a, b) => {
-    if (b._score !== a._score) return b._score - a._score;
-    return (a.timestamp || "").localeCompare(b.timestamp || "");
-  });
-  return scored[0];
+  return items[0];
 }
 
 /* ── Compose Modal (Journey-style dark modal) ── */
@@ -374,7 +397,7 @@ function ComposeModal({ nudge, item, onClose, onSent }) {
   );
 }
 
-/* ── Top Priority Card (with Autopilot) ── */
+/* ── Top Priority Card (with Autopilot + Risk Engine v3) ── */
 function TopPriorityCard({ item, onActionComplete }) {
   const navigate = useNavigate();
   const [completed, setCompleted] = useState(false);
@@ -391,10 +414,29 @@ function TopPriorityCard({ item, onActionComplete }) {
   const parts = [...(item.issues || [])];
   if (item.timeAgo) parts.push(item.timeAgo);
   const issueLine = parts.join(" · ");
-  const why = generateWhy(item);
+
+  /* v3: Use whyNow from API, fallback to old logic */
+  const why = item.whyNow || generateWhy(item);
+
   const nudge = getNudge(item);
-  const canAutoExecute = nudge && nudge.actionType !== "assign_coach";
   const breakdown = item.schoolBreakdown || [];
+
+  /* v3: intervention-based CTA */
+  const intervention = item.interventionType || "nudge";
+  const isCritical = item.severity === "critical";
+  const isBlocker = intervention === "blocker";
+  const isEscalate = intervention === "escalate";
+  const showApprove = intervention === "nudge" || intervention === "escalate" || intervention === "blocker";
+  const canAutoExecute = nudge && nudge.actionType !== "assign_coach" && showApprove;
+
+  /* v3: severity label */
+  const severityLabel = isCritical ? "CRITICAL" : "HIGH PRIORITY";
+
+  /* v3: card styling based on severity */
+  const cardBg = isCritical ? "#fef2f2" : "#fefce8";
+  const cardBorder = isCritical ? "#fecaca" : "#fef08a";
+  const labelColor = isCritical ? "#991b1b" : "#a16207";
+  const issueColor = isCritical ? "#b91c1c" : "#92400e";
 
   function handleApprove(e) {
     e.stopPropagation();
@@ -420,51 +462,59 @@ function TopPriorityCard({ item, onActionComplete }) {
   return (
     <div
       className="rounded-lg overflow-hidden"
-      style={{ background: "#fefce8", border: "1px solid #fef08a" }}
+      style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
       data-testid="top-priority-card"
     >
       <div className="px-5 py-3.5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: "#a16207", margin: 0 }}>
-          Top Priority Right Now
-        </p>
+        {/* Severity label + trajectory */}
+        <div className="flex items-center gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em]" style={{ color: labelColor, margin: 0 }} data-testid="severity-label">
+            {severityLabel}
+          </p>
+          {item.trajectory && (
+            <TrajectoryHint trajectory={item.trajectory} style={{ marginTop: -1 }} />
+          )}
+        </div>
         <p className="text-[15px] font-bold mt-1.5" style={{ color: "#1e293b", margin: 0, lineHeight: 1.3 }}>
           {title}
         </p>
-        <p className="text-[12px] font-medium mt-1" style={{ color: "#92400e", margin: 0 }}>
+        <p className="text-[12px] font-medium mt-1" style={{ color: issueColor, margin: 0 }}>
           {issueLine}
         </p>
-        <p className="text-[11.5px] mt-1.5" style={{ color: "#78716c", margin: 0, lineHeight: 1.4 }}>
+        {/* v3: whyNow */}
+        <p className="text-[11.5px] mt-1.5" style={{ color: "#78716c", margin: 0, lineHeight: 1.4 }} data-testid="why-now-text">
           {why}
         </p>
 
         {/* School breakdown — "Also affected" */}
         {breakdown.length > 1 && (
           <div className="mt-2">
-            <p className="text-[9.5px] font-bold uppercase tracking-[0.08em]" style={{ color: "#a16207", opacity: 0.5, margin: "0 0 4px" }}>
+            <p className="text-[9.5px] font-bold uppercase tracking-[0.08em]" style={{ color: labelColor, opacity: 0.5, margin: "0 0 4px" }}>
               Also affected
             </p>
             {breakdown.slice(0, 3).map((b, i) => (
               <p key={i} className="text-[11px] font-medium" style={{ color: "#78716c", margin: "1px 0", lineHeight: 1.4 }}>
-                <span style={{ color: "#92400e" }}>{b.issue}</span>
+                <span style={{ color: issueColor }}>{b.issue}</span>
                 <span style={{ color: "#a8a29e" }}> — {b.school}</span>
               </p>
             ))}
           </div>
         )}
 
-        {/* Suggested Action with Approve/Edit */}
+        {/* Suggested Action with intervention-aware CTA */}
         {nudge && (
-          <div className="mt-3 pt-2.5" style={{ borderTop: "1px solid rgba(254,240,138,0.6)" }}>
-            <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: "#a16207", opacity: 0.6, margin: 0 }}>
+          <div className="mt-3 pt-2.5" style={{ borderTop: `1px solid ${isCritical ? "rgba(254,202,202,0.6)" : "rgba(254,240,138,0.6)"}` }}>
+            <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: labelColor, opacity: 0.6, margin: 0 }}>
               Suggested action
             </p>
             {(item.schoolName || item.titleSuffix) && (
-              <p className="text-[11px] font-medium mb-1" style={{ color: "#a16207", opacity: 0.7, margin: 0 }}>
+              <p className="text-[11px] font-medium mb-1" style={{ color: labelColor, opacity: 0.7, margin: 0 }}>
                 {item.schoolName ? `Regarding ${item.schoolName} outreach` : `${item.titleSuffix}`}
               </p>
             )}
             <div className="flex items-center gap-1.5 mb-2">
-              <nudge.Icon className="w-3.5 h-3.5" style={{ color: "#0d9488" }} />
+              {isBlocker && <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />}
+              {!isBlocker && <nudge.Icon className="w-3.5 h-3.5" style={{ color: "#0d9488" }} />}
               <span className="text-[12px] font-semibold" style={{ color: "#1e293b" }}>
                 {nudge.label}
               </span>
@@ -475,14 +525,30 @@ function TopPriorityCard({ item, onActionComplete }) {
                   onClick={handleApprove}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold cursor-pointer transition-all duration-100"
                   style={{
-                    background: "#0d9488",
+                    background: isBlocker ? "#dc2626" : isEscalate ? "#b45309" : "#0d9488",
                     color: "#fff",
                     border: "none",
                     fontFamily: "inherit",
                   }}
                   data-testid="autopilot-approve-btn"
                 >
-                  <Check className="w-3 h-3" /> Approve & Send
+                  {isBlocker ? <AlertTriangle className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                  {isBlocker ? "Act Now" : isEscalate ? "Escalate & Send" : "Approve & Send"}
+                </button>
+              )}
+              {intervention === "review" && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate(item.cta.url); }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11.5px] font-semibold cursor-pointer transition-all duration-100"
+                  style={{
+                    background: "#0d9488",
+                    color: "#fff",
+                    border: "none",
+                    fontFamily: "inherit",
+                  }}
+                  data-testid="autopilot-review-btn"
+                >
+                  Open Pod <ArrowRight className="w-3 h-3" />
                 </button>
               )}
               <button
@@ -680,6 +746,13 @@ export default function DirectorInbox() {
           transition: opacity 80ms;
         }
         .inbox-action-link:hover { opacity: 0.7; }
+        .inbox-action-blocker {
+          color: #dc2626;
+          font-weight: 700;
+        }
+        .inbox-action-escalate {
+          color: #b45309;
+        }
       `}</style>
 
       {/* ═══ TOP PRIORITY ═══ */}
