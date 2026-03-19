@@ -103,9 +103,11 @@ function ctaWithContext(item) {
 
 function InboxRow({ item }) {
   const navigate = useNavigate();
+  const [showCompose, setShowCompose] = useState(false);
   const dot = DOT_COLOR[item.priority] || "#94a3b8";
   const nudge = getNudge(item);
   const isHigh = item.priority === "high";
+  const canCompose = nudge && nudge.actionType !== "assign_coach" && nudge.template;
 
   const title = item.titleSuffix
     ? `${item.athleteName} — ${item.titleSuffix}`
@@ -124,14 +126,22 @@ function InboxRow({ item }) {
   /* Explanation for high priority */
   const explanation = isHigh ? (WHY_SHORT[item.primaryRisk] || WHY_SHORT[primary]) : null;
 
-  const ctaLabel = ctaWithContext(item);
+  const suggestedLabel = ctaWithContext(item);
+
+  function handleSuggestedClick(e) {
+    e.stopPropagation();
+    if (canCompose) {
+      setShowCompose(true);
+    } else if (nudge) {
+      navigate(nudge.url);
+    }
+  }
 
   return (
     <div className="inbox-row-wrap" data-testid={`inbox-row-${item.id}`}>
       <div
         className="inbox-row"
-        style={{ height: explanation ? 74 : 66 }}
-        onClick={() => navigate(item.cta.url)}
+        style={{ height: explanation ? 80 : 72 }}
       >
         <span className="inbox-dot" style={{ background: dot }} />
         <div className="inbox-text">
@@ -140,22 +150,33 @@ function InboxRow({ item }) {
           {explanation && (
             <p className="inbox-explain">{explanation}</p>
           )}
+          {nudge && (
+            <span
+              className="inbox-action-link"
+              onClick={handleSuggestedClick}
+              data-testid={`suggested-action-${item.id}`}
+            >
+              {suggestedLabel} <ArrowRight className="w-3 h-3" />
+            </span>
+          )}
         </div>
-        <span className="inbox-cta">
-          {ctaLabel} <ArrowRight className="w-3 h-3" />
+        <span
+          className="inbox-cta"
+          onClick={(e) => { e.stopPropagation(); navigate(item.cta.url); }}
+          data-testid={`open-pod-${item.id}`}
+        >
+          Open Pod <ArrowRight className="w-3 h-3" />
         </span>
       </div>
-      {/* Nudge on hover */}
-      {nudge && (
-        <div
-          className="inbox-nudge"
-          onClick={(e) => { e.stopPropagation(); navigate(nudge.url); }}
-          data-testid={`nudge-${item.id}`}
-        >
-          <nudge.Icon className="w-3 h-3" />
-          <span>{nudge.label}</span>
-          <ArrowRight className="w-2.5 h-2.5" style={{ opacity: 0.5 }} />
-        </div>
+
+      {/* Compose Modal */}
+      {showCompose && nudge && (
+        <ComposeModal
+          nudge={nudge}
+          item={item}
+          onClose={() => setShowCompose(false)}
+          onSent={() => setShowCompose(false)}
+        />
       )}
     </div>
   );
@@ -638,27 +659,27 @@ export default function DirectorInbox() {
         .inbox-cta {
           font-size: 11.5px;
           font-weight: 600;
-          color: #0d9488;
+          color: #64748b;
           white-space: nowrap;
           display: flex;
           align-items: center;
           gap: 3px;
-        }
-        /* Nudge — visible on hover */
-        .inbox-nudge {
-          display: none;
-          align-items: center;
-          gap: 5px;
-          padding: 4px 20px 8px 38px;
-          font-size: 11px;
-          font-weight: 500;
-          color: #0d9488;
-          opacity: 0.7;
           cursor: pointer;
+          transition: color 80ms;
+        }
+        .inbox-cta:hover { color: #1e293b; }
+        .inbox-action-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #0d9488;
+          cursor: pointer;
+          margin-top: 3px;
           transition: opacity 80ms;
         }
-        .inbox-nudge:hover { opacity: 1; }
-        .inbox-row-wrap:hover .inbox-nudge { display: flex; }
+        .inbox-action-link:hover { opacity: 0.7; }
       `}</style>
 
       {/* ═══ TOP PRIORITY ═══ */}
