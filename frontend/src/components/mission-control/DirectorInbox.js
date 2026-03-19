@@ -77,11 +77,35 @@ function getNudge(item) {
 }
 
 /* ── Inbox Row ── */
+/* ── Short explanation for high priority rows ── */
+const WHY_SHORT = {
+  "Needs attention": "Momentum may be dropping",
+  "No activity": "Momentum may be dropping",
+  "Awaiting reply": "Waiting for response",
+  "Missing requirement": "Blocking progress",
+  "No coach assigned": "Not being actively managed",
+  "Needs follow-up": "Conversation may stall",
+};
+
+/* ── Context-aware CTA label ── */
+function ctaWithContext(item) {
+  const school = item.schoolName;
+  const multi = item.schoolCount > 1;
+  const primary = item.primaryRisk || (item.issues || [])[0] || "";
+
+  if (primary === "No coach assigned") return "Assign coach";
+  if (primary === "Awaiting reply") return school ? `Follow up with ${school}` : multi ? "Follow up across schools" : "Follow up";
+  if (primary === "Missing requirement") return school ? `Review ${school}` : "Review";
+  if (primary === "Needs follow-up") return school ? `Follow up with ${school}` : "Follow up";
+  // Default: check in
+  return school ? `Check in about ${school}` : multi ? "Check in across schools" : "Check in";
+}
+
 function InboxRow({ item }) {
   const navigate = useNavigate();
   const dot = DOT_COLOR[item.priority] || "#94a3b8";
-  const isPrimary = item.ctaPrimary;
   const nudge = getNudge(item);
+  const isHigh = item.priority === "high";
 
   const title = item.titleSuffix
     ? `${item.athleteName} — ${item.titleSuffix}`
@@ -89,23 +113,36 @@ function InboxRow({ item }) {
       ? `${item.athleteName} — ${item.schoolName}`
       : item.athleteName;
 
-  const parts = [...(item.issues || [])];
-  if (item.timeAgo) parts.push(item.timeAgo);
-  const subtitle = parts.join(" · ");
+  /* Subtitle: primary issue — context · time (no "Needs attention") */
+  const issues = (item.issues || []).filter(i => i !== "Needs attention");
+  const primary = issues[0] || item.primaryRisk || "";
+  const context = item.schoolName || (item.schoolCount > 1 ? `across ${item.schoolCount} schools` : "");
+  let subtitle = primary;
+  if (context) subtitle += ` — ${context}`;
+  if (item.timeAgo) subtitle += ` · ${item.timeAgo}`;
+
+  /* Explanation for high priority */
+  const explanation = isHigh ? (WHY_SHORT[item.primaryRisk] || WHY_SHORT[primary]) : null;
+
+  const ctaLabel = ctaWithContext(item);
 
   return (
     <div className="inbox-row-wrap" data-testid={`inbox-row-${item.id}`}>
       <div
         className="inbox-row"
+        style={{ height: explanation ? 74 : 66 }}
         onClick={() => navigate(item.cta.url)}
       >
         <span className="inbox-dot" style={{ background: dot }} />
         <div className="inbox-text">
           <p className="inbox-title">{title}</p>
           <p className="inbox-subtitle">{subtitle}</p>
+          {explanation && (
+            <p className="inbox-explain">{explanation}</p>
+          )}
         </div>
-        <span className="inbox-cta" style={{ opacity: isPrimary ? 1 : 0.6 }}>
-          {item.cta.label} <ArrowRight className="w-3 h-3" />
+        <span className="inbox-cta">
+          {ctaLabel} <ArrowRight className="w-3 h-3" />
         </span>
       </div>
       {/* Nudge on hover */}
@@ -589,6 +626,14 @@ export default function DirectorInbox() {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+        .inbox-explain {
+          font-size: 10px;
+          font-weight: 500;
+          color: #94a3b8;
+          opacity: 0.6;
+          line-height: 1.2;
+          margin: 2px 0 0;
         }
         .inbox-cta {
           font-size: 11.5px;
