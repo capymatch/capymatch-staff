@@ -49,6 +49,7 @@ function CollapsibleSection({ title, children, defaultOpen = false, testId }) {
 
 /* ── Outbox strip ── */
 function OutboxStrip({ summary }) {
+  const [expanded, setExpanded] = useState(false);
   if (!summary) return null;
   const { awaiting_response, critical_pending, in_progress, resolved_this_week } = summary;
   if (!awaiting_response && !critical_pending && !in_progress && !resolved_this_week) return null;
@@ -59,20 +60,43 @@ function OutboxStrip({ summary }) {
   if (in_progress > 0) parts.push(`${in_progress} in progress`);
   if (resolved_this_week > 0) parts.push(`${resolved_this_week} resolved this week`);
 
+  // Insight text
+  let insight = "";
+  let insightColor = "#64748B";
+  if (critical_pending > 0) {
+    insight = `${critical_pending} critical escalation${critical_pending > 1 ? "s" : ""} unacknowledged by coach`;
+    insightColor = "#ef4444";
+  } else if (awaiting_response > 0) {
+    insight = `${awaiting_response} request${awaiting_response > 1 ? "s" : ""} awaiting coach response`;
+    insightColor = "#f59e0b";
+  } else if (in_progress > 0) {
+    insight = `All outbound actions acknowledged — ${in_progress} in progress`;
+  } else if (resolved_this_week > 0) {
+    insight = "Coaches are responsive — all recent actions resolved";
+  }
+
   return (
-    <div
-      className="flex items-center justify-between px-4 py-2.5 rounded-lg"
-      style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
-      data-testid="outbox-strip"
-    >
-      <p className="text-[12px] font-medium" style={{ color: "#64748B" }}>
-        <span className="font-semibold" style={{ color: "#475569" }}>Outbox</span>
-        <span className="mx-1.5" style={{ color: "#cbd5e1" }}>—</span>
-        {parts.join(" · ")}
-      </p>
-      <span className="text-[11px] font-semibold flex items-center gap-0.5 cursor-pointer" style={{ color: "#0d9488" }}>
-        View details <ChevronRight className="w-3 h-3" />
-      </span>
+    <div data-testid="outbox-strip">
+      <div
+        className="flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer"
+        style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
+        onClick={() => setExpanded(!expanded)}
+      >
+        <p className="text-[12px] font-medium" style={{ color: "#64748B" }}>
+          <span className="font-semibold" style={{ color: "#475569" }}>Outbox</span>
+          <span className="mx-1.5" style={{ color: "#cbd5e1" }}>—</span>
+          {parts.join(" · ")}
+        </p>
+        <span className="text-[11px] font-semibold flex items-center gap-0.5" style={{ color: "#0d9488" }}>
+          {expanded ? "Hide" : "View details"}
+          <ChevronRight className="w-3 h-3 transition-transform duration-150" style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)" }} />
+        </span>
+      </div>
+      {expanded && insight && (
+        <div className="mt-1.5 px-4 py-2 rounded-lg" style={{ background: "#fefce8", border: "1px solid #fef08a" }}>
+          <p className="text-[11.5px] font-medium" style={{ color: insightColor }}>{insight}</p>
+        </div>
+      )}
     </div>
   );
 }
