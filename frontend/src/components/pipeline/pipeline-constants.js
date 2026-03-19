@@ -4,11 +4,11 @@
  */
 
 export const KANBAN_COLS = [
-  { key: "added", label: "Added", color: "#94a3b8" },
-  { key: "outreach", label: "Outreach", color: "#0d9488" },
-  { key: "in_conversation", label: "Talking", color: "#22c55e" },
-  { key: "campus_visit", label: "Visit", color: "#3b82f6" },
-  { key: "offer", label: "Offered", color: "#a855f7" },
+  { key: "added", label: "Added", color: "#e05555" },
+  { key: "outreach", label: "Outreach", color: "#2f80ed" },
+  { key: "in_conversation", label: "Talking", color: "#e8862a" },
+  { key: "campus_visit", label: "Visit", color: "#8b5cf6" },
+  { key: "offer", label: "Offered", color: "#27ae60" },
 ];
 
 export const COL_TO_STAGE = {
