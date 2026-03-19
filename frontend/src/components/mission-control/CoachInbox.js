@@ -166,7 +166,7 @@ function CoachTopPriority({ item }) {
             {title}
           </p>
           <p className="text-[12px] font-medium mt-1" style={{ color: issueColor, margin: 0 }}>
-            {(item.issues || []).join(" · ")} {item.timeAgo && `· ${item.timeAgo}`}
+            {(item.riskSignals || item.issues || []).filter(s => s !== "Needs attention" && s !== "Needs follow-up").join(" · ") || item.primaryRisk} {item.timeAgo && `· ${item.timeAgo}`}
           </p>
           <p className="text-[11.5px] mt-1.5" style={{ color: "#78716c", margin: 0, lineHeight: 1.4 }} data-testid="coach-why-now">
             {item.whyNow}
@@ -200,14 +200,31 @@ function CoachTopPriority({ item }) {
 }
 
 /* ═══════════════════════════════════════════════ */
-/* Up Next Row — mini Top Priority style           */
+/* Up Next Row — final clarity pass                */
 /* ═══════════════════════════════════════════════ */
 const SEV_DOT = { critical: "#ef4444", high: "#f59e0b", medium: "#94a3b8", low: "#cbd5e1" };
+
+const GENERIC_LABELS = new Set(["Needs attention", "Needs follow-up"]);
+
+/* Intervention → CTA label + color */
+const INTERVENTION_CTA = {
+  nudge:    { label: "Check in",       color: "#0d9488" },
+  review:   { label: "Open Pod",       color: "#3b82f6" },
+  escalate: { label: "Request help",   color: "#dc2626" },
+  blocker:  { label: "Review blocker", color: "#b45309" },
+};
+
+function getSpecificIssue(item) {
+  const signals = item.riskSignals || item.issues || [];
+  const specific = signals.find(s => !GENERIC_LABELS.has(s));
+  return specific || signals[0] || item.primaryRisk || "Open issue";
+}
 
 function UpNextRow({ item, onDismiss }) {
   const navigate = useNavigate();
   const [showEscalate, setShowEscalate] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const dot = SEV_DOT[item.severity] || "#94a3b8";
 
   const title = item.schoolName
@@ -216,14 +233,23 @@ function UpNextRow({ item, onDismiss }) {
       ? `${item.athleteName} — ${item.titleSuffix}`
       : item.athleteName;
 
-  const primary = item.primaryRisk || (item.issues || [])[0] || "";
-  const issueLine = item.timeAgo ? `${primary} · ${item.timeAgo}` : primary;
+  /* Line 1: WHAT — specific issue · time · trajectory */
+  const issue = getSpecificIssue(item);
+  const traj = TRAJECTORY[item.trajectory];
+  const showTraj = item.trajectory && item.trajectory !== "stable" && traj;
 
-  const ctaConfig = COACH_CTA_CONFIG[item.cta.label] || COACH_CTA_CONFIG["Open Pod"];
+  /* Line 2: WHY — whyNow (skip if it just repeats the issue) */
+  const whyNow = item.whyNow || "";
+
+  /* CTA from interventionType */
+  const intv = INTERVENTION_CTA[item.interventionType] || INTERVENTION_CTA.review;
+
+  /* Secondary risks for hover */
+  const secondary = (item.secondaryRisks || []).filter(s => !GENERIC_LABELS.has(s)).slice(0, 2);
 
   function handleCta(e) {
     e.stopPropagation();
-    if (item.cta.label === "Request director help") {
+    if (item.interventionType === "escalate") {
       setShowEscalate(true);
     } else {
       navigate(item.cta.url);
@@ -246,29 +272,43 @@ function UpNextRow({ item, onDismiss }) {
           maxHeight: exiting ? 0 : 200,
           overflow: "hidden",
         }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         data-testid={`coach-inbox-row-${item.id}`}
       >
         <div className="flex items-start gap-3">
           <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: dot }} data-testid={`severity-dot-${item.severity}`} />
           <div className="flex-1 min-w-0">
+            {/* Title */}
             <p className="text-[13px] font-semibold" style={{ color: "#1e293b", lineHeight: 1.3 }}>{title}</p>
-            <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>{issueLine}</p>
-            {item.whyNow && (
-              <p className="text-[11px] mt-1" style={{ color: "#94a3b8", lineHeight: 1.4 }} data-testid={`why-now-${item.id}`}>{item.whyNow}</p>
+            {/* WHAT: issue · time · trajectory (inline) */}
+            <p className="text-[11px] mt-0.5" style={{ color: "#64748b" }}>
+              {issue}
+              {item.timeAgo && <span> · {item.timeAgo}</span>}
+              {showTraj && (
+                <span style={{ color: traj.color, fontWeight: 600, marginLeft: 6 }}>
+                  {traj.symbol} {traj.label}
+                </span>
+              )}
+            </p>
+            {/* WHY: whyNow explanation */}
+            {whyNow && (
+              <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8", lineHeight: 1.4 }} data-testid={`why-now-${item.id}`}>{whyNow}</p>
             )}
-            {item.trajectory && item.trajectory !== "stable" && (
-              <div className="mt-1">
-                <TrajectoryHint trajectory={item.trajectory} />
-              </div>
+            {/* Hover: secondary risks */}
+            {hovered && secondary.length > 0 && (
+              <p className="text-[10px] mt-1" style={{ color: "#b0b8c4" }}>
+                Also: {secondary.join(" · ")}
+              </p>
             )}
           </div>
           <button
             onClick={handleCta}
             className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold transition-opacity hover:opacity-70 mt-1"
-            style={{ color: ctaConfig.color }}
+            style={{ color: intv.color }}
             data-testid={`coach-cta-${item.id}`}
           >
-            {item.cta.label} <ArrowRight className="w-3 h-3" />
+            {intv.label} <ArrowRight className="w-3 h-3" />
           </button>
         </div>
       </div>
