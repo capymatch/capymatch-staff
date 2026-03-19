@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline Board Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; min-height: 100vh; padding: 24px; }
+
+  .board-title { font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 20px; }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* ── Column ── */
+  .col {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+    min-height: 400px;
+  }
+
+  .col-header {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .col-header .count {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-left: 6px;
+  }
+  .col-header .dots {
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.7;
+    letter-spacing: 1px;
+  }
+
+  .col.added .col-header { background: #ef4444; }
+  .col.outreach .col-header { background: #f59e0b; }
+  .col.talking .col-header { background: #3b82f6; }
+  .col.visit .col-header { background: #8b5cf6; }
+  .col.offered .col-header { background: #10b981; }
+
+  .col-body {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: #fff;
+    border: 1px solid #e8ecf1;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: grab;
+    transition: box-shadow 150ms ease, transform 150ms ease;
+    position: relative;
+    border-left: 3px solid transparent;
+  }
+  .card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+  }
+  .card.status-red { border-left-color: #ef4444; }
+  .card.status-amber { border-left-color: #f59e0b; }
+  .card.status-green { border-left-color: #10b981; }
+
+  .card .school-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card .logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .card .school-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+  }
+  .card .priority {
+    font-size: 8px;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+  }
+  .card .priority.top { background: rgba(99,102,241,0.08); color: #6366f1; }
+  .card .priority.high { background: rgba(13,148,136,0.06); color: #0d9488; }
+  .card .priority.med { background: rgba(148,163,184,0.1); color: #94a3b8; }
+
+  .card .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding-left: 36px;
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+  .card .meta-row .dot { width: 3px; height: 3px; border-radius: 50%; background: #cbd5e1; }
+
+  .card .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 8px;
+    padding-left: 36px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .card .next-action {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+  }
+  .card .time-badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .card .time-badge.red { background: rgba(239,68,68,0.06); color: #dc2626; }
+  .card .time-badge.amber { background: rgba(245,158,11,0.06); color: #d97706; }
+  .card .time-badge.green { background: rgba(16,185,129,0.05); color: #047857; }
+  .card .time-badge.neutral { background: #f8fafc; color: #94a3b8; }
+
+  /* ── Minimal card (just title) ── */
+  .card.minimal {
+    padding: 10px 12px;
+  }
+  .card.minimal .school-name {
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  /* ── Dragging state demo ── */
+  .card.dragging {
+    transform: rotate(-2deg) scale(1.04) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.10) !important;
+    z-index: 100;
+    opacity: 0.95;
+    cursor: grabbing;
+  }
+
+  .card.ghost {
+    opacity: 0.25;
+    border: 2px dashed #cbd5e1;
+    background: #f8fafc;
+  }
+  .card.ghost * { visibility: hidden; }
+
+  /* ── Drop target highlight ── */
+  .col.drop-target .col-body {
+    background: rgba(59,130,246,0.03);
+    border-radius: 0 0 12px 12px;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    padding: 30px 16px;
+    text-align: center;
+    font-size: 11px;
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+
+  /* ── Logo colors ── */
+  .logo.stanford { background: #8C1515; }
+  .logo.florida { background: #0021A5; }
+  .logo.emory { background: #012169; }
+  .logo.ucla { background: #2774AE; }
+  .logo.fau { background: #003366; }
+  .logo.creighton { background: #005CA9; }
+  .logo.test { background: #64748b; }
+
+  /* ── Demo instructions ── */
+  .instructions {
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .instructions strong { color: #1e293b; }
+</style>
+</head>
+<body>
+
+<div class="board-title">My Schools — Pipeline</div>
+
+<div class="instructions">
+  <strong>Try it:</strong> Click and drag any card to move it between columns. Cards tilt and lift when dragged.
+</div>
+
+<div class="board" id="board">
+
+  <!-- ═══ ADDED ═══ -->
+  <div class="col added" data-col="added">
+    <div class="col-header">
+      <span>Added <span class="count">3</span></span>
+      <span class="dots">⋮</span>
+    </div>
+    <div class="col-body" data-droppable="added">
+
+      <div class="card status-red" draggable="true" data-id="test">
+        <div class="school-row">
+          <div class="logo test">T</div>
+          <div class="school-name">TEST_Dup</div>
+          <span class="priority med">MED</span>
+        </div>
+        <div class="meta-row">
+          <span>D1</span>
+          <span class="dot"></span>
+          <span>Not Contacted</span>
+        </div>
+        <div class="action-row">
+          <span class="next-action">Start Outreach</span>
+          <span class="time-badge red">2d overdue</span>
+        </div>
+      </div>
+
+      <div class="card status-amber" draggable="true" data-id="fau">
+        <div class="school-row">
+          <div class="logo fau">FA</div>
+          <div class="school-name">Florida Atlantic University</div>
+          <span class="priority med">MED</span>
+        </div>
+        <div class="meta-row">
+          <span>D1</span>
+          <span class="dot"></span>
+          <span>AAC</span>
+          <span class="dot"></span>
+          <span>Not Contacted</span>
+        </div>
+        <div class="action-row">
+          <span class="next-action">Start Outreach</span>
+          <span class="time-badge amber">Due today</span>
+        </div>
+      </div>
+
+      <div class="card status-green" draggable="true" data-id="creighton">
+        <div class="school-row">
+          <div class="logo creighton">C</div>
+          <div class="school-name">Creighton University</div>
+        </div>
+        <div class="meta-row">
+          <span>D1</span>
+          <span class="dot"></span>
+          <span>Big East</span>
+        </div>
+        <div class="action-row">
+          <span class="next-action" style="color: #94a3b8; font-weight: 500;">No action needed</span>
+          <span class="time-badge green">On track</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ OUTREACH ═══ -->
+  <div class="col outreach" data-col="outreach">
+    <div class="col-header">
+      <span>Outreach <span class="count">2</span></span>
+      <span class="dots">⋮</span>
+    </div>
+    <div class="col-body" data-droppable="outreach">
+
+      <div class="card status-red" draggable="true" data-id="emory">
+        <div class="school-row">
+          <div class="logo emory">E</div>
+          <div class="school-name">Emory University</div>
+          <span class="priority med">MED</span>
+        </div>
+        <div class="meta-row">
+          <span>D3</span>
+          <span class="dot"></span>
+          <span>UAA</span>
+          <span class="dot"></span>
+          <span>Contacted</span>
+        </div>
+        <div class="action-row">
+          <span class="next-action">Re-engage</span>
+          <span class="time-badge red">16d overdue</span>
+        </div>
+      </div>
+
+      <div class="card status-red" draggable="true" data-id="ucla">
+        <div class="school-row">
+          <div class="logo ucla">UC</div>
+          <div class="school-name">UCLA</div>
+          <span class="priority high">HIGH</span>
+        </div>
+        <div class="meta-row">
+          <span>D1</span>
+          <span class="dot"></span>
+          <span>Pac-12</span>
+          <span class="dot"></span>
+          <span>Contacted</span>
+        </div>
+        <div class="action-row">
+          <span class="next-action">Re-engage</span>
+          <span class="time-badge red">3d overdue</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ TALKING ═══ -->
+  <div class="col talking" data-col="talking">
+    <div class="col-header">
+      <span>Talking <span class="count">1</span></span>
+      <span class="dots">⋮</span>
+    </div>
+    <div class="col-body" data-droppable="talking">
+
+      <div class="card status-red" draggable="true" data-id="florida">
+        <div class="school-row">
+          <div class="logo florida">UF</div>
+          <div class="school-name">University of Florida</div>
+          <span class="priority high">HIGH</span>
+        </div>
+        <div class="meta-row">
+          <span>D1</span>
+          <span class="dot"></span>
+          <span>SEC</span>
+          <span class="dot"></span>
+          <span>Coach assigned task</span>
+        </div>
+        <div class="action-row">
+          <span class="next-action">Take Action</span>
+          <span class="time-badge red">11d overdue</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ VISIT ═══ -->
+  <div class="col visit" data-col="visit">
+    <div class="col-header">
+      <span>Visit <span class="count">1</span></span>
+      <span class="dots">⋮</span>
+    </div>
+    <div class="col-body" data-droppable="visit">
+
+      <div class="card status-red" draggable="true" data-id="stanford">
+        <div class="school-row">
+          <div class="logo stanford">S</div>
+          <div class="school-name">Stanford University</div>
+          <span class="priority top">TOP</span>
+        </div>
+        <div class="meta-row">
+          <span>D1</span>
+          <span class="dot"></span>
+          <span>Pac-12</span>
+          <span class="dot"></span>
+          <span>Offer</span>
+        </div>
+        <div class="action-row">
+          <span class="next-action">Re-engage</span>
+          <span class="time-badge red">3d overdue</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ OFFERED ═══ -->
+  <div class="col offered" data-col="offered">
+    <div class="col-header">
+      <span>Offered <span class="count">0</span></span>
+      <span class="dots">⋮</span>
+    </div>
+    <div class="col-body" data-droppable="offered">
+      <div class="empty-state">No offers yet</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Drag & Drop with tilt + lift ──
+let draggedEl = null;
+let ghostEl = null;
+
+document.querySelectorAll('.card[draggable]').forEach(card => {
+  card.addEventListener('dragstart', e => {
+    draggedEl = card;
+    // Create ghost placeholder
+    ghostEl = card.cloneNode(true);
+    ghostEl.classList.add('ghost');
+    ghostEl.classList.remove('dragging');
+    ghostEl.removeAttribute('draggable');
+
+    // Lift + tilt the original
+    requestAnimationFrame(() => {
+      card.classList.add('dragging');
+    });
+
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.dataset.id);
+
+    // Highlight potential drop targets
+    document.querySelectorAll('.col').forEach(col => {
+      if (!col.contains(card)) col.classList.add('drop-target');
+    });
+  });
+
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    if (ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
+    ghostEl = null;
+    draggedEl = null;
+    document.querySelectorAll('.col').forEach(col => col.classList.remove('drop-target'));
+  });
+});
+
+document.querySelectorAll('[data-droppable]').forEach(dropzone => {
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    // Find insert position
+    const cards = [...dropzone.querySelectorAll('.card:not(.ghost):not(.dragging)')];
+    const afterEl = cards.find(c => {
+      const rect = c.getBoundingClientRect();
+      return e.clientY < rect.top + rect.height / 2;
+    });
+
+    // Remove old ghost
+    if (ghostEl && ghostEl.parentNode) ghostEl.parentNode.removeChild(ghostEl);
+
+    if (afterEl) {
+      dropzone.insertBefore(ghostEl, afterEl);
+    } else {
+      // Remove empty state if present
+      const empty = dropzone.querySelector('.empty-state');
+      if (empty) dropzone.insertBefore(ghostEl, empty);
+      else dropzone.appendChild(ghostEl);
+    }
+  });
+
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!draggedEl) return;
+
+    // Insert the real card where ghost is
+    if (ghostEl && ghostEl.parentNode) {
+      ghostEl.parentNode.insertBefore(draggedEl, ghostEl);
+      ghostEl.parentNode.removeChild(ghostEl);
+    }
+
+    // Remove empty states from the target
+    const empty = dropzone.querySelector('.empty-state');
+    if (empty && dropzone.querySelectorAll('.card').length > 0) {
+      empty.remove();
+    }
+
+    // Add empty state to source if now empty
+    document.querySelectorAll('[data-droppable]').forEach(dz => {
+      if (dz.querySelectorAll('.card').length === 0 && !dz.querySelector('.empty-state')) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'empty-state';
+        emptyDiv.textContent = 'Drop here';
+        dz.appendChild(emptyDiv);
+      }
+    });
+
+    // Update counts
+    document.querySelectorAll('.col').forEach(col => {
+      const body = col.querySelector('.col-body');
+      const count = body.querySelectorAll('.card').length;
+      col.querySelector('.count').textContent = count;
+    });
+
+    draggedEl.classList.remove('dragging');
+    ghostEl = null;
+    draggedEl = null;
+    document.querySelectorAll('.col').forEach(col => col.classList.remove('drop-target'));
+  });
+});
+</script>
+
+</body>
+</html>
