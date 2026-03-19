@@ -82,10 +82,17 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
 
     for e in escalations:
         ts = _iso_or_none(e.get("created_at"))
+        # Extract school from school_name field, or parse from reason_label "[School Name]"
+        school = e.get("school_name")
+        if not school:
+            import re
+            m = re.search(r"\[([^\]]+)\]", e.get("reason_label", ""))
+            if m:
+                school = m.group(1)
         raw_items.append({
             "athleteId": e.get("athlete_id", ""),
             "athleteName": e.get("athlete_name", "Unknown"),
-            "schoolName": e.get("school_name"),
+            "schoolName": school,
             "issueKey": "escalation",
             "timestamp": ts or now,
             "source": "escalation",
