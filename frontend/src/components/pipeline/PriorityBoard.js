@@ -3,6 +3,8 @@ import axios from "axios";
 import { toast } from "sonner";
 import { ChevronRight, AlertCircle, Clock, Mail, ArrowRight } from "lucide-react";
 import SwipeableCard from "./SwipeableCard";
+import ParticleBurst from "../reinforcement/ParticleBurst";
+import { triggerReinforcement, PARTICLE_COLORS } from "../../lib/reinforcement";
 import {
   LogoBox, OwnerTag, PipelineRowStyles, shortenName,
   STATUS, ROW_GAP, DIVIDER,
@@ -249,14 +251,41 @@ function LowRow({ item, navigate }) {
   );
 }
 
-/* ── Swipeable wrapper ── */
+/* ── Swipeable wrapper with reinforcement ── */
 function SwipePriorityCard({ item, navigate, section }) {
   const prog = item.program;
   const programId = prog?.program_id;
+  const [burstActive, setBurstActive] = useState(false);
+  const [burstColor, setBurstColor] = useState(PARTICLE_COLORS.neutral);
+
+  const fireReinforcement = useCallback(() => {
+    const isHigh = item.attentionLevel === "high";
+    const ctx = {
+      type: "taskComplete",
+      isHeroPriority: isHigh,
+      heroReason: isHigh ? item.primaryAction : "",
+      priorityRank: isHigh ? 1 : 99,
+      attentionBefore: item.attentionLevel,
+      attentionAfter: "low",
+      daysSinceLastActivity: prog?.signals?.days_since_last_activity || 0,
+      stageBefore: prog?.journey_rail?.active || "added",
+      stageAfter: prog?.journey_rail?.active || "added",
+      schoolName: prog?.university_name || "",
+    };
+    const color = isHigh
+      ? PARTICLE_COLORS.riskResolved
+      : item.timingLabel?.toLowerCase().includes("overdue")
+        ? PARTICLE_COLORS.riskResolved
+        : PARTICLE_COLORS.momentum;
+    setBurstColor(color);
+    setBurstActive(true);
+    triggerReinforcement(ctx);
+  }, [item, prog]);
 
   const handleAction = useCallback(() => {
-    if (programId) navigate(`/pipeline/${programId}`);
-  }, [programId, navigate]);
+    fireReinforcement();
+    setTimeout(() => { if (programId) navigate(`/pipeline/${programId}`); }, 400);
+  }, [programId, navigate, fireReinforcement]);
 
   const handleSnooze = useCallback(async (days) => {
     if (!programId) return;
@@ -273,17 +302,23 @@ function SwipePriorityCard({ item, navigate, section }) {
     if (programId) navigate(`/pipeline/${programId}`);
   }, [programId, navigate]);
 
+  const handleBurstComplete = useCallback(() => setBurstActive(false), []);
+
   if (section === "attention") {
     return (
       <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || "Take Action"} programId={programId}>
-        <div onClick={handleTap}><HighCard item={item} /></div>
+        <ParticleBurst active={burstActive} color={burstColor} onComplete={handleBurstComplete}>
+          <div onClick={handleTap}><HighCard item={item} /></div>
+        </ParticleBurst>
       </SwipeableCard>
     );
   }
   if (section === "coming-up") {
     return (
       <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || "View School"} programId={programId}>
-        <div onClick={handleTap}><MedCard item={item} /></div>
+        <ParticleBurst active={burstActive} color={burstColor} onComplete={handleBurstComplete}>
+          <div onClick={handleTap}><MedCard item={item} /></div>
+        </ParticleBurst>
       </SwipeableCard>
     );
   }

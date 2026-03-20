@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2, AlertTriangle, Archive, ChevronRight, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { triggerReinforcement } from "../../lib/reinforcement";
+import ReinforcementToast from "../../components/reinforcement/ReinforcementToast";
 import UniversityLogo from "../../components/UniversityLogo";
 import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
@@ -95,6 +97,25 @@ export default function PipelinePage() {
 
     try {
       await axios.put(`${API}/athlete/programs/${draggableId}`, stageUpdate);
+
+      // Trigger reinforcement on stage change
+      const movedProg = allPrograms.find(p => p.program_id === draggableId);
+      const oldStage = movedProg?.journey_rail?.active || movedProg?.journey_stage || "added";
+      const newStage = stageUpdate.journey_stage || newCol;
+      const isOffer = newStage === "offer" || newStage === "committed";
+      triggerReinforcement({
+        type: "stageChange",
+        isHeroPriority: isOffer,
+        heroReason: isOffer ? "This could change everything" : "",
+        priorityRank: isOffer ? 1 : 99,
+        attentionBefore: null,
+        attentionAfter: null,
+        daysSinceLastActivity: movedProg?.signals?.days_since_last_activity || 0,
+        stageBefore: oldStage,
+        stageAfter: newStage,
+        schoolName: movedProg?.university_name || "",
+      });
+
       toast.success(`Moved to ${KANBAN_COLS.find(c => c.key === newCol)?.label || newCol}`);
     } catch {
       toast.error("Failed to update stage");
@@ -268,6 +289,9 @@ export default function PipelinePage() {
         message={`You've reached your limit of ${usage.limit || 5} schools. Upgrade to add more.`}
         currentTier={subscription?.tier || (subLoading ? "premium" : "basic")}
       />
+
+      {/* Action Reinforcement Toast — portal-based, listens for triggerReinforcement events */}
+      <ReinforcementToast />
     </div>
   );
 }
