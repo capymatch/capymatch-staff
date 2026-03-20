@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight, Info } from "lucide-react";
+import { trackEvent } from "../../lib/analytics";
 import UniversityLogo from "../UniversityLogo";
 import { ProgressRail } from "../journey/ProgressRail";
 import { RAIL_STAGES } from "../journey/constants";
@@ -99,21 +100,34 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     return () => observer.disconnect();
   }, []);
 
-  if (!heroItems || heroItems.length === 0) {
-    return <PipelineHeroEmptyState onTrackCount={0} navigate={navigate} />;
-  }
+  // Track hero_viewed — declared before conditional returns
+  const prevTrackedRef = useRef(null);
 
-  const highItems = heroItems.filter(h => h.attentionLevel === 'high');
-  const medItems = heroItems.filter(h => h.attentionLevel === 'medium');
-  const filtered = filter === 'high' ? highItems : filter === 'medium' ? medItems : heroItems;
+  // Pre-compute all derived values before conditional returns
+  const highItems = (heroItems || []).filter(h => h.attentionLevel === 'high');
+  const medItems = (heroItems || []).filter(h => h.attentionLevel === 'medium');
+  const filtered = filter === 'high' ? highItems : filter === 'medium' ? medItems : (heroItems || []);
   const total = filtered.length;
+  const safeIdx = total > 0 ? ((idx % total) + total) % total : 0;
+  const current = total > 0 ? filtered[safeIdx] : null;
 
-  if (total === 0) {
+  // Track hero_viewed when current card changes
+  useEffect(() => {
+    if (!current?.programId || current.programId === prevTrackedRef.current) return;
+    prevTrackedRef.current = current.programId;
+    trackEvent("hero_viewed", {
+      program_id: current.programId,
+      school_name: current.program?.university_name || "",
+      priority_source: current.prioritySource || "live",
+      recap_rank: current.recapRank || null,
+      attention_level: current.attentionLevel,
+      position: safeIdx + 1,
+    });
+  }, [current, safeIdx]);
+
+  if (!heroItems || heroItems.length === 0 || total === 0) {
     return <PipelineHeroEmptyState onTrackCount={0} navigate={navigate} />;
   }
-
-  const safeIdx = ((idx % total) + total) % total;
-  const current = filtered[safeIdx];
 
   const handleGoTo = (dir) => {
     if (phase !== "idle") return;
@@ -284,7 +298,16 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               </span>
               {current.explainFactors?.length > 0 && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setWhyExpanded(v => !v); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const next = !whyExpanded;
+                    setWhyExpanded(next);
+                    if (next) trackEvent("hero_expanded_why", {
+                      program_id: current.programId,
+                      priority_source: current.prioritySource || "live",
+                      factors_count: current.explainFactors?.length || 0,
+                    });
+                  }}
                   data-testid="hero-why-btn"
                   className="flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded cursor-pointer"
                   style={{
@@ -340,7 +363,20 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               </div>
             )}
             <button
-              onClick={(e) => { e.stopPropagation(); if (p) navigate(`/pipeline/${p.program_id}`); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (p) {
+                  trackEvent("hero_action_clicked", {
+                    program_id: current.programId,
+                    school_name: p.university_name || "",
+                    priority_source: current.prioritySource || "live",
+                    recap_rank: current.recapRank || null,
+                    cta_label: current.ctaLabel || "Take Action",
+                    why_was_expanded: whyExpanded,
+                  });
+                  navigate(`/pipeline/${p.program_id}`);
+                }
+              }}
               data-testid="hero-cta-btn"
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] sm:text-[12px] font-bold cursor-pointer"
               style={{

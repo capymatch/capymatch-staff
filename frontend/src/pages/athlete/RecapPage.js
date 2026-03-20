@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Flame, Minus, Snowflake, Target, Eye, ChevronRight, Sparkles } from "lucide-react";
+import { trackEvent } from "../../lib/analytics";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -36,7 +37,13 @@ function MomentumGroup({ category, items, navigate }) {
           <div
             key={m.program_id}
             data-testid={`momentum-item-${m.program_id}`}
-            onClick={() => navigate(`/pipeline/${m.program_id}`)}
+            onClick={() => {
+              trackEvent("recap_priority_clicked", {
+                program_id: m.program_id, school_name: m.school_name,
+                category, from: "momentum_shift",
+              });
+              navigate(`/pipeline/${m.program_id}`);
+            }}
             style={{
               background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 12,
               padding: "12px 14px", cursor: "pointer",
@@ -69,7 +76,13 @@ function PriorityItem({ priority, navigate }) {
   return (
     <div
       data-testid={`priority-${priority.rank}-${priority.program_id}`}
-      onClick={() => navigate(`/pipeline/${priority.program_id}`)}
+      onClick={() => {
+        trackEvent("recap_priority_clicked", {
+          program_id: priority.program_id, school_name: priority.school_name,
+          rank: priority.rank, from: "priority_reset",
+        });
+        navigate(`/pipeline/${priority.program_id}`);
+      }}
       style={{
         display: "flex", alignItems: "flex-start", gap: 10,
         background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 12,
@@ -106,6 +119,7 @@ export default function RecapPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const trackedSections = useRef(new Set());
 
   useEffect(() => {
     const load = async () => {
@@ -114,7 +128,15 @@ export default function RecapPage() {
           headers: { Authorization: `Bearer ${getToken()}` },
         });
         if (!res.ok) throw new Error("Failed to load recap");
-        setData(await res.json());
+        const result = await res.json();
+        setData(result);
+        trackEvent("recap_opened", {
+          heated: result.momentum?.heated_up?.length || 0,
+          steady: result.momentum?.holding_steady?.length || 0,
+          cooling: result.momentum?.cooling_off?.length || 0,
+          priorities: result.priorities?.length || 0,
+          period_label: result.period_label || "",
+        });
       } catch (e) {
         setError(e.message);
       } finally {
@@ -149,6 +171,19 @@ export default function RecapPage() {
   const steady = momentum?.holding_steady || [];
   const cooling = momentum?.cooling_off || [];
 
+  // Track section visibility once via IntersectionObserver
+  const sectionRef = (sectionName) => (el) => {
+    if (!el || trackedSections.current.has(sectionName)) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !trackedSections.current.has(sectionName)) {
+        trackedSections.current.add(sectionName);
+        trackEvent("recap_section_viewed", { section: sectionName });
+        obs.disconnect();
+      }
+    }, { threshold: 0.3 });
+    obs.observe(el);
+  };
+
   return (
     <div data-testid="recap-page" style={{ minHeight: "100vh", background: "#f8fafc" }}>
       {/* Header */}
@@ -173,6 +208,7 @@ export default function RecapPage() {
       <div style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
         {/* Section 1: Recap Hero */}
         <div
+          ref={sectionRef("hero")}
           data-testid="recap-hero"
           style={{
             background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
@@ -210,7 +246,7 @@ export default function RecapPage() {
         </div>
 
         {/* Section 2: Momentum Shift */}
-        <div style={{ marginBottom: 28 }}>
+        <div ref={sectionRef("momentum_shift")} style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 14 }}>Momentum Shift</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <MomentumGroup category="heated_up" items={heated} navigate={navigate} />
@@ -220,7 +256,7 @@ export default function RecapPage() {
         </div>
 
         {/* Section 3: Priority Reset */}
-        <div style={{ marginBottom: 28 }}>
+        <div ref={sectionRef("priority_reset")} style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 14 }}>Priority Reset</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {priorities.map((p, i) => (
@@ -231,7 +267,7 @@ export default function RecapPage() {
 
         {/* Section 4: AI Summary */}
         {ai_summary && (
-          <div data-testid="ai-summary" style={{
+          <div ref={sectionRef("ai_summary")} data-testid="ai-summary" style={{
             background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.1)",
             borderRadius: 14, padding: "16px 18px",
           }}>

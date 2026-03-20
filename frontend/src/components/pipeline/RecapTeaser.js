@@ -1,8 +1,22 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import { Sparkles, ChevronRight } from "lucide-react";
+import { trackEvent } from "../../lib/analytics";
 
 export default function RecapTeaser({ data: recap }) {
   const navigate = useNavigate();
+  const trackedRef = useRef(false);
+
+  useEffect(() => {
+    if (recap?.recap_hero && !trackedRef.current) {
+      trackedRef.current = true;
+      trackEvent("recap_teaser_viewed", {
+        heated_count: recap.momentum?.heated_up?.length || 0,
+        cooling_count: recap.momentum?.cooling_off?.length || 0,
+        has_top_priority: !!recap.priorities?.find(p => p.rank === "top"),
+      });
+    }
+  }, [recap]);
 
   if (!recap || !recap.recap_hero) return null;
 

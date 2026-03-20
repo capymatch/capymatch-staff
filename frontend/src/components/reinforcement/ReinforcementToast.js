@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { onReinforcement, INDICATOR } from "../../lib/reinforcement";
+import { trackEvent } from "../../lib/analytics";
 
 const DISMISS_MS = 3000;
 
@@ -30,6 +31,16 @@ export default function ReinforcementToast() {
   const show = useCallback((feedback) => {
     clearTimeout(timerRef.current);
     clearTimeout(exitTimerRef.current);
+
+    // Track reinforcement shown
+    trackEvent("reinforcement_shown", {
+      trigger_type: feedback.ctx?.type || "unknown",
+      priority_source: feedback.ctx?.prioritySource || "live",
+      recap_rank: feedback.ctx?.recapRank || null,
+      indicator: feedback.indicator,
+      program_id: feedback.ctx?.schoolName || "",
+      is_hero_priority: feedback.ctx?.isHeroPriority || false,
+    });
 
     // If already visible, quick exit then re-enter
     if (phase !== "idle") {
