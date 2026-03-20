@@ -49,13 +49,57 @@ async def _get_tenant_id(user_id: str):
     return athlete["tenant_id"]
 
 
+async def _get_athlete_profile(tenant_id: str):
+    """Fetch athlete profile data from the athletes collection."""
+    athlete = await db.athletes.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    if not athlete:
+        return None
+    # Merge recruiting_profile sub-doc into top-level for backward compat
+    rp = athlete.get("recruiting_profile") or {}
+    profile = {**athlete}
+    profile.setdefault("athlete_name", athlete.get("full_name", ""))
+    profile.setdefault("club_team", athlete.get("team", ""))
+    for k in ("gpa", "sat_score", "act_score", "division", "regions", "priorities"):
+        if not profile.get(k) and rp.get(k):
+            profile[k] = rp[k]
+    return profile
+
+
 async def _parse_llm_json(response_text):
-    text = response_text.strip()
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-    return json.loads(text)
+    import re
+    text = str(response_text).strip()
+    # Try to extract JSON from code fences
+    match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
+    if match:
+        text = match.group(1)
+    elif text.startswith("```"):
+        parts = text.split("```")
+        for part in parts:
+            part = part.strip().lstrip("json").strip()
+            if part.startswith("{"):
+                text = part
+                break
+    # Find the JSON object
+    brace_start = text.find("{")
+    brace_end = text.rfind("}")
+    if brace_start != -1 and brace_end != -1:
+        text = text[brace_start:brace_end + 1]
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # LLMs sometimes produce unescaped quotes (e.g. 5'10" inside strings).
+        # Try regex extraction of subject/body as fallback.
+        subj_match = re.search(r'"subject"\s*:\s*"((?:[^"\\]|\\.)*)"', text)
+        body_match = re.search(r'"body"\s*:\s*"((?:[^"\\]|\\.)*)"', text)
+        if not body_match:
+            # Greedy fallback: body is typically the last long value
+            body_match = re.search(r'"body"\s*:\s*"(.*)"', text, re.DOTALL)
+        if subj_match or body_match:
+            return {
+                "subject": subj_match.group(1) if subj_match else "",
+                "body": (body_match.group(1) if body_match else "").replace("\\n", "\n").replace('\\"', '"'),
+            }
+        raise
 
 
 # ─────────────────────────────────────────────────────────────
@@ -85,7 +129,7 @@ async def draft_email(data: DraftEmailRequest, request: Request):
             "upgrade_to": ai_check.get("upgrade_to"),
         })
 
-    profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    profile = await _get_athlete_profile(tenant_id)
     if not profile:
         raise HTTPException(400, "Please set up your athlete profile first")
 
@@ -208,7 +252,7 @@ async def ai_next_step(data: NextStepRequest, request: Request):
     if not program:
         raise HTTPException(404, "Program not found")
 
-    profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    profile = await _get_athlete_profile(tenant_id)
     if not profile:
         raise HTTPException(400, "Please set up your athlete profile first")
 
@@ -276,7 +320,7 @@ async def generate_journey_summary(data: JourneySummaryRequest, request: Request
     if not program:
         raise HTTPException(404, "Program not found")
 
-    profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    profile = await _get_athlete_profile(tenant_id)
     coaches = await db.college_coaches.find({"tenant_id": tenant_id, "program_id": data.program_id}, {"_id": 0}).to_list(10)
     head_coach = next((c for c in coaches if c.get("role") == "Head Coach"), coaches[0] if coaches else None)
     interactions = await db.interactions.find({"tenant_id": tenant_id, "program_id": data.program_id}, {"_id": 0}).sort("date_time", -1).to_list(50)
@@ -655,7 +699,7 @@ async def get_school_insight(program_id: str, request: Request):
     if not program:
         raise HTTPException(404, "Program not found")
 
-    profile = await db.athlete_profiles.find_one({"tenant_id": tenant_id}, {"_id": 0})
+    profile = await _get_athlete_profile(tenant_id)
     if not profile:
         raise HTTPException(400, "Complete your athlete profile first")
 

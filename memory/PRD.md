@@ -21,6 +21,12 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
+### AI Draft Email Fix (Feb 2026)
+- **Status**: COMPLETE & VERIFIED
+- Fixed "Please set up your athlete profile first" error — AI features now query `athletes` collection instead of empty `athlete_profiles` collection
+- Fixed JSON parsing of LLM responses with unescaped quotes (e.g. 5'10") via regex fallback
+- All 4 AI endpoints fixed: draft-email, next-step, journey-summary, school-insights
+
 ### Athlete Profile Photos (Feb 2026)
 - **Status**: COMPLETE & VERIFIED
 - Seeded 10 athletes with Unsplash headshot photos (face-cropped)
