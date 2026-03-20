@@ -21,6 +21,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
+### Mobile Kanban Card Redesign (Feb 2026)
+- **Status**: COMPLETE & VERIFIED
+- Combined status + timing into single line ("Needs attention · 3d overdue")
+- Owner tag moved to compact inline badge in header row (saves full row)
+- Improved card padding (12px 14px on mobile vs 9px 10px before)
+- Better border radius (12px cards, 10px columns on mobile)
+- Wider mobile columns (280px vs 256px)
+- Last activity row hidden on mobile to reduce card height
+- Cards reduced from 5-6 content rows to 3 rows
+
 ### Action Reinforcement System (Feb 2026)
 - **Status**: COMPLETE & VERIFIED
 - Event-driven feedback on task completion (swipe) and stage changes (drag-and-drop)

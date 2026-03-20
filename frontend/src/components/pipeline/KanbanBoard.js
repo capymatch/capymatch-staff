@@ -69,7 +69,7 @@ function OwnerBadge({ owner }) {
 }
 
 /* ── Card ── */
-function KanbanCard({ program: p, navigate, index, attention: attn, activeDragId }) {
+function KanbanCard({ program: p, navigate, index, attention: attn, activeDragId, isMobile }) {
   const level = attn?.attentionLevel || "low";
   const s = STATUS[level] || STATUS.low;
   const time = getTimeLine(attn);
@@ -77,6 +77,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, activeDragId
   const owner = attn?.owner || "athlete";
   const isFaded = activeDragId && activeDragId !== p.program_id;
   const lastActivity = p.signals?.days_since_activity;
+  const ownerLabel = owner === "coach" ? "Coach" : owner === "director" ? "Dir" : "You";
 
   return (
     <Draggable draggableId={p.program_id} index={index}>
@@ -117,60 +118,64 @@ function KanbanCard({ program: p, navigate, index, attention: attn, activeDragId
             }}
             data-testid={`kanban-card-${p.program_id}`}
           >
-            {/* 1. School Row */}
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            {/* Row 1: Logo + Name + Owner tag */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{
-                width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                 overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
-                background: "#f1f5f9",
+                background: "#f1f5f9", border: "1px solid rgba(0,0,0,0.04)",
               }}>
-                <UniversityLogo domain={p.domain} name={p.university_name} size={24} className="rounded-full" />
+                <UniversityLogo domain={p.domain} name={p.university_name} size={28} className="rounded-lg" />
               </div>
-              <div style={{
-                fontSize: 13, fontWeight: 700, color: "#172b4d", lineHeight: 1.2,
-                flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              }} data-testid={`card-name-${p.program_id}`}>
-                {shortenName(p.university_name)}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 700, color: "#172b4d", lineHeight: 1.25,
+                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                }} data-testid={`card-name-${p.program_id}`}>
+                  {shortenName(p.university_name)}
+                </div>
               </div>
+              <span style={{
+                fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4, flexShrink: 0,
+                background: owner === "athlete" ? "rgba(13,148,136,0.07)" : "rgba(99,102,241,0.07)",
+                color: owner === "athlete" ? "rgba(13,148,136,0.7)" : "rgba(99,102,241,0.7)",
+              }}>{ownerLabel}</span>
             </div>
 
-            {/* 2. Status Line */}
-            <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5, fontSize: 11, fontWeight: 500 }}
-              data-testid={`card-status-${p.program_id}`}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
-              <span style={{ color: s.color }}>{s.label}</span>
-            </div>
-
-            {/* 3. Time Line */}
-            {time && (
-              <div style={{ marginTop: 3, fontSize: 10.5, color: time.color, fontWeight: 500, paddingLeft: 12 }}
-                data-testid={`card-time-${p.program_id}`}>
-                {time.text}
-              </div>
-            )}
-
-            {/* 4. Action Line */}
+            {/* Row 2: Status dot + label + timing (combined) */}
             <div style={{
-              marginTop: 5, fontSize: 12, fontWeight: 700,
-              color: action === "No action needed" ? "#8993a4" : "#172b4d",
+              display: "flex", alignItems: "center", gap: 5, marginTop: 8,
+              fontSize: 11, fontWeight: 500,
+            }} data-testid={`card-status-${p.program_id}`}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.dot, flexShrink: 0 }} />
+              <span style={{ color: s.color }}>{s.label}</span>
+              {time && (
+                <>
+                  <span style={{ color: "#d1d5db" }}>&middot;</span>
+                  <span style={{ color: time.color, fontWeight: 600, fontSize: 10 }} data-testid={`card-time-${p.program_id}`}>
+                    {time.text}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Row 3: Action */}
+            <div style={{
+              marginTop: 6, fontSize: 12, fontWeight: 600,
+              color: action === "No action needed" ? "#a0aec0" : "#334155",
               lineHeight: 1.3,
             }} data-testid={`card-action-${p.program_id}`}>
               {action}
             </div>
 
-            {/* 5. Owner Line */}
-            <OwnerBadge owner={owner} />
-
-            {/* Optional: Metrics Row */}
-            {lastActivity !== null && lastActivity !== undefined && lastActivity > 0 && (
+            {/* Row 4: Last activity (subtle, only on desktop or if overdue) */}
+            {!isMobile && lastActivity != null && lastActivity > 0 && (
               <div style={{
-                display: "flex", alignItems: "center", gap: 10, marginTop: 5, paddingTop: 5,
-                borderTop: "1px solid #f3f4f6", fontSize: 10, color: "#8993a4", fontWeight: 500,
+                display: "flex", alignItems: "center", gap: 4, marginTop: 6, paddingTop: 6,
+                borderTop: "1px solid #f3f4f6", fontSize: 10, color: "#a0aec0", fontWeight: 500,
               }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <svg width="11" height="11" viewBox="0 0 16 16" fill="#a0aec0"><path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm.5-11v4.793l2.854 2.853-.708.708L7.5 9.207V4h1z" /></svg>
-                  {lastActivity}d ago
-                </span>
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="#a0aec0"><path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm.5-11v4.793l2.854 2.853-.708.708L7.5 9.207V4h1z" /></svg>
+                {lastActivity}d ago
               </div>
             )}
           </div>
@@ -213,10 +218,16 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
         .kb-card-v2 {
           background: #fff;
           border: 1px solid #e8eaed;
-          border-radius: 5px;
-          padding: 9px 10px;
+          border-radius: 10px;
+          padding: 10px 12px;
           cursor: grab;
           transition: box-shadow 120ms ease, transform 120ms ease;
+        }
+        @media (max-width: 767px) {
+          .kb-card-v2 {
+            padding: 12px 14px;
+            border-radius: 12px;
+          }
         }
         .kb-card-v2:hover {
           box-shadow: 0 3px 10px rgba(0,0,0,0.08);
@@ -226,8 +237,8 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
           flex: 1;
           min-width: 0;
           background: #fff;
-          border-radius: 6px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+          border-radius: 10px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -247,13 +258,13 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
         .kb-add-row:hover { background: #f9fafb; color: #5e6c84; }
         .kb-col-pulse .kb-col-v2 { animation: kb-pulse 200ms ease-out; }
         @keyframes kb-pulse {
-          0% { box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+          0% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
           50% { box-shadow: 0 1px 12px rgba(0,0,0,0.12); }
-          100% { box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+          100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
         }
         .kb-ghost-placeholder {
           border: 2px dashed #c1c7d0;
-          border-radius: 5px;
+          border-radius: 10px;
           background: #f4f5f7;
           min-height: 72px;
           margin: 3px 0;
@@ -283,19 +294,20 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                     {...provided.droppableProps}
                     className={`kb-col-v2 ${pulsingColumnId === col.key ? "kb-col-pulse" : ""}`}
                     style={{
-                      ...(isMobile ? { minWidth: 256, flexShrink: 0, scrollSnapAlign: "start" } : {}),
+                      ...(isMobile ? { minWidth: 280, flexShrink: 0, scrollSnapAlign: "start" } : {}),
                       transition: "box-shadow 150ms ease-out",
                       boxShadow: isHovering
                         ? "0 1px 8px rgba(0,0,0,0.1)"
-                        : "0 1px 2px rgba(0,0,0,0.06)",
+                        : "0 1px 3px rgba(0,0,0,0.06)",
                     }}
                     data-testid={`kanban-col-${col.key}`}
                   >
                     {/* Colored Header */}
                     <div style={{
-                      height: 36, display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "0 12px", background: col.color, color: "#fff",
+                      height: 40, display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "0 14px", background: col.color, color: "#fff",
                       fontSize: 12.5, fontWeight: 700, letterSpacing: "0.02em",
+                      borderRadius: "10px 10px 0 0",
                       opacity: isHovering ? 1 : 0.95,
                       transition: "opacity 120ms ease-out",
                     }}>
@@ -314,10 +326,11 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
 
                     {/* Cards */}
                     <div style={{
-                      padding: "6px 8px 10px", display: "flex", flexDirection: "column",
-                      gap: 6, flex: 1, minHeight: 80,
+                      padding: isMobile ? "8px 10px 12px" : "6px 8px 10px",
+                      display: "flex", flexDirection: "column",
+                      gap: isMobile ? 8 : 6, flex: 1, minHeight: 80,
                       background: isHovering ? "rgba(59,130,246,0.03)" : "transparent",
-                      borderRadius: "0 0 6px 6px",
+                      borderRadius: "0 0 10px 10px",
                       transition: "background 120ms ease-out",
                     }}>
                       {count > 0 ? (
@@ -332,6 +345,7 @@ export default function KanbanBoard({ programs, navigate, onDragEnd, onDragUpdat
                               index={idx}
                               attention={attentionMap[p.program_id]}
                               activeDragId={activeDragId}
+                              isMobile={isMobile}
                             />
                           </div>
                         ))
