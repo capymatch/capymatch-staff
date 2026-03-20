@@ -268,6 +268,11 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               >
                 {current.primaryAction}
               </div>
+              {current.heroReason && current.heroReason !== current.reason && (
+                <div className="text-[10px] sm:text-[11px] font-medium mt-1" style={{ color: "rgba(129,140,248,0.7)", lineHeight: 1.3 }} data-testid="hero-recap-reason">
+                  {current.heroReason}
+                </div>
+              )}
             </div>
 
             {/* Owner */}

@@ -1,0 +1,60 @@
+{
+  "summary": "Momentum Recap Hero Card Integration testing completed. All features working correctly. Hero Card shows recap-driven action text and purple recap reason. RecapTeaser displays summary without making duplicate API calls. Freshness decay logic correctly implemented.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_momentum_recap.py",
+    "/app/test_reports/pytest/pytest_recap_hero_integration.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PASS: Hero Card shows 'Re-engage with Emory University' as primary action (recap top priority)",
+    "PASS: Hero Card displays purple recap reason text (data-testid='hero-recap-reason'): 'Top priority in your latest Momentum Recap — at risk of losing momentum — re-engage soon'",
+    "PASS: Recap reason explicitly references 'Momentum Recap'",
+    "PASS: RecapTeaser card displays below hero in Priority view with recap_hero text, heated/cooling counts, 'View Recap' link",
+    "PASS: RecapTeaser receives data as prop from PipelinePage - NO duplicate API call",
+    "PASS: Carousel navigation works - cycling shows recap context for secondary priorities (Stanford, UF)",
+    "PASS: /recap page loads all 4 sections correctly (Hero, Momentum Shift, Priority Reset, AI Insight)",
+    "PASS: Back arrow on /recap page returns to /pipeline",
+    "PASS: GET /api/athlete/momentum-recap returns priorities array with rank, school_name, action, reason, program_id fields",
+    "PASS: No JavaScript errors in browser console",
+    "PASS: Freshness decay logic: full weight ≤3 days, 0.75 ≤7 days, 0.4 ≤14 days, 0 after 14 days",
+    "PASS: RECAP_BOOST constants: top=65, secondary=25, watch=5",
+    "PASS: Live urgent blockers (overdue) override recap priorities when applicable",
+    "PASS: Backend tests 19/19 passed"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100% (all UI flows verified)"
+  },
+  "test_credentials": {
+    "athlete_login": "emma.chen@athlete.capymatch.com / athlete123"
+  },
+  "seed_data_creation": "Used existing seed data - Emma Chen has 5 programs: Stanford/UF/UCLA (heated), Creighton (steady), Emory (cooling/top priority)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Momentum Recap Hero Card integration fully functional. Hero prioritization influenced by recap priorities with freshness decay. RecapTeaser component receives data as prop from PipelinePage (single API call at line 80-82). The recapCtx is built at PipelinePage lines 179-182 and passed to computeAllAttention. Hero items display recap-driven reasoning text when recapRank is 'top' or 'secondary'.",
+  "verified_features": {
+    "1_login_as_emma_chen": "PASS - Demo account login works",
+    "2_pipeline_hero_card_loads": "PASS - Hero Card loads with recap-influenced ordering",
+    "3_hero_shows_recap_action": "PASS - Shows 'Re-engage with Emory University' (recap top priority action)",
+    "4_hero_recap_reason_text": "PASS - Purple text: 'Top priority in your latest Momentum Recap — at risk of losing momentum'",
+    "5_recap_reason_references_momentum_recap": "PASS - Text explicitly contains 'Momentum Recap'",
+    "6_recap_teaser_works": "PASS - Shows recap_hero text, 3 heated, 1 cooling, 'View Recap' link",
+    "7_carousel_shows_recap_context": "PASS - Other items show 'Identified in your Momentum Recap' for secondary priorities",
+    "8_recap_page_loads": "PASS - All 4 sections load correctly",
+    "9_back_navigation": "PASS - Back arrow returns to /pipeline",
+    "10_hero_ordering_changed": "PASS - Primary action influenced by recap priorities (Emory is top, not just attention-only)",
+    "11_api_returns_priorities": "PASS - Returns rank, school_name, action, reason, program_id fields",
+    "12_no_console_errors": "PASS - No JavaScript errors",
+    "13_recap_teaser_no_double_fetch": "PASS - RecapTeaser receives data as prop, no internal useEffect/axios"
+  }
+}

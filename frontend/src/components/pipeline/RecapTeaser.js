@@ -1,35 +1,10 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, ChevronRight } from "lucide-react";
 
-const API = process.env.REACT_APP_BACKEND_URL;
-
-function getToken() {
-  return localStorage.getItem("capymatch_token") || localStorage.getItem("token");
-}
-
-export default function RecapTeaser() {
+export default function RecapTeaser({ data: recap }) {
   const navigate = useNavigate();
-  const [recap, setRecap] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(`${API}/api/athlete/momentum-recap`, {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
-        if (res.ok) setRecap(await res.json());
-      } catch {
-        // silent fail
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
-
-  if (loading || !recap || !recap.recap_hero) return null;
+  if (!recap || !recap.recap_hero) return null;
 
   const heated = recap.momentum?.heated_up?.length || 0;
   const cooling = recap.momentum?.cooling_off?.length || 0;

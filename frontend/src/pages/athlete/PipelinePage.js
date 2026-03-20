@@ -35,6 +35,7 @@ export default function PipelinePage() {
   const [dragDest, setDragDest] = useState(null);
   const [pulsingColumnId, setPulsingColumnId] = useState(null);
   const [activeDragId, setActiveDragId] = useState(null);
+  const [recapData, setRecapData] = useState(null);
   const [viewMode, setViewMode] = useState(() => {
     try { return localStorage.getItem('capymatch_view_mode') || 'priority'; }
     catch { return 'priority'; }
@@ -73,6 +74,13 @@ export default function PipelinePage() {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  /* ── Recap fetch (non-blocking) ── */
+  useEffect(() => {
+    axios.get(`${API}/athlete/momentum-recap`).then(res => {
+      setRecapData(res.data);
+    }).catch(() => {});
+  }, []);
 
   /* ── Drag & Drop ── */
   const handleDragEnd = useCallback(async (result) => {
@@ -167,7 +175,13 @@ export default function PipelinePage() {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchAll} /></div>;
   }
 
-  const allAttention = computeAllAttention(allPrograms, topActionsMap);
+  // Build recap context for attention engine
+  const recapCtx = recapData?.priorities?.length ? {
+    priorities: recapData.priorities,
+    createdAt: recapData.period_start,
+  } : null;
+
+  const allAttention = computeAllAttention(allPrograms, topActionsMap, recapCtx);
   const attentionMap = {};
   allAttention.forEach(a => { attentionMap[a.programId] = a; });
   const heroItems = allAttention.filter(a => a.attentionLevel !== 'low').slice(0, 5);
@@ -223,7 +237,7 @@ export default function PipelinePage() {
       <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
 
       {/* ═══ RECAP TEASER ═══ */}
-      {viewMode === "priority" && <RecapTeaser />}
+      {viewMode === "priority" && <RecapTeaser data={recapData} />}
 
       {/* ═══ BOARD SEPARATOR ═══ */}
       <div className="flex items-center gap-3 mt-5 sm:mt-6 mb-4 px-1" data-testid="board-separator">

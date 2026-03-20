@@ -3,9 +3,27 @@
  *
  * Every program is scored once. The result drives:
  * Hero carousel, Peek row, Priority board, Coming Up timeline, Kanban cards.
+ *
+ * Recap integration: When recap priorities are provided, they boost scores
+ * for programs identified in the latest Momentum Recap. Live urgency always wins.
  */
 
-export function computeAttention(program, topAction) {
+/**
+ * Compute recap freshness factor (0-1).
+ * Full weight within 3 days, decays to 0 at 14 days.
+ */
+function recapFreshness(createdAt) {
+  if (!createdAt) return 0;
+  const age = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  if (age <= 3) return 1;
+  if (age <= 7) return 0.75;
+  if (age <= 14) return 0.4;
+  return 0;
+}
+
+const RECAP_BOOST = { top: 65, secondary: 25, watch: 5 };
+
+export function computeAttention(program, topAction, recapCtx) {
   const p = program;
   const ta = topAction;
   const name = p.university_name || '';
@@ -48,6 +66,24 @@ export function computeAttention(program, topAction) {
   // Stage bonus
   if (p.journey_stage === 'campus_visit') score += 15;
   else if (p.journey_stage === 'in_conversation') score += 10;
+
+  // ── Recap priority boost ──
+  let recapRank = null;
+  let recapAction = null;
+  let recapReason = null;
+  if (recapCtx) {
+    const priority = recapCtx.priorities?.find(pr => pr.program_id === p.program_id);
+    if (priority) {
+      const freshness = recapFreshness(recapCtx.createdAt);
+      const boost = Math.round((RECAP_BOOST[priority.rank] || 0) * freshness);
+      if (boost > 0) {
+        score += boost;
+        recapRank = priority.rank;
+        recapAction = priority.action;
+        recapReason = priority.reason;
+      }
+    }
+  }
 
   // ── CRITICAL: daysUntil <= 0 → MUST NOT be on track ──
   if (daysUntil !== null && daysUntil <= 0 && score < 40) {
@@ -137,6 +173,10 @@ export function computeAttention(program, topAction) {
     reasonShort = 'Due tomorrow';
   } else if (daysUntil !== null && daysUntil <= 3) {
     reasonShort = `Due in ${daysUntil} days`;
+  } else if (recapRank === 'top') {
+    reasonShort = 'Top priority from Momentum Recap';
+  } else if (recapRank === 'secondary') {
+    reasonShort = 'Flagged in Momentum Recap';
   } else if (lastActivity !== null && lastActivity >= 7) {
     reasonShort = `No response in ${lastActivity} days`;
   } else if (lastActivity !== null && lastActivity >= 3) {
@@ -145,8 +185,18 @@ export function computeAttention(program, topAction) {
     reasonShort = 'Ready for first contact';
   } else if (ta?.action_key === 'relationship_cooling' || ta?.action_key === 'reengage_relationship') {
     reasonShort = 'No recent engagement';
+  } else if (recapRank === 'watch') {
+    reasonShort = 'On watch — monitor closely';
   } else if (attentionLevel === 'low') {
     reasonShort = 'On track';
+  }
+
+  // ── heroReason — explains why this program is prioritized, used in Hero card ──
+  let heroReason = reason;
+  if (recapRank === 'top' && recapReason) {
+    heroReason = `Top priority in your latest Momentum Recap — ${recapReason.toLowerCase()}`;
+  } else if (recapRank === 'secondary' && recapReason) {
+    heroReason = `Identified in your Momentum Recap — ${recapReason.toLowerCase()}`;
   }
 
   return {
@@ -154,9 +204,11 @@ export function computeAttention(program, topAction) {
     attentionScore: score,
     attentionLevel,
     timingLabel,
-    primaryAction,
+    primaryAction: recapRank === 'top' && recapAction ? recapAction : primaryAction,
     reason,
     reasonShort,
+    heroReason,
+    recapRank,
     daysUntil,
     owner: ta?.owner || 'athlete',
     ctaLabel: ta?.cta_label || (attentionLevel === 'low' ? 'View School' : 'Take Action'),
@@ -180,14 +232,18 @@ const STAGE_PRIORITY = {
 /**
  * Compute attention for all active programs, sorted by score descending
  * with stable tie-breaking: earliest due date → higher stage → alphabetical.
+ *
+ * @param {Array} programs — all pipeline programs
+ * @param {Object} topActionsMap — keyed by program_id
+ * @param {Object} [recapCtx] — { priorities: [...], createdAt: string }
  */
-export function computeAllAttention(programs, topActionsMap) {
+export function computeAllAttention(programs, topActionsMap, recapCtx) {
   const active = programs.filter(p =>
     p.board_group !== 'archived' &&
     p.recruiting_status !== 'Committed' &&
     p.journey_stage !== 'committed'
   );
-  const results = active.map(p => computeAttention(p, topActionsMap[p.program_id]));
+  const results = active.map(p => computeAttention(p, topActionsMap[p.program_id], recapCtx));
   results.sort((a, b) => {
     // Primary: higher score first
     if (b.attentionScore !== a.attentionScore) return b.attentionScore - a.attentionScore;
