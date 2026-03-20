@@ -1,38 +1,120 @@
-<analysis>**original_problem_statement:** The user wants to build an internal Loop Insights panel for CapyMatch admins to evaluate the behavioral impact of the newly completed  product loop. 
+<analysis>**original_problem_statement:** The user wants to build an internal Loop Insights panel for CapyMatch admins to evaluate the behavioral impact of the product loop. Following that, the user requested deep QA validations of the entire product loop (Hero → Action → Reinforcement → Recap → Hero) across 6 specific behavioral edge-case scenarios. PRODUCT REQUIREMENTS: UI must be calm, compact, and data-dense. The application must accurately handle edge cases where live urgency (e.g., overdue tasks) conflicts with recap strategy (AI suggestions).
 
-**User's preferred language:** English (INSTRUCT next agent to respond in English only).
+**User's preferred language:** English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-CapyMatch is a React + FastAPI + MongoDB recruiting pipeline application. In this session, the core feedback loop was heavily developed, polished, and instrumented. The app now features a Momentum Recap page, an intelligent Hero Card that pulls priorities from the recap and merges them with live blockers, an Action Reinforcement System (animations/toasts), and a custom lightweight analytics tracker () that captures user interactions across this loop.
+CapyMatch is a React + FastAPI + MongoDB recruiting pipeline application. The internal  dashboard has been successfully built and tested. The core Attention Engine and Momentum Recap feedback loops have undergone rigorous scenario-based QA. UI refinements were added to explicitly show when a recap priority is outranked by a live blocker, or when a recap is stale/fading. 
 
 **Last working item:**
-- **Last item agent was working:** Building an internal-only Loop Insights panel (). The agent had just opened  to inspect the existing data aggregation logic before starting implementation.
-- **Status:** NOT STARTED (Requirements gathered, file inspection began).
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** Frontend testing agent (to verify the new  UI renders correctly) and Backend testing agent (to verify any new aggregation methods added to ).
+- **Last item agent was working:** Completing QA SCENARIO 6: User ignores Hero and acts elsewhere. The agent discovered a bug in  where non-hero cards with high attention were falsely triggering hero-level reinforcement praise. The agent fixed the code by passing  down from , linted the files, and created the python test script (), but ran out of context before executing it.
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N (Code is written, but validation script hasn't been run yet)
+- **Which testing method agent to use?** Manual testing via python -c / bash (run ================================================================================
+  QA SCENARIO 6: User Ignores Hero and Acts Elsewhere
+================================================================================
+
+  Setting up scenario...
+  Setup: Purdue (hero, overdue 1d) + Louisville (low priority, due in 5d)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. HERO CARD VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    #1 [110] Purdue University              | att=high     | daysUntil=-1 ◄ HERO
+    #2 [ 20] University of Louisville       | att=low      | daysUntil=5
+
+  Hero: Purdue University
+  Louisville: score=20, attention=low
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2. REINFORCEMENT: User completes Louisville (NOT the hero)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ── OLD LOGIC (before fix) ──
+    isHeroPriority = attentionLevel === 'high' || recapRank === 'top'
+    Louisville attention: low
+    Louisville recapRank: None
+    Old isHeroPriority: False
+    Result: "Momentum building" / neutral (path: soft_progress)
+
+  ── NEW LOGIC (after fix) ──
+    isHeroPriority = programId === heroProgramId
+    Louisville programId: qa6-louisville-001
+    Hero programId: qa6-purdue-001
+    New isHeroPriority: False
+    Result: "Momentum building" / neutral (path: soft_progress)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  3. HERO PERSISTENCE CHECK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    After Louisville action, Purdue's urgency unchanged (still overdue 1d)
+    Hero should remain Purdue: Purdue University
+    Louisville action doesn't change Purdue's score (110)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  4. CONTROL: What if user acted on Purdue (the hero)?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Purdue (hero): "Top priority handled" / highImpact (path: hero_top)
+    Louisville (non-hero): "Momentum building" / neutral (path: soft_progress)
+
+    Difference is clear: hero gets 'highImpact', non-hero gets 'neutral'
+
+════════════════════════════════════════════════════════════════════════════════
+  VERDICT TABLE
+════════════════════════════════════════════════════════════════════════════════
+  [[92mPASS[0m] Louisville reinforcement is soft: "Momentum building" / neutral
+  [[92mPASS[0m] No false 'Top priority handled' praise
+  [[92mPASS[0m] Hero remains Purdue after Louisville action
+  [[92mPASS[0m] Purdue (hero) gets stronger reinforcement than Louisville (non-hero)
+         Purdue: highImpact / Louisville: neutral
+  [INFO] Louisville has low attention — bug path not triggered in this config
+         Fix still correct: exact hero ID comparison prevents false positives
+
+════════════════════════════════════════════════════════════════════════════════
+  NOTES
+════════════════════════════════════════════════════════════════════════════════
+
+  1. BUG FIXED: isHeroPriority now uses exact programId match
+     Before: isHeroPriority = attentionLevel === "high" || recapRank === "top"
+     After:  isHeroPriority = programId === heroProgramId
+     This prevents ANY non-hero program from receiving hero-level praise,
+     even if it has high attention or a recap top rank.
+
+  2. REINFORCEMENT CALIBRATION IS CORRECT
+     Hero action (Purdue):     "Top priority handled" / highImpact
+     Non-hero action (Louie):  "Momentum building" / neutral
+     The gap between hero and non-hero reinforcement is clear but not
+     punishing. The user isn't scolded for ignoring the hero — they get
+     soft encouragement for making progress elsewhere.
+
+  3. HERO PERSISTS AFTER NON-HERO ACTION
+     Completing Louisville doesn't change Purdue's urgency (still overdue).
+     The hero card remains Purdue until the user addresses it or another
+     program develops stronger urgency.
+
+  4. NO FALSE PRAISE LEAKAGE
+     The soft progress path produces: "Momentum building", "Good progress
+     here", "Another step forward" — none of which imply the user handled
+     the most important task. The system is honest about what was done.
+
+
+  [Cleanup complete]), followed by a screenshot test if UI verification is needed.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list:**
-Issue 1: Build Internal Loop Insights Panel (P0)
-- **Attempted fixes:** None. Just started.
-- **Next debug checklist:**
-  1. Review  to ensure  returns the specific data slices requested (Source Comparison, Trust/Explainability Signals, Reinforcement Effectiveness).
-  2. Create a new frontend page  (or similar).
-  3. Register the route securely (admin/director access only) in .
-  4. Build the UI adhering strictly to the design constraints: calm, premium, compact... cards + simple comparison rows... no giant charts unless clearly useful.
-- **Why fix this issue and what will be achieved with the fix?** Allows founders/admins to evaluate if the newly built feedback loop is actually improving user behavior and trust, guiding future product decisions.
-- **Status:** NOT STARTED
+Issue 1: Complete and Report QA Scenario 6 (P0)
+- **Attempted fixes:** The agent successfully updated , , and  to track exact  instead of generic .
+- **Next debug checklist:** 
+  1. Execute .
+  2. Verify that completing an action on a lower-priority (non-hero) card triggers soft reinforcement (e.g., Momentum building) and NOT top-priority language (Top priority handled).
+  3. Compile the validation report for the user based on their requested criteria (Hero title, Hero reason, reinforcement message, etc.).
+- **Why fix this issue and what will be achieved with the fix?** Prevents false praise, ensuring the user trusts the system's hierarchy. Completes the final user QA request.
+- **Status:** IN PROGRESS
 - **Is recurring issue?** N
-- **Should Test frontend/backend/both after fix?** both
+- **Should Test frontend/backend/both after fix?** both (Backend script + frontend reinforcement toast validation)
 - **Blocked on other issue:** None
 
 **In progress Task List:**
-Task 1: Complete the Loop Insights Dashboard (P0)
-- **Where to resume:** You are currently looking at . Evaluate if the current  endpoint provides enough detail for the requested 5 sections (Core Loop Metrics, Source Comparison, Trust Signals, Reinforcement Effectiveness, Time Filters). 
-- **What will be achieved with this?** A high-signal administrative dashboard for product analytics.
-- **Status:** NOT STARTED
-- **Should Test frontend/backend/both after fix?** both
-- **Blocked on something:** None
+None. (Only the active Scenario 6 issue above).
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
@@ -48,97 +130,83 @@ Task 1: Complete the Loop Insights Dashboard (P0)
   - Kanban Keyboard Shortcuts
 
 **Completed work in this session**
-- **Action Reinforcement Fix:** Fixed bug where  was not rendering on the pipeline page (DONE).
-- **Mobile Kanban Redesign:** Optimized Kanban cards for mobile devices by combining status/timing lines and adjusting padding (DONE).
-- **Athlete Profile Photos:** Seeded 10 database athletes with Unsplash headshots and updated all UIs (Events, Capture, Profile) to render actual photos instead of initials (DONE).
-- **AI Draft Email Fix:** Fixed AI draft endpoint querying the wrong database collection and added regex to parse unescaped quotes (e.g., ) in LLM JSON output (DONE).
-- **Carousel Swiping:** Added horizontal touch swipe support and directional CSS transitions to the  component (DONE).
-- **Momentum Recap Feature:** Built a full post-event recap page and a teaser card, generating AI summaries based strictly on structured data changes (DONE).
-- **Hero Card + Recap Wiring:** Connected the Momentum Recap priorities into the Attention Engine so recaps drive the Hero Card suggestions (DONE).
-- **Loop Polish Pass:** Tightened Hero wording, added a Why this? explainability panel, and aligned reinforcement continuity (DONE).
-- **Loop Analytics:** Built a lightweight, custom event-tracking system to measure hero views, clicks, why-expands, and time-to-action (DONE).
+- **Loop Insights Dashboard:** Built internal admin panel () with conversion funnels and trend charts. (DONE)
+- **QA Scenario 1:** Validated strong post-event momentum logic. (DONE)
+- **QA Scenario 2 & UI Feature:** Validated live blockers overriding recaps. Added  (Recap suggested X — this is more urgent) factor to Hero Card UI. (DONE)
+- **QA Scenario 3:** Validated Merged Priority cases. (DONE)
+- **QA Scenario 4 & UI Feature:** Validated stale recap logic. Added  (fading — 40% weight) UI indicator to Hero Card. (DONE)
+- **QA Scenario 5:** Validated system fallback when no recap exists. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
 None.
 
 **Known issue recurrence from previous fork**
-- None.
+- Recurrence count: 0
+- Status: RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Full-Stack Application:** React (Frontend), FastAPI (Backend), MongoDB (Database).
-- **Event-Driven Feedback:** Custom  orchestrates visual UI feedback.
-- **Custom Event Tracking:** Instead of a 3rd party tool, a lightweight custom tracking system ( -> ) batches and stores frontend interaction events directly in MongoDB.
+- React (Frontend), FastAPI (Backend), MongoDB (Database).
+- **Attention Engine ()**: Single source of truth. Sorts all programs. Live urgency mathematically overrides Recap/AI strategy.
+- **Action Reinforcement ()**: Listens to UI events and triggers toast messages. Differentiates between handling the #1 Hero vs a lower-priority card.
 
 **key DB schema**
-- : Added consistent  data. Contains  (sub-document).
-- : New collection storing generated recaps.
-- : New collection storing raw behavioral loop events (, , etc).
+- : Raw behavioral loop events.
+- : AI generated recaps based on structured interaction data.
 
 **changes in tech stack**
-- None.
+- None
 
 **All files of reference**
-- : **CRITICAL** - Current working file. Contains the data aggregation logic you need to expand for the Insights dashboard.
-- : Shows what events the frontend is actively batching and sending.
--  & : The Momentum Recap feature implementation.
-- : The central priority engine (Hero Card logic).
+- : Run this script immediately to validate the active issue.
+- : Modified to use strict  matching.
+- : Modified to push custom explainability factors (, ).
 
 **Areas that need refactoring**:
 -  (700+ lines)
 -  (1000+ lines)
 
 **key api endpoints**
-- : **CRITICAL** - The endpoint that will power the new Loop Insights dashboard.
-- : Ingests batched loop tracking events.
-- : Fetches the recap state.
+- : Powers the insights dashboard.
 
 **Critical Info for New Agent**
-- You are stepping in right after a massive string of successful, rapid-fire feature additions. The user's immediate request is to build an internal dashboard () based on the custom analytics system just implemented.
-- **DO NOT** use heavy BI chart libraries. The user explicitly requested: *calm, premium, compact... cards + simple comparison rows... no giant charts unless clearly useful.*
-- Rely exclusively on the custom  endpoints. Do not attempt to integrate Mixpanel/PostHog. 
+- You are mid-way through a prompt from the user. The user asked you to run QA Scenario 6. You found a bug, fixed the React code, and created the Python validation script. 
+- **Your immediate next step:** Execute , review the output, and respond to the user with the final QA report format they requested.
 
 **documents and test reports created in this job**
 - 
 - 
 - 
-- 
-- 
-- 
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- **User (Pending):** Requested a new internal Loop Insights panel to evaluate the analytics data. (IN PROGRESS)
-- **User:** Requested analytics instrumentation on the full loop to measure trust and behavior. (COMPLETED)
-- **User:** Requested a polish and trust pass on the loop (tighten wording, explainability panel, priority conflict testing). (COMPLETED)
-- **User:** Asked to wire the Recap priorities into the Hero Card to complete the loop. (COMPLETED)
-- **User:** Refined rules for the Momentum Recap (time window, teaser vs full page, LLM constraints). (COMPLETED)
-- **User:** Asked to build a post-event Momentum Recap screen. (COMPLETED)
-- **User:** Checked if reinforcement rules were already connected to Hero Card logic. (CONFIRMED ALREADY IMPLEMENTED)
-- **User:** Asked if the Action Reinforcement system was already built as per spec. (CONFIRMED ALREADY IMPLEMENTED)
-- **User:** Asked for horizontal slide transitions when swiping the carousel. (COMPLETED)
-- **User:** Asked to make the pipeline carousel swipeable on mobile. (COMPLETED)
+- **User (Pending):** Requested SCENARIO 6: User ignores Hero and acts elsewhere. Wants validation that system doesn't give false top-priority praise. (IN PROGRESS)
+- **User:** Requested SCENARIO 5: No recap exists. (DONE)
+- **User:** Requested SCENARIO 4: Stale recap degraded by freshness. (DONE)
+- **User:** Requested SCENARIO 3: Merged Priority Case. (DONE)
+- **User:** Asked to implement explicit UI visibility when live priority outranks recap priority. (DONE)
+- **User:** Requested SCENARIO 2: Live blocker overrides recap. (DONE)
+- **User:** Requested QA SCENARIO 1: Strong post-event momentum. (DONE)
+- **User:** Replied P0 to prioritize Loop Insights. (DONE)
+- **User:** Asked to confirm plan via ask_human. (DONE)
 
 **Project Health Check:**
-- Broken: None
-- Mocked: None
+Broken: None
+Mocked: None
 
 **3rd Party Integrations**
 - OpenAI/LLM (Emergent LLM Key) — Used for AI Drafts and Momentum Recap narratives.
-- @hello-pangea/dnd — Kanban drag-and-drop.
-- lucide-react — Icons.
-- Sonner — Standard toasts.
 
 **Testing status**
-- Testing agent used after significant changes: YES (Heavily utilized, 5 iterations passed).
+- Testing agent used after significant changes: YES
 - Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: None
+- Test files created: 
 - Known regressions: None
 
 **Credentials to test flow:**
-- **Athlete (Full Data):**  / 
-- **Director (Admin access):**  / 
+- **Athlete:**  / 
+- **Director:**  / 
 
 **What agent forgot to execute**
-- The agent successfully completed all prior tasks and has just begun inspecting the backend file to fulfill the user's latest request (Loop Insights panel). No forgotten tasks.</analysis>
+- The agent was successfully progressing through a multi-step QA request but ran out of context exactly after creating the  script. It needs to be executed to finish the user's prompt.</analysis>

@@ -252,21 +252,21 @@ function LowRow({ item, navigate }) {
 }
 
 /* ── Swipeable wrapper with reinforcement ── */
-function SwipePriorityCard({ item, navigate, section }) {
+function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
   const prog = item.program;
   const programId = prog?.program_id;
   const [burstActive, setBurstActive] = useState(false);
   const [burstColor, setBurstColor] = useState(PARTICLE_COLORS.neutral);
 
   const fireReinforcement = useCallback(() => {
+    const isActualHero = programId === heroProgramId;
     const isHigh = item.attentionLevel === "high";
     const isRecapTop = item.recapRank === "top";
-    const isHero = isHigh || isRecapTop;
     const ctx = {
       type: "taskComplete",
-      isHeroPriority: isHero,
-      heroReason: isHero ? (item.heroReason || item.primaryAction) : "",
-      priorityRank: isHero ? 1 : 99,
+      isHeroPriority: isActualHero,
+      heroReason: isActualHero ? (item.heroReason || item.primaryAction) : "",
+      priorityRank: isActualHero ? 1 : 99,
       attentionBefore: item.attentionLevel,
       attentionAfter: "low",
       daysSinceLastActivity: prog?.signals?.days_since_last_activity || 0,
@@ -276,9 +276,9 @@ function SwipePriorityCard({ item, navigate, section }) {
       recapRank: item.recapRank || null,
       prioritySource: item.prioritySource || "live",
     };
-    const color = isHigh
+    const color = isActualHero && isHigh
       ? PARTICLE_COLORS.riskResolved
-      : isRecapTop
+      : isActualHero && isRecapTop
         ? PARTICLE_COLORS.highImpact
         : item.timingLabel?.toLowerCase().includes("overdue")
           ? PARTICLE_COLORS.riskResolved
@@ -286,7 +286,7 @@ function SwipePriorityCard({ item, navigate, section }) {
     setBurstColor(color);
     setBurstActive(true);
     triggerReinforcement(ctx);
-  }, [item, prog]);
+  }, [item, prog, programId, heroProgramId]);
 
   const handleAction = useCallback(() => {
     fireReinforcement();
@@ -354,7 +354,7 @@ function SectionHeader({ label, count, color, icon: Icon, iconBg }) {
   );
 }
 
-export default function PriorityBoard({ items, navigate }) {
+export default function PriorityBoard({ items, navigate, heroProgramId }) {
   const high = items.filter(i => i.attentionLevel === "high");
   const medium = items.filter(i => i.attentionLevel === "medium");
   const low = items.filter(i => i.attentionLevel === "low");
@@ -381,7 +381,7 @@ export default function PriorityBoard({ items, navigate }) {
         <SectionHeader label="Next actions" count={high.length} color="#ef4444" icon={AlertCircle} iconBg="rgba(239,68,68,0.06)" />
         {high.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="attention" />)}
+            {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="attention" heroProgramId={heroProgramId} />)}
           </div>
         ) : (
           <div style={{ padding: "14px 4px", fontSize: 12, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500 }} data-testid="empty-state-attention">Nothing urgent right now</div>
@@ -393,7 +393,7 @@ export default function PriorityBoard({ items, navigate }) {
         <SectionHeader label="Coming up" count={medium.length} color="#f59e0b" icon={Clock} iconBg="rgba(245,158,11,0.06)" />
         {medium.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="coming-up" />)}
+            {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="coming-up" heroProgramId={heroProgramId} />)}
           </div>
         ) : (
           <div style={{ padding: "14px 4px", fontSize: 12, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500 }} data-testid="empty-state-coming-up">No upcoming actions</div>
@@ -418,7 +418,7 @@ export default function PriorityBoard({ items, navigate }) {
         {!onTrackCollapsed && (
           low.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column" }}>
-              {low.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="on-track" />)}
+              {low.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="on-track" heroProgramId={heroProgramId} />)}
             </div>
           ) : (
             <div style={{ padding: "14px 4px", fontSize: 12, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500 }} data-testid="empty-state-on-track">No programs on track yet</div>

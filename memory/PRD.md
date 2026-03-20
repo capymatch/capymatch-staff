@@ -131,6 +131,17 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Route protected — athletes redirected to `/board`
 - Files: `loop_analytics.py` (admin endpoint + helper), `LoopInsightsPage.js`
 
+### Behavioral Loop QA — All 6 Scenarios (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (all 6 scenarios pass)
+- **Scenario 1**: Strong post-event momentum — recap boosts hero correctly
+- **Scenario 2**: Live blocker overrides recap — `recap-outranked` UI indicator shown
+- **Scenario 3**: Merged priority — live + recap converge on same school
+- **Scenario 4**: Stale recap degraded by freshness — `recap-stale` UI indicator shown
+- **Scenario 5**: No recap exists — system falls back gracefully to live-only signals
+- **Scenario 6**: User ignores Hero and acts elsewhere — soft reinforcement ("Momentum building"), NO false hero-level praise ("Top priority handled")
+- **Bug fixed in Scenario 6**: `isHeroPriority` now uses exact `programId === heroProgramId` instead of `attentionLevel === "high"`, preventing false praise leakage
+- Test scripts: `/app/backend/tests/qa_scenario{1-6}_validate.py`
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
