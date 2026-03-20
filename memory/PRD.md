@@ -142,10 +142,20 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - **Bug fixed in Scenario 6**: `isHeroPriority` now uses exact `programId === heroProgramId` instead of `attentionLevel === "high"`, preventing false praise leakage
 - Test scripts: `/app/backend/tests/qa_scenario{1-6}_validate.py`
 
+### DirectorInbox Refactor (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (screenshot confirmed, 0 regressions)
+- Split 801-line monolith into 6 focused modules:
+  - `DirectorInbox.js` (203 lines) — orchestrator: data fetching, layout, CSS
+  - `inbox-utils.js` (162 lines) — constants (NUDGE_MAP, TRAJECTORY), helpers (getNudge, generateWhy, scoreItem, ctaWithContext, buildTitle)
+  - `TopPriorityCard.js` (187 lines) — featured priority card with autopilot CTA
+  - `ComposeModal.js` (129 lines) — dark glass compose modal
+  - `InboxRow.js` (99 lines) — inbox row + group label
+  - `TrajectoryHint.js` (15 lines) — shared trajectory indicator
+- Default export unchanged — `DirectorView.js` required zero changes
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
-- Refactor DirectorInbox.js (700+ lines)
 - Refactor SchoolPod.js (1000+ lines)
 
 ## Future/Backlog Tasks (P2)
