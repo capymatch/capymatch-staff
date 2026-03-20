@@ -46,6 +46,7 @@ import AthleteJourneyPage from "./pages/athlete/JourneyPage";
 import AthleteOnboardingQuiz from "./pages/athlete/OnboardingQuiz";
 import AthletePublicProfile from "./pages/public/AthletePublicProfile";
 import InternalAthleteProfile from "./pages/staff/InternalAthleteProfile";
+import LoopInsightsPage from "./pages/staff/LoopInsightsPage";
 import AthleteInboxPage from "./pages/athlete/InboxPage";
 import AthleteMessagesPage from "./pages/athlete/MessagesPage";
 import AthleteOutreachPage from "./pages/athlete/OutreachAnalysisPage";
@@ -133,6 +134,7 @@ function AppRoutes() {
       <Route path="/support-pods/:athleteId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SupportPod /></ProtectedRoute>} />
       <Route path="/support-pods/:athleteId/school/:programId" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><SchoolPod /></ProtectedRoute>} />
       <Route path="/internal/athlete/:athleteId/profile" element={<ProtectedRoute allowedRoles={["director","club_coach","platform_admin"]}><InternalAthleteProfile /></ProtectedRoute>} />
+      <Route path="/internal/loop-insights" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><LoopInsightsPage /></ProtectedRoute>} />
 
       {/* ── Athlete / Parent routes ── */}
       <Route path="/onboarding" element={<ProtectedRoute useLayout={false} allowedRoles={["athlete","parent"]}><AthleteOnboardingQuiz /></ProtectedRoute>} />
