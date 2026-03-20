@@ -1,92 +1,84 @@
-# CapyMatch - Athlete Pipeline Management Platform
+# CapyMatch — Product Requirements Document
 
 ## Original Problem Statement
-Build and iteratively refine an athlete pipeline management application with Director Mission Control, Coach Dashboard, and School Pods — all powered by a unified Risk Engine v3.
+CapyMatch is an athlete pipeline management tool (Recruiting Operating System) with a React frontend, FastAPI backend, and MongoDB. It supports multiple user roles: Athletes, Directors, and Coaches, with a sophisticated "Risk Engine v3" driving prioritization.
 
-## Architecture
-- **Frontend**: React + Tailwind + Shadcn/UI
-- **Backend**: FastAPI + MongoDB
-- **Key Libraries**: @hello-pangea/dnd, sonner, lucide-react
+## Core Architecture
+- **Frontend**: React (CRA) with Shadcn/UI components
+- **Backend**: FastAPI (Python)
+- **Database**: MongoDB
+- **Key Libraries**: @hello-pangea/dnd (drag-and-drop), sonner (toasts), lucide-react (icons)
 
-## What's Been Implemented
+## User Roles & Credentials
+- **Athlete (Full Data):** emma.chen@athlete.capymatch.com / athlete123
+- **Director:** clara.morgan@director.capymatch.com / director123
+- **Coach:** coach.williams@capymatch.com / coach123
 
-### Kanban Board
-- Redesigned with colored headers, drag-and-drop animations, mobile responsiveness
+## Completed Features
 
-### Director Mission Control (Phases 1-5)
-- Aggregated inbox, Top Priority card, Autopilot nudges, Compose Modal, school context
+### Priority Board Redesign
+- Rich, elevated cards with clear status indicators and contextual actions
+- Swipeable cards with right-swipe (action) and left-swipe (snooze)
+- Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
-### Risk Engine v3
-- `/app/backend/risk_engine.py` — severity scoring, stage-aware weighting, compound risk, trajectory, intervention types, role-aware actions
-- Director UI: severity labels, trajectory indicators, whyNow, intervention CTAs
-- Coach Dashboard: Top Priority + unified Needs Attention (scoped to coach's athletes)
-- School Pod Risk: contextual risk card in pod hero
-- Coach Escalation: POST /api/coach/escalate creates flag visible in Director Inbox
+### Action Reinforcement System (Feb 2026)
+- **Status**: COMPLETE & VERIFIED
+- Event-driven feedback on task completion (swipe) and stage changes (drag-and-drop)
+- ParticleBurst animation: soft glow + particle burst on relevant card
+- ReinforcementToast: dark glass toast at bottom-center with colored indicator dot
+- Context-aware messages tied to Hero Card priority system
+- Debounced event bus prevents rapid-fire feedback
+- Files: reinforcement.js, ParticleBurst.js, ReinforcementToast.js
 
-### Coach Dashboard Unification (March 19, 2026)
-- Removed duplicate "Needs Attention" section from RosterSection
-- Single unified list driven by Risk Engine v3 (CoachInbox)
-- Removed non-actionable journey chips (Visiting Schools, Offer Received)
-- Blockers rendered as standard rows with severity=critical/high
-- RosterSection simplified to "All Clear" + "Events Requiring Prep" only
-- Testing: 100% pass rate (iteration_200)
+### Onboarding Flow
+- Persistent banner on profile page guiding new users to pipeline setup
+- Fixed onboarding quiz bug (auto-create athlete record)
 
-### UI Cleanup — SupportPod (March 19, 2026)
-- Removed duplicate ActionBar card from athlete profile page (SupportPod.js)
-- The card repeated the same issue info already shown in StatusIntelligence Attention section
-- Cleaned up unused imports (MessageSquare) and destructured variables (current_issue, recruiting_signals)
+### Data Seeding
+- Comprehensive seed_fresh.py with 10+ realistic athlete profiles
+- All athletes upgraded to Premium subscription tier
+- Consistent interactions data for journey UI
 
-### Onboarding Flow — Profile → Pipeline Return (March 19, 2026)
-- Added onboarding progress banner to ProfilePage.js that shows when `?from=onboarding` is in the URL or when the user has 0 tracked schools
-- Banner shows 3-step progress strip (Create Profile → Gmail → Add Schools)
-- Before profile is complete: shows "Complete your profile to continue — Fill in X more fields" with essential field counter (X/5)
-- After 5+ essential fields filled: shows "Profile looks great!" with green checkmark and prominent "Continue →" button back to /pipeline
-- Banner does NOT show for athletes who already have schools tracked (completed onboarding)
-- Fixed `_get_athlete` → `_get_or_create_athlete` in athlete_onboarding.py to auto-create athlete records during onboarding instead of 404ing
-- Wiped all athlete/event/action data and created 10 interconnected athletes
-- Each athlete designed to trigger a specific Risk Engine v3 scenario:
-  1. Emma Chen — Hot prospect, improving trajectory (recent actions)
-  2. Olivia Anderson — Missing docs blocker (2025 grad, transcript missing)
-  3. Marcus Johnson — Critical/worsening (25d inactive, stalled at Campus Visit)
-  4. Sarah Martinez — Early stage, narrow list (2027 grad, exploring)
-  5. Lucas Rodriguez — Healthy, all clear (has USC offer, strong momentum)
-  6. Ava Thompson — Escalation + awaiting reply compound risk
-  7. Noah Davis — Event blocker + missing docs compound risk (2025 grad)
-  8. Isabella Wilson — No activity + awaiting reply compound, worsening
-  9. Liam Moore — No coach assigned + no activity compound, worsening
-  10. Sophia Garcia — Follow-up + no activity but improving (recent action)
-- Created 40 programs, 22 pod actions, 2 escalations, 4 recommendations, 3 events, 5 event notes
-- Testing: 100% frontend, 87.5%+ backend (all critical paths pass)
+### Demo Account Access
+- One-click demo account buttons on login page for all key roles
 
-## Key API Endpoints
-- `GET /api/director-inbox` — Director-scoped risk inbox
-- `GET /api/coach-inbox` — Coach-scoped risk inbox
-- `GET /api/school-pod-risk/{program_id}` — School pod risk context
+## Upcoming Tasks (P1)
+- CSV Import Tool for bulk school/coach data
+- Bulk Approve Mode for Director Inbox
+- Refactor DirectorInbox.js (700+ lines)
+- Refactor SchoolPod.js (1000+ lines)
 
-### Database Reset & Comprehensive Seed Data (March 19, 2026)
-- `POST /api/coach/escalate` — Coach → Director escalation
-- `POST /api/autopilot/execute` — One-click approval actions
-
-## Key Files
-- `/app/backend/risk_engine.py` — Risk Engine v3 core
-- `/app/backend/routers/director_inbox.py`, `coach_inbox.py`, `school_pod.py`
-- `/app/frontend/src/components/mission-control/DirectorInbox.js`, `CoachInbox.js`, `SchoolPodRisk.js`
-- `/app/frontend/src/components/mission-control/CoachView.js`, `RosterSection.js`
-
-## Test Credentials
-- **Director**: director@capymatch.com / director123
-- **Coach Williams**: coach.williams@capymatch.com / coach123
-
-## Backlog (Prioritized)
-
-### P1 - Upcoming
-- CSV Import Tool: Bulk importing school/coach data
-- Bulk Approve mode for Director Inbox
-- Refactor DirectorInbox.js into smaller components
-
-### P2 - Future
-- Parent/Family Experience (family view of risk)
+## Future/Backlog Tasks (P2)
+- Parent/Family Experience
 - AI-Powered Coach Summary
 - Club Billing (Stripe)
 - Multi-Agent Intelligence Pipeline
 - Kanban Keyboard Shortcuts
+
+## Key API Endpoints
+- POST /api/athlete/recruiting-profile — Onboarding quiz save
+- GET /api/athlete/programs — Fetch pipeline programs
+- PUT /api/athlete/programs/:id — Update program stage/status
+- GET /api/athlete/tasks — Fetch tasks
+- GET /api/internal/programs/top-actions — Priority actions
+
+## File Structure
+```
+frontend/src/
+  lib/reinforcement.js          — Feedback logic engine
+  lib/computeAttention.js       — Risk/attention computation
+  components/reinforcement/
+    ParticleBurst.js             — Particle animation
+    ReinforcementToast.js        — Dark glass toast (portal)
+  components/pipeline/
+    PriorityBoard.js             — Priority view with swipe cards
+    KanbanBoard.js               — Pipeline drag-and-drop view
+    SwipeableCard.js             — Swipe interaction handler
+  pages/athlete/
+    PipelinePage.js              — Main pipeline page
+    ProfilePage.js               — Profile with onboarding banner
+  pages/LoginPage.js             — Login with demo accounts
+backend/
+  seed_fresh.py                  — Database seeding
+  routers/athlete_onboarding.py  — Onboarding endpoints
+```
