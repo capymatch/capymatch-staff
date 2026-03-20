@@ -21,6 +21,12 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
+### Hero Carousel Touch Swipe (Feb 2026)
+- **Status**: COMPLETE & VERIFIED
+- Added touch swipe support to PipelineHero carousel
+- Swipe left → next card, swipe right → prev card
+- 50px threshold with vertical rejection to prevent accidental triggers
+
 ### AI Draft Email Fix (Feb 2026)
 - **Status**: COMPLETE & VERIFIED
 - Fixed "Please set up your athlete profile first" error — AI features now query `athletes` collection instead of empty `athlete_profiles` collection

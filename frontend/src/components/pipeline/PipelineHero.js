@@ -38,6 +38,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const [compact, setCompact] = useState(false);
   const heroRef = useRef(null);
   const pendingRef = useRef(null);
+  const touchRef = useRef({ startX: 0, startY: 0 });
 
   const transitionTo = useCallback((updateFn) => {
     setPhase("exit");
@@ -64,6 +65,21 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [goTo]);
+
+  /* Swipe-to-slide on touch devices */
+  const onTouchStart = useCallback((e) => {
+    touchRef.current.startX = e.touches[0].clientX;
+    touchRef.current.startY = e.touches[0].clientY;
+  }, []);
+
+  const onTouchEnd = useCallback((e) => {
+    const dx = e.changedTouches[0].clientX - touchRef.current.startX;
+    const dy = e.changedTouches[0].clientY - touchRef.current.startY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) goTo(1);   // swipe left → next
+      else goTo(-1);          // swipe right → prev
+    }
   }, [goTo]);
 
   /* Scroll-based compact mode */
@@ -132,6 +148,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       ref={heroRef}
       data-testid="pipeline-hero"
       className="rounded-xl sm:rounded-2xl overflow-hidden relative pm-hero-hover"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
       style={{
         background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)",
         transition: "padding 180ms ease-out",
