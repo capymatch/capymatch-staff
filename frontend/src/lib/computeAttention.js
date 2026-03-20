@@ -72,11 +72,12 @@ export function computeAttention(program, topAction, recapCtx) {
   let recapAction = null;
   let recapReason = null;
   let recapBoostApplied = 0;
+  let recapFreshnessValue = 1;
   if (recapCtx) {
     const priority = recapCtx.priorities?.find(pr => pr.program_id === p.program_id);
     if (priority) {
-      const freshness = recapFreshness(recapCtx.createdAt);
-      const boost = Math.round((RECAP_BOOST[priority.rank] || 0) * freshness);
+      recapFreshnessValue = recapFreshness(recapCtx.createdAt);
+      const boost = Math.round((RECAP_BOOST[priority.rank] || 0) * recapFreshnessValue);
       if (boost > 0) {
         score += boost;
         recapBoostApplied = boost;
@@ -224,12 +225,19 @@ export function computeAttention(program, topAction, recapCtx) {
     explainFactors.push({ type: 'coach', label: 'Flagged by coach' });
   if (ta?.action_key === 'coach_assigned_action')
     explainFactors.push({ type: 'coach', label: 'Coach assigned action' });
-  if (recapRank === 'top')
-    explainFactors.push({ type: 'recap', label: 'Top priority in Momentum Recap' });
-  else if (recapRank === 'secondary')
-    explainFactors.push({ type: 'recap', label: 'Identified in Momentum Recap' });
-  else if (recapRank === 'watch')
+  if (recapRank === 'top') {
+    const label = recapFreshnessValue >= 0.75
+      ? 'Top priority in Momentum Recap'
+      : `Top priority in Momentum Recap (fading — ${Math.round(recapFreshnessValue * 100)}% weight)`;
+    explainFactors.push({ type: recapFreshnessValue >= 0.75 ? 'recap' : 'recap-stale', label });
+  } else if (recapRank === 'secondary') {
+    const label = recapFreshnessValue >= 0.75
+      ? 'Identified in Momentum Recap'
+      : `Identified in Momentum Recap (fading — ${Math.round(recapFreshnessValue * 100)}% weight)`;
+    explainFactors.push({ type: recapFreshnessValue >= 0.75 ? 'recap' : 'recap-stale', label });
+  } else if (recapRank === 'watch') {
     explainFactors.push({ type: 'recap', label: 'On recap watch list' });
+  }
   if (lastActivity !== null && lastActivity >= 5)
     explainFactors.push({ type: 'stale', label: `${lastActivity} days since last activity` });
   if (ta?.action_key === 'relationship_cooling' || ta?.action_key === 'reengage_relationship')

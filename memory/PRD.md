@@ -106,6 +106,13 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 ### Demo Account Access
 - One-click demo account buttons on login page for all key roles
 
+### Stale Recap Freshness Indicator (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (6/6 checkpoints, frontend screenshots confirmed)
+- When recap freshness < 75%, "Why this?" factors show staleness: *"Top priority in Momentum Recap (fading — 40% weight)"*
+- New factor type `recap-stale`: italic, dimmed purple, same secondary styling as `recap-outranked`
+- Freshness schedule: 0-3d=100%, 4-7d=75%, 8-14d=40%, 14d+=0%
+- Files: `computeAttention.js` (freshness-aware factor labeling), `PipelineHero.js` (recap-stale styling)
+
 ### Recap-Outranked Explainability (Feb 2026)
 - **Status**: COMPLETE & VERIFIED (13/13 frontend tests passed)
 - When Hero Card is live-urgent AND a recap top priority exists for a different school, the "Why this?" panel now shows a secondary factor: *"Recap suggested {school} — this is more urgent"*

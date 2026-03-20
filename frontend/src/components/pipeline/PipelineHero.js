@@ -338,23 +338,27 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                 </div>
                 {current.explainFactors.map((f, i) => {
                   const isOutranked = f.type === 'recap-outranked';
+                  const isStale = f.type === 'recap-stale';
+                  const isSecondary = isOutranked || isStale;
                   return (
                   <div key={i} className="flex items-center gap-1.5 mb-1" style={{
-                    fontSize: isOutranked ? 10 : 11,
-                    color: isOutranked ? 'rgba(165,148,249,0.50)' : 'rgba(255,255,255,0.6)',
-                    fontWeight: isOutranked ? 400 : 500,
-                    fontStyle: isOutranked ? 'italic' : 'normal',
+                    fontSize: isSecondary ? 10 : 11,
+                    color: isOutranked ? 'rgba(165,148,249,0.50)'
+                      : isStale ? 'rgba(165,148,249,0.45)'
+                      : 'rgba(255,255,255,0.6)',
+                    fontWeight: isSecondary ? 400 : 500,
+                    fontStyle: isSecondary ? 'italic' : 'normal',
                   }}>
                     <span style={{
                       width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
                       background: f.type === 'overdue' || f.type === 'due' ? '#ef4444'
                         : f.type === 'coach' ? '#f59e0b'
                         : f.type === 'recap' ? '#818cf8'
-                        : f.type === 'recap-outranked' ? '#a594f9'
+                        : f.type === 'recap-outranked' || f.type === 'recap-stale' ? '#a594f9'
                         : f.type === 'stale' ? '#60a5fa'
                         : f.type === 'risk' ? '#f97316'
                         : '#94a3b8',
-                      opacity: isOutranked ? 0.5 : 1,
+                      opacity: isSecondary ? 0.5 : 1,
                     }} />
                     {f.label}
                   </div>
