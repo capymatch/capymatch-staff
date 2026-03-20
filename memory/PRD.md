@@ -106,6 +106,17 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 ### Demo Account Access
 - One-click demo account buttons on login page for all key roles
 
+### Loop Insights Dashboard (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (8/8 backend, 7/7 frontend)
+- Admin-only panel at `/internal/loop-insights` (director + platform_admin)
+- Backend: `GET /api/analytics/admin/loop-metrics` — aggregates ALL user events with `?days=` filter (7/14/30)
+- Frontend: 5 sections — Core Loop Funnel, Source Comparison, Trust & Explainability, Reinforcement Effectiveness, Activity Trend
+- Calm, premium design with metric cards, comparison bars, daily sparkline
+- Time period toggle (7d/14d/30d) + manual refresh
+- Empty state when no events exist
+- Route protected — athletes redirected to `/board`
+- Files: `loop_analytics.py` (admin endpoint + helper), `LoopInsightsPage.js`
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
