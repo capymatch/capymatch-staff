@@ -49,7 +49,7 @@ def _build_invite_url(request: Request, token: str) -> str:
             parsed = urlparse(referer)
             origin = f"{parsed.scheme}://{parsed.netloc}"
     if not origin:
-        origin = "https://behavior-boost-1.preview.emergentagent.com"
+        origin = "https://analytics-hub-424.preview.emergentagent.com"
     return f"{origin}/invite/{token}"
 
 

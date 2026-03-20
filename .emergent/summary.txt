@@ -1,164 +1,144 @@
-<analysis>**original_problem_statement:**
-The user wants to build an Action Reinforcement System for the CapyMatch application. The goal of this system is to reinforce correct user behavior by providing subtle, intelligent, and context-aware feedback after meaningful actions are taken. This feedback should be integrated with the existing Hero Card priority system, explaining *why* an action was important.
+<analysis>**original_problem_statement:** The user wants to build an internal Loop Insights panel for CapyMatch admins to evaluate the behavioral impact of the newly completed  product loop. 
 
-**PRODUCT REQUIREMENTS:**
-1.  **Goal**: Reinforce correct recruiting behavior by combining micro-animations, context-aware AI messages, and priority awareness.
-2.  **Triggers**: The system should activate upon task completion, pipeline stage changes (drag & drop), attention level improvements (e.g., Critical to Active), and clearing overdue items.
-3.  **Feedback Components**:
-    *   **Card Animation**: A soft glow and a subtle particle burst on the relevant UI card. The effect should be premium and calm, not gamified.
-    *   **AI Feedback Toast**: A custom-styled toast notification at the bottom-center of the screen with a dark, blurred background. It should contain a primary message and an optional subtext, with a colored dot indicating the nature of the feedback (neutral, momentum, risk resolved, high impact).
-4.  **Message Logic**: Messages must be contextual. Actions on top-priority Hero items should receive stronger reinforcement, using the  to explain the impact. Other triggers like resolving risks, progressing stages, or restarting activity on a stale item should have their own tailored messages.
-5.  **Tone**: The system's tone should be calm, intelligent, and feel like a smart assistant, avoiding generic praise or gamification language.
-6.  **Technical**: The implementation should be event-driven, handle rapid actions gracefully (debounce), and hook into existing user action handlers like  and .
+**User's preferred language:** English (INSTRUCT next agent to respond in English only).
 
-**User's preferred language**: English
+**what currently exists?** 
+CapyMatch is a React + FastAPI + MongoDB recruiting pipeline application. In this session, the core feedback loop was heavily developed, polished, and instrumented. The app now features a Momentum Recap page, an intelligent Hero Card that pulls priorities from the recap and merges them with live blockers, an Action Reinforcement System (animations/toasts), and a custom lightweight analytics tracker () that captures user interactions across this loop.
 
-**what currently exists?**
-The application is a full-stack athlete pipeline management tool with a React frontend, FastAPI backend, and MongoDB. It features a sophisticated Risk Engine v3 that drives prioritization for both Directors and Coaches. Key recent additions include:
-- A completely redesigned Priority Board on the athlete's My Schools page, which displays action items as rich, contextual cards.
-- A comprehensive and consistent database seed script () that populates the application with 10+ realistic athlete profiles covering all major risk and opportunity scenarios.
-- All seeded athletes have been upgraded to the Premium subscription tier.
-- A streamlined onboarding flow that now includes a banner on the profile page to guide new users to complete their pipeline setup.
-- Easy-access Demo Account buttons on the login page for all key user roles and scenarios.
+**Last working item:**
+- **Last item agent was working:** Building an internal-only Loop Insights panel (). The agent had just opened  to inspect the existing data aggregation logic before starting implementation.
+- **Status:** NOT STARTED (Requirements gathered, file inspection began).
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** Frontend testing agent (to verify the new  UI renders correctly) and Backend testing agent (to verify any new aggregation methods added to ).
+- **User Testing Done:** N
 
-**Last working item**:
-    - Last item agent was working: The agent was implementing the new Action Reinforcement System. The core components have been created and integrated into the application's UI. This involved creating a logic engine, a particle animation component, and a custom toast component, then wiring them into the task completion and drag-and-drop handlers.
-    - Status: IN PROGRESS
-    - Agent Testing Done: N
-    - Which testing method agent to use? screenshot tool
-    - User Testing Done: N
+**All Pending/In progress Issue list:**
+Issue 1: Build Internal Loop Insights Panel (P0)
+- **Attempted fixes:** None. Just started.
+- **Next debug checklist:**
+  1. Review  to ensure  returns the specific data slices requested (Source Comparison, Trust/Explainability Signals, Reinforcement Effectiveness).
+  2. Create a new frontend page  (or similar).
+  3. Register the route securely (admin/director access only) in .
+  4. Build the UI adhering strictly to the design constraints: calm, premium, compact... cards + simple comparison rows... no giant charts unless clearly useful.
+- **Why fix this issue and what will be achieved with the fix?** Allows founders/admins to evaluate if the newly built feedback loop is actually improving user behavior and trust, guiding future product decisions.
+- **Status:** NOT STARTED
+- **Is recurring issue?** N
+- **Should Test frontend/backend/both after fix?** both
+- **Blocked on other issue:** None
 
-**All Pending/In progress Issue list**:
-  - Issue 1:  (P0) Complete and verify the Action Reinforcement System.
-
-  Issues Detail:
-  - Issue 1: 
-     - Attempted fixes: The agent has written the code for the feature. Three new files were created:  (logic), , and . These were then integrated into  (for drag-and-drop) and  (for swipe-to-complete actions).
-     - Next debug checklist:
-        1.  Log in as an athlete (e.g., ).
-        2.  Navigate to the  page (My Schools -> Priority tab).
-        3.  Perform a trigger action: swipe to complete a task or drag a card to a new stage.
-        4.  Use the  tool to verify the visual feedback: check for the particle burst on the card and the custom toast at the bottom of the screen.
-        5.  Confirm the toast message is contextual and matches the action performed.
-        6.  Check browser console logs for any errors.
-     - Why fix this issue and what will be achieved with the fix? This is a new, high-priority feature requested by the user. Completing it will introduce an intelligent feedback loop that improves the user experience by reinforcing positive actions and explaining their impact.
-     - Status:  IN PROGRESS
-     - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? frontend
-     - Blocked on other issue: None
-
-**In progress Task List**:
-  - Task 1:  (P0) Implement the Action Reinforcement System
-     - Where to resume: The code has been written and integrated. The next step is to perform comprehensive testing by triggering actions in the UI and verifying that the animations and toast notifications appear correctly and with the right context.
-     - What will be achieved with this? A new user-facing feature that provides intelligent, non-intrusive feedback, as per the user's detailed specification.
-     - Status:  IN PROGRESS
-     - Should Test frontend/backend/both after fix? frontend
-     - Blocked on something: None
+**In progress Task List:**
+Task 1: Complete the Loop Insights Dashboard (P0)
+- **Where to resume:** You are currently looking at . Evaluate if the current  endpoint provides enough detail for the requested 5 sections (Core Loop Metrics, Source Comparison, Trust Signals, Reinforcement Effectiveness, Time Filters). 
+- **What will be achieved with this?** A high-signal administrative dashboard for product analytics.
+- **Status:** NOT STARTED
+- **Should Test frontend/backend/both after fix?** both
+- **Blocked on something:** None
 
 **Upcoming and Future Tasks**
-
-**Upcoming Tasks:**
-*   (P1) **CSV Import Tool**: Implement bulk import functionality for school and coach data.
-*   (P1) **Bulk Approve Mode**: Add a feature to the Director Inbox for approving multiple items at once.
-*   (P1) **Refactor **: Break down the monolithic file (over 700 lines) into smaller components.
-*   (P2) **Refactor **: Break down the file (over 1000 lines).
-
-**Future Tasks:**
-*   Parent/Family Experience
-*   AI-Powered Coach Summary
-*   Club Billing (Stripe)
-*   Multi-Agent Intelligence Pipeline
-*   Kanban Keyboard Shortcuts
+- **Upcoming Tasks:**
+  - (P1) CSV Import Tool: Implement bulk import functionality for school and coach data.
+  - (P1) Bulk Approve Mode: Add a feature to the Director Inbox for approving multiple items at once.
+  - (P1) Refactor : Break down the monolithic file (over 700 lines).
+  - (P1) Refactor : Break down the file (over 1000 lines).
+- **Future Tasks:**
+  - Parent/Family Experience
+  - AI-Powered Coach Summary
+  - Club Billing (Stripe)
+  - Multi-Agent Intelligence Pipeline
+  - Kanban Keyboard Shortcuts
 
 **Completed work in this session**
-- **Priority Board Redesign**: Implemented a major UI overhaul for the athlete's My Schools Priority tab, transforming it from a simple list into a board of rich, elevated cards with clear status indicators and contextual actions.
-- **Onboarding Flow Enhancement**: Added a persistent banner to the athlete's profile page that guides new, incomplete users back to the pipeline to add schools, ensuring they don't get stuck.
-- **Onboarding Quiz Bug Fix**: Resolved a critical bug that prevented new users from completing the onboarding questionnaire (Failed to save profile). The fix involved modifying the backend to correctly create an athlete record if one doesn't exist.
-- **Comprehensive DB Seeding**: Significantly enhanced the  script to generate a robust and consistent dataset, including  records. This fixed a major UI contradiction where labels did not match the underlying data, making the app's logic fully testable.
-- **Demo Account Access**: Added buttons for all key demo accounts to the login page for easy one-click access.
-- **Bulk Premium Upgrade**: Upgraded all seeded athletes to the Premium subscription tier.
-- **UI Cleanup**: Removed a duplicate Overdue Actions card from the athlete support pod page.
+- **Action Reinforcement Fix:** Fixed bug where  was not rendering on the pipeline page (DONE).
+- **Mobile Kanban Redesign:** Optimized Kanban cards for mobile devices by combining status/timing lines and adjusting padding (DONE).
+- **Athlete Profile Photos:** Seeded 10 database athletes with Unsplash headshots and updated all UIs (Events, Capture, Profile) to render actual photos instead of initials (DONE).
+- **AI Draft Email Fix:** Fixed AI draft endpoint querying the wrong database collection and added regex to parse unescaped quotes (e.g., ) in LLM JSON output (DONE).
+- **Carousel Swiping:** Added horizontal touch swipe support and directional CSS transitions to the  component (DONE).
+- **Momentum Recap Feature:** Built a full post-event recap page and a teaser card, generating AI summaries based strictly on structured data changes (DONE).
+- **Hero Card + Recap Wiring:** Connected the Momentum Recap priorities into the Attention Engine so recaps drive the Hero Card suggestions (DONE).
+- **Loop Polish Pass:** Tightened Hero wording, added a Why this? explainability panel, and aligned reinforcement continuity (DONE).
+- **Loop Analytics:** Built a lightweight, custom event-tracking system to measure hero views, clicks, why-expands, and time-to-action (DONE).
 
 **Earlier issues found/mentioned but not fixed**
-   - None.
+None.
 
 **Known issue recurrence from previous fork**
-  - None.
+- None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Event-Driven UI Feedback**: The new Action Reinforcement System is built on this principle. User actions (swipes, drags) trigger a central logic engine () that orchestrates visual feedback (, ).
-- **Comprehensive Data Seeding for Testability**: A significant portion of the session was dedicated to creating a robust  script. This script now generates fully consistent data, including a trail of  for each athlete, ensuring that UI components like the journey rail are derived from raw data, not hardcoded labels. This makes the application's logic far more reliable and testable.
-- **Conditional Rendering for Onboarding**: A new banner on the  uses conditional logic based on the user's onboarding status and number of tracked schools to guide them through the setup process.
+- **Full-Stack Application:** React (Frontend), FastAPI (Backend), MongoDB (Database).
+- **Event-Driven Feedback:** Custom  orchestrates visual UI feedback.
+- **Custom Event Tracking:** Instead of a 3rd party tool, a lightweight custom tracking system ( -> ) batches and stores frontend interaction events directly in MongoDB.
 
 **key DB schema**
-  - **subscriptions**: Populated with  tier records for all seeded athletes.
-  - **athletes**: Schema implicitly updated to ensure  is always present and  is created during onboarding.
-  - **interactions**: This collection is now heavily used and populated by the seed script to create a realistic history of emails, calls, and replies for each athlete-school relationship, driving the athlete-facing journey UI.
+- : Added consistent  data. Contains  (sub-document).
+- : New collection storing generated recaps.
+- : New collection storing raw behavioral loop events (, , etc).
 
 **changes in tech stack**
-  - None.
+- None.
 
 **All files of reference**
--   : Key integration point for the new reinforcement system (handles drag-and-drop).
--   : Recently redesigned and now the integration point for swipe-to-complete reinforcement actions.
--   : The new logic engine for the reinforcement system.
--   : New particle animation component.
--   : New custom toast notification component.
--   : Contains the logic for generating all test data. Crucial for understanding the state of any given athlete.
--   : Contains the new onboarding banner logic.
--   : Contains the fix for the critical onboarding bug.
+- : **CRITICAL** - Current working file. Contains the data aggregation logic you need to expand for the Insights dashboard.
+- : Shows what events the frontend is actively batching and sending.
+-  & : The Momentum Recap feature implementation.
+- : The central priority engine (Hero Card logic).
 
 **Areas that need refactoring**:
--    (over 700 lines) is slated for refactoring.
--    (over 1000 lines) is also a candidate for being broken down.
+-  (700+ lines)
+-  (1000+ lines)
 
 **key api endpoints**
--   : The endpoint for saving the onboarding quiz. It was fixed to auto-create an athlete record if one doesn't exist, preventing a 404 error for new users.
+- : **CRITICAL** - The endpoint that will power the new Loop Insights dashboard.
+- : Ingests batched loop tracking events.
+- : Fetches the recap state.
 
 **Critical Info for New Agent**
--   Your immediate and sole focus is to **test and verify the Action Reinforcement System**. The code has been written and integrated, but its functionality is completely unverified.
--   Use the  tool to test. Log in as an athlete (Emma Chen is recommended), go to the  page, and perform actions like completing a task or dragging a card. You must visually confirm that both the particle animation and the toast notification appear as specified.
--   Pay close attention to the user's detailed design specifications for the toast's appearance and the animation's subtlety.
--   The database is in a very healthy, consistent state thanks to the new seed script. Use the demo accounts on the login page for testing.
+- You are stepping in right after a massive string of successful, rapid-fire feature additions. The user's immediate request is to build an internal dashboard () based on the custom analytics system just implemented.
+- **DO NOT** use heavy BI chart libraries. The user explicitly requested: *calm, premium, compact... cards + simple comparison rows... no giant charts unless clearly useful.*
+- Rely exclusively on the custom  endpoints. Do not attempt to integrate Mixpanel/PostHog. 
 
 **documents and test reports created in this job**
-  - /app/test_reports/iteration_201.json
+- 
+- 
+- 
+- 
+- 
+- 
 
 **Last 10 User Messages and any pending HUMAN messages** 
--   **User (LATEST & PENDING):** Provided detailed specs to build an Action Reinforcement System. (IN PROGRESS)
--   **User:** Approved the Priority Board redesign mockup with minor changes and asked for implementation. (COMPLETED)
--   **User:** Requested a mockup for the dead looking lists on the My School page. (COMPLETED)
--   **User:** Complained that the athlete-facing lists were visually unappealing. (COMPLETED)
--   **User:** Requested all athletes be upgraded to the Premium plan. (COMPLETED)
--   **User:** Asked to add the seeded athlete accounts to the sign-in page for easy access. (COMPLETED)
--   **User:** Asked which email to use to access an athlete with data. (COMPLETED)
--   **User:** Explained the missing step in the onboarding flow where a user needs to be guided back to the pipeline. (COMPLETED)
--   **User:** Reported being unable to complete the onboarding questionnaire, with a screenshot showing the error. (COMPLETED)
--   **User:** Pointed out that the seed data was inconsistent and impossible to test against. (COMPLETED)
+- **User (Pending):** Requested a new internal Loop Insights panel to evaluate the analytics data. (IN PROGRESS)
+- **User:** Requested analytics instrumentation on the full loop to measure trust and behavior. (COMPLETED)
+- **User:** Requested a polish and trust pass on the loop (tighten wording, explainability panel, priority conflict testing). (COMPLETED)
+- **User:** Asked to wire the Recap priorities into the Hero Card to complete the loop. (COMPLETED)
+- **User:** Refined rules for the Momentum Recap (time window, teaser vs full page, LLM constraints). (COMPLETED)
+- **User:** Asked to build a post-event Momentum Recap screen. (COMPLETED)
+- **User:** Checked if reinforcement rules were already connected to Hero Card logic. (CONFIRMED ALREADY IMPLEMENTED)
+- **User:** Asked if the Action Reinforcement system was already built as per spec. (CONFIRMED ALREADY IMPLEMENTED)
+- **User:** Asked for horizontal slide transitions when swiping the carousel. (COMPLETED)
+- **User:** Asked to make the pipeline carousel swipeable on mobile. (COMPLETED)
 
 **Project Health Check:**
-- Broken: Nothing is currently broken.
-- Mocked: None.
+- Broken: None
+- Mocked: None
 
 **3rd Party Integrations**
--   : Used for Kanban board drag-and-drop.
--   : Used for standard toast notifications.
--   : Used for UI icons.
+- OpenAI/LLM (Emergent LLM Key) — Used for AI Drafts and Momentum Recap narratives.
+- @hello-pangea/dnd — Kanban drag-and-drop.
+- lucide-react — Icons.
+- Sonner — Standard toasts.
 
 **Testing status**
-  - Testing agent used after significant changes: YES
-  - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: []
-  - Known regressions: None
+- Testing agent used after significant changes: YES (Heavily utilized, 5 iterations passed).
+- Troubleshoot agent used after agent stuck in loop: NO
+- Test files created: None
+- Known regressions: None
 
 **Credentials to test flow:**
-Use the demo account buttons on the login page.
--   **Athlete (Full Data):**  / 
--   **Director:**  / 
--   **Coach:**  / 
+- **Athlete (Full Data):**  / 
+- **Director (Admin access):**  / 
 
 **What agent forgot to execute**
-The agent has not forgotten any tasks and is actively working on the user's latest feature request.</analysis>
+- The agent successfully completed all prior tasks and has just begun inspecting the backend file to fulfill the user's latest request (Loop Insights panel). No forgotten tasks.</analysis>
