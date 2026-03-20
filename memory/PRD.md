@@ -21,6 +21,14 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
+### Loop Polish Pass (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (13/13 frontend tests)
+- Hero wording: concise merged copy ("Overdue 3d — also your recap's top focus")
+- Priority source tracking: "live", "recap", or "merged" drives hero position
+- Reinforcement continuity: recap-aware messages ("Recap priority handled", "Top priority cleared")
+- "Why this?" expandable: colored factor dots (red=overdue, purple=recap, blue=stale), auto-collapse on slide
+- explainFactors array in attention results for structured explainability
+
 ### Recap → Hero Card Integration (Feb 2026)
 - **Status**: COMPLETE & VERIFIED (100% all tests)
 - computeAttention.js: Recap Top Priority boosts score +65, Secondary +25, Watch +5
