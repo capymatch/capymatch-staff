@@ -21,6 +21,15 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
+### Loop Analytics Instrumentation (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (9/9 backend, 14/14 all events)
+- Frontend: trackEvent() with 5s batch flush (analytics.js)
+- Backend: POST /api/analytics/events (batch ingest), GET /api/analytics/loop-metrics (aggregation)
+- Events: hero_viewed, hero_expanded_why, hero_action_clicked, reinforcement_shown, recap_teaser_viewed, recap_opened, recap_section_viewed, recap_priority_clicked
+- Metrics: hero_click_rate, why_expand_rate, avg_time_to_action, priority_source_breakdown, completions_by_source, actions_after_why_expand
+- Collection: loop_analytics in MongoDB
+- Files: loop_analytics.py, analytics.js + instrumentation in PipelineHero, ReinforcementToast, RecapTeaser, RecapPage
+
 ### Loop Polish Pass (Feb 2026)
 - **Status**: COMPLETE & VERIFIED (13/13 frontend tests)
 - Hero wording: concise merged copy ("Overdue 3d — also your recap's top focus")
