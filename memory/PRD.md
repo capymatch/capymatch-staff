@@ -106,6 +106,13 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 ### Demo Account Access
 - One-click demo account buttons on login page for all key roles
 
+### Recap-Outranked Explainability (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (13/13 frontend tests passed)
+- When Hero Card is live-urgent AND a recap top priority exists for a different school, the "Why this?" panel now shows a secondary factor: *"Recap suggested {school} — this is more urgent"*
+- Styled subtly: italic, 10px font, soft purple at 50% opacity (#a594f9), not visually dominant
+- Logic: only fires when `prioritySource='live'` AND another program has `recapRank='top'` — does NOT fire for `merged` or `recap` sources
+- Files: `computeAttention.js` (post-sort injection), `PipelineHero.js` (styled rendering)
+
 ### Loop Insights Dashboard (Feb 2026)
 - **Status**: COMPLETE & VERIFIED (8/8 backend, 7/7 frontend)
 - Admin-only panel at `/internal/loop-insights` (director + platform_admin)
