@@ -142,6 +142,13 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - **Bug fixed in Scenario 6**: `isHeroPriority` now uses exact `programId === heroProgramId` instead of `attentionLevel === "high"`, preventing false praise leakage
 - Test scripts: `/app/backend/tests/qa_scenario{1-6}_validate.py`
 
+### Momentum Recap Caching (Feb 2026)
+- **Status**: COMPLETE & VERIFIED
+- Root cause: `GET /api/athlete/momentum-recap` called Claude LLM (~8s) on every pipeline page load
+- Fix: Cache full recap response in `momentum_recaps` collection. Return cached version if same event period and < 60 minutes old
+- Added `POST /api/athlete/momentum-recap/refresh` for manual cache bypass
+- Pipeline page load: **8.3s → 1.35s** (6x improvement)
+
 ### DirectorInbox Refactor (Feb 2026)
 - **Status**: COMPLETE & VERIFIED (screenshot confirmed, 0 regressions)
 - Split 801-line monolith into 6 focused modules:

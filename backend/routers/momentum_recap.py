@@ -260,7 +260,7 @@ Rules:
 
 @router.get("/athlete/momentum-recap")
 async def get_momentum_recap(current_user: dict = get_current_user_dep()):
-    """Compute post-event momentum recap with priority reset."""
+    """Return cached recap if fresh, otherwise recompute."""
     if current_user["role"] not in ("athlete", "parent"):
         raise HTTPException(403, "Only athletes can access recaps")
 
@@ -295,6 +295,67 @@ async def get_momentum_recap(current_user: dict = get_current_user_dep()):
         except Exception:
             continue
 
+    # Check cache: return stored recap if same period and < 1 hour old
+    cached = await db.momentum_recaps.find_one(
+        {"tenant_id": tenant_id}, {"_id": 0}
+    )
+    if cached and cached.get("full_response"):
+        cached_period = cached.get("period_start", "")
+        cached_at = cached.get("created_at", "")
+        try:
+            cached_time = datetime.fromisoformat(cached_at.replace("Z", "+00:00"))
+            age_minutes = (now - cached_time).total_seconds() / 60
+            # Fresh if same period and under 60 minutes old
+            if cached_period == period_start.isoformat() and age_minutes < 60:
+                return cached["full_response"]
+        except Exception:
+            pass
+
+    # Cache miss — recompute
+    return await _compute_and_cache_recap(tenant_id, now, period_start, period_label, event_name)
+
+
+@router.post("/athlete/momentum-recap/refresh")
+async def refresh_momentum_recap(current_user: dict = get_current_user_dep()):
+    """Force-refresh the recap (bypasses cache)."""
+    if current_user["role"] not in ("athlete", "parent"):
+        raise HTTPException(403, "Only athletes can access recaps")
+
+    athlete = await db.athletes.find_one(
+        {"user_id": current_user["id"]}, {"_id": 0, "tenant_id": 1}
+    )
+    if not athlete:
+        raise HTTPException(404, "Athlete not found")
+    tenant_id = athlete["tenant_id"]
+
+    now = datetime.now(timezone.utc)
+
+    events = await db.events.find(
+        {"status": "past"},
+        {"_id": 0, "event_id": 1, "name": 1, "date": 1}
+    ).sort("date", -1).to_list(10)
+
+    period_start = now - timedelta(days=7)
+    period_label = "Last 7 days"
+    event_name = None
+
+    for evt in events:
+        evt_date_str = evt.get("date", "")
+        try:
+            evt_date = datetime.fromisoformat(str(evt_date_str).replace("Z", "+00:00"))
+            if evt_date <= now:
+                period_start = evt_date
+                event_name = evt.get("name", "Recent Event")
+                period_label = f"Since {event_name}"
+                break
+        except Exception:
+            continue
+
+    return await _compute_and_cache_recap(tenant_id, now, period_start, period_label, event_name)
+
+
+async def _compute_and_cache_recap(tenant_id, now, period_start, period_label, event_name):
+    """Full recap computation with AI summary — result is cached."""
     # Fetch programs
     programs = await db.programs.find(
         {"tenant_id": tenant_id}, {"_id": 0}
@@ -319,7 +380,6 @@ async def get_momentum_recap(current_user: dict = get_current_user_dep()):
         pid = prog.get("program_id", "")
         prog_ixs = [ix for ix in all_interactions if ix.get("program_id") == pid]
 
-        # Split into period vs before
         in_period = []
         before_period = []
         for ix in prog_ixs:
@@ -336,33 +396,17 @@ async def get_momentum_recap(current_user: dict = get_current_user_dep()):
         item = _classify_momentum(prog, in_period, before_period, now)
         momentum_items.append(item)
 
-    # Sort: heated first, then cooling, then steady
     order = {"heated_up": 0, "cooling_off": 1, "holding_steady": 2}
     momentum_items.sort(key=lambda m: order.get(m["category"], 3))
 
-    # Generate structured outputs
     recap_hero = _build_recap_hero(momentum_items)
     priorities = _generate_priorities(momentum_items)
 
-    # AI narrative (structured data only)
     ai_summary = await _generate_ai_summary(
         momentum_items, priorities, recap_hero, period_label
     )
 
-    # Store recap for Hero Card integration
-    recap_doc = {
-        "tenant_id": tenant_id,
-        "created_at": now.isoformat(),
-        "period_start": period_start.isoformat(),
-        "period_label": period_label,
-        "event_name": event_name,
-        "priorities": priorities,
-    }
-    await db.momentum_recaps.replace_one(
-        {"tenant_id": tenant_id}, recap_doc, upsert=True
-    )
-
-    return {
+    response = {
         "recap_hero": recap_hero,
         "period_label": period_label,
         "event_name": event_name,
@@ -375,3 +419,20 @@ async def get_momentum_recap(current_user: dict = get_current_user_dep()):
         "priorities": priorities,
         "ai_summary": ai_summary,
     }
+
+    # Cache full response + priorities for Hero Card integration
+    await db.momentum_recaps.replace_one(
+        {"tenant_id": tenant_id},
+        {
+            "tenant_id": tenant_id,
+            "created_at": now.isoformat(),
+            "period_start": period_start.isoformat(),
+            "period_label": period_label,
+            "event_name": event_name,
+            "priorities": priorities,
+            "full_response": response,
+        },
+        upsert=True,
+    )
+
+    return response
