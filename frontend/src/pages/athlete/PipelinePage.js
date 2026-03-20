@@ -112,17 +112,21 @@ export default function PipelinePage() {
       const oldStage = movedProg?.journey_rail?.active || movedProg?.journey_stage || "added";
       const newStage = stageUpdate.journey_stage || newCol;
       const isOffer = newStage === "offer" || newStage === "committed";
+      const attn = attentionMap[draggableId];
+      const isHero = isOffer || (attn?.recapRank === "top");
       triggerReinforcement({
         type: "stageChange",
-        isHeroPriority: isOffer,
-        heroReason: isOffer ? "This could change everything" : "",
-        priorityRank: isOffer ? 1 : 99,
-        attentionBefore: null,
+        isHeroPriority: isHero,
+        heroReason: isOffer ? "This could change everything" : (attn?.heroReason || ""),
+        priorityRank: isOffer ? 1 : (attn?.recapRank === "top" ? 1 : 99),
+        attentionBefore: attn?.attentionLevel || null,
         attentionAfter: null,
         daysSinceLastActivity: movedProg?.signals?.days_since_last_activity || 0,
         stageBefore: oldStage,
         stageAfter: newStage,
         schoolName: movedProg?.university_name || "",
+        recapRank: attn?.recapRank || null,
+        prioritySource: attn?.prioritySource || "live",
       });
 
       toast.success(`Moved to ${KANBAN_COLS.find(c => c.key === newCol)?.label || newCol}`);

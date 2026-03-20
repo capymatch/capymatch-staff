@@ -260,23 +260,29 @@ function SwipePriorityCard({ item, navigate, section }) {
 
   const fireReinforcement = useCallback(() => {
     const isHigh = item.attentionLevel === "high";
+    const isRecapTop = item.recapRank === "top";
+    const isHero = isHigh || isRecapTop;
     const ctx = {
       type: "taskComplete",
-      isHeroPriority: isHigh,
-      heroReason: isHigh ? item.primaryAction : "",
-      priorityRank: isHigh ? 1 : 99,
+      isHeroPriority: isHero,
+      heroReason: isHero ? (item.heroReason || item.primaryAction) : "",
+      priorityRank: isHero ? 1 : 99,
       attentionBefore: item.attentionLevel,
       attentionAfter: "low",
       daysSinceLastActivity: prog?.signals?.days_since_last_activity || 0,
       stageBefore: prog?.journey_rail?.active || "added",
       stageAfter: prog?.journey_rail?.active || "added",
       schoolName: prog?.university_name || "",
+      recapRank: item.recapRank || null,
+      prioritySource: item.prioritySource || "live",
     };
     const color = isHigh
       ? PARTICLE_COLORS.riskResolved
-      : item.timingLabel?.toLowerCase().includes("overdue")
-        ? PARTICLE_COLORS.riskResolved
-        : PARTICLE_COLORS.momentum;
+      : isRecapTop
+        ? PARTICLE_COLORS.highImpact
+        : item.timingLabel?.toLowerCase().includes("overdue")
+          ? PARTICLE_COLORS.riskResolved
+          : PARTICLE_COLORS.momentum;
     setBurstColor(color);
     setBurstActive(true);
     triggerReinforcement(ctx);

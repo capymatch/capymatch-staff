@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight, Info } from "lucide-react";
 import UniversityLogo from "../UniversityLogo";
 import { ProgressRail } from "../journey/ProgressRail";
 import { RAIL_STAGES } from "../journey/constants";
@@ -37,6 +37,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const [phase, setPhase] = useState("idle");
   const [swipeDir, setSwipeDir] = useState(null); // "left" | "right" | null
   const [compact, setCompact] = useState(false);
+  const [whyExpanded, setWhyExpanded] = useState(false);
   const heroRef = useRef(null);
   const pendingRef = useRef(null);
   const touchRef = useRef({ startX: 0, startY: 0 });
@@ -44,6 +45,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const transitionTo = useCallback((updateFn, dir = null) => {
     setSwipeDir(dir);
     setPhase("exit");
+    setWhyExpanded(false);
     pendingRef.current = updateFn;
     setTimeout(() => {
       if (pendingRef.current) pendingRef.current();
@@ -276,11 +278,57 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             </div>
 
             {/* Owner */}
-            <div className="mt-1.5" data-testid="hero-meta-line">
+            <div className="mt-1.5 flex items-center gap-2" data-testid="hero-meta-line">
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: ownerLabel === 'You' ? 'rgba(13,148,136,0.12)' : 'rgba(99,102,241,0.12)', color: ownerLabel === 'You' ? '#5eead4' : '#a5b4fc' }}>
                 {ownerLabel}
               </span>
+              {current.explainFactors?.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setWhyExpanded(v => !v); }}
+                  data-testid="hero-why-btn"
+                  className="flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded cursor-pointer"
+                  style={{
+                    background: whyExpanded ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)',
+                    color: 'rgba(255,255,255,0.45)',
+                    border: 'none', fontFamily: 'inherit',
+                    transition: 'background 120ms ease, color 120ms ease',
+                  }}
+                >
+                  <Info size={9} />
+                  Why this?
+                </button>
+              )}
             </div>
+
+            {/* Why this? — expandable explainability */}
+            {whyExpanded && current.explainFactors?.length > 0 && (
+              <div
+                data-testid="hero-why-panel"
+                className="mt-2 pt-2"
+                style={{
+                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                  animation: 'pm-why-in 180ms ease-out both',
+                }}
+              >
+                <div className="text-[9px] font-bold mb-1.5" style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Priority factors
+                </div>
+                {current.explainFactors.map((f, i) => (
+                  <div key={i} className="flex items-center gap-1.5 mb-1" style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
+                    <span style={{
+                      width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                      background: f.type === 'overdue' || f.type === 'due' ? '#ef4444'
+                        : f.type === 'coach' ? '#f59e0b'
+                        : f.type === 'recap' ? '#818cf8'
+                        : f.type === 'stale' ? '#60a5fa'
+                        : f.type === 'risk' ? '#f97316'
+                        : '#94a3b8',
+                    }} />
+                    {f.label}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* RIGHT — CTA + progress rail */}

@@ -71,6 +71,7 @@ export function computeAttention(program, topAction, recapCtx) {
   let recapRank = null;
   let recapAction = null;
   let recapReason = null;
+  let recapBoostApplied = 0;
   if (recapCtx) {
     const priority = recapCtx.priorities?.find(pr => pr.program_id === p.program_id);
     if (priority) {
@@ -78,6 +79,7 @@ export function computeAttention(program, topAction, recapCtx) {
       const boost = Math.round((RECAP_BOOST[priority.rank] || 0) * freshness);
       if (boost > 0) {
         score += boost;
+        recapBoostApplied = boost;
         recapRank = priority.rank;
         recapAction = priority.action;
         recapReason = priority.reason;
@@ -174,9 +176,9 @@ export function computeAttention(program, topAction, recapCtx) {
   } else if (daysUntil !== null && daysUntil <= 3) {
     reasonShort = `Due in ${daysUntil} days`;
   } else if (recapRank === 'top') {
-    reasonShort = 'Top priority from Momentum Recap';
+    reasonShort = 'Recap: top priority';
   } else if (recapRank === 'secondary') {
-    reasonShort = 'Flagged in Momentum Recap';
+    reasonShort = 'Recap: flagged';
   } else if (lastActivity !== null && lastActivity >= 7) {
     reasonShort = `No response in ${lastActivity} days`;
   } else if (lastActivity !== null && lastActivity >= 3) {
@@ -186,18 +188,52 @@ export function computeAttention(program, topAction, recapCtx) {
   } else if (ta?.action_key === 'relationship_cooling' || ta?.action_key === 'reengage_relationship') {
     reasonShort = 'No recent engagement';
   } else if (recapRank === 'watch') {
-    reasonShort = 'On watch — monitor closely';
+    reasonShort = 'On your watch list';
   } else if (attentionLevel === 'low') {
     reasonShort = 'On track';
   }
 
-  // ── heroReason — explains why this program is prioritized, used in Hero card ──
-  let heroReason = reason;
-  if (recapRank === 'top' && recapReason) {
-    heroReason = `Top priority in your latest Momentum Recap — ${recapReason.toLowerCase()}`;
-  } else if (recapRank === 'secondary' && recapReason) {
-    heroReason = `Identified in your Momentum Recap — ${recapReason.toLowerCase()}`;
+  // ── heroReason — concise subtitle for Hero card ──
+  // Rule: live urgency always leads, recap context supplements
+  let heroReason = null;
+  const hasLiveUrgency = (daysUntil !== null && daysUntil <= 0) || ta?.category === 'coach_flag';
+
+  if (hasLiveUrgency && recapRank) {
+    // Merged: live urgency + recap
+    heroReason = daysUntil !== null && daysUntil < 0
+      ? `Overdue ${Math.abs(daysUntil)}d — also your recap's top focus`
+      : `Due now — also flagged in your recap`;
+  } else if (recapRank === 'top') {
+    heroReason = 'Recap priority — momentum at risk';
+  } else if (recapRank === 'secondary') {
+    heroReason = 'Flagged in recap — keep pushing';
   }
+
+  // ── prioritySource — what's driving this hero position ──
+  let prioritySource = 'live';
+  if (recapRank && !hasLiveUrgency) prioritySource = 'recap';
+  else if (recapRank && hasLiveUrgency) prioritySource = 'merged';
+
+  // ── explainFactors — structured reasons for "Why this?" panel ──
+  const explainFactors = [];
+  if (daysUntil !== null && daysUntil < 0)
+    explainFactors.push({ type: 'overdue', label: `Overdue by ${Math.abs(daysUntil)} days` });
+  if (daysUntil !== null && daysUntil === 0)
+    explainFactors.push({ type: 'due', label: 'Due today' });
+  if (ta?.category === 'coach_flag')
+    explainFactors.push({ type: 'coach', label: 'Flagged by coach' });
+  if (ta?.action_key === 'coach_assigned_action')
+    explainFactors.push({ type: 'coach', label: 'Coach assigned action' });
+  if (recapRank === 'top')
+    explainFactors.push({ type: 'recap', label: 'Top priority in Momentum Recap' });
+  else if (recapRank === 'secondary')
+    explainFactors.push({ type: 'recap', label: 'Identified in Momentum Recap' });
+  else if (recapRank === 'watch')
+    explainFactors.push({ type: 'recap', label: 'On recap watch list' });
+  if (lastActivity !== null && lastActivity >= 5)
+    explainFactors.push({ type: 'stale', label: `${lastActivity} days since last activity` });
+  if (ta?.action_key === 'relationship_cooling' || ta?.action_key === 'reengage_relationship')
+    explainFactors.push({ type: 'risk', label: 'Engagement cooling off' });
 
   return {
     programId: p.program_id,
@@ -209,6 +245,8 @@ export function computeAttention(program, topAction, recapCtx) {
     reasonShort,
     heroReason,
     recapRank,
+    prioritySource,
+    explainFactors,
     daysUntil,
     owner: ta?.owner || 'athlete',
     ctaLabel: ta?.cta_label || (attentionLevel === 'low' ? 'View School' : 'Take Action'),

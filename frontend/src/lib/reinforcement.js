@@ -89,6 +89,8 @@ function pick(arr) {
  * @param {string}  ctx.stageBefore
  * @param {string}  ctx.stageAfter
  * @param {string}  ctx.schoolName
+ * @param {string}  ctx.recapRank     — "top" | "secondary" | "watch" | null
+ * @param {string}  ctx.prioritySource — "recap" | "live" | "merged"
  *
  * @returns {{ message: string, subtext: string|null, indicator: string, particleColor: string }}
  */
@@ -104,18 +106,25 @@ export function generateFeedback(ctx) {
     stageBefore,
     stageAfter,
     schoolName = "",
+    recapRank = null,
+    prioritySource = "live",
   } = ctx;
 
   // ─── Priority-aware: Hero Card top priority ───
   if (isHeroPriority && priorityRank === 1) {
-    const msg = pick(HERO_PRIORITY_MESSAGES);
-    const sub = heroReason || "This was your most urgent action";
-    return {
-      message: msg,
-      subtext: sub,
-      indicator: "highImpact",
-      particleColor: PARTICLE_COLORS.highImpact,
-    };
+    let msg, sub;
+    if (recapRank === "top" || prioritySource === "recap") {
+      // Recap-driven hero — echo the recap context
+      msg = pick(["Recap priority handled", "Top priority cleared", "Your #1 focus — done"]);
+      sub = heroReason || "This was your most important move";
+    } else if (prioritySource === "merged") {
+      msg = pick(HERO_PRIORITY_MESSAGES);
+      sub = "Cleared a live issue and a recap priority";
+    } else {
+      msg = pick(HERO_PRIORITY_MESSAGES);
+      sub = heroReason || "This was your most urgent action";
+    }
+    return { message: msg, subtext: sub, indicator: "highImpact", particleColor: PARTICLE_COLORS.highImpact };
   }
 
   // ─── Attention improvement: Critical → non-critical ───
@@ -172,11 +181,14 @@ export function generateFeedback(ctx) {
     };
   }
 
-  // ─── Hero priority (non-top) ───
-  if (isHeroPriority) {
+  // ─── Hero priority (non-top) or recap secondary ───
+  if (isHeroPriority || recapRank === "secondary") {
+    const msg = recapRank
+      ? pick(["Recap priority addressed", "Flagged item handled"])
+      : "Priority addressed";
     return {
-      message: "Priority addressed",
-      subtext: heroReason || null,
+      message: msg,
+      subtext: heroReason || schoolName || null,
       indicator: "momentum",
       particleColor: PARTICLE_COLORS.momentum,
     };
