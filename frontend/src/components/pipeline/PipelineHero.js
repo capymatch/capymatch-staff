@@ -35,25 +35,28 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const [filter, setFilter] = useState("all");
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState("idle");
+  const [swipeDir, setSwipeDir] = useState(null); // "left" | "right" | null
   const [compact, setCompact] = useState(false);
   const heroRef = useRef(null);
   const pendingRef = useRef(null);
   const touchRef = useRef({ startX: 0, startY: 0 });
 
-  const transitionTo = useCallback((updateFn) => {
+  const transitionTo = useCallback((updateFn, dir = null) => {
+    setSwipeDir(dir);
     setPhase("exit");
     pendingRef.current = updateFn;
     setTimeout(() => {
       if (pendingRef.current) pendingRef.current();
       pendingRef.current = null;
       setPhase("enter");
-      setTimeout(() => setPhase("idle"), 220);
+      setTimeout(() => { setPhase("idle"); setSwipeDir(null); }, 220);
     }, 140);
   }, []);
 
   const goTo = useCallback((dir) => {
     if (phase !== "idle") return;
-    transitionTo(() => setIdx(i => dir === -1 ? Math.max(0, i - 1) : i + 1));
+    const swipe = dir === 1 ? "left" : "right";
+    transitionTo(() => setIdx(i => dir === -1 ? Math.max(0, i - 1) : i + 1), swipe);
   }, [phase, transitionTo]);
 
   useEffect(() => {
@@ -112,7 +115,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
   const handleGoTo = (dir) => {
     if (phase !== "idle") return;
-    transitionTo(() => setIdx(i => dir === -1 ? (i - 1 + total) % total : (i + 1) % total));
+    const swipe = dir === 1 ? "left" : "right";
+    transitionTo(() => setIdx(i => (i + dir + total) % total), swipe);
   };
 
   const handleFilter = (f) => {
@@ -133,9 +137,11 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     { key: "medium", label: "Soon", count: medItems.length },
   ].filter(pill => pill.key === "all" || pill.count > 0);
 
-  const slideClass = phase === "exit" ? "pm-slide-exit"
-                   : phase === "enter" ? "pm-slide-enter"
-                   : "pm-slide-idle";
+  const slideClass = phase === "exit"
+    ? (swipeDir === "left" ? "pm-swipe-exit-left" : swipeDir === "right" ? "pm-swipe-exit-right" : "pm-slide-exit")
+    : phase === "enter"
+      ? (swipeDir === "left" ? "pm-swipe-enter-left" : swipeDir === "right" ? "pm-swipe-enter-right" : "pm-slide-enter")
+      : "pm-slide-idle";
 
   const peekItems = [];
   for (let i = 0; i < filtered.length && peekItems.length < 4; i++) {

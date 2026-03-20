@@ -37,6 +37,43 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Swipe-direction slide phases ── */
+.pm-swipe-exit-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity var(--pm-fast) var(--pm-ease),
+              transform var(--pm-fast) var(--pm-ease);
+  will-change: transform, opacity;
+}
+
+.pm-swipe-exit-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity var(--pm-fast) var(--pm-ease),
+              transform var(--pm-fast) var(--pm-ease);
+  will-change: transform, opacity;
+}
+
+.pm-swipe-enter-left {
+  animation: pm-swipe-in-left var(--pm-normal) var(--pm-ease) 40ms both;
+  will-change: transform, opacity;
+}
+
+.pm-swipe-enter-right {
+  animation: pm-swipe-in-right var(--pm-normal) var(--pm-ease) 40ms both;
+  will-change: transform, opacity;
+}
+
+@keyframes pm-swipe-in-left {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pm-swipe-in-right {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 /* ── Empty state entrance ── */
 .pm-empty-enter {
   animation: pm-scale-in var(--pm-normal) var(--pm-ease) both;
