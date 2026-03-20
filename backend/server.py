@@ -46,6 +46,7 @@ from routers.school_pod import router as school_pod_router
 from routers.team import router as team_router
 from routers.admin_kb_jobs import router as admin_kb_jobs_router
 from routers.ai_features import router as ai_features_router
+from routers.momentum_recap import router as momentum_recap_router
 from routers.subscription import router as subscription_router
 from routers.notifications import router as notifications_router
 from routers.athlete_tasks import router as athlete_tasks_router
@@ -278,6 +279,7 @@ api_router.include_router(program_metrics_router)
 api_router.include_router(public_profile_router)
 api_router.include_router(team_router)
 api_router.include_router(school_pod_router)
+api_router.include_router(momentum_recap_router)
 api_router.include_router(youtube_feed_router)
 
 app.include_router(api_router)

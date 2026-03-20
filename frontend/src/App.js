@@ -37,6 +37,7 @@ import AthleteAccountPage from "./pages/athlete/AccountPage";
 import AthleteBillingPage from "./pages/athlete/BillingPage";
 import AthleteDashboard from "./pages/AthleteDashboard";
 import AthleteProfilePage from "./pages/athlete/ProfilePage";
+import RecapPage from "./pages/athlete/RecapPage";
 import AthleteCalendarPage from "./pages/athlete/CalendarPage";
 import AthleteSchoolsPage from "./pages/athlete/SchoolsPage";
 import AthleteSchoolDetailPage from "./pages/athlete/SchoolDetailPage";
@@ -137,6 +138,7 @@ function AppRoutes() {
       <Route path="/onboarding" element={<ProtectedRoute useLayout={false} allowedRoles={["athlete","parent"]}><AthleteOnboardingQuiz /></ProtectedRoute>} />
       <Route path="/board" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteDashboard /></ProtectedRoute>} />
       <Route path="/pipeline" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthletePipelinePage /></ProtectedRoute>} />
+      <Route path="/recap" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><RecapPage /></ProtectedRoute>} />
       <Route path="/pipeline/:programId" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteJourneyPage /></ProtectedRoute>} />
       <Route path="/schools" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSchoolsPage /></ProtectedRoute>} />
       <Route path="/schools/:domain" element={<ProtectedRoute allowedRoles={["athlete","parent"]}><AthleteSchoolDetailPage /></ProtectedRoute>} />

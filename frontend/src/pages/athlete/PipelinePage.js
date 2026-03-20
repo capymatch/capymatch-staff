@@ -16,6 +16,7 @@ import PriorityBoard from "../../components/pipeline/PriorityBoard";
 import PipelineStyles from "../../components/pipeline/PipelineStyles";
 import UpcomingTasksSection from "../../components/pipeline/UpcomingTasksSection";
 import CommittedBanner from "../../components/pipeline/CommittedBanner";
+import RecapTeaser from "../../components/pipeline/RecapTeaser";
 import { KANBAN_COLS, COL_TO_STAGE } from "../../components/pipeline/pipeline-constants";
 import { computeAllAttention } from "../../lib/computeAttention";
 import "../../components/pipeline/pipeline-motion.css";
@@ -220,6 +221,9 @@ export default function PipelinePage() {
 
       {/* ═══ HERO ═══ */}
       <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
+
+      {/* ═══ RECAP TEASER ═══ */}
+      {viewMode === "priority" && <RecapTeaser />}
 
       {/* ═══ BOARD SEPARATOR ═══ */}
       <div className="flex items-center gap-3 mt-5 sm:mt-6 mb-4 px-1" data-testid="board-separator">
