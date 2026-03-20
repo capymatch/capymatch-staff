@@ -21,6 +21,13 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
+### Athlete Profile Photos (Feb 2026)
+- **Status**: COMPLETE & VERIFIED
+- Seeded 10 athletes with Unsplash headshot photos (face-cropped)
+- Photos now show in: Events Home avatars, Live Event Capture chips, Athlete Profile page
+- Upload flow: Profile page → click photo → file picker → base64 upload → stored in athletes collection
+- Seed script updated with photo URLs for future re-seeds
+
 ### Mobile Kanban Card Redesign (Feb 2026)
 - **Status**: COMPLETE & VERIFIED
 - Combined status + timing into single line ("Needs attention · 3d overdue")
