@@ -298,5 +298,24 @@ export function computeAllAttention(programs, topActionsMap, recapCtx) {
     const bName = b.program?.university_name || '';
     return aName.localeCompare(bName);
   });
+
+  // ── Post-sort: if hero is live-urgent and a recap top priority exists
+  //    elsewhere, add an explicit "recap outranked" explainability factor ──
+  if (results.length > 0) {
+    const hero = results[0];
+    if (hero.prioritySource === 'live') {
+      const recapTop = results.find(r =>
+        r.recapRank === 'top' && r.programId !== hero.programId
+      );
+      if (recapTop) {
+        const schoolName = recapTop.program?.university_name || 'another school';
+        hero.explainFactors.push({
+          type: 'recap-outranked',
+          label: `Recap suggested ${schoolName} — this is more urgent`,
+        });
+      }
+    }
+  }
+
   return results;
 }

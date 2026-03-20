@@ -336,20 +336,30 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                 <div className="text-[9px] font-bold mb-1.5" style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Priority factors
                 </div>
-                {current.explainFactors.map((f, i) => (
-                  <div key={i} className="flex items-center gap-1.5 mb-1" style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
+                {current.explainFactors.map((f, i) => {
+                  const isOutranked = f.type === 'recap-outranked';
+                  return (
+                  <div key={i} className="flex items-center gap-1.5 mb-1" style={{
+                    fontSize: isOutranked ? 10 : 11,
+                    color: isOutranked ? 'rgba(165,148,249,0.50)' : 'rgba(255,255,255,0.6)',
+                    fontWeight: isOutranked ? 400 : 500,
+                    fontStyle: isOutranked ? 'italic' : 'normal',
+                  }}>
                     <span style={{
                       width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
                       background: f.type === 'overdue' || f.type === 'due' ? '#ef4444'
                         : f.type === 'coach' ? '#f59e0b'
                         : f.type === 'recap' ? '#818cf8'
+                        : f.type === 'recap-outranked' ? '#a594f9'
                         : f.type === 'stale' ? '#60a5fa'
                         : f.type === 'risk' ? '#f97316'
                         : '#94a3b8',
+                      opacity: isOutranked ? 0.5 : 1,
                     }} />
                     {f.label}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
