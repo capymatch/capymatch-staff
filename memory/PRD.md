@@ -166,6 +166,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Font: `-apple-system, SF Pro Text, Inter` — titles 600, body 400-500
 - Files: `PipelineHero.js`, `PipelinePage.js`, `MomentumInsight.js`, `PriorityBoard.js`, `PipelineList.js`
 
+### Pipeline Card Redesign (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% backend 10/10, 100% frontend, iteration_220)
+- Removed system language ("Flagged in recap", "No action needed" → "On track", human guidance)
+- Stronger action copy: "Overdue 4d" → "4 days overdue" badge + "No response for 4 days — send a follow-up now"
+- Fixed contradictions: no "On track" + "Follow up" on same card
+- Card structure: school name + stage context + ONE status + ONE action + "View school →" CTA
+- Section labels: "Act now", "Keep things moving", "Just keep an eye"
+- Stage context under progress rail: "Outreach — waiting for response", "Talking — momentum building", etc.
+- Files: `computeAttention.js`, `PriorityBoard.js`, `KanbanBoard.js`, `PipelineHero.js`
+
 ### Recap Page Release Polish (Mar 2026)
 - **Status**: COMPLETE & VERIFIED (100% backend 30/30, 100% frontend, iteration_219)
 - Confidence signal: teal dot + more visible text (rgba 0.40)
