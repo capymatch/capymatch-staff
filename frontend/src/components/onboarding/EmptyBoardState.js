@@ -124,7 +124,7 @@ export default function EmptyBoardState({ onSchoolAdded }) {
       }
       setProfile(profileData);
       setSuggestions((sugRes.data?.suggestions || []).slice(0, 15));
-      setGmailConnected(gmailRes.data?.connected || false);
+      setGmailConnected(gmailRes.data?.connected || localStorage.getItem('cm_gmail_skipped') === 'true');
     }).finally(() => setLoading(false));
   }, []);
 
@@ -264,20 +264,30 @@ export default function EmptyBoardState({ onSchoolAdded }) {
             )}
             {profileDone && !gmailConnected && (
               <div className="mt-6 space-y-4">
-                <button
-                  className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-60"
-                  style={{ backgroundColor: "#0d9488", color: "white" }}
-                  onClick={() => setShowConsentModal(true)}
-                  disabled={gmailConnecting}
-                  data-testid="connect-gmail-btn"
-                >
-                  {gmailConnecting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Mail className="w-4 h-4" />
-                  )}
-                  {gmailConnecting ? "Connecting..." : "Connect Gmail"} <ChevronRight className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    className="inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-60"
+                    style={{ backgroundColor: "#0d9488", color: "white" }}
+                    onClick={() => setShowConsentModal(true)}
+                    disabled={gmailConnecting}
+                    data-testid="connect-gmail-btn"
+                  >
+                    {gmailConnecting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Mail className="w-4 h-4" />
+                    )}
+                    {gmailConnecting ? "Connecting..." : "Connect Gmail"} <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    className="text-sm font-medium transition-all hover:opacity-70"
+                    style={{ color: "var(--cm-text-3)" }}
+                    onClick={() => { localStorage.setItem('cm_gmail_skipped', 'true'); setGmailConnected(true); }}
+                    data-testid="skip-gmail-btn"
+                  >
+                    Skip for now
+                  </button>
+                </div>
                 <div className="flex items-start gap-3 rounded-lg px-4 py-3" style={{ backgroundColor: "var(--cm-surface-2)" }}>
                   <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--cm-text-3)" }} />
                   <div>
