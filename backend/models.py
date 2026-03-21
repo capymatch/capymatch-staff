@@ -150,6 +150,7 @@ class UserOut(BaseModel):
     org_id: Optional[str] = None
     created_at: str = ""
     athlete_id: Optional[str] = None
+    photo_url: Optional[str] = ""
 
 class TokenResponse(BaseModel):
     token: str
@@ -163,6 +164,7 @@ class MeResponse(BaseModel):
     role: str
     org_id: Optional[str] = None
     athlete_id: Optional[str] = None
+    photo_url: Optional[str] = ""
 
 
 # ── Athlete Self / Dashboard ──

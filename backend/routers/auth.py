@@ -31,6 +31,7 @@ def _safe_user(doc):
         "role": doc["role"],
         "org_id": doc.get("org_id"),
         "created_at": doc.get("created_at", ""),
+        "photo_url": doc.get("photo_url", ""),
     }
     if doc.get("athlete_id"):
         safe["athlete_id"] = doc["athlete_id"]
@@ -202,7 +203,10 @@ async def login(body: UserLogin, background_tasks: BackgroundTasks):
 
 @router.get("/auth/me", response_model=MeResponse)
 async def me(current_user: dict = get_current_user_dep()):
-    return current_user
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    if not user:
+        return current_user
+    return _safe_user(user)
 
 
 # ── Password Reset ─────────────────────────────────────────────────────────

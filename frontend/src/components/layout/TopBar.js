@@ -56,8 +56,12 @@ export default function TopBar({ title, icon: Icon, onMenuToggle }) {
           <button onClick={() => setMenuOpen(!menuOpen)}
             className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors hover:bg-white/5"
             data-testid="user-menu-trigger">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-sm">
-              <span className="text-white text-xs font-bold">{initial}</span>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-sm overflow-hidden">
+              {user?.photo_url ? (
+                <img src={user.photo_url} alt={firstName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white text-xs font-bold">{initial}</span>
+              )}
             </div>
             <span className="text-sm font-medium hidden sm:inline" style={{ color: "var(--cm-text)" }}>{firstName}</span>
             <ChevronDown className="w-3.5 h-3.5" style={{ color: "var(--cm-text-3)" }} />
@@ -70,8 +74,12 @@ export default function TopBar({ title, icon: Icon, onMenuToggle }) {
 
               {/* User card */}
               <div className="px-4 py-3 flex items-center gap-3 border-b" style={{ borderColor: "var(--cm-border)" }}>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-sm flex-shrink-0">
-                  <span className="text-white text-sm font-bold">{initial}</span>
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
+                  {user?.photo_url ? (
+                    <img src={user.photo_url} alt={user?.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white text-sm font-bold">{initial}</span>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate" style={{ color: "var(--cm-text)" }}>{user?.name || "User"}</p>

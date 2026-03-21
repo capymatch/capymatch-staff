@@ -194,10 +194,14 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
         {/* User info */}
         <div className={`py-3 border-t ${collapsed ? "px-2" : "px-5"}`} style={{ borderColor: "var(--cm-border)" }}>
           <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shrink-0">
-              <span className="text-white text-xs font-bold">
-                {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
-              </span>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shrink-0 overflow-hidden">
+              {user?.photo_url ? (
+                <img src={user.photo_url} alt={user?.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white text-xs font-bold">
+                  {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
