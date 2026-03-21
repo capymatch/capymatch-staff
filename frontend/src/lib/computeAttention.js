@@ -297,14 +297,13 @@ export function computeAttention(program, topAction, recapCtx) {
   if (ta?.action_key === 'relationship_cooling' || ta?.action_key === 'reengage_relationship')
     explainFactors.push({ type: 'risk', label: 'Engagement cooling off' });
 
-  // ── Structured reasons list ──
+  // ── Structured reasons list (user-meaningful only, no system jargon) ──
   const reasons = [];
   if (hardTriggers.overdue) reasons.push(`Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''}`);
   if (hardTriggers.coachFlag) reasons.push('Flagged by coach');
   if (hardTriggers.dueSoon && !hardTriggers.overdue) reasons.push(daysUntil === 0 ? 'Due today' : `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`);
-  if (lastActivity !== null && lastActivity >= 7) reasons.push(`No activity in ${lastActivity} days`);
-  if (recapRank === 'top') reasons.push('Top priority in recap');
-  if (recapRank === 'secondary') reasons.push('Flagged in recap');
+  // Only show inactivity if it adds information beyond the overdue signal
+  if (lastActivity !== null && lastActivity >= 7 && !hardTriggers.overdue) reasons.push(`No activity in ${lastActivity} days`);
 
   return {
     programId: p.program_id,

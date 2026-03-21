@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { trackEvent } from "../../lib/analytics";
 import UniversityLogo from "../UniversityLogo";
 import { RAIL_STAGES } from "../journey/constants";
@@ -46,7 +46,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState("idle");
   const [swipeDir, setSwipeDir] = useState(null);
-  const [whyExpanded, setWhyExpanded] = useState(false);
   const heroRef = useRef(null);
   const pendingRef = useRef(null);
   const touchRef = useRef({ startX: 0, startY: 0 });
@@ -54,7 +53,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const transitionTo = useCallback((updateFn, dir = null) => {
     setSwipeDir(dir);
     setPhase("exit");
-    setWhyExpanded(false);
     pendingRef.current = updateFn;
     setTimeout(() => {
       if (pendingRef.current) pendingRef.current();
@@ -382,7 +380,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                   priority_source: current.prioritySource || "live",
                   recap_rank: current.recapRank || null,
                   cta_label: "View school",
-                  why_was_expanded: whyExpanded,
                 });
                 navigate(`/pipeline/${p.program_id}`);
               }
@@ -392,72 +389,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           >
             {current.ctaLabel || "View school"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              const next = !whyExpanded;
-              setWhyExpanded(next);
-              if (next) trackEvent("hero_expanded_why", { program_id: current.programId });
-            }}
-            data-testid="hero-secondary-btn"
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.40)",
-              fontFamily: "inherit", padding: 0,
-              display: "inline-flex", alignItems: "center", gap: 4,
-              transition: "color 120ms ease",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}
-            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.40)"; }}
-          >
-            Why this?
-          </button>
         </div>
 
-        {/* WHY THIS? — expandable explainability panel */}
-        {whyExpanded && current.explainFactors?.length > 0 && (
-          <div
-            data-testid="hero-why-panel"
-            className="mt-4 pt-3"
-            style={{
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              animation: "pm-why-in 180ms ease-out both",
-            }}
-          >
-            <div className="ds-eyebrow mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
-              Priority factors
-            </div>
-            {current.explainFactors.map((f, i) => {
-              const isOutranked = f.type === "recap-outranked";
-              const isStale = f.type === "recap-stale";
-              const isSecondary = isOutranked || isStale;
-              return (
-                <div key={i} className="flex items-center gap-2 mb-1.5" style={{
-                  fontSize: isSecondary ? 12 : 13,
-                  color: isOutranked ? "rgba(200,194,255,0.50)"
-                    : isStale ? "rgba(200,194,255,0.45)"
-                    : "rgba(255,255,255,0.65)",
-                  fontWeight: isSecondary ? 400 : 500,
-                  fontStyle: isSecondary ? "italic" : "normal",
-                  lineHeight: 1.5,
-                }}>
-                  <span style={{
-                    width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                    background: f.type === "overdue" || f.type === "due" ? "#ff6b7f"
-                      : f.type === "coach" ? "#ff9b52"
-                      : f.type === "recap" ? "#8b7bff"
-                      : f.type === "recap-outranked" || f.type === "recap-stale" ? "#c8c2ff"
-                      : f.type === "stale" ? "#5d87ff"
-                      : f.type === "risk" ? "#ff9b52"
-                      : "#9aa5b8",
-                    opacity: isSecondary ? 0.5 : 1,
-                  }} />
-                  {f.label}
-                </div>
-              );
-            })}
-          </div>
-        )}
         {/* Carousel dot indicators */}
         {total > 1 && (
           <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 16 }} data-testid="hero-carousel-dots">
