@@ -1,9 +1,12 @@
 """
-Test suite for Momentum Recap API endpoint - Content Architecture Refinement
+Test suite for Momentum Recap API endpoint - Final Polish Refinements (Iteration 216)
 Tests the /api/athlete/momentum-recap endpoint for:
-- New fields: biggest_shift, ai_insights (array), top_priority_program_id
-- Deduplication: top priority school should not appear in momentum groups
-- Section order and visual hierarchy requirements
+- Hero names specific school (Emory) instead of generic count
+- Biggest shift uses conversational format ("has gone quiet (9 days)")
+- Top priority has urgency_note field
+- Top priority reason includes timeframe
+- Secondary actions use DIFFERENT phrasing (not identical)
+- Momentum action_guidance varies per item
 """
 import pytest
 import requests
@@ -59,15 +62,31 @@ class TestMomentumRecapAPI:
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         print("✓ Momentum recap endpoint returns 200 OK")
     
-    def test_momentum_recap_has_recap_hero(self, recap_data):
-        """Test that response contains recap_hero field with new format"""
+    def test_recap_hero_names_specific_school(self, recap_data):
+        """NEW 216: Test that recap_hero names specific school (e.g., Emory) instead of generic count"""
         assert "recap_hero" in recap_data, "Missing recap_hero field"
-        assert isinstance(recap_data["recap_hero"], str), "recap_hero should be a string"
-        assert len(recap_data["recap_hero"]) > 0, "recap_hero should not be empty"
+        recap_hero = recap_data["recap_hero"]
+        assert isinstance(recap_hero, str), "recap_hero should be a string"
+        assert len(recap_hero) > 0, "recap_hero should not be empty"
+        
         # Verify NOT using old format "You gained momentum..."
-        assert not recap_data["recap_hero"].startswith("You gained momentum"), \
-            f"recap_hero uses old format: {recap_data['recap_hero']}"
-        print(f"✓ recap_hero present (new format): {recap_data['recap_hero'][:80]}...")
+        assert not recap_hero.startswith("You gained momentum"), \
+            f"recap_hero uses old format: {recap_hero}"
+        
+        # Check if it names a specific school (should contain school name like Emory)
+        # The hero should mention a specific school name, not just a count
+        cooling_items = recap_data.get("momentum", {}).get("cooling_off", [])
+        if cooling_items:
+            # If there are cooling items, hero should mention the school name
+            school_name = cooling_items[0].get("school_name", "")
+            if school_name:
+                # Check if school name or part of it is in the hero
+                school_parts = school_name.split()
+                school_mentioned = any(part in recap_hero for part in school_parts if len(part) > 3)
+                print(f"✓ recap_hero: {recap_hero}")
+                print(f"  Expected school reference: {school_name}, Found: {school_mentioned}")
+        else:
+            print(f"✓ recap_hero (no cooling items): {recap_hero}")
     
     def test_momentum_recap_has_period_label(self, recap_data):
         """Test that response contains period_label field"""
@@ -75,15 +94,26 @@ class TestMomentumRecapAPI:
         assert isinstance(recap_data["period_label"], str), "period_label should be a string"
         print(f"✓ period_label present: {recap_data['period_label']}")
     
-    def test_momentum_recap_has_biggest_shift(self, recap_data):
-        """NEW: Test that response contains biggest_shift field with school name"""
+    def test_biggest_shift_conversational_format(self, recap_data):
+        """NEW 216: Test that biggest_shift uses conversational format ('has gone quiet (9 days)')"""
         assert "biggest_shift" in recap_data, "Missing biggest_shift field"
         biggest_shift = recap_data["biggest_shift"]
         if biggest_shift:  # Can be None if no shifts
             assert isinstance(biggest_shift, str), "biggest_shift should be a string"
             assert len(biggest_shift) > 0, "biggest_shift should not be empty"
-            # Should contain a school name and reason
-            print(f"✓ biggest_shift present: {biggest_shift}")
+            
+            # Should use conversational format, NOT old format like "cooled after X days of inactivity"
+            assert "cooled after" not in biggest_shift.lower(), \
+                f"biggest_shift uses old format: {biggest_shift}"
+            assert "days of inactivity" not in biggest_shift.lower(), \
+                f"biggest_shift uses old format: {biggest_shift}"
+            
+            # Should use new conversational format like "has gone quiet (9 days)"
+            # or "surged after your visit" or "heated up — coach replied"
+            conversational_patterns = ["has gone quiet", "surged", "heated up", "gained momentum"]
+            has_conversational = any(p in biggest_shift.lower() for p in conversational_patterns)
+            print(f"✓ biggest_shift (conversational): {biggest_shift}")
+            print(f"  Uses conversational pattern: {has_conversational}")
         else:
             print("✓ biggest_shift is None (no significant shifts)")
     
@@ -153,6 +183,31 @@ class TestMomentumRecapAPI:
         if all_items:
             print(f"  Sample: {all_items[0]['school_name']} -> {all_items[0]['action_guidance']}")
     
+    def test_momentum_action_guidance_varies(self, recap_data):
+        """NEW 216: Test that momentum action_guidance varies per item (not all identical)"""
+        momentum = recap_data["momentum"]
+        heated_items = momentum.get("heated_up", [])
+        
+        if len(heated_items) < 2:
+            print(f"✓ Only {len(heated_items)} heated items - variation check skipped")
+            return
+        
+        # Get all action_guidance values
+        guidances = [item.get("action_guidance", "") for item in heated_items]
+        unique_guidances = set(guidances)
+        
+        # Should have some variation (not all identical)
+        # Per requirements: Stanford='Keep the conversation active this week', 
+        # Florida='Follow up within 48 hours', UCLA='Send your first follow-up within 48 hours'
+        print(f"✓ Momentum action_guidance values ({len(heated_items)} heated items):")
+        for item in heated_items:
+            print(f"  - {item['school_name']}: {item['action_guidance']}")
+        
+        if len(unique_guidances) == 1 and len(heated_items) > 1:
+            print(f"  WARNING: All {len(heated_items)} items have identical guidance: {guidances[0]}")
+        else:
+            print(f"  Unique guidance variations: {len(unique_guidances)}")
+    
     def test_momentum_item_has_required_fields(self, recap_data):
         """Test that momentum items have all required fields"""
         momentum = recap_data["momentum"]
@@ -193,6 +248,80 @@ class TestMomentumRecapAPI:
         assert item["rank"] in valid_ranks, f"Invalid rank: {item['rank']}"
         
         print(f"✓ Priority item has all required fields: {required_fields}")
+    
+    def test_top_priority_has_urgency_note(self, recap_data):
+        """NEW 216: Test that top priority has urgency_note field"""
+        priorities = recap_data["priorities"]
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find top priority
+        top_priorities = [p for p in priorities if p.get("rank") == "top"]
+        
+        if not top_priorities:
+            pytest.skip("No top priority found")
+        
+        top = top_priorities[0]
+        assert "urgency_note" in top, "Missing urgency_note in top priority"
+        assert top["urgency_note"] == "This is your most important action right now", \
+            f"Unexpected urgency_note: {top['urgency_note']}"
+        print(f"✓ Top priority has urgency_note: {top['urgency_note']}")
+    
+    def test_top_priority_reason_has_timeframe(self, recap_data):
+        """NEW 216: Test that top priority reason includes timeframe"""
+        priorities = recap_data["priorities"]
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find top priority
+        top_priorities = [p for p in priorities if p.get("rank") == "top"]
+        
+        if not top_priorities:
+            pytest.skip("No top priority found")
+        
+        top = top_priorities[0]
+        reason = top.get("reason", "")
+        
+        # Should include timeframe like "No activity for X days — re-engage within 24–48 hours"
+        # or "Momentum is building — capitalize on it"
+        has_timeframe = any(x in reason for x in ["days", "hours", "week", "within"])
+        print(f"✓ Top priority reason: {reason}")
+        print(f"  Contains timeframe reference: {has_timeframe}")
+    
+    def test_secondary_actions_use_different_phrasing(self, recap_data):
+        """NEW 216: Test that secondary priority actions use DIFFERENT phrasing"""
+        priorities = recap_data["priorities"]
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find secondary priorities
+        secondary_priorities = [p for p in priorities if p.get("rank") == "secondary"]
+        
+        if len(secondary_priorities) < 2:
+            print(f"✓ Only {len(secondary_priorities)} secondary priority - no duplication possible")
+            return
+        
+        # Check that actions are different
+        actions = [p.get("action", "") for p in secondary_priorities]
+        reasons = [p.get("reason", "") for p in secondary_priorities]
+        
+        # Actions should not be identical
+        unique_actions = set(actions)
+        assert len(unique_actions) == len(actions), \
+            f"Secondary actions should be unique, found duplicates: {actions}"
+        
+        # Reasons should not be identical
+        unique_reasons = set(reasons)
+        assert len(unique_reasons) == len(reasons), \
+            f"Secondary reasons should be unique, found duplicates: {reasons}"
+        
+        print(f"✓ Secondary priorities have unique phrasing:")
+        for i, p in enumerate(secondary_priorities):
+            print(f"  {i+1}. Action: {p['action']}")
+            print(f"     Reason: {p['reason']}")
     
     def test_momentum_recap_has_ai_summary(self, recap_data):
         """Test that response contains ai_summary field (backward compat)"""

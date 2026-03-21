@@ -46,11 +46,11 @@ function MomentumGroup({ category, items, navigate }) {
               navigate(`/pipeline/${m.program_id}`);
             }}
             style={{
-              background: "rgba(255,255,255,0.7)",
-              border: "1px solid rgba(20,37,68,0.04)",
+              background: "rgba(255,255,255,0.5)",
+              border: "1px solid rgba(20,37,68,0.03)",
               borderLeft: `2px solid ${cfg.accent}`,
-              borderRadius: 12,
-              padding: "12px 14px",
+              borderRadius: 10,
+              padding: "10px 12px",
               cursor: "pointer",
               transition: "transform 80ms ease, box-shadow 80ms ease",
             }}
@@ -89,9 +89,9 @@ function PriorityItem({ priority, navigate }) {
         display: "flex", alignItems: "flex-start", gap: 14,
         background: "#fff",
         border: `1px solid ${cfg.border}`,
-        borderLeft: `4px solid ${cfg.accent}`,
+        borderLeft: `5px solid ${cfg.accent}`,
         borderRadius: 14,
-        padding: "16px 18px",
+        padding: "20px 20px",
         cursor: "pointer",
         transition: "transform 80ms ease, box-shadow 80ms ease",
         boxShadow: "0 2px 8px rgba(19,33,58,0.04)",
@@ -116,6 +116,11 @@ function PriorityItem({ priority, navigate }) {
         <div style={{ fontSize: 12, color: "#64748b", fontWeight: 400, marginTop: 4, lineHeight: 1.4 }}>
           <span style={{ color: cfg.accent, marginRight: 4 }}>&rarr;</span>{priority.reason}
         </div>
+        {priority.urgency_note && (
+          <div data-testid="urgency-note" style={{ fontSize: 11, fontWeight: 500, color: cfg.color, marginTop: 6, opacity: 0.8 }}>
+            {priority.urgency_note}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -284,7 +289,7 @@ export default function RecapPage() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
               <Sparkles size={12} color="#94a3b8" />
-              <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>Insight</span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "#64748b", letterSpacing: "0.01em" }}>What's driving your pipeline right now</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {insights.map((bullet, i) => (

@@ -40,7 +40,6 @@ def _classify_momentum(program, interactions_in_period, interactions_before, now
     prog_id = program.get("program_id", "")
     reply_status = program.get("reply_status", "No Reply")
     recruiting_status = program.get("recruiting_status", "Not Contacted")
-    updated_str = program.get("updated_at", "")
 
     ix_count = len(interactions_in_period)
     ix_before = len(interactions_before)
@@ -113,9 +112,16 @@ def _classify_momentum(program, interactions_in_period, interactions_before, now
         reason = " · ".join(changes) if changes else "Consistent activity"
         why = "Pipeline stable — maintain cadence"
 
-    # Action guidance for momentum shift cards
+    # Action guidance for momentum shift cards — contextual, varied
     if heated and not cooling:
-        action_guidance = "Respond within 24 hours" if has_coach_reply else "Follow up within 48 hours"
+        if has_coach_reply:
+            action_guidance = "Respond within 24 hours"
+        elif has_visit:
+            action_guidance = "Keep the conversation active this week"
+        elif current_stage == "added":
+            action_guidance = "Send your first follow-up within 48 hours"
+        else:
+            action_guidance = "Follow up within 48 hours"
     elif cooling and not heated:
         action_guidance = "Re-engage this week" if (days_since and days_since > 7) else "Send a follow-up soon"
     else:
@@ -148,12 +154,15 @@ def _generate_priorities(momentum_items):
     # Top Priority: most urgent cooling item, or heated item needing follow-up
     if cooling:
         top = cooling[0]
+        days = top.get("days_since_last")
+        reason = f"No activity for {days} days — re-engage within 24–48 hours" if days else "Re-engage within 24–48 hours"
         priorities.append({
             "rank": "top",
             "school_name": top["school_name"],
             "program_id": top["program_id"],
             "action": f"Re-engage with {top['school_name']}",
-            "reason": top["why_it_matters"],
+            "reason": reason,
+            "urgency_note": "This is your most important action right now",
         })
     elif heated:
         top = heated[0]
@@ -163,27 +172,53 @@ def _generate_priorities(momentum_items):
             "program_id": top["program_id"],
             "action": f"Follow up with {top['school_name']} while hot",
             "reason": "Momentum is building — capitalize on it",
+            "urgency_note": "This is your most important action right now",
         })
 
-    # Secondary: next 2 actionable items
+    # Secondary: next 2 actionable items — with contextual variation
     remaining = [m for m in momentum_items if not priorities or m["program_id"] != priorities[0]["program_id"]]
     # Prefer heated items first, then cooling
     secondary_pool = sorted(remaining, key=lambda m: (
         0 if m["category"] == "heated_up" else 1 if m["category"] == "cooling_off" else 2
     ))
+    _sec_variants_heated = [
+        lambda name, m: (f"Follow up with {name}", "Campus visit completed — keep the conversation active this week") if "Campus visit" in m.get("what_changed", "") else None,
+        lambda name, m: (f"Keep pushing {name}", "Coach replied — respond within 48 hours") if m.get("has_coach_reply") else None,
+        lambda name, m: (f"Follow up with {name}", "Active dialogue — keep the conversation active this week"),
+        lambda name, m: (f"Send your first follow-up to {name}", "New in your pipeline — make a strong first impression"),
+    ]
+    _sec_variants_cooling = [
+        lambda name, m: (f"Check in with {name}", "No recent activity — send a message this week"),
+    ]
+    _sec_variants_steady = [
+        lambda name, m: (f"Maintain contact with {name}", "Steady engagement — don't let it slip"),
+    ]
+    sec_idx = 0
     for item in secondary_pool[:2]:
-        action = (
-            f"Keep pushing {item['school_name']}" if item["category"] == "heated_up"
-            else f"Check in with {item['school_name']}" if item["category"] == "cooling_off"
-            else f"Maintain contact with {item['school_name']}"
-        )
+        name = item["school_name"]
+        action, reason = None, None
+        if item["category"] == "heated_up":
+            for v in _sec_variants_heated:
+                result = v(name, item)
+                if result:
+                    action, reason = result
+                    break
+            # Alternate phrasing for second heated item
+            if sec_idx == 1 and action and action.startswith("Follow up"):
+                action = f"Keep pushing {name}"
+                reason = "Send your next follow-up within 48 hours"
+        elif item["category"] == "cooling_off":
+            action, reason = _sec_variants_cooling[0](name, item)
+        else:
+            action, reason = _sec_variants_steady[0](name, item)
         priorities.append({
             "rank": "secondary",
-            "school_name": item["school_name"],
+            "school_name": name,
             "program_id": item["program_id"],
             "action": action,
-            "reason": item["what_changed"],
+            "reason": reason,
         })
+        sec_idx += 1
 
     # Watch Item: steady item most at risk of cooling
     watch_pool = [m for m in steady if m["program_id"] not in {p["program_id"] for p in priorities}]
@@ -203,14 +238,18 @@ def _generate_priorities(momentum_items):
 
 
 def _build_recap_hero(momentum_items):
-    """Build the hero headline — action-oriented, not a report."""
-    heated = len([m for m in momentum_items if m["category"] == "heated_up"])
-    cooling = len([m for m in momentum_items if m["category"] == "cooling_off"])
+    """Build the hero headline — personal, names the school."""
+    heated_items = [m for m in momentum_items if m["category"] == "heated_up"]
+    cooling_items = [m for m in momentum_items if m["category"] == "cooling_off"]
+    heated = len(heated_items)
+    cooling = len(cooling_items)
 
     if cooling and heated:
-        return f"Your pipeline is improving, but {cooling} program{'s' if cooling > 1 else ''} need{'s' if cooling == 1 else ''} immediate attention."
+        school = cooling_items[0]["school_name"]
+        return f"Your pipeline is improving, but {school} requires immediate attention."
     elif cooling:
-        return f"{cooling} program{'s' if cooling > 1 else ''} in your pipeline need{'s' if cooling == 1 else ''} immediate attention."
+        school = cooling_items[0]["school_name"]
+        return f"{school} requires your immediate attention."
     elif heated:
         return f"Strong momentum — {heated} school{'s' if heated > 1 else ''} heating up in your pipeline."
     else:
@@ -218,23 +257,24 @@ def _build_recap_hero(momentum_items):
 
 
 def _compute_biggest_shift(momentum_items):
-    """Identify the single biggest momentum change."""
+    """Identify the single biggest momentum change — short, conversational."""
     cooling = [m for m in momentum_items if m["category"] == "cooling_off"]
     if cooling:
         worst = max(cooling, key=lambda m: m.get("days_since_last") or 0)
         days = worst.get("days_since_last")
+        name = worst["school_name"]
         if days:
-            return f"{worst['school_name']} cooled after {days} days of inactivity"
-        return f"{worst['school_name']} is cooling off"
+            return f"{name} has gone quiet ({days} days)"
+        return f"{name} has gone quiet"
 
     heated = [m for m in momentum_items if m["category"] == "heated_up"]
     if heated:
         best = heated[0]
         if "Campus visit" in best.get("what_changed", ""):
-            return f"{best['school_name']} surged after your campus visit"
+            return f"{best['school_name']} surged after your visit"
         if best.get("has_coach_reply"):
             return f"{best['school_name']} heated up — coach replied"
-        return f"{best['school_name']} gained significant momentum"
+        return f"{best['school_name']} gained momentum"
 
     return None
 
