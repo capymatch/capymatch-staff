@@ -255,6 +255,14 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               Flagged by coach
             </span>
           )}
+          {matchPct != null && (
+            <span className="ds-badge" style={{
+              background: "rgba(16,185,129,0.12)",
+              color: "#6ee7b7",
+            }} data-testid="hero-match-score">
+              Match {matchPct}%
+            </span>
+          )}
         </div>
 
         {/* SCHOOL NAME — large, prominent */}
@@ -272,14 +280,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             <h3 className="text-[22px] sm:text-[30px]" style={{ fontWeight: 600, color: "#fff", letterSpacing: "-0.045em", margin: "0 0 8px", lineHeight: 1.02 }} data-testid="hero-school-name">
               {p?.university_name || "School"}
             </h3>
-            {matchPct != null && (
-              <span className="flex-shrink-0" style={{
-                fontSize: 12, fontWeight: 500,
-                color: "rgba(255,255,255,0.40)",
-              }} data-testid="hero-match-score">
-                Match {matchPct}%
-              </span>
-            )}
           </div>
         )}
 
