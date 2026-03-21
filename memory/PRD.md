@@ -295,6 +295,21 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Files: `top_action_engine.py` (date parsing fix), `seed_fresh.py` (coach flags + assigned_to_athlete)
 - **Analysis**: The `capymatch-staff` repo and this repo share identical backend/frontend code for coach signals. The only file differences are in files we've customized (PipelinePage, RecapPage, computeAttention, etc.)
 
+### Attention System Overhaul — Classification Integrity (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% — 9/9 tests, iteration_226)
+- **Problem**: Hero carousel was absorbing medium-tier items, leaving "Keep things moving" empty. UI broke classification integrity.
+- **Solution**: Expanded SchoolAttention model with `tier`, `heroEligible`, `urgency`, `momentum`, `hardTriggers`, `reasons`
+- **Classification logic**:
+  - `tier = 'high'` if overdue || coachFlag || escalation || score >= 80; `'medium'` if score >= 40; else `'low'`
+  - `heroEligible` = overdue || dueSoon (72hrs) || coachFlag || escalation || score >= 80
+  - Hero carousel ONLY shows heroEligible items (max 3, never medium-tier filler)
+  - "Keep things moving" ALWAYS shows medium-tier items
+  - "Just keep an eye" shows low-tier items (collapsed if > 4)
+- **Scoring updates**: Added `daysUntil 4-7 → +15`, `outreach stage → +5`, fallback `board_group` for missing `journey_stage`
+- **Seed fixes**: Spread due dates by priority (Top Choice → 3d, stale 5+ → 5d, stale 3+ → 7d, else 10d) instead of defaulting all to from_now(3)
+- **Dynamic summary**: "Emory University and Stanford University need action first" (names pulled from actual high-tier items)
+- **Files**: `computeAttention.js`, `PipelinePage.js`, `PriorityBoard.js`, `PipelineHero.js`, `MomentumInsight.js`, `seed_fresh.py`
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
