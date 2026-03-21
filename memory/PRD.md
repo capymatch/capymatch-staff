@@ -21,8 +21,12 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
-### YOUR NEXT MOVES — Recap-Driven Unified List (Mar 2026)
-- **Status**: COMPLETE & VERIFIED (13/13 frontend tests, iteration 229)
+### Pipeline Summary + Breakdown Drawer (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (16/16 frontend tests, iteration 230)
+- Enhanced Pipeline Summary card: headline, 3 status chips (live data), 1-2 momentum signals (risk + positive), "View full breakdown →" CTA
+- New right-side BreakdownDrawer: Pipeline Narrative (AI), Momentum Breakdown (gaining/cooling/holding), Per-School Explanation (max 3 reasons, plain language), Coaching Insights (max 3), freshness timestamp
+- Design principle: Main page = action, Drawer = explanation
+- No scoring logic changed
 - Replaced deterministic attention-engine items with AI-generated recommendations from `/api/athlete/momentum-recap` priorities
 - Single unified list with tier badges: NEEDS YOUR ATTENTION NOW (red), SECONDARY (orange), WATCH (gray)
 - Cards show: colored left borders, tier-specific icons (AlertCircle/ChevronRight/Eye), action title, reason, urgency note
