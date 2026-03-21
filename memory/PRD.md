@@ -350,6 +350,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - No duplication: live sections decide placement, AI sections explain context
 - Files: `PipelinePage.js`, `MomentumInsight.js` (now pure live), `PriorityBoard.js` (added AI sections), `App.js` (redirect)
 
+### Breakdown Drawer Refinement (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% — 8/8 backend, 16/16 frontend, iteration_232)
+- Narrative section now uses `recap_hero` + `biggest_shift` + period context (no duplication with insights)
+- Backend `_build_insight_bullets` generates coaching-focused actionable tips instead of status descriptions
+- Progressive reveal shows 3 schools initially (up from 2), with "Show N more" toggle
+- Max 3 coaching insights (pattern observation, risk mitigation, strategic guidance)
+- No system terminology ("score", "priority factor") exposed in UI
+- Stagger animations (slide-in panel, staged content reveal, expand animations)
+- Files: `BreakdownDrawer.js`, `momentum_recap.py`
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
