@@ -1,478 +1,238 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight, Info } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowRight, Info } from "lucide-react";
 import { trackEvent } from "../../lib/analytics";
 import UniversityLogo from "../UniversityLogo";
 import { RAIL_STAGES } from "../journey/constants";
 import PipelineHeroEmptyState from "./PipelineHeroEmptyState";
-import "./pipeline-motion.css";
-import "./pipeline-premium.css";
 
-const LEVEL_STYLE = {
-  high: {
-    accent: "#ff6b7f", glow: "rgba(255,107,127,0.10)", label: "Needs attention",
-    badgeBg: "rgba(255,107,127,0.16)", badgeText: "#ffd2d9",
-  },
-  medium: {
-    accent: "#ff9b52", glow: "rgba(255,155,82,0.06)", label: "Coming soon",
-    badgeBg: "rgba(255,155,82,0.14)", badgeText: "#ffd29f",
-  },
-  low: {
-    accent: "#16b57f", glow: "rgba(22,181,127,0.04)", label: "On track",
-    badgeBg: "rgba(22,181,127,0.14)", badgeText: "#b9fff8",
-  },
-};
-
-function buildRail(program) {
-  if (!program) return null;
-  const stage = program.journey_stage || program.board_group;
-  const map = { needs_outreach: "added", waiting_on_reply: "outreach", overdue: "outreach" };
-  const active = map[stage] || stage || "added";
-  const activeIdx = RAIL_STAGES.findIndex(s => s.key === active);
-  const stages = {};
-  RAIL_STAGES.forEach((s, i) => { if (i <= activeIdx) stages[s.key] = true; });
-  return { active, stages, line_fill: active };
-}
-
-function getShortAction(item) {
-  if (!item) return 'Take action';
-  if (item.timingLabel) return item.timingLabel;
-  if (item.attentionLevel === 'high') return 'Needs attention';
-  if (item.attentionLevel === 'medium') return 'Coming up';
-  return 'On track';
-}
+const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
 
 export default function PipelineHero({ heroItems, matchScores, navigate }) {
-  const [filter, setFilter] = useState("all");
-  const [idx, setIdx] = useState(0);
-  const [phase, setPhase] = useState("idle");
-  const [swipeDir, setSwipeDir] = useState(null);
-  const [compact, setCompact] = useState(false);
   const [whyExpanded, setWhyExpanded] = useState(false);
-  const heroRef = useRef(null);
-  const pendingRef = useRef(null);
-  const touchRef = useRef({ startX: 0, startY: 0 });
+  const trackedRef = useRef(null);
 
-  const transitionTo = useCallback((updateFn, dir = null) => {
-    setSwipeDir(dir);
-    setPhase("exit");
-    setWhyExpanded(false);
-    pendingRef.current = updateFn;
-    setTimeout(() => {
-      if (pendingRef.current) pendingRef.current();
-      pendingRef.current = null;
-      setPhase("enter");
-      setTimeout(() => { setPhase("idle"); setSwipeDir(null); }, 220);
-    }, 140);
-  }, []);
-
-  const goTo = useCallback((dir) => {
-    if (phase !== "idle") return;
-    const swipe = dir === 1 ? "left" : "right";
-    transitionTo(() => setIdx(i => dir === -1 ? Math.max(0, i - 1) : i + 1), swipe);
-  }, [phase, transitionTo]);
+  const current = heroItems?.[0];
 
   useEffect(() => {
-    const onKey = (e) => {
-      const tag = document.activeElement?.tagName?.toLowerCase();
-      if (tag === "input" || tag === "textarea" || tag === "select") return;
-      if (e.key === "ArrowLeft")  { e.preventDefault(); goTo(-1); }
-      if (e.key === "ArrowRight") { e.preventDefault(); goTo(1); }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [goTo]);
-
-  const onTouchStart = useCallback((e) => {
-    touchRef.current.startX = e.touches[0].clientX;
-    touchRef.current.startY = e.touches[0].clientY;
-  }, []);
-
-  const onTouchEnd = useCallback((e) => {
-    const dx = e.changedTouches[0].clientX - touchRef.current.startX;
-    const dy = e.changedTouches[0].clientY - touchRef.current.startY;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      if (dx < 0) goTo(1);
-      else goTo(-1);
-    }
-  }, [goTo]);
-
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setCompact(entry.intersectionRatio < 0.85),
-      { threshold: [0.85, 1] }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const prevTrackedRef = useRef(null);
-  const highItems = (heroItems || []).filter(h => h.attentionLevel === 'high');
-  const medItems = (heroItems || []).filter(h => h.attentionLevel === 'medium');
-  const filtered = filter === 'high' ? highItems : filter === 'medium' ? medItems : (heroItems || []);
-  const total = filtered.length;
-  const safeIdx = total > 0 ? ((idx % total) + total) % total : 0;
-  const current = total > 0 ? filtered[safeIdx] : null;
-
-  useEffect(() => {
-    if (!current?.programId || current.programId === prevTrackedRef.current) return;
-    prevTrackedRef.current = current.programId;
+    if (!current?.programId || current.programId === trackedRef.current) return;
+    trackedRef.current = current.programId;
     trackEvent("hero_viewed", {
       program_id: current.programId,
       school_name: current.program?.university_name || "",
       priority_source: current.prioritySource || "live",
-      recap_rank: current.recapRank || null,
       attention_level: current.attentionLevel,
-      position: safeIdx + 1,
     });
-  }, [current, safeIdx]);
+  }, [current]);
 
-  if (!heroItems || heroItems.length === 0 || total === 0) {
+  if (!heroItems || heroItems.length === 0) {
     return <PipelineHeroEmptyState onTrackCount={0} navigate={navigate} />;
   }
-
-  const handleGoTo = (dir) => {
-    if (phase !== "idle") return;
-    const swipe = dir === 1 ? "left" : "right";
-    transitionTo(() => setIdx(i => (i + dir + total) % total), swipe);
-  };
-
-  const handleFilter = (f) => {
-    if (phase !== "idle" || f === filter) return;
-    transitionTo(() => { setFilter(f); setIdx(0); });
-  };
 
   const p = current.program;
   const ms = matchScores[p?.program_id];
   const matchPct = ms?.match_score;
-  const style = LEVEL_STYLE[current.attentionLevel] || LEVEL_STYLE.low;
-  const rail = buildRail(p);
-  const ownerLabel = current.owner === 'coach' ? 'Coach' : current.owner === 'director' ? 'Director' : 'You';
 
-  const pills = [
-    { key: "all", label: "All", count: heroItems.length },
-    { key: "high", label: "Urgent", count: highItems.length },
-    { key: "medium", label: "Soon", count: medItems.length },
-  ].filter(pill => pill.key === "all" || pill.count > 0);
+  // Progress rail
+  const stage = p?.journey_stage || p?.board_group;
+  const stageMap = { needs_outreach: "added", waiting_on_reply: "outreach", overdue: "outreach" };
+  const activeKey = stageMap[stage] || stage || "added";
+  const activeIdx = RAIL_STAGES.findIndex(s => s.key === activeKey);
 
-  const slideClass = phase === "exit"
-    ? (swipeDir === "left" ? "pm-swipe-exit-left" : swipeDir === "right" ? "pm-swipe-exit-right" : "pm-slide-exit")
-    : phase === "enter"
-      ? (swipeDir === "left" ? "pm-swipe-enter-left" : swipeDir === "right" ? "pm-swipe-enter-right" : "pm-slide-enter")
-      : "pm-slide-idle";
+  // Label config
+  const lvl = current.attentionLevel;
+  const label = lvl === "high" ? { text: "Needs attention", bg: "rgba(255,107,127,0.14)", color: "#ffc4cf" }
+    : lvl === "medium" ? { text: "Gaining momentum", bg: "rgba(255,155,82,0.14)", color: "#ffd29f" }
+    : { text: "On track", bg: "rgba(22,181,127,0.14)", color: "#a7f3d0" };
 
-  const peekItems = [];
-  for (let i = 0; i < filtered.length && peekItems.length < 4; i++) {
-    if (i !== safeIdx && filtered[i].program) peekItems.push({ item: filtered[i], filteredIdx: i });
-  }
-
-  const activeStageKey = rail?.active;
-  const activeStageIdx = RAIL_STAGES.findIndex(s => s.key === activeStageKey);
+  const supportingText = current.heroReason || current.reason || "";
 
   return (
-    <>
     <div
-      ref={heroRef}
       data-testid="pipeline-hero"
-      className="overflow-hidden relative pm-hero-hover"
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
       style={{
-        background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
-        borderRadius: 28,
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)",
+        background: "linear-gradient(135deg, #0f1c35 0%, #152547 50%, #1a2d5a 100%)",
+        borderRadius: 20,
+        padding: "30px 34px 28px",
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: "0 16px 48px rgba(15, 28, 53, 0.18)",
+        fontFamily: FONT,
       }}
     >
-      {/* Glow orbs */}
-      <div className="ds-glow-teal" />
-      <div className="ds-glow-purple" />
+      {/* Soft glow — top right only */}
+      <div style={{
+        position: "absolute", width: 280, height: 280, right: -80, top: -100,
+        background: "radial-gradient(circle, rgba(25,195,178,0.12), transparent 65%)",
+        borderRadius: "50%", pointerEvents: "none",
+      }} />
 
-      {/* ── TOP BAR: Filter pills + Carousel nav ── */}
-      <div
-        className="flex items-center justify-between px-5 sm:px-7 pt-3.5 pb-3 relative z-[1]"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-        data-testid="hero-top-bar"
-      >
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap" data-testid="hero-filter-pills">
-          {pills.map(pill => (
-            <button
-              key={pill.key}
-              onClick={() => handleFilter(pill.key)}
-              data-testid={`hero-filter-${pill.key}`}
-              className="flex items-center gap-1.5 rounded-full text-[13px] font-bold pm-pill"
-              style={{
-                padding: "8px 14px",
-                borderRadius: 999,
-                background: filter === pill.key ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)",
-                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.4)",
-                border: `1px solid ${filter === pill.key ? "rgba(255,255,255,0.08)" : "transparent"}`,
-                cursor: "pointer", fontFamily: "inherit",
-              }}
-            >
-              {pill.label}
-              <span className="pm-pill-badge" style={{
-                fontSize: 11, fontWeight: 800, padding: "1px 6px", borderRadius: 6,
-                background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.3)",
-              }}>{pill.count}</span>
-            </button>
-          ))}
-        </div>
-        {total > 1 && (
-          <div className="flex items-center gap-2.5 flex-shrink-0" data-testid="hero-carousel-nav">
-            <button onClick={() => handleGoTo(-1)} data-testid="carousel-prev"
-              className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-[12px] font-bold tabular-nums min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="carousel-counter">
-              {safeIdx + 1}/{total}
-            </span>
-            <button onClick={() => handleGoTo(1)} data-testid="carousel-next"
-              className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+      {/* ── Label row ── */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22, position: "relative", zIndex: 1 }}>
+        <span data-testid="hero-category-label" style={{
+          fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600,
+          padding: "7px 12px", borderRadius: 999, background: label.bg, color: label.color,
+        }}>{label.text}</span>
+        {current.timingLabel && (
+          <span data-testid="hero-timing-label" style={{
+            fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600,
+            padding: "7px 12px", borderRadius: 999,
+            background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)",
+          }}>{current.timingLabel}</span>
+        )}
+        {current.explainFactors?.length > 0 && (
+          <button
+            onClick={() => { setWhyExpanded(v => !v); if (!whyExpanded) trackEvent("hero_expanded_why", { program_id: current.programId }); }}
+            data-testid="hero-why-btn"
+            style={{
+              fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600,
+              padding: "7px 12px", borderRadius: 999,
+              background: whyExpanded ? "rgba(25,195,178,0.18)" : "rgba(25,195,178,0.10)",
+              color: "#8df0e6", border: "none", cursor: "pointer", fontFamily: FONT,
+              display: "inline-flex", alignItems: "center", gap: 5,
+            }}
+          >
+            <Info size={11} /> Why this surfaced
+          </button>
         )}
       </div>
 
-      {/* ── SLIDE CONTENT ── */}
-      <div className={`relative z-[1] ds-hero-content ${slideClass}`}
-        style={{ padding: compact ? "14px 20px 16px" : "22px 28px 24px" }}
-      >
-        {/* BADGE ROW */}
-        <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-status-row">
-          <span className="ds-badge" style={{
-            background: style.badgeBg,
-            color: style.badgeText,
-          }} data-testid="hero-category-label">
-            {style.label}
-          </span>
-          {current.timingLabel && (
-            <span className="ds-badge" style={{
-              background: "rgba(255,255,255,0.06)",
-              color: "rgba(255,255,255,0.68)",
-            }} data-testid="hero-timing-label">
-              {current.timingLabel}
-            </span>
-          )}
-          {current.explainFactors?.length > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const next = !whyExpanded;
-                setWhyExpanded(next);
-                if (next) trackEvent("hero_expanded_why", {
-                  program_id: current.programId,
-                  priority_source: current.prioritySource || "live",
-                  factors_count: current.explainFactors?.length || 0,
-                });
-              }}
-              data-testid="hero-why-btn"
-              className="ds-badge"
-              style={{
-                background: whyExpanded ? "rgba(25,195,178,0.20)" : "rgba(25,195,178,0.14)",
-                color: "#b9fff8",
-                border: "none", cursor: "pointer", fontFamily: "inherit",
-                transition: "background 120ms ease",
-              }}
-            >
-              <Info size={11} />
-              Why this surfaced
-            </button>
-          )}
-        </div>
+      {/* ── School name ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, position: "relative", zIndex: 1 }}>
+        {p && <UniversityLogo name={p.university_name} logoUrl={ms?.logo_url || p.logo_url} domain={ms?.domain || p.domain} size={26} className="rounded-lg flex-shrink-0" />}
+        <h2 data-testid="hero-school-name" style={{ fontSize: 28, fontWeight: 600, color: "#fff", letterSpacing: "-0.03em", margin: 0, lineHeight: 1.1 }}>
+          {p?.university_name || "School"}
+        </h2>
+        {matchPct != null && (
+          <span data-testid="hero-match-score" style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>({matchPct}%)</span>
+        )}
+      </div>
 
-        {/* SCHOOL NAME — large, prominent */}
-        {!compact && (
-          <div className="flex items-center gap-3 mb-1" data-testid="hero-school-row">
-            {p && (
-              <UniversityLogo
-                name={p.university_name}
-                logoUrl={ms?.logo_url || p.logo_url}
-                domain={ms?.domain || p.domain}
-                size={28}
-                className="rounded-lg flex-shrink-0"
-              />
-            )}
-            <h3 style={{ fontSize: 30, fontWeight: 800, color: "#fff", letterSpacing: "-0.045em", margin: 0, lineHeight: 1.02 }} data-testid="hero-school-name">
-              {p?.university_name || "School"}
-            </h3>
-            {matchPct != null && (
-              <span className="flex-shrink-0" style={{
-                fontSize: 14, fontWeight: 700,
-                color: matchPct >= 80 ? "#8df0e6" : matchPct >= 60 ? "#ffd29f" : "#9aa5b8",
-                opacity: 0.8,
-              }} data-testid="hero-match-score">
-                {matchPct}%
+      {/* ── Action ── */}
+      <div data-testid="hero-advice-text" style={{
+        fontSize: 18, fontWeight: 500, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.015em",
+        lineHeight: 1.3, margin: "10px 0 6px", position: "relative", zIndex: 1,
+      }}>
+        {current.primaryAction}
+      </div>
+
+      {/* ── Supporting text ── */}
+      {supportingText && (
+        <p data-testid="hero-recap-reason" style={{
+          fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.50)",
+          margin: "0 0 26px", lineHeight: 1.55, position: "relative", zIndex: 1,
+        }}>
+          {supportingText}
+        </p>
+      )}
+
+      {/* ── Rail label ── */}
+      <div style={{
+        fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
+        color: "rgba(255,255,255,0.30)", marginBottom: 10, position: "relative", zIndex: 1,
+      }}>
+        Where you are in the process
+      </div>
+
+      {/* ── Progress rail ── */}
+      <div data-testid="hero-progress-rail" style={{
+        display: "grid", gridTemplateColumns: `repeat(${RAIL_STAGES.length}, 1fr)`,
+        gap: 8, marginBottom: 26, position: "relative", zIndex: 1,
+      }}>
+        {RAIL_STAGES.map((s, i) => {
+          const isActive = i === activeIdx;
+          const isPast = i < activeIdx;
+          return (
+            <div key={s.key} style={{ textAlign: "center" }} data-testid={`rail-stage-${s.key}`}>
+              <div style={{
+                width: isActive ? 14 : 10, height: isActive ? 14 : 10,
+                borderRadius: 999, margin: "0 auto 6px",
+                background: isActive ? "#19c3b2" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.10)",
+                border: isActive ? "none" : `1px solid ${isPast ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"}`,
+                boxShadow: isActive ? "0 0 0 5px rgba(25,195,178,0.10)" : "none",
+                transition: "all 0.2s ease",
+              }} />
+              <span style={{ fontSize: 11, fontWeight: isActive ? 600 : 400, color: isActive ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.25)" }}>
+                {s.label}
               </span>
-            )}
-          </div>
-        )}
-
-        {/* PRIMARY ACTION / TASK */}
-        <div data-testid="hero-advice-box">
-          <div style={{
-            fontSize: compact ? 18 : 20,
-            fontWeight: 700,
-            letterSpacing: "-0.03em",
-            color: "#fff",
-            lineHeight: 1.2,
-            margin: "8px 0 10px",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }} data-testid="hero-advice-text">
-            {current.primaryAction}
-          </div>
-          {current.heroReason && current.heroReason !== current.reason && (
-            <div style={{ color: "rgba(255,255,255,0.68)", fontSize: 14, lineHeight: 1.4 }} data-testid="hero-recap-reason">
-              {current.heroReason}
             </div>
-          )}
-        </div>
-
-        {/* META: Owner */}
-        <div className="mt-2 flex items-center gap-2" data-testid="hero-meta-line">
-          <span className="text-[10px] font-bold px-2 py-1 rounded-md" style={{
-            background: ownerLabel === 'You' ? 'rgba(25,195,178,0.12)' : 'rgba(93,135,255,0.12)',
-            color: ownerLabel === 'You' ? '#8df0e6' : '#8facff',
-          }}>
-            {ownerLabel}
-          </span>
-        </div>
-
-        {/* PROGRESS TRACK — premium inline dots */}
-        {!compact && rail && (
-          <div className="ds-progress-track" data-testid="hero-progress-rail">
-            {RAIL_STAGES.map((s, stIdx) => {
-              const isActive = stIdx === activeStageIdx;
-              const isPast = stIdx < activeStageIdx;
-              return (
-                <div key={s.key}
-                  className={`ds-progress-step${isActive ? " active" : ""}${isPast ? " past" : ""}`}
-                  onClick={() => p && navigate(`/pipeline/${p.program_id}`)}
-                  data-testid={`rail-stage-${s.key}`}
-                >
-                  <div className="ds-progress-dot" />
-                  {s.label}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* CTA ROW */}
-        <div style={{ display: "flex", gap: 12, marginTop: compact ? 8 : 4 }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (p) {
-                trackEvent("hero_action_clicked", {
-                  program_id: current.programId,
-                  school_name: p.university_name || "",
-                  priority_source: current.prioritySource || "live",
-                  recap_rank: current.recapRank || null,
-                  cta_label: current.ctaLabel || "View school",
-                  why_was_expanded: whyExpanded,
-                });
-                navigate(`/pipeline/${p.program_id}`);
-              }
-            }}
-            data-testid="hero-cta-btn"
-            className="ds-btn-primary"
-          >
-            {current.ctaLabel || "View school"} <ArrowRight className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); if (p) navigate(`/pipeline/${p.program_id}`); }}
-            data-testid="hero-secondary-btn"
-            className="ds-btn-secondary"
-          >
-            View details
-          </button>
-        </div>
-
-        {/* WHY THIS? — expandable explainability panel */}
-        {whyExpanded && current.explainFactors?.length > 0 && (
-          <div
-            data-testid="hero-why-panel"
-            className="mt-4 pt-3"
-            style={{
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              animation: "pm-why-in 180ms ease-out both",
-            }}
-          >
-            <div className="ds-eyebrow mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
-              Priority factors
-            </div>
-            {current.explainFactors.map((f, i) => {
-              const isOutranked = f.type === "recap-outranked";
-              const isStale = f.type === "recap-stale";
-              const isSecondary = isOutranked || isStale;
-              return (
-                <div key={i} className="flex items-center gap-2 mb-1.5" style={{
-                  fontSize: isSecondary ? 12 : 13,
-                  color: isOutranked ? "rgba(200,194,255,0.50)"
-                    : isStale ? "rgba(200,194,255,0.45)"
-                    : "rgba(255,255,255,0.65)",
-                  fontWeight: isSecondary ? 400 : 500,
-                  fontStyle: isSecondary ? "italic" : "normal",
-                  lineHeight: 1.5,
-                }}>
-                  <span style={{
-                    width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                    background: f.type === "overdue" || f.type === "due" ? "#ff6b7f"
-                      : f.type === "coach" ? "#ff9b52"
-                      : f.type === "recap" ? "#8b7bff"
-                      : f.type === "recap-outranked" || f.type === "recap-stale" ? "#c8c2ff"
-                      : f.type === "stale" ? "#5d87ff"
-                      : f.type === "risk" ? "#ff9b52"
-                      : "#9aa5b8",
-                    opacity: isSecondary ? 0.5 : 1,
-                  }} />
-                  {f.label}
-                </div>
-              );
-            })}
-          </div>
-        )}
+          );
+        })}
       </div>
+
+      {/* ── CTA row ── */}
+      <div style={{ display: "flex", gap: 10, position: "relative", zIndex: 1 }}>
+        <button
+          onClick={() => {
+            if (p) {
+              trackEvent("hero_action_clicked", {
+                program_id: current.programId,
+                school_name: p.university_name || "",
+                priority_source: current.prioritySource || "live",
+                recap_rank: current.recapRank || null,
+              });
+              navigate(`/pipeline/${p.program_id}`);
+            }
+          }}
+          data-testid="hero-cta-btn"
+          style={{
+            padding: "11px 20px", borderRadius: 14, fontSize: 14, fontWeight: 600,
+            background: "linear-gradient(135deg, #19c3b2, #4d7cff)",
+            color: "#fff", border: "none", cursor: "pointer", fontFamily: FONT,
+            display: "inline-flex", alignItems: "center", gap: 7,
+            boxShadow: "0 10px 24px rgba(25,195,178,0.22)",
+            transition: "transform 80ms ease, box-shadow 80ms ease",
+          }}
+        >
+          View School <ArrowRight size={15} />
+        </button>
+        <button
+          onClick={() => { setWhyExpanded(v => !v); if (!whyExpanded) trackEvent("hero_expanded_why", { program_id: current.programId }); }}
+          data-testid="hero-secondary-btn"
+          style={{
+            padding: "11px 20px", borderRadius: 14, fontSize: 14, fontWeight: 600,
+            background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.60)",
+            border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontFamily: FONT,
+            display: "inline-flex", alignItems: "center", gap: 7,
+            transition: "background 80ms ease",
+          }}
+        >
+          Why this?
+        </button>
+      </div>
+
+      {/* ── Why panel ── */}
+      {whyExpanded && current.explainFactors?.length > 0 && (
+        <div data-testid="hero-why-panel" style={{
+          marginTop: 22, paddingTop: 18,
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          position: "relative", zIndex: 1,
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.28)", marginBottom: 10 }}>
+            Priority factors
+          </div>
+          {current.explainFactors.map((f, i) => {
+            const isSecondary = f.type === "recap-outranked" || f.type === "recap-stale";
+            return (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
+                fontSize: 13, fontWeight: isSecondary ? 400 : 500, lineHeight: 1.5,
+                color: isSecondary ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.55)",
+                fontStyle: isSecondary ? "italic" : "normal",
+              }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                  background: f.type === "overdue" || f.type === "due" ? "#ff6b7f"
+                    : f.type === "coach" ? "#ff9b52"
+                    : f.type === "recap" ? "#8b7bff"
+                    : "#9aa5b8",
+                  opacity: isSecondary ? 0.4 : 0.8,
+                }} />
+                {f.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
-
-    {/* ── PEEK ROW ── */}
-    {peekItems.length > 0 && (
-      <div data-testid="peek-row" style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <span className="ds-eyebrow" style={{ color: "#9aa5b8", flexShrink: 0, fontSize: 10 }}>Also:</span>
-        {peekItems.map(({ item, filteredIdx }) => (
-          <button
-            key={item.programId}
-            onClick={() => transitionTo(() => setIdx(filteredIdx))}
-            data-testid={`peek-item-${item.programId}`}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 12,
-              fontSize: 13,
-              fontWeight: 600,
-              background: "rgba(255,255,255,0.72)",
-              color: "#13213a",
-              border: "1px solid rgba(20,37,68,0.08)",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              transition: "all 120ms ease-out",
-              whiteSpace: "nowrap",
-              boxShadow: "0 2px 8px rgba(19,33,58,0.06)",
-            }}
-          >
-            {item.program?.university_name} · {getShortAction(item)}
-          </button>
-        ))}
-      </div>
-    )}
-    </>
   );
 }

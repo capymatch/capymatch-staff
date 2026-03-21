@@ -71,30 +71,28 @@ function HighCard({ item }) {
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
-      background: "rgba(255,255,255,0.86)",
-      border: "1px solid rgba(20,37,68,0.08)",
-      borderRadius: 22, overflow: "hidden",
-      boxShadow: "inset 4px 0 0 #ff6b7f, 0 10px 30px rgba(19, 33, 58, 0.08)",
-      transition: "transform 120ms ease, box-shadow 120ms ease",
-      cursor: "pointer", position: "relative",
+      background: "#fff",
+      border: "1px solid rgba(20,37,68,0.06)",
+      borderRadius: 16, overflow: "hidden",
+      borderLeft: "4px solid #ff6b7f",
+      boxShadow: "0 2px 8px rgba(19, 33, 58, 0.04)",
+      transition: "transform 100ms ease, box-shadow 100ms ease",
+      cursor: "pointer", fontFamily: FONT,
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "inset 4px 0 0 #ff6b7f, 0 14px 36px rgba(19,33,58,0.12)"; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "inset 4px 0 0 #ff6b7f, 0 10px 30px rgba(19,33,58,0.08)"; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(19,33,58,0.07)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(19, 33, 58, 0.04)"; }}
     >
-      <div style={{ padding: "18px 20px 14px" }}>
-        {/* Tiny label */}
-        <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.15em", color: "#cc475d", fontWeight: 700, marginBottom: 10 }}>Act now</div>
-        {/* Top: logo + school + timing */}
+      <div style={{ padding: "18px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.9)",
+            width: 36, height: 36, borderRadius: 10, background: "#fafbfd",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            border: "1px solid rgba(20,37,68,0.06)", overflow: "hidden",
+            border: "1px solid rgba(20,37,68,0.05)", overflow: "hidden",
           }}>
             <LogoBox domain={prog.domain} name={prog.university_name} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "#13213a", letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: "#13213a", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {prog.university_name}
             </div>
             <SchoolMeta program={prog} />
@@ -104,32 +102,19 @@ function HighCard({ item }) {
 
         <MiniRail journeyRail={prog.journey_rail} />
 
-        {/* Action row */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          paddingTop: 12, marginTop: 12,
-          borderTop: "1px solid rgba(20,37,68,0.06)",
-        }}>
-          <div style={{
-            width: 22, height: 22, borderRadius: 7, flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(255,107,127,0.08)", color: "#ff6b7f",
-          }}>
-            <AlertCircle style={{ width: 12, height: 12 }} />
-          </div>
+        {/* Reason + CTA */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
           <span data-testid={`priority-action-${prog.program_id}`} style={{
-            flex: 1, fontSize: 14, fontWeight: 600, lineHeight: 1.4,
-            color: "#5f6c84",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            flex: 1, fontSize: 14, fontWeight: 400, lineHeight: 1.45, color: "#5f6c84",
           }}>{primaryAction}</span>
           <button data-testid={`cta-btn-${prog.program_id}`} style={{
-            fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
-            padding: "8px 14px", borderRadius: 14, flexShrink: 0,
+            fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer",
+            padding: "9px 16px", borderRadius: 12, flexShrink: 0,
             display: "flex", alignItems: "center", gap: 5,
-            background: "linear-gradient(135deg, #19c3b2, #5d87ff)", color: "#fff",
-            fontFamily: "inherit", boxShadow: "0 8px 20px rgba(29,160,191,0.20)",
+            background: "linear-gradient(135deg, #19c3b2, #4d7cff)", color: "#fff",
+            fontFamily: FONT, boxShadow: "0 6px 16px rgba(25,195,178,0.18)",
           }}>
-            {ctaLabel || "Take Action"} <ArrowRight style={{ width: 13, height: 13 }} />
+            View School <ArrowRight style={{ width: 13, height: 13 }} />
           </button>
         </div>
       </div>
