@@ -353,14 +353,14 @@ function MonitorRow({ item, navigate }) {
 }
 
 /* ── Swipeable wrapper with reinforcement ── */
-function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
+function SwipePriorityCard({ item, navigate, section, heroSet }) {
   const prog = item.program;
   const programId = prog?.program_id;
   const [burstActive, setBurstActive] = useState(false);
   const [burstColor, setBurstColor] = useState(PARTICLE_COLORS.neutral);
 
   const fireReinforcement = useCallback(() => {
-    const isActualHero = programId === heroProgramId;
+    const isActualHero = heroSet.has(programId);
     const isHigh = item.attentionLevel === "high";
     const isRecapTop = item.recapRank === "top";
     const ctx = {
@@ -387,7 +387,7 @@ function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
     setBurstColor(color);
     setBurstActive(true);
     triggerReinforcement(ctx);
-  }, [item, prog, programId, heroProgramId]);
+  }, [item, prog, programId, heroSet]);
 
   const handleAction = useCallback(() => {
     fireReinforcement();
@@ -415,7 +415,7 @@ function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
     return (
       <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel="View school" programId={programId}>
         <ParticleBurst active={burstActive} color={burstColor} onComplete={handleBurstComplete}>
-          <div onClick={handleTap}><ActNowCard item={item} isHeroPriority={programId === heroProgramId} /></div>
+          <div onClick={handleTap}><ActNowCard item={item} isHeroPriority={heroSet.has(programId)} /></div>
         </ParticleBurst>
       </SwipeableCard>
     );
@@ -447,9 +447,10 @@ function SectionLabel({ label, count, color }) {
   );
 }
 
-export default function PriorityBoard({ items, navigate, heroProgramId }) {
-  const high = items.filter(i => i.attentionLevel === "high" && i.programId !== heroProgramId);
-  const medium = items.filter(i => i.attentionLevel === "medium");
+export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
+  const heroSet = new Set(heroItemIds);
+  const high = items.filter(i => i.attentionLevel === "high" && !heroSet.has(i.programId));
+  const medium = items.filter(i => i.attentionLevel === "medium" && !heroSet.has(i.programId));
   const low = items.filter(i => i.attentionLevel === "low");
   const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0;
   const [monitorCollapsed, setMonitorCollapsed] = useState(low.length > 4);
@@ -476,7 +477,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
           <div data-testid="priority-section-attention">
             <SectionLabel label="Next actions" count={high.length} color="#ef4444" />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="act-now" heroProgramId={heroProgramId} />)}
+              {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="act-now" heroSet={heroSet} />)}
             </div>
           </div>
         )}
@@ -487,7 +488,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
             <SectionLabel label="Keep things moving" count={medium.length} color="#f59e0b" />
             {medium.length > 0 ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="momentum" heroProgramId={heroProgramId} />)}
+                {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="momentum" heroSet={heroSet} />)}
               </div>
             ) : (
               <div style={{ padding: "14px 4px", fontSize: 13, color: "#94a3b8", fontWeight: 400 }} data-testid="empty-state-coming-up">No upcoming actions</div>
@@ -514,7 +515,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
           {!monitorCollapsed && (
             low.length > 0 ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {low.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="monitor" heroProgramId={heroProgramId} />)}
+                {low.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="monitor" heroSet={heroSet} />)}
               </div>
             ) : (
               <div style={{ padding: "14px 4px", fontSize: 13, color: "#94a3b8", fontWeight: 400 }} data-testid="empty-state-on-track">No programs to monitor yet</div>
