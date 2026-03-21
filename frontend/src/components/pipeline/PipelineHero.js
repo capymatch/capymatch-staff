@@ -229,10 +229,10 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       </div>
 
       {/* ── SLIDE CONTENT ── */}
-      <div className={`relative z-[1] ds-hero-content ${slideClass} px-4 sm:px-7 py-4 sm:py-6`}
+      <div className={`relative z-[1] ds-hero-content ${slideClass} px-4 sm:px-6 py-3 sm:py-4`}
       >
         {/* BADGE ROW — max 2 badges: priority + timing */}
-        <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-status-row">
+        <div className="flex items-center gap-2 flex-wrap mb-2.5" data-testid="hero-status-row">
           <span className="ds-badge" style={{
             background: "rgba(239,68,68,0.12)",
             color: "#fca5a5",
@@ -261,7 +261,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                 className="rounded-lg flex-shrink-0"
               />
             )}
-            <h3 className="text-[22px] sm:text-[30px]" style={{ fontWeight: 600, color: "#fff", letterSpacing: "-0.045em", margin: "0 0 8px", lineHeight: 1.02 }} data-testid="hero-school-name">
+            <h3 className="text-[18px] sm:text-[22px]" style={{ fontWeight: 600, color: "#fff", letterSpacing: "-0.04em", margin: 0, lineHeight: 1.1 }} data-testid="hero-school-name">
               {p?.university_name || "School"}
             </h3>
           </div>
@@ -270,12 +270,12 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         {/* PRIMARY ACTION / TASK */}
         <div data-testid="hero-advice-box">
           <div style={{
-            fontSize: compact ? 18 : 20,
+            fontSize: compact ? 15 : 16,
             fontWeight: 500,
-            letterSpacing: "-0.03em",
+            letterSpacing: "-0.02em",
             color: "#fff",
-            lineHeight: 1.2,
-            margin: "8px 0 10px",
+            lineHeight: 1.3,
+            margin: "6px 0 6px",
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
@@ -284,7 +284,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             {current.primaryAction || ""}
           </div>
           {/* Context line */}
-          <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-descriptive-reason">
+          <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 13, fontWeight: 400, lineHeight: 1.4 }} data-testid="hero-descriptive-reason">
             {(() => {
               const hr = (current.heroReason || "").trim();
               if (hr) return hr;
@@ -298,7 +298,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
           {/* Coach signal — human-readable, not a badge */}
           {current.topAction?.category === 'coach_flag' && (
-            <div style={{ color: "rgba(255,255,255,0.38)", fontSize: 13, fontWeight: 400, lineHeight: 1.45, marginTop: 4 }} data-testid="hero-coach-signal">
+            <div style={{ color: "rgba(255,255,255,0.38)", fontSize: 12, fontWeight: 400, lineHeight: 1.4, marginTop: 2 }} data-testid="hero-coach-signal">
               Coach is expecting a response
             </div>
           )}
@@ -320,7 +320,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         {/* PROGRESS TRACK — premium inline dots */}
         {!compact && rail && (
           <>
-          <div className="ds-eyebrow mt-4 mb-1" style={{ color: "rgba(255,255,255,0.30)", fontSize: 10, letterSpacing: "0.1em" }}>
+          <div className="ds-eyebrow mt-3 mb-0.5" style={{ color: "rgba(255,255,255,0.30)", fontSize: 9, letterSpacing: "0.1em" }}>
             Where you are right now
           </div>
           <div className="ds-progress-track" data-testid="hero-progress-rail">
@@ -343,7 +343,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         )}
 
         {/* CTA ROW */}
-        <div className="flex items-center gap-4 mt-4 sm:mt-4">
+        <div className="flex items-center gap-4 mt-3">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -359,7 +359,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               }
             }}
             data-testid="hero-cta-btn"
-            className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-3 sm:px-5"
+            className="ds-btn-primary text-[12px] sm:text-[13px] py-2 px-3.5 sm:py-2 sm:px-4"
           >
             {current.ctaLabel || "Open school"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
@@ -367,7 +367,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
         {/* Carousel dot indicators */}
         {total > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 16 }} data-testid="hero-carousel-dots">
+          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 10 }} data-testid="hero-carousel-dots">
             {Array.from({ length: total }).map((_, i) => (
               <button key={i} onClick={() => { setIdx(i); setFilter("all"); }} style={{
                 width: i === safeIdx ? 16 : 6, height: 6, borderRadius: 3,
