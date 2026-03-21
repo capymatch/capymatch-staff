@@ -149,7 +149,8 @@ function TractionItem({ item, accentColor }) {
 
 /* ── Main PriorityBoard ── */
 export default function PriorityBoard({ items, navigate, heroItemIds = [], recapData }) {
-  const priorities = recapData?.priorities || [];
+  const heroSet = new Set(heroItemIds);
+  const priorities = (recapData?.priorities || []).filter(p => !heroSet.has(p.program_id));
   const hasPriorities = priorities.length > 0;
 
   /* Momentum data */
