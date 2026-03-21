@@ -117,7 +117,7 @@ function PriorityItem({ priority, navigate }) {
           <span style={{ color: cfg.accent, marginRight: 4 }}>&rarr;</span>{priority.reason}
         </div>
         {priority.urgency_note && (
-          <div data-testid="urgency-note" style={{ fontSize: 11, fontWeight: 500, color: cfg.color, marginTop: 6, opacity: 0.8 }}>
+          <div data-testid="urgency-note" style={{ fontSize: 11, fontWeight: 400, color: "#94a3b8", marginTop: 6, fontStyle: "italic" }}>
             {priority.urgency_note}
           </div>
         )}
@@ -269,8 +269,8 @@ export default function RecapPage() {
         {/* Section 3: Momentum Shift — LIGHTER context (excludes top priority) */}
         {(heated.length > 0 || steady.length > 0 || cooling.length > 0) && (
           <div ref={sectionRef("momentum_shift")} data-testid="momentum-shift-section" style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 14 }}>
-              Momentum Shift
+            <div style={{ fontSize: 11, fontWeight: 500, color: "#64748b", letterSpacing: "0.01em", marginBottom: 14 }}>
+              Where you're gaining traction
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <MomentumGroup category="heated_up" items={heated} navigate={navigate} />

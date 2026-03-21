@@ -160,7 +160,7 @@ def _generate_priorities(momentum_items):
             "rank": "top",
             "school_name": top["school_name"],
             "program_id": top["program_id"],
-            "action": f"Re-engage with {top['school_name']}",
+            "action": f"Re-engage {top['school_name']}",
             "reason": reason,
             "urgency_note": "This is your most important action right now",
         })
@@ -182,16 +182,16 @@ def _generate_priorities(momentum_items):
         0 if m["category"] == "heated_up" else 1 if m["category"] == "cooling_off" else 2
     ))
     _sec_variants_heated = [
-        lambda name, m: (f"Follow up with {name}", "Campus visit completed — keep the conversation active this week") if "Campus visit" in m.get("what_changed", "") else None,
-        lambda name, m: (f"Keep pushing {name}", "Coach replied — respond within 48 hours") if m.get("has_coach_reply") else None,
-        lambda name, m: (f"Follow up with {name}", "Active dialogue — keep the conversation active this week"),
-        lambda name, m: (f"Send your first follow-up to {name}", "New in your pipeline — make a strong first impression"),
+        lambda name, m: (f"Follow up with {name}", "Keep the conversation active this week") if "Campus visit" in m.get("what_changed", "") else None,
+        lambda name, m: (f"Keep pushing {name}", "Respond within 48 hours") if m.get("has_coach_reply") else None,
+        lambda name, m: (f"Follow up with {name}", "Keep the conversation active this week"),
+        lambda name, m: (f"Send your first follow-up to {name}", "Make a strong first impression"),
     ]
     _sec_variants_cooling = [
-        lambda name, m: (f"Check in with {name}", "No recent activity — send a message this week"),
+        lambda name, m: (f"Check in with {name}", "Send a message this week"),
     ]
     _sec_variants_steady = [
-        lambda name, m: (f"Maintain contact with {name}", "Steady engagement — don't let it slip"),
+        lambda name, m: (f"Maintain contact with {name}", "Don't let it slip"),
     ]
     sec_idx = 0
     for item in secondary_pool[:2]:
@@ -288,12 +288,17 @@ def _build_insight_bullets(momentum_items):
 
     for m in heated:
         changes = m.get("what_changed", "")
+        stage = m.get("current_stage", "")
         if "Campus visit" in changes:
             bullets.append(f"{m['school_name']} gained momentum after your visit")
         elif m.get("has_coach_reply"):
             bullets.append(f"{m['school_name']} is heating up — coach replied")
+        elif stage == "added":
+            bullets.append(f"{m['school_name']} is heating up after being recently added")
+        elif "Active dialogue" in changes or "dialogue" in changes.lower():
+            bullets.append(f"{m['school_name']} is heating up through active conversations")
         else:
-            bullets.append(f"{m['school_name']} is heating up")
+            bullets.append(f"{m['school_name']} is gaining traction")
 
     for m in cooling:
         days = m.get("days_since_last")

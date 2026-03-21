@@ -1,6 +1,9 @@
 """
-Test suite for Momentum Recap API endpoint - Final Polish Refinements (Iteration 216)
+Test suite for Momentum Recap API endpoint - Production Polish (Iteration 217)
 Tests the /api/athlete/momentum-recap endpoint for:
+- Top priority action is 'Re-engage Emory University' (no 'with')
+- Secondary reasons are clean without redundant prefixes
+- ai_insights bullets are contextual (Florida='through active conversations', UCLA='after being recently added')
 - Hero names specific school (Emory) instead of generic count
 - Biggest shift uses conversational format ("has gone quiet (9 days)")
 - Top priority has urgency_note field
@@ -322,6 +325,110 @@ class TestMomentumRecapAPI:
         for i, p in enumerate(secondary_priorities):
             print(f"  {i+1}. Action: {p['action']}")
             print(f"     Reason: {p['reason']}")
+    
+    def test_top_priority_action_no_with_prefix(self, recap_data):
+        """NEW 217: Test that top priority action is 'Re-engage Emory University' NOT 'Re-engage with Emory University'"""
+        priorities = recap_data["priorities"]
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find top priority
+        top_priorities = [p for p in priorities if p.get("rank") == "top"]
+        
+        if not top_priorities:
+            pytest.skip("No top priority found")
+        
+        top = top_priorities[0]
+        action = top.get("action", "")
+        
+        # Should NOT contain "Re-engage with" - should be "Re-engage {school}"
+        assert "Re-engage with" not in action, \
+            f"Top priority action should NOT contain 'with': {action}"
+        
+        # If it's a re-engage action, verify format
+        if "Re-engage" in action:
+            # Should be "Re-engage {school_name}" format
+            expected_format = f"Re-engage {top['school_name']}"
+            assert action == expected_format, \
+                f"Expected '{expected_format}', got '{action}'"
+        
+        print(f"✓ Top priority action format correct: {action}")
+    
+    def test_secondary_reasons_no_redundant_prefix(self, recap_data):
+        """NEW 217: Test that secondary reasons are clean without redundant context prefixes"""
+        priorities = recap_data["priorities"]
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find secondary priorities
+        secondary_priorities = [p for p in priorities if p.get("rank") == "secondary"]
+        
+        if not secondary_priorities:
+            pytest.skip("No secondary priorities found")
+        
+        for p in secondary_priorities:
+            reason = p.get("reason", "")
+            school = p.get("school_name", "")
+            
+            # Should NOT have redundant prefixes like "Campus visit completed — "
+            redundant_prefixes = [
+                "Campus visit completed —",
+                "Campus visit completed -",
+                "Coach replied —",
+                "Coach replied -",
+            ]
+            
+            for prefix in redundant_prefixes:
+                assert prefix not in reason, \
+                    f"Secondary reason for {school} has redundant prefix: {reason}"
+            
+            print(f"✓ {school} reason is clean: {reason}")
+    
+    def test_ai_insights_contextual_florida(self, recap_data):
+        """NEW 217: Test that Florida insight is 'is heating up through active conversations'"""
+        ai_insights = recap_data.get("ai_insights", [])
+        
+        if not ai_insights:
+            pytest.skip("No ai_insights to test")
+        
+        # Find Florida insight
+        florida_insights = [b for b in ai_insights if "Florida" in b]
+        
+        if not florida_insights:
+            print("✓ No Florida insight found (may not be in heated_up)")
+            return
+        
+        florida_insight = florida_insights[0]
+        
+        # Should contain "through active conversations" NOT just "is heating up"
+        assert "through active conversations" in florida_insight, \
+            f"Florida insight should be contextual: {florida_insight}"
+        
+        print(f"✓ Florida insight is contextual: {florida_insight}")
+    
+    def test_ai_insights_contextual_ucla(self, recap_data):
+        """NEW 217: Test that UCLA insight is 'is heating up after being recently added'"""
+        ai_insights = recap_data.get("ai_insights", [])
+        
+        if not ai_insights:
+            pytest.skip("No ai_insights to test")
+        
+        # Find UCLA insight
+        ucla_insights = [b for b in ai_insights if "UCLA" in b]
+        
+        if not ucla_insights:
+            print("✓ No UCLA insight found (may not be in heated_up)")
+            return
+        
+        ucla_insight = ucla_insights[0]
+        
+        # Should contain "after being recently added" NOT just "is heating up"
+        assert "after being recently added" in ucla_insight, \
+            f"UCLA insight should be contextual: {ucla_insight}"
+        
+        print(f"✓ UCLA insight is contextual: {ucla_insight}")
     
     def test_momentum_recap_has_ai_summary(self, recap_data):
         """Test that response contains ai_summary field (backward compat)"""
