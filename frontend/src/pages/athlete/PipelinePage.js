@@ -16,6 +16,7 @@ import PriorityBoard from "../../components/pipeline/PriorityBoard";
 import PipelineStyles from "../../components/pipeline/PipelineStyles";
 import UpcomingTasksSection from "../../components/pipeline/UpcomingTasksSection";
 import CommittedBanner from "../../components/pipeline/CommittedBanner";
+import "../../components/pipeline/pipeline-responsive.css";
 import RecapTeaser from "../../components/pipeline/RecapTeaser";
 import MomentumInsight from "../../components/pipeline/MomentumInsight";
 import PipelineList from "../../components/pipeline/PipelineList";
@@ -201,16 +202,16 @@ export default function PipelinePage() {
   const nearLimit = schoolPct >= 0.8;
 
   return (
-    <div className="pipeline-premium" style={{ maxWidth: 1120, margin: "0 auto", padding: "0 4px" }} data-testid="recruiting-board">
+    <div className="pipeline-premium px-3 sm:px-1" style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER ═══ */}
-      <div className="flex items-start justify-between gap-4 mb-6 sm:mb-8" data-testid="pipeline-header">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-5 sm:mb-8" data-testid="pipeline-header">
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.03em", color: "#13213a", margin: "0 0 8px" }}>
+          <h1 className="text-xl sm:text-[28px]" style={{ fontWeight: 600, letterSpacing: "-0.03em", color: "#13213a", margin: 0 }}>
             Your recruiting right now
           </h1>
-          <p style={{ fontSize: 15, fontWeight: 400, color: "#64748b", margin: 0, lineHeight: 1.5 }} data-testid="summary-chips">
+          <p className="text-[13px] sm:text-[15px] mt-1.5 sm:mt-2" style={{ fontWeight: 400, color: "#64748b", lineHeight: 1.5 }} data-testid="summary-chips">
             {highCount > 0 && <>{highCount} needs attention</>}
             {highCount > 0 && medCount > 0 && <span style={{ margin: "0 6px", color: "#cbd5e1" }}>&middot;</span>}
             {medCount > 0 && <>{medCount} gaining momentum</>}

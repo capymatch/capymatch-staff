@@ -63,6 +63,7 @@ export default function PipelineList({ programs, attentionMap, matchScores, navi
                 cursor: "pointer",
                 transition: "background 80ms ease",
               }}
+              className="pipeline-list-row"
               onMouseEnter={e => { e.currentTarget.style.background = "#fafbfd"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
             >

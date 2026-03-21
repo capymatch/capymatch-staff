@@ -1,0 +1,119 @@
+/* ═══ Pipeline Responsive Overrides ═══ */
+
+@media (max-width: 640px) {
+  /* Hero card */
+  [data-testid="pipeline-hero"] {
+    border-radius: 18px !important;
+  }
+
+  /* Slide content — reduce padding */
+  .ds-hero-content {
+    padding: 16px 16px 18px !important;
+  }
+
+  /* School name */
+  [data-testid="hero-school-name"] {
+    font-size: 20px !important;
+    letter-spacing: -0.03em !important;
+  }
+
+  /* Action text */
+  [data-testid="hero-advice-text"] {
+    font-size: 16px !important;
+  }
+
+  /* Recap reason */
+  [data-testid="hero-recap-reason"] {
+    font-size: 13px !important;
+  }
+
+  /* Match score */
+  [data-testid="hero-match-score"] {
+    font-size: 12px !important;
+  }
+
+  /* Progress rail */
+  .ds-progress-track {
+    gap: 2px !important;
+  }
+  .ds-progress-step {
+    font-size: 9px !important;
+  }
+
+  /* CTA buttons — full width stack on mobile */
+  [data-testid="hero-cta-btn"],
+  [data-testid="hero-secondary-btn"] {
+    font-size: 13px !important;
+    padding: 10px 16px !important;
+  }
+
+  /* Badges smaller */
+  .ds-badge {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  /* Filter pills smaller */
+  [data-testid="hero-filter-pills"] .pm-pill {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+  }
+  [data-testid="hero-filter-pills"] .pm-pill-badge {
+    font-size: 10px !important;
+    padding: 1px 5px !important;
+  }
+
+  /* Carousel nav buttons smaller */
+  [data-testid="hero-carousel-nav"] button {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Momentum Insight */
+  [data-testid="recap-teaser"] {
+    padding: 18px 16px !important;
+    border-radius: 14px !important;
+    margin-top: 24px !important;
+    margin-bottom: 24px !important;
+  }
+
+  /* Priority Board cards */
+  [data-testid^="priority-card-"] {
+    border-radius: 12px !important;
+  }
+
+  /* Pipeline List — simplified on mobile */
+  .pipeline-list-row,
+  [data-testid^="pipeline-list-row-"] {
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 4px 8px !important;
+    padding: 10px 12px !important;
+  }
+  .pipeline-list-row > *:nth-child(2),
+  .pipeline-list-row > *:nth-child(3),
+  .pipeline-list-row > *:nth-child(4),
+  [data-testid^="pipeline-list-row-"] > *:nth-child(2),
+  [data-testid^="pipeline-list-row-"] > *:nth-child(3),
+  [data-testid^="pipeline-list-row-"] > *:nth-child(4) {
+    display: none !important;
+  }
+}
+
+/* Tablet responsive */
+@media (max-width: 768px) and (min-width: 641px) {
+  [data-testid="pipeline-hero"] {
+    border-radius: 22px !important;
+  }
+  .ds-hero-content {
+    padding: 18px 22px 20px !important;
+  }
+  [data-testid="hero-school-name"] {
+    font-size: 24px !important;
+  }
+  [data-testid^="pipeline-list-row-"] {
+    grid-template-columns: 1fr 70px 80px 1fr auto !important;
+    gap: 10px !important;
+  }
+}
