@@ -19,6 +19,7 @@ import CommittedBanner from "../../components/pipeline/CommittedBanner";
 import "../../components/pipeline/pipeline-responsive.css";
 // RecapTeaser removed — recap content merged into PriorityBoard
 import MomentumInsight from "../../components/pipeline/MomentumInsight";
+import BreakdownDrawer from "../../components/pipeline/BreakdownDrawer";
 import { KANBAN_COLS, COL_TO_STAGE } from "../../components/pipeline/pipeline-constants";
 import { computeAllAttention } from "../../lib/computeAttention";
 import "../../components/pipeline/pipeline-motion.css";
@@ -39,6 +40,7 @@ export default function PipelinePage() {
   const [pulsingColumnId, setPulsingColumnId] = useState(null);
   const [activeDragId, setActiveDragId] = useState(null);
   const [recapData, setRecapData] = useState(null);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [viewMode, setViewMode] = useState(() => {
     try { return localStorage.getItem('capymatch_view_mode') || 'priority'; }
     catch { return 'priority'; }
@@ -225,7 +227,7 @@ export default function PipelinePage() {
       </div>
 
       {/* ═══ CONTEXT LAYER: Live Summary ═══ */}
-      {viewMode === "priority" && <MomentumInsight attention={allAttention} />}
+      {viewMode === "priority" && <MomentumInsight attention={allAttention} recapData={recapData} onViewBreakdown={() => setBreakdownOpen(true)} />}
 
       {/* ═══ HERO ═══ */}
       <div style={{ marginBottom: 24 }}>
@@ -296,6 +298,14 @@ export default function PipelinePage() {
 
       {/* Action Reinforcement Toast — portal-based, listens for triggerReinforcement events */}
       <ReinforcementToast />
+
+      {/* ═══ FULL BREAKDOWN DRAWER ═══ */}
+      <BreakdownDrawer
+        isOpen={breakdownOpen}
+        onClose={() => setBreakdownOpen(false)}
+        recapData={recapData}
+        attentionItems={allAttention}
+      />
     </div>
   );
 }
