@@ -236,10 +236,10 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         {/* BADGE ROW */}
         <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-status-row">
           <span className="ds-badge" style={{
-            background: style.badgeBg,
-            color: style.badgeText,
-          }} data-testid="hero-category-label">
-            {style.label}
+            background: "rgba(239,68,68,0.12)",
+            color: "#fca5a5",
+          }} data-testid="hero-top-priority-badge">
+            Top Priority
           </span>
           {current.timingLabel && (
             <span className="ds-badge" style={{
@@ -263,16 +263,15 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                 className="rounded-lg flex-shrink-0"
               />
             )}
-            <h3 className="text-[22px] sm:text-[30px]" style={{ fontWeight: 600, color: "#fff", letterSpacing: "-0.045em", margin: 0, lineHeight: 1.02 }} data-testid="hero-school-name">
+            <h3 className="text-[22px] sm:text-[30px]" style={{ fontWeight: 600, color: "#fff", letterSpacing: "-0.045em", margin: "0 0 8px", lineHeight: 1.02 }} data-testid="hero-school-name">
               {p?.university_name || "School"}
             </h3>
             {matchPct != null && (
               <span className="flex-shrink-0" style={{
-                fontSize: 14, fontWeight: 500,
-                color: matchPct >= 80 ? "#8df0e6" : matchPct >= 60 ? "#ffd29f" : "#9aa5b8",
-                opacity: 0.8,
+                fontSize: 12, fontWeight: 500,
+                color: "rgba(255,255,255,0.40)",
               }} data-testid="hero-match-score">
-                {matchPct}%
+                Match {matchPct}%
               </span>
             )}
           </div>
@@ -292,7 +291,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
           }} data-testid="hero-advice-text">
-            {current.primaryAction}
+            {(current.primaryAction || "").replace(/\bwith\s+/i, "")}
           </div>
           {/* Descriptive supporting text — never just repeat the timing badge */}
           {(() => {
@@ -309,7 +308,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             return (
               <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-descriptive-reason">
                 {current.attentionLevel === "high"
-                  ? `No activity in ${p?.signals?.days_since_activity || p?.signals?.days_since_last_activity || "several"} days — this is now your top priority`
+                  ? `No activity for ${p?.signals?.days_since_activity || p?.signals?.days_since_last_activity || "several"} days — now your top priority`
                   : current.attentionLevel === "medium"
                     ? "Recent engagement — follow up to keep momentum going"
                     : "Pipeline is on track — maintain your cadence"}
@@ -334,7 +333,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         {!compact && rail && (
           <>
           <div className="ds-eyebrow mt-4 mb-1" style={{ color: "rgba(255,255,255,0.30)", fontSize: 10, letterSpacing: "0.1em" }}>
-            Where you are in the process
+            Your recruiting stage
           </div>
           <div className="ds-progress-track" data-testid="hero-progress-rail">
             {RAIL_STAGES.map((s, stIdx) => {
@@ -356,7 +355,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         )}
 
         {/* CTA ROW */}
-        <div className="flex gap-2 sm:gap-3 mt-1 sm:mt-1">
+        <div className="flex items-center gap-4 mt-2 sm:mt-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -385,7 +384,15 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               if (next) trackEvent("hero_expanded_why", { program_id: current.programId });
             }}
             data-testid="hero-secondary-btn"
-            className="ds-btn-secondary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-3 sm:px-5"
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.40)",
+              fontFamily: "inherit", padding: 0,
+              display: "inline-flex", alignItems: "center", gap: 4,
+              transition: "color 120ms ease",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.40)"; }}
           >
             Why this?
           </button>

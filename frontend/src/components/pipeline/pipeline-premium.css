@@ -37,7 +37,7 @@
   height: 320px;
   right: -90px;
   top: -110px;
-  background: radial-gradient(circle, rgba(25,195,178,0.18), transparent 60%);
+  background: radial-gradient(circle, rgba(25,195,178,0.10), transparent 60%);
   border-radius: 999px;
   pointer-events: none;
 }
@@ -48,7 +48,7 @@
   height: 280px;
   left: -80px;
   bottom: -120px;
-  background: radial-gradient(circle, rgba(139,123,255,0.18), transparent 60%);
+  background: radial-gradient(circle, rgba(139,123,255,0.10), transparent 60%);
   border-radius: 999px;
   pointer-events: none;
 }
