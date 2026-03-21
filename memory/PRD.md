@@ -21,8 +21,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Swipeable cards with right-swipe (action) and left-swipe (snooze)
 - Three priority sections: Next Actions (high), Coming Up (medium), On Track (low)
 
-### Pipeline Summary + Breakdown Drawer (Mar 2026)
-- **Status**: COMPLETE & VERIFIED (16/16 frontend tests, iteration 230)
+### Journey Page Light Theme (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (18/18 frontend tests, iteration 231)
+- Converted Journey page from dark theme to Pipeline-matching light design
+- Header card: white with teal accent bar, dark text
+- PrimaryHeroCard: white with colored left accent border
+- ProgressRail: light track, colored stage dots
+- RadarStrip: white with subtle border
+- FloatingActionBar: white pill with teal Email CTA
+- Sidebar cards: CSS variables already light, no changes needed
+- No logic/data changes — purely visual
 - Enhanced Pipeline Summary card: headline, 3 status chips (live data), 1-2 momentum signals (risk + positive), "View full breakdown →" CTA
 - New right-side BreakdownDrawer: Pipeline Narrative (AI), Momentum Breakdown (gaining/cooling/holding), Per-School Explanation (max 3 reasons, plain language), Coaching Insights (max 3), freshness timestamp
 - Design principle: Main page = action, Drawer = explanation
