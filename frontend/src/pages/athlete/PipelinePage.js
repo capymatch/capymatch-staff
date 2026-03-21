@@ -19,7 +19,6 @@ import CommittedBanner from "../../components/pipeline/CommittedBanner";
 import "../../components/pipeline/pipeline-responsive.css";
 import RecapTeaser from "../../components/pipeline/RecapTeaser";
 import MomentumInsight from "../../components/pipeline/MomentumInsight";
-import PipelineList from "../../components/pipeline/PipelineList";
 import { KANBAN_COLS, COL_TO_STAGE } from "../../components/pipeline/pipeline-constants";
 import { computeAllAttention } from "../../lib/computeAttention";
 import "../../components/pipeline/pipeline-motion.css";
@@ -271,10 +270,7 @@ export default function PipelinePage() {
         {viewMode === 'pipeline' ? (
           <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
         ) : (
-          <>
-            <PriorityBoard items={allAttention} navigate={navigate} heroProgramId={allAttention[0]?.programId} />
-            <PipelineList programs={activePrograms} attentionMap={attentionMap} matchScores={matchScores} navigate={navigate} />
-          </>
+          <PriorityBoard items={allAttention} navigate={navigate} heroProgramId={allAttention[0]?.programId} />
         )}
       </div>
 
