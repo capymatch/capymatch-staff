@@ -249,31 +249,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               {current.timingLabel}
             </span>
           )}
-          {current.explainFactors?.length > 0 && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const next = !whyExpanded;
-                setWhyExpanded(next);
-                if (next) trackEvent("hero_expanded_why", {
-                  program_id: current.programId,
-                  priority_source: current.prioritySource || "live",
-                  factors_count: current.explainFactors?.length || 0,
-                });
-              }}
-              data-testid="hero-why-btn"
-              className="ds-badge"
-              style={{
-                background: whyExpanded ? "rgba(25,195,178,0.20)" : "rgba(25,195,178,0.14)",
-                color: "#b9fff8",
-                border: "none", cursor: "pointer", fontFamily: "inherit",
-                transition: "background 120ms ease",
-              }}
-            >
-              <Info size={11} />
-              Why this surfaced
-            </button>
-          )}
         </div>
 
         {/* SCHOOL NAME — large, prominent */}
