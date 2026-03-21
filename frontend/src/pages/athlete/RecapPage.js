@@ -4,21 +4,22 @@ import { ArrowLeft, Flame, Minus, Snowflake, Target, Eye, ChevronRight, Sparkles
 import { trackEvent } from "../../lib/analytics";
 
 const API = process.env.REACT_APP_BACKEND_URL;
+const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
 
 function getToken() {
   return localStorage.getItem("capymatch_token") || localStorage.getItem("token");
 }
 
 const CATEGORY_CONFIG = {
-  heated_up: { label: "Heated Up", icon: Flame, color: "#f97316", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.12)", dot: "#f97316" },
-  holding_steady: { label: "Holding Steady", icon: Minus, color: "#6b7280", bg: "rgba(107,114,128,0.05)", border: "rgba(107,114,128,0.1)", dot: "#9ca3af" },
-  cooling_off: { label: "Cooling Off", icon: Snowflake, color: "#3b82f6", bg: "rgba(59,130,246,0.05)", border: "rgba(59,130,246,0.1)", dot: "#60a5fa" },
+  heated_up: { label: "Heated Up", icon: Flame, color: "#f97316", accent: "#f97316", bg: "rgba(249,115,22,0.04)", border: "rgba(249,115,22,0.10)", dot: "#f97316" },
+  holding_steady: { label: "Holding Steady", icon: Minus, color: "#64748b", accent: "#94a3b8", bg: "rgba(107,114,128,0.03)", border: "rgba(107,114,128,0.08)", dot: "#94a3b8" },
+  cooling_off: { label: "Cooling Off", icon: Snowflake, color: "#3b82f6", accent: "#3b82f6", bg: "rgba(59,130,246,0.04)", border: "rgba(59,130,246,0.10)", dot: "#60a5fa" },
 };
 
 const RANK_CONFIG = {
-  top: { label: "Top Priority", icon: Target, color: "#dc2626", bg: "rgba(220,38,38,0.06)", border: "rgba(220,38,38,0.14)" },
-  secondary: { label: "Secondary", icon: ChevronRight, color: "#d97706", bg: "rgba(217,119,6,0.05)", border: "rgba(217,119,6,0.1)" },
-  watch: { label: "Watch", icon: Eye, color: "#6b7280", bg: "rgba(107,114,128,0.04)", border: "rgba(107,114,128,0.08)" },
+  top: { label: "Top Priority", icon: Target, color: "#dc2626", bg: "rgba(220,38,38,0.04)", border: "rgba(220,38,38,0.10)", accent: "#ef4444" },
+  secondary: { label: "Secondary", icon: ChevronRight, color: "#d97706", bg: "rgba(217,119,6,0.04)", border: "rgba(217,119,6,0.10)", accent: "#f59e0b" },
+  watch: { label: "Watch", icon: Eye, color: "#64748b", bg: "rgba(107,114,128,0.03)", border: "rgba(107,114,128,0.06)", accent: "#94a3b8" },
 };
 
 function MomentumGroup({ category, items, navigate }) {
@@ -27,12 +28,12 @@ function MomentumGroup({ category, items, navigate }) {
   const Icon = cfg.icon;
   return (
     <div data-testid={`momentum-group-${category}`}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
         <Icon size={14} color={cfg.color} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color, letterSpacing: "0.01em" }}>{cfg.label}</span>
-        <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, marginLeft: 2 }}>({items.length})</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: cfg.color, letterSpacing: "0.02em" }}>{cfg.label}</span>
+        <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400 }}>({items.length})</span>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {items.map((m) => (
           <div
             key={m.program_id}
@@ -45,22 +46,27 @@ function MomentumGroup({ category, items, navigate }) {
               navigate(`/pipeline/${m.program_id}`);
             }}
             style={{
-              background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 12,
-              padding: "12px 14px", cursor: "pointer",
-              transition: "transform 120ms ease, box-shadow 120ms ease",
+              background: "#fff",
+              border: "1px solid rgba(20,37,68,0.05)",
+              borderLeft: `3px solid ${cfg.accent}`,
+              borderRadius: 14,
+              padding: "14px 16px",
+              cursor: "pointer",
+              transition: "transform 80ms ease, box-shadow 80ms ease",
+              boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.dot, flexShrink: 0 }} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>{m.school_name}</span>
-              <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500, marginLeft: "auto" }}>{m.stage_label}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{m.school_name}</span>
+              <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, marginLeft: "auto" }}>{m.stage_label}</span>
             </div>
-            <div style={{ fontSize: 12, color: "#475569", fontWeight: 500, lineHeight: 1.4, paddingLeft: 14 }}>
+            <div style={{ fontSize: 13, color: "#334155", fontWeight: 400, lineHeight: 1.5, paddingLeft: 14 }}>
               {m.what_changed}
             </div>
-            <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, lineHeight: 1.4, paddingLeft: 14, marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 400, lineHeight: 1.45, paddingLeft: 14, marginTop: 3 }}>
               {m.why_it_matters}
             </div>
           </div>
@@ -84,29 +90,34 @@ function PriorityItem({ priority, navigate }) {
         navigate(`/pipeline/${priority.program_id}`);
       }}
       style={{
-        display: "flex", alignItems: "flex-start", gap: 10,
-        background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 12,
-        padding: "12px 14px", cursor: "pointer",
-        transition: "transform 120ms ease",
+        display: "flex", alignItems: "flex-start", gap: 12,
+        background: "#fff",
+        border: "1px solid rgba(20,37,68,0.05)",
+        borderLeft: `3px solid ${cfg.accent}`,
+        borderRadius: 14,
+        padding: "14px 16px",
+        cursor: "pointer",
+        transition: "transform 80ms ease, box-shadow 80ms ease",
+        boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = ""; }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
     >
       <div style={{
-        width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+        width: 30, height: 30, borderRadius: 9, flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
-        background: cfg.border,
+        background: cfg.bg, border: `1px solid ${cfg.border}`,
       }}>
         <Icon size={14} color={cfg.color} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 2 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 3 }}>
           {cfg.label}
         </div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b", lineHeight: 1.3 }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "#0f172a", lineHeight: 1.35 }}>
           {priority.action}
         </div>
-        <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, marginTop: 2 }}>
+        <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 400, marginTop: 3, lineHeight: 1.4 }}>
           {priority.reason}
         </div>
       </div>
@@ -148,10 +159,10 @@ export default function RecapPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: FONT }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 32, height: 32, border: "3px solid #e2e8f0", borderTopColor: "#1e293b", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-          <div style={{ fontSize: 13, color: "#64748b", fontWeight: 500 }}>Analyzing momentum...</div>
+          <div style={{ width: 28, height: 28, border: "3px solid #e2e8f0", borderTopColor: "#1e293b", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+          <div style={{ fontSize: 13, color: "#64748b", fontWeight: 400 }}>Analyzing momentum...</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
@@ -160,8 +171,8 @@ export default function RecapPage() {
 
   if (error) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
-        <div style={{ textAlign: "center", color: "#dc2626", fontSize: 14 }}>{error}</div>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", fontFamily: FONT }}>
+        <div style={{ textAlign: "center", color: "#dc2626", fontSize: 14, fontWeight: 400 }}>{error}</div>
       </div>
     );
   }
@@ -185,12 +196,12 @@ export default function RecapPage() {
   };
 
   return (
-    <div data-testid="recap-page" style={{ minHeight: "100vh", background: "#f8fafc" }}>
+    <div data-testid="recap-page" style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: FONT }}>
       {/* Header */}
       <div style={{
         position: "sticky", top: 0, zIndex: 20, background: "rgba(248,250,252,0.92)",
-        backdropFilter: "blur(12px)", borderBottom: "1px solid #f1f5f9",
-        padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
+        backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(20,37,68,0.05)",
+        padding: "14px 16px", display: "flex", alignItems: "center", gap: 12,
       }}>
         <button
           data-testid="recap-back-btn"
@@ -200,55 +211,59 @@ export default function RecapPage() {
           <ArrowLeft size={20} color="#475569" />
         </button>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Momentum Recap</div>
-          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>{period_label}</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#0f172a", lineHeight: 1.2 }}>Momentum Recap</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400, marginTop: 1 }}>{period_label}</div>
         </div>
       </div>
 
-      <div style={{ padding: "20px 16px 40px", maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ padding: "24px 16px 48px", maxWidth: 640, margin: "0 auto" }}>
         {/* Section 1: Recap Hero */}
         <div
           ref={sectionRef("hero")}
           data-testid="recap-hero"
           style={{
-            background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-            borderRadius: 16, padding: "24px 20px", marginBottom: 24,
+            background: "linear-gradient(135deg, #0f1c35 0%, #152547 50%, #1a2d5a 100%)",
+            borderRadius: 20, padding: "28px 24px", marginBottom: 36,
             position: "relative", overflow: "hidden",
+            boxShadow: "0 12px 40px rgba(15, 28, 53, 0.14)",
           }}
         >
           <div style={{
-            position: "absolute", top: -20, right: -20, width: 100, height: 100,
-            borderRadius: "50%", background: "rgba(99,102,241,0.08)",
+            position: "absolute", top: -30, right: -30, width: 140, height: 140,
+            borderRadius: "50%", background: "radial-gradient(circle, rgba(25,195,178,0.08), transparent 65%)",
+            pointerEvents: "none",
           }} />
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, position: "relative", zIndex: 1 }}>
             Pipeline Summary
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#f1f5f9", lineHeight: 1.4 }}>
+          <div style={{ fontSize: 18, fontWeight: 500, color: "rgba(255,255,255,0.90)", lineHeight: 1.5, position: "relative", zIndex: 1 }}>
             {recap_hero}
           </div>
           <div style={{
-            display: "flex", gap: 16, marginTop: 16, paddingTop: 14,
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            display: "flex", gap: 24, marginTop: 20, paddingTop: 16,
+            borderTop: "1px solid rgba(255,255,255,0.06)", position: "relative", zIndex: 1,
           }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#f97316" }}>{heated.length}</div>
-              <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}>Heated Up</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: "#f97316" }}>{heated.length}</div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 500, marginTop: 2 }}>Heated Up</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#9ca3af" }}>{steady.length}</div>
-              <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}>Steady</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: "rgba(255,255,255,0.50)" }}>{steady.length}</div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 500, marginTop: 2 }}>Steady</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#60a5fa" }}>{cooling.length}</div>
-              <div style={{ fontSize: 10, color: "#94a3b8", fontWeight: 500 }}>Cooling</div>
+              <div style={{ fontSize: 22, fontWeight: 600, color: "#60a5fa" }}>{cooling.length}</div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 500, marginTop: 2 }}>Cooling</div>
             </div>
           </div>
         </div>
 
         {/* Section 2: Momentum Shift */}
-        <div ref={sectionRef("momentum_shift")} style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 14 }}>Momentum Shift</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div ref={sectionRef("momentum_shift")} style={{ marginBottom: 36 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 16 }}>
+            Momentum Shift
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <MomentumGroup category="heated_up" items={heated} navigate={navigate} />
             <MomentumGroup category="holding_steady" items={steady} navigate={navigate} />
             <MomentumGroup category="cooling_off" items={cooling} navigate={navigate} />
@@ -256,8 +271,10 @@ export default function RecapPage() {
         </div>
 
         {/* Section 3: Priority Reset */}
-        <div ref={sectionRef("priority_reset")} style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 14 }}>Priority Reset</h2>
+        <div ref={sectionRef("priority_reset")} style={{ marginBottom: 36 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 16 }}>
+            Priority Reset
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {priorities.map((p, i) => (
               <PriorityItem key={i} priority={p} navigate={navigate} />
@@ -268,14 +285,16 @@ export default function RecapPage() {
         {/* Section 4: AI Summary */}
         {ai_summary && (
           <div ref={sectionRef("ai_summary")} data-testid="ai-summary" style={{
-            background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.1)",
-            borderRadius: 14, padding: "16px 18px",
+            background: "#fff",
+            border: "1px solid rgba(20,37,68,0.05)",
+            borderRadius: 16, padding: "20px 20px",
+            boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-              <Sparkles size={13} color="#818cf8" />
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#818cf8", textTransform: "uppercase", letterSpacing: "0.04em" }}>AI Insight</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+              <Sparkles size={13} color="#19c3b2" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#19c3b2", textTransform: "uppercase", letterSpacing: "0.06em" }}>AI Insight</span>
             </div>
-            <div style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.6, fontWeight: 500 }}>
+            <div style={{ fontSize: 14, color: "#334155", lineHeight: 1.6, fontWeight: 400 }}>
               {ai_summary}
             </div>
           </div>
