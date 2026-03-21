@@ -46,7 +46,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState("idle");
   const [swipeDir, setSwipeDir] = useState(null);
-  const [compact, setCompact] = useState(false);
   const [whyExpanded, setWhyExpanded] = useState(false);
   const heroRef = useRef(null);
   const pendingRef = useRef(null);
@@ -96,16 +95,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     }
   }, [goTo]);
 
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setCompact(entry.intersectionRatio < 0.85),
-      { threshold: [0.85, 1] }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  /* Compact mode disabled — card stays full size on scroll */
+  const compact = false;
 
   const prevTrackedRef = useRef(null);
   const highItems = (heroItems || []).filter(h => h.attentionLevel === 'high');
