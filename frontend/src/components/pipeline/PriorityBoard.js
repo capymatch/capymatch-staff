@@ -48,6 +48,81 @@ function MiniRail({ journeyRail }) {
 }
 
 /* ═══════════════════════════════════════════════
+   HERO PRIORITY CARD (dark, inline — top of list)
+   ═══════════════════════════════════════════════ */
+function HeroPriorityCard({ item, navigate }) {
+  const { primaryAction, timingLabel, program: prog } = item;
+  const reason = item.reason || item.heroReason || timingLabel || "Needs your attention";
+
+  return (
+    <div
+      data-testid={`hero-priority-card-${prog.program_id}`}
+      onClick={() => navigate(`/pipeline/${prog.program_id}`)}
+      style={{
+        background: "linear-gradient(135deg, #0f1c35 0%, #152547 50%, #1a2d5a 100%)",
+        borderRadius: 18, padding: "24px 24px", marginBottom: 24,
+        position: "relative", overflow: "hidden", cursor: "pointer",
+        boxShadow: "0 8px 28px rgba(15, 28, 53, 0.12)",
+        transition: "transform 80ms ease, box-shadow 80ms ease",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 12px 36px rgba(15,28,53,0.18)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 8px 28px rgba(15,28,53,0.12)"; }}
+    >
+      <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "radial-gradient(circle, rgba(239,68,68,0.06), transparent 65%)", pointerEvents: "none" }} />
+
+      {/* Header */}
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+            <UniversityLogo domain={prog.domain} name={prog.university_name} size={26} className="rounded" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 600, color: "rgba(255,255,255,0.95)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {prog.university_name}
+            </div>
+          </div>
+        </div>
+        {timingLabel && (
+          <div style={{ marginTop: 8, marginLeft: 50 }}>
+            <span data-testid="hero-timing-badge" style={{
+              fontSize: 10, fontWeight: 500, padding: "3px 8px", borderRadius: 999,
+              background: "rgba(239,68,68,0.15)", color: "#fca5a5",
+            }}>{timingLabel}</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ position: "relative", zIndex: 1, marginTop: 10 }}>
+        <MiniRail journeyRail={prog.journey_rail} />
+      </div>
+
+      <p data-testid={`hero-reason-${prog.program_id}`} style={{ fontSize: 14, fontWeight: 400, lineHeight: 1.5, color: "rgba(255,255,255,0.60)", margin: "14px 0 0", padding: 0, position: "relative", zIndex: 1 }}>
+        {reason}
+      </p>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, position: "relative", zIndex: 1 }}>
+        <span data-testid={`hero-action-${prog.program_id}`} style={{ flex: 1, fontSize: 15, fontWeight: 500, lineHeight: 1.4, color: "rgba(255,255,255,0.90)" }}>
+          {primaryAction}
+        </span>
+        <button data-testid={`hero-cta-${prog.program_id}`} style={{
+          fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
+          padding: "8px 16px", borderRadius: 10, flexShrink: 0,
+          display: "flex", alignItems: "center", gap: 4,
+          background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.90)",
+          backdropFilter: "blur(8px)",
+        }}>
+          View school <ArrowRight style={{ width: 12, height: 12 }} />
+        </button>
+      </div>
+
+      <div data-testid="hero-context-line" style={{ fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.28)", fontStyle: "italic", marginTop: 12, position: "relative", zIndex: 1 }}>
+        This is your most important action right now
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
    ACT NOW CARD (high priority — red accent)
    ═══════════════════════════════════════════════ */
 function ActNowCard({ item, isHeroPriority }) {
@@ -360,18 +435,17 @@ function SectionLabel({ label, count, color }) {
 }
 
 export default function PriorityBoard({ items, navigate, heroProgramId }) {
-  const high = items.filter(i => i.attentionLevel === "high");
+  const heroItem = items.find(i => i.programId === heroProgramId && i.attentionLevel === "high");
+  const high = items.filter(i => i.attentionLevel === "high" && i.programId !== heroProgramId);
   const medium = items.filter(i => i.attentionLevel === "medium");
   const low = items.filter(i => i.attentionLevel === "low");
-  const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0;
+  const allOnTrack = !heroItem && high.length === 0 && medium.length === 0 && low.length > 0;
   const [monitorCollapsed, setMonitorCollapsed] = useState(low.length > 4);
 
   return (
     <div data-testid="priority-board" style={{ marginTop: 8, fontFamily: FONT }}>
-      {/* Section title */}
-      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#8190aa", marginBottom: 18 }}>
-        Your pipeline
-      </div>
+      {/* Hero: top priority */}
+      {heroItem && <HeroPriorityCard item={heroItem} navigate={navigate} />}
 
       {allOnTrack && (
         <div style={{
@@ -387,17 +461,13 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-        {/* ACT NOW (High) */}
-        {(high.length > 0 || !allOnTrack) && (
+        {/* NEXT ACTIONS (remaining urgent, excluding hero) */}
+        {high.length > 0 && (
           <div data-testid="priority-section-attention">
-            <SectionLabel label="Act now" count={high.length} color="#ef4444" />
-            {high.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="act-now" heroProgramId={heroProgramId} />)}
-              </div>
-            ) : (
-              <div style={{ padding: "14px 4px", fontSize: 13, color: "#94a3b8", fontWeight: 400 }} data-testid="empty-state-attention">Nothing urgent right now</div>
-            )}
+            <SectionLabel label="Next actions" count={high.length} color="#ef4444" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="act-now" heroProgramId={heroProgramId} />)}
+            </div>
           </div>
         )}
 
