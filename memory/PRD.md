@@ -285,6 +285,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
   - `TrajectoryHint.js` (15 lines) — shared trajectory indicator
 - Default export unchanged — `DirectorView.js` required zero changes
 
+### Coach Signals Activation (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (18/18 backend, 100% frontend, iteration_225)
+- **Root cause**: Coach signals code was 100% present (identical to capymatch-staff repo) but appeared dead due to 3 data/parsing issues
+- **Fix 1**: `top_action_engine.py` — ISO timestamps (`2026-03-17T20:51:37+00:00`) were failing `strptime('%Y-%m-%d')`. Fixed by extracting first 10 chars (`next_due[:10]`)
+- **Fix 2**: Seed data `pod_actions` lacked `assigned_to_athlete: True` — added to all ready/open actions
+- **Fix 3**: No `coach_flags` documents existed — added 4 realistic flags (Emma: Emory reply_needed + Stanford strong_interest, Ava: UGA followup_overdue, Isabella: Texas A&M review_school)
+- Now active priority levels: P1 coach flags, P2 coach assigned actions, P3 director actions, P4 overdue follow-ups, P6 first outreach
+- Files: `top_action_engine.py` (date parsing fix), `seed_fresh.py` (coach flags + assigned_to_athlete)
+- **Analysis**: The `capymatch-staff` repo and this repo share identical backend/frontend code for coach signals. The only file differences are in files we've customized (PipelinePage, RecapPage, computeAttention, etc.)
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
@@ -302,13 +312,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - GET /api/athlete/programs — Fetch pipeline programs
 - PUT /api/athlete/programs/:id — Update program stage/status
 - GET /api/athlete/tasks — Fetch tasks
-- GET /api/internal/programs/top-actions — Priority actions
+- GET /api/internal/programs/top-actions — Priority actions (now returns real coach flags, overdue, etc.)
+- GET /api/athlete/flags — Active coach flags for athlete
+- POST /api/roster/athlete/{id}/flag-followup — Coach creates flag
+- POST /api/athlete/flags/{flag_id}/complete — Athlete marks flag complete
 
 ## File Structure
 ```
 frontend/src/
   lib/reinforcement.js          — Feedback logic engine
-  lib/computeAttention.js       — Risk/attention computation
+  lib/computeAttention.js       — Risk/attention computation (consumes coach_flag category from top-actions)
   components/reinforcement/
     ParticleBurst.js             — Particle animation
     ReinforcementToast.js        — Dark glass toast (portal)
@@ -316,11 +329,17 @@ frontend/src/
     PriorityBoard.js             — Priority view with swipe cards
     KanbanBoard.js               — Pipeline drag-and-drop view
     SwipeableCard.js             — Swipe interaction handler
+  components/journey/
+    heroOrchestrator.js          — Hero card priority system (coach tasks, flags, watch, overdue)
+    CoachWatchCard.js            — Coach watch UI
+    HeroCard.js (pipeline/)      — Dark hero card with coach_flag accent colors
   pages/athlete/
     PipelinePage.js              — Main pipeline page
     ProfilePage.js               — Profile with onboarding banner
   pages/LoginPage.js             — Login with demo accounts
 backend/
-  seed_fresh.py                  — Database seeding
+  services/top_action_engine.py  — 8-priority cascade engine (coach flags → overdue → on_track)
+  routers/coach_flags.py         — Coach flag CRUD endpoints
+  seed_fresh.py                  — Database seeding (now includes coach flags)
   routers/athlete_onboarding.py  — Onboarding endpoints
 ```
