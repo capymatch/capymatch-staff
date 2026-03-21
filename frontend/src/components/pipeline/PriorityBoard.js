@@ -9,6 +9,7 @@ import { LogoBox } from "./pipeline-design";
 import UniversityLogo from "../UniversityLogo";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
 
 /* ── Shared: Mini Journey Rail ── */
 function MiniRail({ journeyRail }) {
@@ -318,7 +319,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
   const [monitorCollapsed, setMonitorCollapsed] = useState(low.length > 4);
 
   return (
-    <div data-testid="priority-board" style={{ marginTop: 8 }}>
+    <div data-testid="priority-board" style={{ marginTop: 8, fontFamily: FONT }}>
       {/* Section title */}
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#8190aa", marginBottom: 18 }}>
         What to do next
