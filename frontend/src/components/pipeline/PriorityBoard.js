@@ -1,6 +1,5 @@
 import React from "react";
-import { AlertCircle, ChevronRight, Eye, Flame, Minus } from "lucide-react";
-import UniversityLogo from "../UniversityLogo";
+import { AlertCircle, ChevronRight, Eye } from "lucide-react";
 
 const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
 
@@ -115,52 +114,11 @@ function RecapMoveCard({ priority, navigate }) {
   );
 }
 
-/* ── Traction item (Heated Up / Holding Steady rows) ── */
-function TractionItem({ item, accentColor }) {
-  return (
-    <div style={{
-      borderLeft: `3px solid ${accentColor}`,
-      padding: "10px 14px",
-      marginBottom: 2,
-      borderRadius: "0 8px 8px 0",
-      background: "rgba(255,255,255,0.6)",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: accentColor }}>+</span>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>
-            {item.school_name}
-          </span>
-        </div>
-        <span style={{
-          fontSize: 11, fontWeight: 500, color: "#94a3b8",
-          padding: "2px 8px", borderRadius: 6,
-          background: "rgba(100,116,139,0.06)",
-        }}>
-          {item.stage_label}
-        </span>
-      </div>
-      <div style={{ fontSize: 13, fontWeight: 400, color: "#64748b", marginTop: 4, paddingLeft: 22 }}>
-        {item.action_guidance}
-      </div>
-    </div>
-  );
-}
-
 /* ── Main PriorityBoard ── */
 export default function PriorityBoard({ items, navigate, heroItemIds = [], recapData }) {
   const heroSet = new Set(heroItemIds);
   const priorities = (recapData?.priorities || []).filter(p => !heroSet.has(p.program_id));
   const hasPriorities = priorities.length > 0;
-
-  /* Momentum data */
-  const momentum = recapData?.momentum;
-  const heatedUp = momentum?.heated_up || [];
-  const holdingSteady = momentum?.holding_steady || [];
-  const hasTraction = heatedUp.length > 0 || holdingSteady.length > 0;
-
-  /* AI insights */
-  const aiInsights = recapData?.ai_insights || [];
 
   /* All on track state */
   const allOnTrack = items?.every(i => i.tier === "low") && items?.length > 0;
@@ -195,81 +153,6 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [], recap
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {priorities.map((p) => (
                 <RecapMoveCard key={p.program_id} priority={p} navigate={navigate} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ═══ WHERE YOU'RE GAINING TRACTION ═══ */}
-        {hasTraction && (
-          <div data-testid="traction-section">
-            <div style={{
-              fontSize: 12, fontWeight: 500, color: "#475569",
-              marginBottom: 16, padding: "0 2px",
-            }}>
-              Where you're gaining traction
-            </div>
-
-            {heatedUp.length > 0 && (
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                  <Flame style={{ width: 14, height: 14, color: "#f59e0b" }} />
-                  <span data-testid="heated-up-label" style={{ fontSize: 13, fontWeight: 600, color: "#f59e0b" }}>
-                    Heated Up
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#94a3b8" }}>({heatedUp.length})</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  {heatedUp.map((item, i) => (
-                    <TractionItem key={item.program_id || i} item={item} accentColor="#f59e0b" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {holdingSteady.length > 0 && (
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                  <Minus style={{ width: 14, height: 14, color: "#94a3b8" }} />
-                  <span data-testid="holding-steady-label" style={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>
-                    Holding Steady
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 400, color: "#94a3b8" }}>({holdingSteady.length})</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  {holdingSteady.map((item, i) => (
-                    <TractionItem key={item.program_id || i} item={item} accentColor="#94a3b8" />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ═══ WHAT'S DRIVING YOUR PIPELINE RIGHT NOW ═══ */}
-        {aiInsights.length > 0 && (
-          <div data-testid="ai-insights-section">
-            <div style={{
-              fontSize: 12, fontWeight: 500, color: "#475569",
-              marginBottom: 12, padding: "0 2px",
-              display: "flex", alignItems: "center", gap: 6,
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#94a3b8" }} />
-              What's driving your pipeline right now
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {aiInsights.map((ins, i) => (
-                <div key={i} style={{
-                  display: "flex", alignItems: "flex-start", gap: 10,
-                  fontSize: 13, lineHeight: 1.55, color: "#64748b",
-                  padding: "0 2px",
-                }}>
-                  <span style={{
-                    width: 5, height: 5, borderRadius: "50%",
-                    background: "#cbd5e1", flexShrink: 0, marginTop: 7,
-                  }} />
-                  {typeof ins === 'string' ? ins : ins.text || ins.insight || ''}
-                </div>
               ))}
             </div>
           </div>
