@@ -301,15 +301,17 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           )}
         </div>
 
-        {/* META: Owner */}
+        {/* META: Owner — only show when it's not the athlete's own task */}
+        {ownerLabel !== 'You' && (
         <div className="mt-2 flex items-center gap-2" data-testid="hero-meta-line">
           <span className="text-[10px] font-bold px-2 py-1 rounded-md" style={{
-            background: ownerLabel === 'You' ? 'rgba(25,195,178,0.12)' : 'rgba(93,135,255,0.12)',
-            color: ownerLabel === 'You' ? '#8df0e6' : '#8facff',
+            background: 'rgba(93,135,255,0.12)',
+            color: '#8facff',
           }}>
             {ownerLabel}
           </span>
         </div>
+        )}
 
         {/* PROGRESS TRACK — premium inline dots */}
         {!compact && rail && (
