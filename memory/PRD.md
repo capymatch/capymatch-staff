@@ -166,6 +166,14 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Font: `-apple-system, SF Pro Text, Inter` — titles 600, body 400-500
 - Files: `PipelineHero.js`, `PipelinePage.js`, `MomentumInsight.js`, `PriorityBoard.js`, `PipelineList.js`
 
+### Recap Page Release Polish (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% backend 30/30, 100% frontend, iteration_219)
+- Confidence signal: teal dot + more visible text (rgba 0.40)
+- Top priority label: "Needs your attention now" (human, not robotic)
+- Spacing: +8px between summary card and next moves section
+- Insight card: lighter bg (0.45 opacity), smaller text (12px bullets, 10px title)
+- Action verbs standardized: Re-engage / Follow up with / Keep pushing / Monitor
+
 ### Recap Page Production Finalization (Mar 2026)
 - **Status**: COMPLETE & VERIFIED (100% backend 25/25, 100% frontend, iteration_218)
 - Section label: "Your next moves" (replaced "WHAT TO DO")
