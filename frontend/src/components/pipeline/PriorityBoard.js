@@ -58,40 +58,33 @@ function ActNowCard({ item, isHeroPriority }) {
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
-      background: "#fff",
-      border: "1px solid rgba(20,37,68,0.06)",
+      background: isHeroPriority ? "rgba(239,68,68,0.015)" : "#fff",
+      border: isHeroPriority ? "1px solid rgba(239,68,68,0.08)" : "1px solid rgba(20,37,68,0.06)",
       borderRadius: 16,
-      borderLeft: "3px solid #ef4444",
-      boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
+      borderLeft: isHeroPriority ? "4px solid #ef4444" : "3px solid #ef4444",
+      boxShadow: isHeroPriority ? "0 2px 8px rgba(239,68,68,0.06)" : "0 1px 3px rgba(19,33,58,0.03)",
       transition: "transform 80ms ease, box-shadow 80ms ease",
       cursor: "pointer",
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(19,33,58,0.06)"; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = isHeroPriority ? "0 6px 16px rgba(239,68,68,0.08)" : "0 4px 12px rgba(19,33,58,0.06)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = isHeroPriority ? "0 2px 8px rgba(239,68,68,0.06)" : "0 1px 3px rgba(19,33,58,0.03)"; }}
     >
-      <div style={{ padding: "18px 20px" }}>
+      <div style={{ padding: isHeroPriority ? "22px 24px" : "18px 20px" }}>
         {/* School row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
-            width: 32, height: 32, borderRadius: 8, background: "#fafbfd",
+            width: isHeroPriority ? 36 : 32, height: isHeroPriority ? 36 : 32, borderRadius: 8, background: "#fafbfd",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             border: "1px solid rgba(20,37,68,0.05)", overflow: "hidden",
           }}>
-            <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded" />
+            <UniversityLogo domain={prog.domain} name={prog.university_name} size={isHeroPriority ? 26 : 22} className="rounded" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#13213a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: isHeroPriority ? 16 : 15, fontWeight: 600, color: "#13213a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {prog.university_name}
             </div>
           </div>
-          {isHeroPriority && (
-            <span data-testid="top-priority-tag" style={{
-              fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 999,
-              background: "rgba(239,68,68,0.08)", color: "#dc2626",
-              textTransform: "uppercase", letterSpacing: "0.05em",
-            }}>Top Priority</span>
-          )}
-          {timingLabel && (
+          {!isHeroPriority && timingLabel && (
             <span data-testid="timing-badge" style={{
               fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 999,
               background: timingLabel.toLowerCase().includes("overdue") ? "rgba(239,68,68,0.08)" : "rgba(100,116,139,0.06)",
@@ -99,6 +92,24 @@ function ActNowCard({ item, isHeroPriority }) {
             }}>{timingLabel}</span>
           )}
         </div>
+
+        {/* Badges row for hero card */}
+        {isHeroPriority && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+            <span data-testid="top-priority-tag" style={{
+              fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 999,
+              background: "rgba(239,68,68,0.08)", color: "#dc2626",
+              letterSpacing: "0.02em",
+            }}>Needs attention now</span>
+            {timingLabel && (
+              <span data-testid="timing-badge" style={{
+                fontSize: 10, fontWeight: 500, padding: "3px 8px", borderRadius: 999,
+                background: timingLabel.toLowerCase().includes("overdue") ? "rgba(239,68,68,0.08)" : "rgba(100,116,139,0.06)",
+                color: timingLabel.toLowerCase().includes("overdue") ? "#dc2626" : "#64748b",
+              }}>{timingLabel}</span>
+            )}
+          </div>
+        )}
 
         <MiniRail journeyRail={prog.journey_rail} />
 
@@ -349,7 +360,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
     <div data-testid="priority-board" style={{ marginTop: 8, fontFamily: FONT }}>
       {/* Section title */}
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#8190aa", marginBottom: 18 }}>
-        What to do next
+        Your pipeline
       </div>
 
       {allOnTrack && (

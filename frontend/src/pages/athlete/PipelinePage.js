@@ -224,10 +224,7 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {/* ═══ HERO ═══ */}
-      <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
-
-      {/* ═══ MOMENTUM INSIGHT ═══ */}
+      {/* ═══ CONTEXT LAYER: What Changed ═══ */}
       {viewMode === "priority" && <MomentumInsight data={recapData} attention={allAttention} />}
 
       {/* ═══ UPGRADE PROMPT ═══ */}
