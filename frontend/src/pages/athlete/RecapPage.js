@@ -17,7 +17,7 @@ const CATEGORY_CONFIG = {
 };
 
 const RANK_CONFIG = {
-  top: { label: "Top Priority", icon: Target, color: "#dc2626", bg: "rgba(220,38,38,0.04)", border: "rgba(220,38,38,0.10)", accent: "rgba(239,68,68,0.55)" },
+  top: { label: "Needs your attention now", icon: Target, color: "#dc2626", bg: "rgba(220,38,38,0.04)", border: "rgba(220,38,38,0.10)", accent: "rgba(239,68,68,0.55)" },
   secondary: { label: "Secondary", icon: ChevronRight, color: "#d97706", bg: "rgba(217,119,6,0.04)", border: "rgba(217,119,6,0.10)", accent: "#f59e0b" },
   watch: { label: "Watch", icon: Eye, color: "#64748b", bg: "rgba(107,114,128,0.03)", border: "rgba(107,114,128,0.06)", accent: "#94a3b8" },
 };
@@ -254,15 +254,16 @@ export default function RecapPage() {
           )}
           <div data-testid="confidence-signal" style={{
             marginTop: biggest_shift ? 10 : 16, fontSize: 10, fontWeight: 500,
-            color: "rgba(255,255,255,0.30)", letterSpacing: "0.04em",
-            position: "relative", zIndex: 1,
+            color: "rgba(255,255,255,0.40)", letterSpacing: "0.04em",
+            position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 5,
           }}>
+            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(25,195,178,0.50)" }} />
             Confidence: High
           </div>
         </div>
 
         {/* Section 2: Priority Reset — STRONGEST visual weight */}
-        <div ref={sectionRef("priority_reset")} data-testid="priority-reset-section" style={{ marginBottom: 32 }}>
+        <div ref={sectionRef("priority_reset")} data-testid="priority-reset-section" style={{ marginBottom: 32, marginTop: 8 }}>
           <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#0f172a", marginBottom: 14 }}>
             Your next moves
           </div>
@@ -290,21 +291,21 @@ export default function RecapPage() {
         {/* Section 4: AI Insight — SOFTEST, bullet points */}
         {insights.length > 0 && (
           <div ref={sectionRef("ai_summary")} data-testid="ai-summary" style={{
-            background: "rgba(248,250,252,0.6)",
-            border: "1px solid rgba(20,37,68,0.04)",
-            borderRadius: 14, padding: "18px 20px",
+            background: "rgba(248,250,252,0.45)",
+            border: "1px solid rgba(20,37,68,0.03)",
+            borderRadius: 14, padding: "16px 18px",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
-              <Sparkles size={12} color="#94a3b8" />
-              <span style={{ fontSize: 11, fontWeight: 500, color: "#64748b", letterSpacing: "0.01em" }}>What's driving your pipeline right now</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+              <Sparkles size={11} color="#b0bec5" />
+              <span style={{ fontSize: 10, fontWeight: 500, color: "#94a3b8", letterSpacing: "0.01em" }}>What's driving your pipeline right now</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {insights.map((bullet, i) => {
                 const isUrgent = bullet.includes("re-engagement") || bullet.includes("inactive");
                 return (
                   <div key={i} data-testid={`insight-bullet-${i}`} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 12, color: isUrgent ? "#94a3b8" : "#cbd5e1", lineHeight: 1.5, flexShrink: 0 }}>&#8226;</span>
-                    <span style={{ fontSize: 13, color: isUrgent ? "#334155" : "#64748b", fontWeight: isUrgent ? 500 : 400, lineHeight: 1.5 }}>{bullet}</span>
+                    <span style={{ fontSize: 11, color: isUrgent ? "#94a3b8" : "#d1d5db", lineHeight: 1.5, flexShrink: 0 }}>&#8226;</span>
+                    <span style={{ fontSize: 12, color: isUrgent ? "#475569" : "#94a3b8", fontWeight: isUrgent ? 500 : 400, lineHeight: 1.5 }}>{bullet}</span>
                   </div>
                 );
               })}

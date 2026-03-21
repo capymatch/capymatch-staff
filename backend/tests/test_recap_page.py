@@ -1,5 +1,5 @@
 """
-Test suite for Momentum Recap API endpoint - Production Polish (Iteration 218)
+Test suite for Momentum Recap API endpoint - Production Polish (Iteration 219)
 Tests the /api/athlete/momentum-recap endpoint for:
 - Top priority action is 'Re-engage Emory University' (no 'with')
 - Secondary reasons are clean without redundant prefixes
@@ -13,6 +13,10 @@ Tests the /api/athlete/momentum-recap endpoint for:
 
 NEW Iteration 218 tests:
 - Watch card reason is 'Check in within the next few days to maintain momentum'
+
+NEW Iteration 219 tests:
+- Action verbs: 'Re-engage Emory University', 'Follow up with Stanford University', 
+  'Keep pushing University of Florida', 'Monitor Creighton University'
 """
 import pytest
 import requests
@@ -488,6 +492,151 @@ class TestMomentumRecapAPI:
             f"Watch card reason should NOT contain old text 'Could cool off': {reason}"
         
         print(f"✓ Watch card reason is correct: {reason}")
+    
+    def test_action_verb_re_engage(self, recap_data):
+        """NEW 219: Test that cooling off top priority uses 'Re-engage {school}' format"""
+        priorities = recap_data.get("priorities", [])
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find top priority that should be a re-engage action (cooling off)
+        top_priorities = [p for p in priorities if p.get("rank") == "top"]
+        
+        if not top_priorities:
+            pytest.skip("No top priority found")
+        
+        top = top_priorities[0]
+        action = top.get("action", "")
+        
+        # If it's a cooling off item, should use "Re-engage {school}" format
+        if "Re-engage" in action:
+            # Verify format is "Re-engage {school_name}" NOT "Re-engage with {school_name}"
+            assert "Re-engage with" not in action, \
+                f"Action should be 'Re-engage {{school}}' not 'Re-engage with': {action}"
+            assert action.startswith("Re-engage "), \
+                f"Action should start with 'Re-engage ': {action}"
+            print(f"✓ Re-engage action verb correct: {action}")
+        else:
+            print(f"✓ Top priority is not a re-engage action: {action}")
+    
+    def test_action_verb_follow_up_with(self, recap_data):
+        """NEW 219: Test that heated secondary uses 'Follow up with {school}' format"""
+        priorities = recap_data.get("priorities", [])
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find secondary priorities
+        secondary_priorities = [p for p in priorities if p.get("rank") == "secondary"]
+        
+        if not secondary_priorities:
+            pytest.skip("No secondary priorities found")
+        
+        # Check for "Follow up with" format
+        follow_up_actions = [p for p in secondary_priorities if "Follow up with" in p.get("action", "")]
+        
+        if follow_up_actions:
+            for p in follow_up_actions:
+                action = p.get("action", "")
+                school = p.get("school_name", "")
+                expected = f"Follow up with {school}"
+                # Could also be "Follow up with {school} while hot"
+                assert action.startswith(f"Follow up with {school}"), \
+                    f"Expected action to start with '{expected}', got '{action}'"
+                print(f"✓ Follow up with action verb correct: {action}")
+        else:
+            print("✓ No 'Follow up with' actions found in secondary priorities")
+    
+    def test_action_verb_keep_pushing(self, recap_data):
+        """NEW 219: Test that alternate heated secondary uses 'Keep pushing {school}' format"""
+        priorities = recap_data.get("priorities", [])
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find secondary priorities
+        secondary_priorities = [p for p in priorities if p.get("rank") == "secondary"]
+        
+        if not secondary_priorities:
+            pytest.skip("No secondary priorities found")
+        
+        # Check for "Keep pushing" format
+        keep_pushing_actions = [p for p in secondary_priorities if "Keep pushing" in p.get("action", "")]
+        
+        if keep_pushing_actions:
+            for p in keep_pushing_actions:
+                action = p.get("action", "")
+                school = p.get("school_name", "")
+                expected = f"Keep pushing {school}"
+                assert action == expected, \
+                    f"Expected '{expected}', got '{action}'"
+                print(f"✓ Keep pushing action verb correct: {action}")
+        else:
+            print("✓ No 'Keep pushing' actions found in secondary priorities")
+    
+    def test_action_verb_monitor(self, recap_data):
+        """NEW 219: Test that watch priority uses 'Monitor {school}' format"""
+        priorities = recap_data.get("priorities", [])
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find watch priority
+        watch_priorities = [p for p in priorities if p.get("rank") == "watch"]
+        
+        if not watch_priorities:
+            print("✓ No watch priority found in current data")
+            return
+        
+        watch = watch_priorities[0]
+        action = watch.get("action", "")
+        school = watch.get("school_name", "")
+        
+        # Should be "Monitor {school_name}" format
+        expected = f"Monitor {school}"
+        assert action == expected, \
+            f"Watch action should be '{expected}', got '{action}'"
+        
+        print(f"✓ Monitor action verb correct: {action}")
+    
+    def test_all_action_verbs_standardized(self, recap_data):
+        """NEW 219: Test that all action verbs match the standardized spec"""
+        priorities = recap_data.get("priorities", [])
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Valid action verb patterns
+        valid_patterns = [
+            "Re-engage ",      # For cooling off top priority
+            "Follow up with ", # For heated secondary
+            "Keep pushing ",   # For alternate heated secondary
+            "Monitor ",        # For watch
+            "Check in with ",  # For cooling secondary
+            "Maintain contact with ",  # For steady
+            "Send your first follow-up to ",  # For newly added
+        ]
+        
+        print("✓ All priority actions:")
+        for p in priorities:
+            action = p.get("action", "")
+            rank = p.get("rank", "")
+            school = p.get("school_name", "")
+            
+            # Check if action starts with a valid pattern
+            has_valid_pattern = any(action.startswith(pattern) for pattern in valid_patterns)
+            
+            # Also allow "Follow up with X while hot" format
+            if "while hot" in action:
+                has_valid_pattern = True
+            
+            print(f"  [{rank}] {action}")
+            
+            assert has_valid_pattern, \
+                f"Action '{action}' does not match any valid pattern: {valid_patterns}"
+        
+        print("✓ All action verbs match standardized spec")
 
 
 class TestAuthEndpoint:
