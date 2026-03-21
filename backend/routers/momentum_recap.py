@@ -234,6 +234,29 @@ def _generate_priorities(momentum_items):
             "reason": "Check in within the next few days to maintain momentum",
         })
 
+    # Backfill: ensure every school appears — any remaining get "watch" rank
+    included_ids = {p["program_id"] for p in priorities}
+    for item in momentum_items:
+        if item["program_id"] not in included_ids:
+            cat = item["category"]
+            if cat == "heated_up":
+                action = f"Follow up with {item['school_name']}"
+                reason = "Keep the momentum going"
+            elif cat == "cooling_off":
+                days = item.get("days_since_last")
+                action = f"Check in with {item['school_name']}"
+                reason = f"No activity in {days} days" if days else "Re-engage soon"
+            else:
+                action = f"Monitor {item['school_name']}"
+                reason = "Maintain your current cadence"
+            priorities.append({
+                "rank": "watch",
+                "school_name": item["school_name"],
+                "program_id": item["program_id"],
+                "action": action,
+                "reason": reason,
+            })
+
     return priorities
 
 
