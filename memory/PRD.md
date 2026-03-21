@@ -166,6 +166,18 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Font: `-apple-system, SF Pro Text, Inter` — titles 600, body 400-500
 - Files: `PipelineHero.js`, `PipelinePage.js`, `MomentumInsight.js`, `PriorityBoard.js`, `PipelineList.js`
 
+### Recap Page Content Architecture Refinement (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% backend 16/16, 100% frontend, iteration_215)
+- Eliminated duplication: Top priority school excluded from Momentum Shift
+- Reordered sections: Summary → Priority Reset (What To Do) → Momentum Shift → AI Insight
+- New hero: Action-oriented headline + "Biggest shift" callout
+- Priority Reset: Strongest visual weight (4px border, bold action text, arrow reasons)
+- Momentum Shift: Lighter cards, action guidance text (e.g., "Follow up within 48 hours")
+- AI Insight: Converted from paragraph to data-driven bullet points (no LLM dependency)
+- Backend: Added `biggest_shift`, `ai_insights` (array), `top_priority_program_id`, `action_guidance` fields
+- Removed LLM call from recap computation (instant response, no 8s latency)
+- Files: `momentum_recap.py`, `RecapPage.js`
+
 ### Recap Page Premium Redesign (Mar 2026)
 - **Status**: COMPLETE & VERIFIED (100% backend 12/12, 100% frontend desktop+mobile, iteration_214)
 - Applied same premium design system as Pipeline page to RecapPage.js:
