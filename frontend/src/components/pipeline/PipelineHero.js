@@ -249,6 +249,14 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               {current.timingLabel}
             </span>
           )}
+          {current.topAction?.category === 'coach_flag' && (
+            <span className="ds-badge" style={{
+              background: "rgba(245,158,11,0.15)",
+              color: "#fbbf24",
+            }} data-testid="hero-coach-flag-badge">
+              Flagged by coach
+            </span>
+          )}
         </div>
 
         {/* SCHOOL NAME — large, prominent */}

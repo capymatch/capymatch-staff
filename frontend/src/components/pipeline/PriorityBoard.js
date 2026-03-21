@@ -166,6 +166,12 @@ function ActNowCard({ item, isHeroPriority }) {
               color: timingLabel.toLowerCase().includes("overdue") ? "#dc2626" : "#64748b",
             }}>{timingLabel}</span>
           )}
+          {!isHeroPriority && item.topAction?.category === 'coach_flag' && (
+            <span data-testid="coach-flag-badge" style={{
+              fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 999,
+              background: "rgba(245,158,11,0.10)", color: "#d97706",
+            }}>Coach flagged</span>
+          )}
         </div>
 
         {/* Badges row for hero card */}
@@ -182,6 +188,13 @@ function ActNowCard({ item, isHeroPriority }) {
                 background: timingLabel.toLowerCase().includes("overdue") ? "rgba(239,68,68,0.08)" : "rgba(100,116,139,0.06)",
                 color: timingLabel.toLowerCase().includes("overdue") ? "#dc2626" : "#64748b",
               }}>{timingLabel}</span>
+            )}
+            {item.topAction?.category === 'coach_flag' && (
+              <span data-testid="coach-flag-badge" style={{
+                fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 999,
+                background: "rgba(245,158,11,0.10)", color: "#d97706",
+                letterSpacing: "0.02em",
+              }}>Coach flagged</span>
             )}
           </div>
         )}
