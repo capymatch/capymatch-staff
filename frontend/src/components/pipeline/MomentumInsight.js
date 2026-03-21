@@ -21,54 +21,30 @@ export default function MomentumInsight({ data: recap, attention }) {
 
   if (!recap || !recap.recap_hero) return null;
 
-  const heated = recap.momentum?.heated_up?.length || 0;
-  const cooling = recap.momentum?.cooling_off?.length || 0;
-  const steady = recap.momentum?.holding_steady?.length || 0;
-
   const highItems = (attention || []).filter(a => a.tier === "high");
   const medItems = (attention || []).filter(a => a.tier === "medium");
-  const topSchool = highItems[0]?.program?.university_name;
-  const topDays = highItems[0]?.program?.signals?.days_since_last_activity;
-  const improving = heated > cooling;
+  const lowItems = (attention || []).filter(a => a.tier === "low");
+  const total = (attention || []).length;
 
-  /* Narrative decision sentence */
-  let decision = "";
-  const urgentNames = highItems.slice(0, 2).map(h => h.program?.university_name).filter(Boolean);
-  if (improving && urgentNames.length >= 2) {
-    decision = `Your pipeline is improving, but ${urgentNames[0]} and ${urgentNames[1]} need action first.`;
-  } else if (improving && urgentNames.length === 1) {
-    decision = `Your pipeline is improving, but ${urgentNames[0]} needs immediate attention.`;
-  } else if (improving) {
-    decision = "Your pipeline is improving \u2014 keep the momentum going.";
-  } else if (urgentNames.length >= 2) {
-    decision = `${urgentNames[0]} and ${urgentNames[1]} need your attention \u2014 don\u2019t let momentum slip.`;
-  } else if (urgentNames.length === 1) {
-    decision = `${urgentNames[0]} needs your attention \u2014 don\u2019t let momentum slip.`;
-  } else {
-    decision = "Your pipeline is holding steady \u2014 stay consistent.";
-  }
+  /* Header — position-aware */
+  const header = highItems.length > 0
+    ? `You\u2019re in a good position \u2014 ${highItems.length} school${highItems.length !== 1 ? 's' : ''} need${highItems.length === 1 ? 's' : ''} attention`
+    : total > 0
+      ? `All ${total} schools are on track \u2014 keep it going`
+      : "Your pipeline is ready to build";
 
-  /* Biggest shift insight */
-  const coolingSchools = recap.momentum?.cooling_off || [];
-  let biggestShift = "";
-  if (coolingSchools.length > 0) {
-    const topCooling = coolingSchools[0];
-    const name = topCooling?.university_name || topSchool;
-    const days = topCooling?.days_since_last_activity || topDays;
-    if (name && days) {
-      biggestShift = `Biggest shift: ${name} cooled after ${days} days of inactivity`;
-    } else if (name) {
-      biggestShift = `Biggest shift: ${name} cooled off recently`;
-    }
-  } else if (topSchool && topDays) {
-    biggestShift = `Biggest shift: ${topSchool} cooled after ${topDays} days of inactivity`;
-  }
-
-  const pills = [
-    heated > 0 && { label: `${heated} gaining momentum`, bg: "rgba(255,155,82,0.06)", color: "rgba(184,115,48,0.7)" },
-    highItems.length > 0 && { label: `${highItems.length} need${highItems.length === 1 ? 's' : ''} attention`, bg: "rgba(255,107,127,0.06)", color: "rgba(181,67,90,0.7)" },
-    steady > 0 && { label: `${steady} steady`, bg: "rgba(148,163,184,0.07)", color: "rgba(100,116,139,0.65)" },
+  /* Breakdown pills */
+  const breakdownPills = [
+    highItems.length > 0 && { label: `${highItems.length} need${highItems.length === 1 ? 's' : ''} attention now`, bg: "rgba(239,68,68,0.06)", color: "#b5435a" },
+    medItems.length > 0 && { label: `${medItems.length} need${medItems.length === 1 ? 's' : ''} a follow-up soon`, bg: "rgba(245,158,11,0.06)", color: "#b87330" },
+    lowItems.length > 0 && { label: `${lowItems.length} ${lowItems.length === 1 ? 'is' : 'are'} on track`, bg: "rgba(16,185,129,0.06)", color: "rgba(16,150,100,0.7)" },
   ].filter(Boolean);
+
+  /* Insight — name the urgent schools */
+  const urgentNames = highItems.slice(0, 2).map(h => h.program?.university_name).filter(Boolean);
+  let insight = "";
+  if (urgentNames.length >= 2) insight = `${urgentNames[0]} and ${urgentNames[1]} require action first.`;
+  else if (urgentNames.length === 1) insight = `${urgentNames[0]} requires action first.`;
 
   return (
     <div
@@ -85,16 +61,16 @@ export default function MomentumInsight({ data: recap, attention }) {
       }}
     >
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 16 }}>
-        What changed since your last update
+        Pipeline summary
       </div>
 
       <p data-testid="momentum-decision" style={{ fontSize: 16, fontWeight: 500, color: "#0f172a", lineHeight: 1.55, margin: "0 0 14px" }}>
-        {decision}
+        {header}
       </p>
 
-      {/* Supporting pills — smaller, softer */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: biggestShift ? 16 : 20 }}>
-        {pills.map((pill, i) => (
+      {/* Breakdown pills */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: insight ? 16 : 20 }}>
+        {breakdownPills.map((pill, i) => (
           <span key={i} style={{
             fontSize: 12, fontWeight: 500, padding: "5px 11px",
             borderRadius: 999, background: pill.bg, color: pill.color,
@@ -104,14 +80,13 @@ export default function MomentumInsight({ data: recap, attention }) {
         ))}
       </div>
 
-      {/* Biggest shift insight */}
-      {biggestShift && (
+      {/* Insight */}
+      {insight && (
         <p data-testid="biggest-shift" style={{
           fontSize: 13, fontWeight: 500, color: "#64748b",
           margin: "0 0 20px", lineHeight: 1.5,
-          fontStyle: "italic",
         }}>
-          {biggestShift}
+          {insight}
         </p>
       )}
 

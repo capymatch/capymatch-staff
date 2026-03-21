@@ -153,55 +153,57 @@ export function computeAttention(program, topAction, recapCtx) {
     timingLabel = 'New';
   }
 
-  // ── Primary action ──
+  // ── Primary action — verb-first, time-oriented ──
   const actionMap = {
-    coach_assigned_action: `Follow up with ${name} coach`,
-    overdue_follow_up: `Follow up with ${name}`,
-    stale_reply: `Follow up with ${name}`,
-    first_outreach_needed: `Send intro to ${name}`,
-    send_intro_email: `Send intro to ${name}`,
-    relationship_cooling: `Re-engage ${name}`,
-    reengage_relationship: `Re-engage ${name}`,
+    coach_assigned_action: `Follow up now with ${name}`,
+    overdue_follow_up: `Follow up now with ${name}`,
+    stale_reply: `Follow up now with ${name}`,
+    first_outreach_needed: `Send your intro to ${name}`,
+    send_intro_email: `Send your intro to ${name}`,
+    relationship_cooling: `Re-engage ${name} now`,
+    reengage_relationship: `Re-engage ${name} now`,
     due_today_follow_up: `Follow up with ${name} today`,
   };
   let primaryAction = actionMap[ta?.action_key];
   if (!primaryAction) {
     if (ta?.cta_label && ta.action_key !== 'no_action_needed') {
-      primaryAction = `${ta.cta_label} with ${name}`;
+      primaryAction = `${ta.cta_label} — ${name}`;
     } else {
       primaryAction = `${name} is on track`;
     }
   }
   // Override if due date creates urgency but top-action says on_track
   if (daysUntil !== null && daysUntil <= 0 && ta?.action_key === 'no_action_needed') {
-    primaryAction = daysUntil < 0 ? `Follow up with ${name}` : `Follow up with ${name} today`;
+    primaryAction = daysUntil < 0 ? `Follow up now with ${name}` : `Follow up with ${name} today`;
   }
-  // Override for upcoming items that have timing but show "is on track"
+  // Override for upcoming items — use time-based guidance
   if (daysUntil !== null && daysUntil > 0 && daysUntil <= 7 && primaryAction.endsWith('is on track')) {
-    primaryAction = p.next_action ? `${p.next_action} with ${name}` : `Follow up with ${name}`;
+    primaryAction = `Follow up in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} with ${name}`;
   }
 
-  // ── Reason — single human-readable status sentence ──
+  // ── Reason — calm, factual status ──
   const reasonMap = {
-    coach_assigned_action: 'Coach assigned a follow-up — take action',
-    overdue_follow_up: daysUntil !== null && daysUntil < 0 ? `No response for ${Math.abs(daysUntil)} days — send a follow-up now` : 'Follow-up is due',
-    stale_reply: 'Waiting on coach reply — follow up this week',
-    first_outreach_needed: 'Ready for first contact — reach out today',
-    send_intro_email: 'Ready for first contact — reach out today',
-    relationship_cooling: 'Engagement has been quiet — re-engage soon',
-    reengage_relationship: 'Engagement has been quiet — re-engage soon',
-    due_today_follow_up: 'Follow-up due today — take action',
+    coach_assigned_action: 'Coach assigned a follow-up',
+    overdue_follow_up: daysUntil !== null && daysUntil < 0 ? `Last contact ${Math.abs(daysUntil)} days ago \u00b7 needs follow-up` : 'Follow-up is due',
+    stale_reply: 'Waiting on coach reply \u00b7 follow up this week',
+    first_outreach_needed: 'Ready for first contact',
+    send_intro_email: 'Ready for first contact',
+    relationship_cooling: `No activity in ${lastActivity || 'several'} days \u00b7 re-engage soon`,
+    reengage_relationship: `No activity in ${lastActivity || 'several'} days \u00b7 re-engage soon`,
+    due_today_follow_up: 'Follow-up due today',
   };
   let reason = reasonMap[ta?.action_key] || 'On track';
   if (daysUntil !== null && daysUntil <= 0 && reason === 'On track') {
-    reason = daysUntil < 0 ? `No response for ${Math.abs(daysUntil)} days — send a follow-up now` : 'Follow-up due today — take action';
+    reason = daysUntil < 0 ? `Last contact ${Math.abs(daysUntil)} days ago \u00b7 needs follow-up` : 'Follow-up due today';
   }
   // Fix contradiction: if primaryAction says follow up, reason can't say "On track"
   if (reason === 'On track' && primaryAction && !primaryAction.includes('is on track')) {
     if (daysUntil !== null && daysUntil > 0 && daysUntil <= 3) {
-      reason = `Action due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} — stay ahead`;
+      reason = `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} \u00b7 stay ahead`;
+    } else if (daysUntil !== null && daysUntil > 3 && daysUntil <= 7) {
+      reason = `Due in ${daysUntil} days \u00b7 keep momentum`;
     } else if (lastActivity !== null && lastActivity > 0) {
-      reason = `${lastActivity} days since last activity — keep momentum`;
+      reason = `${lastActivity} days since last activity \u00b7 keep momentum`;
     } else {
       reason = 'Keep things moving';
     }
@@ -254,12 +256,12 @@ export function computeAttention(program, topAction, recapCtx) {
   if (hasLiveUrgency && recapRank) {
     // Merged: live urgency + recap
     heroReason = daysUntil !== null && daysUntil < 0
-      ? `No response for ${Math.abs(daysUntil)} days — top priority`
-      : `Due now — needs your attention`;
+      ? `Last contact ${Math.abs(daysUntil)} days ago \u00b7 needs follow-up`
+      : `Due now \u00b7 needs your attention`;
   } else if (recapRank === 'top') {
-    heroReason = 'Needs attention — momentum slipping';
+    heroReason = 'Needs attention \u00b7 momentum slipping';
   } else if (recapRank === 'secondary') {
-    heroReason = 'Momentum is building — stay active';
+    heroReason = 'Building momentum \u00b7 stay active';
   }
 
   // ── prioritySource — what's driving this hero position ──
@@ -315,7 +317,9 @@ export function computeAttention(program, topAction, recapCtx) {
     hardTriggers,
     reasons,
     timingLabel,
-    primaryAction: recapRank === 'top' && recapAction ? recapAction : primaryAction,
+    // Coach flag/hard trigger actions take priority over recap text
+    primaryAction: (hardTriggers.coachFlag || hardTriggers.overdue || hardTriggers.escalation) ? primaryAction
+      : recapRank === 'top' && recapAction ? recapAction : primaryAction,
     reason,
     reasonShort,
     heroReason,

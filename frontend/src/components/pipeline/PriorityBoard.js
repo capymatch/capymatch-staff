@@ -237,70 +237,88 @@ function ActNowCard({ item, isHeroPriority }) {
 }
 
 /* ═══════════════════════════════════════════════
-   KEEP MOMENTUM CARD (medium — orange accent)
+   KEEP MOMENTUM CARD (medium — ranked accent bar)
    ═══════════════════════════════════════════════ */
-function MomentumCard({ item }) {
+function MomentumCard({ item, rank }) {
   const { primaryAction, timingLabel, program: prog } = item;
-  // For momentum cards, prefer actual reason over heroReason
   const rawReason = item.reason || item.heroReason || timingLabel || "Maintain engagement";
   const reason = rawReason.replace(/\s*[—–-]\s*also your recap[''']s top focus\.?/gi, "").replace(/also your recap[''']s top focus\.?/gi, "").trim();
+  // Accent bar color intensity based on rank (0 = strongest)
+  const accentOpacity = rank === 0 ? 1 : rank === 1 ? 0.6 : 0.4;
+  const rankLabel = rank === 0 ? "Next best move" : null;
+  // Momentum label
+  const momentumText = item.momentum === 'building' ? "Building momentum \u2014 stay active"
+    : item.momentum === 'cooling' ? "Momentum cooling \u2014 re-engage"
+    : "Steady momentum";
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
-      background: "#fff",
-      border: "1px solid rgba(20,37,68,0.06)",
-      borderRadius: 16,
-      borderLeft: "3px solid #f59e0b",
-      boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
-      transition: "transform 80ms ease, box-shadow 80ms ease",
+      background: "rgba(255,255,255,0.95)",
+      border: "1px solid rgba(20,37,68,0.05)",
+      borderRadius: 14,
+      borderLeft: `3px solid rgba(245,158,11,${accentOpacity})`,
+      boxShadow: "0 1px 2px rgba(19,33,58,0.02)",
+      transition: "transform 120ms ease, box-shadow 120ms ease",
       cursor: "pointer",
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(19,33,58,0.06)"; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(19,33,58,0.07)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 2px rgba(19,33,58,0.02)"; }}
     >
-      <div style={{ padding: "18px 20px" }}>
+      <div style={{ padding: "16px 18px" }}>
         {/* School row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
-            width: 32, height: 32, borderRadius: 8, background: "#fafbfd",
+            width: 30, height: 30, borderRadius: 7, background: "#fafbfd",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            border: "1px solid rgba(20,37,68,0.05)", overflow: "hidden",
+            border: "1px solid rgba(20,37,68,0.04)", overflow: "hidden",
           }}>
-            <UniversityLogo domain={prog.domain} name={prog.university_name} size={22} className="rounded" />
+            <UniversityLogo domain={prog.domain} name={prog.university_name} size={20} className="rounded" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "#13213a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#13213a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {prog.university_name}
             </div>
           </div>
-          {timingLabel && (
-            <span data-testid="timing-badge" style={{
-              fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 999,
-              background: "rgba(100,116,139,0.06)", color: "#64748b",
-            }}>{timingLabel}</span>
-          )}
+          <div style={{ display: "flex", gap: 5, alignItems: "center", flexShrink: 0 }}>
+            {rankLabel && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 999,
+                background: "rgba(245,158,11,0.08)", color: "#b45309",
+                letterSpacing: "0.02em",
+              }}>{rankLabel}</span>
+            )}
+            {timingLabel && (
+              <span data-testid="timing-badge" style={{
+                fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 999,
+                background: "rgba(100,116,139,0.05)", color: "#64748b",
+              }}>{timingLabel}</span>
+            )}
+          </div>
         </div>
 
-        <MiniRail journeyRail={prog.journey_rail} />
+        {/* One-line: stage + momentum + next step */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, fontSize: 12, color: "#94a3b8", fontWeight: 400 }}>
+          <MiniRailInline journeyRail={prog.journey_rail} />
+          <span style={{ color: "#cbd5e1" }}>{"\u00b7"}</span>
+          <span>{momentumText}</span>
+        </div>
 
-        {/* Reason */}
-        <p data-testid={`priority-reason-${prog.program_id}`} style={{
-          fontSize: 13, fontWeight: 400, lineHeight: 1.5, color: "#64748b",
-          margin: "12px 0 0", padding: 0,
-        }}>{reason}</p>
-
-        {/* Action */}
+        {/* Action row — secondary button, more visible on hover */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
           <span data-testid={`priority-action-${prog.program_id}`} style={{
-            flex: 1, fontSize: 14, fontWeight: 500, lineHeight: 1.4, color: "#1e293b",
+            flex: 1, fontSize: 13, fontWeight: 500, lineHeight: 1.4, color: "#334155",
           }}>{primaryAction}</span>
-          <button data-testid={`cta-btn-${prog.program_id}`} style={{
-            fontSize: 13, fontWeight: 500, border: "1px solid rgba(20,37,68,0.10)", cursor: "pointer",
-            padding: "8px 14px", borderRadius: 10, flexShrink: 0,
+          <button data-testid={`cta-btn-${prog.program_id}`} className="medium-cta-btn" style={{
+            fontSize: 12, fontWeight: 500, border: "1px solid rgba(20,37,68,0.08)", cursor: "pointer",
+            padding: "6px 12px", borderRadius: 8, flexShrink: 0,
             display: "flex", alignItems: "center", gap: 4,
-            background: "#fff", color: "#1e293b",
-          }}>
-            View school <ArrowRight style={{ width: 12, height: 12 }} />
+            background: "transparent", color: "#64748b",
+            transition: "all 120ms ease",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = "#13213a"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#13213a"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(20,37,68,0.08)"; }}
+          >
+            View <ArrowRight style={{ width: 11, height: 11 }} />
           </button>
         </div>
       </div>
@@ -308,8 +326,18 @@ function MomentumCard({ item }) {
   );
 }
 
+/* Inline mini rail for medium cards — just stage name */
+function MiniRailInline({ journeyRail }) {
+  const stageName = journeyRail?.active || "added";
+  const label = { added: "Added", outreach: "Outreach", in_conversation: "Talking", campus_visit: "Visit", offer: "Offer" }[stageName] || stageName;
+  return <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#f59e0b" }} />
+    {label}
+  </span>;
+}
+
 /* ═══════════════════════════════════════════════
-   MONITOR ROW (low priority — compact neutral)
+   MONITOR ROW (low priority — passive, minimal)
    ═══════════════════════════════════════════════ */
 function MonitorRow({ item, navigate }) {
   const { program: prog } = item;
@@ -322,38 +350,38 @@ function MonitorRow({ item, navigate }) {
       data-testid={`priority-card-${prog.program_id}`}
       style={{
         display: "flex", alignItems: "center", gap: 10,
-        padding: "10px 14px", borderRadius: 10,
-        background: "#fff",
-        border: "1px solid rgba(20,37,68,0.04)",
+        padding: "8px 12px", borderRadius: 8,
+        background: "transparent",
+        border: "1px solid rgba(20,37,68,0.03)",
         marginBottom: 2,
         transition: "background 80ms ease", cursor: "pointer",
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = "#fafbfd"; }}
-      onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
+      onMouseEnter={e => { e.currentTarget.style.background = "rgba(248,250,252,0.8)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
     >
       <div style={{
-        width: 28, height: 28, borderRadius: 7, background: "#fafbfd",
+        width: 24, height: 24, borderRadius: 6, background: "#fafbfd",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-        border: "1px solid rgba(20,37,68,0.05)",
+        border: "1px solid rgba(20,37,68,0.03)",
       }}>
-        <UniversityLogo domain={prog.domain} name={prog.university_name} size={18} className="rounded-sm" />
+        <UniversityLogo domain={prog.domain} name={prog.university_name} size={16} className="rounded-sm" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {prog.university_name}
         </div>
-        <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 400, display: "flex", alignItems: "center", gap: 5, marginTop: 1 }}>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981" }} />
-          On track · {stageLabel}
+        <div style={{ fontSize: 11, color: "#cbd5e1", fontWeight: 400, display: "flex", alignItems: "center", gap: 4, marginTop: 1 }}>
+          <span style={{ width: 4, height: 4, borderRadius: "50%", background: "#10b981" }} />
+          No action needed · {stageLabel}
         </div>
       </div>
-      <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8", flexShrink: 0 }}>View school</span>
+      <span style={{ fontSize: 11, fontWeight: 400, color: "#cbd5e1", flexShrink: 0, textDecoration: "underline", textDecorationColor: "rgba(203,213,225,0.4)", textUnderlineOffset: 2 }}>View</span>
     </div>
   );
 }
 
 /* ── Swipeable wrapper with reinforcement ── */
-function SwipePriorityCard({ item, navigate, section, heroSet }) {
+function SwipePriorityCard({ item, navigate, section, heroSet, rank }) {
   const prog = item.program;
   const programId = prog?.program_id;
   const [burstActive, setBurstActive] = useState(false);
@@ -424,7 +452,7 @@ function SwipePriorityCard({ item, navigate, section, heroSet }) {
     return (
       <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel="View school" programId={programId}>
         <ParticleBurst active={burstActive} color={burstColor} onComplete={handleBurstComplete}>
-          <div onClick={handleTap}><MomentumCard item={item} /></div>
+          <div onClick={handleTap}><MomentumCard item={item} rank={rank} /></div>
         </ParticleBurst>
       </SwipeableCard>
     );
@@ -473,7 +501,7 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
         {/* NEXT ACTIONS (remaining high-tier, excluding hero carousel) */}
         {high.length > 0 && (
           <div data-testid="priority-section-attention">
@@ -488,8 +516,8 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
         {medium.length > 0 && (
           <div data-testid="priority-section-coming-up">
             <SectionLabel label="Keep things moving" count={medium.length} color="#f59e0b" />
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="momentum" heroSet={heroSet} />)}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {medium.map((item, i) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="momentum" heroSet={heroSet} rank={i} />)}
             </div>
           </div>
         )}
@@ -499,20 +527,20 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
           <div data-testid="priority-section-on-track">
             <div
               onClick={() => setMonitorCollapsed(c => !c)}
-              style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "0 2px", marginBottom: monitorCollapsed ? 0 : 10 }}
+              style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "0 2px", marginBottom: monitorCollapsed ? 0 : 8 }}
               data-testid="on-track-header"
             >
               <ChevronRight style={{
-                width: 14, height: 14, color: "#10b981",
+                width: 13, height: 13, color: "#10b981",
                 transition: "transform 200ms",
                 transform: monitorCollapsed ? "none" : "rotate(90deg)", flexShrink: 0,
               }} />
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-              <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#475569" }}>Just keep an eye</span>
-              <span style={{ fontSize: 12, fontWeight: 400, color: "#94a3b8" }}>({low.length})</span>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", flexShrink: 0, opacity: 0.6 }} />
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#94a3b8" }}>Just keep an eye</span>
+              <span style={{ fontSize: 11, fontWeight: 400, color: "#cbd5e1" }}>({low.length})</span>
             </div>
             {!monitorCollapsed && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {low.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="monitor" heroSet={heroSet} />)}
               </div>
             )}

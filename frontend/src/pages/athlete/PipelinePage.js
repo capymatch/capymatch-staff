@@ -228,7 +228,9 @@ export default function PipelinePage() {
       {viewMode === "priority" && <MomentumInsight data={recapData} attention={allAttention} />}
 
       {/* ═══ HERO ═══ */}
-      <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
+      <div style={{ marginBottom: 24 }}>
+        <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
+      </div>
 
       {/* ═══ UPGRADE PROMPT ═══ */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (

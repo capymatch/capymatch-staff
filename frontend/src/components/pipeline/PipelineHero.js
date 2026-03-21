@@ -299,30 +299,38 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
           }} data-testid="hero-advice-text">
-            {(current.primaryAction || "").replace(/\bwith\s+/i, "")}
+            {current.primaryAction || ""}
           </div>
-          {/* Descriptive supporting text — never just repeat the timing badge */}
-          {(() => {
-            const hr = (current.heroReason || "").trim();
-            const tl = (current.timingLabel || "").trim();
-            const isJustTiming = !hr || hr.toLowerCase() === tl.toLowerCase() || hr.toLowerCase() === (current.reason || "").toLowerCase() || /^overdue\s/i.test(hr) || /^tomorrow$/i.test(hr) || /^due\s/i.test(hr);
-            if (!isJustTiming) {
-              return (
-                <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-recap-reason">
-                  {hr.replace(/\s*[—–-]\s*also your recap['']s top focus\.?/gi, "").replace(/also your recap['']s top focus\.?/gi, "").trim()}
+          {/* Calm factual subtext */}
+          <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-descriptive-reason">
+            {(() => {
+              const hr = (current.heroReason || "").trim();
+              if (hr) return hr;
+              if (current.tier === "high") {
+                const days = p?.signals?.days_since_activity || p?.signals?.days_since_last_activity;
+                return days ? `Last contact ${days} days ago \u00b7 needs follow-up` : "Needs your attention now";
+              }
+              return "On track \u00b7 keep momentum";
+            })()}
+          </div>
+
+          {/* REASON STACK — top 2-3 reasons, always visible */}
+          {current.reasons?.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 12 }} data-testid="hero-reason-stack">
+              {current.reasons.slice(0, 3).map((r, i) => (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  fontSize: 13, fontWeight: 450, color: "rgba(255,255,255,0.65)", lineHeight: 1.4,
+                }}>
+                  <span style={{
+                    width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                    background: i === 0 ? "#ff6b7f" : i === 1 ? "#fbbf24" : "#5d87ff",
+                  }} />
+                  {r}
                 </div>
-              );
-            }
-            return (
-              <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-descriptive-reason">
-                {current.attentionLevel === "high"
-                  ? `No activity for ${p?.signals?.days_since_activity || p?.signals?.days_since_last_activity || "several"} days — now your top priority`
-                  : current.attentionLevel === "medium"
-                    ? "Recent engagement — follow up to keep momentum going"
-                    : "Pipeline is on track — maintain your cadence"}
-              </div>
-            );
-          })()}
+              ))}
+            </div>
+          )}
         </div>
 
         {/* META: Owner — only show when it's not the athlete's own task */}
@@ -363,7 +371,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         )}
 
         {/* CTA ROW */}
-        <div className="flex items-center gap-4 mt-2 sm:mt-2">
+        <div className="flex items-center gap-4 mt-4 sm:mt-4">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -448,6 +456,19 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                 </div>
               );
             })}
+          </div>
+        )}
+        {/* Carousel dot indicators */}
+        {total > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 16 }} data-testid="hero-carousel-dots">
+            {Array.from({ length: total }).map((_, i) => (
+              <button key={i} onClick={() => { setIdx(i); setFilter("all"); }} style={{
+                width: i === safeIdx ? 16 : 6, height: 6, borderRadius: 3,
+                background: i === safeIdx ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)",
+                border: "none", cursor: "pointer", padding: 0,
+                transition: "all 200ms ease",
+              }} />
+            ))}
           </div>
         )}
       </div>
