@@ -25,19 +25,25 @@ export default function MomentumInsight({ data: recap, attention }) {
   const cooling = recap.momentum?.cooling_off?.length || 0;
   const steady = recap.momentum?.holding_steady?.length || 0;
 
-  const highItems = (attention || []).filter(a => a.attentionLevel === "high");
+  const highItems = (attention || []).filter(a => a.tier === "high");
+  const medItems = (attention || []).filter(a => a.tier === "medium");
   const topSchool = highItems[0]?.program?.university_name;
   const topDays = highItems[0]?.program?.signals?.days_since_last_activity;
   const improving = heated > cooling;
 
   /* Narrative decision sentence */
   let decision = "";
-  if (improving && topSchool) {
-    decision = `Your pipeline is improving, but ${topSchool} needs immediate attention.`;
+  const urgentNames = highItems.slice(0, 2).map(h => h.program?.university_name).filter(Boolean);
+  if (improving && urgentNames.length >= 2) {
+    decision = `Your pipeline is improving, but ${urgentNames[0]} and ${urgentNames[1]} need action first.`;
+  } else if (improving && urgentNames.length === 1) {
+    decision = `Your pipeline is improving, but ${urgentNames[0]} needs immediate attention.`;
   } else if (improving) {
     decision = "Your pipeline is improving \u2014 keep the momentum going.";
-  } else if (topSchool) {
-    decision = `${topSchool} needs your attention \u2014 don\u2019t let momentum slip.`;
+  } else if (urgentNames.length >= 2) {
+    decision = `${urgentNames[0]} and ${urgentNames[1]} need your attention \u2014 don\u2019t let momentum slip.`;
+  } else if (urgentNames.length === 1) {
+    decision = `${urgentNames[0]} needs your attention \u2014 don\u2019t let momentum slip.`;
   } else {
     decision = "Your pipeline is holding steady \u2014 stay consistent.";
   }
@@ -60,7 +66,7 @@ export default function MomentumInsight({ data: recap, attention }) {
 
   const pills = [
     heated > 0 && { label: `${heated} gaining momentum`, bg: "rgba(255,155,82,0.06)", color: "rgba(184,115,48,0.7)" },
-    highItems.length > 0 && { label: `${highItems.length} needs attention`, bg: "rgba(255,107,127,0.06)", color: "rgba(181,67,90,0.7)" },
+    highItems.length > 0 && { label: `${highItems.length} need${highItems.length === 1 ? 's' : ''} attention`, bg: "rgba(255,107,127,0.06)", color: "rgba(181,67,90,0.7)" },
     steady > 0 && { label: `${steady} steady`, bg: "rgba(148,163,184,0.07)", color: "rgba(100,116,139,0.65)" },
   ].filter(Boolean);
 

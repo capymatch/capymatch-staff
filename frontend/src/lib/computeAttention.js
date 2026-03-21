@@ -55,6 +55,7 @@ export function computeAttention(program, topAction, recapCtx) {
     else if (daysUntil === 0) score += 70;
     else if (daysUntil === 1) score += 50;
     else if (daysUntil <= 3) score += 30;
+    else if (daysUntil <= 7) score += 15;
   }
 
   // Activity
@@ -63,9 +64,12 @@ export function computeAttention(program, topAction, recapCtx) {
     else if (lastActivity >= 3) score += 20;
   }
 
-  // Stage bonus
-  if (p.journey_stage === 'campus_visit') score += 15;
-  else if (p.journey_stage === 'in_conversation') score += 10;
+  // Stage bonus (use journey_stage, fall back to board_group)
+  const stageMap = { needs_outreach: 'added', waiting_on_reply: 'outreach', overdue: 'outreach' };
+  const effectiveStage = p.journey_stage || stageMap[p.board_group] || p.board_group || 'added';
+  if (effectiveStage === 'campus_visit') score += 15;
+  else if (effectiveStage === 'in_conversation') score += 10;
+  else if (effectiveStage === 'outreach') score += 5;
 
   // ── Recap priority boost ──
   let recapRank = null;
@@ -93,8 +97,46 @@ export function computeAttention(program, topAction, recapCtx) {
     score = 40;
   }
 
-  // ── Attention level ──
-  const attentionLevel = score >= 80 ? 'high' : score >= 40 ? 'medium' : 'low';
+  // ── Hard triggers ──
+  const hardTriggers = {
+    overdue: daysUntil !== null && daysUntil < 0,
+    dueSoon: daysUntil !== null && daysUntil >= 0 && daysUntil <= 3,
+    coachFlag: ta?.category === 'coach_flag' || ta?.action_key === 'coach_assigned_action',
+    escalation: ta?.priority === 1 || ta?.priority === 2 || ta?.priority === 3,
+  };
+
+  // ── Tier (classification — respects hard triggers) ──
+  const tier =
+    (hardTriggers.overdue || hardTriggers.coachFlag || hardTriggers.escalation || score >= 80)
+      ? 'high'
+      : score >= 40
+        ? 'medium'
+        : 'low';
+
+  // ── Hero eligibility (strict — only truly urgent items) ──
+  const heroEligible =
+    hardTriggers.overdue ||
+    hardTriggers.dueSoon ||
+    hardTriggers.coachFlag ||
+    hardTriggers.escalation ||
+    score >= 80;
+
+  // ── Urgency (placement signal) ──
+  const urgency =
+    (hardTriggers.overdue || hardTriggers.coachFlag || hardTriggers.escalation || score >= 80)
+      ? 'critical'
+      : (hardTriggers.dueSoon || score >= 40)
+        ? 'soon'
+        : 'monitor';
+
+  // ── Momentum (tone signal) ──
+  const momentum =
+    (lastActivity !== null && lastActivity >= 7) ? 'cooling'
+      : (lastActivity !== null && lastActivity >= 3) ? 'steady'
+        : 'building';
+
+  // ── Attention level (kept for backward compat) ──
+  const attentionLevel = tier;
 
   // ── Timing label ──
   let timingLabel = null;
@@ -253,10 +295,25 @@ export function computeAttention(program, topAction, recapCtx) {
   if (ta?.action_key === 'relationship_cooling' || ta?.action_key === 'reengage_relationship')
     explainFactors.push({ type: 'risk', label: 'Engagement cooling off' });
 
+  // ── Structured reasons list ──
+  const reasons = [];
+  if (hardTriggers.overdue) reasons.push(`Overdue by ${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''}`);
+  if (hardTriggers.coachFlag) reasons.push('Flagged by coach');
+  if (hardTriggers.dueSoon && !hardTriggers.overdue) reasons.push(daysUntil === 0 ? 'Due today' : `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`);
+  if (lastActivity !== null && lastActivity >= 7) reasons.push(`No activity in ${lastActivity} days`);
+  if (recapRank === 'top') reasons.push('Top priority in recap');
+  if (recapRank === 'secondary') reasons.push('Flagged in recap');
+
   return {
     programId: p.program_id,
     attentionScore: score,
     attentionLevel,
+    tier,
+    heroEligible,
+    urgency,
+    momentum,
+    hardTriggers,
+    reasons,
     timingLabel,
     primaryAction: recapRank === 'top' && recapAction ? recapAction : primaryAction,
     reason,

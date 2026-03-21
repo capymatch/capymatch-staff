@@ -520,7 +520,15 @@ async def seed():
             next_due = ago(p["days_overdue"])
         else:
             next_action = "Follow up"
-            next_due = from_now(3)
+            # Spread due dates: Top Choice = soon, others based on staleness
+            if p["priority"] == "Top Choice":
+                next_due = from_now(3)
+            elif p["days_stale"] >= 5:
+                next_due = from_now(5)
+            elif p["days_stale"] >= 3:
+                next_due = from_now(7)
+            else:
+                next_due = from_now(10)
 
         doc = {
             "program_id": pid,

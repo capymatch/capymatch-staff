@@ -99,9 +99,9 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const compact = false;
 
   const prevTrackedRef = useRef(null);
-  const highItems = (heroItems || []).filter(h => h.attentionLevel === 'high');
-  const medItems = (heroItems || []).filter(h => h.attentionLevel === 'medium');
-  const filtered = filter === 'high' ? highItems : filter === 'medium' ? medItems : (heroItems || []);
+  const urgentItems = (heroItems || []).filter(h => h.urgency === 'critical');
+  const soonItems = (heroItems || []).filter(h => h.urgency === 'soon');
+  const filtered = filter === 'high' ? urgentItems : filter === 'medium' ? soonItems : (heroItems || []);
   const total = filtered.length;
   const safeIdx = total > 0 ? ((idx % total) + total) % total : 0;
   const current = total > 0 ? filtered[safeIdx] : null;
@@ -143,8 +143,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
   const pills = [
     { key: "all", label: "All", count: heroItems.length },
-    { key: "high", label: "Urgent", count: highItems.length },
-    { key: "medium", label: "Soon", count: medItems.length },
+    { key: "high", label: "Urgent", count: urgentItems.length },
+    { key: "medium", label: "Soon", count: soonItems.length },
   ].filter(pill => pill.key === "all" || pill.count > 0);
 
   const slideClass = phase === "exit"

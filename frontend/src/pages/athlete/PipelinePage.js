@@ -191,10 +191,10 @@ export default function PipelinePage() {
   const allAttention = computeAllAttention(allPrograms, topActionsMap, recapCtx);
   const attentionMap = {};
   allAttention.forEach(a => { attentionMap[a.programId] = a; });
-  const heroItems = allAttention.filter(a => a.attentionLevel !== 'low').slice(0, 5);
-  const highCount = allAttention.filter(a => a.attentionLevel === 'high').length;
-  const medCount = allAttention.filter(a => a.attentionLevel === 'medium').length;
-  const lowCount = allAttention.filter(a => a.attentionLevel === 'low').length;
+  const heroItems = allAttention.filter(a => a.heroEligible);
+  const highCount = allAttention.filter(a => a.tier === 'high').length;
+  const medCount = allAttention.filter(a => a.tier === 'medium').length;
+  const lowCount = allAttention.filter(a => a.tier === 'low').length;
 
   const usage = getUsage(subscription, "schools");
   const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;

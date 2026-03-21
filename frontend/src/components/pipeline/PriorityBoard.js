@@ -449,11 +449,12 @@ function SectionLabel({ label, count, color }) {
 
 export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
   const heroSet = new Set(heroItemIds);
-  const high = items.filter(i => i.attentionLevel === "high" && !heroSet.has(i.programId));
-  const medium = items.filter(i => i.attentionLevel === "medium" && !heroSet.has(i.programId));
-  const low = items.filter(i => i.attentionLevel === "low");
-  const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0
-    && items.filter(i => i.attentionLevel === "high" || i.attentionLevel === "medium").length === 0;
+  // Section allocation: hero items are excluded; rest goes by tier
+  const high = items.filter(i => i.tier === "high" && !heroSet.has(i.programId));
+  const medium = items.filter(i => i.tier === "medium" && !heroSet.has(i.programId));
+  const low = items.filter(i => i.tier === "low");
+  // allOnTrack only when NO item across the entire pipeline is high or medium
+  const allOnTrack = items.every(i => i.tier === "low") && low.length > 0;
   const [monitorCollapsed, setMonitorCollapsed] = useState(low.length > 4);
 
   return (
@@ -473,7 +474,7 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-        {/* NEXT ACTIONS (remaining urgent, excluding hero) */}
+        {/* NEXT ACTIONS (remaining high-tier, excluding hero carousel) */}
         {high.length > 0 && (
           <div data-testid="priority-section-attention">
             <SectionLabel label="Next actions" count={high.length} color="#ef4444" />
@@ -483,46 +484,40 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
           </div>
         )}
 
-        {/* KEEP MOMENTUM (Medium) */}
-        {(medium.length > 0 || !allOnTrack) && (
+        {/* KEEP THINGS MOVING (Medium tier — ALWAYS shown if medium items exist) */}
+        {medium.length > 0 && (
           <div data-testid="priority-section-coming-up">
             <SectionLabel label="Keep things moving" count={medium.length} color="#f59e0b" />
-            {medium.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="momentum" heroSet={heroSet} />)}
-              </div>
-            ) : (
-              <div style={{ padding: "14px 4px", fontSize: 13, color: "#94a3b8", fontWeight: 400 }} data-testid="empty-state-coming-up">No upcoming actions</div>
-            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="momentum" heroSet={heroSet} />)}
+            </div>
           </div>
         )}
 
-        {/* MONITOR (Low) */}
-        <div data-testid="priority-section-on-track">
-          <div
-            onClick={() => setMonitorCollapsed(c => !c)}
-            style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "0 2px", marginBottom: monitorCollapsed ? 0 : 10 }}
-            data-testid="on-track-header"
-          >
-            <ChevronRight style={{
-              width: 14, height: 14, color: "#10b981",
-              transition: "transform 200ms",
-              transform: monitorCollapsed ? "none" : "rotate(90deg)", flexShrink: 0,
-            }} />
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#475569" }}>Just keep an eye</span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: "#94a3b8" }}>({low.length})</span>
-          </div>
-          {!monitorCollapsed && (
-            low.length > 0 ? (
+        {/* JUST KEEP AN EYE (Low tier) */}
+        {low.length > 0 && (
+          <div data-testid="priority-section-on-track">
+            <div
+              onClick={() => setMonitorCollapsed(c => !c)}
+              style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "0 2px", marginBottom: monitorCollapsed ? 0 : 10 }}
+              data-testid="on-track-header"
+            >
+              <ChevronRight style={{
+                width: 14, height: 14, color: "#10b981",
+                transition: "transform 200ms",
+                transform: monitorCollapsed ? "none" : "rotate(90deg)", flexShrink: 0,
+              }} />
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#475569" }}>Just keep an eye</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: "#94a3b8" }}>({low.length})</span>
+            </div>
+            {!monitorCollapsed && (
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {low.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="monitor" heroSet={heroSet} />)}
               </div>
-            ) : (
-              <div style={{ padding: "14px 4px", fontSize: 13, color: "#94a3b8", fontWeight: 400 }} data-testid="empty-state-on-track">No programs to monitor yet</div>
-            )
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
