@@ -10,13 +10,17 @@ import { useSubscription, getUsage } from "../../lib/subscription";
 import UpgradeModal from "../../components/UpgradeModal";
 import OnboardingEmptyBoard from "../../components/onboarding/EmptyBoardState";
 import PipelineHero from "../../components/pipeline/PipelineHero";
+// ComingUpTimeline removed — "Coming up" is now unified inside PriorityBoard
+import KanbanBoard from "../../components/pipeline/KanbanBoard";
 import PriorityBoard from "../../components/pipeline/PriorityBoard";
-import MomentumInsight from "../../components/pipeline/MomentumInsight";
-import PipelineList from "../../components/pipeline/PipelineList";
+import PipelineStyles from "../../components/pipeline/PipelineStyles";
+import UpcomingTasksSection from "../../components/pipeline/UpcomingTasksSection";
 import CommittedBanner from "../../components/pipeline/CommittedBanner";
+import RecapTeaser from "../../components/pipeline/RecapTeaser";
 import { KANBAN_COLS, COL_TO_STAGE } from "../../components/pipeline/pipeline-constants";
 import { computeAllAttention } from "../../lib/computeAttention";
 import "../../components/pipeline/pipeline-motion.css";
+import "../../components/pipeline/pipeline-premium.css";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -33,8 +37,16 @@ export default function PipelinePage() {
   const [pulsingColumnId, setPulsingColumnId] = useState(null);
   const [activeDragId, setActiveDragId] = useState(null);
   const [recapData, setRecapData] = useState(null);
+  const [viewMode, setViewMode] = useState(() => {
+    try { return localStorage.getItem('capymatch_view_mode') || 'priority'; }
+    catch { return 'priority'; }
+  });
+  const [viewPhase, setViewPhase] = useState('idle');
+  const viewPendingRef = useRef(null);
   const navigate = useNavigate();
   const { subscription, loading: subLoading } = useSubscription();
+  const togglePriorityRef = useRef(null);
+  const togglePipelineRef = useRef(null);
 
   /* ── Data fetching ── */
   const fetchAll = useCallback(async () => {
@@ -135,11 +147,26 @@ export default function PipelinePage() {
     setActiveDragId(start.draggableId);
   }, []);
 
+  /* ── View toggle with animation ── */
+  const toggleView = useCallback((mode) => {
+    if (mode === viewMode || viewPhase !== 'idle') return;
+    setViewPhase('exit');
+    viewPendingRef.current = mode;
+    setTimeout(() => {
+      const next = viewPendingRef.current;
+      viewPendingRef.current = null;
+      setViewMode(next);
+      try { localStorage.setItem('capymatch_view_mode', next); } catch {}
+      setViewPhase('enter');
+      setTimeout(() => setViewPhase('idle'), 220);
+    }, 140);
+  }, [viewMode, viewPhase]);
+
   /* ── Loading state ── */
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24" data-testid="board-loading">
-        <div className="flex flex-col items-center gap-3"><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#bbb" }} /><span className="text-sm" style={{ color: "#9aa5b8" }}>Loading...</span></div>
+        <div className="flex flex-col items-center gap-3"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#999" }} /><span className="text-sm" style={{ color: "#999" }}>Loading your board...</span></div>
       </div>
     );
   }
@@ -172,71 +199,109 @@ export default function PipelinePage() {
   const nearLimit = schoolPct >= 0.8;
 
   return (
-    <div style={{ maxWidth: 1060, margin: "0 auto", padding: "0 8px" }} data-testid="recruiting-board">
+    <div className="pipeline-premium" style={{ maxWidth: 1120, margin: "0 auto", padding: "0 4px" }} data-testid="recruiting-board">
+      <PipelineStyles />
 
-      {/* ═══ 1. HEADER ═══ */}
-      <div style={{ marginBottom: 28 }} data-testid="pipeline-header">
-        <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.03em", color: "#13213a", margin: "0 0 6px" }}>
-          Your recruiting right now
-        </h1>
-        <p style={{ fontSize: 15, fontWeight: 400, color: "#5f6c84", margin: 0 }} data-testid="summary-chips">
-          {highCount > 0 && <>{highCount} needs attention</>}
-          {highCount > 0 && medCount > 0 && " \u00b7 "}
-          {medCount > 0 && <>{medCount} gaining momentum</>}
-          {(highCount > 0 || medCount > 0) && lowCount > 0 && " \u00b7 "}
-          {lowCount > 0 && <>{lowCount} steady</>}
-        </p>
+      {/* ═══ PAGE HEADER ═══ */}
+      <div className="flex items-start justify-between gap-4 mb-6 sm:mb-8" data-testid="pipeline-header">
+        <div>
+          <div className="ds-eyebrow" style={{ color: "#7b88a2", marginBottom: 6 }}>Recruiting intelligence</div>
+          <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.05em", color: "#13213a", margin: "0 0 10px" }}>
+            Your Pipeline
+          </h1>
+          <div className="flex items-center gap-3 flex-wrap" data-testid="summary-chips">
+            {highCount > 0 && (
+              <span className="flex items-center gap-2 text-[12px] sm:text-[13px] font-semibold" data-testid="chip-attention" style={{ color: "#5f6c84" }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: "#ff6b7f" }} />{highCount} needs attention
+              </span>
+            )}
+            {medCount > 0 && (
+              <span className="flex items-center gap-2 text-[12px] sm:text-[13px] font-semibold" data-testid="chip-momentum" style={{ color: "#5f6c84" }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: "#ff9b52" }} />{medCount} coming up
+              </span>
+            )}
+            {lowCount > 0 && (
+              <span className="flex items-center gap-2 text-[12px] sm:text-[13px] font-semibold" data-testid="chip-on-track" style={{ color: "#5f6c84" }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: "#16b57f" }} />{lowCount} on track
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="pm-toggle-track" style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: "1px solid rgba(20,37,68,0.08)", borderRadius: 14, boxShadow: "0 4px 12px rgba(19,33,58,0.06)" }} data-testid="view-toggle">
+          <div className="pm-toggle-slider" style={{
+            left: viewMode === 'priority' ? 2 : (togglePriorityRef.current?.offsetWidth || 60) + 2,
+            width: viewMode === 'priority' ? (togglePriorityRef.current?.offsetWidth || 60) : (togglePipelineRef.current?.offsetWidth || 60),
+            borderRadius: 12,
+          }} />
+          <button ref={togglePriorityRef} onClick={() => toggleView('priority')} data-testid="toggle-priority" className="pm-toggle-btn"
+            style={{ color: viewMode === 'priority' ? '#13213a' : '#9aa5b8', padding: "8px 18px", fontSize: 13 }}>Priority</button>
+          <button ref={togglePipelineRef} onClick={() => toggleView('pipeline')} data-testid="toggle-pipeline" className="pm-toggle-btn"
+            style={{ color: viewMode === 'pipeline' ? '#13213a' : '#9aa5b8', padding: "8px 18px", fontSize: 13 }}>Pipeline</button>
+        </div>
       </div>
 
-      {/* ═══ 2. HERO CARD ═══ */}
+      {/* ═══ HERO ═══ */}
       <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
 
-      {/* ═══ 3. MOMENTUM INSIGHT ═══ */}
-      <MomentumInsight data={recapData} attention={allAttention} />
+      {/* ═══ RECAP TEASER ═══ */}
+      {viewMode === "priority" && <RecapTeaser data={recapData} />}
+
+      {/* ═══ BOARD SEPARATOR ═══ */}
+      <div className="flex items-center gap-4 mt-8 sm:mt-10 mb-5 px-1" data-testid="board-separator">
+        <div className="flex-1 h-px" style={{ background: "rgba(20,37,68,0.08)" }} />
+        <span className="ds-eyebrow flex-shrink-0" style={{ color: "#9aa5b8", fontSize: 11 }}>Manage all programs</span>
+        <div className="flex-1 h-px" style={{ background: "rgba(20,37,68,0.08)" }} />
+      </div>
 
       {/* ═══ UPGRADE PROMPT ═══ */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (
-        <div style={{ background: "#fff", border: `1px solid ${usage.used >= usage.limit ? "rgba(255,155,82,0.2)" : "rgba(20,37,68,0.06)"}`, borderRadius: 16, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14, boxShadow: "0 2px 8px rgba(19,33,58,0.03)" }} data-testid="over-limit-banner">
-          <AlertTriangle style={{ width: 18, height: 18, color: usage.used >= usage.limit ? "#ff9b52" : "#9aa5b8", flexShrink: 0 }} />
+        <div style={{ background: usage.used >= usage.limit ? "rgba(255,155,82,0.06)" : "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: `1px solid ${usage.used >= usage.limit ? "rgba(255,155,82,0.2)" : "rgba(20,37,68,0.08)"}`, borderRadius: 22, padding: "18px 22px", marginBottom: 18, display: "flex", alignItems: "center", gap: 16, boxShadow: "0 10px 30px rgba(19,33,58,0.08)" }} data-testid="over-limit-banner">
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: usage.used >= usage.limit ? "rgba(255,155,82,0.15)" : "rgba(93,135,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <AlertTriangle style={{ width: 18, height: 18, color: usage.used >= usage.limit ? "#ff9b52" : "#5f6c84" }} />
+          </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#13213a" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#13213a", marginBottom: 2 }}>
               {usage.used >= usage.limit ? `You've reached your ${usage.limit}-school limit` : `${usage.used} of ${usage.limit} schools used`}
             </div>
-            <div style={{ fontSize: 13, color: "#5f6c84", marginTop: 2 }}>
-              {usage.used >= usage.limit ? "Upgrade to add more schools." : "Approaching your plan limit."}
+            <div style={{ fontSize: 12, color: "#5f6c84" }}>
+              {usage.used >= usage.limit ? "Upgrade to add more schools and unlock AI drafts." : "You're approaching your plan limit. Upgrade for more schools and AI drafts."}
             </div>
           </div>
-          <button onClick={() => setShowUpgrade(true)} style={{ padding: "9px 16px", borderRadius: 12, background: "linear-gradient(135deg, #19c3b2, #4d7cff)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", flexShrink: 0 }} data-testid="upgrade-from-banner">Upgrade</button>
+          <button onClick={() => setShowUpgrade(true)} className="ds-btn-primary" style={{ padding: "10px 18px", fontSize: 12, borderRadius: 14 }} data-testid="upgrade-from-banner">Upgrade</button>
         </div>
       )}
 
-      {/* ═══ 4. WHAT TO DO NEXT ═══ */}
-      <PriorityBoard items={allAttention} navigate={navigate} heroProgramId={allAttention[0]?.programId} />
-
-      {/* ═══ COMMITTED ═══ */}
+      <UpcomingTasksSection tasks={tasks} navigate={navigate} />
       <CommittedBanner programs={committedPrograms} navigate={navigate} />
 
-      {/* ═══ 5. ALL PROGRAMS ═══ */}
-      <PipelineList programs={activePrograms} attentionMap={attentionMap} matchScores={matchScores} navigate={navigate} />
+      {/* ═══ BOARD ═══ */}
+      <div className={`pm-view-${viewPhase}`} data-testid="board-view-container">
+        {viewMode === 'pipeline' ? (
+          <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
+        ) : (
+          <PriorityBoard items={allAttention} navigate={navigate} heroProgramId={allAttention[0]?.programId} />
+        )}
+      </div>
 
       {/* ═══ ARCHIVED ═══ */}
       {archivedPrograms.length > 0 && (
-        <div data-testid="section-archived" style={{ marginTop: 32 }}>
-          <div onClick={() => setCollapsedArchived(!collapsedArchived)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 0 10px", cursor: "pointer" }} data-testid="section-header-archived">
-            <ChevronRight style={{ width: 13, height: 13, color: "#9aa5b8", transition: "transform 0.2s", transform: collapsedArchived ? "none" : "rotate(90deg)" }} />
-            <Archive style={{ width: 13, height: 13, color: "#9aa5b8" }} />
-            <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9aa5b8" }}>Archived</span>
-            <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, background: "rgba(20,37,68,0.04)", color: "#9aa5b8" }}>{archivedPrograms.length}</span>
+        <div data-testid="section-archived" style={{ marginTop: 28 }}>
+          <div onClick={() => setCollapsedArchived(!collapsedArchived)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "18px 0 12px", cursor: "pointer" }} data-testid="section-header-archived">
+            <ChevronRight style={{ width: 14, height: 14, color: "#9aa5b8", transition: "transform 0.2s", transform: collapsedArchived ? "none" : "rotate(90deg)" }} />
+            <Archive style={{ width: 14, height: 14, color: "#9aa5b8" }} />
+            <span className="ds-eyebrow" style={{ color: "#9aa5b8", fontSize: 11 }}>Archived</span>
+            <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.72)", color: "#9aa5b8", border: "1px solid rgba(20,37,68,0.06)" }}>{archivedPrograms.length}</span>
+            <div style={{ flex: 1, height: 1, background: "rgba(20,37,68,0.08)", marginLeft: 8 }} />
           </div>
           {!collapsedArchived && archivedPrograms.map(p => (
-            <div key={p.program_id} style={{ background: "#fff", border: "1px solid rgba(20,37,68,0.05)", borderRadius: 14, padding: "12px 16px", marginBottom: 6, display: "flex", alignItems: "center", gap: 12, opacity: 0.65 }} data-testid={`archived-card-${p.program_id}`}>
-              <UniversityLogo domain={p.domain} name={p.university_name} size={32} className="rounded-[10px] grayscale" />
+            <div key={p.program_id} style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: "1px solid rgba(20,37,68,0.08)", borderRadius: 18, padding: "14px 18px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14, opacity: 0.7, boxShadow: "0 4px 12px rgba(19,33,58,0.04)" }} data-testid={`archived-card-${p.program_id}`}>
+              <UniversityLogo domain={p.domain} name={p.university_name} size={36} className="rounded-[12px] grayscale" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#13213a" }}>{p.university_name}</div>
-                <div style={{ fontSize: 12, color: "#5f6c84", marginTop: 1 }}>{[p.division, p.conference, p.state].filter(Boolean).join(" · ")}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#13213a" }}>{p.university_name}</div>
+                <div style={{ fontSize: 11, color: "#5f6c84", marginTop: 2 }}>{[p.division, p.conference, p.state].filter(Boolean).join(" · ")}</div>
               </div>
-              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchAll(); } catch { toast.error("Failed"); } }} style={{ padding: "7px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600, background: "rgba(25,195,178,0.06)", color: "#19c3b2", border: "1px solid rgba(25,195,178,0.12)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }} data-testid={`reactivate-btn-${p.program_id}`}>
-                <RotateCcw style={{ width: 12, height: 12 }} /> Reactivate
+              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchAll(); } catch { toast.error("Failed"); } }} className="ds-btn-secondary" style={{ padding: "8px 16px", fontSize: 12, borderRadius: 14, display: "flex", alignItems: "center", gap: 6 }} data-testid={`reactivate-btn-${p.program_id}`}>
+                <RotateCcw style={{ width: 13, height: 13 }} /> Reactivate
               </button>
             </div>
           ))}
@@ -250,6 +315,7 @@ export default function PipelinePage() {
         currentTier={subscription?.tier || (subLoading ? "premium" : "basic")}
       />
 
+      {/* Action Reinforcement Toast — portal-based, listens for triggerReinforcement events */}
       <ReinforcementToast />
     </div>
   );
