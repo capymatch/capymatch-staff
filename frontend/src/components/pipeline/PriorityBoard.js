@@ -34,24 +34,25 @@ function MiniRail({ journeyRail }) {
 /* ═══════════════════════════════════════════════
    ACT NOW CARD (high priority — red accent)
    ═══════════════════════════════════════════════ */
-function ActNowCard({ item }) {
+function ActNowCard({ item, isHeroPriority }) {
   const { primaryAction, timingLabel, program: prog } = item;
-  const reason = item.heroReason || item.reason || timingLabel || "Needs your attention";
+  const rawReason = item.heroReason || item.reason || timingLabel || "Needs your attention";
+  const reason = rawReason.replace(/\s*[—–-]\s*also your recap[''']s top focus\.?/gi, "").replace(/also your recap[''']s top focus\.?/gi, "").trim();
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
       background: "#fff",
       border: "1px solid rgba(20,37,68,0.06)",
-      borderRadius: 14,
+      borderRadius: 16,
       borderLeft: "3px solid #ef4444",
-      boxShadow: "0 1px 4px rgba(19,33,58,0.04)",
+      boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
       transition: "transform 80ms ease, box-shadow 80ms ease",
       cursor: "pointer",
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(19,33,58,0.06)"; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 4px rgba(19,33,58,0.04)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
     >
-      <div style={{ padding: "16px 18px" }}>
+      <div style={{ padding: "18px 20px" }}>
         {/* School row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
@@ -66,6 +67,13 @@ function ActNowCard({ item }) {
               {prog.university_name}
             </div>
           </div>
+          {isHeroPriority && (
+            <span data-testid="top-priority-tag" style={{
+              fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 999,
+              background: "rgba(239,68,68,0.08)", color: "#dc2626",
+              textTransform: "uppercase", letterSpacing: "0.05em",
+            }}>Top Priority</span>
+          )}
           {timingLabel && (
             <span data-testid="timing-badge" style={{
               fontSize: 11, fontWeight: 500, padding: "3px 10px", borderRadius: 999,
@@ -107,22 +115,23 @@ function ActNowCard({ item }) {
    ═══════════════════════════════════════════════ */
 function MomentumCard({ item }) {
   const { primaryAction, timingLabel, ctaLabel, program: prog } = item;
-  const reason = item.heroReason || item.reason || timingLabel || "Maintain engagement";
+  const rawReason = item.heroReason || item.reason || timingLabel || "Maintain engagement";
+  const reason = rawReason.replace(/\s*[—–-]\s*also your recap[''']s top focus\.?/gi, "").replace(/also your recap[''']s top focus\.?/gi, "").trim();
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
       background: "#fff",
       border: "1px solid rgba(20,37,68,0.06)",
-      borderRadius: 14,
+      borderRadius: 16,
       borderLeft: "3px solid #f59e0b",
-      boxShadow: "0 1px 4px rgba(19,33,58,0.04)",
+      boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
       transition: "transform 80ms ease, box-shadow 80ms ease",
       cursor: "pointer",
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(19,33,58,0.06)"; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 4px rgba(19,33,58,0.04)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
     >
-      <div style={{ padding: "16px 18px" }}>
+      <div style={{ padding: "18px 20px" }}>
         {/* School row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
@@ -279,7 +288,7 @@ function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
     return (
       <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || "Take Action"} programId={programId}>
         <ParticleBurst active={burstActive} color={burstColor} onComplete={handleBurstComplete}>
-          <div onClick={handleTap}><ActNowCard item={item} /></div>
+          <div onClick={handleTap}><ActNowCard item={item} isHeroPriority={programId === heroProgramId} /></div>
         </ParticleBurst>
       </SwipeableCard>
     );
@@ -338,7 +347,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
         {/* ACT NOW (High) */}
         {(high.length > 0 || !allOnTrack) && (
           <div data-testid="priority-section-attention">

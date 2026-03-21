@@ -210,13 +210,6 @@ export default function PipelinePage() {
           <h1 className="text-xl sm:text-[28px]" style={{ fontWeight: 600, letterSpacing: "-0.03em", color: "#13213a", margin: 0 }}>
             Your recruiting right now
           </h1>
-          <p className="text-[13px] sm:text-[15px] mt-1.5 sm:mt-2" style={{ fontWeight: 400, color: "#64748b", lineHeight: 1.5 }} data-testid="summary-chips">
-            {highCount > 0 && <>{highCount} needs attention</>}
-            {highCount > 0 && medCount > 0 && <span style={{ margin: "0 6px", color: "#cbd5e1" }}>&middot;</span>}
-            {medCount > 0 && <>{medCount} gaining momentum</>}
-            {(highCount > 0 || medCount > 0) && lowCount > 0 && <span style={{ margin: "0 6px", color: "#cbd5e1" }}>&middot;</span>}
-            {lowCount > 0 && <>{lowCount} steady</>}
-          </p>
         </div>
         <div className="pm-toggle-track" style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: "1px solid rgba(20,37,68,0.08)", borderRadius: 14, boxShadow: "0 4px 12px rgba(19,33,58,0.06)" }} data-testid="view-toggle">
           <div className="pm-toggle-slider" style={{
@@ -236,13 +229,6 @@ export default function PipelinePage() {
 
       {/* ═══ MOMENTUM INSIGHT ═══ */}
       {viewMode === "priority" && <MomentumInsight data={recapData} attention={allAttention} />}
-
-      {/* ═══ BOARD SEPARATOR ═══ */}
-      <div className="flex items-center gap-4 mt-8 sm:mt-10 mb-5 px-1" data-testid="board-separator">
-        <div className="flex-1 h-px" style={{ background: "rgba(20,37,68,0.08)" }} />
-        <span className="ds-eyebrow flex-shrink-0" style={{ color: "#9aa5b8", fontSize: 11 }}>Manage all programs</span>
-        <div className="flex-1 h-px" style={{ background: "rgba(20,37,68,0.08)" }} />
-      </div>
 
       {/* ═══ UPGRADE PROMPT ═══ */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (

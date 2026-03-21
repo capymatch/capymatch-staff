@@ -330,8 +330,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             {current.primaryAction}
           </div>
           {current.heroReason && current.heroReason !== current.reason && (
-            <div style={{ color: "rgba(255,255,255,0.68)", fontSize: 14, lineHeight: 1.4 }} data-testid="hero-recap-reason">
-              {current.heroReason}
+            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-recap-reason">
+              {current.heroReason.replace(/\s*[—–-]\s*also your recap['']s top focus\.?/gi, "").replace(/also your recap['']s top focus\.?/gi, "").trim()}
             </div>
           )}
         </div>
