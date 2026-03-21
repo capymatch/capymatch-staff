@@ -58,18 +58,18 @@ function ActNowCard({ item, isHeroPriority }) {
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
-      background: isHeroPriority ? "rgba(239,68,68,0.015)" : "#fff",
-      border: isHeroPriority ? "1px solid rgba(239,68,68,0.08)" : "1px solid rgba(20,37,68,0.06)",
+      background: isHeroPriority ? "rgba(239,68,68,0.02)" : "#fff",
+      border: isHeroPriority ? "1px solid rgba(239,68,68,0.10)" : "1px solid rgba(20,37,68,0.06)",
       borderRadius: 16,
-      borderLeft: isHeroPriority ? "4px solid #ef4444" : "3px solid #ef4444",
-      boxShadow: isHeroPriority ? "0 2px 8px rgba(239,68,68,0.06)" : "0 1px 3px rgba(19,33,58,0.03)",
+      borderLeft: isHeroPriority ? "5px solid #ef4444" : "3px solid #ef4444",
+      boxShadow: isHeroPriority ? "0 3px 10px rgba(239,68,68,0.07)" : "0 1px 3px rgba(19,33,58,0.03)",
       transition: "transform 80ms ease, box-shadow 80ms ease",
       cursor: "pointer",
     }}
-    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = isHeroPriority ? "0 6px 16px rgba(239,68,68,0.08)" : "0 4px 12px rgba(19,33,58,0.06)"; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = isHeroPriority ? "0 2px 8px rgba(239,68,68,0.06)" : "0 1px 3px rgba(19,33,58,0.03)"; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = isHeroPriority ? "0 6px 16px rgba(239,68,68,0.10)" : "0 4px 12px rgba(19,33,58,0.06)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = isHeroPriority ? "0 3px 10px rgba(239,68,68,0.07)" : "0 1px 3px rgba(19,33,58,0.03)"; }}
     >
-      <div style={{ padding: isHeroPriority ? "22px 24px" : "18px 20px" }}>
+      <div style={{ padding: isHeroPriority ? "24px 26px" : "18px 20px" }}>
         {/* School row */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
@@ -80,7 +80,7 @@ function ActNowCard({ item, isHeroPriority }) {
             <UniversityLogo domain={prog.domain} name={prog.university_name} size={isHeroPriority ? 26 : 22} className="rounded" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: isHeroPriority ? 16 : 15, fontWeight: 600, color: "#13213a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: isHeroPriority ? 17 : 15, fontWeight: 600, color: "#13213a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {prog.university_name}
             </div>
           </div>
@@ -122,7 +122,7 @@ function ActNowCard({ item, isHeroPriority }) {
         {/* Action */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
           <span data-testid={`priority-action-${prog.program_id}`} style={{
-            flex: 1, fontSize: 14, fontWeight: 500, lineHeight: 1.4, color: "#1e293b",
+            flex: 1, fontSize: isHeroPriority ? 15 : 14, fontWeight: 500, lineHeight: 1.4, color: "#1e293b",
           }}>{primaryAction}</span>
           <button data-testid={`cta-btn-${prog.program_id}`} style={{
             fontSize: 13, fontWeight: 500, border: "none", cursor: "pointer",
@@ -133,6 +133,16 @@ function ActNowCard({ item, isHeroPriority }) {
             View school <ArrowRight style={{ width: 12, height: 12 }} />
           </button>
         </div>
+
+        {/* Context line for top priority */}
+        {isHeroPriority && (
+          <div data-testid="primary-context-line" style={{
+            fontSize: 11, fontWeight: 400, color: "#94a3b8", fontStyle: "italic",
+            marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(20,37,68,0.04)",
+          }}>
+            This is your most important action right now
+          </div>
+        )}
       </div>
     </div>
   );
