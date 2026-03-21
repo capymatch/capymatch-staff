@@ -319,6 +319,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Carousel dot indicators, hover elevation on medium cards, standardized language (Follow up now / Follow up in X days / No action needed)
 - Files: `computeAttention.js`, `PipelineHero.js`, `PriorityBoard.js`, `MomentumInsight.js`
 
+### Pipeline + Recap Merge — Unified Page (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% — 10/10 tests, iteration_228)
+- Merged Pipeline Priority and Momentum Recap into a single unified page
+- **Architecture**: Live layer (computeAttention.js) = source of truth for scoring/tiers/hero. AI layer (recap API) = explanation only.
+- **Page structure**: [1] Live Summary → [2] Hero Card → [3] Keep things moving → [4] Just keep an eye → [5] What changed recently (AI) → [6] AI coaching insights (AI)
+- /recap now redirects to /pipeline (standalone Recap page removed from navigation)
+- AI sections show freshness timestamp ("Insights updated Xh ago")
+- No duplication: live sections decide placement, AI sections explain context
+- Files: `PipelinePage.js`, `MomentumInsight.js` (now pure live), `PriorityBoard.js` (added AI sections), `App.js` (redirect)
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
