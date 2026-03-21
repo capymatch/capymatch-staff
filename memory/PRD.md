@@ -166,6 +166,15 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Font: `-apple-system, SF Pro Text, Inter` — titles 600, body 400-500
 - Files: `PipelineHero.js`, `PipelinePage.js`, `MomentumInsight.js`, `PriorityBoard.js`, `PipelineList.js`
 
+### Recap Page Production Finalization (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% backend 25/25, 100% frontend, iteration_218)
+- Section label: "Your next moves" (replaced "WHAT TO DO")
+- Top priority border: softer rgba(239,68,68,0.55) instead of solid red
+- Arrows (→) only on actionable items — removed from Watch card
+- Watch reason: "Check in within the next few days to maintain momentum"
+- Emory insight bullet emphasized (darker #334155, fontWeight 500)
+- "Confidence: High" trust signal added under hero summary
+
 ### Recap Page Production Polish (Mar 2026)
 - **Status**: COMPLETE & VERIFIED (100% backend 24/24, 100% frontend, iteration_217)
 - Title: "Re-engage Emory University" (removed redundant "with")
