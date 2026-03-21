@@ -514,6 +514,7 @@ async def _compute_and_cache_recap(tenant_id, now, period_start, period_label, e
         "period_label": period_label,
         "event_name": event_name,
         "period_start": period_start.isoformat(),
+        "created_at": now.isoformat(),
         "momentum": {
             "heated_up": [m for m in momentum_items if m["category"] == "heated_up"],
             "holding_steady": [m for m in momentum_items if m["category"] == "holding_steady"],

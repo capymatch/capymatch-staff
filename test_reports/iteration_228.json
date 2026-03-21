@@ -1,0 +1,87 @@
+{
+  "summary": "Completed frontend testing of Pipeline + Recap merge (iteration 228). All core features working correctly. Fixed bug where AI insights weren't displaying due to field name mismatch (insights vs ai_insights). Added created_at to API response for freshness timestamp.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_228.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/frontend/src/components/pipeline/PriorityBoard.js",
+    "/app/backend/routers/momentum_recap.py"
+  ],
+  "success_rate": {
+    "backend": "N/A (frontend-only testing)",
+    "frontend": "100% (10/10 tests passed)"
+  },
+  "test_credentials": {
+    "emma_email": "emma.chen@athlete.capymatch.com",
+    "emma_password": "athlete123"
+  },
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pipeline + Recap merge testing complete (iteration 228). All features verified: [1] Live Summary card with breakdown pills (2 need attention now / 2 need follow-up soon / 1 on track), biggest shift, and insight text. [2] Hero Card shows Emory University with badges (TOP PRIORITY, 2 DAYS OVERDUE, FLAGGED BY COACH). [3] Needs attention now section absorbed by hero. [4] Keep things moving section shows Florida (Next best move) and UCLA. [5] Just keep an eye shows Creighton with 'No action needed · Added'. [6] What changed recently section shows Gaining momentum (Stanford, Florida, UCLA), Cooling off (Emory), Holding steady (Creighton). [7] AI coaching insights section shows bullet points from recap. [8] /recap redirects to /pipeline correctly. [9] No duplicate priority lists. [10] No console errors. Fixed: PriorityBoard.js now reads ai_insights from recapData (was looking for 'insights'). Added created_at to momentum-recap API response for freshness timestamp.",
+  "tests_verified": {
+    "live_summary": {
+      "card_present": "PASS",
+      "headline": "PASS - 'You're in a good position — 2 schools need attention'",
+      "breakdown_pills": "PASS - 3 pills: '2 need attention now', '2 need a follow-up soon', '1 is on track'",
+      "biggest_shift": "PASS - 'Emory University has gone quiet (8 days)'",
+      "insight": "PASS - 'Emory University and Stanford University require action first.'"
+    },
+    "hero_card": {
+      "emory_present": "PASS",
+      "badges": "PASS - TOP PRIORITY, 2 DAYS OVERDUE, FLAGGED BY COACH",
+      "action": "PASS - 'Reply Now — Emory University'"
+    },
+    "keep_things_moving": {
+      "section_present": "PASS",
+      "florida": "PASS - with 'Next best move' label",
+      "ucla": "PASS"
+    },
+    "just_keep_an_eye": {
+      "section_present": "PASS",
+      "creighton": "PASS - with 'No action needed · Added'"
+    },
+    "what_changed_recently": {
+      "section_present": "PASS",
+      "gaining_momentum": "PASS - Stanford, Florida, UCLA",
+      "cooling_off": "PASS - Emory",
+      "holding_steady": "PASS - Creighton"
+    },
+    "ai_coaching_insights": {
+      "section_present": "PASS",
+      "bullet_points": "PASS - 5 insights displayed"
+    },
+    "recap_redirect": {
+      "redirect_works": "PASS - /recap redirects to /pipeline"
+    },
+    "no_duplicates": {
+      "priority_lists": "PASS - no duplicate sections"
+    },
+    "console_errors": {
+      "no_errors": "PASS"
+    }
+  },
+  "fixes_applied": {
+    "ai_insights_field_name": {
+      "file": "/app/frontend/src/components/pipeline/PriorityBoard.js",
+      "issue": "Component was looking for recapData.insights but API returns ai_insights",
+      "fix": "Changed to: const aiInsights = recapData?.ai_insights || recapData?.insights || [];"
+    },
+    "freshness_timestamp": {
+      "file": "/app/backend/routers/momentum_recap.py",
+      "issue": "API response didn't include created_at for freshness timestamp",
+      "fix": "Added 'created_at': now.isoformat() to response object"
+    }
+  }
+}

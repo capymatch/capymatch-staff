@@ -17,7 +17,7 @@ import PipelineStyles from "../../components/pipeline/PipelineStyles";
 import UpcomingTasksSection from "../../components/pipeline/UpcomingTasksSection";
 import CommittedBanner from "../../components/pipeline/CommittedBanner";
 import "../../components/pipeline/pipeline-responsive.css";
-import RecapTeaser from "../../components/pipeline/RecapTeaser";
+// RecapTeaser removed — recap content merged into PriorityBoard
 import MomentumInsight from "../../components/pipeline/MomentumInsight";
 import { KANBAN_COLS, COL_TO_STAGE } from "../../components/pipeline/pipeline-constants";
 import { computeAllAttention } from "../../lib/computeAttention";
@@ -224,8 +224,8 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {/* ═══ CONTEXT LAYER: What Changed ═══ */}
-      {viewMode === "priority" && <MomentumInsight data={recapData} attention={allAttention} />}
+      {/* ═══ CONTEXT LAYER: Live Summary ═══ */}
+      {viewMode === "priority" && <MomentumInsight attention={allAttention} />}
 
       {/* ═══ HERO ═══ */}
       <div style={{ marginBottom: 24 }}>
@@ -258,7 +258,7 @@ export default function PipelinePage() {
         {viewMode === 'pipeline' ? (
           <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
         ) : (
-          <PriorityBoard items={allAttention} navigate={navigate} heroItemIds={heroItems.map(h => h.programId)} />
+          <PriorityBoard items={allAttention} navigate={navigate} heroItemIds={heroItems.map(h => h.programId)} recapData={recapData} />
         )}
       </div>
 

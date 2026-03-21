@@ -475,15 +475,22 @@ function SectionLabel({ label, count, color }) {
   );
 }
 
-export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
+export default function PriorityBoard({ items, navigate, heroItemIds = [], recapData }) {
   const heroSet = new Set(heroItemIds);
-  // Section allocation: hero items are excluded; rest goes by tier
   const high = items.filter(i => i.tier === "high" && !heroSet.has(i.programId));
   const medium = items.filter(i => i.tier === "medium" && !heroSet.has(i.programId));
   const low = items.filter(i => i.tier === "low");
-  // allOnTrack only when NO item across the entire pipeline is high or medium
   const allOnTrack = items.every(i => i.tier === "low") && low.length > 0;
   const [monitorCollapsed, setMonitorCollapsed] = useState(low.length > 4);
+
+  /* AI layer data */
+  const momentum = recapData?.momentum;
+  const heatedUp = momentum?.heated_up || [];
+  const coolingOff = momentum?.cooling_off || [];
+  const holdingSteady = momentum?.holding_steady || [];
+  const hasAIData = heatedUp.length > 0 || coolingOff.length > 0 || holdingSteady.length > 0;
+  const aiInsights = recapData?.ai_insights || recapData?.insights || [];
+  const recapUpdatedAt = recapData?.created_at || recapData?.updated_at;
 
   return (
     <div data-testid="priority-board" style={{ marginTop: 8, fontFamily: FONT }}>
@@ -502,17 +509,17 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-        {/* NEXT ACTIONS (remaining high-tier, excluding hero carousel) */}
+        {/* ═══ [3] NEEDS ATTENTION NOW (high) ═══ */}
         {high.length > 0 && (
           <div data-testid="priority-section-attention">
-            <SectionLabel label="Next actions" count={high.length} color="#ef4444" />
+            <SectionLabel label="Needs attention now" count={high.length} color="#ef4444" />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="act-now" heroSet={heroSet} />)}
             </div>
           </div>
         )}
 
-        {/* KEEP THINGS MOVING (Medium tier — ALWAYS shown if medium items exist) */}
+        {/* ═══ [4] KEEP THINGS MOVING (medium) ═══ */}
         {medium.length > 0 && (
           <div data-testid="priority-section-coming-up">
             <SectionLabel label="Keep things moving" count={medium.length} color="#f59e0b" />
@@ -522,7 +529,7 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
           </div>
         )}
 
-        {/* JUST KEEP AN EYE (Low tier) */}
+        {/* ═══ [5] JUST KEEP AN EYE (low) ═══ */}
         {low.length > 0 && (
           <div data-testid="priority-section-on-track">
             <div
@@ -546,7 +553,113 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
             )}
           </div>
         )}
+
+        {/* ═══ [6] WHAT CHANGED RECENTLY (AI layer) ═══ */}
+        {hasAIData && (
+          <div data-testid="what-changed-section" style={{
+            background: "#fafbfd", borderRadius: 16, padding: "24px 24px 20px",
+            border: "1px solid rgba(20,37,68,0.04)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#8b5cf6", flexShrink: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#475569" }}>What changed recently</span>
+              </div>
+              {recapUpdatedAt && (
+                <span data-testid="ai-freshness" style={{ fontSize: 11, fontWeight: 400, color: "#cbd5e1" }}>
+                  Insights updated {formatTimeAgo(recapUpdatedAt)}
+                </span>
+              )}
+            </div>
+
+            {/* Heated up */}
+            {heatedUp.length > 0 && (
+              <MomentumGroup label="Gaining momentum" color="#f59e0b" icon={"\u2191"} items={heatedUp} />
+            )}
+
+            {/* Cooling off */}
+            {coolingOff.length > 0 && (
+              <MomentumGroup label="Cooling off" color="#ef4444" icon={"\u2193"} items={coolingOff} />
+            )}
+
+            {/* Holding steady */}
+            {holdingSteady.length > 0 && (
+              <MomentumGroup label="Holding steady" color="#10b981" icon={"\u2014"} items={holdingSteady} />
+            )}
+          </div>
+        )}
+
+        {/* ═══ [7] AI COACHING INSIGHTS ═══ */}
+        {aiInsights.length > 0 && (
+          <div data-testid="ai-insights-section" style={{
+            background: "#fafbfd", borderRadius: 16, padding: "24px 24px 20px",
+            border: "1px solid rgba(20,37,68,0.04)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#3b82f6", flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#475569" }}>Coaching insights</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {aiInsights.slice(0, 5).map((ins, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, lineHeight: 1.55, color: "#475569" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#3b82f6", flexShrink: 0, marginTop: 7, opacity: 0.5 }} />
+                  {typeof ins === 'string' ? ins : ins.text || ins.insight || ''}
+                </div>
+              ))}
+            </div>
+            {recapUpdatedAt && (
+              <div style={{ marginTop: 14, fontSize: 11, color: "#cbd5e1" }}>
+                Based on your latest recap {"\u00b7"} updated {formatTimeAgo(recapUpdatedAt)}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+/* Momentum group — for "What changed recently" section */
+function MomentumGroup({ label, color, icon, items }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color }}>{icon}</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color, letterSpacing: "0.01em" }}>{label}</span>
+      </div>
+      {items.map((item, i) => (
+        <div key={i} style={{
+          display: "flex", alignItems: "flex-start", gap: 8,
+          padding: "6px 0", fontSize: 13, lineHeight: 1.5, color: "#475569",
+        }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", minWidth: 0 }}>
+            {item.university_name || item.school_name || 'School'}
+          </span>
+          {(item.what_changed || item.reason) && (
+            <>
+              <span style={{ color: "#cbd5e1" }}>{"\u2014"}</span>
+              <span style={{ color: "#64748b" }}>{item.what_changed || item.reason}</span>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* Format relative time */
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - d;
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  } catch { return ""; }
 }
