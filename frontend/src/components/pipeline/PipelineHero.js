@@ -294,11 +294,28 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           }} data-testid="hero-advice-text">
             {current.primaryAction}
           </div>
-          {current.heroReason && current.heroReason !== current.reason && (
-            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-recap-reason">
-              {current.heroReason.replace(/\s*[—–-]\s*also your recap['']s top focus\.?/gi, "").replace(/also your recap['']s top focus\.?/gi, "").trim()}
-            </div>
-          )}
+          {/* Descriptive supporting text — never just repeat the timing badge */}
+          {(() => {
+            const hr = (current.heroReason || "").trim();
+            const tl = (current.timingLabel || "").trim();
+            const isJustTiming = !hr || hr.toLowerCase() === tl.toLowerCase() || hr.toLowerCase() === (current.reason || "").toLowerCase() || /^overdue\s/i.test(hr) || /^tomorrow$/i.test(hr) || /^due\s/i.test(hr);
+            if (!isJustTiming) {
+              return (
+                <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-recap-reason">
+                  {hr.replace(/\s*[—–-]\s*also your recap['']s top focus\.?/gi, "").replace(/also your recap['']s top focus\.?/gi, "").trim()}
+                </div>
+              );
+            }
+            return (
+              <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-descriptive-reason">
+                {current.attentionLevel === "high"
+                  ? `No activity in ${p?.signals?.days_since_activity || p?.signals?.days_since_last_activity || "several"} days — this is now your top priority`
+                  : current.attentionLevel === "medium"
+                    ? "Recent engagement — follow up to keep momentum going"
+                    : "Pipeline is on track — maintain your cadence"}
+              </div>
+            );
+          })()}
         </div>
 
         {/* META: Owner — only show when it's not the athlete's own task */}
