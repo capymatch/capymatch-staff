@@ -1,5 +1,5 @@
 """
-Test suite for Momentum Recap API endpoint - Production Polish (Iteration 217)
+Test suite for Momentum Recap API endpoint - Production Polish (Iteration 218)
 Tests the /api/athlete/momentum-recap endpoint for:
 - Top priority action is 'Re-engage Emory University' (no 'with')
 - Secondary reasons are clean without redundant prefixes
@@ -10,6 +10,9 @@ Tests the /api/athlete/momentum-recap endpoint for:
 - Top priority reason includes timeframe
 - Secondary actions use DIFFERENT phrasing (not identical)
 - Momentum action_guidance varies per item
+
+NEW Iteration 218 tests:
+- Watch card reason is 'Check in within the next few days to maintain momentum'
 """
 import pytest
 import requests
@@ -457,6 +460,34 @@ class TestMomentumRecapAPI:
         assert "ai_insights" in data, "Missing ai_insights in refresh response"
         assert "top_priority_program_id" in data, "Missing top_priority_program_id in refresh response"
         print("✓ Refresh endpoint works correctly with all new fields")
+    
+    def test_watch_card_reason_text(self, recap_data):
+        """NEW 218: Test that watch card reason is 'Check in within the next few days to maintain momentum'"""
+        priorities = recap_data.get("priorities", [])
+        
+        if not priorities:
+            pytest.skip("No priority items to test")
+        
+        # Find watch priority
+        watch_priorities = [p for p in priorities if p.get("rank") == "watch"]
+        
+        if not watch_priorities:
+            print("✓ No watch priority found in current data")
+            return
+        
+        watch = watch_priorities[0]
+        reason = watch.get("reason", "")
+        
+        # Should be the new text, NOT the old "Could cool off without attention"
+        expected_reason = "Check in within the next few days to maintain momentum"
+        assert reason == expected_reason, \
+            f"Watch card reason should be '{expected_reason}', got '{reason}'"
+        
+        # Verify NOT using old text
+        assert "Could cool off" not in reason, \
+            f"Watch card reason should NOT contain old text 'Could cool off': {reason}"
+        
+        print(f"✓ Watch card reason is correct: {reason}")
 
 
 class TestAuthEndpoint:

@@ -231,7 +231,7 @@ def _generate_priorities(momentum_items):
             "school_name": watch["school_name"],
             "program_id": watch["program_id"],
             "action": f"Monitor {watch['school_name']}",
-            "reason": "Could cool off without attention",
+            "reason": "Check in within the next few days to maintain momentum",
         })
 
     return priorities
