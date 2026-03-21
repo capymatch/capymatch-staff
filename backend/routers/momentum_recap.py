@@ -303,37 +303,42 @@ def _compute_biggest_shift(momentum_items):
 
 
 def _build_insight_bullets(momentum_items):
-    """Generate data-driven bullet insights — no AI needed."""
+    """Generate coaching-focused actionable insights — not status descriptions."""
     bullets = []
     heated = [m for m in momentum_items if m["category"] == "heated_up"]
     cooling = [m for m in momentum_items if m["category"] == "cooling_off"]
-    steady = [m for m in momentum_items if m["category"] == "holding_steady"]
+    total = len(momentum_items)
 
-    for m in heated:
-        changes = m.get("what_changed", "")
-        stage = m.get("current_stage", "")
-        if "Campus visit" in changes:
-            bullets.append(f"{m['school_name']} gained momentum after your visit")
-        elif m.get("has_coach_reply"):
-            bullets.append(f"{m['school_name']} is heating up — coach replied")
-        elif stage == "added":
-            bullets.append(f"{m['school_name']} is heating up after being recently added")
-        elif "Active dialogue" in changes or "dialogue" in changes.lower():
-            bullets.append(f"{m['school_name']} is heating up through active conversations")
+    # Coaching insight 1: Pattern observation
+    if len(heated) >= 2:
+        bullets.append(f"{len(heated)} of {total} schools are gaining momentum — your outreach is working")
+    elif heated:
+        h = heated[0]
+        if h.get("has_coach_reply"):
+            bullets.append(f"{h['school_name']} coach replied — respond within 24 hours to keep this alive")
+        elif "Campus visit" in h.get("what_changed", ""):
+            bullets.append(f"Your {h['school_name']} visit made an impact — send a thank-you note this week")
         else:
-            bullets.append(f"{m['school_name']} is gaining traction")
+            bullets.append(f"{h['school_name']} is responding to your outreach — keep the cadence going")
 
-    for m in cooling:
-        days = m.get("days_since_last")
-        if days:
-            bullets.append(f"{m['school_name']} requires immediate re-engagement ({days}d inactive)")
+    # Coaching insight 2: Risk mitigation
+    if cooling:
+        c = cooling[0]
+        days = c.get("days_since_last")
+        if days and days > 7:
+            bullets.append(f"{c['school_name']} has been quiet for {days} days — try a different approach or channel")
         else:
-            bullets.append(f"{m['school_name']} requires re-engagement")
+            bullets.append(f"Don't let {c['school_name']} go cold — a quick check-in can restart the conversation")
 
-    for m in steady:
-        bullets.append(f"{m['school_name']} remains stable")
+    # Coaching insight 3: Strategic observation
+    if len(heated) > len(cooling):
+        bullets.append("Your pipeline is trending positive — focus on quality conversations over volume")
+    elif len(cooling) > len(heated):
+        bullets.append("A few schools need attention — prioritize re-engagement this week")
+    elif len(momentum_items) > 0:
+        bullets.append("Steady progress across your pipeline — consistency is your advantage right now")
 
-    return bullets
+    return bullets[:3]
 
 
 async def _generate_ai_summary(momentum_items, priorities, recap_hero, period_label):

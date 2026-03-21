@@ -1,35 +1,39 @@
-<analysis>**original_problem_statement**: The user requires a precise UI implementation of the Pipeline page and Recap page using a calm, premium SaaS aesthetic. The focus must be on answering What should I focus on right now, and why? by stripping out redundant information, unifying typography (Inter/Manrope), ensuring mobile responsiveness, and creating clear hierarchical calls-to-action. PRODUCT REQUIREMENTS: UI updates MUST NOT strip existing underlying logic (like swipe handlers, carousels, or kanban toggles).
+<analysis>**original_problem_statement**: 
+The user requested extensive UI/UX refinements across the CapyMatch application. Core requests included: converting the split action lists into a single unified YOUR NEXT MOVES AI-driven list, removing redundant UI elements/explanations from the Pipeline Hero card, introducing a Pipeline Summary top bar with a slide-out View full breakdown explanation drawer, syncing the visual design of the Journey page to match the new Pipeline page, fixing mobile responsiveness on the Director Dashboard, and wiring real user profile photos to avatars.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
-**what currently exists?**: 
-CapyMatch is a React + FastAPI + MongoDB application serving as a Recruiting OS. The Pipeline page has been fully refactored to match the premium design system, resolving mobile responsiveness issues, removing duplicate elements, and successfully restoring heavily stripped logic (carousel, kanban toggle) that a previous agent accidentally deleted. The focus has now shifted to applying the identical design language to the Recap Page.
+**what currently exists?** 
+CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool. The Priority/Pipeline page now features a compact Pipeline Summary top bar, a heavily refined and compacted Pipeline Hero card (dark gradient, strict badge limits, human-readable coach signals), and a unified YOUR NEXT MOVES list driven by the backend  AI endpoint. The Journey page has been successfully redesigned to match the Pipeline's styling (dark gradient header/hero, light theme timeline). The Director Mission Control is now mobile-responsive.
 
 **Last working item**:
-- **Last item agent was working**: Applying the new premium design system to . The agent was instructed to update the design (font weights max 600, 400-500 body, white cards, softer shadows) without removing or changing any existing data or logic.
-- **Status**: TESTING PENDING (The agent successfully overwrote the file with the new design but ran out of context before linting or testing).
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: Screenshot tool (to verify visual hierarchy, styling, and mobile responsiveness) followed by  (to ensure the Recap page interactions and routing remain intact).
-- **User Testing Done**: N
+    - Last item agent was working: Refining the Why this matters () drawer to meet strict new user constraints: max 3 narrative bullets, one-phrase momentum descriptions, plain-language per-school details, max 3 actionable coaching insights, progressive reveal (Show 3 more schools toggle), and subtle motion/animations.
+    - Status: IN PROGRESS
+    - Agent Testing Done: N (Agent was actively editing and verifying backend output when the session ended)
+    - Which testing method agent to use? Frontend testing agent + Screenshot tool (to verify progressive reveal animations and strict UI formatting).
+    - User Testing Done: N
 
-**All Pending/In progress Issue list**:
-Issue 1: Verify and Finalize RecapPage Redesign (P0)
-- **Attempted fixes**: The agent executed a  overwrite for  applying the new Tailwind/CSS design principles. 
-- **Next debug checklist**: 
-  1. Use  on  to ensure no syntax errors were introduced during the rewrite.
-  2. Navigate to the Recap page and use the screenshot tool to verify that the UI matches the new premium system (white cards, clean typography, correct weights).
-  3. Ensure no data or logic (like API fetches or user interactions) was accidentally removed.
-- **Why fix this issue and what will be achieved with the fix?** Completes the user's latest request to unify the aesthetic of the Recap page with the newly refined Pipeline page.
-- **Status**: TESTING PENDING
-- **Is recurring issue?** N
-- **Should Test frontend/backend/both after fix?** Frontend
-- **Blocked on other issue**: None
+**All Pending/In progress Issue list**: 
+  Issue 1: Refine Why this matters Breakdown Drawer (P0)
+     - Attempted fixes: The agent rewrote  multiple times to implement progressive reveal, compress language, and establish visual hierarchy. They were executing bash commands to check the exact  AI output when the session ended.
+     - Next debug checklist: 
+         1. Review . Ensure progressive reveal (Show more toggle) and subtle entrance animations are present.
+         2. Check  AI prompt. Ensure it adheres to the strict rules: max 3 narrative bullets, 1 short phrase per momentum item, and max 3 insight bullets.
+         3. Verify there is no system terminology (e.g., score, priority factor) exposed in the UI.
+         4. Take a screenshot of the drawer open, then a screenshot with Show more expanded.
+         5. Run the frontend testing agent to verify UI interactions.
+     - Why fix this issue and what will be achieved with the fix? It completes a 3-part revision requested by the user to make the drawer feel like a smart coach rather than a dense data report.
+     - Status: IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both (Backend for AI prompt constraints, Frontend for UI rendering)
+     - Blocked on other issue: None
 
-**In progress Task List**:
-None
+**In progress Task List**: 
+None currently (All ongoing work is captured in Issue 1).
 
-**Upcoming and Future Tasks**:
+**Upcoming and Future Tasks**
   - **Upcoming Tasks:**
+    - (P1) Implement Next best move fallback card: When no schools are , show a lighter Next best move card (top medium item) instead of an empty dark hero section.
     - (P1) CSV Import Tool: Bulk import functionality for school/coach data.
     - (P1) Bulk Approve Mode: Allow selecting/approving multiple items at once in Director Inbox.
     - (P1) Refactor : Break down the massive 1000+ line component.
@@ -38,86 +42,90 @@ None
     - AI-Powered Coach Summary
     - Club Billing (Stripe)
     - Multi-Agent Intelligence Pipeline
-    - Kanban Keyboard Shortcuts
 
-**Completed work in this session**:
-- Restored stripped logic in Pipeline page (Hero carousel, swipe gestures, Kanban toggle) which was wrongly deleted in previous fork. (DONE)
-- Unified Pipeline Typography by stripping hardcoded  overrides so they correctly inherit Inter/Manrope from . (DONE)
-- Fixed Pipeline mobile responsiveness by creating , stacking filter pills, adjusting paddings, and shrinking hero elements. (DONE)
-- Deduplicated Pipeline data by removing redundant counts and rebuilding the What Changed Momentum card into a narrative sentence. (DONE)
-- Disabled IntersectionObserver compact mode to prevent the Hero card from aggressively shrinking on mobile scroll. (DONE)
-- Refined Hero Card CTA hierarchy, match score labeling, and Top Priority badges. (DONE)
+**Completed work in this session**
+- Built unified YOUR NEXT MOVES list using  data (DONE).
+- Cleaned up : Removed PRIORITY FACTORS drawer, duplicate reason stacks, and restricted badges to max 2. Compacted the card's physical dimensions (DONE).
+- Excluded Hero carousel schools from appearing in the YOUR NEXT MOVES list (DONE).
+- Wired real athlete profile photos () from the DB to the TopBar and Sidebar avatars, fixing the login/me auth flows (DONE).
+- Implemented the compact 2-line Pipeline Summary top bar with inline momentum signals (DONE).
+- Fixed AI backfill logic in  to ensure all schools (e.g., UCLA) are ranked and displayed even if the LLM drops them from the summary (DONE).
+- Overhauled Journey Page styling to match the Pipeline page (Dark gradient header/hero card, light theme timeline/cards) (DONE).
+- Fixed Director Dashboard Mission Control mobile responsiveness (removed forced text truncation and fixed row heights) (DONE).
 
-**Earlier issues found/mentioned but not fixed**:
+**Earlier issues found/mentioned but not fixed**
 None.
 
-**Known issue recurrence from previous fork**:
-- **Issue recurrence in previous fork**: Agents repeatedly stripped underlying interactive logic (carousels, toggles, filter pills) while attempting to modify the UI/CSS of React components. The agent in this session had to retrieve and restore over 400 lines of deleted logic.
-- **Recurrence count**: 1
-- **Status**: RESOLVED (but requires vigilance).
-- *Note:* Always use targeted  instead of full file overwrites when making UI tweaks to complex components to avoid destroying embedded logic.
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: None
+  - Recurrence count: 0
+  - Status: RESOLVED
 
-**Code Architecture**:
+**Code Architecture**
 
 
-**Key Technical Concepts**:
-- React (Frontend), FastAPI (Backend), MongoDB.
-- Design System: Custom CSS variables + Tailwind. Headings use 'Manrope' (max weight 600), Body uses 'Inter' (weight 400-500).
+**Key Technical Concepts**
+- React, FastAPI, MongoDB.
+- **Data Philosophy:** Live deterministic data decides *what* to do and *when* (Hero cards, chips). Generative AI explains *why* (Breakdown Drawer, Momentum narrative).
+-  structures the strict action strings using mapped human-readable fallback languages instead of system variable names.
 
-**key DB schema**:
-- : Behavioral loop events.
-- : AI-generated recaps from interactions.
+**key DB schema**
+  -  / : {id, email, role, photo_url}
+  - : {athlete_id, school_id, reason, status, due_date}
 
-**changes in tech stack**:
-- None
+**changes in tech stack**
+  - None
 
-**All files of reference**:
-- : Recently updated; needs linting and testing.
-- : Added for responsive queries on Pipeline components.
-- : Highly refined hero component.
-- : Actively maintained product specs.
+**All files of reference**
+  - : File actively being modified to handle strict AI constraints, progressive reveal, and animation.
+  - : Backend API that feeds the drawer. The AI prompt here may need tweaking to strictly output max 3 bullets and short momentum phrases.
+  - : The new compact status bar.
+  - : Highly refined and compacted.
 
-**Areas that need refactoring**:
--  (still over 1000 lines).
+**Areas that need refactoring**
+  -  (over 1000 lines).
 
-**key api endpoints**:
-- 
+**key api endpoints**
+  - : Feeds the YOUR NEXT MOVES list and the Breakdown Drawer. Contains caching (forced refresh required if prompt is changed).
+  - : Now correctly returns .
 
-**Critical Info for New Agent**:
-Be incredibly careful when modifying UI code. A previous agent caused massive regressions by doing full file overwrites that stripped out event handlers, swipe logic, and carousels. The current task is to ensure the **RecapPage.js** redesign (which was just overwritten) maintained all its underlying data mapping and logic. Thoroughly test it before declaring success. 
+**Critical Info for New Agent**
+The user left a very detailed 7-point constraint list for the  (Messages 505, 510, 513). You must ensure the drawer implements a Show more progressive reveal for the schools, utilizes subtle slide/fade animations, and strictly limits data (max 3 narrative bullets, max 3 insights, plain English only). The previous agent was checking the output of the backend  to see if the AI was formatting the data correctly. Your first step should be evaluating  and  to finalize this exact design spec.
 
-**documents and test reports created in this job**:
-- 
--  through 
+**documents and test reports created in this job**
+  -  (Pipeline YOUR NEXT MOVES list tests)
+  -  (Pipeline Summary / Drawer V1 tests)
+  -  (Journey Page light/dark theme tests)
 
-**Last 10 User Messages and any pending HUMAN messages**:
-- **User (Pending Task):** Now please apply the same new design to the recap page. DO NOT REMOVE/CHANGE ANY DATA/LOGIC, just update the design -> *Agent overwrote file, testing pending.*
-- **User:** Improve this Hero Card UI without changing layout... [Provided 7 specific copy/badge/CTA weight changes] -> *Completed.*
-- **User:** Doesn’t the web version show a more descriptive message? -> *Completed (fixed duplication fallback logic).*
-- **User:** I did not ask you to remove, i asked how does that show/read in the web version -> *Agent reverted accidental deletion, then provided explanation.*
-- **User:** How does the highlighted overdue 4d show in web version? -> *Clarified.*
-- **User:** What does that “You” mean in the pipeline hero card? / I think we don’t need to show “you” when it’s my task -> *Completed.*
-- **User:** Remove the “Why this surfaced” we already have the “Why this” button -> *Completed.*
-- **User:** Fix the layout of the buttons and the hero card filter in mobile [Image provided] -> *Completed via responsive CSS.*
-- **User:** Pipeline hero card is changing as I scroll the page down in my iphone -> *Completed by disabling IntersectionObserver compact logic.*
-- **User:** You are a senior product designer... REFINING an existing screen to remove duplication and improve clarity. -> *Completed.*
+**Last 10 User Messages and any pending HUMAN messages**
+- **User (PENDING):** Refine the Why this matters drawer to improve clarity, reduce density, and increase meaningful insight... [Detailed 7-point constraints] -> *Agent was executing bash to check AI payload. Needs implementation.*
+- **User:** Refine the Why this matters drawer with progressive reveal and subtle motion...
+- **User:** You are refining the View full breakdown drawer in CapyMatch. Goal: Make the drawer feel like: A clear, human explanation...
+- **User:** are you applying the changes to the full breakdown panel??
+- **User:** Refine the Pipeline Summary into a compact status header. Goal: Transform the summary into a lightweight orientation bar...
+- **User:** Refactor the Pipeline Summary into a compact status header... (Agent verified current state already matched this).
+- **User:** Refactor the Pipeline Summary into a compact header. 1. Reduce height by ~50%...
+- **User:** the hero card from the pipeline is too big, could you make a bit smaller?
+- **User:** Director’s area. Dashboard not looking good in mobile [Image attached]
+- **User:** Still not the same design/colors [Images attached comparing Journey Header to Pipeline Hero]
 
 **Project Health Check:**
-- Broken: None apparent, but RecapPage needs verification.
-- Mocked: None
+- Broken: None (The Breakdown drawer is functional but requires structural/UI refinement based on pending constraints).
+- Mocked: None.
 
-**3rd Party Integrations**:
-- OpenAI/LLM (Emergent LLM Key) — Used for momentum recaps and AI summaries.
+**3rd Party Integrations**
+- OpenAI GPT-4o — uses Emergent LLM Key (Generates momentum recap summaries).
+- Stripe (Payments) — requires User API Key.
 
-**Testing status**:
-- Testing agent used after significant changes: YES (iterations 210-213 for the Pipeline UI).
-- Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: None
-- Known regressions: None currently, but RecapPage must be verified to ensure data wasn't stripped.
+**Testing status**
+  - Testing agent used after significant changes: YES (Iterations 229, 230, 231 all passed 100%).
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: None
+  - Known regressions: None
 
-**Credentials to test flow**:
+**Credentials to test flow:**
 - **Athlete:**  / 
 - **Director:**  / 
 
-**What agent forgot to execute**:
-The agent overwrote  to fulfill the user's final request but the session terminated before the agent could run Javascript linting, take verification screenshots, or utilize the  to ensure logic wasn't stripped. Verify this immediately.</analysis>
+**What agent forgot to execute**
+The agent received three dense, cascading constraint updates from the user regarding  (progressive reveal, strict content limits, animation). The agent created the file but the context ended before they could verify the UI rendering via screenshot tool, ensure the backend AI prompt matched the new output limits, and run the frontend testing agent. Ensure the drawer perfectly matches the rules in message 513.</analysis>

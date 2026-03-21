@@ -10,7 +10,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://priority-unify.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://capymatch-ui-refine.preview.emergentagent.com").rstrip("/")
 
 # Test credentials
 ATHLETE_EMAIL = "emma.chen@athlete.capymatch.com"
