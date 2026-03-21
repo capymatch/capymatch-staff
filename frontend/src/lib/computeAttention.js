@@ -140,24 +140,25 @@ export function computeAttention(program, topAction, recapCtx) {
 
   // ── Timing label ──
   let timingLabel = null;
-  if (daysUntil !== null) {
-    if (daysUntil < 0) timingLabel = `${Math.abs(daysUntil)} days overdue`;
-    else if (daysUntil === 0) timingLabel = 'Due today';
-    else if (daysUntil === 1) timingLabel = 'Tomorrow';
-    else if (daysUntil <= 3) timingLabel = `In ${daysUntil} days`;
-  }
-  if (!timingLabel && lastActivity > 0) {
+  if (lastActivity > 0) {
     timingLabel = `${lastActivity}d since last activity`;
+  } else if (daysUntil !== null) {
+    if (daysUntil < 0) timingLabel = `${Math.abs(daysUntil)}d overdue`;
+    else if (daysUntil === 0) timingLabel = 'Due today';
+    else if (daysUntil === 1) timingLabel = 'Due tomorrow';
+    else if (daysUntil <= 3) timingLabel = `Due in ${daysUntil}d`;
   }
   if (!timingLabel && ta?.category === 'first_outreach') {
     timingLabel = 'New';
   }
 
-  // ── Primary action — verb-first, time-oriented ──
+  // ── Primary action — verb-first, school name then urgency ──
   const actionMap = {
-    coach_assigned_action: `Follow up now with ${name}`,
-    overdue_follow_up: `Follow up now with ${name}`,
-    stale_reply: `Follow up now with ${name}`,
+    coach_assigned_action: `Follow up with ${name} now`,
+    coach_flag_reply_needed: `Reply to ${name} now`,
+    coach_flag_general: `Follow up with ${name} now`,
+    overdue_follow_up: `Follow up with ${name} now`,
+    stale_reply: `Follow up with ${name} now`,
     first_outreach_needed: `Send your intro to ${name}`,
     send_intro_email: `Send your intro to ${name}`,
     relationship_cooling: `Re-engage ${name} now`,
@@ -174,27 +175,29 @@ export function computeAttention(program, topAction, recapCtx) {
   }
   // Override if due date creates urgency but top-action says on_track
   if (daysUntil !== null && daysUntil <= 0 && ta?.action_key === 'no_action_needed') {
-    primaryAction = daysUntil < 0 ? `Follow up now with ${name}` : `Follow up with ${name} today`;
+    primaryAction = daysUntil < 0 ? `Follow up with ${name} now` : `Follow up with ${name} today`;
   }
   // Override for upcoming items — use time-based guidance
   if (daysUntil !== null && daysUntil > 0 && daysUntil <= 7 && primaryAction.endsWith('is on track')) {
-    primaryAction = `Follow up in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} with ${name}`;
+    primaryAction = `Follow up with ${name} in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`;
   }
 
-  // ── Reason — calm, factual status ──
+  // ── Reason — context line: "No response in X days — follow up now" ──
   const reasonMap = {
-    coach_assigned_action: 'Coach assigned a follow-up',
-    overdue_follow_up: daysUntil !== null && daysUntil < 0 ? `Last contact ${Math.abs(daysUntil)} days ago \u00b7 needs follow-up` : 'Follow-up is due',
-    stale_reply: 'Waiting on coach reply \u00b7 follow up this week',
+    coach_assigned_action: 'Coach is expecting a response',
+    coach_flag_reply_needed: 'Coach is expecting a response',
+    coach_flag_general: 'Coach flagged this for follow-up',
+    overdue_follow_up: lastActivity ? `No response in ${lastActivity} day${lastActivity !== 1 ? 's' : ''} \u2014 follow up now` : 'Follow-up is overdue',
+    stale_reply: 'Waiting on coach reply \u2014 follow up this week',
     first_outreach_needed: 'Ready for first contact',
     send_intro_email: 'Ready for first contact',
-    relationship_cooling: `No activity in ${lastActivity || 'several'} days \u00b7 re-engage soon`,
-    reengage_relationship: `No activity in ${lastActivity || 'several'} days \u00b7 re-engage soon`,
+    relationship_cooling: `No response in ${lastActivity || 'several'} day${lastActivity !== 1 ? 's' : ''} \u2014 re-engage now`,
+    reengage_relationship: `No response in ${lastActivity || 'several'} day${lastActivity !== 1 ? 's' : ''} \u2014 re-engage now`,
     due_today_follow_up: 'Follow-up due today',
   };
   let reason = reasonMap[ta?.action_key] || 'On track';
   if (daysUntil !== null && daysUntil <= 0 && reason === 'On track') {
-    reason = daysUntil < 0 ? `Last contact ${Math.abs(daysUntil)} days ago \u00b7 needs follow-up` : 'Follow-up due today';
+    reason = lastActivity ? `No response in ${lastActivity} day${lastActivity !== 1 ? 's' : ''} \u2014 follow up now` : 'Follow-up due now';
   }
   // Fix contradiction: if primaryAction says follow up, reason can't say "On track"
   if (reason === 'On track' && primaryAction && !primaryAction.includes('is on track')) {
@@ -248,20 +251,22 @@ export function computeAttention(program, topAction, recapCtx) {
     reasonShort = 'On track';
   }
 
-  // ── heroReason — concise subtitle for Hero card ──
-  // Rule: live urgency always leads, recap context supplements
+  // ── heroReason — concise context line for Hero card ──
   let heroReason = null;
   const hasLiveUrgency = (daysUntil !== null && daysUntil <= 0) || ta?.category === 'coach_flag';
 
-  if (hasLiveUrgency && recapRank) {
-    // Merged: live urgency + recap
-    heroReason = daysUntil !== null && daysUntil < 0
-      ? `Last contact ${Math.abs(daysUntil)} days ago \u00b7 needs follow-up`
-      : `Due now \u00b7 needs your attention`;
+  if (hasLiveUrgency) {
+    if (lastActivity) {
+      heroReason = `No response in ${lastActivity} day${lastActivity !== 1 ? 's' : ''} \u2014 follow up now`;
+    } else if (daysUntil !== null && daysUntil < 0) {
+      heroReason = `${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''} overdue \u2014 follow up now`;
+    } else {
+      heroReason = 'Due now \u2014 follow up today';
+    }
   } else if (recapRank === 'top') {
-    heroReason = 'Needs attention \u00b7 momentum slipping';
+    heroReason = lastActivity ? `No response in ${lastActivity} days \u2014 momentum slipping` : 'Needs attention \u2014 momentum slipping';
   } else if (recapRank === 'secondary') {
-    heroReason = 'Building momentum \u00b7 stay active';
+    heroReason = 'Building momentum \u2014 stay active';
   }
 
   // ── prioritySource — what's driving this hero position ──
@@ -327,7 +332,7 @@ export function computeAttention(program, topAction, recapCtx) {
     explainFactors,
     daysUntil,
     owner: ta?.owner || 'athlete',
-    ctaLabel: 'View school',
+    ctaLabel: 'Open school',
     microSignal,
     program: p,
     topAction: ta,

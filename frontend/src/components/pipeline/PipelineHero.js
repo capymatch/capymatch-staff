@@ -231,7 +231,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       {/* ── SLIDE CONTENT ── */}
       <div className={`relative z-[1] ds-hero-content ${slideClass} px-4 sm:px-7 py-4 sm:py-6`}
       >
-        {/* BADGE ROW */}
+        {/* BADGE ROW — max 2 badges: priority + timing */}
         <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-status-row">
           <span className="ds-badge" style={{
             background: "rgba(239,68,68,0.12)",
@@ -245,22 +245,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               color: "rgba(255,255,255,0.68)",
             }} data-testid="hero-timing-label">
               {current.timingLabel}
-            </span>
-          )}
-          {current.topAction?.category === 'coach_flag' && (
-            <span className="ds-badge" style={{
-              background: "rgba(245,158,11,0.15)",
-              color: "#fbbf24",
-            }} data-testid="hero-coach-flag-badge">
-              Flagged by coach
-            </span>
-          )}
-          {matchPct != null && (
-            <span className="ds-badge" style={{
-              background: "rgba(16,185,129,0.12)",
-              color: "#6ee7b7",
-            }} data-testid="hero-match-score">
-              Match {matchPct}%
             </span>
           )}
         </div>
@@ -299,16 +283,16 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           }} data-testid="hero-advice-text">
             {current.primaryAction || ""}
           </div>
-          {/* Calm factual subtext */}
+          {/* Context line */}
           <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-descriptive-reason">
             {(() => {
               const hr = (current.heroReason || "").trim();
               if (hr) return hr;
               if (current.tier === "high") {
                 const days = p?.signals?.days_since_activity || p?.signals?.days_since_last_activity;
-                return days ? `Last contact ${days} days ago \u00b7 needs follow-up` : "Needs your attention now";
+                return days ? `No response in ${days} day${days !== 1 ? 's' : ''} \u2014 follow up now` : "Needs your attention now";
               }
-              return "On track \u00b7 keep momentum";
+              return "On track \u2014 keep momentum";
             })()}
           </div>
 
@@ -330,7 +314,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         {!compact && rail && (
           <>
           <div className="ds-eyebrow mt-4 mb-1" style={{ color: "rgba(255,255,255,0.30)", fontSize: 10, letterSpacing: "0.1em" }}>
-            Your recruiting stage
+            Where you are right now
           </div>
           <div className="ds-progress-track" data-testid="hero-progress-rail">
             {RAIL_STAGES.map((s, stIdx) => {
@@ -362,7 +346,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                   school_name: p.university_name || "",
                   priority_source: current.prioritySource || "live",
                   recap_rank: current.recapRank || null,
-                  cta_label: "View school",
+                  cta_label: "Open school",
                 });
                 navigate(`/pipeline/${p.program_id}`);
               }
@@ -370,7 +354,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             data-testid="hero-cta-btn"
             className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-3 sm:px-5"
           >
-            {current.ctaLabel || "View school"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            {current.ctaLabel || "Open school"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
