@@ -294,9 +294,9 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           }} data-testid="hero-advice-text">
             {current.primaryAction}
           </div>
-          {current.heroReason && current.heroReason !== current.reason && (
+          {current.heroReason && current.heroReason !== current.reason && current.heroReason !== current.timingLabel && (
             <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 14, fontWeight: 400, lineHeight: 1.45 }} data-testid="hero-recap-reason">
-              {current.heroReason.replace(/\s*[—–-]\s*also your recap['']s top focus\.?/gi, "").replace(/also your recap['']s top focus\.?/gi, "").trim()}
+              {current.heroReason.replace(/\s*[—–-]\s*also your recap['']s top focus\.?/gi, "").replace(/also your recap['']s top focus\.?/gi, "").replace(/overdue \d+d?/gi, "").trim() || null}
             </div>
           )}
         </div>
