@@ -166,12 +166,12 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     <div
       ref={heroRef}
       data-testid="pipeline-hero"
-      className="overflow-hidden relative pm-hero-hover"
+      className="overflow-hidden relative pm-hero-hover rounded-[18px] sm:rounded-[28px]"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       style={{
         background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
-        borderRadius: 28,
+        borderRadius: undefined,
         border: "1px solid rgba(255,255,255,0.08)",
         boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)",
       }}
@@ -182,19 +182,19 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
       {/* ── TOP BAR: Filter pills + Carousel nav ── */}
       <div
-        className="flex items-center justify-between px-5 sm:px-7 pt-3.5 pb-3 relative z-[1]"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-7 pt-3 sm:pt-3.5 pb-2.5 sm:pb-3 relative z-[1] gap-2 sm:gap-0"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         data-testid="hero-top-bar"
       >
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap" data-testid="hero-filter-pills">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap" data-testid="hero-filter-pills">
           {pills.map(pill => (
             <button
               key={pill.key}
               onClick={() => handleFilter(pill.key)}
               data-testid={`hero-filter-${pill.key}`}
-              className="flex items-center gap-1.5 rounded-full text-[13px] font-bold pm-pill"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-full text-[12px] sm:text-[13px] font-bold pm-pill"
               style={{
-                padding: "8px 14px",
+                padding: "6px 10px",
                 borderRadius: 999,
                 background: filter === pill.key ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)",
                 color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.4)",
@@ -204,7 +204,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             >
               {pill.label}
               <span className="pm-pill-badge" style={{
-                fontSize: 11, fontWeight: 800, padding: "1px 6px", borderRadius: 6,
+                fontSize: 10, fontWeight: 800, padding: "1px 5px", borderRadius: 6,
                 background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
                 color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.3)",
               }}>{pill.count}</span>
@@ -212,27 +212,26 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           ))}
         </div>
         {total > 1 && (
-          <div className="flex items-center gap-2.5 flex-shrink-0" data-testid="hero-carousel-nav">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0" data-testid="hero-carousel-nav">
             <button onClick={() => handleGoTo(-1)} data-testid="carousel-prev"
-              className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
-            <span className="text-[12px] font-bold tabular-nums min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="carousel-counter">
+            <span className="text-[11px] sm:text-[12px] font-bold tabular-nums min-w-[24px] sm:min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="carousel-counter">
               {safeIdx + 1}/{total}
             </span>
             <button onClick={() => handleGoTo(1)} data-testid="carousel-next"
-              className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         )}
       </div>
 
       {/* ── SLIDE CONTENT ── */}
-      <div className={`relative z-[1] ds-hero-content ${slideClass}`}
-        style={{ padding: compact ? "14px 20px 16px" : "22px 28px 24px" }}
+      <div className={`relative z-[1] ds-hero-content ${slideClass} px-4 sm:px-7 py-4 sm:py-6`}
       >
         {/* BADGE ROW */}
         <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-status-row">
@@ -289,7 +288,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                 className="rounded-lg flex-shrink-0"
               />
             )}
-            <h3 style={{ fontSize: 30, fontWeight: 600, color: "#fff", letterSpacing: "-0.045em", margin: 0, lineHeight: 1.02 }} data-testid="hero-school-name">
+            <h3 className="text-[22px] sm:text-[30px]" style={{ fontWeight: 600, color: "#fff", letterSpacing: "-0.045em", margin: 0, lineHeight: 1.02 }} data-testid="hero-school-name">
               {p?.university_name || "School"}
             </h3>
             {matchPct != null && (
@@ -363,7 +362,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         )}
 
         {/* CTA ROW */}
-        <div style={{ display: "flex", gap: 12, marginTop: compact ? 8 : 4 }}>
+        <div className="flex gap-2 sm:gap-3 mt-1 sm:mt-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -380,9 +379,9 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               }
             }}
             data-testid="hero-cta-btn"
-            className="ds-btn-primary"
+            className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-3 sm:px-5"
           >
-            {current.ctaLabel || "View School"} <ArrowRight className="w-4 h-4" />
+            {current.ctaLabel || "View School"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
           <button
             onClick={(e) => {
@@ -392,7 +391,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               if (next) trackEvent("hero_expanded_why", { program_id: current.programId });
             }}
             data-testid="hero-secondary-btn"
-            className="ds-btn-secondary"
+            className="ds-btn-secondary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-3 sm:px-5"
           >
             Why this?
           </button>
