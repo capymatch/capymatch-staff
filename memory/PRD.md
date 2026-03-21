@@ -166,6 +166,15 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Font: `-apple-system, SF Pro Text, Inter` — titles 600, body 400-500
 - Files: `PipelineHero.js`, `PipelinePage.js`, `MomentumInsight.js`, `PriorityBoard.js`, `PipelineList.js`
 
+### Hero+Pipeline Unification (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% backend 10/10, 100% frontend, iteration_221)
+- Removed PipelineHero from render — top priority now the first card in pipeline with prominent styling
+- Moved MomentumInsight ("What changed since your last update") to top as context layer
+- New flow: Context → Top priority (prominent: red tint, 4px border, 22px padding, badges row) → Next actions → Supporting → Monitor
+- No duplication between context and pipeline cards
+- Section: "YOUR PIPELINE" → Act Now → Keep things moving → Just keep an eye
+- Files: `PipelinePage.js`, `PriorityBoard.js`, `MomentumInsight.js`
+
 ### Pipeline Card Redesign (Mar 2026)
 - **Status**: COMPLETE & VERIFIED (100% backend 10/10, 100% frontend, iteration_220)
 - Removed system language ("Flagged in recap", "No action needed" → "On track", human guidance)
