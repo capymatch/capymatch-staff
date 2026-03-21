@@ -12,21 +12,37 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
 
 /* ── Shared: Mini Journey Rail ── */
+const STAGE_CONTEXT = {
+  added: "Added — getting started",
+  outreach: "Outreach — waiting for response",
+  in_conversation: "Talking — momentum building",
+  campus_visit: "Visit — relationship deepening",
+  offer: "Offer — decision pending",
+};
+
 function MiniRail({ journeyRail }) {
   if (!journeyRail?.stages) return null;
   const order = ["added", "outreach", "in_conversation", "campus_visit", "offer"];
   const activeIdx = order.indexOf(journeyRail.active);
+  const stageCtx = STAGE_CONTEXT[journeyRail.active] || null;
 
   return (
-    <div style={{ display: "flex", gap: 3, marginTop: 10 }}>
-      {order.map((s, i) => (
-        <div key={s} style={{
-          flex: 1, height: 3, borderRadius: 3,
-          background: i <= activeIdx
-            ? (i === activeIdx ? "rgba(25,195,178,0.5)" : "#19c3b2")
-            : "rgba(20,37,68,0.06)",
-        }} />
-      ))}
+    <div>
+      <div style={{ display: "flex", gap: 3, marginTop: 10 }}>
+        {order.map((s, i) => (
+          <div key={s} style={{
+            flex: 1, height: 3, borderRadius: 3,
+            background: i <= activeIdx
+              ? (i === activeIdx ? "rgba(25,195,178,0.5)" : "#19c3b2")
+              : "rgba(20,37,68,0.06)",
+          }} />
+        ))}
+      </div>
+      {stageCtx && (
+        <div data-testid="stage-context" style={{ fontSize: 11, color: "#94a3b8", fontWeight: 400, marginTop: 4 }}>
+          {stageCtx}
+        </div>
+      )}
     </div>
   );
 }
@@ -36,7 +52,8 @@ function MiniRail({ journeyRail }) {
    ═══════════════════════════════════════════════ */
 function ActNowCard({ item, isHeroPriority }) {
   const { primaryAction, timingLabel, program: prog } = item;
-  const rawReason = item.heroReason || item.reason || timingLabel || "Needs your attention";
+  // For Act Now cards, prefer the actual reason over heroReason (which is for the hero card)
+  const rawReason = item.reason || item.heroReason || timingLabel || "Needs your attention";
   const reason = rawReason.replace(/\s*[—–-]\s*also your recap[''']s top focus\.?/gi, "").replace(/also your recap[''']s top focus\.?/gi, "").trim();
 
   return (
@@ -102,7 +119,7 @@ function ActNowCard({ item, isHeroPriority }) {
             display: "flex", alignItems: "center", gap: 4,
             background: "#13213a", color: "#fff",
           }}>
-            View <ArrowRight style={{ width: 12, height: 12 }} />
+            View school <ArrowRight style={{ width: 12, height: 12 }} />
           </button>
         </div>
       </div>
@@ -114,8 +131,9 @@ function ActNowCard({ item, isHeroPriority }) {
    KEEP MOMENTUM CARD (medium — orange accent)
    ═══════════════════════════════════════════════ */
 function MomentumCard({ item }) {
-  const { primaryAction, timingLabel, ctaLabel, program: prog } = item;
-  const rawReason = item.heroReason || item.reason || timingLabel || "Maintain engagement";
+  const { primaryAction, timingLabel, program: prog } = item;
+  // For momentum cards, prefer actual reason over heroReason
+  const rawReason = item.reason || item.heroReason || timingLabel || "Maintain engagement";
   const reason = rawReason.replace(/\s*[—–-]\s*also your recap[''']s top focus\.?/gi, "").replace(/also your recap[''']s top focus\.?/gi, "").trim();
 
   return (
@@ -173,7 +191,7 @@ function MomentumCard({ item }) {
             display: "flex", alignItems: "center", gap: 4,
             background: "#fff", color: "#1e293b",
           }}>
-            {ctaLabel || "View"} <ArrowRight style={{ width: 12, height: 12 }} />
+            View school <ArrowRight style={{ width: 12, height: 12 }} />
           </button>
         </div>
       </div>
@@ -220,7 +238,7 @@ function MonitorRow({ item, navigate }) {
           On track · {stageLabel}
         </div>
       </div>
-      <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8", flexShrink: 0 }}>View</span>
+      <span style={{ fontSize: 12, fontWeight: 500, color: "#94a3b8", flexShrink: 0 }}>View school</span>
     </div>
   );
 }
@@ -286,7 +304,7 @@ function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
 
   if (section === "act-now") {
     return (
-      <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || "Take Action"} programId={programId}>
+      <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel="View school" programId={programId}>
         <ParticleBurst active={burstActive} color={burstColor} onComplete={handleBurstComplete}>
           <div onClick={handleTap}><ActNowCard item={item} isHeroPriority={programId === heroProgramId} /></div>
         </ParticleBurst>
@@ -295,7 +313,7 @@ function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
   }
   if (section === "momentum") {
     return (
-      <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel={item.ctaLabel || "View School"} programId={programId}>
+      <SwipeableCard onAction={handleAction} onSnooze={handleSnooze} actionLabel="View school" programId={programId}>
         <ParticleBurst active={burstActive} color={burstColor} onComplete={handleBurstComplete}>
           <div onClick={handleTap}><MomentumCard item={item} /></div>
         </ParticleBurst>
@@ -365,7 +383,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
         {/* KEEP MOMENTUM (Medium) */}
         {(medium.length > 0 || !allOnTrack) && (
           <div data-testid="priority-section-coming-up">
-            <SectionLabel label="Keep momentum" count={medium.length} color="#f59e0b" />
+            <SectionLabel label="Keep things moving" count={medium.length} color="#f59e0b" />
             {medium.length > 0 ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="momentum" heroProgramId={heroProgramId} />)}
@@ -389,7 +407,7 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
               transform: monitorCollapsed ? "none" : "rotate(90deg)", flexShrink: 0,
             }} />
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#475569" }}>Monitor</span>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: "#475569" }}>Just keep an eye</span>
             <span style={{ fontSize: 12, fontWeight: 400, color: "#94a3b8" }}>({low.length})</span>
           </div>
           {!monitorCollapsed && (

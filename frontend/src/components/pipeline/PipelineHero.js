@@ -365,7 +365,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                   school_name: p.university_name || "",
                   priority_source: current.prioritySource || "live",
                   recap_rank: current.recapRank || null,
-                  cta_label: current.ctaLabel || "View School",
+                  cta_label: "View school",
                   why_was_expanded: whyExpanded,
                 });
                 navigate(`/pipeline/${p.program_id}`);
@@ -374,7 +374,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             data-testid="hero-cta-btn"
             className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-3 sm:px-5"
           >
-            {current.ctaLabel || "View School"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            {current.ctaLabel || "View school"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
           <button
             onClick={(e) => {

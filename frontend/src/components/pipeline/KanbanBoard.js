@@ -18,7 +18,7 @@ function useIsMobile(breakpoint = 768) {
 
 /* ── Short action label from attention data ── */
 function getShortAction(attn) {
-  if (!attn) return "No action needed";
+  if (!attn) return "On track";
   const rs = (attn.reasonShort || "").toLowerCase();
   if (rs.includes("coach assigned")) return "Take action";
   if (rs.includes("flagged by coach")) return "Review flag";
@@ -26,7 +26,7 @@ function getShortAction(attn) {
   if (rs.includes("due today") || rs.includes("due tomorrow") || rs.includes("due in")) return "Follow up";
   if (rs.includes("no response") || rs.includes("no recent")) return "Re-engage";
   if (rs.includes("ready for first contact")) return "Start outreach";
-  if (rs === "on track") return "No action needed";
+  if (rs === "on track") return "On track";
   return attn.ctaLabel || "View details";
 }
 
@@ -162,7 +162,7 @@ function KanbanCard({ program: p, navigate, index, attention: attn, activeDragId
             {/* Row 3: Action */}
             <div style={{
               marginTop: 6, fontSize: 12, fontWeight: 600,
-              color: action === "No action needed" ? "#a0aec0" : "#334155",
+              color: action === "On track" ? "#a0aec0" : "#334155",
               lineHeight: 1.3,
             }} data-testid={`card-action-${p.program_id}`}>
               {action}
