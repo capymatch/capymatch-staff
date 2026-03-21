@@ -20,6 +20,7 @@ import RecapTeaser from "../../components/pipeline/RecapTeaser";
 import { KANBAN_COLS, COL_TO_STAGE } from "../../components/pipeline/pipeline-constants";
 import { computeAllAttention } from "../../lib/computeAttention";
 import "../../components/pipeline/pipeline-motion.css";
+import "../../components/pipeline/pipeline-premium.css";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -198,42 +199,44 @@ export default function PipelinePage() {
   const nearLimit = schoolPct >= 0.8;
 
   return (
-    <div style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
+    <div className="pipeline-premium" style={{ maxWidth: 1120, margin: "0 auto", padding: "0 4px" }} data-testid="recruiting-board">
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER ═══ */}
-      <div className="flex items-start justify-between gap-3 mb-4 sm:mb-5" data-testid="pipeline-header">
+      <div className="flex items-start justify-between gap-4 mb-6 sm:mb-8" data-testid="pipeline-header">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight m-0" style={{ color: "var(--cm-text, #0f172a)" }}>
+          <div className="ds-eyebrow" style={{ color: "#7b88a2", marginBottom: 6 }}>Recruiting intelligence</div>
+          <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.05em", color: "#13213a", margin: "0 0 10px" }}>
             Your Pipeline
           </h1>
-          <div className="flex items-center gap-2 flex-wrap mt-1.5" data-testid="summary-chips">
+          <div className="flex items-center gap-3 flex-wrap" data-testid="summary-chips">
             {highCount > 0 && (
-              <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-attention" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#ef4444" }} />{highCount} needs attention
+              <span className="flex items-center gap-2 text-[12px] sm:text-[13px] font-semibold" data-testid="chip-attention" style={{ color: "#5f6c84" }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: "#ff6b7f" }} />{highCount} needs attention
               </span>
             )}
             {medCount > 0 && (
-              <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-momentum" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#818cf8" }} />{medCount} coming up
+              <span className="flex items-center gap-2 text-[12px] sm:text-[13px] font-semibold" data-testid="chip-momentum" style={{ color: "#5f6c84" }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: "#ff9b52" }} />{medCount} coming up
               </span>
             )}
             {lowCount > 0 && (
-              <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium" data-testid="chip-on-track" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#10b981" }} />{lowCount} on track
+              <span className="flex items-center gap-2 text-[12px] sm:text-[13px] font-semibold" data-testid="chip-on-track" style={{ color: "#5f6c84" }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: "#16b57f" }} />{lowCount} on track
               </span>
             )}
           </div>
         </div>
-        <div className="pm-toggle-track" style={{ background: 'var(--cm-surface-2, #f1f5f9)' }} data-testid="view-toggle">
+        <div className="pm-toggle-track" style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: "1px solid rgba(20,37,68,0.08)", borderRadius: 14, boxShadow: "0 4px 12px rgba(19,33,58,0.06)" }} data-testid="view-toggle">
           <div className="pm-toggle-slider" style={{
             left: viewMode === 'priority' ? 2 : (togglePriorityRef.current?.offsetWidth || 60) + 2,
             width: viewMode === 'priority' ? (togglePriorityRef.current?.offsetWidth || 60) : (togglePipelineRef.current?.offsetWidth || 60),
+            borderRadius: 12,
           }} />
           <button ref={togglePriorityRef} onClick={() => toggleView('priority')} data-testid="toggle-priority" className="pm-toggle-btn"
-            style={{ color: viewMode === 'priority' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)' }}>Priority</button>
+            style={{ color: viewMode === 'priority' ? '#13213a' : '#9aa5b8', padding: "8px 18px", fontSize: 13 }}>Priority</button>
           <button ref={togglePipelineRef} onClick={() => toggleView('pipeline')} data-testid="toggle-pipeline" className="pm-toggle-btn"
-            style={{ color: viewMode === 'pipeline' ? 'var(--cm-text)' : 'var(--cm-text-3, #94a3b8)' }}>Pipeline</button>
+            style={{ color: viewMode === 'pipeline' ? '#13213a' : '#9aa5b8', padding: "8px 18px", fontSize: 13 }}>Pipeline</button>
         </div>
       </div>
 
@@ -244,27 +247,27 @@ export default function PipelinePage() {
       {viewMode === "priority" && <RecapTeaser data={recapData} />}
 
       {/* ═══ BOARD SEPARATOR ═══ */}
-      <div className="flex items-center gap-3 mt-5 sm:mt-6 mb-4 px-1" data-testid="board-separator">
-        <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
-        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider flex-shrink-0" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Manage all programs</span>
-        <div className="flex-1 h-px" style={{ background: "var(--cm-border, #e2e8f0)" }} />
+      <div className="flex items-center gap-4 mt-8 sm:mt-10 mb-5 px-1" data-testid="board-separator">
+        <div className="flex-1 h-px" style={{ background: "rgba(20,37,68,0.08)" }} />
+        <span className="ds-eyebrow flex-shrink-0" style={{ color: "#9aa5b8", fontSize: 11 }}>Manage all programs</span>
+        <div className="flex-1 h-px" style={{ background: "rgba(20,37,68,0.08)" }} />
       </div>
 
       {/* ═══ UPGRADE PROMPT ═══ */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (
-        <div style={{ background: usage.used >= usage.limit ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.02)", border: `1px solid ${usage.used >= usage.limit ? "rgba(245,158,11,0.2)" : "var(--cm-border)"}`, borderRadius: 10, padding: "14px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }} data-testid="over-limit-banner">
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: usage.used >= usage.limit ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <AlertTriangle style={{ width: 18, height: 18, color: usage.used >= usage.limit ? "#f59e0b" : "var(--cm-text-3)" }} />
+        <div style={{ background: usage.used >= usage.limit ? "rgba(255,155,82,0.06)" : "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: `1px solid ${usage.used >= usage.limit ? "rgba(255,155,82,0.2)" : "rgba(20,37,68,0.08)"}`, borderRadius: 22, padding: "18px 22px", marginBottom: 18, display: "flex", alignItems: "center", gap: 16, boxShadow: "0 10px 30px rgba(19,33,58,0.08)" }} data-testid="over-limit-banner">
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: usage.used >= usage.limit ? "rgba(255,155,82,0.15)" : "rgba(93,135,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <AlertTriangle style={{ width: 18, height: 18, color: usage.used >= usage.limit ? "#ff9b52" : "#5f6c84" }} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--cm-text)", marginBottom: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#13213a", marginBottom: 2 }}>
               {usage.used >= usage.limit ? `You've reached your ${usage.limit}-school limit` : `${usage.used} of ${usage.limit} schools used`}
             </div>
-            <div style={{ fontSize: 11, color: "var(--cm-text-3)" }}>
+            <div style={{ fontSize: 12, color: "#5f6c84" }}>
               {usage.used >= usage.limit ? "Upgrade to add more schools and unlock AI drafts." : "You're approaching your plan limit. Upgrade for more schools and AI drafts."}
             </div>
           </div>
-          <button onClick={() => setShowUpgrade(true)} style={{ padding: "7px 14px", borderRadius: 8, background: usage.used >= usage.limit ? "#f59e0b" : "var(--cm-surface-2)", color: usage.used >= usage.limit ? "#000" : "var(--cm-text-2)", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0, border: usage.used >= usage.limit ? "none" : "1px solid var(--cm-border)" }} data-testid="upgrade-from-banner">Upgrade</button>
+          <button onClick={() => setShowUpgrade(true)} className="ds-btn-primary" style={{ padding: "10px 18px", fontSize: 12, borderRadius: 14 }} data-testid="upgrade-from-banner">Upgrade</button>
         </div>
       )}
 
@@ -282,23 +285,23 @@ export default function PipelinePage() {
 
       {/* ═══ ARCHIVED ═══ */}
       {archivedPrograms.length > 0 && (
-        <div data-testid="section-archived" style={{ marginTop: 24 }}>
-          <div onClick={() => setCollapsedArchived(!collapsedArchived)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 0 10px", cursor: "pointer" }} data-testid="section-header-archived">
-            <ChevronRight style={{ width: 14, height: 14, color: "#94a3b8", transition: "transform 0.2s", transform: collapsedArchived ? "none" : "rotate(90deg)" }} />
-            <Archive style={{ width: 13, height: 13, color: "#94a3b8" }} />
-            <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8" }}>Archived</span>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 6, background: "var(--cm-surface-2)", color: "#94a3b8" }}>{archivedPrograms.length}</span>
-            <div style={{ flex: 1, height: 1, background: "var(--cm-border)", marginLeft: 6 }} />
+        <div data-testid="section-archived" style={{ marginTop: 28 }}>
+          <div onClick={() => setCollapsedArchived(!collapsedArchived)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "18px 0 12px", cursor: "pointer" }} data-testid="section-header-archived">
+            <ChevronRight style={{ width: 14, height: 14, color: "#9aa5b8", transition: "transform 0.2s", transform: collapsedArchived ? "none" : "rotate(90deg)" }} />
+            <Archive style={{ width: 14, height: 14, color: "#9aa5b8" }} />
+            <span className="ds-eyebrow" style={{ color: "#9aa5b8", fontSize: 11 }}>Archived</span>
+            <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.72)", color: "#9aa5b8", border: "1px solid rgba(20,37,68,0.06)" }}>{archivedPrograms.length}</span>
+            <div style={{ flex: 1, height: 1, background: "rgba(20,37,68,0.08)", marginLeft: 8 }} />
           </div>
           {!collapsedArchived && archivedPrograms.map(p => (
-            <div key={p.program_id} style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 12, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12, opacity: 0.7 }} data-testid={`archived-card-${p.program_id}`}>
-              <UniversityLogo domain={p.domain} name={p.university_name} size={34} className="rounded-[10px] grayscale" />
+            <div key={p.program_id} style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: "1px solid rgba(20,37,68,0.08)", borderRadius: 18, padding: "14px 18px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14, opacity: 0.7, boxShadow: "0 4px 12px rgba(19,33,58,0.04)" }} data-testid={`archived-card-${p.program_id}`}>
+              <UniversityLogo domain={p.domain} name={p.university_name} size={36} className="rounded-[12px] grayscale" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>{p.university_name}</div>
-                <div style={{ fontSize: 10, color: "var(--cm-text-3)", marginTop: 1 }}>{[p.division, p.conference, p.state].filter(Boolean).join(" · ")}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#13213a" }}>{p.university_name}</div>
+                <div style={{ fontSize: 11, color: "#5f6c84", marginTop: 2 }}>{[p.division, p.conference, p.state].filter(Boolean).join(" · ")}</div>
               </div>
-              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchAll(); } catch { toast.error("Failed"); } }} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11, fontWeight: 700, background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }} data-testid={`reactivate-btn-${p.program_id}`}>
-                <RotateCcw style={{ width: 12, height: 12 }} /> Reactivate
+              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchAll(); } catch { toast.error("Failed"); } }} className="ds-btn-secondary" style={{ padding: "8px 16px", fontSize: 12, borderRadius: 14, display: "flex", alignItems: "center", gap: 6 }} data-testid={`reactivate-btn-${p.program_id}`}>
+                <RotateCcw style={{ width: 13, height: 13 }} /> Reactivate
               </button>
             </div>
           ))}

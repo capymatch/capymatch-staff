@@ -20,13 +20,13 @@ function MiniRail({ journeyRail }) {
   const activeIdx = order.indexOf(journeyRail.active);
 
   return (
-    <div style={{ display: "flex", gap: 2, marginTop: 6 }}>
+    <div style={{ display: "flex", gap: 3, marginTop: 8 }}>
       {order.map((s, i) => (
         <div key={s} style={{
-          flex: 1, height: 3, borderRadius: 2,
+          flex: 1, height: 3, borderRadius: 3,
           background: i <= activeIdx
-            ? (i === activeIdx ? "rgba(13,148,136,0.45)" : "#0d9488")
-            : "var(--cm-surface-2, #f1f5f9)",
+            ? (i === activeIdx ? "rgba(25,195,178,0.45)" : "#19c3b2")
+            : "rgba(20,37,68,0.06)",
         }} />
       ))}
     </div>
@@ -38,13 +38,13 @@ function TimingBadge({ timingLabel, attentionLevel }) {
   if (!timingLabel) return null;
   const isOverdue = timingLabel.toLowerCase().includes("overdue");
   const isDueToday = timingLabel.toLowerCase().includes("today");
-  const bg = isOverdue ? "rgba(239,68,68,0.08)" : isDueToday ? "rgba(245,158,11,0.08)" : "rgba(100,116,139,0.08)";
-  const color = isOverdue ? "#dc2626" : isDueToday ? "#b45309" : "#64748b";
+  const bg = isOverdue ? "rgba(255,107,127,0.10)" : isDueToday ? "rgba(255,155,82,0.10)" : "rgba(100,116,139,0.08)";
+  const color = isOverdue ? "#ff6b7f" : isDueToday ? "#ff9b52" : "#5f6c84";
 
   return (
     <span data-testid="timing-badge" style={{
-      fontSize: 9, fontWeight: 700, letterSpacing: "0.03em",
-      padding: "2px 7px", borderRadius: 5, textTransform: "uppercase",
+      fontSize: 10, fontWeight: 800, letterSpacing: "0.06em",
+      padding: "4px 10px", borderRadius: 999, textTransform: "uppercase",
       flexShrink: 0, background: bg, color,
     }}>{timingLabel}</span>
   );
@@ -57,7 +57,7 @@ function SchoolMeta({ program }) {
   if (program.conference) parts.push(program.conference);
   if (!parts.length) return null;
   return (
-    <div style={{ fontSize: 10, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500, display: "flex", alignItems: "center", gap: 5, marginTop: 1 }}>
+    <div style={{ fontSize: 11, color: "#5f6c84", fontWeight: 500, display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
       {parts.join(" · ")}
     </div>
   );
@@ -71,30 +71,30 @@ function HighCard({ item }) {
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
-      background: "var(--cm-surface, white)",
-      border: "1px solid rgba(239,68,68,0.15)",
-      borderRadius: 14, overflow: "hidden",
-      transition: "box-shadow 200ms, border-color 200ms",
+      background: "rgba(255,255,255,0.86)",
+      border: "1px solid rgba(20,37,68,0.08)",
+      borderRadius: 22, overflow: "hidden",
+      boxShadow: "inset 4px 0 0 #ff6b7f, 0 10px 30px rgba(19, 33, 58, 0.08)",
+      transition: "transform 120ms ease, box-shadow 120ms ease",
       cursor: "pointer", position: "relative",
     }}
-    onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(15,23,42,0.06)"; e.currentTarget.style.borderColor = "#fca5a5"; }}
-    onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.15)"; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "inset 4px 0 0 #ff6b7f, 0 14px 36px rgba(19,33,58,0.12)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "inset 4px 0 0 #ff6b7f, 0 10px 30px rgba(19,33,58,0.08)"; }}
     >
-      {/* Left accent */}
-      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, borderRadius: "14px 0 0 14px", background: "#ef4444" }} />
-
-      <div style={{ padding: "14px 16px 10px" }}>
+      <div style={{ padding: "18px 20px 14px" }}>
+        {/* Tiny label */}
+        <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.15em", color: "#cc475d", fontWeight: 700, marginBottom: 10 }}>Act now</div>
         {/* Top: logo + school + timing */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10, background: "var(--cm-surface-2, #f1f5f9)",
+            width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.9)",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            border: "1px solid rgba(0,0,0,0.04)", overflow: "hidden",
+            border: "1px solid rgba(20,37,68,0.06)", overflow: "hidden",
           }}>
             <LogoBox domain={prog.domain} name={prog.university_name} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text, #0f172a)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#13213a", letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {prog.university_name}
             </div>
             <SchoolMeta program={prog} />
@@ -106,31 +106,30 @@ function HighCard({ item }) {
 
         {/* Action row */}
         <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "8px 12px", margin: "10px -16px -10px",
-          borderTop: "1px solid rgba(226,232,240,0.5)",
-          background: "rgba(248,250,252,0.6)",
-          borderRadius: "0 0 14px 14px",
+          display: "flex", alignItems: "center", gap: 10,
+          paddingTop: 12, marginTop: 12,
+          borderTop: "1px solid rgba(20,37,68,0.06)",
         }}>
           <div style={{
-            width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+            width: 22, height: 22, borderRadius: 7, flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(239,68,68,0.06)", color: "#ef4444",
+            background: "rgba(255,107,127,0.08)", color: "#ff6b7f",
           }}>
-            <AlertCircle style={{ width: 10, height: 10 }} />
+            <AlertCircle style={{ width: 12, height: 12 }} />
           </div>
           <span data-testid={`priority-action-${prog.program_id}`} style={{
-            flex: 1, fontSize: 12, fontWeight: 600, lineHeight: 1.35,
-            color: "var(--cm-text-2, #475569)",
+            flex: 1, fontSize: 14, fontWeight: 600, lineHeight: 1.4,
+            color: "#5f6c84",
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>{primaryAction}</span>
           <button data-testid={`cta-btn-${prog.program_id}`} style={{
-            fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
-            padding: "5px 10px", borderRadius: 8, flexShrink: 0,
-            display: "flex", alignItems: "center", gap: 4,
-            background: "rgba(239,68,68,0.06)", color: "#dc2626",
+            fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
+            padding: "8px 14px", borderRadius: 14, flexShrink: 0,
+            display: "flex", alignItems: "center", gap: 5,
+            background: "linear-gradient(135deg, #19c3b2, #5d87ff)", color: "#fff",
+            fontFamily: "inherit", boxShadow: "0 8px 20px rgba(29,160,191,0.20)",
           }}>
-            {ctaLabel || "Take Action"} <ArrowRight style={{ width: 12, height: 12 }} />
+            {ctaLabel || "Take Action"} <ArrowRight style={{ width: 13, height: 13 }} />
           </button>
         </div>
       </div>
@@ -146,27 +145,30 @@ function MedCard({ item }) {
 
   return (
     <div data-testid={`priority-card-${prog.program_id}`} style={{
-      background: "var(--cm-surface, white)",
-      border: "1px solid var(--cm-border, #e2e8f0)",
-      borderRadius: 14, overflow: "hidden",
-      transition: "box-shadow 200ms, border-color 200ms",
+      background: "rgba(255,255,255,0.86)",
+      border: "1px solid rgba(20,37,68,0.08)",
+      borderRadius: 22, overflow: "hidden",
+      boxShadow: "inset 4px 0 0 #ff9b52, 0 10px 30px rgba(19, 33, 58, 0.08)",
+      transition: "transform 120ms ease, box-shadow 120ms ease",
       cursor: "pointer",
     }}
-    onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(15,23,42,0.06)"; e.currentTarget.style.borderColor = "#cbd5e1"; }}
-    onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.borderColor = "var(--cm-border, #e2e8f0)"; }}
+    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "inset 4px 0 0 #ff9b52, 0 14px 36px rgba(19,33,58,0.12)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "inset 4px 0 0 #ff9b52, 0 10px 30px rgba(19,33,58,0.08)"; }}
     >
-      <div style={{ padding: "14px 16px 10px" }}>
+      <div style={{ padding: "18px 20px 14px" }}>
+        {/* Tiny label */}
+        <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.15em", color: "#cc6c22", fontWeight: 700, marginBottom: 10 }}>Keep momentum</div>
         {/* Top: logo + school + timing */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10, background: "var(--cm-surface-2, #f1f5f9)",
+            width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.9)",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            border: "1px solid rgba(0,0,0,0.04)", overflow: "hidden",
+            border: "1px solid rgba(20,37,68,0.06)", overflow: "hidden",
           }}>
             <LogoBox domain={prog.domain} name={prog.university_name} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--cm-text, #0f172a)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#13213a", letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {prog.university_name}
             </div>
             <SchoolMeta program={prog} />
@@ -178,31 +180,30 @@ function MedCard({ item }) {
 
         {/* Action row */}
         <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "8px 12px", margin: "10px -16px -10px",
-          borderTop: "1px solid rgba(226,232,240,0.5)",
-          background: "rgba(248,250,252,0.6)",
-          borderRadius: "0 0 14px 14px",
+          display: "flex", alignItems: "center", gap: 10,
+          paddingTop: 12, marginTop: 12,
+          borderTop: "1px solid rgba(20,37,68,0.06)",
         }}>
           <div style={{
-            width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+            width: 22, height: 22, borderRadius: 7, flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(245,158,11,0.06)", color: "#f59e0b",
+            background: "rgba(255,155,82,0.08)", color: "#ff9b52",
           }}>
-            <Clock style={{ width: 10, height: 10 }} />
+            <Clock style={{ width: 12, height: 12 }} />
           </div>
           <span data-testid={`priority-action-${prog.program_id}`} style={{
-            flex: 1, fontSize: 12, fontWeight: 600, lineHeight: 1.35,
-            color: "var(--cm-text-2, #475569)",
+            flex: 1, fontSize: 14, fontWeight: 600, lineHeight: 1.4,
+            color: "#5f6c84",
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>{primaryAction}</span>
           <button data-testid={`cta-btn-${prog.program_id}`} style={{
-            fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
-            padding: "5px 10px", borderRadius: 8, flexShrink: 0,
-            display: "flex", alignItems: "center", gap: 4,
-            background: "rgba(13,148,136,0.06)", color: "#0d9488",
+            fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
+            padding: "8px 14px", borderRadius: 14, flexShrink: 0,
+            display: "flex", alignItems: "center", gap: 5,
+            background: "rgba(255,255,255,0.82)", color: "#13213a",
+            fontFamily: "inherit", boxShadow: "inset 0 0 0 1px rgba(19,33,58,.08), 0 4px 12px rgba(19,33,58,0.06)",
           }}>
-            {ctaLabel || "View School"} <ArrowRight style={{ width: 12, height: 12 }} />
+            {ctaLabel || "View School"} <ArrowRight style={{ width: 13, height: 13 }} />
           </button>
         </div>
       </div>
@@ -223,30 +224,33 @@ function LowRow({ item, navigate }) {
       onClick={() => navigate(`/pipeline/${prog.program_id}`)}
       data-testid={`priority-card-${prog.program_id}`}
       style={{
-        display: "flex", alignItems: "center", gap: 10,
-        padding: "10px 12px", borderRadius: 10,
-        transition: "background 150ms", cursor: "pointer",
+        display: "flex", alignItems: "center", gap: 12,
+        padding: "12px 16px", borderRadius: 16,
+        background: "rgba(255,255,255,0.5)",
+        border: "1px solid rgba(20,37,68,0.04)",
+        marginBottom: 4,
+        transition: "all 120ms ease", cursor: "pointer",
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = "rgba(241,245,249,0.65)"; }}
-      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+      onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.82)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(19,33,58,0.06)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.5)"; e.currentTarget.style.boxShadow = "none"; }}
     >
       <div style={{
-        width: 28, height: 28, borderRadius: 8, background: "var(--cm-surface-2, #f1f5f9)",
+        width: 32, height: 32, borderRadius: 10, background: "rgba(255,255,255,0.9)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-        border: "1px solid rgba(0,0,0,0.03)",
+        border: "1px solid rgba(20,37,68,0.06)",
       }}>
         <LogoBox domain={prog.domain} name={prog.university_name} muted />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #475569)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#13213a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {prog.university_name}
         </div>
-        <div style={{ fontSize: 10, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500, display: "flex", alignItems: "center", gap: 4, marginTop: 1 }}>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981" }} />
+        <div style={{ fontSize: 11, color: "#5f6c84", fontWeight: 500, display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#16b57f" }} />
           On track · {stageLabel}
         </div>
       </div>
-      <span style={{ fontSize: 10, fontWeight: 600, color: "var(--cm-text-3, #94a3b8)", flexShrink: 0 }}>View →</span>
+      <span style={{ fontSize: 11, fontWeight: 600, color: "#9aa5b8", flexShrink: 0 }}>View →</span>
     </div>
   );
 }
@@ -338,18 +342,18 @@ function SwipePriorityCard({ item, navigate, section, heroProgramId }) {
 /* ── Section header ── */
 function SectionHeader({ label, count, color, icon: Icon, iconBg }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 2px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "0 2px" }}>
       {Icon && (
         <div style={{
-          width: 20, height: 20, borderRadius: 6,
+          width: 24, height: 24, borderRadius: 8,
           display: "flex", alignItems: "center", justifyContent: "center",
           background: iconBg, color,
         }}>
-          <Icon style={{ width: 10, height: 10 }} />
+          <Icon style={{ width: 12, height: 12 }} />
         </div>
       )}
-      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--cm-text-2, #475569)" }}>{label}</span>
-      <span style={{ fontSize: 10, fontWeight: 500, color: "var(--cm-text-4, #cbd5e1)" }}>({count})</span>
+      <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em", color: "#13213a" }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 500, color: "#9aa5b8" }}>({count})</span>
     </div>
   );
 }
@@ -362,41 +366,41 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
   const [onTrackCollapsed, setOnTrackCollapsed] = useState(low.length > 3);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }} data-testid="priority-board">
+    <div style={{ display: "flex", flexDirection: "column", gap: 28 }} data-testid="priority-board">
 
       {allOnTrack && (
         <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "12px 16px", borderRadius: 8,
-          background: "rgba(16,185,129,0.03)", border: "1px solid rgba(16,185,129,0.08)",
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "16px 20px", borderRadius: 18,
+          background: "rgba(22,181,127,0.04)", border: "1px solid rgba(22,181,127,0.10)",
         }} data-testid="all-on-track-banner">
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text-2, #475569)" }}>Everything is on track</span>
-          <span style={{ fontSize: 11, color: "var(--cm-text-3, #94a3b8)" }}>&mdash; no programs need immediate attention</span>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#16b57f", flexShrink: 0 }} />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#13213a" }}>Everything is on track</span>
+          <span style={{ fontSize: 13, color: "#5f6c84" }}>&mdash; no programs need immediate attention</span>
         </div>
       )}
 
       {/* Next Actions (High) */}
       <div data-testid="priority-section-attention">
-        <SectionHeader label="Next actions" count={high.length} color="#ef4444" icon={AlertCircle} iconBg="rgba(239,68,68,0.06)" />
+        <SectionHeader label="Next actions" count={high.length} color="#ff6b7f" icon={AlertCircle} iconBg="rgba(255,107,127,0.08)" />
         {high.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {high.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="attention" heroProgramId={heroProgramId} />)}
           </div>
         ) : (
-          <div style={{ padding: "14px 4px", fontSize: 12, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500 }} data-testid="empty-state-attention">Nothing urgent right now</div>
+          <div style={{ padding: "18px 6px", fontSize: 13, color: "#9aa5b8", fontWeight: 500 }} data-testid="empty-state-attention">Nothing urgent right now</div>
         )}
       </div>
 
       {/* Coming Up (Medium) */}
       <div data-testid="priority-section-coming-up">
-        <SectionHeader label="Coming up" count={medium.length} color="#f59e0b" icon={Clock} iconBg="rgba(245,158,11,0.06)" />
+        <SectionHeader label="Coming up" count={medium.length} color="#ff9b52" icon={Clock} iconBg="rgba(255,155,82,0.08)" />
         {medium.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {medium.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="coming-up" heroProgramId={heroProgramId} />)}
           </div>
         ) : (
-          <div style={{ padding: "14px 4px", fontSize: 12, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500 }} data-testid="empty-state-coming-up">No upcoming actions</div>
+          <div style={{ padding: "18px 6px", fontSize: 13, color: "#9aa5b8", fontWeight: 500 }} data-testid="empty-state-coming-up">No upcoming actions</div>
         )}
       </div>
 
@@ -404,24 +408,24 @@ export default function PriorityBoard({ items, navigate, heroProgramId }) {
       <div data-testid="priority-section-on-track">
         <div
           onClick={() => setOnTrackCollapsed(c => !c)}
-          style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", padding: "4px 2px", marginBottom: onTrackCollapsed ? 0 : 8 }}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "4px 2px", marginBottom: onTrackCollapsed ? 0 : 10 }}
           data-testid="on-track-header"
         >
           <ChevronRight style={{
-            width: 14, height: 14, color: "#10b981",
+            width: 16, height: 16, color: "#16b57f",
             transition: "transform 200ms",
             transform: onTrackCollapsed ? "none" : "rotate(90deg)", flexShrink: 0,
           }} />
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.02em", color: "#10b981" }}>On track</span>
-          <span style={{ fontSize: 10, fontWeight: 500, color: "var(--cm-text-4, #cbd5e1)" }}>({low.length})</span>
+          <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "-0.01em", color: "#16b57f" }}>On track</span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: "#9aa5b8" }}>({low.length})</span>
         </div>
         {!onTrackCollapsed && (
           low.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {low.map((item) => <SwipePriorityCard key={item.programId} item={item} navigate={navigate} section="on-track" heroProgramId={heroProgramId} />)}
             </div>
           ) : (
-            <div style={{ padding: "14px 4px", fontSize: 12, color: "var(--cm-text-3, #94a3b8)", fontWeight: 500 }} data-testid="empty-state-on-track">No programs on track yet</div>
+            <div style={{ padding: "18px 6px", fontSize: 13, color: "#9aa5b8", fontWeight: 500 }} data-testid="empty-state-on-track">No programs on track yet</div>
           )
         )}
       </div>

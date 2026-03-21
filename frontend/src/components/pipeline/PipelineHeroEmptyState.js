@@ -1,64 +1,56 @@
-/**
- * PipelineHeroEmptyState — Calm, premium success state when all programs are on track.
- * Rendered inside the same dark hero container. Centered, green accent.
- */
 import React from "react";
 import { CheckCircle2, ArrowRight, Compass } from "lucide-react";
 import "./pipeline-motion.css";
-
-const GREEN = "#34d399";
-const GREEN_GLOW = "rgba(52,211,153,0.08)";
+import "./pipeline-premium.css";
 
 export default function PipelineHeroEmptyState({ onTrackCount, navigate }) {
   return (
     <div
       data-testid="pipeline-hero-empty"
-      className="rounded-xl sm:rounded-2xl overflow-hidden relative"
-      style={{ background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)" }}
+      className="overflow-hidden relative"
+      style={{
+        background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
+        borderRadius: 28,
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)",
+      }}
     >
-      {/* Green glow — crossfades from red/purple */}
-      <div className="absolute inset-0 pointer-events-none pm-glow"
-        style={{ background: `radial-gradient(ellipse at 50% 40%, ${GREEN_GLOW} 0%, transparent 65%)` }} />
+      <div className="ds-glow-teal" style={{ opacity: 0.4, background: "radial-gradient(circle, rgba(22,181,127,0.18), transparent 60%)" }} />
+      <div className="ds-glow-purple" />
 
-      <div className="relative z-[1] flex flex-col items-center text-center px-6 sm:px-10 py-12 sm:py-16 pm-empty-enter">
-        {/* Success icon */}
+      <div className="relative z-[1] flex flex-col items-center text-center px-6 sm:px-10 py-14 sm:py-20 pm-empty-enter">
         <div
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-5"
-          style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.15)" }}
+          className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-6"
+          style={{ background: "rgba(22,181,127,0.08)", border: "1px solid rgba(22,181,127,0.15)" }}
         >
-          <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7" style={{ color: GREEN }} />
+          <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" style={{ color: "#16b57f" }} />
         </div>
 
-        {/* Headline */}
-        <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight mb-2">
+        <h2 className="text-xl sm:text-3xl font-extrabold text-white mb-3" style={{ letterSpacing: "-0.04em" }}>
           You're in a great spot
         </h2>
 
-        {/* Supporting text */}
-        <p className="text-[13px] sm:text-[15px] font-medium leading-relaxed max-w-md mb-1" style={{ color: "rgba(255,255,255,0.55)" }}>
-          All your active programs are on track.{"\n"}No follow-ups are needed right now.
+        <p className="text-[14px] sm:text-[16px] font-medium leading-relaxed max-w-md mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+          All your active programs are on track. No follow-ups are needed right now.
         </p>
 
-        {/* Tertiary line */}
-        <p className="text-[11px] sm:text-xs mb-6" style={{ color: "rgba(255,255,255,0.3)" }}>
+        <p className="text-[12px] sm:text-[13px] mb-8" style={{ color: "rgba(255,255,255,0.3)" }}>
           We'll let you know if anything needs attention.
         </p>
 
-        {/* Supporting metric */}
         {onTrackCount > 0 && (
           <div
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-7"
-            style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.12)" }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-8"
+            style={{ background: "rgba(22,181,127,0.06)", border: "1px solid rgba(22,181,127,0.12)" }}
             data-testid="hero-empty-metric"
           >
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: GREEN }} />
-            <span className="text-[11px] sm:text-xs font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
+            <div className="w-2 h-2 rounded-full" style={{ background: "#16b57f" }} />
+            <span className="text-[12px] sm:text-[13px] font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
               {onTrackCount} program{onTrackCount !== 1 ? "s" : ""} actively progressing
             </span>
           </div>
         )}
 
-        {/* CTAs */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -66,19 +58,18 @@ export default function PipelineHeroEmptyState({ onTrackCount, navigate }) {
               if (board) board.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
             data-testid="hero-empty-primary-cta"
-            className="flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-full text-[13px] sm:text-sm font-bold text-white cursor-pointer pm-btn-hover"
-            style={{ background: GREEN, border: "none", fontFamily: "inherit", boxShadow: `0 4px 20px rgba(52,211,153,0.35)` }}
+            className="ds-btn-primary"
+            style={{ borderRadius: 999, padding: "12px 24px", background: "linear-gradient(135deg, #16b57f, #19c3b2)" }}
           >
-            Review your schools
-            <ArrowRight className="w-4 h-4" />
+            Review your schools <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => navigate("/schools")}
             data-testid="hero-empty-secondary-cta"
-            className="flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-full text-[13px] sm:text-sm font-semibold cursor-pointer pm-btn-hover"
-            style={{ color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontFamily: "inherit" }}
+            className="ds-btn-secondary"
+            style={{ borderRadius: 999, padding: "12px 24px", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)", boxShadow: "none", border: "1px solid rgba(255,255,255,0.1)" }}
           >
-            <Compass className="w-3.5 h-3.5" />
+            <Compass className="w-4 h-4" />
             Explore new programs
           </button>
         </div>

@@ -2,15 +2,24 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight, Info } from "lucide-react";
 import { trackEvent } from "../../lib/analytics";
 import UniversityLogo from "../UniversityLogo";
-import { ProgressRail } from "../journey/ProgressRail";
 import { RAIL_STAGES } from "../journey/constants";
 import PipelineHeroEmptyState from "./PipelineHeroEmptyState";
 import "./pipeline-motion.css";
+import "./pipeline-premium.css";
 
 const LEVEL_STYLE = {
-  high:   { accent: "#ef4444", glow: "rgba(239,68,68,0.10)", label: "Needs attention" },
-  medium: { accent: "#f59e0b", glow: "rgba(245,158,11,0.06)", label: "Needs action" },
-  low:    { accent: "#10b981", glow: "rgba(16,185,129,0.04)", label: "On track" },
+  high: {
+    accent: "#ff6b7f", glow: "rgba(255,107,127,0.10)", label: "Needs attention",
+    badgeBg: "rgba(255,107,127,0.16)", badgeText: "#ffd2d9",
+  },
+  medium: {
+    accent: "#ff9b52", glow: "rgba(255,155,82,0.06)", label: "Coming soon",
+    badgeBg: "rgba(255,155,82,0.14)", badgeText: "#ffd29f",
+  },
+  low: {
+    accent: "#16b57f", glow: "rgba(22,181,127,0.04)", label: "On track",
+    badgeBg: "rgba(22,181,127,0.14)", badgeText: "#b9fff8",
+  },
 };
 
 function buildRail(program) {
@@ -36,7 +45,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const [filter, setFilter] = useState("all");
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState("idle");
-  const [swipeDir, setSwipeDir] = useState(null); // "left" | "right" | null
+  const [swipeDir, setSwipeDir] = useState(null);
   const [compact, setCompact] = useState(false);
   const [whyExpanded, setWhyExpanded] = useState(false);
   const heroRef = useRef(null);
@@ -73,7 +82,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [goTo]);
 
-  /* Swipe-to-slide on touch devices */
   const onTouchStart = useCallback((e) => {
     touchRef.current.startX = e.touches[0].clientX;
     touchRef.current.startY = e.touches[0].clientY;
@@ -83,12 +91,11 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     const dx = e.changedTouches[0].clientX - touchRef.current.startX;
     const dy = e.changedTouches[0].clientY - touchRef.current.startY;
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      if (dx < 0) goTo(1);   // swipe left → next
-      else goTo(-1);          // swipe right → prev
+      if (dx < 0) goTo(1);
+      else goTo(-1);
     }
   }, [goTo]);
 
-  /* Scroll-based compact mode */
   useEffect(() => {
     const el = heroRef.current;
     if (!el) return;
@@ -100,10 +107,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     return () => observer.disconnect();
   }, []);
 
-  // Track hero_viewed — declared before conditional returns
   const prevTrackedRef = useRef(null);
-
-  // Pre-compute all derived values before conditional returns
   const highItems = (heroItems || []).filter(h => h.attentionLevel === 'high');
   const medItems = (heroItems || []).filter(h => h.attentionLevel === 'medium');
   const filtered = filter === 'high' ? highItems : filter === 'medium' ? medItems : (heroItems || []);
@@ -111,7 +115,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const safeIdx = total > 0 ? ((idx % total) + total) % total : 0;
   const current = total > 0 ? filtered[safeIdx] : null;
 
-  // Track hero_viewed when current card changes
   useEffect(() => {
     if (!current?.programId || current.programId === prevTrackedRef.current) return;
     prevTrackedRef.current = current.programId;
@@ -164,268 +167,306 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     if (i !== safeIdx && filtered[i].program) peekItems.push({ item: filtered[i], filteredIdx: i });
   }
 
+  const activeStageKey = rail?.active;
+  const activeStageIdx = RAIL_STAGES.findIndex(s => s.key === activeStageKey);
+
   return (
     <>
     <div
       ref={heroRef}
       data-testid="pipeline-hero"
-      className="rounded-xl sm:rounded-2xl overflow-hidden relative pm-hero-hover"
+      className="overflow-hidden relative pm-hero-hover"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       style={{
-        background: "linear-gradient(145deg, #1a2332 0%, #0f1a26 100%)",
-        transition: "padding 180ms ease-out",
+        background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
+        borderRadius: 28,
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)",
       }}
     >
-      <div className="absolute inset-0 pointer-events-none pm-glow"
-        style={{ background: `radial-gradient(ellipse at 20% 30%, ${style.glow} 0%, transparent 60%)` }} />
+      {/* Glow orbs */}
+      <div className="ds-glow-teal" />
+      <div className="ds-glow-purple" />
 
-      {/* TOP BAR: Filter pills + Carousel nav */}
+      {/* ── TOP BAR: Filter pills + Carousel nav ── */}
       <div
-        className="flex items-center justify-between px-4 sm:px-5 pt-2.5 pb-2 relative z-[1]"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+        className="flex items-center justify-between px-5 sm:px-7 pt-3.5 pb-3 relative z-[1]"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         data-testid="hero-top-bar"
       >
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap" data-testid="hero-filter-pills">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap" data-testid="hero-filter-pills">
           {pills.map(pill => (
             <button
               key={pill.key}
               onClick={() => handleFilter(pill.key)}
               data-testid={`hero-filter-${pill.key}`}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-2xl text-[10px] sm:text-[12px] font-semibold pm-pill"
+              className="flex items-center gap-1.5 rounded-full text-[13px] font-bold pm-pill"
               style={{
-                background: filter === pill.key ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)",
+                padding: "8px 14px",
+                borderRadius: 999,
+                background: filter === pill.key ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)",
                 color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.4)",
-                border: "none", cursor: "pointer", fontFamily: "inherit",
+                border: `1px solid ${filter === pill.key ? "rgba(255,255,255,0.08)" : "transparent"}`,
+                cursor: "pointer", fontFamily: "inherit",
               }}
             >
               {pill.label}
-              <span className="text-[9px] sm:text-[10px] font-extrabold px-1 py-0.5 rounded-md pm-pill-badge"
-                style={{
-                  background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-                  color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.3)",
-                }}>{pill.count}</span>
+              <span className="pm-pill-badge" style={{
+                fontSize: 11, fontWeight: 800, padding: "1px 6px", borderRadius: 6,
+                background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.3)",
+              }}>{pill.count}</span>
             </button>
           ))}
         </div>
         {total > 1 && (
-          <div className="flex items-center gap-2 flex-shrink-0" data-testid="hero-carousel-nav">
+          <div className="flex items-center gap-2.5 flex-shrink-0" data-testid="hero-carousel-nav">
             <button onClick={() => handleGoTo(-1)} data-testid="carousel-prev"
-              className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer pm-nav-hover"
+              className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronLeft className="w-3 h-3" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-[10px] sm:text-[11px] font-bold tabular-nums min-w-[24px] text-center" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="carousel-counter">
+            <span className="text-[12px] font-bold tabular-nums min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="carousel-counter">
               {safeIdx + 1}/{total}
             </span>
             <button onClick={() => handleGoTo(1)} data-testid="carousel-next"
-              className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer pm-nav-hover"
+              className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         )}
       </div>
 
-      {/* SLIDE CONTENT — responsive: stacked on mobile, side-by-side on desktop */}
-      <div className={`relative z-[1] ${slideClass}`}
-        style={{
-          padding: compact ? '8px 14px 10px' : '10px 16px 12px',
-          transition: 'padding 180ms ease-out',
-        }}
+      {/* ── SLIDE CONTENT ── */}
+      <div className={`relative z-[1] ds-hero-content ${slideClass}`}
+        style={{ padding: compact ? "14px 20px 16px" : "22px 28px 24px" }}
       >
-        <div className="hero-slide-grid">
-          {/* LEFT — urgency → school → action → owner */}
-          <div style={{ minWidth: 0 }}>
-            {/* Urgency: ● HIGH · Overdue 10d */}
-            <div className="flex items-center gap-1.5" data-testid="hero-status-row">
-              <div className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: style.accent }} />
-              <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider uppercase" style={{ color: style.accent }} data-testid="hero-category-label">
-                {style.label}
-              </span>
-              {current.timingLabel && (
-                <>
-                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
-                  <span className="text-[10px] sm:text-[11px] font-bold" style={{ color: style.accent, opacity: 0.7 }} data-testid="hero-timing-label">
-                    {current.timingLabel}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* School + match% inline */}
-            {!compact && (
-              <div className="flex items-center gap-2 mt-1.5" data-testid="hero-school-row">
-                {p && (
-                  <UniversityLogo
-                    name={p.university_name}
-                    logoUrl={ms?.logo_url || p.logo_url}
-                    domain={ms?.domain || p.domain}
-                    size={20}
-                    className="rounded flex-shrink-0"
-                  />
-                )}
-                <span className="text-[14px] sm:text-[15px] font-bold text-white/80 truncate" data-testid="hero-school-name">
-                  {p?.university_name || "School"}
-                </span>
-                {matchPct != null && (
-                  <span className="text-[11px] font-bold flex-shrink-0" style={{ color: matchPct >= 80 ? "rgba(74,222,128,0.6)" : matchPct >= 60 ? "rgba(251,191,36,0.55)" : "rgba(148,163,184,0.4)" }} data-testid="hero-match-score">
-                    {matchPct}%
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Action — largest */}
-            <div className={compact ? "mt-1.5" : "mt-1"} data-testid="hero-advice-box">
-              <div className={`${compact ? 'text-[15px]' : 'text-[16px] sm:text-[17px]'} font-extrabold leading-snug`}
-                style={{ color: "#fff", display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                data-testid="hero-advice-text"
-              >
-                {current.primaryAction}
-              </div>
-              {current.heroReason && current.heroReason !== current.reason && (
-                <div className="text-[10px] sm:text-[11px] font-medium mt-1" style={{ color: "rgba(129,140,248,0.7)", lineHeight: 1.3 }} data-testid="hero-recap-reason">
-                  {current.heroReason}
-                </div>
-              )}
-            </div>
-
-            {/* Owner */}
-            <div className="mt-1.5 flex items-center gap-2" data-testid="hero-meta-line">
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: ownerLabel === 'You' ? 'rgba(13,148,136,0.12)' : 'rgba(99,102,241,0.12)', color: ownerLabel === 'You' ? '#5eead4' : '#a5b4fc' }}>
-                {ownerLabel}
-              </span>
-              {current.explainFactors?.length > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const next = !whyExpanded;
-                    setWhyExpanded(next);
-                    if (next) trackEvent("hero_expanded_why", {
-                      program_id: current.programId,
-                      priority_source: current.prioritySource || "live",
-                      factors_count: current.explainFactors?.length || 0,
-                    });
-                  }}
-                  data-testid="hero-why-btn"
-                  className="flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded cursor-pointer"
-                  style={{
-                    background: whyExpanded ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)',
-                    color: 'rgba(255,255,255,0.45)',
-                    border: 'none', fontFamily: 'inherit',
-                    transition: 'background 120ms ease, color 120ms ease',
-                  }}
-                >
-                  <Info size={9} />
-                  Why this?
-                </button>
-              )}
-            </div>
-
-            {/* Why this? — expandable explainability */}
-            {whyExpanded && current.explainFactors?.length > 0 && (
-              <div
-                data-testid="hero-why-panel"
-                className="mt-2 pt-2"
-                style={{
-                  borderTop: '1px solid rgba(255,255,255,0.06)',
-                  animation: 'pm-why-in 180ms ease-out both',
-                }}
-              >
-                <div className="text-[9px] font-bold mb-1.5" style={{ color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Priority factors
-                </div>
-                {current.explainFactors.map((f, i) => {
-                  const isOutranked = f.type === 'recap-outranked';
-                  const isStale = f.type === 'recap-stale';
-                  const isSecondary = isOutranked || isStale;
-                  return (
-                  <div key={i} className="flex items-center gap-1.5 mb-1" style={{
-                    fontSize: isSecondary ? 10 : 11,
-                    color: isOutranked ? 'rgba(165,148,249,0.50)'
-                      : isStale ? 'rgba(165,148,249,0.45)'
-                      : 'rgba(255,255,255,0.6)',
-                    fontWeight: isSecondary ? 400 : 500,
-                    fontStyle: isSecondary ? 'italic' : 'normal',
-                  }}>
-                    <span style={{
-                      width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
-                      background: f.type === 'overdue' || f.type === 'due' ? '#ef4444'
-                        : f.type === 'coach' ? '#f59e0b'
-                        : f.type === 'recap' ? '#818cf8'
-                        : f.type === 'recap-outranked' || f.type === 'recap-stale' ? '#a594f9'
-                        : f.type === 'stale' ? '#60a5fa'
-                        : f.type === 'risk' ? '#f97316'
-                        : '#94a3b8',
-                      opacity: isSecondary ? 0.5 : 1,
-                    }} />
-                    {f.label}
-                  </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT — CTA + progress rail */}
-          <div className="hero-right-col">
-            {/* Progress rail — hidden on mobile, shown on desktop */}
-            {!compact && rail && (
-              <div className="hero-rail-wrapper" data-testid="hero-progress-rail">
-                <ProgressRail rail={rail} onStageClick={() => p && navigate(`/pipeline/${p.program_id}`)} />
-              </div>
-            )}
+        {/* BADGE ROW */}
+        <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-status-row">
+          <span className="ds-badge" style={{
+            background: style.badgeBg,
+            color: style.badgeText,
+          }} data-testid="hero-category-label">
+            {style.label}
+          </span>
+          {current.timingLabel && (
+            <span className="ds-badge" style={{
+              background: "rgba(255,255,255,0.06)",
+              color: "rgba(255,255,255,0.68)",
+            }} data-testid="hero-timing-label">
+              {current.timingLabel}
+            </span>
+          )}
+          {current.explainFactors?.length > 0 && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (p) {
-                  trackEvent("hero_action_clicked", {
-                    program_id: current.programId,
-                    school_name: p.university_name || "",
-                    priority_source: current.prioritySource || "live",
-                    recap_rank: current.recapRank || null,
-                    cta_label: current.ctaLabel || "Take Action",
-                    why_was_expanded: whyExpanded,
-                  });
-                  navigate(`/pipeline/${p.program_id}`);
-                }
+                const next = !whyExpanded;
+                setWhyExpanded(next);
+                if (next) trackEvent("hero_expanded_why", {
+                  program_id: current.programId,
+                  priority_source: current.prioritySource || "live",
+                  factors_count: current.explainFactors?.length || 0,
+                });
               }}
-              data-testid="hero-cta-btn"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] sm:text-[12px] font-bold cursor-pointer"
+              data-testid="hero-why-btn"
+              className="ds-badge"
               style={{
-                background: `${style.accent}18`, border: `1px solid ${style.accent}30`,
-                color: style.accent, fontFamily: "inherit", whiteSpace: 'nowrap',
-                transition: 'background 120ms ease-out',
+                background: whyExpanded ? "rgba(25,195,178,0.20)" : "rgba(25,195,178,0.14)",
+                color: "#b9fff8",
+                border: "none", cursor: "pointer", fontFamily: "inherit",
+                transition: "background 120ms ease",
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = `${style.accent}28`}
-              onMouseLeave={(e) => e.currentTarget.style.background = `${style.accent}18`}
             >
-              {current.ctaLabel || "Take Action"} <ArrowRight className="w-3 h-3" />
+              <Info size={11} />
+              Why this surfaced
             </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); if (p) navigate(`/pipeline/${p.program_id}`); }}
-              data-testid="hero-secondary-btn"
-              className="text-[10px] font-medium cursor-pointer"
-              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.25)", fontFamily: "inherit", padding: 0 }}
-            >
-              View details
-            </button>
-          </div>
+          )}
         </div>
+
+        {/* SCHOOL NAME — large, prominent */}
+        {!compact && (
+          <div className="flex items-center gap-3 mb-1" data-testid="hero-school-row">
+            {p && (
+              <UniversityLogo
+                name={p.university_name}
+                logoUrl={ms?.logo_url || p.logo_url}
+                domain={ms?.domain || p.domain}
+                size={28}
+                className="rounded-lg flex-shrink-0"
+              />
+            )}
+            <h3 style={{ fontSize: 30, fontWeight: 800, color: "#fff", letterSpacing: "-0.045em", margin: 0, lineHeight: 1.02 }} data-testid="hero-school-name">
+              {p?.university_name || "School"}
+            </h3>
+            {matchPct != null && (
+              <span className="flex-shrink-0" style={{
+                fontSize: 14, fontWeight: 700,
+                color: matchPct >= 80 ? "#8df0e6" : matchPct >= 60 ? "#ffd29f" : "#9aa5b8",
+                opacity: 0.8,
+              }} data-testid="hero-match-score">
+                {matchPct}%
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* PRIMARY ACTION / TASK */}
+        <div data-testid="hero-advice-box">
+          <div style={{
+            fontSize: compact ? 18 : 20,
+            fontWeight: 700,
+            letterSpacing: "-0.03em",
+            color: "#fff",
+            lineHeight: 1.2,
+            margin: "8px 0 10px",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }} data-testid="hero-advice-text">
+            {current.primaryAction}
+          </div>
+          {current.heroReason && current.heroReason !== current.reason && (
+            <div style={{ color: "rgba(255,255,255,0.68)", fontSize: 14, lineHeight: 1.4 }} data-testid="hero-recap-reason">
+              {current.heroReason}
+            </div>
+          )}
+        </div>
+
+        {/* META: Owner */}
+        <div className="mt-2 flex items-center gap-2" data-testid="hero-meta-line">
+          <span className="text-[10px] font-bold px-2 py-1 rounded-md" style={{
+            background: ownerLabel === 'You' ? 'rgba(25,195,178,0.12)' : 'rgba(93,135,255,0.12)',
+            color: ownerLabel === 'You' ? '#8df0e6' : '#8facff',
+          }}>
+            {ownerLabel}
+          </span>
+        </div>
+
+        {/* PROGRESS TRACK — premium inline dots */}
+        {!compact && rail && (
+          <div className="ds-progress-track" data-testid="hero-progress-rail">
+            {RAIL_STAGES.map((s, stIdx) => {
+              const isActive = stIdx === activeStageIdx;
+              const isPast = stIdx < activeStageIdx;
+              return (
+                <div key={s.key}
+                  className={`ds-progress-step${isActive ? " active" : ""}${isPast ? " past" : ""}`}
+                  onClick={() => p && navigate(`/pipeline/${p.program_id}`)}
+                  data-testid={`rail-stage-${s.key}`}
+                >
+                  <div className="ds-progress-dot" />
+                  {s.label}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* CTA ROW */}
+        <div style={{ display: "flex", gap: 12, marginTop: compact ? 8 : 4 }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (p) {
+                trackEvent("hero_action_clicked", {
+                  program_id: current.programId,
+                  school_name: p.university_name || "",
+                  priority_source: current.prioritySource || "live",
+                  recap_rank: current.recapRank || null,
+                  cta_label: current.ctaLabel || "View school",
+                  why_was_expanded: whyExpanded,
+                });
+                navigate(`/pipeline/${p.program_id}`);
+              }
+            }}
+            data-testid="hero-cta-btn"
+            className="ds-btn-primary"
+          >
+            {current.ctaLabel || "View school"} <ArrowRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); if (p) navigate(`/pipeline/${p.program_id}`); }}
+            data-testid="hero-secondary-btn"
+            className="ds-btn-secondary"
+          >
+            View details
+          </button>
+        </div>
+
+        {/* WHY THIS? — expandable explainability panel */}
+        {whyExpanded && current.explainFactors?.length > 0 && (
+          <div
+            data-testid="hero-why-panel"
+            className="mt-4 pt-3"
+            style={{
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              animation: "pm-why-in 180ms ease-out both",
+            }}
+          >
+            <div className="ds-eyebrow mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
+              Priority factors
+            </div>
+            {current.explainFactors.map((f, i) => {
+              const isOutranked = f.type === "recap-outranked";
+              const isStale = f.type === "recap-stale";
+              const isSecondary = isOutranked || isStale;
+              return (
+                <div key={i} className="flex items-center gap-2 mb-1.5" style={{
+                  fontSize: isSecondary ? 12 : 13,
+                  color: isOutranked ? "rgba(200,194,255,0.50)"
+                    : isStale ? "rgba(200,194,255,0.45)"
+                    : "rgba(255,255,255,0.65)",
+                  fontWeight: isSecondary ? 400 : 500,
+                  fontStyle: isSecondary ? "italic" : "normal",
+                  lineHeight: 1.5,
+                }}>
+                  <span style={{
+                    width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                    background: f.type === "overdue" || f.type === "due" ? "#ff6b7f"
+                      : f.type === "coach" ? "#ff9b52"
+                      : f.type === "recap" ? "#8b7bff"
+                      : f.type === "recap-outranked" || f.type === "recap-stale" ? "#c8c2ff"
+                      : f.type === "stale" ? "#5d87ff"
+                      : f.type === "risk" ? "#ff9b52"
+                      : "#9aa5b8",
+                    opacity: isSecondary ? 0.5 : 1,
+                  }} />
+                  {f.label}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
 
-    {/* PEEK ROW */}
+    {/* ── PEEK ROW ── */}
     {peekItems.length > 0 && (
-      <div data-testid="peek-row" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--cm-text-3, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0 }}>Also:</span>
+      <div data-testid="peek-row" style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <span className="ds-eyebrow" style={{ color: "#9aa5b8", flexShrink: 0, fontSize: 10 }}>Also:</span>
         {peekItems.map(({ item, filteredIdx }) => (
           <button
             key={item.programId}
             onClick={() => transitionTo(() => setIdx(filteredIdx))}
             data-testid={`peek-item-${item.programId}`}
-            style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: 'var(--cm-surface-2, #f1f5f9)', color: 'var(--cm-text-2, #475569)', border: '1px solid var(--cm-border, #e2e8f0)', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 120ms ease-out', whiteSpace: 'nowrap' }}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 12,
+              fontSize: 13,
+              fontWeight: 600,
+              background: "rgba(255,255,255,0.72)",
+              color: "#13213a",
+              border: "1px solid rgba(20,37,68,0.08)",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              transition: "all 120ms ease-out",
+              whiteSpace: "nowrap",
+              boxShadow: "0 2px 8px rgba(19,33,58,0.06)",
+            }}
           >
             {item.program?.university_name} · {getShortAction(item)}
           </button>

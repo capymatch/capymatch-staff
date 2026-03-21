@@ -8,40 +8,48 @@ export default function UpcomingTasksSection({ tasks, navigate }) {
   if (systemTasks.length === 0) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
-      <div style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", borderRadius: 10, padding: "16px 20px" }} data-testid="upcoming-tasks">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700, color: "var(--cm-text)" }}>
-            <CheckSquare style={{ width: 15, height: 15, color: "#3b82f6" }} /> Upcoming Tasks
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+      <div style={{
+        background: "rgba(255,255,255,0.72)",
+        backdropFilter: "blur(16px)",
+        border: "1px solid rgba(20,37,68,0.08)",
+        borderRadius: 22,
+        padding: "20px 22px",
+        boxShadow: "0 10px 30px rgba(19, 33, 58, 0.08)",
+      }} data-testid="upcoming-tasks">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 800, color: "#13213a", letterSpacing: "-0.02em" }}>
+            <CheckSquare style={{ width: 16, height: 16, color: "#5d87ff" }} /> Upcoming Tasks
           </div>
-          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--cm-text-3)" }}>{systemTasks.length} coming up</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#9aa5b8" }}>{systemTasks.length} coming up</span>
         </div>
         {systemTasks.map((task) => (
           <div
             key={task.task_id}
             onClick={() => navigate(task.link)}
             style={{
-              display: "flex", alignItems: "center", gap: 12,
-              padding: "10px 0", borderTop: "1px solid var(--cm-border)",
+              display: "flex", alignItems: "center", gap: 14,
+              padding: "12px 0", borderTop: "1px solid rgba(20,37,68,0.06)",
               cursor: "pointer",
+              transition: "background 100ms ease",
             }}
             data-testid={`task-item-${task.task_id}`}
           >
             <div style={{
-              width: 28, height: 28, borderRadius: 7,
-              background: "rgba(59,130,246,0.1)", display: "flex",
+              width: 34, height: 34, borderRadius: 12,
+              background: "rgba(93,135,255,0.08)", display: "flex",
               alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <Clock style={{ width: 14, height: 14, color: "#3b82f6" }} />
+              <Clock style={{ width: 16, height: 16, color: "#5d87ff" }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--cm-text)", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</div>
-              <div style={{ fontSize: 11, color: "var(--cm-text-3)", marginTop: 1 }}>{task.description}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#13213a", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{task.title}</div>
+              <div style={{ fontSize: 12, color: "#5f6c84", marginTop: 2 }}>{task.description}</div>
             </div>
             <span style={{
-              fontSize: 10, fontWeight: 700, padding: "2px 8px",
-              borderRadius: 5, background: "rgba(59,130,246,0.1)", color: "#3b82f6",
-              flexShrink: 0,
+              fontSize: 11, fontWeight: 800, padding: "4px 10px",
+              borderRadius: 999, background: "rgba(93,135,255,0.08)", color: "#5d87ff",
+              flexShrink: 0, letterSpacing: "0.02em",
             }}>In {task.days_diff}d</span>
           </div>
         ))}

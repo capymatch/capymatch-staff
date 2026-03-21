@@ -1,0 +1,275 @@
+/* ═══════════════════════════════════════════════════
+   CapyMatch Premium Design System — Pipeline Scope
+   ═══════════════════════════════════════════════════ */
+
+/* ── Page background ── */
+.pipeline-premium {
+  background:
+    radial-gradient(circle at top right, rgba(141, 240, 230, 0.12), transparent 30%),
+    radial-gradient(circle at top left, rgba(139, 123, 255, 0.08), transparent 25%),
+    #f5f7fb;
+  min-height: 100vh;
+}
+
+/* ── Premium card surfaces ── */
+.ds-card {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(19, 33, 58, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.ds-card-dark {
+  background: linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 28px;
+  padding: 26px;
+  box-shadow: 0 24px 70px rgba(19, 33, 58, 0.10);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Glow orbs for dark cards ── */
+.ds-glow-teal {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  right: -90px;
+  top: -110px;
+  background: radial-gradient(circle, rgba(25,195,178,0.18), transparent 60%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ds-glow-purple {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  left: -80px;
+  bottom: -120px;
+  background: radial-gradient(circle, rgba(139,123,255,0.18), transparent 60%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+/* ── Premium badge ── */
+.ds-badge {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 800;
+  padding: 9px 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* ── Premium buttons ── */
+.ds-btn-primary {
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #19c3b2, #5d87ff);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 18px 32px rgba(29, 160, 191, 0.28);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 100ms ease, box-shadow 120ms ease;
+}
+.ds-btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 38px rgba(29, 160, 191, 0.35);
+}
+.ds-btn-primary:active { transform: scale(0.98); }
+
+.ds-btn-secondary {
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.82);
+  color: #20304f;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: inset 0 0 0 1px rgba(19,33,58,.08), 0 10px 30px rgba(19,33,58,0.08);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 100ms ease, box-shadow 120ms ease;
+}
+.ds-btn-secondary:hover {
+  transform: scale(1.02);
+}
+.ds-btn-secondary:active { transform: scale(0.98); }
+
+/* ── Priority items ── */
+.ds-priority-item {
+  border-radius: 22px;
+  padding: 18px 20px;
+  background: rgba(255,255,255,0.86);
+  border: 1px solid rgba(20, 37, 68, 0.08);
+  box-shadow: 0 10px 30px rgba(19, 33, 58, 0.08);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.ds-priority-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(19, 33, 58, 0.12);
+}
+.ds-priority-critical { box-shadow: inset 4px 0 0 #ff6b7f, 0 10px 30px rgba(19, 33, 58, 0.08); }
+.ds-priority-grow { box-shadow: inset 4px 0 0 #ff9b52, 0 10px 30px rgba(19, 33, 58, 0.08); }
+.ds-priority-monitor { box-shadow: inset 4px 0 0 #96a2b8, 0 10px 30px rgba(19, 33, 58, 0.08); }
+
+/* ── Tags ── */
+.ds-tag {
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ds-tag-heated  { background: #fff1e5; color: #cc6c22; }
+.ds-tag-cooling { background: #edf2ff; color: #4568dc; }
+.ds-tag-steady  { background: #eef1f6; color: #6d7890; }
+.ds-tag-priority { background: #ffe7eb; color: #cc475d; }
+
+/* ── Section eyebrow ── */
+.ds-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 800;
+}
+
+/* ── Trend pills ── */
+.ds-trend-pill {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  min-width: 140px;
+}
+.ds-trend-pill strong {
+  display: block;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+.ds-trend-pill span {
+  font-size: 13px;
+  color: rgba(255,255,255,0.62);
+}
+
+/* ── Inline progress track (hero) ── */
+.ds-progress-track {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin: 22px 0 20px;
+  align-items: center;
+}
+.ds-progress-step {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.ds-progress-step:hover { color: rgba(255,255,255,0.5); }
+.ds-progress-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  margin: 0 auto 8px;
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: all 0.3s ease;
+}
+.ds-progress-step.active .ds-progress-dot {
+  width: 18px;
+  height: 18px;
+  background: #19c3b2;
+  border-color: #19c3b2;
+  box-shadow: 0 0 0 8px rgba(25,195,178,0.10);
+}
+.ds-progress-step.active {
+  color: #fff;
+  font-weight: 700;
+}
+.ds-progress-step.past .ds-progress-dot {
+  background: rgba(255,255,255,0.45);
+  border-color: rgba(255,255,255,0.3);
+}
+.ds-progress-step.past {
+  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+}
+
+/* ── School item (recap) ── */
+.ds-school-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  background: rgba(255,255,255,0.84);
+  border: 1px solid rgba(20, 37, 68, 0.08);
+  border-radius: 22px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 30px rgba(19, 33, 58, 0.08);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.ds-school-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(19, 33, 58, 0.12);
+}
+
+/* ── Section header ── */
+.ds-section-title {
+  font-size: 24px;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  color: #13213a;
+  margin: 0;
+}
+.ds-section-sub {
+  font-size: 14px;
+  color: #5f6c84;
+  margin: 4px 0 0;
+}
+
+/* ── Tiny label ── */
+.ds-tiny {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #7c89a2;
+  font-weight: 700;
+}
+
+/* ── Hero slide layout ── */
+.ds-hero-content {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .ds-progress-track {
+    gap: 6px;
+    margin: 16px 0 14px;
+  }
+  .ds-progress-step { font-size: 10px; }
+  .ds-progress-dot { width: 10px; height: 10px; }
+  .ds-progress-step.active .ds-progress-dot { width: 14px; height: 14px; }
+}
