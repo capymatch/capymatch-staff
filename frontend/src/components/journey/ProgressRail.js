@@ -29,7 +29,7 @@ export function ProgressRail({ rail, onStageClick, hideLabels }) {
         }
       `}</style>
       <div style={{ position: "relative", height: DOT_ACTIVE + 8, display: "flex", alignItems: "center" }}>
-        <div style={{ position: "absolute", left: `${halfStep}%`, right: `${halfStep}%`, top: "50%", transform: "translateY(-50%)", height: 2, background: "rgba(255,255,255,0.06)", zIndex: 0 }} />
+        <div style={{ position: "absolute", left: `${halfStep}%`, right: `${halfStep}%`, top: "50%", transform: "translateY(-50%)", height: 2, background: "#e2e8f0", zIndex: 0 }} />
         {fillScale > 0 && (
           <div style={{ position: "absolute", left: `${halfStep}%`, right: `${halfStep}%`, top: "50%", transform: `translateY(-50%) scaleX(${fillScale})`, transformOrigin: "left", height: 2, background: fillGradient, zIndex: 0, transition: "transform 0.5s ease" }} />
         )}
@@ -46,8 +46,8 @@ export function ProgressRail({ rail, onStageClick, hideLabels }) {
               <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
                 <div style={{
                   width: size, height: size, borderRadius: "50%",
-                  border: `2px solid ${completed || isActive ? stageColor : "rgba(255,255,255,0.1)"}`,
-                  background: completed || isActive ? stageColor : "#1e1e2e",
+                  border: `2px solid ${completed || isActive ? stageColor : "#cbd5e1"}`,
+                  background: completed || isActive ? stageColor : "#fff",
                   boxShadow: isActive ? `0 0 12px ${stageColor}66` : completed ? `0 0 8px ${stageColor}26` : "none",
                   transition: "all 0.3s",
                 }} />
@@ -73,7 +73,7 @@ export function ProgressRail({ rail, onStageClick, hideLabels }) {
             <div key={s.key} style={{ flex: 1, textAlign: "center" }}>
               <span style={{
                 fontSize: 10, fontWeight: isActive ? 700 : completed ? 600 : 500,
-                color: isActive ? s.color : completed ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.2)",
+                color: isActive ? s.color : completed ? "#475569" : "#94a3b8",
               }}>{s.label}</span>
             </div>
           );

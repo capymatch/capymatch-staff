@@ -9,8 +9,8 @@ const INTEREST_STYLES = {
   "High":           { color: "#22c55e", bg: "rgba(34,197,94,0.1)",  border: "rgba(34,197,94,0.2)" },
   "Medium":         { color: "#3b82f6", bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.2)" },
   "Emerging":       { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.2)" },
-  "No signals yet": { color: "#94a3b8", bg: "var(--cm-surface-2)",  border: "var(--cm-border)" },
-  "Not started":    { color: "#64748b", bg: "var(--cm-surface-2)",  border: "var(--cm-border)" },
+  "No signals yet": { color: "#94a3b8", bg: "rgba(100,116,139,0.06)",  border: "#e2e8f0" },
+  "Not started":    { color: "#64748b", bg: "rgba(100,116,139,0.06)",  border: "#e2e8f0" },
 };
 
 const TREND_ICON = {
