@@ -370,26 +370,26 @@ export default function JourneyPage() {
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6 pb-4">
-        <div style={{ background: "#fff", borderRadius: 14, overflow: "hidden", position: "relative", border: "1px solid rgba(20,37,68,0.06)", boxShadow: "0 1px 4px rgba(19,33,58,0.03)" }}>
+        <div style={{ background: "linear-gradient(135deg, #13213a 0%, #1a2744 50%, #1e2c4a 100%)", borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)", boxShadow: "0 4px 24px rgba(15,23,42,0.12)" }}>
           {/* Teal accent bar */}
           <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
           <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
           {/* Back & Actions */}
           <div className="flex items-center justify-between mb-4">
-            <button onClick={() => navigate("/pipeline")} className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: "#94a3b8" }} data-testid="back-to-pipeline">
+            <button onClick={() => navigate("/pipeline")} className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="back-to-pipeline">
               <ArrowLeft className="w-3.5 h-3.5" />Pipeline
             </button>
             <div className="flex items-center gap-2">
               {/* J4: Compare button */}
               <button onClick={() => navigate(`/compare?selected=${programId}`)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-slate-50"
-                style={{ color: "#64748b", borderColor: "#e2e8f0" }}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-white/5"
+                style={{ color: "rgba(255,255,255,0.4)", borderColor: "rgba(255,255,255,0.08)" }}
                 data-testid="compare-btn">
                 <GitCompare className="w-3 h-3" />Compare
               </button>
               {program.questionnaire_url && (
                 <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-teal-50 text-teal-600 border-teal-200"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-teal-700/10 text-teal-400 border-teal-700/30"
                   data-testid="questionnaire-link">
                   <ExternalLink className="w-3 h-3" />Questionnaire
                 </a>
@@ -397,7 +397,7 @@ export default function JourneyPage() {
               {isArchived ? (
                 <Button variant="outline" size="sm" onClick={handleArchiveToggle}
                   className="text-xs h-7 px-3"
-                  style={{ color: "#0d9488", borderColor: "rgba(13,148,136,0.3)" }}
+                  style={{ color: "#2dd4bf", borderColor: "rgba(45,212,191,0.3)" }}
                   data-testid="reactivate-btn">
                   <RotateCcw className="w-3 h-3 mr-1" />Reactivate
                 </Button>
@@ -405,7 +405,7 @@ export default function JourneyPage() {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <button className="px-3 py-1 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1.5"
-                      style={{ background: "rgba(100,116,139,0.06)", color: "#64748b", border: "1px solid #e2e8f0" }}
+                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}
                       data-testid="archive-btn">
                       <Archive className="w-3 h-3" />Archive
                     </button>
@@ -440,10 +440,10 @@ export default function JourneyPage() {
           {/* School Info + Logo + Match Score */}
           <div className="flex items-start gap-4 mb-3">
             {/* J1: Real university logo */}
-            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-lg" />
+            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-lg" style={{ border: "1px solid rgba(255,255,255,0.06)" }} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#0f172a" }} data-testid="journey-school-name">
+                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#fff" }} data-testid="journey-school-name">
                   {program.university_name}
                 </h1>
                 <PulseIndicator coachWatchState={coachWatch?.state} />
@@ -452,8 +452,8 @@ export default function JourneyPage() {
                   <span
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold"
                     style={{
-                      background: "rgba(16,185,129,0.08)",
-                      color: matchScore.match_score >= 80 ? "#059669" : matchScore.match_score >= 60 ? "#d97706" : "#94a3b8",
+                      background: "rgba(16,185,129,0.12)",
+                      color: matchScore.match_score >= 80 ? "#6ee7b7" : matchScore.match_score >= 60 ? "#fbbf24" : "#94a3b8",
                     }}
                     data-testid="journey-match-score"
                   >
@@ -463,15 +463,15 @@ export default function JourneyPage() {
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 {program.division && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md" style={{ background: "rgba(13,148,136,0.08)", color: "#0d9488" }}>{program.division}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md" style={{ background: "rgba(13,148,136,0.15)", color: "#2dd4bf" }}>{program.division}</span>
                 )}
                 {program.conference && (
-                  <span className="text-[11px]" style={{ color: "#64748b" }}>{program.conference}</span>
+                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>{program.conference}</span>
                 )}
                 {program.location && (
-                  <span className="text-[11px]" style={{ color: "#94a3b8" }}>{program.location}</span>
+                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{program.location}</span>
                 )}
-                <span className="text-[11px]" style={{ color: "#94a3b8" }}>{timeline.length} interactions</span>
+                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{timeline.length} interactions</span>
                 {/* J4: School Social Links */}
                 {program.social_links && typeof program.social_links === "object" && Object.keys(program.social_links).length > 0 && (
                   <SchoolSocialLinks links={program.social_links} />
