@@ -296,6 +296,13 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             })()}
           </div>
 
+          {/* Coach signal — human-readable, not a badge */}
+          {current.topAction?.category === 'coach_flag' && (
+            <div style={{ color: "rgba(255,255,255,0.38)", fontSize: 13, fontWeight: 400, lineHeight: 1.45, marginTop: 4 }} data-testid="hero-coach-signal">
+              Coach is expecting a response
+            </div>
+          )}
+
         </div>
 
         {/* META: Owner — only show when it's not the athlete's own task */}
