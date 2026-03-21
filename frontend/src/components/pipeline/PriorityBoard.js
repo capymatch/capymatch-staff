@@ -452,7 +452,8 @@ export default function PriorityBoard({ items, navigate, heroItemIds = [] }) {
   const high = items.filter(i => i.attentionLevel === "high" && !heroSet.has(i.programId));
   const medium = items.filter(i => i.attentionLevel === "medium" && !heroSet.has(i.programId));
   const low = items.filter(i => i.attentionLevel === "low");
-  const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0;
+  const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0
+    && items.filter(i => i.attentionLevel === "high" || i.attentionLevel === "medium").length === 0;
   const [monitorCollapsed, setMonitorCollapsed] = useState(low.length > 4);
 
   return (
