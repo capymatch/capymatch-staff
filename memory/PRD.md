@@ -310,6 +310,15 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - **Dynamic summary**: "Emory University and Stanford University need action first" (names pulled from actual high-tier items)
 - **Files**: `computeAttention.js`, `PipelinePage.js`, `PriorityBoard.js`, `PipelineHero.js`, `MomentumInsight.js`, `seed_fresh.py`
 
+### Attention UI Refinement — Clarity, Hierarchy, Trust (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% — 14/14 frontend tests, iteration_227)
+- Hero card: visible reason stack (top 3), calm factual subtext, verb-first action ("Reply Now — Emory"), coach flag priority over recap text
+- Medium cards: ranked accent bar (stronger = higher), "Next best move" label on rank 0, time-based actions ("Follow up in 7 days"), momentum signal ("Talking · Steady momentum")
+- Section hierarchy: +24px hero spacing, passive low-tier (reduced opacity, link-style CTA, smaller font), removed strong borders
+- Summary card: "You're in a good position — 2 schools need attention" + breakdown pills (needs attention / follow-up soon / on track) + insight naming urgent schools
+- Carousel dot indicators, hover elevation on medium cards, standardized language (Follow up now / Follow up in X days / No action needed)
+- Files: `computeAttention.js`, `PipelineHero.js`, `PriorityBoard.js`, `MomentumInsight.js`
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
