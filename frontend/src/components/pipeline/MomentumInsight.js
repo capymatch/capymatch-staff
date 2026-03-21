@@ -3,8 +3,6 @@ import { useEffect, useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import { trackEvent } from "../../lib/analytics";
 
-const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
-
 export default function MomentumInsight({ data: recap, attention }) {
   const navigate = useNavigate();
   const trackedRef = useRef(false);
@@ -58,7 +56,6 @@ export default function MomentumInsight({ data: recap, attention }) {
         marginBottom: 32,
         border: "1px solid rgba(20,37,68,0.06)",
         boxShadow: "0 2px 12px rgba(19, 33, 58, 0.04)",
-        fontFamily: FONT,
       }}
     >
       {/* Section title */}
@@ -91,7 +88,7 @@ export default function MomentumInsight({ data: recap, attention }) {
           fontSize: 13, fontWeight: 600, color: "#19c3b2",
           background: "none", border: "none", cursor: "pointer",
           display: "inline-flex", alignItems: "center", gap: 5,
-          padding: 0, fontFamily: FONT,
+          padding: 0,
         }}
       >
         View full breakdown <ArrowRight size={14} />

@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import UniversityLogo from "../UniversityLogo";
 import { RAIL_STAGES } from "../journey/constants";
 
-const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
+/* Inherits Inter/Manrope from index.css */
 
 const STAGE_LABEL = {
   added: "Added",
@@ -29,7 +29,7 @@ export default function PipelineList({ programs, attentionMap, matchScores, navi
   });
 
   return (
-    <div style={{ marginTop: 40, fontFamily: FONT }} data-testid="pipeline-list">
+    <div style={{ marginTop: 40 }} data-testid="pipeline-list">
       {/* Section title */}
       <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#8190aa", marginBottom: 14 }}>
         All programs

@@ -171,10 +171,8 @@ export default function PipelinePage() {
   const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;
   const nearLimit = schoolPct >= 0.8;
 
-  const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
-
   return (
-    <div style={{ maxWidth: 1060, margin: "0 auto", padding: "0 8px", fontFamily: FONT }} data-testid="recruiting-board">
+    <div style={{ maxWidth: 1060, margin: "0 auto", padding: "0 8px" }} data-testid="recruiting-board">
 
       {/* ═══ 1. HEADER ═══ */}
       <div style={{ marginBottom: 28 }} data-testid="pipeline-header">
@@ -208,7 +206,7 @@ export default function PipelinePage() {
               {usage.used >= usage.limit ? "Upgrade to add more schools." : "Approaching your plan limit."}
             </div>
           </div>
-          <button onClick={() => setShowUpgrade(true)} style={{ padding: "9px 16px", borderRadius: 12, background: "linear-gradient(135deg, #19c3b2, #4d7cff)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", fontFamily: FONT, flexShrink: 0 }} data-testid="upgrade-from-banner">Upgrade</button>
+          <button onClick={() => setShowUpgrade(true)} style={{ padding: "9px 16px", borderRadius: 12, background: "linear-gradient(135deg, #19c3b2, #4d7cff)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none", flexShrink: 0 }} data-testid="upgrade-from-banner">Upgrade</button>
         </div>
       )}
 
@@ -237,7 +235,7 @@ export default function PipelinePage() {
                 <div style={{ fontSize: 14, fontWeight: 600, color: "#13213a" }}>{p.university_name}</div>
                 <div style={{ fontSize: 12, color: "#5f6c84", marginTop: 1 }}>{[p.division, p.conference, p.state].filter(Boolean).join(" · ")}</div>
               </div>
-              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchAll(); } catch { toast.error("Failed"); } }} style={{ padding: "7px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600, background: "rgba(25,195,178,0.06)", color: "#19c3b2", border: "1px solid rgba(25,195,178,0.12)", cursor: "pointer", fontFamily: FONT, display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }} data-testid={`reactivate-btn-${p.program_id}`}>
+              <button onClick={async (e) => { e.stopPropagation(); try { await axios.put(`${API}/athlete/programs/${p.program_id}`, { is_active: true }); toast.success(`${p.university_name} reactivated`); fetchAll(); } catch { toast.error("Failed"); } }} style={{ padding: "7px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600, background: "rgba(25,195,178,0.06)", color: "#19c3b2", border: "1px solid rgba(25,195,178,0.12)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }} data-testid={`reactivate-btn-${p.program_id}`}>
                 <RotateCcw style={{ width: 12, height: 12 }} /> Reactivate
               </button>
             </div>

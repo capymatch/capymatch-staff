@@ -5,8 +5,6 @@ import UniversityLogo from "../UniversityLogo";
 import { RAIL_STAGES } from "../journey/constants";
 import PipelineHeroEmptyState from "./PipelineHeroEmptyState";
 
-const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
-
 export default function PipelineHero({ heroItems, matchScores, navigate }) {
   const [whyExpanded, setWhyExpanded] = useState(false);
   const trackedRef = useRef(null);
@@ -56,7 +54,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         position: "relative",
         overflow: "hidden",
         boxShadow: "0 16px 48px rgba(15, 28, 53, 0.18)",
-        fontFamily: FONT,
       }}
     >
       {/* Soft glow — top right only */}
@@ -87,7 +84,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600,
               padding: "7px 12px", borderRadius: 999,
               background: whyExpanded ? "rgba(25,195,178,0.18)" : "rgba(25,195,178,0.10)",
-              color: "#8df0e6", border: "none", cursor: "pointer", fontFamily: FONT,
+              color: "#8df0e6", border: "none", cursor: "pointer",
               display: "inline-flex", alignItems: "center", gap: 5,
             }}
           >
@@ -177,7 +174,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           style={{
             padding: "11px 20px", borderRadius: 14, fontSize: 14, fontWeight: 600,
             background: "linear-gradient(135deg, #19c3b2, #4d7cff)",
-            color: "#fff", border: "none", cursor: "pointer", fontFamily: FONT,
+            color: "#fff", border: "none", cursor: "pointer",
             display: "inline-flex", alignItems: "center", gap: 7,
             boxShadow: "0 10px 24px rgba(25,195,178,0.22)",
             transition: "transform 80ms ease, box-shadow 80ms ease",
@@ -191,7 +188,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           style={{
             padding: "11px 20px", borderRadius: 14, fontSize: 14, fontWeight: 600,
             background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.60)",
-            border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer", fontFamily: FONT,
+            border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer",
             display: "inline-flex", alignItems: "center", gap: 7,
             transition: "background 80ms ease",
           }}
