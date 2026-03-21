@@ -677,6 +677,7 @@ async def seed():
             "created_by": ad["owner"] or "System",
             "created_at": ago(10),
             "is_suggested": False,
+            "assigned_to_athlete": ad["status"] in ("ready", "open"),
             "completed_at": ago(3) if ad["status"] == "completed" else None,
         })
     print(f"  Created {len(actions_data)} actions")
@@ -732,6 +733,90 @@ async def seed():
     for e in escalations:
         await db.director_actions.insert_one(e)
     print(f"  Created {len(escalations)} escalations")
+
+    # ─── STEP 7b: CREATE COACH FLAGS ─────────────────────────────
+    print("\n[STEP 7b] Creating coach flags...")
+    coach_flags_data = [
+        # Coach Williams flags Emory for Emma — reply needed (2 days overdue, no reply)
+        {
+            "flag_id": f"flag_{uid()[:12]}",
+            "athlete_id": "athlete_1",
+            "tenant_id": next(a for a in ATHLETES if a["id"] == "athlete_1")["_tenant_id"],
+            "program_id": program_map[("athlete_1", "Emory University")],
+            "university_name": "Emory University",
+            "reason": "reply_needed",
+            "reason_label": "Reply needed",
+            "note": "Emory coach asked about your schedule — reply before they move on",
+            "due": "today",
+            "due_date": ago(0)[:10],
+            "owner": "athlete",
+            "status": "active",
+            "flagged_by": coach_williams["id"],
+            "flagged_by_name": coach_williams["name"],
+            "created_at": ago(1),
+            "completed_at": None,
+        },
+        # Coach Williams flags Stanford for Emma — strong interest
+        {
+            "flag_id": f"flag_{uid()[:12]}",
+            "athlete_id": "athlete_1",
+            "tenant_id": next(a for a in ATHLETES if a["id"] == "athlete_1")["_tenant_id"],
+            "program_id": program_map[("athlete_1", "Stanford University")],
+            "university_name": "Stanford University",
+            "reason": "strong_interest",
+            "reason_label": "Strong interest worth pursuing",
+            "note": "Stanford coach mentioned you specifically — send a thank-you ASAP",
+            "due": "this_week",
+            "due_date": from_now(3)[:10],
+            "owner": "athlete",
+            "status": "active",
+            "flagged_by": coach_williams["id"],
+            "flagged_by_name": coach_williams["name"],
+            "created_at": ago(0, 6),
+            "completed_at": None,
+        },
+        # Coach Williams flags UGA for Ava — followup overdue
+        {
+            "flag_id": f"flag_{uid()[:12]}",
+            "athlete_id": "athlete_6",
+            "tenant_id": next(a for a in ATHLETES if a["id"] == "athlete_6")["_tenant_id"],
+            "program_id": program_map[("athlete_6", "University of Georgia")],
+            "university_name": "University of Georgia",
+            "reason": "followup_overdue",
+            "reason_label": "Follow-up overdue",
+            "note": "UGA coach is waiting — you haven't replied in 10 days",
+            "due": "today",
+            "due_date": ago(0)[:10],
+            "owner": "athlete",
+            "status": "active",
+            "flagged_by": coach_williams["id"],
+            "flagged_by_name": coach_williams["name"],
+            "created_at": ago(2),
+            "completed_at": None,
+        },
+        # Coach Garcia flags Texas A&M for Isabella — review school
+        {
+            "flag_id": f"flag_{uid()[:12]}",
+            "athlete_id": "athlete_8",
+            "tenant_id": next(a for a in ATHLETES if a["id"] == "athlete_8")["_tenant_id"],
+            "program_id": program_map[("athlete_8", "Texas A&M University")],
+            "university_name": "Texas A&M University",
+            "reason": "review_school",
+            "reason_label": "Review this school",
+            "note": "Texas A&M is a strong match for you — let's discuss if you're still interested",
+            "due": "this_week",
+            "due_date": from_now(5)[:10],
+            "owner": "athlete",
+            "status": "active",
+            "flagged_by": coach_garcia["id"],
+            "flagged_by_name": coach_garcia["name"],
+            "created_at": ago(1),
+            "completed_at": None,
+        },
+    ]
+    for cf in coach_flags_data:
+        await db.coach_flags.insert_one(cf)
+    print(f"  Created {len(coach_flags_data)} coach flags")
 
     # ─── STEP 8: CREATE AUTOPILOT LOG (for trajectory: improving) ─
     print("\n[STEP 8] Creating autopilot log entries (for improving trajectories)...")

@@ -254,10 +254,14 @@ async def compute_top_action(program_id: str, tenant_id: str, *, metrics: dict =
 
     # ── Priority 3: Overdue follow-up ──
     next_due = program.get("next_action_due")
+    next_due_date = None
     if next_due:
         today = now.strftime("%Y-%m-%d")
         try:
-            diff = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(next_due, "%Y-%m-%d")).days
+            # Handle both "YYYY-MM-DD" and full ISO timestamps like "2026-03-17T20:51:37+00:00"
+            due_str = next_due[:10] if len(next_due) >= 10 else next_due
+            next_due_date = due_str
+            diff = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(due_str, "%Y-%m-%d")).days
         except (ValueError, TypeError):
             diff = 0
 
@@ -295,7 +299,7 @@ async def compute_top_action(program_id: str, tenant_id: str, *, metrics: dict =
     # ── Priority 5: Due today ──
     if next_due:
         today = now.strftime("%Y-%m-%d")
-        if next_due == today:
+        if next_due_date == today:
             return _make_action(
                 "due_today",
                 f"due_today:{next_due}",
