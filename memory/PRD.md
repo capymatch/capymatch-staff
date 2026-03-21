@@ -154,13 +154,17 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - New CSS: `pipeline-premium.css` (design tokens + utility classes)
 - All business logic, data, interactions, API calls preserved
 
-### Pipeline Strict Layout & Font Unification (Mar 2026)
-- **Status**: COMPLETE & VERIFIED (14/14 frontend tests pass, 100% success, iteration_211)
-- **Design-only changes** — all logic preserved (carousel, toggle, kanban, recap teaser, peek row, touch/keyboard nav, reinforcement, drag-and-drop)
-- Rewrote `PriorityBoard.js` section labels: "Next Actions" → "ACT NOW" (red accent), "Coming Up" → "KEEP MOMENTUM" (orange accent), "On Track" → "MONITOR" (green, collapsible)
-- "WHAT TO DO NEXT" section header above all 3 groups
-- White cards with subtle left accent borders, reason + action per card
-- Files modified: `PriorityBoard.js` only (PipelineHero.js and PipelinePage.js fully preserved from original)
+### Pipeline Production Spec Implementation (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (22/22 features pass, iteration_212)
+- Implemented strict 5-section layout per user spec:
+  1. **Header**: "Your recruiting right now" + counts (no extra badges)
+  2. **Hero Card**: Single top-priority card, dark gradient, label row, progress rail ("WHERE YOU ARE IN THE PROCESS"), [View School] + [Why this?]. NO carousel, NO "Also" row, NO "View details"
+  3. **Momentum Insight**: Decision sentence, soft pills, "View full breakdown" CTA
+  4. **What to do next**: ACT NOW (red) / KEEP MOMENTUM (orange) / MONITOR (neutral) — each item has reason + action
+  5. **Pipeline List**: "All programs" — visually secondary (muted colors, lighter weights)
+- Font: `-apple-system, SF Pro Text, Inter` — titles 600, body 400-500 max
+- Light UI, white cards, subtle shadows, rounded 16-20px, soft gradient only in hero
+- Files: `PipelineHero.js`, `PipelinePage.js`, `MomentumInsight.js`, `PriorityBoard.js`, `PipelineList.js`
 
 ### Momentum Recap Caching (Feb 2026)
 - **Status**: COMPLETE & VERIFIED

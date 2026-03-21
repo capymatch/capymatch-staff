@@ -99,12 +99,12 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       {/* School name */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, position: "relative", zIndex: 1 }}>
         {p && <UniversityLogo name={p.university_name} logoUrl={ms?.logo_url || p.logo_url} domain={ms?.domain || p.domain} size={26} className="rounded-lg flex-shrink-0" />}
-        <h2 data-testid="hero-school-name" style={{
+        <div data-testid="hero-school-name" style={{
           fontSize: 28, fontWeight: 600, color: "#fff", letterSpacing: "-0.03em",
           margin: 0, lineHeight: 1.1, fontFamily: FONT,
         }}>
           {p?.university_name || "School"}
-        </h2>
+        </div>
         {matchPct != null && (
           <span data-testid="hero-match-score" style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.45)" }}>({matchPct}%)</span>
         )}

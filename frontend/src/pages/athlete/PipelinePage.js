@@ -104,12 +104,12 @@ export default function PipelinePage() {
 
       {/* ═══ 1. HEADER ═══ */}
       <div style={{ marginBottom: 32 }} data-testid="pipeline-header">
-        <h1 style={{
+        <div style={{
           fontSize: 28, fontWeight: 600, letterSpacing: "-0.03em",
           color: "#0f172a", margin: "0 0 8px", fontFamily: FONT,
         }}>
           Your recruiting right now
-        </h1>
+        </div>
         <p style={{ fontSize: 15, fontWeight: 400, color: "#64748b", margin: 0, lineHeight: 1.5 }} data-testid="summary-chips">
           {highCount > 0 && <>{highCount} needs attention</>}
           {highCount > 0 && medCount > 0 && <span style={{ margin: "0 6px", color: "#cbd5e1" }}>&middot;</span>}
