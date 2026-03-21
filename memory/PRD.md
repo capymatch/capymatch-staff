@@ -166,6 +166,15 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Font: `-apple-system, SF Pro Text, Inter` — titles 600, body 400-500
 - Files: `PipelineHero.js`, `PipelinePage.js`, `MomentumInsight.js`, `PriorityBoard.js`, `PipelineList.js`
 
+### Dark Hero + Next Actions Refactor (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% frontend all 12 features, iteration_223)
+- Dark navy hero card = sole representation of top priority (Emory)
+- "Act now" section removed, replaced by inline dark hero card
+- "Next actions" section for remaining urgents (Stanford, Florida) — hero excluded
+- Flow: Context → Hero → Next actions → Keep things moving → Just keep an eye
+- No duplication between hero and lists
+- Files: `PriorityBoard.js` (new HeroPriorityCard component, filtered high list)
+
 ### Primary Card Emphasis (Mar 2026)
 - **Status**: COMPLETE & VERIFIED (100% frontend all 10 features, iteration_222)
 - Top priority card: 5px border, red bg tint (0.02), 24px padding, 17px title, 15px action text
