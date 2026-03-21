@@ -142,6 +142,18 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - **Bug fixed in Scenario 6**: `isHeroPriority` now uses exact `programId === heroProgramId` instead of `attentionLevel === "high"`, preventing false praise leakage
 - Test scripts: `/app/backend/tests/qa_scenario{1-6}_validate.py`
 
+### Pipeline Premium Design Refactor (Feb 2026)
+- **Status**: COMPLETE & VERIFIED (14/14 frontend tests pass, 0 issues)
+- Applied new premium design system to the full pipeline page:
+  - **Hero Card**: Navy gradient bg with teal/purple glow orbs, badge row (status/timing/why), 30px school name, inline dot progress track (6 stages), gradient CTA buttons
+  - **Recap Teaser**: Dark gradient card, sparkle icon, 26px summary headline, trend pills (heated/steady/cooling), top priority callout
+  - **Priority Board**: Glass cards with 22px radius, inset 4px accent borders (red=critical, orange=grow, gray=monitor), "ACT NOW"/"KEEP MOMENTUM" labels, gradient/secondary CTA buttons
+  - **Page Header**: "RECRUITING INTELLIGENCE" eyebrow, 36px title, colored summary chips, glass toggle
+  - **Committed Banner**: Gold gradient card with 22px radius
+  - **Upcoming Tasks**: Glass card with 22px radius, icon badges
+- New CSS: `pipeline-premium.css` (design tokens + utility classes)
+- All business logic, data, interactions, API calls preserved
+
 ### Momentum Recap Caching (Feb 2026)
 - **Status**: COMPLETE & VERIFIED
 - Root cause: `GET /api/athlete/momentum-recap` called Claude LLM (~8s) on every pipeline page load
