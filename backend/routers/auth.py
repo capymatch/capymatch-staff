@@ -189,6 +189,16 @@ async def login(body: UserLogin, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     safe = _safe_user(user)
+
+    # For athletes, pull the profile photo from athletes collection
+    if safe.get("athlete_id") and not safe.get("photo_url"):
+        athlete_doc = await db.athletes.find_one(
+            {"id": safe["athlete_id"]},
+            {"_id": 0, "photo_url": 1}
+        )
+        if athlete_doc and athlete_doc.get("photo_url"):
+            safe["photo_url"] = athlete_doc["photo_url"]
+
     token = create_token(safe)
 
     # Background: check weekly measurables nudge for athletes
@@ -206,7 +216,16 @@ async def me(current_user: dict = get_current_user_dep()):
     user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
     if not user:
         return current_user
-    return _safe_user(user)
+    safe = _safe_user(user)
+    # For athletes, pull the profile photo from athletes collection
+    if safe.get("athlete_id") and not safe.get("photo_url"):
+        athlete = await db.athletes.find_one(
+            {"id": safe["athlete_id"]},
+            {"_id": 0, "photo_url": 1}
+        )
+        if athlete and athlete.get("photo_url"):
+            safe["photo_url"] = athlete["photo_url"]
+    return safe
 
 
 # ── Password Reset ─────────────────────────────────────────────────────────
