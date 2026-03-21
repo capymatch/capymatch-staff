@@ -227,6 +227,9 @@ export default function PipelinePage() {
       {/* ═══ CONTEXT LAYER: What Changed ═══ */}
       {viewMode === "priority" && <MomentumInsight data={recapData} attention={allAttention} />}
 
+      {/* ═══ HERO ═══ */}
+      <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
+
       {/* ═══ UPGRADE PROMPT ═══ */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (
         <div style={{ background: usage.used >= usage.limit ? "rgba(255,155,82,0.06)" : "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: `1px solid ${usage.used >= usage.limit ? "rgba(255,155,82,0.2)" : "rgba(20,37,68,0.08)"}`, borderRadius: 22, padding: "18px 22px", marginBottom: 18, display: "flex", alignItems: "center", gap: 16, boxShadow: "0 10px 30px rgba(19,33,58,0.08)" }} data-testid="over-limit-banner">

@@ -435,17 +435,14 @@ function SectionLabel({ label, count, color }) {
 }
 
 export default function PriorityBoard({ items, navigate, heroProgramId }) {
-  const heroItem = items.find(i => i.programId === heroProgramId && i.attentionLevel === "high");
   const high = items.filter(i => i.attentionLevel === "high" && i.programId !== heroProgramId);
   const medium = items.filter(i => i.attentionLevel === "medium");
   const low = items.filter(i => i.attentionLevel === "low");
-  const allOnTrack = !heroItem && high.length === 0 && medium.length === 0 && low.length > 0;
+  const allOnTrack = high.length === 0 && medium.length === 0 && low.length > 0;
   const [monitorCollapsed, setMonitorCollapsed] = useState(low.length > 4);
 
   return (
     <div data-testid="priority-board" style={{ marginTop: 8, fontFamily: FONT }}>
-      {/* Hero: top priority */}
-      {heroItem && <HeroPriorityCard item={heroItem} navigate={navigate} />}
 
       {allOnTrack && (
         <div style={{
