@@ -17,7 +17,7 @@ import uuid
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 if not BASE_URL:
-    BASE_URL = "https://urgency-risk.preview.emergentagent.com"
+    BASE_URL = "https://priority-unify.preview.emergentagent.com"
 
 API = f"{BASE_URL}/api"
 
