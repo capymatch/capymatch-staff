@@ -46,7 +46,7 @@ export function InboxRow({ item }) {
 
   return (
     <div className="inbox-row-wrap" data-testid={`inbox-row-${item.id}`}>
-      <div className="inbox-row" style={{ height: 76 }}>
+      <div className="inbox-row">
         <span className="inbox-dot" style={{ background: dot }} />
         <div className="inbox-text">
           <p className="inbox-title">{title}</p>

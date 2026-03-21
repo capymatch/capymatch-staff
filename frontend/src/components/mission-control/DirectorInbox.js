@@ -86,11 +86,10 @@ export default function DirectorInbox() {
         .inbox-row-wrap:last-child { border-bottom: none; }
         .inbox-row {
           display: grid;
-          grid-template-columns: 18px 1fr auto;
-          align-items: center;
-          gap: 0;
-          padding: 0 20px;
-          height: 66px;
+          grid-template-columns: 14px 1fr auto;
+          align-items: start;
+          gap: 0 8px;
+          padding: 12px 16px;
           cursor: pointer;
           transition: background 80ms ease-out;
         }
@@ -100,30 +99,28 @@ export default function DirectorInbox() {
           height: 7px;
           border-radius: 50%;
           justify-self: start;
+          margin-top: 6px;
         }
         .inbox-text {
           min-width: 0;
-          padding-right: 16px;
         }
         .inbox-title {
           font-size: 13px;
           font-weight: 600;
           color: #1e293b;
-          line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          line-height: 1.4;
           margin: 0;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
         .inbox-subtitle {
           font-size: 11.5px;
           font-weight: 500;
           color: #94a3b8;
-          line-height: 1.3;
+          line-height: 1.4;
           margin: 2px 0 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
         }
         .inbox-cta {
           font-size: 11.5px;
@@ -135,6 +132,7 @@ export default function DirectorInbox() {
           gap: 3px;
           cursor: pointer;
           transition: color 80ms;
+          margin-top: 4px;
         }
         .inbox-cta:hover { color: #1e293b; }
         .inbox-action-link {
@@ -155,6 +153,27 @@ export default function DirectorInbox() {
         }
         .inbox-action-escalate {
           color: #b45309;
+        }
+
+        /* ── Mobile: stack CTA below text ── */
+        @media (max-width: 640px) {
+          .inbox-row {
+            grid-template-columns: 14px 1fr;
+            padding: 12px 14px;
+          }
+          .inbox-title {
+            font-size: 13px;
+          }
+          .inbox-subtitle {
+            font-size: 11px;
+          }
+          .inbox-cta {
+            grid-column: 2;
+            justify-self: start;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #0d9488;
+          }
         }
       `}</style>
 
