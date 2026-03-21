@@ -154,6 +154,21 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - New CSS: `pipeline-premium.css` (design tokens + utility classes)
 - All business logic, data, interactions, API calls preserved
 
+### Pipeline Strict Layout & Font Unification (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (15/15 frontend tests pass, 100% success, iteration_210)
+- Rewrote `PriorityBoard.js` with strict 3-group structure:
+  - **ACT NOW** (red accent `#ef4444`): high-priority cards with reason + action + View CTA
+  - **KEEP MOMENTUM** (orange accent `#f59e0b`): medium-priority cards with reason + action
+  - **MONITOR** (green `#10b981`): compact collapsible rows for on-track programs
+- Section header: "WHAT TO DO NEXT" above all 3 groups
+- Unified fonts across all pipeline components to match app global:
+  - Removed all hardcoded `fontFamily: '-apple-system, SF Pro Text, ...'` inline overrides
+  - Body text now inherits **Inter** from `index.css`
+  - Headings now inherit **Manrope** from `index.css`
+- White cards, light UI, subtle shadows, max font-weight 500 for body text
+- Layout hierarchy: Header → Hero Card → Momentum Insight → What to do next → Pipeline List
+- Files modified: `PriorityBoard.js`, `PipelineHero.js`, `MomentumInsight.js`, `PipelineList.js`, `PipelinePage.js`
+
 ### Momentum Recap Caching (Feb 2026)
 - **Status**: COMPLETE & VERIFIED
 - Root cause: `GET /api/athlete/momentum-recap` called Claude LLM (~8s) on every pipeline page load
