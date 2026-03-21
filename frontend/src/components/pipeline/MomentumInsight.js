@@ -35,7 +35,7 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
 
   return (
     <div data-testid="live-summary" style={{
-      padding: "10px 2px 12px",
+      padding: "10px 0 12px",
       marginBottom: 8,
     }}>
       {/* Line 1: headline */}
@@ -82,12 +82,12 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
             fontSize: 11, fontWeight: 600, color: "#94a3b8",
             padding: 0, marginLeft: "auto",
             display: "inline-flex", alignItems: "center", gap: 3,
-            transition: "color 100ms",
+            transition: "color 100ms", whiteSpace: "nowrap",
           }}
           onMouseEnter={e => { e.currentTarget.style.color = "#475569"; }}
           onMouseLeave={e => { e.currentTarget.style.color = "#94a3b8"; }}
         >
-          Breakdown <ArrowRight style={{ width: 11, height: 11 }} />
+          View full breakdown <ArrowRight style={{ width: 11, height: 11 }} />
         </button>
       </div>
     </div>
