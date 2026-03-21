@@ -312,23 +312,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             })()}
           </div>
 
-          {/* REASON STACK — top 2-3 reasons, always visible */}
-          {current.reasons?.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 12 }} data-testid="hero-reason-stack">
-              {current.reasons.slice(0, 3).map((r, i) => (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  fontSize: 13, fontWeight: 450, color: "rgba(255,255,255,0.65)", lineHeight: 1.4,
-                }}>
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                    background: i === 0 ? "#ff6b7f" : i === 1 ? "#fbbf24" : "#5d87ff",
-                  }} />
-                  {r}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* META: Owner — only show when it's not the athlete's own task */}
