@@ -46,28 +46,24 @@ function MomentumGroup({ category, items, navigate }) {
               navigate(`/pipeline/${m.program_id}`);
             }}
             style={{
-              background: "#fff",
-              border: "1px solid rgba(20,37,68,0.05)",
-              borderLeft: `3px solid ${cfg.accent}`,
-              borderRadius: 14,
-              padding: "14px 16px",
+              background: "rgba(255,255,255,0.7)",
+              border: "1px solid rgba(20,37,68,0.04)",
+              borderLeft: `2px solid ${cfg.accent}`,
+              borderRadius: 12,
+              padding: "12px 14px",
               cursor: "pointer",
               transition: "transform 80ms ease, box-shadow 80ms ease",
-              boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 3px 8px rgba(0,0,0,0.03)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: cfg.dot, flexShrink: 0 }} />
               <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>{m.school_name}</span>
               <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, marginLeft: "auto" }}>{m.stage_label}</span>
             </div>
-            <div style={{ fontSize: 13, color: "#334155", fontWeight: 400, lineHeight: 1.5, paddingLeft: 14 }}>
-              {m.what_changed}
-            </div>
-            <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 400, lineHeight: 1.45, paddingLeft: 14, marginTop: 3 }}>
-              {m.why_it_matters}
+            <div style={{ fontSize: 13, color: "#64748b", fontWeight: 400, lineHeight: 1.5, paddingLeft: 14 }}>
+              {m.action_guidance || m.what_changed}
             </div>
           </div>
         ))}
@@ -90,35 +86,35 @@ function PriorityItem({ priority, navigate }) {
         navigate(`/pipeline/${priority.program_id}`);
       }}
       style={{
-        display: "flex", alignItems: "flex-start", gap: 12,
+        display: "flex", alignItems: "flex-start", gap: 14,
         background: "#fff",
-        border: "1px solid rgba(20,37,68,0.05)",
-        borderLeft: `3px solid ${cfg.accent}`,
+        border: `1px solid ${cfg.border}`,
+        borderLeft: `4px solid ${cfg.accent}`,
         borderRadius: 14,
-        padding: "14px 16px",
+        padding: "16px 18px",
         cursor: "pointer",
         transition: "transform 80ms ease, box-shadow 80ms ease",
-        boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
+        boxShadow: "0 2px 8px rgba(19,33,58,0.04)",
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(19,33,58,0.03)"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.06)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(19,33,58,0.04)"; }}
     >
       <div style={{
-        width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
         background: cfg.bg, border: `1px solid ${cfg.border}`,
       }}>
-        <Icon size={14} color={cfg.color} />
+        <Icon size={15} color={cfg.color} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 10, fontWeight: 600, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 3 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
           {cfg.label}
         </div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: "#0f172a", lineHeight: 1.35 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", lineHeight: 1.35 }}>
           {priority.action}
         </div>
-        <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 400, marginTop: 3, lineHeight: 1.4 }}>
-          {priority.reason}
+        <div style={{ fontSize: 12, color: "#64748b", fontWeight: 400, marginTop: 4, lineHeight: 1.4 }}>
+          <span style={{ color: cfg.accent, marginRight: 4 }}>&rarr;</span>{priority.reason}
         </div>
       </div>
     </div>
@@ -177,10 +173,12 @@ export default function RecapPage() {
     );
   }
 
-  const { recap_hero, period_label, momentum, priorities, ai_summary } = data;
-  const heated = momentum?.heated_up || [];
-  const steady = momentum?.holding_steady || [];
-  const cooling = momentum?.cooling_off || [];
+  const { recap_hero, biggest_shift, period_label, momentum, priorities, ai_insights, top_priority_program_id } = data;
+  const topPid = top_priority_program_id;
+  const heated = (momentum?.heated_up || []).filter(m => m.program_id !== topPid);
+  const steady = (momentum?.holding_steady || []).filter(m => m.program_id !== topPid);
+  const cooling = (momentum?.cooling_off || []).filter(m => m.program_id !== topPid);
+  const insights = ai_insights || [];
 
   // Track section visibility once via IntersectionObserver
   const sectionRef = (sectionName) => (el) => {
@@ -217,13 +215,13 @@ export default function RecapPage() {
       </div>
 
       <div style={{ padding: "24px 16px 48px", maxWidth: 640, margin: "0 auto" }}>
-        {/* Section 1: Recap Hero */}
+        {/* Section 1: Summary — Narrative + biggest shift */}
         <div
           ref={sectionRef("hero")}
           data-testid="recap-hero"
           style={{
             background: "linear-gradient(135deg, #0f1c35 0%, #152547 50%, #1a2d5a 100%)",
-            borderRadius: 20, padding: "28px 24px", marginBottom: 36,
+            borderRadius: 20, padding: "28px 24px", marginBottom: 32,
             position: "relative", overflow: "hidden",
             boxShadow: "0 12px 40px rgba(15, 28, 53, 0.14)",
           }}
@@ -236,44 +234,25 @@ export default function RecapPage() {
           <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12, position: "relative", zIndex: 1 }}>
             Pipeline Summary
           </div>
-          <div style={{ fontSize: 18, fontWeight: 500, color: "rgba(255,255,255,0.90)", lineHeight: 1.5, position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: 18, fontWeight: 500, color: "rgba(255,255,255,0.92)", lineHeight: 1.5, position: "relative", zIndex: 1 }}>
             {recap_hero}
           </div>
-          <div style={{
-            display: "flex", gap: 24, marginTop: 20, paddingTop: 16,
-            borderTop: "1px solid rgba(255,255,255,0.06)", position: "relative", zIndex: 1,
-          }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 22, fontWeight: 600, color: "#f97316" }}>{heated.length}</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 500, marginTop: 2 }}>Heated Up</div>
+          {biggest_shift && (
+            <div data-testid="biggest-shift" style={{
+              marginTop: 14, paddingTop: 14,
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.55)",
+              lineHeight: 1.4, position: "relative", zIndex: 1,
+            }}>
+              Biggest shift: {biggest_shift}
             </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 22, fontWeight: 600, color: "rgba(255,255,255,0.50)" }}>{steady.length}</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 500, marginTop: 2 }}>Steady</div>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 22, fontWeight: 600, color: "#60a5fa" }}>{cooling.length}</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 500, marginTop: 2 }}>Cooling</div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Section 2: Momentum Shift */}
-        <div ref={sectionRef("momentum_shift")} style={{ marginBottom: 36 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 16 }}>
-            Momentum Shift
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <MomentumGroup category="heated_up" items={heated} navigate={navigate} />
-            <MomentumGroup category="holding_steady" items={steady} navigate={navigate} />
-            <MomentumGroup category="cooling_off" items={cooling} navigate={navigate} />
-          </div>
-        </div>
-
-        {/* Section 3: Priority Reset */}
-        <div ref={sectionRef("priority_reset")} style={{ marginBottom: 36 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 16 }}>
-            Priority Reset
+        {/* Section 2: Priority Reset — STRONGEST visual weight */}
+        <div ref={sectionRef("priority_reset")} data-testid="priority-reset-section" style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#0f172a", marginBottom: 14 }}>
+            What To Do
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {priorities.map((p, i) => (
@@ -282,20 +261,38 @@ export default function RecapPage() {
           </div>
         </div>
 
-        {/* Section 4: AI Summary */}
-        {ai_summary && (
-          <div ref={sectionRef("ai_summary")} data-testid="ai-summary" style={{
-            background: "#fff",
-            border: "1px solid rgba(20,37,68,0.05)",
-            borderRadius: 16, padding: "20px 20px",
-            boxShadow: "0 1px 3px rgba(19,33,58,0.03)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
-              <Sparkles size={13} color="#19c3b2" />
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#19c3b2", textTransform: "uppercase", letterSpacing: "0.06em" }}>AI Insight</span>
+        {/* Section 3: Momentum Shift — LIGHTER context (excludes top priority) */}
+        {(heated.length > 0 || steady.length > 0 || cooling.length > 0) && (
+          <div ref={sectionRef("momentum_shift")} data-testid="momentum-shift-section" style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 14 }}>
+              Momentum Shift
             </div>
-            <div style={{ fontSize: 14, color: "#334155", lineHeight: 1.6, fontWeight: 400 }}>
-              {ai_summary}
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <MomentumGroup category="heated_up" items={heated} navigate={navigate} />
+              <MomentumGroup category="holding_steady" items={steady} navigate={navigate} />
+              <MomentumGroup category="cooling_off" items={cooling} navigate={navigate} />
+            </div>
+          </div>
+        )}
+
+        {/* Section 4: AI Insight — SOFTEST, bullet points */}
+        {insights.length > 0 && (
+          <div ref={sectionRef("ai_summary")} data-testid="ai-summary" style={{
+            background: "rgba(248,250,252,0.6)",
+            border: "1px solid rgba(20,37,68,0.04)",
+            borderRadius: 14, padding: "18px 20px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
+              <Sparkles size={12} color="#94a3b8" />
+              <span style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>Insight</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {insights.map((bullet, i) => (
+                <div key={i} data-testid={`insight-bullet-${i}`} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5, flexShrink: 0 }}>&#8226;</span>
+                  <span style={{ fontSize: 13, color: "#64748b", fontWeight: 400, lineHeight: 1.5 }}>{bullet}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}

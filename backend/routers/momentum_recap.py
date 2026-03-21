@@ -56,10 +56,11 @@ def _classify_momentum(program, interactions_in_period, interactions_before, now
     }
     current_stage = status_to_stage.get(recruiting_status, "added")
 
-    # Days since last interaction
+    # Days since last interaction (check in-period first, then before-period)
     days_since = None
-    if interactions_in_period:
-        last_dt_str = interactions_in_period[0].get("date_time", "")
+    last_interaction_list = interactions_in_period if interactions_in_period else interactions_before
+    if last_interaction_list:
+        last_dt_str = last_interaction_list[0].get("date_time", "")
         try:
             last_dt = datetime.fromisoformat(last_dt_str.replace("Z", "+00:00"))
             days_since = (now - last_dt).days
@@ -112,17 +113,27 @@ def _classify_momentum(program, interactions_in_period, interactions_before, now
         reason = " · ".join(changes) if changes else "Consistent activity"
         why = "Pipeline stable — maintain cadence"
 
+    # Action guidance for momentum shift cards
+    if heated and not cooling:
+        action_guidance = "Respond within 24 hours" if has_coach_reply else "Follow up within 48 hours"
+    elif cooling and not heated:
+        action_guidance = "Re-engage this week" if (days_since and days_since > 7) else "Send a follow-up soon"
+    else:
+        action_guidance = "Maintain your current cadence"
+
     return {
         "program_id": prog_id,
         "school_name": name,
         "category": category,
         "what_changed": reason,
         "why_it_matters": why,
+        "action_guidance": action_guidance,
         "current_stage": current_stage,
         "stage_label": STAGE_LABELS.get(current_stage, current_stage),
         "interactions_count": ix_count,
         "has_coach_reply": has_coach_reply,
         "reply_status": reply_status,
+        "days_since_last": days_since,
     }
 
 
@@ -192,26 +203,69 @@ def _generate_priorities(momentum_items):
 
 
 def _build_recap_hero(momentum_items):
-    """Build the hero summary sentence from structured data."""
+    """Build the hero headline — action-oriented, not a report."""
     heated = len([m for m in momentum_items if m["category"] == "heated_up"])
     cooling = len([m for m in momentum_items if m["category"] == "cooling_off"])
-    steady = len([m for m in momentum_items if m["category"] == "holding_steady"])
 
-    parts = []
-    if heated:
-        parts.append(f"gained momentum with {heated} school{'s' if heated > 1 else ''}")
+    if cooling and heated:
+        return f"Your pipeline is improving, but {cooling} program{'s' if cooling > 1 else ''} need{'s' if cooling == 1 else ''} immediate attention."
+    elif cooling:
+        return f"{cooling} program{'s' if cooling > 1 else ''} in your pipeline need{'s' if cooling == 1 else ''} immediate attention."
+    elif heated:
+        return f"Strong momentum — {heated} school{'s' if heated > 1 else ''} heating up in your pipeline."
+    else:
+        return "Your pipeline is holding steady this period."
+
+
+def _compute_biggest_shift(momentum_items):
+    """Identify the single biggest momentum change."""
+    cooling = [m for m in momentum_items if m["category"] == "cooling_off"]
     if cooling:
-        parts.append(f"{cooling} program{'s' if cooling > 1 else ''} need{'s' if cooling == 1 else ''} re-engagement")
-    if steady:
-        parts.append(f"{steady} holding steady")
+        worst = max(cooling, key=lambda m: m.get("days_since_last") or 0)
+        days = worst.get("days_since_last")
+        if days:
+            return f"{worst['school_name']} cooled after {days} days of inactivity"
+        return f"{worst['school_name']} is cooling off"
 
-    if not parts:
-        return "No significant pipeline changes this period."
+    heated = [m for m in momentum_items if m["category"] == "heated_up"]
+    if heated:
+        best = heated[0]
+        if "Campus visit" in best.get("what_changed", ""):
+            return f"{best['school_name']} surged after your campus visit"
+        if best.get("has_coach_reply"):
+            return f"{best['school_name']} heated up — coach replied"
+        return f"{best['school_name']} gained significant momentum"
 
-    sentence = "You " + parts[0]
-    if len(parts) > 1:
-        sentence += ", " + ", ".join(parts[1:])
-    return sentence + "."
+    return None
+
+
+def _build_insight_bullets(momentum_items):
+    """Generate data-driven bullet insights — no AI needed."""
+    bullets = []
+    heated = [m for m in momentum_items if m["category"] == "heated_up"]
+    cooling = [m for m in momentum_items if m["category"] == "cooling_off"]
+    steady = [m for m in momentum_items if m["category"] == "holding_steady"]
+
+    for m in heated:
+        changes = m.get("what_changed", "")
+        if "Campus visit" in changes:
+            bullets.append(f"{m['school_name']} gained momentum after your visit")
+        elif m.get("has_coach_reply"):
+            bullets.append(f"{m['school_name']} is heating up — coach replied")
+        else:
+            bullets.append(f"{m['school_name']} is heating up")
+
+    for m in cooling:
+        days = m.get("days_since_last")
+        if days:
+            bullets.append(f"{m['school_name']} requires immediate re-engagement ({days}d inactive)")
+        else:
+            bullets.append(f"{m['school_name']} requires re-engagement")
+
+    for m in steady:
+        bullets.append(f"{m['school_name']} remains stable")
+
+    return bullets
 
 
 async def _generate_ai_summary(momentum_items, priorities, recap_hero, period_label):
@@ -400,14 +454,18 @@ async def _compute_and_cache_recap(tenant_id, now, period_start, period_label, e
     momentum_items.sort(key=lambda m: order.get(m["category"], 3))
 
     recap_hero = _build_recap_hero(momentum_items)
+    biggest_shift = _compute_biggest_shift(momentum_items)
     priorities = _generate_priorities(momentum_items)
+    ai_insights = _build_insight_bullets(momentum_items)
 
-    ai_summary = await _generate_ai_summary(
-        momentum_items, priorities, recap_hero, period_label
-    )
+    # Join bullets as fallback ai_summary string for backward compat
+    ai_summary = " ".join(f"• {b}" for b in ai_insights) if ai_insights else ""
+
+    top_priority_pid = priorities[0]["program_id"] if priorities else None
 
     response = {
         "recap_hero": recap_hero,
+        "biggest_shift": biggest_shift,
         "period_label": period_label,
         "event_name": event_name,
         "period_start": period_start.isoformat(),
@@ -418,6 +476,8 @@ async def _compute_and_cache_recap(tenant_id, now, period_start, period_label, e
         },
         "priorities": priorities,
         "ai_summary": ai_summary,
+        "ai_insights": ai_insights,
+        "top_priority_program_id": top_priority_pid,
     }
 
     # Cache full response + priorities for Hero Card integration
