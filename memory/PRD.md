@@ -391,6 +391,16 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - **CTA enhancements**: "Save & Trigger Actions (2)" shows count, "Notify athletes" pluralizes
 - Files: `LiveEvent.js` (full V2 rewrite)
 
+### Event Summary — Post-Tournament Control Center (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% — 11/11 backend, 16/16 frontend, iteration_235)
+- **Actions Needed Today**: Priority section at top showing top 5 actions with school, athlete, action type, and deadline (Today/Within 72h/Within 48h)
+- **Urgency labels**: Athlete headers show "N urgent" (red flame) + "N risk" (amber triangle) instead of "N hot"
+- **Smart action hierarchy**: Hot unsent notes get prominent primary "Send to Athlete" button (red, full-width), secondary actions (In Pod, Advocate) below
+- **School action hints**: "Follow up within 24h" for hot, "Send film" for needs_film, "Monitor and engage" for warm
+- **Tournament Mode banner**: "Tournament Mode could have automated N of these actions" when 2+ pending
+- **Visual priority**: Red left border on urgent, amber on risk, color-coded deadline badges
+- Files: `EventSummary.js` (full rewrite)
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
