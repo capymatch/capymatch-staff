@@ -325,7 +325,9 @@ export default function ProfilePage() {
             <button data-testid="share-copy-link" onClick={copyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white">
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {copied ? "Copied!" : "Copy Link"}
             </button>
-            <a href={shareLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-white/10 text-white">
+            <a href={shareLink} target="_blank" rel="noopener noreferrer" data-testid="share-preview-btn"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-emerald-50"
+              style={{ color: "#059669", borderColor: "rgba(5,150,105,0.3)" }}>
               <ExternalLink className="w-3 h-3" /> Preview
             </a>
           </div>
