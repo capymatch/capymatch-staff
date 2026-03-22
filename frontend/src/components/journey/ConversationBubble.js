@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Star, Loader2, Eye, ExternalLink, Flag, CheckCircle2, MousePointerClick } from "lucide-react";
+import { MapPin, Star, Loader2, Eye, ExternalLink, Flag, CheckCircle2, MousePointerClick, Radio } from "lucide-react";
 import { CONV_CONFIG } from "./constants";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -82,26 +82,28 @@ export function ConversationBubble({ event }) {
   if (cfg.side === "center") {
     const isCoachDirective = evtType === "coach_directive";
     const isFlagCompleted = evtType === "flag_completed";
-    const isFlagRelated = isCoachDirective || isFlagCompleted;
+    const isCoachSignal = evtType === "coach_signal";
+    const isFlagRelated = isCoachDirective || isFlagCompleted || isCoachSignal;
 
     return (
       <div className="flex justify-center my-2" data-testid={isFlagRelated ? `conv-flag-${evtType}` : "conv-milestone"}>
         <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border"
           style={{
-            backgroundColor: isCoachDirective ? "rgba(245,158,11,0.06)" : isFlagCompleted ? "rgba(16,185,129,0.06)" : "var(--cm-surface)",
-            borderColor: isCoachDirective ? "rgba(245,158,11,0.2)" : isFlagCompleted ? "rgba(16,185,129,0.2)" : "var(--cm-border)",
+            backgroundColor: isCoachSignal ? "rgba(59,130,246,0.06)" : isCoachDirective ? "rgba(245,158,11,0.06)" : isFlagCompleted ? "rgba(16,185,129,0.06)" : "var(--cm-surface)",
+            borderColor: isCoachSignal ? "rgba(59,130,246,0.2)" : isCoachDirective ? "rgba(245,158,11,0.2)" : isFlagCompleted ? "rgba(16,185,129,0.2)" : "var(--cm-border)",
           }}>
           <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-            isCoachDirective ? "bg-amber-500/10" : isFlagCompleted ? "bg-emerald-500/10" : `bg-${cfg.color}-500/10`
+            isCoachSignal ? "bg-blue-500/10" : isCoachDirective ? "bg-amber-500/10" : isFlagCompleted ? "bg-emerald-500/10" : `bg-${cfg.color}-500/10`
           }`}>
-            {isCoachDirective ? <Flag className="w-3.5 h-3.5 text-amber-400" />
+            {isCoachSignal ? <Radio className="w-3.5 h-3.5 text-blue-400" />
+            : isCoachDirective ? <Flag className="w-3.5 h-3.5 text-amber-400" />
             : isFlagCompleted ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             : evtType === "camp" || evtType === "camp_meeting" ? <span className="text-base">&#127947;&#65039;</span>
             : evtType === "visit" || evtType === "campus_visit" ? <MapPin className={`w-3.5 h-3.5 text-${cfg.color}-400`} />
             : <Star className={`w-3.5 h-3.5 text-${cfg.color}-400`} />}
           </div>
           <div>
-            <p className="text-xs font-semibold" style={{ color: isCoachDirective ? "#f59e0b" : isFlagCompleted ? "#10b981" : "var(--cm-text)" }}>
+            <p className="text-xs font-semibold" style={{ color: isCoachSignal ? "#3b82f6" : isCoachDirective ? "#f59e0b" : isFlagCompleted ? "#10b981" : "var(--cm-text)" }}>
               {event.title || cfg.label}
             </p>
             {(event.content || event.notes) && (
@@ -112,7 +114,7 @@ export function ConversationBubble({ event }) {
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>{formatDate(event.date || event.date_time)}</span>
               {(event.created_by_name || event.coach_name) && (
-                <span className="text-[10px] font-medium" style={{ color: isCoachDirective ? "rgba(245,158,11,0.6)" : isFlagCompleted ? "rgba(16,185,129,0.6)" : "var(--cm-text-3)" }}>
+                <span className="text-[10px] font-medium" style={{ color: isCoachSignal ? "rgba(59,130,246,0.6)" : isCoachDirective ? "rgba(245,158,11,0.6)" : isFlagCompleted ? "rgba(16,185,129,0.6)" : "var(--cm-text-3)" }}>
                   {event.created_by_name || event.coach_name}
                 </span>
               )}

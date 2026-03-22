@@ -812,6 +812,29 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
             "coach_name": "",
         })
 
+    # Include event signals (coach notes from live events)
+    athlete_doc = await db.athletes.find_one({"tenant_id": tenant_id}, {"_id": 0, "id": 1})
+    athlete_id_for_notes = (athlete_doc or {}).get("id", "")
+    if athlete_id_for_notes:
+        signal_notes = await db.athlete_notes.find(
+            {"athlete_id": athlete_id_for_notes, "program_id": program_id, "tag": "event_signal"},
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(50)
+        for sn in signal_notes:
+            timeline.append({
+                "id": sn.get("id"),
+                "event_type": "coach_signal",
+                "type": "Coach Signal",
+                "title": "Coach Signal",
+                "date": sn.get("created_at"),
+                "date_time": sn.get("created_at"),
+                "content": sn.get("text", ""),
+                "notes": sn.get("text", ""),
+                "outcome": "",
+                "coach_name": sn.get("author", "Coach"),
+                "created_by_name": sn.get("author", "Coach"),
+            })
+
     # Sort by date descending
     timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
 

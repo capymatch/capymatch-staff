@@ -42,6 +42,13 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - "What's driving your pipeline right now" section: AI insight bullet points
 - Matches user-provided design spec exactly
 
+### Event Signal in Journey Timeline (Mar 2026)
+- **Status**: COMPLETE & VERIFIED
+- Backend (`athlete_dashboard.py`) fetches `athlete_notes` tagged `event_signal` and appends to journey timeline as `event_type: "coach_signal"`
+- Frontend (`ConversationBubble.js`) renders coach signals as blue center-aligned bubbles with Radio icon
+- Added `coach_signal` entry to `CONV_CONFIG` in `constants.js`
+- Full data flow verified: Live Event capture → athlete_notes → Journey Timeline display
+
 ### Loop Analytics Instrumentation (Feb 2026)
 - **Status**: COMPLETE & VERIFIED (9/9 backend, 14/14 all events)
 - Frontend: trackEvent() with 5s batch flush (analytics.js)
