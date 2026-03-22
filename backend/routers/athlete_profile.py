@@ -231,6 +231,10 @@ async def update_profile(body: dict, current_user: dict = get_current_user_dep()
         await db.athletes.update_one({"id": athlete["id"]}, {"$set": update_fields})
         updated.update(update_fields)
 
+    # Refresh athlete store cache so coach/director boards see updated status
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
+
     return _athlete_to_profile(updated)
 
 
