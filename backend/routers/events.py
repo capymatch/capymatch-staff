@@ -566,7 +566,7 @@ async def log_recruiting_signal(event_id: str, body: EventSignalCreate, current_
                 notif_type="coach_signal",
                 title=f"Signal from {current_user['name']}: {signal_label}",
                 message=f"{school_name}: {body.note_text}" if body.note_text else f"{signal_label} — {school_name}",
-                action_url=f"/my-schools",
+                action_url="/messages",
             )
 
     # 6. Timeline entry
