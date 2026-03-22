@@ -1096,6 +1096,9 @@ async def create_interaction(body: dict, current_user: dict = get_current_user_d
     await db.interactions.insert_one(doc)
     doc.pop("_id", None)
 
+    # Invalidate AI insight cache on new interaction
+    await db.ai_insight_cache.delete_many({"tenant_id": tenant_id, "program_id": program_id})
+
     # Update last_meaningful_engagement_at on program if meaningful
     _meaningful_types = {"Coach Reply", "Phone Call", "Campus Visit", "Video Call", "Camp"}
     is_meaningful = (
@@ -1184,6 +1187,9 @@ async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_
     }
     await db.interactions.insert_one(doc)
     doc.pop("_id", None)
+
+    # Invalidate AI insight cache on new reply
+    await db.ai_insight_cache.delete_many({"tenant_id": tenant_id, "program_id": program_id})
 
     # AUTOMATION: Reply received → update program status + priority
     await db.programs.update_one(
@@ -1304,6 +1310,9 @@ async def mark_follow_up_sent(program_id: str, body: dict, current_user: dict = 
         "created_at": now.isoformat(),
     }
     await db.interactions.insert_one(interaction_doc)
+
+    # Invalidate AI insight cache on follow-up
+    await db.ai_insight_cache.delete_many({"tenant_id": tenant_id, "program_id": program_id})
 
     updated = await db.programs.find_one(
         {"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0}

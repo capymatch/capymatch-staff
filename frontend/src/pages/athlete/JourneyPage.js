@@ -24,7 +24,7 @@ import { RAIL_STAGES, STAGE_LABELS } from "../../components/journey/constants";
 import UniversityLogo from "../../components/UniversityLogo";
 import { RiskBadgeRow, RiskBadgeEmpty, RiskExplainerDrawer } from "../../components/RiskBadges";
 import { CoachSocialLinks } from "../../components/CoachSocialLinks";
-import CoachWatchCard from "../../components/journey/CoachWatchCard";
+import CoachWatchCardV2 from "../../components/journey/CoachWatchCardV2";
 import SchoolIntelligenceDrawer from "../../components/journey/SchoolIntelligenceDrawer";
 import NotesSidebar from "../../components/NotesSidebar";
 import { useSubscription } from "../../lib/subscription";
@@ -74,6 +74,8 @@ export default function JourneyPage() {
   const [aiNextStepLoading, setAiNextStepLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
+  const [autoInsight, setAutoInsight] = useState(null);
+  const [autoInsightLoading, setAutoInsightLoading] = useState(false);
   const [siDrawerOpen, setSiDrawerOpen] = useState(false);
 
   // J1: Match score + risk badges
@@ -225,6 +227,16 @@ export default function JourneyPage() {
     } catch { toast.error("Failed to generate summary"); }
     finally { setAiSummaryLoading(false); }
   };
+
+  // Auto-fetch insight on page load for premium users
+  useEffect(() => {
+    if (!programId || !isPremium) return;
+    setAutoInsightLoading(true);
+    axios.post(`${API}/ai/auto-insight`, { program_id: programId })
+      .then(res => setAutoInsight(res.data))
+      .catch(() => {})
+      .finally(() => setAutoInsightLoading(false));
+  }, [programId, isPremium]);
 
   const handleStageClick = (stageKey) => {
     if (!program) return;
@@ -691,8 +703,8 @@ export default function JourneyPage() {
 
           {/* RIGHT: Sidebar — Coach Watch Intelligence Layer */}
           <div className="space-y-5">
-            {/* Section 1: Coach Watch Summary (NEW TOP CARD) */}
-            <CoachWatchCard coachWatch={coachWatch} />
+            {/* Section 1: Unified Coach Watch V2 (Coach Watch + AI Insight) */}
+            <CoachWatchCardV2 insight={autoInsight} loading={autoInsightLoading} />
 
             {/* Section 2: Key Contacts (compact, max 2) */}
             <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="key-contacts-card">
@@ -808,82 +820,21 @@ export default function JourneyPage() {
               </div>
             </div>
 
-            {/* Section 5: AI Assist (lightweight tools) */}
-            <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: isPremium ? "rgba(13,148,136,0.12)" : "var(--cm-border)" }} data-testid="ai-section">
-              <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: "var(--cm-text-3)" }}>
-                <Sparkles className="w-3 h-3 text-[#1a8a80]" /> AI Assist
-                {!isPremium && <span className="text-[8px] font-bold px-1 py-px rounded bg-amber-500/15 text-amber-400 ml-auto">PREMIUM</span>}
-              </h3>
-
-              {isPremium ? (
-                <div className="space-y-1.5">
-                  <button onClick={fetchAiNextStep} disabled={aiNextStepLoading}
-                    className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
-                    style={{ backgroundColor: "var(--cm-surface-2)" }}
-                    data-testid="ai-next-step-btn">
-                    {aiNextStepLoading ? (
-                      <Loader2 className="w-3 h-3 animate-spin text-[#1a8a80]" />
-                    ) : aiNextStep ? (
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${aiNextStep.urgency === "high" ? "bg-red-400" : aiNextStep.urgency === "medium" ? "bg-amber-400" : "bg-green-400"}`} />
-                    ) : (
-                      <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
-                    )}
-                    <div className="text-left flex-1 min-w-0">
-                      {aiNextStep ? (
-                        <p className="text-[10px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>{aiNextStep.next_step}</p>
-                      ) : (
-                        <>
-                          <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Get Next Step</p>
-                          <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Based on Coach Watch and activity</p>
-                        </>
-                      )}
-                    </div>
-                  </button>
-                  <button onClick={fetchAiSummary} disabled={aiSummaryLoading}
-                    className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
-                    style={{ backgroundColor: "var(--cm-surface-2)" }}
-                    data-testid="ai-journey-summary-btn">
-                    {aiSummaryLoading ? (
-                      <Loader2 className="w-3 h-3 animate-spin text-[#1a8a80]" />
-                    ) : (
-                      <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
-                    )}
-                    <div className="text-left flex-1 min-w-0">
-                      {aiSummary ? (
-                        <p className="text-[10px] truncate" style={{ color: "var(--cm-text-2)" }}>{aiSummary.relationship_summary}</p>
-                      ) : (
-                        <>
-                          <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Summarize Relationship</p>
-                          <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Full journey overview</p>
-                        </>
-                      )}
-                    </div>
-                  </button>
-                  <button onClick={() => setSiDrawerOpen(true)}
-                    className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
-                    style={{ backgroundColor: "var(--cm-surface-2)" }}
-                    data-testid="ai-school-insight-btn">
-                    <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
-                    <div className="text-left flex-1 min-w-0">
-                      <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Explore School Intelligence</p>
-                      <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Fit, timing, and strategy analysis</p>
-                    </div>
-                  </button>
-                </div>
-              ) : (
-                <div className="py-3 text-center">
-                  <Lock className="w-4 h-4 mx-auto mb-1.5" style={{ color: "var(--cm-text-3)" }} />
-                  <p className="text-[10px] font-semibold mb-0.5" style={{ color: "var(--cm-text-2)" }}>AI-powered insights</p>
-                  <p className="text-[8px] mb-2" style={{ color: "var(--cm-text-3)" }}>Next steps, summaries, and fit analysis</p>
-                  <button onClick={() => navigate("/settings")}
-                    className="text-[10px] font-semibold px-3 py-1 rounded-lg text-white"
-                    style={{ backgroundColor: "#1a8a80" }}
-                    data-testid="ai-upgrade-btn">
-                    Upgrade
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Section 5: Explore deeper (School Intelligence drawer) */}
+            {isPremium && (
+              <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "rgba(13,148,136,0.12)" }} data-testid="ai-section">
+                <button onClick={() => setSiDrawerOpen(true)}
+                  className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
+                  style={{ backgroundColor: "var(--cm-surface-2)" }}
+                  data-testid="ai-school-insight-btn">
+                  <Sparkles className="w-3 h-3 text-[#1a8a80] flex-shrink-0" />
+                  <div className="text-left flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold" style={{ color: "var(--cm-text)" }}>Explore School Intelligence</p>
+                    <p className="text-[8px]" style={{ color: "var(--cm-text-3)" }}>Fit, timing, and strategy analysis</p>
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
           </>

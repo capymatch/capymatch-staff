@@ -19,6 +19,7 @@ load_dotenv()
 from auth_middleware import get_current_user_dep, decode_token
 from db_client import db
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from routers.athlete_dashboard import _compute_coach_watch
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,58 @@ router = APIRouter()
 
 LLM_MODEL_PROVIDER = "anthropic"
 LLM_MODEL_NAME = "claude-sonnet-4-5-20250929"
+
+# ── Coach Watch context builder (shared across AI endpoints) ──
+
+async def _build_coach_watch_context(tenant_id: str, program_id: str):
+    """Compute Coach Watch and build a context dict for LLM injection."""
+    import asyncio
+    program = await db.programs.find_one({"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0})
+    if not program:
+        return None, None
+
+    interactions, email_tracking = await asyncio.gather(
+        db.interactions.find({"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}).to_list(500),
+        db.email_tracking.find({"program_id": program_id}, {"_id": 0}).to_list(500),
+    )
+
+    cw = _compute_coach_watch(program, interactions, email_tracking)
+
+    # Build human-readable signal list
+    signal_strings = []
+    meta = cw.get("meta", {})
+    if meta.get("hasReply"):
+        signal_strings.append("coach replied")
+    if meta.get("totalOpens", 0) > 0:
+        signal_strings.append(f"opened {meta['totalOpens']}×")
+    if meta.get("totalClicks", 0) > 0:
+        signal_strings.append(f"clicked {meta['totalClicks']}×")
+    if meta.get("hasVisit"):
+        signal_strings.append("campus visit")
+    if meta.get("hasOffer"):
+        signal_strings.append("offer received")
+    days = meta.get("daysSinceActivity")
+    if days is not None:
+        signal_strings.append(f"last activity {days}d ago")
+    if meta.get("outreachCount", 0) > 0 and not meta.get("hasReply"):
+        signal_strings.append("no reply yet")
+
+    return cw, signal_strings
+
+
+def _coach_watch_prompt_block(cw: dict, signal_strings: list) -> str:
+    """Build a prompt block injecting Coach Watch as source of truth."""
+    return f"""
+COACH WATCH (SOURCE OF TRUTH — do not contradict):
+- State: {cw['state']}
+- Headline: {cw['headline']}
+- Recommended Action: {cw['recommendedAction']}
+- Confidence: {cw['confidenceLevel']}
+- Interest Level: {cw['interestLevel']}
+- Trend: {cw['trend']}
+- Signals: {', '.join(signal_strings) if signal_strings else 'none'}
+
+CONSTRAINT: Your recommendation must ALIGN with the Coach Watch assessment above. Explain and personalize the recommendation — do NOT override or contradict it."""
 
 
 # ── Helpers ──
@@ -100,6 +153,121 @@ async def _parse_llm_json(response_text):
                 "body": (body_match.group(1) if body_match else "").replace("\\n", "\n").replace('\\"', '"'),
             }
         raise
+
+
+# ─────────────────────────────────────────────────────────────
+# 0. Auto-Insight (Coach Watch + AI explanation, cached)
+# ─────────────────────────────────────────────────────────────
+
+INSIGHT_CACHE_TTL_SECONDS = 2 * 60 * 60  # 2 hour fallback
+
+
+class AutoInsightRequest(BaseModel):
+    program_id: str
+
+
+@router.post("/ai/auto-insight")
+async def auto_insight(data: AutoInsightRequest, request: Request):
+    """Return Coach Watch state + AI explanation. Cached per athlete+school."""
+    user_id, _ = _get_user_info(request)
+    tenant_id = await _get_tenant_id(user_id)
+
+    # Check cache first
+    now = datetime.now(timezone.utc)
+    cache_key = {"tenant_id": tenant_id, "program_id": data.program_id}
+    cached = await db.ai_insight_cache.find_one(cache_key, {"_id": 0})
+    if cached and cached.get("created_at"):
+        try:
+            cached_dt = datetime.fromisoformat(str(cached["created_at"]).replace("Z", "+00:00"))
+            if cached_dt.tzinfo is None:
+                cached_dt = cached_dt.replace(tzinfo=timezone.utc)
+            if (now - cached_dt).total_seconds() < INSIGHT_CACHE_TTL_SECONDS:
+                return cached["payload"]
+        except Exception:
+            pass
+
+    # Compute Coach Watch
+    cw, signal_strings = await _build_coach_watch_context(tenant_id, data.program_id)
+    if not cw:
+        raise HTTPException(404, "Program not found")
+
+    program = await db.programs.find_one({"program_id": data.program_id, "tenant_id": tenant_id}, {"_id": 0})
+
+    # Build recommended_action_text (human-friendly version)
+    action_text = cw.get("recommendedAction", "Review your next steps.")
+
+    # Call LLM for the explanation layer
+    system_message = """You are explaining a pre-determined recommendation for a student-athlete's college recruiting journey.
+
+- DO NOT generate a new strategy
+- DO NOT contradict the recommended_action
+- Your role is to:
+  1. Explain why this recommendation makes sense given the signals
+  2. Add light personalization
+  3. Keep it to 1-2 sentences
+
+If confidence is low:
+- Use softer language ("you may want to", "consider")
+
+If confidence is high:
+- Be direct ("follow up now", "wait 2 days")
+
+Return ONLY valid JSON:
+{"insight": "1-2 sentence explanation", "urgency": "high|medium|low"}"""
+
+    cw_block = _coach_watch_prompt_block(cw, signal_strings)
+    user_prompt = f"""{cw_block}
+
+School: {program.get('university_name', 'Unknown')}
+Explain to the athlete WHY the recommended action ("{action_text}") is the right move right now.
+Return ONLY valid JSON."""
+
+    ai_data = {"insight": "", "urgency": "medium"}
+    try:
+        api_key = _get_api_key()
+        if api_key:
+            chat = LlmChat(
+                api_key=api_key,
+                session_id=f"insight_{uuid.uuid4().hex[:8]}",
+                system_message=system_message,
+            ).with_model(LLM_MODEL_PROVIDER, LLM_MODEL_NAME)
+            response = await chat.send_message(UserMessage(text=user_prompt))
+            ai_data = await _parse_llm_json(response)
+    except Exception as e:
+        logger.warning(f"Auto-insight LLM failed (non-fatal): {e}")
+        ai_data = {"insight": cw.get("summary", ""), "urgency": "medium"}
+
+    # Map confidence to urgency fallback
+    if not ai_data.get("urgency"):
+        conf = cw.get("confidenceLevel", "low")
+        ai_data["urgency"] = "high" if conf == "high" else "medium" if conf == "medium" else "low"
+
+    payload = {
+        "state": cw["state"],
+        "headline": cw["headline"],
+        "recommended_action": cw["state"],
+        "recommended_action_text": action_text,
+        "confidence": cw.get("confidenceLevel", "low"),
+        "ai": {
+            "insight": ai_data.get("insight", ""),
+            "urgency": ai_data.get("urgency", "medium"),
+        },
+        "signals": signal_strings[:5],
+    }
+
+    # Cache the result
+    await db.ai_insight_cache.update_one(
+        cache_key,
+        {"$set": {"payload": payload, "created_at": now.isoformat(), **cache_key}},
+        upsert=True,
+    )
+
+    return payload
+
+
+async def invalidate_insight_cache(tenant_id: str, program_id: str):
+    """Call this whenever a new email, reply, open, or click event occurs."""
+    await db.ai_insight_cache.delete_many({"tenant_id": tenant_id, "program_id": program_id})
 
 
 # ─────────────────────────────────────────────────────────────
@@ -260,6 +428,10 @@ async def ai_next_step(data: NextStepRequest, request: Request):
         {"tenant_id": tenant_id, "program_id": data.program_id}, {"_id": 0}
     ).sort("date_time", -1).to_list(50)
 
+    # Compute Coach Watch context
+    cw, cw_signals = await _build_coach_watch_context(tenant_id, data.program_id)
+    cw_block = _coach_watch_prompt_block(cw, cw_signals) if cw else ""
+
     status_to_stage = {"Not Contacted": "Targeting", "Contacted": "Contacted", "Applied": "Engaged", "Camp Attended": "Evaluating", "Offer Received": "Offer", "Committed": "Closed"}
     stage = status_to_stage.get(program.get("recruiting_status", "Not Contacted"), "Targeting")
     reply_to_response = {"No Reply": "no response", "Awaiting Reply": "no response", "Reply Received": "responded", "In Conversation": "asked for info"}
@@ -282,12 +454,14 @@ async def ai_next_step(data: NextStepRequest, request: Request):
 
     system_message = """You are an AI recruiting assistant for a college-bound student-athlete.
 Recommend the single most important "Next Step" for a specific college program.
+Your recommendation must ALIGN with the Coach Watch assessment provided. Explain and personalize, do not override.
 Return ONLY valid JSON:
 {"next_step": "one clear sentence", "reasoning": "1-2 sentence explanation", "urgency": "high|medium|low", "action_type": "email|call|visit|camp|highlight|academic|wait"}"""
 
     user_prompt = f"""Student: {profile.get('grad_year', 'N/A')} grad, {profile.get('position', 'N/A')}, GPA {profile.get('gpa', 'N/A')}
 School: {program.get('university_name', 'N/A')}, {division}, Stage: {stage}
 Last Contact: {last_contact_date} via {last_contact_method}, Coach: {coach_response}, Days since: {days_since}
+{cw_block}
 Return ONLY valid JSON."""
 
     try:
@@ -325,6 +499,10 @@ async def generate_journey_summary(data: JourneySummaryRequest, request: Request
     head_coach = next((c for c in coaches if c.get("role") == "Head Coach"), coaches[0] if coaches else None)
     interactions = await db.interactions.find({"tenant_id": tenant_id, "program_id": data.program_id}, {"_id": 0}).sort("date_time", -1).to_list(50)
 
+    # Compute Coach Watch context
+    cw, cw_signals = await _build_coach_watch_context(tenant_id, data.program_id)
+    cw_block = _coach_watch_prompt_block(cw, cw_signals) if cw else ""
+
     context = f"""Program: {program.get('university_name', '')}, {program.get('division', '')}, {program.get('conference', '')}
 Status: {program.get('recruiting_status', 'Not Contacted')}, Reply: {program.get('reply_status', 'No Reply')}, Priority: {program.get('priority', 'Medium')}
 Coach: {head_coach.get('coach_name', 'Unknown') if head_coach else 'No coach added'}"""
@@ -336,13 +514,15 @@ Coach: {head_coach.get('coach_name', 'Unknown') if head_coach else 'No coach add
 
     athlete_name = profile.get('athlete_name', 'The athlete') if profile else 'The athlete'
 
-    system_message = """Summarize a recruiting journey. Return ONLY valid JSON:
+    system_message = """Summarize a recruiting journey. Your summary must align with the Coach Watch assessment provided.
+Do not contradict the Coach Watch recommended action.
+Return ONLY valid JSON:
 {"relationship_summary": "2-3 sentences", "key_highlights": ["highlight 1", "highlight 2"], "suggested_action": "specific next step", "action_type": "email|call|wait|event|other"}"""
 
     try:
         api_key = _get_api_key()
         chat = LlmChat(api_key=api_key, session_id=f"journey_{uuid.uuid4().hex[:8]}", system_message=system_message).with_model(LLM_MODEL_PROVIDER, LLM_MODEL_NAME)
-        response = await chat.send_message(UserMessage(text=f"Analyze:\n{context}\nWhat should {athlete_name} do next? Return ONLY valid JSON."))
+        response = await chat.send_message(UserMessage(text=f"Analyze:\n{context}\n{cw_block}\nWhat should {athlete_name} do next? Return ONLY valid JSON."))
         result = await _parse_llm_json(response)
         return {**result, "program_id": data.program_id, "university_name": program.get("university_name", ""), "coach_name": head_coach.get("coach_name", "") if head_coach else ""}
     except json.JSONDecodeError:

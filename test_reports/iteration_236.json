@@ -1,0 +1,107 @@
+{
+  "summary": "Coach Watch V2 Auto-Insight feature testing complete. All backend API tests passed (10/10). Frontend CoachWatchCardV2 component renders correctly with all required elements: status chip, confidence badge, headline, recommended action with icon, AI insight section, and signals list.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_coach_watch_v2_auto_insight.py",
+    "/app/test_reports/pytest/pytest_coach_watch_v2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_coach_watch_v2_auto_insight.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (all CoachWatchCardV2 elements verified)"
+  },
+  "test_credentials": {
+    "athlete_email": "emma.chen@athlete.capymatch.com",
+    "athlete_password": "athlete123",
+    "stanford_program_id": "cd5c0908-c3ea-49d1-8a5f-d57d18f32116"
+  },
+  "seed_data_creation": "Used existing Stanford program data with coach reply and campus visit signals",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Coach Watch V2 Auto-Insight testing complete (iteration 236). All 8 features verified: (1) POST /api/ai/auto-insight returns correct contract with state, headline, recommended_action, recommended_action_text, confidence, ai.insight, ai.urgency, signals array - PASS, (2) Auto-insight caching works (second call returns cached result) - PASS, (3) Cache invalidation on new interaction - PASS (cache cleared when posting interaction), (4) POST /api/ai/next-step includes Coach Watch context - PASS (returns valid JSON with next_step, urgency), (5) POST /api/ai/journey-summary includes Coach Watch context - PASS (returns valid JSON with relationship_summary), (6) CoachWatchCardV2 renders on Journey page with all elements - PASS (status chip, confidence badge, headline, recommended action with icon, AI insight section, signals list), (7) Old CoachWatchCard replaced by V2 - PASS (no duplicate cards), (8) School Intelligence drawer button works - PASS. Key test IDs: coach-watch-v2, cw2-status-chip, cw2-confidence, cw2-headline, cw2-action, cw2-ai-insight, cw2-signals, coach-watch-v2-skeleton, si-compact-preview, ai-school-insight-btn. Stanford shows 'Hot' state with 'High confidence' and AI insight about coach reply and campus visit.",
+  "tests_verified": {
+    "feature_1_auto_insight_contract": {
+      "endpoint": "POST /api/ai/auto-insight",
+      "status": "PASS",
+      "response_fields": ["state", "headline", "recommended_action", "recommended_action_text", "confidence", "ai.insight", "ai.urgency", "signals"],
+      "valid_states": ["hot_opportunity", "active_conversation", "re_engaged", "emerging_interest", "cooling", "follow_up_window_open", "waiting_for_signal", "stalled", "deprioritize", "no_signals"]
+    },
+    "feature_2_caching": {
+      "status": "PASS",
+      "cache_ttl": "2 hours",
+      "behavior": "Second call returns cached result"
+    },
+    "feature_3_cache_invalidation": {
+      "status": "PASS",
+      "trigger": "POST /api/athlete/interactions",
+      "behavior": "Cache cleared on new interaction"
+    },
+    "feature_4_next_step_coach_watch_context": {
+      "endpoint": "POST /api/ai/next-step",
+      "status": "PASS",
+      "response_fields": ["next_step", "urgency"]
+    },
+    "feature_5_journey_summary_coach_watch_context": {
+      "endpoint": "POST /api/ai/journey-summary",
+      "status": "PASS",
+      "response_fields": ["relationship_summary"]
+    },
+    "feature_6_coach_watch_card_v2_rendering": {
+      "status": "PASS",
+      "elements_verified": {
+        "status_chip": "Hot (for Stanford)",
+        "confidence_badge": "High confidence",
+        "headline": "Interest is active",
+        "recommended_action": "Respond now and move to the next step.",
+        "ai_insight": "Stanford's coach replied and scheduled a campus visit...",
+        "signals": "coach replied • campus visit • last activity 2d ago"
+      }
+    },
+    "feature_7_old_card_replaced": {
+      "status": "PASS",
+      "old_card_present": false,
+      "new_card_present": true
+    },
+    "feature_8_school_intelligence_drawer": {
+      "status": "PASS",
+      "button_found": true,
+      "drawer_opens": true
+    }
+  },
+  "api_response_examples": {
+    "stanford_auto_insight": {
+      "state": "hot_opportunity",
+      "headline": "Interest is active",
+      "recommended_action": "hot_opportunity",
+      "recommended_action_text": "Respond now and move to the next step.",
+      "confidence": "high",
+      "ai": {
+        "insight": "Stanford's coach replied and scheduled a campus visit with activity just 2 days ago—this is active recruiting momentum. Respond now to keep this hot opportunity moving forward.",
+        "urgency": "high"
+      },
+      "signals": ["coach replied", "campus visit", "last activity 2d ago"]
+    },
+    "emory_auto_insight": {
+      "state": "stalled",
+      "headline": "Progress has stalled",
+      "confidence": "medium",
+      "ai": {
+        "insight": "With no response after 8 days and cooling signals, it's time to either try a fresh angle...",
+        "urgency": "medium"
+      },
+      "signals": ["last activity 8d ago", "no reply yet"]
+    }
+  }
+}
