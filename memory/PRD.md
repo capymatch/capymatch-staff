@@ -360,6 +360,14 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Stagger animations (slide-in panel, staged content reveal, expand animations)
 - Files: `BreakdownDrawer.js`, `momentum_recap.py`
 
+### Live Event Full-Screen Mode (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (screenshot confirmed)
+- Live Event Capture page (`/events/:id/live`) now launches in full-screen mode (no sidebar/topbar)
+- Added hamburger menu (☰) toggle in header → slide-out navigation overlay with key pages (Dashboard, Events, Event Prep, Roster, Advocacy, Insights)
+- Overlay dismissible via X button or backdrop click, with slide-in/fade animations
+- Route set to `useLayout={false}` for auto full-screen on entry
+- Files: `App.js` (route config), `LiveEvent.js` (nav overlay + menu toggle)
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox

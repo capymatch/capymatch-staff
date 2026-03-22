@@ -4,7 +4,8 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ArrowLeft, Radio, Send, Clock, Check, Zap, Users, FileText, X,
-  Plus, ArrowRight, Eye, Film, MessageSquare, Star
+  Plus, ArrowRight, Eye, Film, MessageSquare, Star, Menu,
+  LayoutDashboard, Calendar, Megaphone, BarChart3, UserPlus, Settings
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -61,6 +62,7 @@ function LiveEvent() {
   // Signals filter + mobile tab
   const [showAllSignals, setShowAllSignals] = useState(false);
   const [mobileTab, setMobileTab] = useState("capture"); // "capture" | "signals"
+  const [navOpen, setNavOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -504,12 +506,86 @@ function LiveEvent() {
     </div>
   );
 
+  const NAV_LINKS = [
+    { to: "/mission-control", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/events", label: "Events", icon: Calendar },
+    { to: `/events/${eventId}/prep`, label: "Event Prep", icon: FileText },
+    { to: "/roster", label: "Roster", icon: Users },
+    { to: "/advocacy", label: "Advocacy", icon: Megaphone },
+    { to: "/program", label: "Insights", icon: BarChart3 },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-900 text-white" data-testid="live-event-page">
+      {/* Nav overlay */}
+      {navOpen && (
+        <>
+          <div
+            data-testid="nav-backdrop"
+            onClick={() => setNavOpen(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 998,
+              background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)",
+              animation: "fadeIn 150ms ease both",
+            }}
+          />
+          <div
+            data-testid="nav-overlay"
+            style={{
+              position: "fixed", top: 0, left: 0, bottom: 0,
+              width: "min(260px, 75vw)", zIndex: 999,
+              background: "#111827", borderRight: "1px solid rgba(255,255,255,0.06)",
+              animation: "slideInLeft 200ms cubic-bezier(0.16,1,0.3,1) both",
+              overflowY: "auto", padding: "16px 0",
+            }}
+          >
+            <div style={{ padding: "0 16px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>Navigate</span>
+              <button
+                onClick={() => setNavOpen(false)}
+                data-testid="nav-close-btn"
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: 4 }}
+              >
+                <X style={{ width: 16, height: 16 }} />
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {NAV_LINKS.map(({ to, label, icon: Icon }) => (
+                <button
+                  key={to}
+                  onClick={() => { setNavOpen(false); navigate(to); }}
+                  data-testid={`nav-link-${label.toLowerCase().replace(/\s/g, "-")}`}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 16px", background: "none", border: "none",
+                    cursor: "pointer", color: "#94a3b8", fontSize: 13,
+                    fontWeight: 500, textAlign: "left", width: "100%",
+                    transition: "background 100ms, color 100ms",
+                    borderRadius: 0,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#e2e8f0"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#94a3b8"; }}
+                >
+                  <Icon style={{ width: 16, height: 16, flexShrink: 0 }} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+            @keyframes slideInLeft { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+          `}</style>
+        </>
+      )}
+
       {/* Header */}
       <header className="bg-gray-900/95 border-b border-gray-700/50">
         <div className="max-w-[960px] mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button onClick={() => setNavOpen(true)} className="text-gray-400 hover:text-white transition-colors shrink-0" data-testid="nav-toggle-btn" title="Menu">
+              <Menu className="w-4 h-4" />
+            </button>
             <button onClick={() => navigate(`/events/${eventId}/prep`)} className="text-gray-400 hover:text-white transition-colors shrink-0" data-testid="back-from-live">
               <ArrowLeft className="w-4 h-4" />
             </button>

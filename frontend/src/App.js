@@ -113,7 +113,7 @@ function AppRoutes() {
       <Route path="/mission-control" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><MissionControl /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><EventHome /></ProtectedRoute>} />
       <Route path="/events/:eventId/prep" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><EventPrep /></ProtectedRoute>} />
-      <Route path="/events/:eventId/live" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><LiveEvent /></ProtectedRoute>} />
+      <Route path="/events/:eventId/live" element={<ProtectedRoute useLayout={false} allowedRoles={["director","club_coach"]}><LiveEvent /></ProtectedRoute>} />
       <Route path="/events/:eventId/summary" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><EventSummary /></ProtectedRoute>} />
       <Route path="/advocacy" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><AdvocacyHome /></ProtectedRoute>} />
       <Route path="/advocacy/new" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><RecommendationBuilder /></ProtectedRoute>} />
