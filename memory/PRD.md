@@ -11,6 +11,16 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### P0 Cache Staleness Fix — Systemic Data Synchronization (Mar 23, 2026)
+- **Problem**: `athlete_store.py` in-memory cache was not refreshed when athletes completed tasks, marked replies, sent follow-ups, or resolved blockers. Coach and Director dashboards showed stale/ghost data.
+- **Fix**: Added `await recompute_derived_data()` to ALL write endpoints across the backend:
+  - `athlete_dashboard.py`: create_interaction, mark_as_replied, mark_follow_up_sent, create_program, update_program, delete_program
+  - `coach_inbox.py`: coach_escalate
+  - `athletes.py`: assign_owner, send_message
+  - `athlete_onboarding.py`: save_recruiting_profile
+  - Previously patched: athlete_profile.py, school_pod.py, coach_flags.py, support_pods.py, director_actions.py, roster.py, invites.py
+- **Testing**: 100% pass rate (iteration_237) — 11/11 backend tests + frontend verification
+
 ### Coach Watch V2 — Unified Intelligence Card (Mar 22, 2026)
 - **New endpoint**: `POST /api/ai/auto-insight` — computes Coach Watch state + calls LLM for explanation
 - **Response contract**: `{ state, headline, recommended_action, recommended_action_text, confidence, ai: { insight, urgency }, signals[] }`
@@ -78,6 +88,7 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## Test Credentials
 - **Athlete**: emma.chen@athlete.capymatch.com / athlete123
+- **Coach**: coach.williams@capymatch.com / coach123
 - **Director**: director@capymatch.com / director123
 
 ## 3rd Party Integrations
