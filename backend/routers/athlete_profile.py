@@ -220,12 +220,16 @@ async def update_profile(body: dict, current_user: dict = get_current_user_dep()
     # Recompute profile completeness
     from migrations.schema_v2_signals import compute_profile_completeness
     pct = compute_profile_completeness(updated)
+    update_fields = {}
     if pct != updated.get("profile_completeness", 0):
-        await db.athletes.update_one(
-            {"id": athlete["id"]},
-            {"$set": {"profile_completeness": pct}},
-        )
-        updated["profile_completeness"] = pct
+        update_fields["profile_completeness"] = pct
+    # Sync profile_complete boolean with completeness percentage
+    is_complete = pct >= 80
+    if is_complete != updated.get("profile_complete", False):
+        update_fields["profile_complete"] = is_complete
+    if update_fields:
+        await db.athletes.update_one({"id": athlete["id"]}, {"$set": update_fields})
+        updated.update(update_fields)
 
     return _athlete_to_profile(updated)
 
