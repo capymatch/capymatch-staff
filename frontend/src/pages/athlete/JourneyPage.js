@@ -511,7 +511,7 @@ export default function JourneyPage() {
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-4">
 
         {/* ═══ ORCHESTRATED HERO SECTION ═══ */}
-        <PrimaryHeroCard hero={featuredHero} />
+        <PrimaryHeroCard hero={featuredHero} program={program} matchScore={matchScore} navigate={navigate} />
         {radarItems.length > 0 && <RadarStrip items={radarItems} />}
 
         {/* Committed toggle */}

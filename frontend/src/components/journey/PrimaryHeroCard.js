@@ -1,6 +1,18 @@
 import { Loader2, ArrowRight } from "lucide-react";
+import UniversityLogo from "../UniversityLogo";
+import { RAIL_STAGES } from "./constants";
+import "../pipeline/pipeline-premium.css";
 
-export function PrimaryHeroCard({ hero }) {
+function buildRail(program) {
+  if (!program) return null;
+  const stage = program.journey_stage || program.board_group;
+  const map = { needs_outreach: "added", waiting_on_reply: "outreach", overdue: "outreach" };
+  const active = map[stage] || stage || "added";
+  const activeIdx = RAIL_STAGES.findIndex(s => s.key === active);
+  return { active, activeIdx };
+}
+
+export function PrimaryHeroCard({ hero, program, matchScore, navigate }) {
   if (!hero) return null;
   const Icon = hero.icon;
   const isCommitted = hero.type === "committed";
@@ -26,63 +38,121 @@ export function PrimaryHeroCard({ hero }) {
     );
   }
 
-  /* ── Standard hero — dark gradient matching Pipeline hero ── */
+  const rail = buildRail(program);
+  const matchPct = matchScore?.match_score;
+  const logoUrl = matchScore?.logo_url || program?.logo_url;
+  const domain = matchScore?.domain || program?.domain;
+
+  /* ── Standard hero — Pipeline hero design ── */
   return (
-    <div className="mb-4 rounded-2xl overflow-hidden relative"
+    <div className="mb-4 rounded-[18px] sm:rounded-[28px] overflow-hidden relative"
       style={{
-        background: "linear-gradient(135deg, #13213a 0%, #1a2744 50%, #1e2c4a 100%)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        boxShadow: "0 4px 24px rgba(15,23,42,0.12)",
+        background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)",
       }}
       data-testid="primary-hero-card">
 
-      {/* Top accent bar */}
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${hero.accent}, ${hero.accent}88)` }} />
+      {/* Glow orbs */}
+      <div className="ds-glow-teal" />
+      <div className="ds-glow-purple" />
 
-      <div className="px-5 sm:px-7 py-5 sm:py-6">
+      {/* Slide content */}
+      <div className="relative z-[1] px-4 sm:px-6 py-4 sm:py-5">
 
         {/* BADGE ROW */}
-        <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-badge-row">
-          <span className="text-[9px] font-bold uppercase tracking-[0.08em] px-2.5 py-1 rounded-md"
-            style={{ background: `${hero.accent}20`, color: hero.accent }}
-            data-testid="hero-kicker">
+        <div className="flex items-center gap-2 flex-wrap mb-2.5" data-testid="hero-badge-row">
+          <span className="ds-badge" style={{
+            background: `${hero.accent}20`,
+            color: hero.accent,
+          }} data-testid="hero-kicker">
             {hero.kicker}
           </span>
           {hero.pills?.map((pill, i) => (
-            <span key={i} className="text-[9px] font-medium uppercase tracking-wider px-2 py-1 rounded-md"
-              style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)" }}>
+            <span key={i} className="ds-badge" style={{
+              background: "rgba(255,255,255,0.06)",
+              color: "rgba(255,255,255,0.55)",
+            }}>
               {pill.label}
             </span>
           ))}
         </div>
 
-        {/* ICON + TITLE */}
-        <div className="flex items-start gap-3.5 mb-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-            style={{ backgroundColor: `${hero.accent}18` }}>
-            <Icon className="w-5 h-5" style={{ color: hero.accent }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg sm:text-xl font-semibold tracking-tight"
-              style={{ color: "#fff", lineHeight: 1.25, letterSpacing: "-0.03em" }}
-              data-testid="hero-title">
-              {hero.title}
+        {/* SCHOOL NAME — logo + name + match % */}
+        {program && (
+          <div className="flex items-center gap-3 mb-1" data-testid="hero-school-row">
+            <UniversityLogo
+              name={program.university_name}
+              logoUrl={logoUrl}
+              domain={domain}
+              size={28}
+              className="rounded-lg flex-shrink-0"
+            />
+            <h3 className="text-[18px] sm:text-[22px] flex-1 min-w-0" style={{
+              fontWeight: 600, color: "#fff", letterSpacing: "-0.04em",
+              margin: 0, lineHeight: 1.1, overflow: "hidden",
+              textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }} data-testid="hero-school-name">
+              {program.university_name || "School"}
             </h3>
+            {matchPct != null && (
+              <span className="flex-shrink-0" style={{
+                fontSize: 13, fontWeight: 700,
+                color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "rgba(255,255,255,0.4)",
+              }}>{matchPct}%</span>
+            )}
+          </div>
+        )}
+
+        {/* PRIMARY ACTION */}
+        <div data-testid="hero-advice-box">
+          <div style={{
+            fontSize: 16, fontWeight: 500, letterSpacing: "-0.02em",
+            color: "#fff", lineHeight: 1.3, margin: "6px 0 6px",
+            display: "-webkit-box", WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical", overflow: "hidden",
+          }} data-testid="hero-title">
+            {hero.title}
+          </div>
+          {/* Context / subtitle */}
+          <div style={{
+            color: "rgba(255,255,255,0.50)", fontSize: 13,
+            fontWeight: 400, lineHeight: 1.4,
+          }} data-testid="hero-subtitle">
+            {hero.subtitle}
           </div>
         </div>
 
-        {/* CONTEXT LINE */}
-        <p className="text-[13px] mb-5"
-          style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}
-          data-testid="hero-subtitle">
-          {hero.subtitle}
-        </p>
+        {/* PROGRESS RAIL */}
+        {rail && (
+          <>
+            <div className="ds-eyebrow mt-3 mb-0.5" style={{
+              color: "rgba(255,255,255,0.30)", fontSize: 9, letterSpacing: "0.1em",
+            }}>
+              Where you are right now
+            </div>
+            <div className="ds-progress-track" data-testid="hero-progress-rail">
+              {RAIL_STAGES.map((s, stIdx) => {
+                const isActive = stIdx === rail.activeIdx;
+                const isPast = stIdx < rail.activeIdx;
+                return (
+                  <div key={s.key}
+                    className={`ds-progress-step${isActive ? " active" : ""}${isPast ? " past" : ""}`}
+                    data-testid={`rail-stage-${s.key}`}>
+                    <div className="ds-progress-dot" />
+                    {s.label}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
 
         {/* CTA ROW */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mt-3">
           {hero.primaryCta && (
             <button onClick={hero.primaryCta.handler} disabled={hero.primaryCta.loading}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all shadow-sm"
+              className="ds-btn-primary text-[12px] sm:text-[13px] py-2 px-3.5 sm:py-2 sm:px-4"
               style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1 }}
               data-testid="hero-primary-cta">
               {hero.primaryCta.loading
