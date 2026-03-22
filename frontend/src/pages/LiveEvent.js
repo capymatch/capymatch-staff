@@ -295,7 +295,7 @@ function LiveEvent() {
             return (
               <button
                 key={a.id}
-                onClick={() => { setSelectedAthlete(a.id); setSelectedSchool(null); setShowAddSchool(false); noteRef.current?.focus(); }}
+                onClick={() => { setSelectedAthlete(a.id); setSelectedSchool(null); setShowAddSchool(false); }}
                 data-testid={`athlete-chip-${a.id}`}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all relative ${
                   selectedAthlete === a.id
