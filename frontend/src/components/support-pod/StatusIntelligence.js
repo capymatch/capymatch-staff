@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Compass, AlertCircle, ChevronDown, ChevronUp, Info, Eye, Shield } from "lucide-react";
+import { Compass, AlertCircle, ChevronDown, ChevronUp, Info, Eye, Shield, UserCog, MessageSquare, ClipboardCheck } from "lucide-react";
 
 /**
  * StatusIntelligence — explains the unified Journey State + Attention Status
  * for the Support Pod detail view. Human-readable, not a developer panel.
  */
-export default function StatusIntelligence({ data, escalations }) {
+export default function StatusIntelligence({ data, escalations, athleteId, onAction }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!data) return null;
@@ -90,6 +90,47 @@ export default function StatusIntelligence({ data, escalations }) {
               <p className="text-[11px] leading-relaxed" style={{ color: "var(--cm-text-2, #64748b)" }}>
                 {attention_explanation}
               </p>
+              {/* Action buttons based on blocker nature */}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {primary.nature === "blocker" && primary.reason?.toLowerCase().includes("profile") && (
+                  <button
+                    onClick={() => onAction?.("nudge_profile", athleteId)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors"
+                    style={{ background: "rgba(220,38,38,0.06)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.12)" }}
+                    data-testid="si-action-nudge-profile"
+                  >
+                    <UserCog className="w-3 h-3" /> Nudge to Complete Profile
+                  </button>
+                )}
+                {primary.nature === "blocker" && primary.reason?.toLowerCase().includes("missing") && !primary.reason?.toLowerCase().includes("profile") && (
+                  <button
+                    onClick={() => onAction?.("review_docs", athleteId)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors"
+                    style={{ background: "rgba(220,38,38,0.06)", color: "#dc2626", border: "1px solid rgba(220,38,38,0.12)" }}
+                    data-testid="si-action-review-docs"
+                  >
+                    <ClipboardCheck className="w-3 h-3" /> Review Missing Docs
+                  </button>
+                )}
+                {(primary.nature === "needs_review" || primary.nature === "needs_follow_up") && (
+                  <button
+                    onClick={() => onAction?.("send_message", athleteId)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors"
+                    style={{ background: "rgba(59,130,246,0.06)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.12)" }}
+                    data-testid="si-action-message"
+                  >
+                    <MessageSquare className="w-3 h-3" /> Send Message
+                  </button>
+                )}
+                <button
+                  onClick={() => onAction?.("view_details", athleteId)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors"
+                  style={{ background: "rgba(100,116,139,0.06)", color: "#64748b", border: "1px solid rgba(100,116,139,0.12)" }}
+                  data-testid="si-action-view"
+                >
+                  <Eye className="w-3 h-3" /> View Details
+                </button>
+              </div>
             </>
           ) : (
             <>

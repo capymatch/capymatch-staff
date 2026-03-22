@@ -333,7 +333,20 @@ function SupportPod() {
         )}
 
         {/* Status Intelligence — Journey + Attention explanation (authoritative display) */}
-        <StatusIntelligence data={status_intelligence} escalations={escalations} />
+        <StatusIntelligence data={status_intelligence} escalations={escalations} athleteId={athleteId}
+          onAction={(action, id) => {
+            if (action === "nudge_profile") {
+              navigate(`/messages?athlete=${id}&nudge=profile`);
+            } else if (action === "review_docs") {
+              navigate(`/support-pods/${id}#profile`);
+            } else if (action === "send_message") {
+              navigate(`/messages?athlete=${id}`);
+            } else if (action === "view_details") {
+              const el = document.querySelector('[data-testid="school-list-section"]');
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
+        />
 
         {/* Profile Completeness Alert */}
         <ProfileAlert completeness={profile_completeness} athleteId={athleteId} athleteName={athlete?.full_name} />
