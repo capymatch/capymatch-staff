@@ -14,6 +14,8 @@ VALID_CONTACT_METHODS = {"email", "phone", "text", "slack"}
 
 EDITABLE_FIELDS = {"name", "phone", "contact_method", "availability", "bio"}
 
+MAX_PHOTO_SIZE = 2 * 1024 * 1024  # 2MB
+
 
 def compute_completeness(user_doc: dict) -> str:
     """Incomplete / Basic / Complete based on filled profile fields."""
@@ -112,6 +114,26 @@ async def update_my_profile(body: dict, current_user: dict = get_current_user_de
 
     user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
     return _build_profile_response(user)
+
+
+@router.post("/profile/photo")
+async def upload_profile_photo(body: dict, current_user: dict = get_current_user_dep()):
+    """Upload a profile photo as base64 data URL."""
+    photo_data = body.get("photo_url", "")
+    if not photo_data:
+        raise HTTPException(status_code=400, detail="No photo data provided")
+    if not photo_data.startswith("data:image/"):
+        raise HTTPException(status_code=400, detail="Invalid image format")
+    if len(photo_data) > MAX_PHOTO_SIZE * 1.37:  # base64 overhead
+        raise HTTPException(status_code=400, detail="Image too large (max 2MB)")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"photo_url": photo_data, "profile.avatar_url": photo_data, "profile.updated_at": now}},
+    )
+    return {"photo_url": photo_data}
+
 
 
 @router.get("/profile/{coach_id}")

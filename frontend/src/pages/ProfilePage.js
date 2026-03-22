@@ -4,7 +4,7 @@ import axios from "axios";
 import { useAuth } from "@/AuthContext";
 import { toast } from "sonner";
 import {
-  User, Phone, MessageSquare, Clock, FileText, Save, CheckCircle, AlertCircle, Minus,
+  User, Phone, MessageSquare, Clock, FileText, Save, CheckCircle, AlertCircle, Minus, Camera,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -23,10 +23,11 @@ const COMPLETENESS_CONFIG = {
 };
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
     name: "", phone: "", contact_method: "", availability: "", bio: "",
@@ -77,6 +78,28 @@ export default function ProfilePage() {
     form.bio !== (profile.bio || "")
   );
 
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2MB"); return; }
+    setUploadingPhoto(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const res = await axios.post(`${API}/profile/photo`, { photo_url: reader.result });
+        setProfile((p) => ({ ...p, avatar_url: res.data.photo_url }));
+        if (user) setUser({ ...user, photo_url: res.data.photo_url });
+        toast.success("Photo updated");
+      } catch (err) {
+        toast.error(err.response?.data?.detail || "Failed to upload photo");
+      } finally {
+        setUploadingPhoto(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const completeness = profile ? COMPLETENESS_CONFIG[profile.completeness] || COMPLETENESS_CONFIG.incomplete : null;
   const CompIcon = completeness?.icon || Minus;
 
@@ -97,9 +120,23 @@ export default function ProfilePage() {
       <main className="max-w-xl mx-auto">
         {/* Avatar + name header */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center shrink-0">
-            <span className="text-white font-semibold text-lg">{initials}</span>
-          </div>
+          <label className="relative w-14 h-14 rounded-full shrink-0 cursor-pointer group" data-testid="profile-photo-upload">
+            <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+            ) : (
+              <div className="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-lg">{initials}</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {uploadingPhoto ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+              ) : (
+                <Camera className="w-4 h-4 text-white" />
+              )}
+            </div>
+          </label>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold text-slate-900" data-testid="profile-title">Your Profile</h1>
             <div className="flex items-center gap-2 mt-0.5">
