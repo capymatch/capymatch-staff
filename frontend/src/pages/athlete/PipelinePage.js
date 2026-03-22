@@ -203,7 +203,7 @@ export default function PipelinePage() {
   const nearLimit = schoolPct >= 0.8;
 
   return (
-    <div className="pipeline-premium px-2 sm:px-1" style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
+    <div className="pipeline-premium px-0 sm:px-1" style={{ maxWidth: 1120, margin: "0 auto" }} data-testid="recruiting-board">
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER ═══ */}

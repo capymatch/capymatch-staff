@@ -164,7 +164,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     <div
       ref={heroRef}
       data-testid="pipeline-hero"
-      className="overflow-hidden relative pm-hero-hover rounded-[18px] sm:rounded-[28px]"
+      className="overflow-hidden relative pm-hero-hover rounded-[12px] sm:rounded-[28px]"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       style={{
