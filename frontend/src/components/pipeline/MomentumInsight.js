@@ -1,11 +1,9 @@
 import { useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { trackEvent } from "../../lib/analytics";
-import { Flame, AlertTriangle, ArrowRight, Target } from "lucide-react";
+import { Flame, AlertTriangle, ArrowRight } from "lucide-react";
 
 export default function MomentumInsight({ attention, recapData, onViewBreakdown }) {
   const trackedRef = useRef(false);
-  const navigate = useNavigate();
 
   const highItems = (attention || []).filter(a => a.tier === "high");
   const medItems = (attention || []).filter(a => a.tier === "medium");
@@ -34,14 +32,6 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
   ].filter(Boolean);
 
   const signals = buildSignals(recapData);
-
-  // Determine top priority: highest-urgency "high" tier school with an action
-  const topPriority = highItems.length > 0
-    ? highItems.sort((a, b) => (b.attentionScore || 0) - (a.attentionScore || 0))[0]
-    : null;
-  const topSchoolName = topPriority?.program?.university_name
-    ?.replace(/University of /g, "").replace(/ University/g, "") || null;
-  const topAction = topPriority?.primaryAction || topPriority?.topAction?.action || null;
 
   return (
     <div data-testid="live-summary" style={{
@@ -100,33 +90,6 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
           View full breakdown <ArrowRight style={{ width: 11, height: 11 }} />
         </button>
       </div>
-
-      {/* Line 3: Top priority action (deterministic from Coach Watch) */}
-      {topPriority && topAction && (
-        <button
-          data-testid="top-priority-line"
-          onClick={() => {
-            trackEvent("top_priority_clicked", { program_id: topPriority.programId, school: topSchoolName });
-            navigate(`/pipeline/${topPriority.programId}`);
-          }}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            marginTop: 10, padding: "6px 10px",
-            background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.10)",
-            borderRadius: 8, cursor: "pointer", width: "100%",
-            transition: "background 150ms, border-color 150ms",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.18)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(239,68,68,0.04)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.10)"; }}
-        >
-          <Target style={{ width: 12, height: 12, color: "#ef4444", flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>
-            Top priority:{" "}
-            <span style={{ fontWeight: 500 }}>{topAction}{topSchoolName ? ` \u2014 ${topSchoolName}` : ""}</span>
-          </span>
-          <ArrowRight style={{ width: 11, height: 11, color: "#94a3b8", marginLeft: "auto", flexShrink: 0 }} />
-        </button>
-      )}
     </div>
   );
 }
