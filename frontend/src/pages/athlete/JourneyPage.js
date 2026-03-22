@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
+import "../../components/pipeline/pipeline-premium.css";
 import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
   Edit2, Trash2, Plus, AlertCircle, Clock, ExternalLink,
@@ -382,9 +383,10 @@ export default function JourneyPage() {
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6 pb-4">
-        <div style={{ background: "linear-gradient(135deg, #13213a 0%, #1a2744 50%, #1e2c4a 100%)", borderRadius: 16, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.04)", boxShadow: "0 4px 24px rgba(15,23,42,0.12)" }}>
-          {/* Teal accent bar */}
-          <div style={{ height: 3, background: "linear-gradient(90deg, #0d9488, #14b8a6)" }} />
+        <div style={{ background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)", borderRadius: 22, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)" }}>
+          {/* Glow orbs */}
+          <div className="ds-glow-teal" />
+          <div className="ds-glow-purple" />
           <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
           {/* Back & Actions */}
           <div className="flex items-center justify-between mb-4">
