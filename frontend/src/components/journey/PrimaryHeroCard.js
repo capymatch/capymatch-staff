@@ -1,18 +1,7 @@
 import { Loader2, ArrowRight } from "lucide-react";
-import UniversityLogo from "../UniversityLogo";
-import { RAIL_STAGES } from "./constants";
 import "../pipeline/pipeline-premium.css";
 
-function buildRail(program) {
-  if (!program) return null;
-  const stage = program.journey_stage || program.board_group;
-  const map = { needs_outreach: "added", waiting_on_reply: "outreach", overdue: "outreach" };
-  const active = map[stage] || stage || "added";
-  const activeIdx = RAIL_STAGES.findIndex(s => s.key === active);
-  return { active, activeIdx };
-}
-
-export function PrimaryHeroCard({ hero, program, matchScore, navigate }) {
+export function PrimaryHeroCard({ hero }) {
   if (!hero) return null;
   const Icon = hero.icon;
   const isCommitted = hero.type === "committed";
@@ -38,12 +27,7 @@ export function PrimaryHeroCard({ hero, program, matchScore, navigate }) {
     );
   }
 
-  const rail = buildRail(program);
-  const matchPct = matchScore?.match_score;
-  const logoUrl = matchScore?.logo_url || program?.logo_url;
-  const domain = matchScore?.domain || program?.domain;
-
-  /* ── Standard hero — Pipeline hero design ── */
+  /* ── Standard hero — Pipeline visual design, original data ── */
   return (
     <div className="mb-4 rounded-[18px] sm:rounded-[28px] overflow-hidden relative"
       style={{
@@ -57,14 +41,12 @@ export function PrimaryHeroCard({ hero, program, matchScore, navigate }) {
       <div className="ds-glow-teal" />
       <div className="ds-glow-purple" />
 
-      {/* Slide content */}
-      <div className="relative z-[1] px-4 sm:px-6 py-4 sm:py-5">
+      <div className="relative z-[1] px-5 sm:px-7 py-5 sm:py-6">
 
         {/* BADGE ROW */}
-        <div className="flex items-center gap-2 flex-wrap mb-2.5" data-testid="hero-badge-row">
+        <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-badge-row">
           <span className="ds-badge" style={{
-            background: `${hero.accent}20`,
-            color: hero.accent,
+            background: `${hero.accent}20`, color: hero.accent,
           }} data-testid="hero-kicker">
             {hero.kicker}
           </span>
@@ -78,78 +60,30 @@ export function PrimaryHeroCard({ hero, program, matchScore, navigate }) {
           ))}
         </div>
 
-        {/* SCHOOL NAME — logo + name + match % */}
-        {program && (
-          <div className="flex items-center gap-3 mb-1" data-testid="hero-school-row">
-            <UniversityLogo
-              name={program.university_name}
-              logoUrl={logoUrl}
-              domain={domain}
-              size={28}
-              className="rounded-lg flex-shrink-0"
-            />
-            <h3 className="text-[18px] sm:text-[22px] flex-1 min-w-0" style={{
-              fontWeight: 600, color: "#fff", letterSpacing: "-0.04em",
-              margin: 0, lineHeight: 1.1, overflow: "hidden",
-              textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }} data-testid="hero-school-name">
-              {program.university_name || "School"}
+        {/* ICON + TITLE */}
+        <div className="flex items-start gap-3.5 mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+            style={{ backgroundColor: `${hero.accent}18` }}>
+            <Icon className="w-5 h-5" style={{ color: hero.accent }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg sm:text-xl font-semibold tracking-tight"
+              style={{ color: "#fff", lineHeight: 1.25, letterSpacing: "-0.03em" }}
+              data-testid="hero-title">
+              {hero.title}
             </h3>
-            {matchPct != null && (
-              <span className="flex-shrink-0" style={{
-                fontSize: 13, fontWeight: 700,
-                color: matchPct >= 80 ? "#4ade80" : matchPct >= 60 ? "#fbbf24" : "rgba(255,255,255,0.4)",
-              }}>{matchPct}%</span>
-            )}
-          </div>
-        )}
-
-        {/* PRIMARY ACTION */}
-        <div data-testid="hero-advice-box">
-          <div style={{
-            fontSize: 16, fontWeight: 500, letterSpacing: "-0.02em",
-            color: "#fff", lineHeight: 1.3, margin: "6px 0 6px",
-            display: "-webkit-box", WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical", overflow: "hidden",
-          }} data-testid="hero-title">
-            {hero.title}
-          </div>
-          {/* Context / subtitle */}
-          <div style={{
-            color: "rgba(255,255,255,0.50)", fontSize: 13,
-            fontWeight: 400, lineHeight: 1.4,
-          }} data-testid="hero-subtitle">
-            {hero.subtitle}
           </div>
         </div>
 
-        {/* PROGRESS RAIL */}
-        {rail && (
-          <>
-            <div className="ds-eyebrow mt-3 mb-0.5" style={{
-              color: "rgba(255,255,255,0.30)", fontSize: 9, letterSpacing: "0.1em",
-            }}>
-              Where you are right now
-            </div>
-            <div className="ds-progress-track" data-testid="hero-progress-rail">
-              {RAIL_STAGES.map((s, stIdx) => {
-                const isActive = stIdx === rail.activeIdx;
-                const isPast = stIdx < rail.activeIdx;
-                return (
-                  <div key={s.key}
-                    className={`ds-progress-step${isActive ? " active" : ""}${isPast ? " past" : ""}`}
-                    data-testid={`rail-stage-${s.key}`}>
-                    <div className="ds-progress-dot" />
-                    {s.label}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
+        {/* CONTEXT LINE */}
+        <p className="text-[13px] mb-5"
+          style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}
+          data-testid="hero-subtitle">
+          {hero.subtitle}
+        </p>
 
         {/* CTA ROW */}
-        <div className="flex items-center gap-3 mt-3">
+        <div className="flex items-center gap-3">
           {hero.primaryCta && (
             <button onClick={hero.primaryCta.handler} disabled={hero.primaryCta.loading}
               className="ds-btn-primary text-[12px] sm:text-[13px] py-2 px-3.5 sm:py-2 sm:px-4"
