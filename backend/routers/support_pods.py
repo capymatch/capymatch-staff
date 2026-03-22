@@ -104,6 +104,19 @@ async def _compute_status_intelligence(athlete_id: str, athlete: dict, intervent
     for issue in active_issues:
         all_signals.append(normalize_pod_issue_signal(issue))
 
+    # Source 4: Missing documents / incomplete profile
+    missing_docs = athlete.get("missing_documents", [])
+    profile_complete = athlete.get("profile_complete", True)
+    if missing_docs or not profile_complete:
+        all_signals.append({
+            "type": "missing_requirement",
+            "severity": "medium",
+            "label": "Missing requirement" if missing_docs else "Profile incomplete",
+            "source": "profile",
+            "reason": f"Missing: {', '.join(missing_docs)}" if missing_docs else "Athlete profile is incomplete",
+            "nature": "blocker",
+        })
+
     # Journey State
     journey_state = compute_journey_state(athlete)
     best_stage = athlete.get("pipeline_best_stage", "")
