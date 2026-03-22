@@ -207,9 +207,8 @@ export default function PipelinePage() {
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER ═══ */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-5 sm:mb-8" data-testid="pipeline-header">
-        <div></div>
-        <div className="pm-toggle-track" style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: "1px solid rgba(20,37,68,0.08)", borderRadius: 14, boxShadow: "0 4px 12px rgba(19,33,58,0.06)" }} data-testid="view-toggle">
+      <div className="mb-5 sm:mb-8 px-2 sm:px-0" data-testid="pipeline-header">
+        <div className="pm-toggle-track inline-flex" style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(16px)", border: "1px solid rgba(20,37,68,0.08)", borderRadius: 14, boxShadow: "0 4px 12px rgba(19,33,58,0.06)" }} data-testid="view-toggle">
           <div className="pm-toggle-slider" style={{
             left: viewMode === 'priority' ? 2 : (togglePriorityRef.current?.offsetWidth || 60) + 2,
             width: viewMode === 'priority' ? (togglePriorityRef.current?.offsetWidth || 60) : (togglePipelineRef.current?.offsetWidth || 60),
