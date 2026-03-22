@@ -141,6 +141,9 @@ async def save_recruiting_profile(body: dict, current_user: dict = get_current_u
         {"$set": updates},
     )
 
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
+
     return {"ok": True, "recruiting_profile": recruiting_profile}
 
 

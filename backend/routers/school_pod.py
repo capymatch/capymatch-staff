@@ -1122,6 +1122,8 @@ async def complete_my_assigned_action(action_id: str, current_user: dict = get_c
     )
     if result.modified_count == 0:
         raise HTTPException(404, "Action not found")
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
     return {"status": "completed", "completed_at": now}
 
 

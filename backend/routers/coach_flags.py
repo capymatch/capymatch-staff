@@ -235,4 +235,7 @@ async def complete_flag(
             "",
         )
 
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
+
     return {"message": "Flag marked as complete", "flag_id": flag_id}

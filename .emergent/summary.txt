@@ -1,31 +1,28 @@
-<analysis>**original_problem_statement**: 
-The user requested extensive UI/UX refinements across the CapyMatch application. Core requests included: converting the split action lists into a single unified YOUR NEXT MOVES AI-driven list, removing redundant UI elements/explanations from the Pipeline Hero card, introducing a Pipeline Summary top bar with a slide-out View full breakdown explanation drawer, syncing the visual design of the Journey page to match the new Pipeline page, fixing mobile responsiveness on the Director Dashboard, and wiring real user profile photos to avatars.
+<analysis>original_problem_statement: The user requested extensive UI/UX refinements and AI integration improvements across the CapyMatch application. Core requests included replacing fragmented AI buttons with a unified Coach Watch V2 intelligence card, redesigning Journey hero cards to match Pipeline hero aesthetics, adding Why this? contextual signals to tasks, fixing mobile responsiveness (margins/padding), and fixing several critical bugs related to notifications, profile previews, and systemic data staleness (blockers showing on coach dashboards for athletes who had already resolved the issues).
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool. The Priority/Pipeline page now features a compact Pipeline Summary top bar, a heavily refined and compacted Pipeline Hero card (dark gradient, strict badge limits, human-readable coach signals), and a unified YOUR NEXT MOVES list driven by the backend  AI endpoint. The Journey page has been successfully redesigned to match the Pipeline's styling (dark gradient header/hero, light theme timeline). The Director Mission Control is now mobile-responsive.
+CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool. The Journey page now features a unified AI Coach Watch V2 card that loads automatically, explaining recommended actions. Journey Hero cards visually match the Pipeline cards and include a new Why this? contextual layer. A major systemic data synchronization issue was identified and is currently being patched: backend endpoints were reading from a static  cache that did not auto-refresh when athletes completed tasks or updated profiles. 
 
 **Last working item**:
-    - Last item agent was working: Refining the Why this matters () drawer to meet strict new user constraints: max 3 narrative bullets, one-phrase momentum descriptions, plain-language per-school details, max 3 actionable coaching insights, progressive reveal (Show 3 more schools toggle), and subtle motion/animations.
+    - Last item agent was working: Systemic fix for stale cache data. The agent was injecting  into all backend write endpoints (action completions, flag resolutions, inbox dismissals) so that when an athlete or coach resolves an issue, the global  cache updates immediately and clears the blocker from the Coach and Director dashboards.
     - Status: IN PROGRESS
-    - Agent Testing Done: N (Agent was actively editing and verifying backend output when the session ended)
-    - Which testing method agent to use? Frontend testing agent + Screenshot tool (to verify progressive reveal animations and strict UI formatting).
+    - Agent Testing Done: N (For the final batch of endpoints)
+    - Which testing method agent to use? manual testing by curl / python -c to verify cache recomputes, and screenshot tool to verify UI clears the issue.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
-  Issue 1: Refine Why this matters Breakdown Drawer (P0)
-     - Attempted fixes: The agent rewrote  multiple times to implement progressive reveal, compress language, and establish visual hierarchy. They were executing bash commands to check the exact  AI output when the session ended.
+  Issue 1: Resolving actions/tasks does not automatically update coach/director boards (P0)
+     - Attempted fixes: The agent already fixed this for Profile Saves (), but realized task completions and flag dismissals also need cache invalidation. The agent successfully added  to , , , and .
      - Next debug checklist: 
-         1. Review . Ensure progressive reveal (Show more toggle) and subtle entrance animations are present.
-         2. Check  AI prompt. Ensure it adheres to the strict rules: max 3 narrative bullets, 1 short phrase per momentum item, and max 3 insight bullets.
-         3. Verify there is no system terminology (e.g., score, priority factor) exposed in the UI.
-         4. Take a screenshot of the drawer open, then a screenshot with Show more expanded.
-         5. Run the frontend testing agent to verify UI interactions.
-     - Why fix this issue and what will be achieved with the fix? It completes a 3-part revision requested by the user to make the drawer feel like a smart coach rather than a dense data report.
+         1. Add  to  endpoints (e.g., , ).
+         2. Check  for any dismiss/resolve endpoints () and add the cache refresh there too.
+         3. Verify the full loop: Complete a task as an athlete -> verify the coach's inbox/dashboard clears the task automatically without requiring a backend restart.
+     - Why fix this issue and what will be achieved with the fix? Ensures complete data synchronization across the app. Coaches and Directors will no longer see ghost blockers for athletes who have already completed their requirements.
      - Status: IN PROGRESS
-     - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Both (Backend for AI prompt constraints, Frontend for UI rendering)
+     - Is recurring issue? Y (Stale cache data has caused multiple UI inconsistencies)
+     - Should Test frontend/backend/both after fix? Both (Backend data verification + Frontend dashboard rendering)
      - Blocked on other issue: None
 
 **In progress Task List**: 
@@ -33,7 +30,6 @@ None currently (All ongoing work is captured in Issue 1).
 
 **Upcoming and Future Tasks**
   - **Upcoming Tasks:**
-    - (P1) Implement Next best move fallback card: When no schools are , show a lighter Next best move card (top medium item) instead of an empty dark hero section.
     - (P1) CSV Import Tool: Bulk import functionality for school/coach data.
     - (P1) Bulk Approve Mode: Allow selecting/approving multiple items at once in Director Inbox.
     - (P1) Refactor : Break down the massive 1000+ line component.
@@ -44,14 +40,18 @@ None currently (All ongoing work is captured in Issue 1).
     - Multi-Agent Intelligence Pipeline
 
 **Completed work in this session**
-- Built unified YOUR NEXT MOVES list using  data (DONE).
-- Cleaned up : Removed PRIORITY FACTORS drawer, duplicate reason stacks, and restricted badges to max 2. Compacted the card's physical dimensions (DONE).
-- Excluded Hero carousel schools from appearing in the YOUR NEXT MOVES list (DONE).
-- Wired real athlete profile photos () from the DB to the TopBar and Sidebar avatars, fixing the login/me auth flows (DONE).
-- Implemented the compact 2-line Pipeline Summary top bar with inline momentum signals (DONE).
-- Fixed AI backfill logic in  to ensure all schools (e.g., UCLA) are ranked and displayed even if the LLM drops them from the summary (DONE).
-- Overhauled Journey Page styling to match the Pipeline page (Dark gradient header/hero card, light theme timeline/cards) (DONE).
-- Fixed Director Dashboard Mission Control mobile responsiveness (removed forced text truncation and fixed row heights) (DONE).
+- Event Signal in Journey Timeline: Added  to config and rendered properly in timeline (DONE).
+- Notification Click Redirect Bug: Fixed  pointing to non-existent  route, now correctly routes to  (DONE).
+- Public Profile Preview: Fixed invisible preview button in  and fixed backend ignoring  for unpublished profiles (DONE).
+- Sidebar Cleanup: Removed Social Spotlight from coach/staff sidebar (DONE).
+- Coach Photo Upload: Added backend  and clickable avatar upload on  (DONE).
+- Coach Watch V2 Unified Intelligence: Created  and . Unified AI insight into one auto-loading card instead of separate buttons (DONE).
+- Pipeline Summary Cleanup: Removed redundant momentum text and Top Priority experimental line to keep the summary concise (DONE).
+- Journey Hero Card Redesign: Updated  and Journey header to use dark gradient/glow styling matching the Pipeline page (DONE).
+- Follow-up Task CTA Fix: Mapped tasks containing words like follow up or email to open the Email Composer instead of a generic Mark Done (DONE).
+- Mobile Padding Reductions: Removed excess  side padding on Pipeline and Journey pages, adjusted border radii (DONE).
+- Why this? Hero Context: Added dynamic text string generation (days since activity, interest level, stage) directly above quotes in Journey Hero cards (DONE).
+- Sarah Martinez Blocker Fix (Phase 1 & 2): Fixed  and  desync. Added action buttons (Nudge to Complete Profile & View Details) to Support Pod blockers. Synced  boolean with percentage calculation in DB (DONE).
 
 **Earlier issues found/mentioned but not fixed**
 None.
@@ -66,59 +66,58 @@ None.
 
 **Key Technical Concepts**
 - React, FastAPI, MongoDB.
-- **Data Philosophy:** Live deterministic data decides *what* to do and *when* (Hero cards, chips). Generative AI explains *why* (Breakdown Drawer, Momentum narrative).
--  structures the strict action strings using mapped human-readable fallback languages instead of system variable names.
+- **Coach Watch Engine**: A 10-state deterministic relationship matrix now paired with LLM context via .
+- **Data Flow / Staleness**:  caches athlete data on startup. Direct MongoDB writes bypass this cache unless  is explicitly called.
 
 **key DB schema**
-  -  / : {id, email, role, photo_url}
-  - : {athlete_id, school_id, reason, status, due_date}
+  - : Added  (boolean) synced with  (dict).
+  - : Stores communications (cache invalidation added on insert).
 
 **changes in tech stack**
   - None
 
 **All files of reference**
-  - : File actively being modified to handle strict AI constraints, progressive reveal, and animation.
-  - : Backend API that feeds the drawer. The AI prompt here may need tweaking to strictly output max 3 bullets and short momentum phrases.
-  - : The new compact status bar.
-  - : Highly refined and compacted.
+  - : Global athlete cache handling.
+  - : Contains action resolution endpoints currently being patched with cache refresh.
+  - : Computes Journey Hero details and  context signals.
+  - : Newly created AI intelligence view.
 
 **Areas that need refactoring**
   -  (over 1000 lines).
+  - Global cache management: Currently  requires manual invalidation hooks scattered across 10+ backend files.
 
 **key api endpoints**
-  - : Feeds the YOUR NEXT MOVES list and the Breakdown Drawer. Contains caching (forced refresh required if prompt is changed).
-  - : Now correctly returns .
+  - : New Coach Watch V2 AI explanation endpoint.
+  - : New endpoint to ping athletes about blockers.
+  - : Task completion.
 
 **Critical Info for New Agent**
-The user left a very detailed 7-point constraint list for the  (Messages 505, 510, 513). You must ensure the drawer implements a Show more progressive reveal for the schools, utilizes subtle slide/fade animations, and strictly limits data (max 3 narrative bullets, max 3 insights, plain English only). The previous agent was checking the output of the backend  to see if the AI was formatting the data correctly. Your first step should be evaluating  and  to finalize this exact design spec.
+The application suffers from cache staleness because  holds athlete objects in memory. The previous agent successfully tracked this down after fixing the Sarah Martinez Blocker bug. You must finish adding  (imported from ) to the remaining action-resolution endpoints (specifically inside  and ) so that when a task/flag/action is resolved, the cache updates and removes the blocker from the coach dashboard. 
 
 **documents and test reports created in this job**
-  -  (Pipeline YOUR NEXT MOVES list tests)
-  -  (Pipeline Summary / Drawer V1 tests)
-  -  (Journey Page light/dark theme tests)
+  -  (Coach Watch V2 tests - 100% pass)
+  -  (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **User (PENDING):** Refine the Why this matters drawer to improve clarity, reduce density, and increase meaningful insight... [Detailed 7-point constraints] -> *Agent was executing bash to check AI payload. Needs implementation.*
-- **User:** Refine the Why this matters drawer with progressive reveal and subtle motion...
-- **User:** You are refining the View full breakdown drawer in CapyMatch. Goal: Make the drawer feel like: A clear, human explanation...
-- **User:** are you applying the changes to the full breakdown panel??
-- **User:** Refine the Pipeline Summary into a compact status header. Goal: Transform the summary into a lightweight orientation bar...
-- **User:** Refactor the Pipeline Summary into a compact status header... (Agent verified current state already matched this).
-- **User:** Refactor the Pipeline Summary into a compact header. 1. Reduce height by ~50%...
-- **User:** the hero card from the pipeline is too big, could you make a bit smaller?
-- **User:** Director’s area. Dashboard not looking good in mobile [Image attached]
-- **User:** Still not the same design/colors [Images attached comparing Journey Header to Pipeline Hero]
+- **User**: What about when an athlete completes for example a task that was overdue, will it update in the coach and director area ?
+- **Agent**: (Acknowledged No, proceeded to add  to various completion endpoints across the backend, but ran out of context before finishing  and ).
+- **User**: Was this fixed just for the profile or any other data? We need to make sure coach and director get their boards updated when the athlete clears the issue
+- **User**: Sarah has completed her profile, but it is still showing blocker in the coach’s area [Images]
+- **User**: Nudge to complete profile redirects to the message area, details does not do anything! [Image]
+- **User**: Blocker does not have action buttons [Image]
+- **User**: Please check inconsistency with Sarah Martinez [Image showing in both UP NEXT and ALL CLEAR]
+- **User**: Refactor the Action Hero Card to include a clear Why this? explanation that connects the action to the school context above...
 
 **Project Health Check:**
-- Broken: None (The Breakdown drawer is functional but requires structural/UI refinement based on pending constraints).
-- Mocked: None.
+- Broken: None. 
+- Mocked:  acts as a local memory cache, which behaves like mocked data if not actively refreshed.
 
 **3rd Party Integrations**
-- OpenAI GPT-4o — uses Emergent LLM Key (Generates momentum recap summaries).
-- Stripe (Payments) — requires User API Key.
+- OpenAI GPT-4o — uses Emergent LLM Key (Used heavily in the new  endpoint)
+- Stripe (Payments) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Iterations 229, 230, 231 all passed 100%).
+  - Testing agent used after significant changes: YES (Iteration 236 for Coach Watch V2).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
@@ -126,6 +125,7 @@ The user left a very detailed 7-point constraint list for the  (Messages 505, 51
 **Credentials to test flow:**
 - **Athlete:**  / 
 - **Director:**  / 
+- **Coach:**  / 
 
 **What agent forgot to execute**
-The agent received three dense, cascading constraint updates from the user regarding  (progressive reveal, strict content limits, animation). The agent created the file but the context ended before they could verify the UI rendering via screenshot tool, ensure the backend AI prompt matched the new output limits, and run the frontend testing agent. Ensure the drawer perfectly matches the rules in message 513.</analysis>
+The agent was in the middle of executing a systemic backend cache fix. They successfully added  to , , , and . They forgot/ran out of context to add it to the final few files:  (specifically  and ) and . Resume by finishing these imports and function calls, then verifying the cache flow end-to-end.</analysis>

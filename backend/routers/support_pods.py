@@ -473,6 +473,12 @@ async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdat
         await db.pod_action_events.insert_one(event)
 
     result = await db.pod_actions.find_one({"id": action_id}, {"_id": 0})
+
+    # Refresh cache when actions are completed/cancelled
+    if update.status in ("completed", "cancelled"):
+        from services.athlete_store import recompute_derived_data
+        await recompute_derived_data()
+
     return result or {"id": action_id, **update_dict}
 
 

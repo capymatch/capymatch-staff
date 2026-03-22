@@ -344,4 +344,7 @@ async def coach_escalate(body: dict, current_user: dict = get_current_user_dep()
     await db.director_actions.insert_one(doc)
     doc.pop("_id", None)
 
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
+
     return {"success": True, "action_id": action_id, "message": "Escalation sent to director"}

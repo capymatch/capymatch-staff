@@ -394,6 +394,10 @@ async def resolve_action(
         })
 
     log.info(f"Action {action_id} resolved by {current_user['id']}")
+
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
+
     return {
         "message": "Action resolved",
         "action_id": action_id,

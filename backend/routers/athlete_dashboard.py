@@ -12,6 +12,7 @@ import uuid
 
 from auth_middleware import get_current_user_dep
 from db_client import db
+from services.athlete_store import recompute_derived_data
 
 router = APIRouter()
 
@@ -897,6 +898,7 @@ async def create_program(body: dict, current_user: dict = get_current_user_dep()
     }
     await db.programs.insert_one(doc)
     doc.pop("_id", None)
+    await recompute_derived_data()
     return doc
 
 
@@ -947,6 +949,7 @@ async def update_program(program_id: str, body: dict, current_user: dict = get_c
     updated = await db.programs.find_one(
         {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
     )
+    await recompute_derived_data()
     return updated
 
 
@@ -965,6 +968,7 @@ async def delete_program(program_id: str, current_user: dict = get_current_user_
     await db.interactions.delete_many(
         {"tenant_id": tenant_id, "program_id": program_id}
     )
+    await recompute_derived_data()
     return {"deleted": True}
 
 
@@ -1153,6 +1157,7 @@ async def create_interaction(body: dict, current_user: dict = get_current_user_d
             {"$set": program_updates},
         )
 
+    await recompute_derived_data()
     return doc
 
 
@@ -1204,6 +1209,7 @@ async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_
         }},
     )
 
+    await recompute_derived_data()
     return doc
 
 
@@ -1317,6 +1323,7 @@ async def mark_follow_up_sent(program_id: str, body: dict, current_user: dict = 
     updated = await db.programs.find_one(
         {"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0}
     )
+    await recompute_derived_data()
     return updated
 
 

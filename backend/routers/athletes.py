@@ -132,6 +132,8 @@ async def assign_owner(athlete_id: str, assignment: AssignCreate, current_user: 
     }
     await db.assignments.insert_one(doc)
     doc.pop("_id", None)
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
     return doc
 
 
@@ -154,6 +156,9 @@ async def send_message(athlete_id: str, message: MessageCreate, current_user: di
     # Auto-resolve follow-up/engagement issues when outreach is sent
     from pod_issues import auto_resolve_on_outreach
     await auto_resolve_on_outreach(athlete_id, current_user.get("name", "Coach"))
+
+    from services.athlete_store import recompute_derived_data
+    await recompute_derived_data()
 
     return doc
 
