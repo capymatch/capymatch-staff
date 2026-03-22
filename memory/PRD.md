@@ -368,6 +368,19 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - Route set to `useLayout={false}` for auto full-screen on entry
 - Files: `App.js` (route config), `LiveEvent.js` (nav overlay + menu toggle)
 
+### Live Event Capture Redesign — Intelligent Decision Tool (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (100% — 12/12 backend, 20/20 frontend, iteration_233)
+- Transformed passive logging form into intelligent capture tool with real-time feedback
+- **Live Impact Panel**: Dynamic consequence display above CTA (red=high priority, amber=risk, green=standard)
+- **Signal Intelligence Triggers**: Inline consequence + suggested next step when signal selected
+- **Grouped Signals**: 4 categories (Coach Signals, Performance, Needs/Risks, Milestones) replacing flat grid
+- **Upgraded Athlete Selection**: Photo + first name + status indicator dot (green=covered, gray=not yet)
+- **School Selection**: Inline search filter, "Targets first" badge, recent schools, prominent "Add School"
+- **Single CTA**: "Save & Trigger Actions" button + "Notify athlete" checkbox (replaces 2 separate buttons)
+- **Interest Micro-Guidance**: 1-line helper text (Hot="Active recruiting interest", Warm="Monitor closely", etc.)
+- **Visual Polish**: bg-gray-950, Barlow Condensed headings, active:scale-95 tap feedback, min-h-[44px] targets
+- Files: `LiveEvent.js` (full rewrite), `index.css` (Barlow Condensed font), `App.js` (useLayout={false})
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox
