@@ -723,3 +723,42 @@ async def create_director_task(athlete_id: str, body: dict, current_user: dict =
     })
 
     return {"ok": True, "task": doc}
+
+
+@router.post("/support-pods/{athlete_id}/nudge")
+async def nudge_athlete(athlete_id: str, body: dict, current_user: dict = get_current_user_dep()):
+    """Send a nudge notification to an athlete (e.g., complete profile)."""
+    nudge_type = body.get("type", "general")
+    now = datetime.now(timezone.utc).isoformat()
+
+    athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0, "full_name": 1, "tenant_id": 1, "user_id": 1})
+    if not athlete:
+        raise HTTPException(404, "Athlete not found")
+
+    # Find the athlete's user account
+    user = await db.users.find_one({"id": athlete.get("user_id")}, {"_id": 0, "id": 1})
+    if not user:
+        raise HTTPException(404, "Athlete user account not found")
+
+    message_map = {
+        "complete_profile": "Your coach has requested you complete your athlete profile. A complete profile helps coaches find and evaluate you.",
+        "general": "Your coach has sent you a reminder.",
+    }
+
+    title_map = {
+        "complete_profile": "Complete Your Profile",
+        "general": "Coach Reminder",
+    }
+
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "coach_nudge",
+        "title": title_map.get(nudge_type, "Coach Reminder"),
+        "message": message_map.get(nudge_type, message_map["general"]),
+        "action_url": "/athlete-profile" if nudge_type == "complete_profile" else "/board",
+        "read": False,
+        "created_at": now,
+    })
+
+    return {"ok": True, "message": "Nudge sent"}

@@ -334,16 +334,18 @@ function SupportPod() {
 
         {/* Status Intelligence — Journey + Attention explanation (authoritative display) */}
         <StatusIntelligence data={status_intelligence} escalations={escalations} athleteId={athleteId}
-          onAction={(action, id) => {
+          onAction={async (action, id) => {
             if (action === "nudge_profile") {
-              navigate(`/messages?athlete=${id}&nudge=profile`);
-            } else if (action === "review_docs") {
-              navigate(`/support-pods/${id}#profile`);
-            } else if (action === "send_message") {
-              navigate(`/messages?athlete=${id}`);
+              try {
+                const token = localStorage.getItem("capymatch_token");
+                await axios.post(`${API}/support-pods/${id}/nudge`, { type: "complete_profile" }, { headers: { Authorization: `Bearer ${token}` } });
+                toast.success("Nudge sent to athlete");
+              } catch {
+                toast.error("Failed to send nudge");
+              }
             } else if (action === "view_details") {
-              const el = document.querySelector('[data-testid="school-list-section"]');
-              if (el) el.scrollIntoView({ behavior: "smooth" });
+              const el = document.querySelector('[data-testid="profile-alert"]') || document.querySelector('[data-testid="school-list-section"]');
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
             }
           }}
         />
