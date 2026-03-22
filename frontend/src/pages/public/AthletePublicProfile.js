@@ -93,7 +93,7 @@ export default function AthletePublicProfile() {
 
       if (slug) {
         try {
-          const r = await fetch(`${BACKEND_URL}/api/public/profile/${slug}`);
+          const r = await fetch(`${BACKEND_URL}/api/public/profile/${slug}${isStaffPreview ? "?staff_preview=true" : ""}`);
           if (r.ok) { setData(await r.json()); setLoading(false); return; }
           if (r.status === 404 && isStaffPreview) { setUnpublished(true); }
         } catch { /* fall through */ }

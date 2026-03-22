@@ -336,7 +336,7 @@ async def _ensure_slug(athlete: dict) -> str:
 # ══════════════════════════════════════════════════════════════════════
 
 @router.get("/public/profile/{slug}")
-async def get_public_profile(slug: str):
+async def get_public_profile(slug: str, staff_preview: bool = False):
     """Unauthenticated public profile page by slug."""
     athlete = await db.athletes.find_one(
         {"public_profile_slug": slug}, {"_id": 0}
@@ -346,7 +346,7 @@ async def get_public_profile(slug: str):
 
     settings = _normalize_settings(athlete.get("public_profile_settings"))
 
-    if not settings.get("profile_visible", False):
+    if not settings.get("profile_visible", False) and not staff_preview:
         raise HTTPException(404, "Profile not found")
 
     full_profile = _athlete_to_profile_dict(athlete)
