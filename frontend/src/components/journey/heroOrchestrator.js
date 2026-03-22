@@ -52,7 +52,9 @@ export function computeHeroSelection({
       id: `task-${a.id}`, priority: 2 + i * 0.1, type: "coach_task",
       kicker: `Coach Task${a.due_date ? ` \u00B7 Due ${new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}`,
       title: a.title,
-      subtitle: `Assigned by ${a.created_by || "your coach"} for ${a.school_name || uni}`,
+      subtitle: a.note_text
+        ? `"${a.note_text}" — ${a.created_by || "your coach"}`
+        : `Assigned by ${a.created_by || "your coach"} for ${a.school_name || uni}`,
       accent: "#0d9488", icon: ClipboardCheck, iconColor: "#0d9488", iconBg: "rgba(13,148,136,0.15)",
       pills: [
         a.due_date && { label: `Due ${new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` },

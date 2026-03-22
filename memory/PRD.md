@@ -401,6 +401,12 @@ CapyMatch is an athlete pipeline management tool (Recruiting Operating System) w
 - **Visual priority**: Red left border on urgent, amber on risk, color-coded deadline badges
 - Files: `EventSummary.js` (full rewrite)
 
+### Event Signal → Pipeline + Journey Fix (Mar 2026)
+- **Status**: COMPLETE & VERIFIED (end-to-end test confirmed both fixes)
+- **Bug 1 Fix**: Added `note_text` to pod_action creation in `events.py`. Updated `heroOrchestrator.js` to display coach's note in Journey card subtitle (e.g., `"Coach was very impressed with her serve technique" — Clara Adams`)
+- **Bug 2 Fix**: When a signal is sent to athlete, now also creates a `coach_flag` entry (with correct `tenant_id`) so the Pipeline's `top_action_engine` surfaces it at Priority 1. Stanford now appears in Hero carousel.
+- Files: `events.py` (pod_action note_text + coach_flag creation), `heroOrchestrator.js` (note_text display)
+
 ## Upcoming Tasks (P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode for Director Inbox

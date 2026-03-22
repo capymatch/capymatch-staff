@@ -510,6 +510,7 @@ async def log_recruiting_signal(event_id: str, body: EventSignalCreate, current_
             "program_id": program_id,
             "school_name": school_name,
             "title": action_title,
+            "note_text": body.note_text or "",
             "owner": current_user["name"],
             "status": "ready",
             "due_date": due,
@@ -527,6 +528,30 @@ async def log_recruiting_signal(event_id: str, body: EventSignalCreate, current_
         # Mark as auto-routed
         await db.event_notes.update_one({"id": note_id}, {"$set": {"routed_to_pod": True}})
         signal_doc["routed_to_pod"] = True
+
+    # 4b. If sent to athlete, create a coach_flag so Pipeline surfaces it
+    if send_to_athlete and program_id and not upgrade_needed:
+        user_for_flag = await db.users.find_one({"athlete_id": athlete_id}, {"_id": 0, "id": 1})
+        flag_tenant = f"tenant-{user_for_flag['id']}" if user_for_flag else None
+        if flag_tenant:
+            signal_label = signal_type.replace("_", " ").title()
+            flag_reason = f"Event signal: {signal_label}"
+            if body.note_text:
+                flag_reason += f" — {body.note_text}"
+            await db.coach_flags.insert_one({
+                "id": str(uuid.uuid4()),
+                "athlete_id": athlete_id,
+                "program_id": program_id,
+                "tenant_id": flag_tenant,
+                "school_name": school_name,
+                "reason": flag_reason,
+                "flag_type": "event_signal",
+                "source": "event_signal",
+                "status": "active",
+                "created_by": current_user["name"],
+                "created_at": now,
+                "due_date": due,
+            })
 
     # 5. If send_to_athlete and school already in pipeline, notify athlete
     if send_to_athlete and school_name and not upgrade_needed:
