@@ -45,12 +45,13 @@ function AllClearRow({ athlete, isLast }) {
   );
 }
 
-export default function RosterSection({ athletes = [], eventPrep = [] }) {
+export default function RosterSection({ athletes = [], eventPrep = [], excludeIds = [] }) {
   const navigate = useNavigate();
   const [allClearOpen, setAllClearOpen] = useState(true);
 
-  /* Only show athletes NOT needing action — the v3 CoachInbox handles attention items */
-  const allClear = athletes.filter(a => !a.attention_status?.primary);
+  /* Only show athletes NOT needing action and NOT in CoachInbox */
+  const excludeSet = new Set(excludeIds);
+  const allClear = athletes.filter(a => !a.attention_status?.primary && !excludeSet.has(a.id));
 
   return (
     <section data-testid="roster-section">

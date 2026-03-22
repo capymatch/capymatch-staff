@@ -110,6 +110,7 @@ export default function CoachView({ data, userName }) {
   const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
   const [directorRequestCount, setDirectorRequestCount] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
+  const [inboxAthleteIds, setInboxAthleteIds] = useState([]);
   const navigate = useNavigate();
   const firstName = userName?.split(" ")[0] || "Coach";
   const summary = data.todays_summary || {};
@@ -127,7 +128,17 @@ export default function CoachView({ data, userName }) {
     } catch {}
   }, []);
 
-  useEffect(() => { fetchDirectorCount(); }, [fetchDirectorCount]);
+  // Fetch coach-inbox athlete IDs to exclude from "All Clear"
+  const fetchInboxIds = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("capymatch_token");
+      const res = await axios.get(`${API}/coach-inbox`, { headers: { Authorization: `Bearer ${token}` } });
+      const ids = (res.data.items || []).map(i => i.athleteId).filter(Boolean);
+      setInboxAthleteIds(ids);
+    } catch {}
+  }, []);
+
+  useEffect(() => { fetchDirectorCount(); fetchInboxIds(); }, [fetchDirectorCount, fetchInboxIds]);
   useEffect(() => {
     const t = setInterval(fetchDirectorCount, 45_000);
     return () => clearInterval(t);
@@ -302,7 +313,7 @@ export default function CoachView({ data, userName }) {
       <CoachInbox />
 
       {/* ── Athletes Requiring Attention + On Track + Event Prep ── */}
-      <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} />
+      <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} excludeIds={inboxAthleteIds} />
 
       {/* ── Upcoming Events (hidden in focus mode) ── */}
       {!focusMode && (
