@@ -46,7 +46,7 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
         {headline}
       </p>
 
-      {/* Line 2: chips + signals + CTA */}
+      {/* Line 2: chips + CTA */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
         {chips.map((c, i) => (
           <span key={i} data-testid={`status-chip-${i}`} style={{
@@ -55,22 +55,6 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
             lineHeight: 1.3,
           }}>
             {c.label}
-          </span>
-        ))}
-
-        {signals.length > 0 && (
-          <span style={{ fontSize: 11, color: "#94a3b8", margin: "0 2px" }}>&middot;</span>
-        )}
-
-        {signals.map((sig, i) => (
-          <span key={i} style={{
-            display: "inline-flex", alignItems: "center", gap: 3,
-            fontSize: 11, fontWeight: 500, color: sig.color, lineHeight: 1.3,
-          }}>
-            {sig.type === "risk"
-              ? <AlertTriangle style={{ width: 11, height: 11, flexShrink: 0 }} />
-              : <Flame style={{ width: 11, height: 11, flexShrink: 0 }} />}
-            {sig.text}
           </span>
         ))}
 
