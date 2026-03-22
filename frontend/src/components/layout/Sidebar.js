@@ -15,7 +15,6 @@ const STAFF_NAV = [
   { id: "messages", label: "Messages", icon: MessageSquare, path: "/messages" },
   { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
   { id: "program", label: "Program Insights", icon: BarChart3, path: "/program" },
-  { id: "spotlight", label: "Social Spotlight", icon: Play, path: "/spotlight" },
 ];
 
 const DIRECTOR_EXTRA = [
