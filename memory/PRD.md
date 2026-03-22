@@ -21,6 +21,21 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
   - Previously patched: athlete_profile.py, school_pod.py, coach_flags.py, support_pods.py, director_actions.py, roster.py, invites.py
 - **Testing**: 100% pass rate (iteration_237) — 11/11 backend tests + frontend verification
 
+### SchoolPod.js Refactor (Mar 23, 2026)
+- **Before**: 1070-line monolith with 9 internal sub-components
+- **After**: Main page reduced to 441 lines, 9 extracted components in `/components/school-pod/`
+  - `constants.js` (32 lines) — shared configs, API helpers, stage/severity constants
+  - `SignalCard.js` (28 lines) — signal severity card
+  - `TaskItem.js` (203 lines) — task with edit/nudge/reassign/menu
+  - `AddTaskModal.js` (129 lines) — task creation modal
+  - `TimelineItem.js` (14 lines) — timeline event row
+  - `Section.js` (39 lines) — section wrapper + AddNoteForm
+  - `PipelineStatus.js` (35 lines) — pipeline stage bar
+  - `RelationshipTracker.js` (98 lines) — relationship strength tracker
+  - `PlaybookSection.js` (59 lines) — collapsible playbook
+- **Zero logic changes** — exact same behavior, props, and data-testid attributes preserved
+- **Verified**: Screenshot confirms all sections render correctly
+
 ### Coach Watch V2 — Unified Intelligence Card (Mar 22, 2026)
 - **New endpoint**: `POST /api/ai/auto-insight` — computes Coach Watch state + calls LLM for explanation
 - **Response contract**: `{ state, headline, recommended_action, recommended_action_text, confidence, ai: { insight, urgency }, signals[] }`
@@ -58,10 +73,8 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 ## Prioritized Backlog
 
 ### P1 — Upcoming
-- "Next best move" fallback card when no schools are heroEligible
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
-- Refactor `SchoolPod.js` (1000+ line component)
 
 ### P2 — Future
 - Parent/Family Experience

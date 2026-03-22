@@ -1,653 +1,30 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, School, Mail, Phone, ExternalLink, RefreshCw,
-  AlertTriangle, CheckCircle2, Clock, FileText, Plus, Send,
-  MessageSquare, TrendingUp, TrendingDown, Minus, Flag, Loader2, X,
-  ClipboardCheck, Megaphone, ChevronDown, ChevronUp, User, Activity,
-  Zap, Shield, PenLine, MoreHorizontal, Pencil, UserCheck, Bell
+  CheckCircle2, Clock, Plus,
+  ClipboardCheck, Megaphone, Flag, Loader2,
+  PenLine,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { CoachActionBar } from "@/components/support-pod/CoachActionBar";
 import { CoachEmailComposer } from "@/components/support-pod/CoachEmailComposer";
 import { CoachLogInteraction } from "@/components/support-pod/CoachLogInteraction";
 import { CoachFollowUpScheduler } from "@/components/support-pod/CoachFollowUpScheduler";
 import { EscalateToDirector } from "@/components/support-pod/EscalateToDirector";
 import { CoachNotesSidebar } from "@/components/support-pod/CoachNotesSidebar";
-import ActionPlan from "@/components/support-pod/ActionPlan";
 import SchoolPodRisk from "@/components/mission-control/SchoolPodRisk";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const token = () => localStorage.getItem("capymatch_token");
-const headers = () => ({ Authorization: `Bearer ${token()}` });
-
-const PRIORITY_ICON = { critical: AlertTriangle, high: AlertTriangle, medium: Clock, info: TrendingUp };
-const PRIORITY_COLOR = { critical: "#ef4444", high: "#f59e0b", medium: "#3b82f6", info: "#10b981" };
-const SEVERITY_LABEL = { critical: "Critical", high: "High", medium: "Medium", info: "Info" };
-const SEVERITY_BG = { critical: "rgba(239,68,68,0.1)", high: "rgba(245,158,11,0.1)", medium: "rgba(59,130,246,0.1)", info: "rgba(16,185,129,0.1)" };
-
-const PIPELINE_STAGES = ["Prospect", "Contacted", "Engaged", "Interested", "Visit", "Offer"];
-const STRENGTH_CONFIG = {
-  cold:   { label: "Cold",   color: "#94a3b8", bg: "rgba(148,163,184,0.1)", ring: "rgba(148,163,184,0.25)" },
-  warm:   { label: "Warm",   color: "#f59e0b", bg: "rgba(245,158,11,0.1)", ring: "rgba(245,158,11,0.25)" },
-  active: { label: "Active", color: "#10b981", bg: "rgba(16,185,129,0.1)", ring: "rgba(16,185,129,0.25)" },
-  strong: { label: "Strong", color: "#6366f1", bg: "rgba(99,102,241,0.1)", ring: "rgba(99,102,241,0.25)" },
-};
-
-/* ─── Signal Card with severity badge ─── */
-function SignalCard({ signal }) {
-  const Icon = PRIORITY_ICON[signal.priority] || AlertTriangle;
-  const color = PRIORITY_COLOR[signal.priority] || "#64748b";
-  const label = SEVERITY_LABEL[signal.priority] || "";
-  const badgeBg = SEVERITY_BG[signal.priority] || "";
-  return (
-    <div className="flex items-start gap-3 py-2.5" data-testid={`signal-${signal.id}`}>
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: `${color}15` }}>
-        <Icon className="w-3.5 h-3.5" style={{ color }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-xs font-semibold" style={{ color: "var(--cm-text, #1e293b)" }}>{signal.title}</p>
-          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full" style={{ backgroundColor: badgeBg, color }} data-testid={`signal-severity-${signal.id}`}>
-            {label}
-          </span>
-        </div>
-        <p className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>{signal.description}</p>
-        {signal.recommendation && (
-          <p className="text-[11px] mt-1 font-medium" style={{ color }}>&#8594; {signal.recommendation}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Task Item (renamed from ActionItem) ─── */
-function TaskItem({ action, onComplete, onUpdate, athleteId, programId }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(action.title);
-  const [nudging, setNudging] = useState(false);
-  const menuRef = useRef(null);
-
-  const isOpen = action.status === "ready" || action.status === "open";
-  const isAthlete = action.assigned_to_athlete || (action.owner || "").toLowerCase().includes("athlete");
-  const ownerLabel = isAthlete ? "Athlete" : action.owner || "Coach";
-
-  // Overdue detection
-  const isOverdue = (() => {
-    if (!isOpen || !action.due_date) return false;
-    return new Date(action.due_date) < new Date();
-  })();
-
-  // Close menu on outside click
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen]);
-
-  const handleSaveEdit = async () => {
-    if (!editTitle.trim() || editTitle === action.title) { setEditing(false); return; }
-    try {
-      await axios.patch(`${API}/support-pods/${athleteId}/school/${programId}/actions/${action.id}`, { title: editTitle.trim() }, { headers: headers() });
-      toast.success("Task updated");
-      onUpdate?.();
-    } catch { toast.error("Failed to update"); }
-    setEditing(false);
-  };
-
-  const handleReassign = async (newOwner) => {
-    try {
-      await axios.patch(`${API}/support-pods/${athleteId}/school/${programId}/actions/${action.id}`, { owner: newOwner }, { headers: headers() });
-      toast.success(`Reassigned to ${newOwner}`);
-      onUpdate?.();
-    } catch { toast.error("Failed to reassign"); }
-    setMenuOpen(false);
-  };
-
-  const handleNudge = async () => {
-    setNudging(true);
-    try {
-      await axios.post(`${API}/support-messages`, {
-        athlete_id: athleteId,
-        subject: `Reminder: ${action.title}`,
-        body: `Friendly reminder — this task is ${isOverdue ? "overdue" : "pending"}: "${action.title}". Let me know if you need anything!`,
-      }, { headers: headers() });
-      toast.success("Reminder sent");
-    } catch { toast.error("Failed to send reminder"); }
-    setNudging(false);
-    setMenuOpen(false);
-  };
-
-  const ownerColors = {
-    athlete: { bg: "rgba(20,184,166,0.08)", color: "#0d9488", border: "rgba(20,184,166,0.15)" },
-    coach: { bg: "rgba(99,102,241,0.06)", color: "#6366f1", border: "rgba(99,102,241,0.12)" },
-    director: { bg: "rgba(168,85,247,0.06)", color: "#a855f7", border: "rgba(168,85,247,0.12)" },
-  };
-  const ownerKey = isAthlete ? "athlete" : ownerLabel.toLowerCase().includes("director") ? "director" : "coach";
-  const oc = ownerColors[ownerKey];
-
-  return (
-    <div className="flex items-start gap-3 py-2.5 px-1 group relative" data-testid={`task-${action.id}`}>
-      {/* Checkbox */}
-      <button
-        onClick={() => isOpen && onComplete(action.id)}
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors mt-0.5 ${isOpen ? "border-slate-300 hover:border-teal-500 hover:bg-teal-50 cursor-pointer" : "border-emerald-400 bg-emerald-50"}`}
-        data-testid={`task-complete-${action.id}`}
-      >
-        {!isOpen && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-      </button>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        {editing ? (
-          <div className="flex items-center gap-2">
-            <input
-              autoFocus
-              value={editTitle}
-              onChange={e => setEditTitle(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditing(false); }}
-              className="flex-1 text-xs font-medium px-2 py-1 rounded border outline-none focus:ring-1 focus:ring-teal-500"
-              style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)", color: "var(--cm-text, #1e293b)" }}
-              data-testid={`task-edit-input-${action.id}`}
-            />
-            <button onClick={handleSaveEdit} className="text-[10px] font-semibold text-teal-600 hover:text-teal-700">Save</button>
-            <button onClick={() => { setEditing(false); setEditTitle(action.title); }} className="text-[10px] font-medium" style={{ color: "var(--cm-text-3)" }}>Esc</button>
-          </div>
-        ) : (
-          <>
-            <p className={`text-xs font-medium leading-snug ${!isOpen ? "line-through" : ""}`} style={{ color: isOpen ? "var(--cm-text, #1e293b)" : "var(--cm-text-3, #94a3b8)" }}>
-              {action.title}
-            </p>
-            {/* Meta row: overdue badge + date + nudge */}
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {isOverdue && (
-                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626" }} data-testid={`task-overdue-${action.id}`}>
-                  Overdue
-                </span>
-              )}
-              {action.due_date && !editing && (
-                <span className="text-[10px]" style={{ color: isOverdue ? "#dc2626" : "var(--cm-text-3, #94a3b8)" }}>
-                  {new Date(action.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </span>
-              )}
-              {isOpen && isOverdue && isAthlete && !editing && (
-                <button
-                  onClick={handleNudge}
-                  disabled={nudging}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors hover:opacity-90 disabled:opacity-50"
-                  style={{ backgroundColor: "rgba(217,119,6,0.08)", color: "#d97706", border: "1px solid rgba(217,119,6,0.15)" }}
-                  data-testid={`task-nudge-${action.id}`}
-                >
-                  <Bell className="w-3 h-3" />
-                  {nudging ? "..." : "Nudge"}
-                </button>
-              )}
-            </div>
-            {/* Owner badge */}
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="inline-flex items-center text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: oc.bg, color: oc.color, border: `1px solid ${oc.border}` }}>
-                {ownerLabel}
-              </span>
-              {action.action_type && action.action_type !== "general" && (
-                <span className="text-[9px]" style={{ color: "var(--cm-text-4, #cbd5e1)" }}>
-                  {ACTION_TYPES.find(t => t.value === action.action_type)?.label || action.action_type}
-                </span>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Overflow menu — visible on hover */}
-      {isOpen && !editing && (
-        <div className="relative shrink-0" ref={menuRef}>
-          <button
-            onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-            className="p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
-            data-testid={`task-menu-${action.id}`}
-          >
-            <MoreHorizontal className="w-3.5 h-3.5" style={{ color: "var(--cm-text-3, #94a3b8)" }} />
-          </button>
-
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border shadow-xl overflow-hidden z-20"
-              style={{ backgroundColor: "#1e2535", borderColor: "rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}
-              data-testid={`task-menu-dropdown-${action.id}`}
-            >
-              <button onClick={() => { setEditing(true); setMenuOpen(false); }}
-                className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors hover:bg-white/5"
-                style={{ color: "rgba(255,255,255,0.7)" }} data-testid={`task-edit-${action.id}`}>
-                <Pencil className="w-3 h-3" style={{ color: "rgba(255,255,255,0.4)" }} />Edit
-              </button>
-              <button onClick={() => onComplete(action.id)}
-                className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors hover:bg-white/5"
-                style={{ color: "rgba(255,255,255,0.7)" }} data-testid={`task-mark-done-${action.id}`}>
-                <CheckCircle2 className="w-3 h-3" style={{ color: "#10b981" }} />Mark Complete
-              </button>
-              <div className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
-              {!isAthlete ? (
-                <button onClick={() => handleReassign("Athlete")}
-                  className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors hover:bg-white/5"
-                  style={{ color: "rgba(255,255,255,0.7)" }}>
-                  <UserCheck className="w-3 h-3" style={{ color: "#0d9488" }} />Reassign to Athlete
-                </button>
-              ) : (
-                <button onClick={() => handleReassign("Coach")}
-                  className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors hover:bg-white/5"
-                  style={{ color: "rgba(255,255,255,0.7)" }}>
-                  <UserCheck className="w-3 h-3" style={{ color: "#6366f1" }} />Reassign to Coach
-                </button>
-              )}
-              {isAthlete && (
-                <button onClick={handleNudge} disabled={nudging}
-                  className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors hover:bg-white/5 disabled:opacity-50"
-                  style={{ color: "rgba(255,255,255,0.7)" }}>
-                  <Bell className="w-3 h-3" style={{ color: "#d97706" }} />{nudging ? "Sending..." : "Remind / Nudge"}
-                </button>
-              )}
-              <button onClick={() => { handleNudge(); }}
-                className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 transition-colors hover:bg-white/5"
-                style={{ color: "rgba(255,255,255,0.7)" }}>
-                <MessageSquare className="w-3 h-3" style={{ color: "rgba(255,255,255,0.4)" }} />Follow Up
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TimelineItem({ event }) {
-  const d = event.created_at ? new Date(event.created_at) : null;
-  return (
-    <div className="flex items-start gap-3 py-2" data-testid="timeline-event">
-      <div className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-xs" style={{ color: "var(--cm-text, #1e293b)" }}>{event.description}</p>
-        <p className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-          {event.actor}{d ? ` · ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : ""}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-const ACTION_TYPES = [
-  { value: "general", label: "General Task" },
-  { value: "send_email", label: "Send Email" },
-  { value: "log_visit", label: "Log Visit" },
-  { value: "log_interaction", label: "Log Interaction" },
-  { value: "preparation", label: "Preparation" },
-  { value: "profile_update", label: "Profile Update" },
-  { value: "research", label: "Research" },
-  { value: "reply", label: "Reply to Message" },
-];
-
-function AddTaskModal({ open, onOpenChange, onSubmit }) {
-  const [title, setTitle] = useState("");
-  const [assignToAthlete, setAssignToAthlete] = useState(false);
-  const [actionType, setActionType] = useState("general");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const handleSubmit = () => {
-    if (!title.trim()) return;
-    onSubmit(title.trim(), assignToAthlete, assignToAthlete ? actionType : null);
-    setTitle("");
-    setAssignToAthlete(false);
-    setActionType("general");
-  };
-
-  if (!open) return null;
-
-  const inputCls = "w-full px-3 py-2 rounded-lg border text-sm outline-none focus:ring-1 focus:ring-teal-600 transition-colors";
-  const inputStyle = { backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" };
-  const selectedLabel = ACTION_TYPES.find(t => t.value === actionType)?.label || "General Task";
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }} data-testid="add-task-overlay" onClick={() => onOpenChange(false)}>
-      <div className="w-full max-w-md rounded-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
-        onClick={e => e.stopPropagation()}
-        style={{ background: "#161b25", border: "1px solid rgba(46, 196, 182, 0.15)", boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 40px rgba(26,138,128,0.08)", maxHeight: "90vh", colorScheme: "dark" }}
-        data-testid="add-task-modal">
-
-        <div className="p-5 pb-4 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <ClipboardCheck className="w-4 h-4 text-teal-600" />New Task
-            </h2>
-            <button onClick={() => onOpenChange(false)} className="p-1 rounded-lg hover:bg-white/10 transition-colors" data-testid="add-task-close">
-              <X className="w-4 h-4 text-white/40" />
-            </button>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">Add a task for this school relationship.</p>
-        </div>
-
-        <div className="p-5 space-y-3 flex-1">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>Task</label>
-            <input
-              autoFocus
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              placeholder="What needs to be done?"
-              className={inputCls}
-              style={inputStyle}
-              data-testid="new-task-input"
-            />
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider block mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>Options</label>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 cursor-pointer select-none" data-testid="assign-to-athlete-toggle">
-                <div
-                  onClick={() => setAssignToAthlete(!assignToAthlete)}
-                  className="relative w-8 h-[18px] rounded-full transition-colors"
-                  style={{ background: assignToAthlete ? "#1a8a80" : "rgba(255,255,255,0.15)" }}
-                >
-                  <div className="absolute top-[2px] rounded-full w-[14px] h-[14px] bg-white transition-transform shadow-sm"
-                    style={{ left: assignToAthlete ? 15 : 2 }} />
-                </div>
-                <span className="text-xs font-medium" style={{ color: assignToAthlete ? "#5eead4" : "rgba(255,255,255,0.4)" }}>
-                  Assign to Athlete
-                </span>
-              </label>
-              {assignToAthlete && (
-                <div className="relative" data-testid="task-type-select">
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border outline-none transition-colors hover:border-teal-600/40"
-                    style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: dropdownOpen ? "rgba(46,196,182,0.4)" : "rgba(255,255,255,0.1)", color: "#e2e8f0" }}
-                  >
-                    {selectedLabel}
-                    <ChevronDown className="w-3 h-3" style={{ color: "rgba(255,255,255,0.4)" }} />
-                  </button>
-                  {dropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-48 rounded-lg border shadow-xl overflow-hidden z-10"
-                      style={{ backgroundColor: "#1e2535", borderColor: "rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.5)" }}>
-                      {ACTION_TYPES.map(t => (
-                        <button
-                          key={t.value}
-                          type="button"
-                          onClick={() => { setActionType(t.value); setDropdownOpen(false); }}
-                          className="w-full text-left px-3 py-2 text-xs transition-colors"
-                          style={{
-                            color: t.value === actionType ? "#5eead4" : "rgba(255,255,255,0.6)",
-                            backgroundColor: t.value === actionType ? "rgba(46,196,182,0.1)" : "transparent",
-                          }}
-                          onMouseEnter={e => { if (t.value !== actionType) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; }}
-                          onMouseLeave={e => { if (t.value !== actionType) e.currentTarget.style.backgroundColor = "transparent"; }}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 flex items-center justify-between gap-3 flex-shrink-0" style={{ background: "rgba(15,18,25,0.5)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <button onClick={() => onOpenChange(false)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-all hover:bg-white/5"
-            style={{ color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }} data-testid="cancel-task-btn">
-            Cancel
-          </button>
-          <Button onClick={handleSubmit} disabled={!title.trim()}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition-all hover:shadow-[0_0_20px_rgba(26,138,128,0.4)] disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg, #1a8a80, #25a99e)" }} data-testid="save-task-btn">
-            <Plus className="w-4 h-4" />
-            Add Task
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AddNoteForm({ onSubmit, onCancel }) {
-  const [text, setText] = useState("");
-  return (
-    <div className="py-2">
-      <textarea
-        autoFocus
-        value={text}
-        onChange={e => setText(e.target.value)}
-        placeholder="Add a note about this school..."
-        rows={3}
-        className="w-full text-xs px-3 py-2 rounded-lg border outline-none focus:ring-1 focus:ring-teal-500 resize-none"
-        style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)", color: "var(--cm-text, #1e293b)" }}
-        data-testid="new-note-input"
-      />
-      <div className="flex justify-end gap-2 mt-2">
-        <button onClick={onCancel} className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "var(--cm-text-3)" }}>Cancel</button>
-        <Button size="sm" onClick={() => text.trim() && onSubmit(text.trim())} disabled={!text.trim()} data-testid="save-note-btn">Save Note</Button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Section wrapper ─────────────────────────────
-function Section({ title, count, children, action, testId }) {
-  return (
-    <div className="rounded-xl border" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid={testId}>
-      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-        <div className="flex items-center gap-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>{title}</h3>
-          {count != null && <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: "var(--cm-surface-2, #f1f5f9)", color: "var(--cm-text-3)" }}>{count}</span>}
-        </div>
-        {action}
-      </div>
-      <div className="px-4 py-2">{children}</div>
-    </div>
-  );
-}
-
-/* ─── Pipeline Status Bar ─── */
-function PipelineStatus({ pipeline }) {
-  if (!pipeline) return null;
-  const { stage_index, stage_days } = pipeline;
-  const displayStage = PIPELINE_STAGES[stage_index] || PIPELINE_STAGES[0];
-  return (
-    <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="pipeline-status">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Pipeline Status</p>
-        <span className="text-[11px] font-semibold" style={{ color: "var(--cm-text, #1e293b)" }}>
-        
-        </span>
-      </div>
-      <div className="flex items-center gap-1">
-        {PIPELINE_STAGES.map((stage, i) => {
-          const isActive = i <= stage_index;
-          const isCurrent = i === stage_index;
-          return (
-            <div key={stage} className="flex-1 flex flex-col items-center gap-1">
-              <div
-                className="w-full h-1.5 rounded-full transition-all"
-                style={{
-                  backgroundColor: isCurrent ? "#0d9488" : isActive ? "#0d948880" : "var(--cm-border, #e2e8f0)",
-                }}
-              />
-              <span className="text-[9px] font-medium" style={{ color: isCurrent ? "#0d9488" : isActive ? "var(--cm-text-2, #64748b)" : "var(--cm-text-4, #cbd5e1)" }}>
-                {stage}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Relationship Tracker (full) ─── */
-function RelationshipTracker({ relationship }) {
-  if (!relationship) return null;
-  const { strength, interactions, last_contact, last_contact_type, response_detail, contact_health } = relationship;
-  const cfg = STRENGTH_CONFIG[strength] || STRENGTH_CONFIG.cold;
-  const STRENGTH_ORDER = ["cold", "warm", "active", "strong"];
-  const activeIdx = STRENGTH_ORDER.indexOf(strength);
-
-  const lastDate = last_contact ? new Date(last_contact).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
-
-  // Contact health color
-  const healthColor = strength === "strong" || strength === "active" ? "#10b981"
-    : strength === "warm" ? "#f59e0b" : "#ef4444";
-
-  return (
-    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="relationship-tracker">
-      {/* Header */}
-      <div className="px-4 py-3 border-b" style={{ borderColor: "var(--cm-border, #e2e8f0)" }}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Relationship Tracker</h3>
-          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style={{ backgroundColor: cfg.bg, color: cfg.color }} data-testid="relationship-strength-badge">
-            {cfg.label}
-          </span>
-        </div>
-        {/* Strength meter */}
-        <div className="flex items-center gap-1.5 mt-2.5">
-          {STRENGTH_ORDER.map((s, i) => {
-            const sc = STRENGTH_CONFIG[s];
-            const filled = i <= activeIdx;
-            return (
-              <div key={s} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full h-1.5 rounded-full transition-all" style={{ backgroundColor: filled ? sc.color : "var(--cm-border, #e2e8f0)" }} />
-                <span className="text-[8px] font-semibold uppercase" style={{ color: filled ? sc.color : "var(--cm-text-4, #cbd5e1)" }}>{sc.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="px-4 py-3 space-y-3">
-        {/* Interaction Summary */}
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--cm-text-3)" }}>Interactions</p>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { icon: Mail, label: "Emails", count: interactions.emails },
-              { icon: Phone, label: "Calls", count: interactions.calls },
-              { icon: Activity, label: "Events", count: interactions.events },
-            ].map(({ icon: Icon, label, count }) => (
-              <div key={label} className="flex flex-col items-center py-2 rounded-lg" style={{ backgroundColor: "var(--cm-bg, #f8fafc)" }}>
-                <Icon className="w-3.5 h-3.5 mb-1" style={{ color: "var(--cm-text-3)" }} />
-                <span className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>{count}</span>
-                <span className="text-[9px]" style={{ color: "var(--cm-text-3)" }}>{label}</span>
-              </div>
-            ))}
-          </div>
-          {(interactions.advocacy > 0 || interactions.visits > 0) && (
-            <div className="flex gap-3 mt-2 text-[11px]" style={{ color: "var(--cm-text-2, #64748b)" }}>
-              {interactions.visits > 0 && <span><strong>{interactions.visits}</strong> campus visit{interactions.visits !== 1 ? "s" : ""}</span>}
-              {interactions.advocacy > 0 && <span><strong>{interactions.advocacy}</strong> advocacy message{interactions.advocacy !== 1 ? "s" : ""}</span>}
-            </div>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div className="border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} />
-
-        {/* Last Contact */}
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Last Contact</p>
-          {lastDate ? (
-            <span className="text-xs" style={{ color: "var(--cm-text)" }} data-testid="last-contact-date">
-              {lastDate} <span style={{ color: "var(--cm-text-3)" }}>&#183; {last_contact_type}</span>
-            </span>
-          ) : (
-            <span className="text-xs" style={{ color: "var(--cm-text-3)" }}>No recorded contact</span>
-          )}
-        </div>
-
-        {/* Response Rate */}
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>Response Rate</p>
-          <span className="text-xs font-semibold" style={{ color: "var(--cm-text)" }} data-testid="response-rate">{response_detail}</span>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t" style={{ borderColor: "var(--cm-border, #e2e8f0)" }} />
-
-        {/* Contact Health */}
-        <div data-testid="contact-health">
-          <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--cm-text-3)" }}>Contact Health</p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: contact_health.includes("today") || contact_health.includes("Recently") ? "#10b981" : contact_health.includes("Awaiting") ? "#f59e0b" : contact_health.includes("recommended") || contact_health.includes("cold") ? "#f59e0b" : contact_health.includes("No recorded") || contact_health.includes("Re-engagement") ? "#ef4444" : "#94a3b8" }} />
-            <p className="text-xs font-medium" style={{ color: contact_health.includes("today") || contact_health.includes("Recently") ? "#10b981" : contact_health.includes("Awaiting") ? "#f59e0b" : contact_health.includes("recommended") || contact_health.includes("cold") ? "#f59e0b" : contact_health.includes("No recorded") || contact_health.includes("Re-engagement") ? "#ef4444" : "#94a3b8" }}>{contact_health}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Collapsible Playbook Section ─── */
-function PlaybookSection({ playbook, initialChecked, onSave }) {
-  const totalSteps = playbook?.steps?.length || 0;
-  const checkedCount = (initialChecked || []).length;
-  const allDone = totalSteps > 0 && checkedCount >= totalSteps;
-  const [collapsed, setCollapsed] = useState(allDone);
-
-  // Find last completed date from steps
-  const lastUpdate = initialChecked?.length > 0
-    ? new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    : null;
-
-  if (!playbook) return null;
-
-  return (
-    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "var(--cm-surface, white)", borderColor: "var(--cm-border, #e2e8f0)" }} data-testid="school-playbook">
-      <div
-        className="flex items-center justify-between px-4 py-3 border-b cursor-pointer hover:bg-slate-50/50 transition-colors"
-        style={{ borderColor: "var(--cm-border, #e2e8f0)" }}
-        onClick={() => setCollapsed(!collapsed)}
-        data-testid="playbook-toggle"
-      >
-        <div className="flex items-center gap-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Playbook</h3>
-          {allDone ? (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-600">Complete</span>
-          ) : (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: "var(--cm-surface-2, #f1f5f9)", color: "var(--cm-text-3)" }}>
-              {checkedCount}/{totalSteps}
-            </span>
-          )}
-        </div>
-        {collapsed ? <ChevronDown className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} /> : <ChevronUp className="w-4 h-4" style={{ color: "var(--cm-text-3)" }} />}
-      </div>
-
-      {collapsed ? (
-        /* Collapsed summary */
-        <div className="px-4 py-3" data-testid="playbook-collapsed-summary">
-          {allDone ? (
-            <div className="flex items-center gap-2 text-xs text-emerald-600">
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="font-medium">{playbook.title} completed</span>
-              {lastUpdate && <span className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>Last update: {lastUpdate}</span>}
-            </div>
-          ) : (
-            <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>
-              {playbook.title} &#8212; {checkedCount} of {totalSteps} steps done
-            </p>
-          )}
-        </div>
-      ) : (
-        /* Expanded: show full ActionPlan */
-        <div className="px-4 py-2">
-          <ActionPlan playbook={playbook} initialChecked={initialChecked || []} onSave={onSave} />
-        </div>
-      )}
-    </div>
-  );
-}
-
+import { API, headers } from "@/components/school-pod/constants";
+import { SignalCard } from "@/components/school-pod/SignalCard";
+import { TaskItem } from "@/components/school-pod/TaskItem";
+import { AddTaskModal } from "@/components/school-pod/AddTaskModal";
+import { TimelineItem } from "@/components/school-pod/TimelineItem";
+import { Section } from "@/components/school-pod/Section";
+import { PipelineStatus } from "@/components/school-pod/PipelineStatus";
+import { RelationshipTracker } from "@/components/school-pod/RelationshipTracker";
+import { PlaybookSection } from "@/components/school-pod/PlaybookSection";
 
 // ─── Main School Pod Page ────────────────────────
 export default function SchoolPod() {
@@ -700,7 +77,6 @@ export default function SchoolPod() {
     try {
       await axios.post(`${API}/support-pods/${athleteId}/school/${programId}/notes`, { text }, { headers: headers() });
       toast.success("Note saved");
-      setShowAddNote(false);
       fetchData();
     } catch { toast.error("Failed"); }
   };
@@ -721,7 +97,7 @@ export default function SchoolPod() {
 
   if (!data) return null;
 
-  const { program, metrics, health, health_display, hero_status, signals, actions, notes, timeline_events, stage_history, school_info, current_issue, playbook, playbook_checked_steps, athlete_context, relationship, pipeline } = data;
+  const { program, metrics, health_display, hero_status, signals, actions, notes, timeline_events, stage_history, school_info, current_issue, playbook, playbook_checked_steps, athlete_context, relationship, pipeline } = data;
   const openActions = actions.filter(a => a.status === "ready" || a.status === "open");
   const completedActions = actions.filter(a => a.status === "completed");
   const allTimeline = [
@@ -729,15 +105,12 @@ export default function SchoolPod() {
     ...notes.map(n => ({ ...n, type: "note_display", description: n.text, actor: n.author })),
   ].sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
 
-  // Hero uses the unified hero_status from the backend (single source of truth)
   const heroColor = hero_status?.color || "#10b981";
   const heroLabel = hero_status?.label || "On Track";
 
-  // Build descriptive hero subtitle
   let heroTitle = current_issue?.title || signals[0]?.title || `${program.university_name} — ${program.recruiting_status}`;
   let heroDesc = current_issue?.description || signals[0]?.description || `Reply: ${program.reply_status} · Next: ${program.next_action || "No pending action"}`;
 
-  // Athlete identity line
   const athleteIdentity = [
     athlete_context?.name,
     athlete_context?.graduation_year ? `${athlete_context.graduation_year}` : "",
@@ -746,7 +119,7 @@ export default function SchoolPod() {
 
   return (
     <div className={`bg-slate-50/30 min-h-screen overflow-x-hidden transition-[margin] duration-300 ease-out ${notesOpen ? "mr-[340px] sm:mr-[380px]" : ""}`} data-testid="school-pod-page">
-      {/* Header with Athlete Context (#5) */}
+      {/* Header with Athlete Context */}
       <header className="bg-white/95 border-b border-gray-100" data-testid="school-pod-header">
         <div className="px-3 sm:px-6 py-3 max-w-5xl mx-auto">
           <div className="flex items-center gap-3 min-w-0">
@@ -764,7 +137,6 @@ export default function SchoolPod() {
               <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="school-name">
                 {program.university_name}
               </h1>
-              {/* Athlete identity line */}
               {athleteIdentity && (
                 <p className="text-[11px] font-medium" style={{ color: "var(--cm-text-2, #64748b)" }} data-testid="athlete-identity">
                   {athleteIdentity}
@@ -1039,7 +411,7 @@ export default function SchoolPod() {
         />
       )}
 
-      {/* Right-edge Notes Tab + Panel (Journey-style) */}
+      {/* Right-edge Notes Tab + Panel */}
       {!notesOpen && (
         <button
           onClick={() => setNotesOpen(true)}
