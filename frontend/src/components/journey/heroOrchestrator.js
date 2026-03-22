@@ -42,11 +42,20 @@ export function computeHeroSelection({
       research: { label: "Mark Done", icon: Check },
       general: { label: "Mark Done", icon: Check },
     };
-    const cta = ctaMap[a.action_type] || ctaMap.general;
-    const h = a.action_type === "send_email" ? handlers.onEmail
-      : a.action_type === "reply" ? () => handlers.onNavigate("/messages")
-      : a.action_type === "profile_update" ? () => handlers.onNavigate("/profile")
-      : ["log_visit", "log_interaction"].includes(a.action_type) ? handlers.onLog
+
+    // Smart CTA: detect follow-up / email / outreach tasks regardless of action_type
+    const titleLower = (a.title || "").toLowerCase();
+    const isFollowUp = titleLower.includes("follow up") || titleLower.includes("follow-up")
+      || titleLower.includes("email") || titleLower.includes("reach out")
+      || titleLower.includes("send") || titleLower.includes("message")
+      || titleLower.includes("contact");
+    const effectiveType = isFollowUp && a.action_type !== "send_email" ? "send_email" : a.action_type;
+
+    const cta = ctaMap[effectiveType] || ctaMap.general;
+    const h = effectiveType === "send_email" ? handlers.onEmail
+      : effectiveType === "reply" ? () => handlers.onNavigate("/messages")
+      : effectiveType === "profile_update" ? () => handlers.onNavigate("/profile")
+      : ["log_visit", "log_interaction"].includes(effectiveType) ? handlers.onLog
       : () => handlers.onMarkActionDone(a.id);
     all.push({
       id: `task-${a.id}`, priority: 2 + i * 0.1, type: "coach_task",
