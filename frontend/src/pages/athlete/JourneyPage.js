@@ -382,8 +382,8 @@ export default function JourneyPage() {
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 pt-6 pb-4">
-        <div style={{ background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)", borderRadius: 22, overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 pt-6 pb-4">
+        <div style={{ background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)", borderRadius: "12px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)" }} className="sm:!rounded-[22px]">
           {/* Glow orbs */}
           <div className="ds-glow-teal" />
           <div className="ds-glow-purple" />
@@ -510,7 +510,7 @@ export default function JourneyPage() {
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-4 sm:px-6 mt-4">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 mt-4">
 
         {/* ═══ ORCHESTRATED HERO SECTION ═══ */}
         <PrimaryHeroCard hero={featuredHero} />

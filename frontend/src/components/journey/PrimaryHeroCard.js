@@ -29,7 +29,7 @@ export function PrimaryHeroCard({ hero }) {
 
   /* ── Standard hero — Pipeline visual design, original data ── */
   return (
-    <div className="mb-4 rounded-[18px] sm:rounded-[28px] overflow-hidden relative"
+    <div className="mb-4 rounded-[12px] sm:rounded-[28px] overflow-hidden relative"
       style={{
         background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
         border: "1px solid rgba(255,255,255,0.08)",
