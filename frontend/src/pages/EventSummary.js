@@ -76,7 +76,7 @@ function NoteActions({ note, eventId, onRefresh }) {
   const isSent = note.sent_to_athlete;
 
   return (
-    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
       {/* Always In Pod (auto-routed) */}
       <span className="flex items-center gap-0.5 text-[10px] text-blue-600 font-medium px-2 py-1 bg-blue-50 rounded-md border border-blue-100" data-testid={`routed-badge-${note.id}`}>
         <Check className="w-3 h-3" /> In Pod
@@ -133,35 +133,37 @@ function AthleteCard({ athleteId, athleteName, notes, eventId, onRefresh, naviga
       {/* Athlete header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+        className="w-full px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
         data-testid={`athlete-card-toggle-${athleteId}`}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm text-gray-900">{athleteName}</span>
-            {allActioned && (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            )}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm text-gray-900">{athleteName}</span>
+              {allActioned && (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {hotCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">{hotCount} hot</span>}
+              {warmCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{warmCount} warm</span>}
+              <span className="text-[10px] text-gray-400">{notes.length} notes</span>
+              {followUpCount > 0 && <span className="text-[10px] text-gray-400">· {followUpCount} follow-ups</span>}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            {hotCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">{hotCount} hot</span>}
-            {warmCount > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{warmCount} warm</span>}
-            <span className="text-[10px] text-gray-400">{notes.length} notes</span>
-            {followUpCount > 0 && <span className="text-[10px] text-gray-400">· {followUpCount} follow-ups</span>}
+          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            <span
+              role="link"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athleteId}`); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); navigate(`/support-pods/${athleteId}`); } }}
+              className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors cursor-pointer"
+              data-testid={`open-pod-${athleteId}`}
+            >
+              Pod <ExternalLink className="w-3 h-3" />
+            </span>
+            {expanded ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span
-            role="link"
-            tabIndex={0}
-            onClick={(e) => { e.stopPropagation(); navigate(`/support-pods/${athleteId}`); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); navigate(`/support-pods/${athleteId}`); } }}
-            className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors cursor-pointer"
-            data-testid={`open-pod-${athleteId}`}
-          >
-            Pod <ExternalLink className="w-3 h-3" />
-          </span>
-          {expanded ? <ChevronUp className="w-4 h-4 text-gray-300" /> : <ChevronDown className="w-4 h-4 text-gray-300" />}
         </div>
       </button>
 
@@ -171,15 +173,15 @@ function AthleteCard({ athleteId, athleteName, notes, eventId, onRefresh, naviga
           {sortedNotes.map((n) => {
             const badge = INTEREST_BADGE[n.interest_level] || INTEREST_BADGE.none;
             return (
-              <div key={n.id} className="px-4 py-2.5 flex items-start justify-between gap-2" data-testid={`summary-note-${n.id}`}>
-                <div className="flex-1 min-w-0">
+              <div key={n.id} className="px-4 py-2.5" data-testid={`summary-note-${n.id}`}>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                     {n.school_name && (
                       <span className="text-xs font-medium text-gray-700">{n.school_name}</span>
                     )}
                     <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${badge.cls}`}>{badge.label}</span>
                     {n.follow_ups?.length > 0 && (
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         {n.follow_ups.map((f) => (
                           <span key={f} className="text-[9px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500">{f.replace(/_/g, " ")}</span>
                         ))}
