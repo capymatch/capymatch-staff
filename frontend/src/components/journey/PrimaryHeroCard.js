@@ -1,7 +1,18 @@
+import { useState, useEffect } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
 import "../pipeline/pipeline-premium.css";
 
 export function PrimaryHeroCard({ hero }) {
+  const [whyVisible, setWhyVisible] = useState(false);
+
+  useEffect(() => {
+    if (hero?.whyThis?.length > 0) {
+      const t = setTimeout(() => setWhyVisible(true), 150);
+      return () => clearTimeout(t);
+    }
+    setWhyVisible(false);
+  }, [hero]);
+
   if (!hero) return null;
   const Icon = hero.icon;
   const isCommitted = hero.type === "committed";
@@ -76,6 +87,25 @@ export function PrimaryHeroCard({ hero }) {
         </div>
 
         {/* CONTEXT LINE */}
+        {hero.whyThis?.length > 0 && (
+          <div className="mb-3 transition-all duration-300"
+            style={{
+              opacity: whyVisible ? 1 : 0,
+              transform: whyVisible ? "translateY(0)" : "translateY(4px)",
+            }}
+            data-testid="hero-why-this">
+            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1"
+              style={{ color: "rgba(255,255,255,0.35)" }}>
+              Why this?
+            </p>
+            <p className="text-[12px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)" }}>
+              {hero.whyThis.join(" \u2022 ")}
+            </p>
+          </div>
+        )}
+
+        {/* SUBTITLE / QUOTE */}
         <p className="text-[13px] mb-5"
           style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}
           data-testid="hero-subtitle">

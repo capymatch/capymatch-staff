@@ -17,6 +17,25 @@ export function computeHeroSelection({
 }) {
   const all = [];
   const uni = program?.university_name || "this school";
+  const signals = program?.signals || {};
+  const rail = program?.journey_rail || {};
+
+  // ── Build contextual "why this" signals from program data ──
+  function buildWhyThis(extras) {
+    const reasons = [];
+    const daysSince = signals.days_since_activity;
+    if (daysSince != null && daysSince > 0) reasons.push(`Last interaction was ${daysSince} day${daysSince === 1 ? "" : "s"} ago`);
+    if (signals.has_coach_reply) reasons.push("Coach showed interest");
+    if (signals.coach_engagement === "high") reasons.push("Coach engagement is high");
+    if (rail.active && rail.active !== "added") {
+      const stageName = rail.active.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      reasons.push(`${stageName} stage is active`);
+    }
+    if (program?.risk_badges?.some(b => b.key === "roster_tight")) reasons.push("Roster is filling quickly");
+    if (program?.risk_badges?.some(b => b.key === "timeline_awareness")) reasons.push("Recruiting window is active");
+    if (extras) reasons.push(...extras);
+    return reasons.slice(0, 3);
+  }
 
   // ── P1 — Committed ──
   if (isCommitted) {
@@ -71,6 +90,7 @@ export function computeHeroSelection({
       ].filter(Boolean),
       primaryCta: { label: cta.label, icon: cta.icon, handler: h },
       secondaryCta: null,
+      whyThis: buildWhyThis(a.due_date ? [`Due ${new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`] : []),
       dot: "bg-teal-500", tag: "Supporting",
     });
   });
@@ -87,6 +107,7 @@ export function computeHeroSelection({
       pills: [dl && { label: dl }, { label: `From ${f.flagged_by_name || "Coach"}` }].filter(Boolean),
       primaryCta: { label: "Mark Complete", icon: Check, handler: () => handlers.onCompleteFlag(f.flag_id), loading: completingFlag === f.flag_id },
       secondaryCta: null,
+      whyThis: buildWhyThis([`Flagged by ${f.flagged_by_name || "Coach"}`]),
       dot: "bg-amber-500", tag: "Supporting",
     });
   });
@@ -102,6 +123,7 @@ export function computeHeroSelection({
       pills: [{ label: "High confidence" }],
       primaryCta: { label: coachWatch.primaryCta || "Respond Now", icon: Send, handler: handlers.onEmail },
       secondaryCta: null,
+      whyThis: buildWhyThis(["High-opportunity moment"]),
       dot: "bg-green-500", tag: "Supporting",
     });
   }
@@ -117,6 +139,7 @@ export function computeHeroSelection({
       pills: [{ label: "High confidence" }],
       primaryCta: { label: coachWatch.primaryCta || "Reply Promptly", icon: Send, handler: handlers.onEmail },
       secondaryCta: null,
+      whyThis: buildWhyThis(["Conversation is active"]),
       dot: "bg-blue-500", tag: "Supporting",
     });
   }
@@ -132,6 +155,7 @@ export function computeHeroSelection({
       pills: [{ label: `${daysOverdue}d overdue` }],
       primaryCta: { label: "Send Email", icon: Mail, handler: handlers.onEmail },
       secondaryCta: { label: "Reschedule", icon: Clock, handler: handlers.onFollowup },
+      whyThis: buildWhyThis([`${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`]),
       dot: "bg-orange-500", tag: "Supporting",
     });
   }
@@ -149,6 +173,7 @@ export function computeHeroSelection({
       pills: [],
       primaryCta: { label: "Send Thank You", icon: Mail, handler: handlers.onEmail },
       secondaryCta: { label: "Log a Note", icon: FileText, handler: handlers.onLog },
+      whyThis: buildWhyThis([`Coach replied ${tt}`]),
       dot: "bg-emerald-500", tag: "Supporting",
     });
   }
@@ -164,6 +189,7 @@ export function computeHeroSelection({
       pills: [{ label: daysUntilDue === 0 ? "Today" : `In ${daysUntilDue}d` }],
       primaryCta: { label: "Send Email", icon: Mail, handler: handlers.onEmail },
       secondaryCta: { label: "Reschedule", icon: Clock, handler: handlers.onFollowup },
+      whyThis: buildWhyThis([`Follow-up due ${daysUntilDue === 0 ? "today" : `in ${daysUntilDue}d`}`]),
       dot: "bg-teal-500", tag: "Optional",
     });
   }
@@ -179,6 +205,7 @@ export function computeHeroSelection({
       pills: [],
       primaryCta: { label: "Open Questionnaire", icon: ExternalLink, handler: () => window.open(program.questionnaire_url, "_blank") },
       secondaryCta: null,
+      whyThis: buildWhyThis(["Questionnaire boosts your visibility"]),
       dot: "bg-amber-400", tag: "Optional",
     });
   }
@@ -197,6 +224,7 @@ export function computeHeroSelection({
         pills: [],
         primaryCta: { label: NS_LABELS[pa], icon: NS_ICONS[pa], handler: ah[pa] },
         secondaryCta: rule.actions[1] ? { label: NS_LABELS[rule.actions[1]], icon: NS_ICONS[rule.actions[1]], handler: ah[rule.actions[1]] } : null,
+        whyThis: buildWhyThis(),
         dot: "bg-teal-500", tag: "Optional",
       });
     }
