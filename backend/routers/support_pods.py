@@ -189,6 +189,13 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
     if not athlete:
         return {"error": "Athlete not found"}
 
+    # Merge live DB fields into the static athlete data
+    db_athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0})
+    if db_athlete:
+        athlete["profile_complete"] = db_athlete.get("profile_complete", athlete.get("profile_complete", False))
+        athlete["profile_completeness"] = db_athlete.get("profile_completeness", athlete.get("profile_completeness", 0))
+        athlete["missing_documents"] = db_athlete.get("missing_documents", athlete.get("missing_documents", []))
+
     interventions = get_athlete_interventions(athlete_id)
     members = generate_pod_members(athlete)
 

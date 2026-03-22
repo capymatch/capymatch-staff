@@ -125,11 +125,19 @@ async def get_coach_inbox(current_user: dict = get_current_user_dep()):
 
     # ── 3. MISSING DOCUMENTS (coach's athletes) ──
     athletes = get_athletes()
+    # Merge live DB profile fields to avoid stale static data
+    db_athletes = await db.athletes.find(
+        {"id": {"$in": list(visible)}},
+        {"_id": 0, "id": 1, "profile_complete": 1, "missing_documents": 1}
+    ).to_list(500)
+    db_map = {a["id"]: a for a in db_athletes}
     for ath in athletes:
         if ath["id"] not in visible:
             continue
-        missing = ath.get("missing_documents", [])
-        if missing or not ath.get("profile_complete", True):
+        db_ath = db_map.get(ath["id"], {})
+        missing = db_ath.get("missing_documents", ath.get("missing_documents", []))
+        profile_complete = db_ath.get("profile_complete", ath.get("profile_complete", True))
+        if missing or not profile_complete:
             raw_items.append({
                 "athleteId": ath["id"],
                 "athleteName": ath.get("full_name", ath.get("name", "Unknown")),
