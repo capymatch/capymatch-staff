@@ -15,6 +15,7 @@ from typing import Optional
 from db_client import db
 from auth_middleware import get_current_user_dep
 from services.ownership import can_access_athlete
+from middleware.security import sanitize_text
 
 log = logging.getLogger(__name__)
 router = APIRouter(tags=["support-messages"])
@@ -121,8 +122,8 @@ async def send_message(msg: SendMessage, current_user: dict = get_current_user_d
         "sender_name": current_user.get("name", "Coach"),
         "sender_role": current_user.get("role", "club_coach"),
         "recipients": [{"id": r["id"], "name": r["name"]} for r in recipients],
-        "subject": msg.subject,
-        "body": msg.body,
+        "subject": sanitize_text(msg.subject),
+        "body": sanitize_text(msg.body),
         "attachments": msg.attachments or [],
         "read_by": [current_user["id"]],
         "created_at": now,
@@ -216,8 +217,8 @@ async def reply_to_thread(thread_id: str, reply: ReplyMessage, current_user: dic
         "sender_name": current_user.get("name", "User"),
         "sender_role": current_user.get("role", "athlete"),
         "recipients": [],  # reply goes to all thread participants
-        "subject": f"Re: {thread.get('subject', '')}",
-        "body": reply.body,
+        "subject": sanitize_text(f"Re: {thread.get('subject', '')}"),
+        "body": sanitize_text(reply.body),
         "attachments": reply.attachments or [],
         "read_by": [current_user["id"]],
         "created_at": now,

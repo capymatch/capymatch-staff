@@ -21,6 +21,13 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
   - Previously patched: athlete_profile.py, school_pod.py, coach_flags.py, support_pods.py, director_actions.py, roster.py, invites.py
 - **Testing**: 100% pass rate (iteration_237) — 11/11 backend tests + frontend verification
 
+### Authentication & Security Hardening (Mar 23, 2026)
+- **Refresh tokens**: Short-lived access tokens (1h) + long-lived refresh tokens (7d) with rotation. Frontend axios interceptor auto-refreshes on 401. `POST /api/auth/refresh` + `POST /api/auth/logout` endpoints.
+- **Rate limiting**: IP-based rate limiting middleware — login (10/min), register (5/min), forgot-password (3/min), file upload (20/min). Uses X-Forwarded-For for proxy environments.
+- **CORS**: Configurable via `CORS_ORIGINS` env var (default `*` for dev, lock to domain in production).
+- **Input sanitization**: All user text (message body, subject) stripped of HTML tags via `bleach`. Prevents XSS.
+- **File upload content validation**: Magic byte header checks for PDF/PNG/JPG/GIF + extension whitelist + python-magic MIME detection. Blocks disguised executables.
+
 ### File Upload in Messages (Mar 23, 2026)
 - **Backend**: `POST /api/files/upload` (multipart, 10MB max, images/PDF/docs/CSV/TXT) + `GET /api/files/{file_id}/download`
 - **Storage**: Emergent Object Storage via `services/storage.py`

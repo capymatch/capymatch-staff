@@ -154,6 +154,7 @@ class UserOut(BaseModel):
 
 class TokenResponse(BaseModel):
     token: str
+    refresh_token: Optional[str] = None
     user: UserOut
     claimed_athlete_id: Optional[str] = None
 

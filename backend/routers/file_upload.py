@@ -1,10 +1,10 @@
 """
 File upload/download endpoints for message attachments.
 """
-import uuid
+import magic
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, UploadFile, File, HTTPException, Query
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import Response
 from db_client import db
 from auth_middleware import get_current_user_dep
@@ -14,6 +14,8 @@ log = logging.getLogger(__name__)
 router = APIRouter(tags=["files"])
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+# Allowed MIME types — checked against both header AND actual file content
 ALLOWED_TYPES = {
     "image/jpeg", "image/png", "image/gif", "image/webp",
     "application/pdf",
@@ -24,18 +26,52 @@ ALLOWED_TYPES = {
     "text/plain", "text/csv",
 }
 
+# Fallback extension whitelist for when magic detection is unreliable (e.g., xlsx/docx)
+ALLOWED_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
+    ".txt", ".csv",
+}
+
 
 @router.post("/files/upload")
 async def upload(file: UploadFile = File(...), current_user: dict = get_current_user_dep()):
-    content_type = file.content_type or "application/octet-stream"
-    if content_type not in ALLOWED_TYPES:
-        raise HTTPException(400, f"File type not allowed: {content_type}")
+    # Check extension first
+    filename = file.filename or ""
+    ext = ("." + filename.rsplit(".", 1)[-1].lower()) if "." in filename else ""
+    if ext and ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(400, f"File type not allowed: {ext}")
 
     data = await file.read()
     if len(data) > MAX_FILE_SIZE:
         raise HTTPException(400, "File too large (max 10 MB)")
 
-    result = upload_file(data, file.filename, content_type, current_user["id"])
+    # Validate actual file content via magic bytes
+    detected_type = magic.from_buffer(data, mime=True)
+    declared_type = file.content_type or "application/octet-stream"
+
+    # Explicit magic byte validation for critical file types
+    MAGIC_HEADERS = {
+        ".pdf": b"%PDF",
+        ".png": b"\x89PNG",
+        ".jpg": b"\xff\xd8\xff",
+        ".jpeg": b"\xff\xd8\xff",
+        ".gif": b"GIF8",
+    }
+    expected_header = MAGIC_HEADERS.get(ext)
+    if expected_header and not data[:len(expected_header)].startswith(expected_header):
+        log.warning(f"Upload blocked: magic bytes mismatch for {ext}, user={current_user['id']}")
+        raise HTTPException(400, "File content does not match its declared type")
+
+    # For Office XML formats (docx/xlsx), magic often returns application/zip — allow if extension matches
+    is_office_xml = ext in {".docx", ".xlsx"} and detected_type in {"application/zip", "application/x-zip-compressed"}
+    actual_type = detected_type if detected_type != "application/octet-stream" else declared_type
+
+    if not is_office_xml and actual_type not in ALLOWED_TYPES:
+        log.warning(f"Upload blocked: declared={declared_type}, detected={detected_type}, ext={ext}, user={current_user['id']}")
+        raise HTTPException(400, f"File content type not allowed: {detected_type}")
+
+    result = upload_file(data, filename, actual_type, current_user["id"])
 
     doc = {
         "id": result["file_id"],

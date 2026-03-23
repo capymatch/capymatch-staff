@@ -8,8 +8,9 @@ from passlib.hash import bcrypt
 from datetime import datetime, timezone, timedelta
 
 from db_client import db
+from pydantic import BaseModel
 from models import UserCreate, UserLogin, TokenResponse, UserOut, MeResponse
-from auth_middleware import create_token, get_current_user_dep
+from auth_middleware import create_token, create_refresh_token, decode_refresh_token, get_current_user_dep
 
 import logging
 
@@ -176,7 +177,17 @@ async def register(body: UserCreate):
 
     safe = _safe_user(user_doc)
     token = create_token(safe)
-    response = {"token": token, "user": safe}
+    refresh_token, refresh_id = create_refresh_token(safe["id"])
+
+    # Store refresh token in DB
+    await db.refresh_tokens.insert_one({
+        "token_id": refresh_id,
+        "user_id": safe["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "revoked": False,
+    })
+
+    response = {"token": token, "refresh_token": refresh_token, "user": safe}
     if claimed_athlete:
         response["claimed_athlete_id"] = claimed_athlete["id"]
     return response
@@ -200,6 +211,15 @@ async def login(body: UserLogin, background_tasks: BackgroundTasks):
             safe["photo_url"] = athlete_doc["photo_url"]
 
     token = create_token(safe)
+    refresh_token, refresh_id = create_refresh_token(safe["id"])
+
+    # Store refresh token in DB
+    await db.refresh_tokens.insert_one({
+        "token_id": refresh_id,
+        "user_id": safe["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "revoked": False,
+    })
 
     # Background: check weekly measurables nudge for athletes
     if safe.get("role") in ("athlete", "parent"):
@@ -208,7 +228,57 @@ async def login(body: UserLogin, background_tasks: BackgroundTasks):
             from services.notifications import check_and_send_measurables_nudge
             background_tasks.add_task(check_and_send_measurables_nudge, safe["id"], athlete["tenant_id"])
 
-    return {"token": token, "user": safe}
+    return {"token": token, "refresh_token": refresh_token, "user": safe}
+
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@router.post("/auth/refresh")
+async def refresh(body: RefreshRequest):
+    """Exchange a valid refresh token for a new access + refresh token pair."""
+    payload = decode_refresh_token(body.refresh_token)
+    token_id = payload.get("jti")
+    user_id = payload["sub"]
+
+    # Verify token not revoked
+    stored = await db.refresh_tokens.find_one({"token_id": token_id, "revoked": False}, {"_id": 0})
+    if not stored:
+        raise HTTPException(status_code=401, detail="Refresh token revoked or invalid")
+
+    # Revoke old refresh token (rotation)
+    await db.refresh_tokens.update_one({"token_id": token_id}, {"$set": {"revoked": True}})
+
+    # Load user
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    safe = _safe_user(user)
+    new_access = create_token(safe)
+    new_refresh, new_refresh_id = create_refresh_token(user_id)
+
+    await db.refresh_tokens.insert_one({
+        "token_id": new_refresh_id,
+        "user_id": user_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "revoked": False,
+    })
+
+    return {"token": new_access, "refresh_token": new_refresh, "user": safe}
+
+
+@router.post("/auth/logout")
+async def logout(current_user: dict = get_current_user_dep()):
+    """Revoke all refresh tokens for the user."""
+    await db.refresh_tokens.update_many(
+        {"user_id": current_user["id"]},
+        {"$set": {"revoked": True}},
+    )
+    return {"message": "Logged out"}
+
 
 
 @router.get("/auth/me", response_model=MeResponse)
