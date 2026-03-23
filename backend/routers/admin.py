@@ -44,7 +44,7 @@ async def admin_status(current_user: dict = get_current_user_dep()):
             ],
             "in_memory_only": [
                 {"name": "schools", "count": len(SCHOOLS), "source": "mock_data.py", "description": "10 static school entries — low priority for persistence"},
-                {"name": "interventions", "count": len(get_interventions()), "source": "decision_engine.py", "description": "Recomputed on startup from persisted data — stateless, no persistence needed"},
+                {"name": "interventions", "count": len(await get_interventions()), "source": "decision_engine.py", "description": "Recomputed on startup from persisted data — stateless, no persistence needed"},
             ],
         },
         "seed_strategy": "seed-if-empty — mock data inserted on first run only, user data preserved across restarts",

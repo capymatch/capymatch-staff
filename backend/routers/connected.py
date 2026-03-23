@@ -61,7 +61,7 @@ async def get_athlete_pipeline_summary(
     """Staff-shaped pipeline summary for a single athlete."""
 
     # ── Athlete header ──
-    athlete = get_athlete_by_id(athlete_id)
+    athlete = await get_athlete_by_id(athlete_id)
     if not athlete:
         raise HTTPException(404, "Athlete not found")
 

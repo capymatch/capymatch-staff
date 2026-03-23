@@ -313,13 +313,13 @@ async def get_pending_assignments(current_user: dict = get_current_user_dep()):
                 "grad_year": a.get("grad_year"),
                 "team": a.get("team"),
             }
-            for a in get_athletes()
+            for a in await get_athletes()
             if a.get("team") == team and not a.get("primary_coach_id")
         ]
 
         # Also count assigned athletes on the team (for context, not suggestion)
         assigned_on_team = sum(
-            1 for a in get_athletes()
+            1 for a in await get_athletes()
             if a.get("team") == team and a.get("primary_coach_id")
         )
 
@@ -365,7 +365,7 @@ async def assign_athletes_from_invite(
     # Validate all athletes exist and are unassigned
     assigned = []
     for aid in athlete_ids:
-        athlete = next((a for a in get_athletes() if a["id"] == aid), None)
+        athlete = next((a for a in await get_athletes() if a["id"] == aid), None)
         if not athlete:
             continue
         if athlete.get("primary_coach_id"):

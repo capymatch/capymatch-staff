@@ -36,28 +36,28 @@ _ALERT_HEALTH_STATES = {"at_risk", "cooling_off", "needs_attention", "needs_foll
 router = APIRouter()
 
 
-def enrich_with_health(interventions_list):
+async def enrich_with_health(interventions_list):
     enriched = []
     for item in interventions_list:
         item_copy = {**item}
-        athlete = sp_get_athlete(item["athlete_id"])
+        athlete = await sp_get_athlete(item["athlete_id"])
         if athlete:
-            athlete_interventions = get_athlete_interventions(item["athlete_id"])
+            athlete_interventions = await get_athlete_interventions(item["athlete_id"])
             item_copy["pod_health"] = explain_pod_health(athlete, athlete_interventions)
         enriched.append(item_copy)
     return enriched
 
 
-def _build_athlete_roster_item(athlete: dict) -> dict:
+async def _build_athlete_roster_item(athlete: dict) -> dict:
     """Build a compact athlete object for coach roster view."""
-    interventions = get_athlete_interventions(athlete["id"])
+    interventions = await get_athlete_interventions(athlete["id"])
     health = explain_pod_health(athlete, interventions)
 
     # Find any active intervention for this athlete
     category = None
     badge_color = None
     why = None
-    for item in get_interventions():
+    for item in await get_interventions():
         if item["athlete_id"] == athlete["id"]:
             category = item.get("category")
             badge_color = item.get("badge_color")
@@ -112,15 +112,15 @@ async def get_mission_control_data(current_user: dict = get_current_user_dep()):
     """Role-specific Mission Control data."""
 
     role = current_user["role"]
-    alerts = filter_by_athlete_id(get_alerts(), current_user)
-    signals = filter_by_athlete_id(get_signals(), current_user, athlete_id_key="athleteId")
+    alerts = filter_by_athlete_id(await get_alerts(), current_user)
+    signals = filter_by_athlete_id(await get_signals(), current_user, athlete_id_key="athleteId")
     events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
-    attention = filter_by_athlete_id(get_needing_attention(), current_user)
+    attention = filter_by_athlete_id(await get_needing_attention(), current_user)
 
     if role == "director":
         return await _build_director_response(alerts, attention, signals, events)
     else:
-        response = _build_coach_response(current_user, alerts, attention, signals, events)
+        response = await _build_coach_response(current_user, alerts, attention, signals, events)
         # Unified status model: collect all signals, score, assign Journey + Attention
         await _compute_unified_statuses(response.get("myRoster", []))
         # Recount needing_action
@@ -163,7 +163,7 @@ async def _build_director_response(alerts, attention, signals, events):
 
     # Program status KPIs
     program_status = {
-        "totalAthletes": len(get_athletes()),
+        "totalAthletes": len(await get_athletes()),
         "activeCoaches": len(coach_map),
         "unassignedCount": len(unassigned_ids),
         "upcomingEvents": len([e for e in events if 0 <= e.get("daysAway", 99) <= 14]),
@@ -174,7 +174,7 @@ async def _build_director_response(alerts, attention, signals, events):
     trend_data = await _compute_trends(program_status)
 
     # Needs attention — use ATHLETES_NEEDING_ATTENTION (matches KPI count), top 8
-    needs_attention = enrich_with_health(attention[:8])
+    needs_attention = await enrich_with_health(attention[:8])
 
     # Upcoming events — next 5, only future
     upcoming = sorted(
@@ -225,7 +225,7 @@ async def _build_director_response(alerts, attention, signals, events):
         "programActivity": activity,
         "coachHealth": coach_health,
         "recruitingSignals": recruiting_signals,
-        "programSnapshot": {**get_snapshot(), "unassigned_count": len(unassigned_ids)},
+        "programSnapshot": {**(await get_snapshot()), "unassigned_count": len(unassigned_ids)},
         "escalations": escalations,
         "outbox_summary": outbox_summary,
     }
@@ -248,10 +248,10 @@ async def _compute_trends(current_status):
             prev_needing = prev.get("pod_health", {}).get("needs_attention", 0) + prev.get("pod_health", {}).get("at_risk", 0)
             attention_delta = current_needing - prev_needing
             prev_issues = prev.get("open_issues", {}).get("total", 0)
-            current_issues = len(get_interventions())
+            current_issues = len(await get_interventions())
             issues_delta = current_issues - prev_issues
             prev_healthy = prev.get("pod_health", {}).get("healthy", 0)
-            current_healthy = get_snapshot().get("positiveMomentum", 0)
+            current_healthy = (await get_snapshot()).get("positiveMomentum", 0)
             health_delta = current_healthy - prev_healthy
         else:
             attention_delta = 0
@@ -405,13 +405,13 @@ async def _get_recruiting_signals():
     }
 
 
-def _build_coach_response(user, alerts, attention, signals, events):
+async def _build_coach_response(user, alerts, attention, signals, events):
     """Coach: personal work dashboard — intervention-focused."""
     visible_ids = get_visible_athlete_ids(user)
-    my_athletes = [a for a in get_athletes() if a["id"] in visible_ids]
+    my_athletes = [a for a in await get_athletes() if a["id"] in visible_ids]
 
     # Build roster items with health info
-    roster = [_build_athlete_roster_item(a) for a in my_athletes]
+    roster = [await _build_athlete_roster_item(a) for a in my_athletes]
     roster.sort(key=lambda a: a.get("momentum_score", 0))  # lowest momentum first
 
     # Count how many need action
@@ -533,7 +533,7 @@ async def _compute_unified_statuses(roster: list):
 
         # Source 1: Decision engine interventions
         # These are already pre-computed in athlete data via get_interventions()
-        for item in get_interventions():
+        for item in await get_interventions():
             if item["athlete_id"] == aid:
                 all_signals.append(normalize_decision_engine_signal(item))
 
@@ -681,17 +681,17 @@ def _category_to_reason(category, athlete):
 
 @router.get("/mission-control/alerts")
 async def get_priority_alerts_endpoint(current_user: dict = get_current_user_dep()):
-    return filter_by_athlete_id(get_alerts(), current_user)
+    return filter_by_athlete_id(await get_alerts(), current_user)
 
 
 @router.get("/mission-control/signals")
 async def get_momentum_signals(current_user: dict = get_current_user_dep()):
-    return filter_by_athlete_id(get_signals(), current_user)
+    return filter_by_athlete_id(await get_signals(), current_user)
 
 
 @router.get("/mission-control/athletes")
 async def get_athletes_attention(current_user: dict = get_current_user_dep()):
-    return filter_by_athlete_id(get_needing_attention(), current_user)
+    return filter_by_athlete_id(await get_needing_attention(), current_user)
 
 
 @router.get("/mission-control/events")
@@ -702,7 +702,7 @@ async def get_upcoming_events(current_user: dict = get_current_user_dep()):
 @router.get("/mission-control/snapshot")
 async def get_program_snapshot_endpoint(current_user: dict = get_current_user_dep()):
     if current_user["role"] == "director":
-        return get_snapshot()
+        return await get_snapshot()
     visible = get_visible_athlete_ids(current_user)
-    my_athletes = [a for a in get_athletes() if a["id"] in visible]
+    my_athletes = [a for a in await get_athletes() if a["id"] in visible]
     return get_program_snapshot(my_athletes)

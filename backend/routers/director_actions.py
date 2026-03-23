@@ -107,7 +107,7 @@ async def create_director_action(
             raise HTTPException(400, f"Escalations require risk_level: {', '.join(VALID_RISK_LEVELS)}")
 
     # Verify athlete exists
-    athlete = get_athlete_by_id(data.athlete_id)
+    athlete = await get_athlete_by_id(data.athlete_id)
     if not athlete:
         raise HTTPException(404, "Athlete not found")
 

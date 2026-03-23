@@ -297,8 +297,8 @@ async def get_current_issue(athlete_id: str):
 
     # Auto-resolve momentum_drop issues that are no longer valid
     # under the pipeline-based momentum model
-    from services.athlete_store import get_all as get_athletes
-    athlete = next((a for a in get_athletes() if a["id"] == athlete_id), None)
+    from services.athlete_store import get_by_id as get_athlete_by_id
+    athlete = await get_athlete_by_id(athlete_id)
     pipeline_momentum = athlete.get("pipeline_momentum", 0) if athlete else 0
 
     still_active = []

@@ -338,7 +338,7 @@ async def get_school_pod_risk(program_id: str, current_user: dict = get_current_
     recruiting_status = (program.get("recruiting_status") or "Prospect").strip()
 
     # Get athlete data
-    athletes = get_athletes()
+    athletes = await get_athletes()
     athlete = next((a for a in athletes if a["id"] == athlete_id), None)
     days_inactive = (athlete or {}).get("days_since_activity", 0)
 

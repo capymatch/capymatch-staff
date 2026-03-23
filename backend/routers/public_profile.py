@@ -392,7 +392,7 @@ async def get_internal_athlete_profile(
     athlete = await db.athletes.find_one({"id": athlete_id}, {"_id": 0})
     if not athlete:
         # Also try athlete_store (in-memory)
-        mem = get_athlete_by_id(athlete_id)
+        mem = await get_athlete_by_id(athlete_id)
         if mem:
             athlete = mem
         else:

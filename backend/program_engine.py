@@ -25,16 +25,16 @@ from support_pod import (
 from advocacy_engine import RECOMMENDATIONS, get_all_relationships
 
 
-def _filter_athletes(athlete_ids=None):
+async def _filter_athletes(athlete_ids=None):
     if athlete_ids is None:
-        return get_athletes()
-    return [a for a in get_athletes() if a["id"] in athlete_ids]
+        return await get_athletes()
+    return [a for a in await get_athletes() if a["id"] in athlete_ids]
 
 
-def _filter_interventions(athlete_ids=None):
+async def _filter_interventions(athlete_ids=None):
     if athlete_ids is None:
-        return get_interventions()
-    return [i for i in get_interventions() if i["athlete_id"] in athlete_ids]
+        return await get_interventions()
+    return [i for i in await get_interventions() if i["athlete_id"] in athlete_ids]
 
 
 def _filter_recommendations(athlete_ids=None):
@@ -43,16 +43,16 @@ def _filter_recommendations(athlete_ids=None):
     return [r for r in RECOMMENDATIONS if r["athlete_id"] in athlete_ids]
 
 
-def compute_program_health(athlete_ids=None):
+async def compute_program_health(athlete_ids=None):
     """Section 1: Where is the program fragile?"""
-    athletes = _filter_athletes(athlete_ids)
-    interventions = _filter_interventions(athlete_ids)
+    athletes = await _filter_athletes(athlete_ids)
+    interventions = await _filter_interventions(athlete_ids)
 
     health_counts = {"healthy": 0, "needs_attention": 0, "at_risk": 0}
     health_map = {"green": "healthy", "yellow": "needs_attention", "red": "at_risk"}
 
     for athlete in athletes:
-        ai = get_athlete_interventions(athlete["id"])
+        ai = await get_athlete_interventions(athlete["id"])
         members = generate_pod_members(athlete)
         actions = generate_suggested_actions(athlete["id"], ai)
         h = calculate_pod_health(athlete, members, actions)
@@ -110,9 +110,9 @@ def compute_program_health(athlete_ids=None):
     }
 
 
-def compute_readiness(athlete_ids=None):
+async def compute_readiness(athlete_ids=None):
     """Section 2: Which teams/grad years need intervention? Who's stalling?"""
-    athletes = _filter_athletes(athlete_ids)
+    athletes = await _filter_athletes(athlete_ids)
 
     stall_thresholds = {2025: 30, 2026: 45, 2027: 90}
     expected_stages = {2025: "actively_recruiting", 2026: "actively_recruiting", 2027: "exploring"}
@@ -142,7 +142,7 @@ def compute_readiness(athlete_ids=None):
         if stage in entry:
             entry[stage] += 1
 
-        athlete_interventions = get_athlete_interventions(athlete["id"])
+        athlete_interventions = await get_athlete_interventions(athlete["id"])
         blocker_count = sum(1 for i in athlete_interventions if i["category"] == "blocker")
         entry["blockers"] += blocker_count
 
@@ -191,7 +191,7 @@ def compute_readiness(athlete_ids=None):
     return {"by_grad_year": result, "stalled_athletes": stalled_athletes}
 
 
-def compute_event_effectiveness(athlete_ids=None):
+async def compute_event_effectiveness(athlete_ids=None):
     """Section 3: Which events produced outcomes? Where is follow-up breaking?"""
     recs = _filter_recommendations(athlete_ids)
     past_events = []
@@ -249,7 +249,7 @@ def compute_event_effectiveness(athlete_ids=None):
     return {"past_events": past_events, "upcoming_events": upcoming_events[:3]}
 
 
-def compute_advocacy_outcomes(athlete_ids=None):
+async def compute_advocacy_outcomes(athlete_ids=None):
     """Section 4: Is advocacy producing results?"""
     recs = _filter_recommendations(athlete_ids)
     now = datetime.now(timezone.utc)
@@ -306,9 +306,9 @@ def compute_advocacy_outcomes(athlete_ids=None):
     }
 
 
-def compute_support_load(coach_id=None, athlete_ids=None):
+async def compute_support_load(coach_id=None, athlete_ids=None):
     """Section 5: Who is overloaded? Where are ownership gaps?"""
-    interventions = _filter_interventions(athlete_ids)
+    interventions = await _filter_interventions(athlete_ids)
     owner_stats = {}
 
     for i in interventions:
@@ -364,10 +364,10 @@ def compute_support_load(coach_id=None, athlete_ids=None):
     }
 
 
-def get_coaches():
+async def get_coaches():
     """Return list of named coaches from intervention ownership data."""
     coaches = {}
-    for i in get_interventions():
+    for i in await get_interventions():
         owner = i.get("owner", "")
         if owner and owner not in ("Needs assignment", "Parent + Coach", "Coach + Athlete", "Unassigned", "Parent/Guardian"):
             coaches.setdefault(owner, set()).add(i.get("athlete_id"))
@@ -378,7 +378,7 @@ def get_coaches():
     ]
 
 
-def compute_all(coach_id=None):
+async def compute_all(coach_id=None):
     """Compute all 5 sections. Optionally filtered by coach_id."""
     athlete_ids = None
     view_mode = "director"
@@ -386,19 +386,19 @@ def compute_all(coach_id=None):
     if coach_id:
         # Determine which athletes this coach owns (from interventions)
         athlete_ids = set()
-        for i in get_interventions():
+        for i in await get_interventions():
             if i.get("owner") == coach_id:
                 athlete_ids.add(i["athlete_id"])
         view_mode = "club_coach"
 
-    athletes = _filter_athletes(athlete_ids)
+    athletes = await _filter_athletes(athlete_ids)
 
     return {
-        "program_health": compute_program_health(athlete_ids),
-        "readiness": compute_readiness(athlete_ids),
-        "event_effectiveness": compute_event_effectiveness(athlete_ids),
-        "advocacy_outcomes": compute_advocacy_outcomes(athlete_ids),
-        "support_load": compute_support_load(coach_id=coach_id, athlete_ids=athlete_ids),
+        "program_health": await compute_program_health(athlete_ids),
+        "readiness": await compute_readiness(athlete_ids),
+        "event_effectiveness": await compute_event_effectiveness(athlete_ids),
+        "advocacy_outcomes": await compute_advocacy_outcomes(athlete_ids),
+        "support_load": await compute_support_load(coach_id=coach_id, athlete_ids=athlete_ids),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "athlete_count": len(athletes),
         "event_count": len(UPCOMING_EVENTS),

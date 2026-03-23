@@ -185,7 +185,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
     """Get full Support Pod data for an athlete"""
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
-    athlete = sp_get_athlete(athlete_id)
+    athlete = await sp_get_athlete(athlete_id)
     if not athlete:
         return {"error": "Athlete not found"}
 
@@ -196,7 +196,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         athlete["profile_completeness"] = db_athlete.get("profile_completeness", athlete.get("profile_completeness", 0))
         athlete["missing_documents"] = db_athlete.get("missing_documents", athlete.get("missing_documents", []))
 
-    interventions = get_athlete_interventions(athlete_id)
+    interventions = await get_athlete_interventions(athlete_id)
     members = generate_pod_members(athlete)
 
     # Merge saved actions (DB) with suggested actions (from interventions)
@@ -285,7 +285,7 @@ async def create_pod_action(athlete_id: str, action: ActionCreate, current_user:
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
     """Create a new action item in the pod"""
     now = datetime.now(timezone.utc).isoformat()
-    athlete = sp_get_athlete(athlete_id) or {}
+    athlete = await sp_get_athlete(athlete_id) or {}
     athlete_name = athlete.get("full_name", "Unknown Athlete")
     doc = {
         "id": str(uuid.uuid4()),
@@ -376,7 +376,7 @@ async def quick_resolve(athlete_id: str, body: dict, current_user: dict = get_cu
                 )
             else:
                 # Suggested action — materialize it
-                suggested = generate_suggested_actions(athlete_id, get_athlete_interventions(athlete_id))
+                suggested = generate_suggested_actions(athlete_id, await get_athlete_interventions(athlete_id))
                 original = next((s for s in suggested if s["id"] == action_id), {})
                 doc = {
                     **original,
@@ -438,7 +438,7 @@ async def update_pod_action(athlete_id: str, action_id: str, update: ActionUpdat
         await db.pod_actions.update_one({"id": action_id}, {"$set": update_dict})
     else:
         from support_pod import get_athlete_interventions, generate_suggested_actions
-        suggested = generate_suggested_actions(athlete_id, get_athlete_interventions(athlete_id))
+        suggested = generate_suggested_actions(athlete_id, await get_athlete_interventions(athlete_id))
         original = next((s for s in suggested if s["id"] == action_id), {})
         action_title = original.get("title", "")
         doc = {
@@ -498,11 +498,11 @@ async def escalate_task(athlete_id: str, action_id: str, body: dict, current_use
     if not task:
         # Check suggested actions
         from support_pod import get_athlete_interventions, generate_suggested_actions
-        suggested = generate_suggested_actions(athlete_id, get_athlete_interventions(athlete_id))
+        suggested = generate_suggested_actions(athlete_id, await get_athlete_interventions(athlete_id))
         task = next((s for s in suggested if s["id"] == action_id), None)
 
     task_title = task.get("title", "Unknown task") if task else "Unknown task"
-    athlete = sp_get_athlete(athlete_id) or {}
+    athlete = await sp_get_athlete(athlete_id) or {}
     athlete_name = athlete.get("full_name", "Unknown")
 
     # Mark the task as escalated
@@ -612,7 +612,7 @@ async def escalate_to_director(athlete_id: str, body: dict, current_user: dict =
 
     now = datetime.now(timezone.utc).isoformat()
     action_id = f"da_{uuid.uuid4().hex[:12]}"
-    athlete = sp_get_athlete(athlete_id) or {}
+    athlete = await sp_get_athlete(athlete_id) or {}
     athlete_name = body.get("athlete_name") or athlete.get("full_name", "Unknown")
 
     doc = {

@@ -17,7 +17,7 @@ router = APIRouter()
 @router.get("/program/coaches")
 async def list_coaches(current_user: dict = get_current_user_dep()):
     """Return available coaches for the persona switcher (directors only)."""
-    return get_coaches()
+    return await get_coaches()
 
 
 @router.get("/program/intelligence")
@@ -34,7 +34,7 @@ async def program_intelligence(
     if current_user["role"] == "club_coach":
         effective_coach_id = current_user["name"]
 
-    data = compute_program_intelligence(coach_id=effective_coach_id)
+    data = await compute_program_intelligence(coach_id=effective_coach_id)
 
     # Trending: program-wide snapshots for director, current-only stats for coach
     if effective_coach_id:

@@ -31,8 +31,8 @@ def _require_director(user: dict):
         raise HTTPException(status_code=403, detail="Only directors can manage roster assignments")
 
 
-def _athlete_by_id(athlete_id: str) -> dict | None:
-    return get_athlete_by_id(athlete_id)
+async def _athlete_by_id(athlete_id: str) -> dict | None:
+    return await get_athlete_by_id(athlete_id)
 
 
 async def _get_open_actions_warning(athlete_id: str, from_coach_id: str) -> list:
@@ -89,7 +89,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
 
     # Build enriched athlete list
     enriched_athletes = []
-    for a in get_athletes():
+    for a in await get_athletes():
         cid = athlete_to_coach.get(a["id"])
         coach = coach_by_id.get(cid) if cid else None
 
@@ -145,9 +145,10 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         })
 
     # Needs attention — build per-athlete risk alerts
-    attention_ids = {item["athlete_id"] for item in get_needing_attention()}
+    needing_attn = await get_needing_attention()
+    attention_ids = {item["athlete_id"] for item in needing_attn}
     attention_lookup = {}
-    for item in get_needing_attention():
+    for item in needing_attn:
         aid = item["athlete_id"]
         if aid not in attention_lookup:
             attention_lookup[aid] = []
@@ -212,7 +213,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         age_map[label].append(a)
     age_groups = [{"label": l, "athletes": ats, "count": len(ats)} for l, ats in sorted(age_map.items())]
 
-    total = len(get_athletes())
+    total = len(await get_athletes())
     return {
         "athletes": enriched_athletes,
         "groups": groups,
@@ -252,7 +253,7 @@ async def reassign_athlete(
     _require_director(current_user)
 
     # Validate athlete exists
-    athlete = _athlete_by_id(athlete_id)
+    athlete = await _athlete_by_id(athlete_id)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
@@ -327,7 +328,7 @@ async def unassign_athlete(
     """Remove coach assignment from an athlete. Director-only."""
     _require_director(current_user)
 
-    athlete = _athlete_by_id(athlete_id)
+    athlete = await _athlete_by_id(athlete_id)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
@@ -725,7 +726,7 @@ async def bulk_assign(body: dict, current_user: dict = get_current_user_dep()):
 
     updated = 0
     for aid in athlete_ids:
-        athlete = _athlete_by_id(aid)
+        athlete = await _athlete_by_id(aid)
         if not athlete:
             continue
         if athlete.get("primary_coach_id") == coach_id:
@@ -754,7 +755,7 @@ async def bulk_remind(body: dict, current_user: dict = get_current_user_dep()):
     from datetime import datetime, timezone
     reminders = []
     for aid in athlete_ids:
-        athlete = _athlete_by_id(aid)
+        athlete = await _athlete_by_id(aid)
         if not athlete:
             continue
         reminders.append({
@@ -786,7 +787,7 @@ async def bulk_note(body: dict, current_user: dict = get_current_user_dep()):
     from datetime import datetime, timezone
     notes = []
     for aid in athlete_ids:
-        athlete = _athlete_by_id(aid)
+        athlete = await _athlete_by_id(aid)
         if not athlete:
             continue
         notes.append({

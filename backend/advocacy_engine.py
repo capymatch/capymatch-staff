@@ -165,7 +165,7 @@ def get_recommendation(rec_id):
     return next((r for r in RECOMMENDATIONS if r["id"] == rec_id), None)
 
 
-def list_recommendations(status_filter=None, athlete_filter=None, school_filter=None, grad_year_filter=None):
+async def list_recommendations(status_filter=None, athlete_filter=None, school_filter=None, grad_year_filter=None):
     """Return recommendations grouped by priority status"""
     recs = list(RECOMMENDATIONS)
 
@@ -183,7 +183,7 @@ def list_recommendations(status_filter=None, athlete_filter=None, school_filter=
 
     if grad_year_filter:
         for r in recs:
-            athlete = next((a for a in get_athletes() if a["id"] == r["athlete_id"]), None)
+            athlete = next((a for a in await get_athletes() if a["id"] == r["athlete_id"]), None)
             if athlete:
                 r["_grad_year"] = athlete.get("grad_year")
         recs = [r for r in recs if r.get("_grad_year") == int(grad_year_filter)]
@@ -223,7 +223,7 @@ def list_recommendations(status_filter=None, athlete_filter=None, school_filter=
     }
 
     # Enrich with athlete photos
-    all_athletes = get_athletes()
+    all_athletes = await get_athletes()
     def enrich(items):
         for r in items:
             ath = next((a for a in all_athletes if a["id"] == r.get("athlete_id")), None)
@@ -240,9 +240,9 @@ def list_recommendations(status_filter=None, athlete_filter=None, school_filter=
     }
 
 
-def create_recommendation(data):
+async def create_recommendation(data):
     """Create a new recommendation (draft)"""
-    athlete = next((a for a in get_athletes() if a["id"] == data["athlete_id"]), None)
+    athlete = next((a for a in await get_athletes() if a["id"] == data["athlete_id"]), None)
     school = next((s for s in SCHOOLS if s["id"] == data.get("school_id")), None)
 
     rec = {
@@ -277,7 +277,7 @@ def create_recommendation(data):
     return rec
 
 
-def update_recommendation(rec_id, updates):
+async def update_recommendation(rec_id, updates):
     """Update draft recommendation fields"""
     rec = get_recommendation(rec_id)
     if not rec:
@@ -301,7 +301,7 @@ def update_recommendation(rec_id, updates):
         rec["fit_summary"] = ", ".join(reasons_map.get(r, r) for r in updates["fit_reasons"])[:80]
 
     if "athlete_id" in updates:
-        athlete = next((a for a in get_athletes() if a["id"] == updates["athlete_id"]), None)
+        athlete = next((a for a in await get_athletes() if a["id"] == updates["athlete_id"]), None)
         if athlete:
             rec["athlete_name"] = athlete["full_name"]
 
@@ -511,7 +511,7 @@ def get_all_relationships():
 # EVENT CONTEXT LOOKUP
 # ============================================================================
 
-def get_event_context(athlete_id, school_id=None):
+async def get_event_context(athlete_id, school_id=None):
     """Get event notes relevant to an athlete-school pair for recommendation builder"""
     context_notes = []
 
@@ -531,7 +531,7 @@ def get_event_context(athlete_id, school_id=None):
             })
 
     # Also build athlete snapshot
-    athlete = next((a for a in get_athletes() if a["id"] == athlete_id), None)
+    athlete = next((a for a in await get_athletes() if a["id"] == athlete_id), None)
     athlete_snapshot = None
     if athlete:
         athlete_snapshot = {

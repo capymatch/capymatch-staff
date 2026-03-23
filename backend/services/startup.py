@@ -143,7 +143,7 @@ async def run_startup(db):
     from program_engine import compute_all as compute_program_intelligence
     from services.snapshots import extract_snapshot_metrics, seed_historical_snapshots
 
-    program_data = compute_program_intelligence()
+    program_data = await compute_program_intelligence()
     current_metrics = extract_snapshot_metrics(program_data)
     await seed_historical_snapshots(db, current_metrics)
 
@@ -151,10 +151,46 @@ async def run_startup(db):
     from services.ownership import refresh_ownership_cache
     await refresh_ownership_cache()
 
-    # ── Step 9: Ensure Knowledge Base indexes ──
+    # ── Step 9: Ensure all MongoDB indexes ──
+
+    # Core collection indexes for fast lookups
+    await db.athletes.create_index("id", unique=True)
+    await db.athletes.create_index("tenant_id")
+    await db.athletes.create_index("primary_coach_id")
+    await db.athletes.create_index("user_id")
+
+    await db.programs.create_index("program_id", unique=True)
+    await db.programs.create_index("athlete_id")
+    await db.programs.create_index("tenant_id")
+    await db.programs.create_index([("athlete_id", 1), ("recruiting_status", 1)])
+
+    await db.interactions.create_index("athlete_id")
+    await db.interactions.create_index("program_id")
+    await db.interactions.create_index([("athlete_id", 1), ("created_at", -1)])
+    await db.interactions.create_index("tenant_id")
+
+    await db.users.create_index("id", unique=True)
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("org_id")
+
+    await db.support_messages.create_index("thread_id")
+    await db.support_messages.create_index([("thread_id", 1), ("created_at", -1)])
+    await db.support_messages.create_index("tenant_id")
+
+    await db.notifications.create_index([("user_id", 1), ("read", 1)])
+    await db.notifications.create_index("tenant_id")
+
+    await db.coach_watch_alerts.create_index("tenant_id")
+
+    # TTL indexes for auto-expiring security data
+    await db.refresh_tokens.create_index("expires_at", expireAfterSeconds=0)
+    await db.refresh_tokens.create_index("user_id")
+
+    log.info("MongoDB indexes ensured on all core collections")
+
+    # Knowledge Base indexes
     kb_count = await db.university_knowledge_base.count_documents({})
     if kb_count > 0:
-        # Data already imported from BSON dump — just ensure search indexes
         await db.university_knowledge_base.create_index("university_name")
         await db.university_knowledge_base.create_index("division")
         await db.university_knowledge_base.create_index("region")
@@ -167,11 +203,13 @@ async def run_startup(db):
         log.info(f"Knowledge Base: {kb_count} schools seeded/refreshed")
 
     from services.athlete_store import get_all, get_interventions
+    all_athletes = await get_all()
+    all_interventions = await get_interventions()
     log.info(
         f"Persistence startup complete: "
-        f"{len(get_all())} athletes, "
+        f"{len(all_athletes)} athletes, "
         f"{len(mock_data.UPCOMING_EVENTS)} events, "
-        f"{len(get_interventions())} interventions recomputed"
+        f"{len(all_interventions)} interventions recomputed"
     )
 
     # ── Schema V2: Structured signals migration ──

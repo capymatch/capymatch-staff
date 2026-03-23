@@ -10,12 +10,12 @@ from services.athlete_store import get_all as get_athletes, get_interventions
 from mock_data import UPCOMING_EVENTS
 
 
-def get_athlete(athlete_id):
-    return next((a for a in get_athletes() if a["id"] == athlete_id), None)
+async def get_athlete(athlete_id):
+    return next((a for a in await get_athletes() if a["id"] == athlete_id), None)
 
 
-def get_athlete_interventions(athlete_id):
-    return [i for i in get_interventions() if i["athlete_id"] == athlete_id]
+async def get_athlete_interventions(athlete_id):
+    return [i for i in await get_interventions() if i["athlete_id"] == athlete_id]
 
 
 def generate_pod_members(athlete):

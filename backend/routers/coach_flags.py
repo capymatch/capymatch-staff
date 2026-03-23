@@ -66,7 +66,7 @@ async def flag_for_followup(
         raise HTTPException(403, "Only coaches can flag follow-ups in V1.")
 
     # Verify athlete exists
-    athlete = get_athlete_by_id(athlete_id)
+    athlete = await get_athlete_by_id(athlete_id)
     if not athlete:
         raise HTTPException(404, "Athlete not found")
 

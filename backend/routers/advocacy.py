@@ -28,7 +28,7 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
     """Get rich athlete context for the recommendation builder."""
     from services.athlete_store import get_all as get_athletes_list
 
-    athlete = next((a for a in get_athletes_list() if a["id"] == athlete_id), None)
+    athlete = next((a for a in await get_athletes_list() if a["id"] == athlete_id), None)
     if not athlete:
         raise HTTPException(404, "Athlete not found")
 
@@ -57,7 +57,7 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
         last_contact = program.get("last_contact_date")
 
     # Get event context
-    event_ctx = get_event_context(athlete_id, school_id)
+    event_ctx = await get_event_context(athlete_id, school_id)
 
     # Get highlight video from athlete profile
     athlete_doc = await db.athletes.find_one({"id": athlete_id}, {"_id": 0, "highlight_video": 1, "profile_url": 1, "video_links": 1})
@@ -66,7 +66,7 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
     from advocacy_engine import list_recommendations
     prev_advocacy = []
     try:
-        all_recs = list_recommendations()
+        all_recs = await list_recommendations()
         for status_key, recs in all_recs.items():
             if isinstance(recs, list):
                 for r in recs:
@@ -108,7 +108,7 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
 
 @router.get("/advocacy/recommendations")
 async def list_all_recommendations(status: str = None, athlete: str = None, school: str = None, grad_year: str = None, current_user: dict = get_current_user_dep()):
-    result = list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
+    result = await list_recommendations(status_filter=status, athlete_filter=athlete, school_filter=school, grad_year_filter=grad_year)
     if current_user["role"] == "director":
         return result
     # Filter each list inside the dict
@@ -122,7 +122,7 @@ async def list_all_recommendations(status: str = None, athlete: str = None, scho
 async def list_advocacy_athletes(q: str = "", current_user: dict = get_current_user_dep()):
     """Search athletes for the recommendation builder autocomplete."""
     from services.athlete_store import get_all as get_athletes_list
-    athletes = get_athletes_list()
+    athletes = await get_athletes_list()
 
     if q and len(q) >= 2:
         q_lower = q.lower()
@@ -147,12 +147,12 @@ async def list_advocacy_athletes(q: str = "", current_user: dict = get_current_u
 
 @router.get("/advocacy/context/{athlete_id}/{school_id}")
 async def get_advocacy_context(athlete_id: str, school_id: str, current_user: dict = get_current_user_dep()):
-    return get_event_context(athlete_id, school_id)
+    return await get_event_context(athlete_id, school_id)
 
 
 @router.get("/advocacy/context/{athlete_id}")
 async def get_advocacy_context_athlete(athlete_id: str, current_user: dict = get_current_user_dep()):
-    return get_event_context(athlete_id)
+    return await get_event_context(athlete_id)
 
 
 @router.get("/advocacy/relationships")
@@ -180,7 +180,7 @@ async def get_relationship(school_id: str, current_user: dict = get_current_user
 
 @router.post("/advocacy/recommendations")
 async def create_new_recommendation(body: RecommendationCreate, current_user: dict = get_current_user_dep()):
-    rec = create_recommendation(body.model_dump())
+    rec = await create_recommendation(body.model_dump())
 
     # Persist to MongoDB
     await db.recommendations.insert_one({**rec})
@@ -202,7 +202,7 @@ async def get_rec_detail(rec_id: str, current_user: dict = get_current_user_dep(
 @router.patch("/advocacy/recommendations/{rec_id}")
 async def update_rec(rec_id: str, body: RecommendationUpdate, current_user: dict = get_current_user_dep()):
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
-    result = update_recommendation(rec_id, updates)
+    result = await update_recommendation(rec_id, updates)
     if not result:
         return {"error": "Recommendation not found"}
 

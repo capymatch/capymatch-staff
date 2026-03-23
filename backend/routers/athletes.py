@@ -15,14 +15,14 @@ router = APIRouter()
 @router.get("/athletes")
 async def get_all_athletes(current_user: dict = get_current_user_dep()):
     visible = get_visible_athlete_ids(current_user)
-    return [a for a in get_athletes() if a["id"] in visible]
+    return [a for a in await get_athletes() if a["id"] in visible]
 
 
 @router.get("/athletes/{athlete_id}")
 async def get_athlete(athlete_id: str, current_user: dict = get_current_user_dep()):
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
-    athlete = get_athlete_by_id(athlete_id)
+    athlete = await get_athlete_by_id(athlete_id)
     if not athlete:
         return {"error": "Athlete not found"}
     return athlete
@@ -82,7 +82,7 @@ async def create_note(athlete_id: str, note: NoteCreate, current_user: dict = ge
 
     # 2. Materialize and resolve suggested (non-persisted) system actions
     from support_pod import get_athlete_interventions, generate_suggested_actions
-    interventions = get_athlete_interventions(athlete_id)
+    interventions = await get_athlete_interventions(athlete_id)
     suggested = generate_suggested_actions(athlete_id, interventions)
     saved_ids = {t["id"] for t in system_tasks}
     all_saved = await db.pod_actions.find({"athlete_id": athlete_id}, {"_id": 0, "id": 1}).to_list(200)

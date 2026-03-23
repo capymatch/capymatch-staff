@@ -52,7 +52,7 @@ async def _find_program_id(athlete_id: str, school_name: str):
 @router.get("/events")
 async def list_events(team: str = None, type: str = None, current_user: dict = get_current_user_dep()):
     """Get all events, filtered by coach's athletes."""
-    result = get_all_events(team_filter=team, type_filter=type)
+    result = await get_all_events(team_filter=team, type_filter=type)
     if current_user["role"] == "director":
         return result
     # Filter both upcoming and past lists
@@ -123,7 +123,7 @@ async def create_event(body: EventCreate, current_user: dict = get_current_user_
 @router.get("/events/{event_id}/prep")
 async def get_prep_data(event_id: str, current_user: dict = get_current_user_dep()):
     """Get prep data: athletes, schools, checklist, blockers"""
-    result = get_event_prep(event_id)
+    result = await get_event_prep(event_id)
     if not result:
         return {"error": "Event not found"}
 
@@ -266,7 +266,7 @@ async def list_event_notes(event_id: str, current_user: dict = get_current_user_
 @router.post("/events/{event_id}/notes")
 async def create_event_note(event_id: str, body: EventNoteCreate, current_user: dict = get_current_user_dep()):
     """Capture a live event note"""
-    result = capture_note(event_id, body.model_dump())
+    result = await capture_note(event_id, body.model_dump())
     if not result:
         return {"error": "Event not found"}
 
@@ -356,7 +356,7 @@ async def log_recruiting_signal(event_id: str, body: EventSignalCreate, current_
 
     # Resolve athlete
     from services.athlete_store import get_by_id as get_athlete_by_id
-    athlete = get_athlete_by_id(athlete_id)
+    athlete = await get_athlete_by_id(athlete_id)
     athlete_name = athlete["full_name"] if athlete else "Unknown"
 
     # 1. Store structured signal as event_note

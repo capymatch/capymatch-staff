@@ -98,7 +98,7 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
 
     # 3. Athletes needing attention (snapshot top 8)
     athletes_attention = []
-    for a in get_needing_attention()[:8]:
+    for a in (await get_needing_attention())[:8]:
         athletes_attention.append({
             "name": a.get("athlete_name", ""),
             "category": a.get("category", ""),
@@ -109,7 +109,7 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
     # 4. Unassigned athletes
     unassigned_ids = get_unassigned_athlete_ids()
     unassigned_athletes = []
-    for a in get_athletes():
+    for a in await get_athletes():
         if a["id"] in unassigned_ids:
             unassigned_athletes.append({"name": a["full_name"], "team": a["team"]})
 

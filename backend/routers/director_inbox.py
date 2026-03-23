@@ -145,7 +145,7 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
     # ── 3. ROSTER ──
     from services.ownership import get_unassigned_athlete_ids
     unassigned = get_unassigned_athlete_ids()
-    athletes = get_athletes()
+    athletes = await get_athletes()
 
     for uid in unassigned:
         ath = next((a for a in athletes if a["id"] == uid), None)

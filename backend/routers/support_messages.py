@@ -283,14 +283,14 @@ async def get_inbox(current_user: dict = get_current_user_dep()):
     if not athlete_id and current_user.get("role") in ("athlete", "parent"):
         from services.athlete_store import get_all as get_all_athletes
         user_email = current_user.get("email", "")
-        for ath in get_all_athletes():
+        for ath in await get_all_athletes():
             if ath.get("email") == user_email or ath.get("id") in user_email:
                 lookup_ids.append(ath["id"])
                 break
         # Also check athlete name match
         if len(lookup_ids) == 1:
             user_name = current_user.get("name", "")
-            for ath in get_all_athletes():
+            for ath in await get_all_athletes():
                 if ath.get("full_name") == user_name:
                     lookup_ids.append(ath["id"])
                     break
@@ -339,7 +339,7 @@ async def get_unread_count(current_user: dict = get_current_user_dep()):
         from services.athlete_store import get_all as get_all_athletes
         user_email = current_user.get("email", "")
         user_name = current_user.get("name", "")
-        for ath in get_all_athletes():
+        for ath in await get_all_athletes():
             if ath.get("email") == user_email or ath.get("full_name") == user_name:
                 lookup_ids.append(ath["id"])
                 break

@@ -52,7 +52,7 @@ async def program_narrative(current_user: dict = get_current_user_dep()):
     if current_user["role"] == "club_coach":
         coach_id = current_user["name"]
 
-    data = compute_program_intelligence(coach_id=coach_id)
+    data = await compute_program_intelligence(coach_id=coach_id)
     view_mode = data.get("view_mode", "program")
 
     try:
@@ -84,7 +84,7 @@ async def event_recap(event_id: str, current_user: dict = get_current_user_dep()
 
     # Enrich notes with athlete names
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes()}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in await get_athletes()}
     enriched_notes = []
     for n in notes:
         if current_user["role"] != "director" and n.get("athlete_id") not in visible:
@@ -119,12 +119,12 @@ async def advocacy_draft(
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
 
-    athlete = sp_get_athlete(athlete_id)
+    athlete = await sp_get_athlete(athlete_id)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
     # Get school info and event context
-    context = get_event_context(athlete_id, school_id)
+    context = await get_event_context(athlete_id, school_id)
     school = context.get("school", {"id": school_id, "name": school_id})
     event_notes = context.get("notes", [])
 
@@ -165,7 +165,7 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
     Uses the SAME data filters as the director's dashboard to ensure
     the AI brief is consistent with what the user sees on screen.
     """
-    attention = filter_by_athlete_id(get_needing_attention(), current_user)
+    attention = filter_by_athlete_id(await get_needing_attention(), current_user)
     events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
 
     # Filter to future events only — same as dashboard
@@ -175,14 +175,14 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
     )[:5]
 
     if current_user["role"] == "director":
-        snapshot = get_snapshot()
+        snapshot = await get_snapshot()
     else:
         visible = get_visible_athlete_ids(current_user)
-        my_athletes = [a for a in get_athletes() if a["id"] in visible]
+        my_athletes = [a for a in await get_athletes() if a["id"] in visible]
         snapshot = get_program_snapshot(my_athletes)
 
     # Enrich attention items with athlete names
-    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes()}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in await get_athletes()}
     for a in attention:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
@@ -309,18 +309,18 @@ def _parse_program_insights(raw: str) -> dict:
 async def suggested_actions(current_user: dict = get_current_user_dep()):
     """V2: Generate structured next-action suggestions for Mission Control."""
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes() if a["id"] in visible}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in await get_athletes() if a["id"] in visible}
 
-    alerts = [a for a in get_alerts() if a.get("athlete_id") in visible]
+    alerts = [a for a in await get_alerts() if a.get("athlete_id") in visible]
     for a in alerts:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
     events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
-    attention = [a for a in get_needing_attention() if a.get("athlete_id") in visible]
+    attention = [a for a in await get_needing_attention() if a.get("athlete_id") in visible]
     for a in attention:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
-    snapshot = get_snapshot() if current_user["role"] == "director" else get_program_snapshot([a for a in get_athletes() if a["id"] in visible])
+    snapshot = (await get_snapshot()) if current_user["role"] == "director" else get_program_snapshot([a for a in await get_athletes() if a["id"] in visible])
 
     # Aging recommendations
     aging_recs = await db.recommendations.find(
@@ -393,11 +393,11 @@ async def pod_actions_ai(athlete_id: str, current_user: dict = get_current_user_
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
 
-    athlete = sp_get_athlete(athlete_id)
+    athlete = await sp_get_athlete(athlete_id)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
-    interventions = get_athlete_interventions(athlete_id)
+    interventions = await get_athlete_interventions(athlete_id)
     saved_actions = await db.pod_actions.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
     timeline_count = await db.athlete_notes.count_documents({"athlete_id": athlete_id})
     timeline_count += await db.assignments.count_documents({"athlete_id": athlete_id})
@@ -423,11 +423,11 @@ async def pod_brief_ai(athlete_id: str, current_user: dict = get_current_user_de
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
 
-    athlete = sp_get_athlete(athlete_id)
+    athlete = await sp_get_athlete(athlete_id)
     if not athlete:
         raise HTTPException(status_code=404, detail="Athlete not found")
 
-    interventions = get_athlete_interventions(athlete_id)
+    interventions = await get_athlete_interventions(athlete_id)
     pod_health = explain_pod_health(athlete, interventions)
     # pod_health returns {"status": "red/yellow/green", "reason": "..."}
     pod_health_data = {"score": pod_health.get("status", "unknown"), "label": pod_health.get("reason", "")}
@@ -475,7 +475,7 @@ async def program_insights_ai(current_user: dict = get_current_user_dep()):
     if current_user["role"] != "director":
         raise HTTPException(status_code=403, detail="Program insights are available to directors only")
 
-    data = compute_program_intelligence()
+    data = await compute_program_intelligence()
     try:
         raw = await generate_program_insights(data)
     except RuntimeError as e:
@@ -485,7 +485,7 @@ async def program_insights_ai(current_user: dict = get_current_user_dep()):
     parsed = _parse_program_insights(raw)
 
     # Confidence indicator
-    n_athletes = len(get_athletes())
+    n_athletes = len(await get_athletes())
     n_events = len(UPCOMING_EVENTS)
     n_recs = await db.recommendations.count_documents({})
     n_notes = await db.event_notes.count_documents({})
@@ -528,7 +528,7 @@ async def event_followups_ai(event_id: str, current_user: dict = get_current_use
 
     # Filter notes by ownership
     visible = get_visible_athlete_ids(current_user)
-    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in get_athletes()}
+    athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in await get_athletes()}
     notes = []
     for n in all_notes:
         if current_user["role"] != "director" and n.get("athlete_id") not in visible:

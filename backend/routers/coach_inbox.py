@@ -124,7 +124,7 @@ async def get_coach_inbox(current_user: dict = get_current_user_dep()):
             })
 
     # ── 3. MISSING DOCUMENTS (coach's athletes) ──
-    athletes = get_athletes()
+    athletes = await get_athletes()
     # Merge live DB profile fields to avoid stale static data
     db_athletes = await db.athletes.find(
         {"id": {"$in": list(visible)}},

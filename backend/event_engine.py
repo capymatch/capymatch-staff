@@ -15,10 +15,13 @@ def get_event(event_id):
     return next((e for e in UPCOMING_EVENTS if e["id"] == event_id), None)
 
 
-def get_all_events(team_filter=None, type_filter=None):
+async def get_all_events(team_filter=None, type_filter=None):
     """Return events grouped as upcoming/past with urgency indicators"""
     upcoming = []
     past = []
+
+    all_athletes_list = await get_athletes()
+    all_interventions_list = await get_interventions()
 
     for event in UPCOMING_EVENTS:
         e = {**event}
@@ -47,7 +50,7 @@ def get_all_events(team_filter=None, type_filter=None):
         # Athlete photos for card display
         athlete_photos = []
         for aid in event.get("athlete_ids", []):
-            ath = next((a for a in get_athletes() if a["id"] == aid), None)
+            ath = next((a for a in all_athletes_list if a["id"] == aid), None)
             if ath:
                 athlete_photos.append({
                     "id": aid,
@@ -58,13 +61,11 @@ def get_all_events(team_filter=None, type_filter=None):
 
         # Athlete readiness summary for card display
         athlete_ids = event.get("athlete_ids", [])
-        all_athletes = get_athletes()
-        all_interventions = get_interventions()
         blockers_count = 0
         needs_attention_count = 0
         ready_count = 0
         for aid in athlete_ids:
-            athlete_intv = [i for i in all_interventions if i["athlete_id"] == aid]
+            athlete_intv = [i for i in all_interventions_list if i["athlete_id"] == aid]
             if any(i["category"] == "blocker" for i in athlete_intv):
                 blockers_count += 1
             elif any(i["category"] == "readiness_issue" for i in athlete_intv):
@@ -85,7 +86,7 @@ def get_all_events(team_filter=None, type_filter=None):
 
         # Apply filters
         if team_filter:
-            roster_athletes = [a for a in get_athletes() if a["id"] in event.get("athlete_ids", [])]
+            roster_athletes = [a for a in all_athletes_list if a["id"] in event.get("athlete_ids", [])]
             teams = {a["team"] for a in roster_athletes}
             if team_filter not in teams:
                 continue
@@ -104,7 +105,7 @@ def get_all_events(team_filter=None, type_filter=None):
     return {"upcoming": upcoming, "past": past}
 
 
-def get_event_prep(event_id):
+async def get_event_prep(event_id):
     """Build prep data for an event: athletes, schools, checklist, blockers"""
     event = get_event(event_id)
     if not event:
@@ -117,13 +118,16 @@ def get_event_prep(event_id):
     athletes_attending = []
     blockers = []
 
+    all_athletes_list = await get_athletes()
+    all_interventions_list = await get_interventions()
+
     for aid in athlete_ids:
-        athlete = next((a for a in get_athletes() if a["id"] == aid), None)
+        athlete = next((a for a in all_athletes_list if a["id"] == aid), None)
         if not athlete:
             continue
 
         # Get interventions for this athlete
-        athlete_interventions = [i for i in get_interventions() if i["athlete_id"] == aid]
+        athlete_interventions = [i for i in all_interventions_list if i["athlete_id"] == aid]
         blocker_interventions = [i for i in athlete_interventions if i["category"] == "blocker"]
 
         # Determine prep status
@@ -215,13 +219,14 @@ def toggle_checklist_item(event_id, item_id):
     return {"item": item, "prepStatus": event["prepStatus"], "prepProgress": {"completed": completed, "total": total}}
 
 
-def capture_note(event_id, data):
+async def capture_note(event_id, data):
     """Capture a live event note"""
     event = get_event(event_id)
     if not event:
         return None
 
-    athlete = next((a for a in get_athletes() if a["id"] == data["athlete_id"]), None)
+    all_athletes_list = await get_athletes()
+    athlete = next((a for a in all_athletes_list if a["id"] == data["athlete_id"]), None)
     interest = data.get("interest_level", "none")
 
     note = {
