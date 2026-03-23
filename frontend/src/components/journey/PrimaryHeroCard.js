@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Loader2, ArrowRight } from "lucide-react";
-import { RAIL_STAGES } from "./constants";
 import "../pipeline/pipeline-premium.css";
 
 export function PrimaryHeroCard({ hero, program }) {
@@ -18,11 +17,8 @@ export function PrimaryHeroCard({ hero, program }) {
   const Icon = hero.icon;
   const isCommitted = hero.type === "committed";
 
-  // Build rail from program data
-  const rail = program?.journey_rail || {};
-  const activeStageKey = rail.active || "added";
-  const activeStageIdx = RAIL_STAGES.findIndex(s => s.key === activeStageKey);
-  const hasRail = activeStageIdx >= 0;
+  // Build rail from program data - not used in card anymore
+  const hasRail = false;
 
   /* ── Committed milestone — special golden treatment ── */
   if (isCommitted) {
@@ -151,52 +147,6 @@ export function PrimaryHeroCard({ hero, program }) {
         </div>
 
         </div>{/* end LEFT */}
-
-        {/* RIGHT: Vertical stage rail */}
-        {hasRail && (
-          <div className="hidden sm:flex flex-col items-start pt-1 pl-4 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: 130 }} data-testid="journey-hero-rail">
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.30)", marginBottom: 10 }}>
-              Where you are
-            </div>
-            <div className="flex flex-col gap-0">
-              {RAIL_STAGES.map((s, stIdx) => {
-                const isActive = stIdx === activeStageIdx;
-                const isPast = stIdx < activeStageIdx;
-                const isLast = stIdx === RAIL_STAGES.length - 1;
-                return (
-                  <div key={s.key} className="flex items-start gap-2.5" data-testid={`journey-rail-stage-${s.key}`}>
-                    <div className="flex flex-col items-center" style={{ width: 12 }}>
-                      <div style={{
-                        width: isActive ? 10 : 6,
-                        height: isActive ? 10 : 6,
-                        borderRadius: "50%",
-                        background: isActive ? "#2ec4b6" : isPast ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.10)",
-                        boxShadow: isActive ? "0 0 8px rgba(46,196,182,0.5)" : "none",
-                        flexShrink: 0,
-                        marginTop: isActive ? 3 : 5,
-                      }} />
-                      {!isLast && (
-                        <div style={{
-                          width: 1.5,
-                          height: 14,
-                          background: isPast ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-                        }} />
-                      )}
-                    </div>
-                    <span style={{
-                      fontSize: 12,
-                      fontWeight: isActive ? 700 : 400,
-                      color: isActive ? "#2ec4b6" : isPast ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.20)",
-                      lineHeight: isActive ? "16px" : "22px",
-                    }}>
-                      {s.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         </div>{/* end flex row */}
       </div>
