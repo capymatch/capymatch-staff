@@ -21,8 +21,12 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
 
   if (total === 0) return null;
 
-  const headline = highItems.length > 0
-    ? `You\u2019re in a good position \u2014 ${highItems.length} school${highItems.length !== 1 ? "s" : ""} need${highItems.length === 1 ? "s" : ""} attention`
+  const headline = highItems.length >= total
+    ? `${highItems.length} school${highItems.length !== 1 ? "s" : ""} need${highItems.length === 1 ? "s" : ""} your attention now`
+    : highItems.length > 0
+    ? `${highItems.length} school${highItems.length !== 1 ? "s" : ""} need${highItems.length === 1 ? "s" : ""} attention \u2014 ${total - highItems.length} on track`
+    : medItems.length > 0
+    ? `${medItems.length} school${medItems.length !== 1 ? "s" : ""} to check on soon`
     : `All ${total} schools are on track`;
 
   const chips = [
