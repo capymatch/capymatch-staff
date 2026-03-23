@@ -155,7 +155,7 @@ export function computeAttention(program, topAction, recapCtx) {
   // ── Primary action — verb-first, school name then urgency ──
   const actionMap = {
     coach_assigned_action: `Follow up with ${name} now`,
-    coach_flag_reply_needed: `Reply to ${name} now`,
+    coach_flag_reply_needed: `Follow up with ${name} now`,
     coach_flag_general: `Follow up with ${name} now`,
     overdue_follow_up: `Follow up with ${name} now`,
     stale_reply: `Follow up with ${name} now`,
@@ -251,22 +251,38 @@ export function computeAttention(program, topAction, recapCtx) {
     reasonShort = 'On track';
   }
 
-  // ── heroReason — concise context line for Hero card ──
+  // ── heroReason — single merged context line for Hero card ──
   let heroReason = null;
   const hasLiveUrgency = (daysUntil !== null && daysUntil <= 0) || ta?.category === 'coach_flag';
+  const isCoachWaiting = ta?.category === 'coach_flag' || ta?.action_key === 'coach_assigned_action' || ta?.action_key === 'coach_flag_reply_needed';
 
   if (hasLiveUrgency) {
-    if (lastActivity) {
-      heroReason = `No response in ${lastActivity} day${lastActivity !== 1 ? 's' : ''} \u2014 follow up now`;
-    } else if (daysUntil !== null && daysUntil < 0) {
-      heroReason = `${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''} overdue \u2014 follow up now`;
-    } else {
-      heroReason = 'Due now \u2014 follow up today';
-    }
+    const parts = [];
+    if (lastActivity) parts.push(`No response in ${lastActivity} day${lastActivity !== 1 ? 's' : ''}`);
+    else if (daysUntil !== null && daysUntil < 0) parts.push(`${Math.abs(daysUntil)} day${Math.abs(daysUntil) !== 1 ? 's' : ''} overdue`);
+    else parts.push('Due now');
+    if (isCoachWaiting) parts.push('Coach is expecting a reply');
+    heroReason = parts.join(' \u00b7 ');
   } else if (recapRank === 'top') {
     heroReason = lastActivity ? `No response in ${lastActivity} days \u2014 momentum slipping` : 'Needs attention \u2014 momentum slipping';
   } else if (recapRank === 'secondary') {
     heroReason = 'Building momentum \u2014 stay active';
+  }
+
+  // ── riskContext — one-line risk signal for high-urgency items ──
+  let riskContext = null;
+  if (tier === 'high' && lastActivity && lastActivity >= 7) {
+    riskContext = 'This conversation is at risk of stalling';
+  } else if (tier === 'high' && daysUntil !== null && daysUntil < -3) {
+    riskContext = 'This conversation is at risk of stalling';
+  }
+
+  // ── ctaLabel — action-aligned CTA ──
+  let ctaLabel = 'Open school';
+  if (tier === 'high') {
+    if (isCoachWaiting || ta?.action_key === 'coach_flag_reply_needed') ctaLabel = 'Reply now';
+    else if (ta?.action_key === 'first_outreach_needed' || ta?.action_key === 'send_intro_email') ctaLabel = 'Send intro';
+    else ctaLabel = 'Follow up now';
   }
 
   // ── prioritySource — what's driving this hero position ──
@@ -332,7 +348,9 @@ export function computeAttention(program, topAction, recapCtx) {
     explainFactors,
     daysUntil,
     owner: ta?.owner || 'athlete',
-    ctaLabel: 'Open school',
+    ctaLabel,
+    coachWaiting: isCoachWaiting,
+    riskContext,
     microSignal,
     program: p,
     topAction: ta,

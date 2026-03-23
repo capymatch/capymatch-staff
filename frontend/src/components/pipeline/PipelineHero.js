@@ -231,7 +231,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       {/* ── SLIDE CONTENT ── */}
       <div className={`relative z-[1] ds-hero-content ${slideClass} px-4 sm:px-6 py-3 sm:py-4`}
       >
-        {/* BADGE ROW — max 2 badges: priority + timing */}
+        {/* BADGE ROW — priority + timing + coach signal */}
         <div className="flex items-center gap-2 flex-wrap mb-2.5" data-testid="hero-status-row">
           <span className="ds-badge" style={{
             background: "rgba(239,68,68,0.12)",
@@ -245,6 +245,14 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               color: "rgba(255,255,255,0.68)",
             }} data-testid="hero-timing-label">
               {current.timingLabel}
+            </span>
+          )}
+          {current.coachWaiting && (
+            <span className="ds-badge" style={{
+              background: "rgba(251,191,36,0.14)",
+              color: "#fcd34d",
+            }} data-testid="hero-coach-waiting-badge">
+              Coach Waiting
             </span>
           )}
         </div>
@@ -283,26 +291,25 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
           }} data-testid="hero-advice-text">
             {current.primaryAction || ""}
           </div>
-          {/* Context line */}
+          {/* Merged context line */}
           <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 13, fontWeight: 400, lineHeight: 1.4 }} data-testid="hero-descriptive-reason">
             {(() => {
               const hr = (current.heroReason || "").trim();
               if (hr) return hr;
               if (current.tier === "high") {
                 const days = p?.signals?.days_since_activity || p?.signals?.days_since_last_activity;
-                return days ? `No response in ${days} day${days !== 1 ? 's' : ''} \u2014 follow up now` : "Needs your attention now";
+                return days ? `No response in ${days} day${days !== 1 ? 's' : ''}` : "Needs your attention now";
               }
               return "On track \u2014 keep momentum";
             })()}
           </div>
 
-          {/* Coach signal — human-readable, not a badge */}
-          {current.topAction?.category === 'coach_flag' && (
-            <div style={{ color: "rgba(255,255,255,0.38)", fontSize: 12, fontWeight: 400, lineHeight: 1.4, marginTop: 2 }} data-testid="hero-coach-signal">
-              Coach is expecting a response
+          {/* Risk context — one line, visible for at-risk conversations */}
+          {current.riskContext && (
+            <div style={{ color: "rgba(255,107,127,0.7)", fontSize: 12, fontWeight: 500, lineHeight: 1.4, marginTop: 4 }} data-testid="hero-risk-context">
+              {current.riskContext}
             </div>
           )}
-
         </div>
 
         {/* META: Owner — only show when it's not the athlete's own task */}
@@ -317,29 +324,14 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         </div>
         )}
 
-        {/* PROGRESS TRACK — premium inline dots */}
+        {/* STAGE LABEL — simplified from full timeline */}
         {!compact && rail && (
-          <>
-          <div className="ds-eyebrow mt-3 mb-0.5" style={{ color: "rgba(255,255,255,0.30)", fontSize: 9, letterSpacing: "0.1em" }}>
-            Where you are right now
+          <div className="mt-3 flex items-center gap-2" data-testid="hero-progress-rail">
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: "rgba(255,255,255,0.30)", textTransform: "uppercase" }}>Stage:</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.65)" }} data-testid="hero-stage-label">
+              {RAIL_STAGES[activeStageIdx]?.label || "Added"}
+            </span>
           </div>
-          <div className="ds-progress-track" data-testid="hero-progress-rail">
-            {RAIL_STAGES.map((s, stIdx) => {
-              const isActive = stIdx === activeStageIdx;
-              const isPast = stIdx < activeStageIdx;
-              return (
-                <div key={s.key}
-                  className={`ds-progress-step${isActive ? " active" : ""}${isPast ? " past" : ""}`}
-                  onClick={() => p && navigate(`/pipeline/${p.program_id}`)}
-                  data-testid={`rail-stage-${s.key}`}
-                >
-                  <div className="ds-progress-dot" />
-                  {s.label}
-                </div>
-              );
-            })}
-          </div>
-          </>
         )}
 
         {/* CTA ROW */}
