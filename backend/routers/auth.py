@@ -379,7 +379,8 @@ async def forgot_password(body: dict):
     })
 
     # Build reset URL
-    frontend_url = _FRONTEND_URL or os.environ.get("CORS_ORIGINS", "").split(",")[0].strip()
+    from config import FRONTEND_URL as _CFG_FRONTEND_URL
+    frontend_url = _CFG_FRONTEND_URL or _FRONTEND_URL
     reset_url = f"{frontend_url}/reset-password?token={raw_token}"
 
     # Send email

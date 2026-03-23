@@ -296,18 +296,30 @@ app.include_router(api_router)
 
 # ── CORS ──
 
+from config import ALLOWED_ORIGINS, ENABLE_SECURITY_HEADERS, ENABLE_HTTPS_REDIRECT, IS_PRODUCTION, log_config
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ── Rate Limiting ──
 
-from middleware.security import RateLimitMiddleware
+from middleware.security import RateLimitMiddleware, SecurityHeadersMiddleware, HTTPSRedirectMiddleware
 app.add_middleware(RateLimitMiddleware)
+
+# ── Security Headers ──
+
+if ENABLE_SECURITY_HEADERS:
+    app.add_middleware(SecurityHeadersMiddleware)
+
+# ── HTTPS Redirect (production only) ──
+
+if ENABLE_HTTPS_REDIRECT and IS_PRODUCTION:
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 
 # ── Logging ──
@@ -316,4 +328,5 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+log_config()
 # force reload

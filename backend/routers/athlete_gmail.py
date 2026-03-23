@@ -62,11 +62,14 @@ async def _gmail_config_with_db(redirect_uri_override=None):
 
 
 def _get_redirect_uri(request: Request) -> str:
+    from config import FRONTEND_URL, FRONTEND_HOSTNAME
     origin = request.headers.get("origin") or request.headers.get("referer") or ""
-    if "preview.emergentagent.com" in origin:
+    if FRONTEND_HOSTNAME and FRONTEND_HOSTNAME in origin:
         from urllib.parse import urlparse
         parsed = urlparse(origin)
         return f"{parsed.scheme}://{parsed.netloc}/api/gmail/callback"
+    if FRONTEND_URL:
+        return f"{FRONTEND_URL}/api/gmail/callback"
     return os.environ.get("GMAIL_REDIRECT_URI", "")
 
 

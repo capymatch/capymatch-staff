@@ -41,6 +41,7 @@ def _safe_invite(doc):
 
 def _build_invite_url(request: Request, token: str) -> str:
     """Build the frontend invite URL from the request origin."""
+    from config import FRONTEND_URL
     origin = request.headers.get("origin", "")
     if not origin:
         referer = request.headers.get("referer", "")
@@ -49,7 +50,7 @@ def _build_invite_url(request: Request, token: str) -> str:
             parsed = urlparse(referer)
             origin = f"{parsed.scheme}://{parsed.netloc}"
     if not origin:
-        origin = "https://data-sync-production.preview.emergentagent.com"
+        origin = FRONTEND_URL
     return f"{origin}/invite/{token}"
 
 

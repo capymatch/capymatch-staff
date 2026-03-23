@@ -1,4 +1,4 @@
-"""Security middleware: rate limiting, input sanitization."""
+"""Security middleware: rate limiting, input sanitization, security headers, HTTPS redirect."""
 
 import time
 import logging
@@ -6,7 +6,7 @@ import bleach
 from collections import defaultdict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 log = logging.getLogger(__name__)
 
@@ -80,3 +80,47 @@ def sanitize_dict(data: dict) -> dict:
         else:
             cleaned[k] = v
     return cleaned
+
+
+# ── Security Headers ──────────────────────────────────────────
+
+SECURITY_HEADERS = {
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "img-src 'self' data: https:; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "font-src 'self' https:; "
+        "connect-src 'self' https:;"
+    ),
+}
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Adds production security headers to every response."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        for header, value in SECURITY_HEADERS.items():
+            response.headers.setdefault(header, value)
+        return response
+
+
+# ── HTTPS Redirect ────────────────────────────────────────────
+
+class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    """Redirects HTTP → HTTPS in production.
+
+    Respects X-Forwarded-Proto from reverse proxies to avoid redirect loops.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+        if proto == "http":
+            url = request.url.replace(scheme="https")
+            return RedirectResponse(url=str(url), status_code=301)
+        return await call_next(request)
