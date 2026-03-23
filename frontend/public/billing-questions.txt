@@ -1,0 +1,24 @@
+Club Billing Questions
+
+1. Who pays?
+a) Club directors pay for org subscription
+b) Individual athletes/families pay
+c) Both
+
+2. Billing model?
+a) Flat monthly/annual tiers (Free/Pro/Premium)
+b) Per-athlete pricing
+c) Hybrid (base + per-athlete)
+
+3. Stripe features needed?
+a) Checkout + subscription management
+b) Above + invoicing & billing portal
+c) Above + usage-based metering
+
+4. Build on existing subscription/stripe code or fresh club-level flow?
+a) Build on existing
+b) Fresh new flow
+
+5. Specific tiers/pricing or placeholder plans?
+a) I have specific tiers - I'll share
+b) Use placeholder plans for now
