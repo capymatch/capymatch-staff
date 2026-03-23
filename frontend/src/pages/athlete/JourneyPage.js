@@ -451,7 +451,9 @@ export default function JourneyPage() {
             </div>
           </div>
 
-          {/* School Info + Logo + Match Score */}
+          {/* School Info + Logo + Match Score — two-column with rail */}
+          <div className="flex gap-4">
+          <div className="flex-1 min-w-0">
           <div className="flex items-start gap-4 mb-3">
             {/* J1: Real university logo */}
             <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-lg" style={{ border: "1px solid rgba(255,255,255,0.06)" }} />
@@ -495,16 +497,70 @@ export default function JourneyPage() {
           </div>
 
           {/* J1: Risk Badges */}
-          <div className="ml-16 mb-3" data-testid="journey-risk-badges">
+          <div className="ml-16 mb-1" data-testid="journey-risk-badges">
             {riskBadges.length > 0 ? (
               <RiskBadgeRow badges={riskBadges} onBadgeClick={(b) => setRiskDrawer(b)} />
             ) : matchScore ? (
               <RiskBadgeEmpty />
             ) : null}
           </div>
+          </div>{/* end left column */}
 
-          {/* Progress Rail */}
-          <ProgressRail rail={rail} onStageClick={handleStageClick} />
+          {/* RIGHT: Vertical stage rail */}
+          {rail && (
+            <div className="hidden sm:flex flex-col items-start pt-1 pl-5 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: 130 }} data-testid="journey-header-rail">
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.30)", marginBottom: 10 }}>
+                Where you are
+              </div>
+              <div className="flex flex-col gap-0">
+                {[
+                  { key: "added", label: "Added" },
+                  { key: "outreach", label: "Outreach" },
+                  { key: "in_conversation", label: "Talking" },
+                  { key: "campus_visit", label: "Visit" },
+                  { key: "offer", label: "Offer" },
+                  { key: "committed", label: "Committed" },
+                ].map((s, stIdx, arr) => {
+                  const activeKey = rail.active || "added";
+                  const activeIdx = arr.findIndex(x => x.key === activeKey);
+                  const isActive = stIdx === activeIdx;
+                  const isPast = stIdx < activeIdx;
+                  const isLast = stIdx === arr.length - 1;
+                  return (
+                    <div key={s.key} className="flex items-start gap-2.5 cursor-pointer" onClick={() => handleStageClick && handleStageClick(s.key)} data-testid={`header-rail-stage-${s.key}`}>
+                      <div className="flex flex-col items-center" style={{ width: 12 }}>
+                        <div style={{
+                          width: isActive ? 10 : 6,
+                          height: isActive ? 10 : 6,
+                          borderRadius: "50%",
+                          background: isActive ? "#2ec4b6" : isPast ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.10)",
+                          boxShadow: isActive ? "0 0 8px rgba(46,196,182,0.5)" : "none",
+                          flexShrink: 0,
+                          marginTop: isActive ? 3 : 5,
+                        }} />
+                        {!isLast && (
+                          <div style={{
+                            width: 1.5,
+                            height: 14,
+                            background: isPast ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+                          }} />
+                        )}
+                      </div>
+                      <span style={{
+                        fontSize: 12,
+                        fontWeight: isActive ? 700 : 400,
+                        color: isActive ? "#2ec4b6" : isPast ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.20)",
+                        lineHeight: isActive ? "16px" : "22px",
+                      }}>
+                        {s.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          </div>{/* end two-column flex */}
         </div>
       </div>
       </div>
