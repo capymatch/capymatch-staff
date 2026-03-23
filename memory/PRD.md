@@ -12,6 +12,12 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### Production Readiness Item #6: Performance — Pagination & Code Splitting (Mar 23, 2026)
+- **API Pagination**: Created `services/pagination.py` with `paginate_list()` (in-memory) and `paginate_query()` (MongoDB cursor) utilities. Added optional `?page=N&page_size=N` query params to 6 key endpoints: athletes, director-inbox, notifications, athlete timeline, athlete notes, support-messages inbox. All endpoints are fully backward-compatible — without params they return the original format.
+- **Pagination envelope**: `{items/data, total, page, page_size, total_pages}`. Max page_size capped at 200.
+- **Frontend Code Splitting**: Converted 45+ page imports in App.js from static to `React.lazy()` with `Suspense` wrapper. Only the login page is eagerly loaded; all other pages are lazy-loaded into separate chunks for faster initial load.
+- **Testing**: 100% pass rate (iteration_243) — 18/18 backend pagination tests + frontend code splitting verified across all 3 roles.
+
 ### Production Readiness Item #5: Redis Shared Cache (Mar 23, 2026)
 - **Redis-backed cache layer** (`services/cache.py`): Replaces process-local `_derived_cache` with Redis, shared across all workers. Structured keys (`cm:athletes:all`, `cm:athlete:{id}`, `cm:derived:{name}`). 30s TTL (configurable via `CACHE_TTL_SECONDS`).
 - **Graceful DB fallback**: If Redis is unavailable, all reads fall through to MongoDB directly. App never crashes due to cache. Warning logged, not error.
@@ -89,14 +95,11 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 2. **Data Architecture** — DONE
 3. **Environment & Config** — DONE
 4. **Error Handling** — DONE
-5. **Performance** — TODO: API pagination, frontend bundle splitting
+5. **Performance** — DONE: API pagination, frontend bundle splitting
 
 ## Prioritized Backlog
 
 ### P1 — Upcoming
-- Environment & Config hardening
-- Error Handling improvements
-- Performance (pagination, bundle splitting)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
 
@@ -109,7 +112,12 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 ## Key API Endpoints
 - `POST /api/auth/login` / `POST /api/auth/refresh` / `POST /api/auth/logout`
 - `GET /api/mission-control` — Role-based dashboard data
-- `GET /api/athletes` — All athletes (direct MongoDB query)
+- `GET /api/athletes` — All athletes (supports `?page=N&page_size=N`)
+- `GET /api/director-inbox` — Inbox items (supports pagination)
+- `GET /api/notifications` — Notifications (supports pagination)
+- `GET /api/athletes/{id}/timeline` — Timeline (supports pagination)
+- `GET /api/athletes/{id}/notes` — Notes (supports pagination)
+- `GET /api/support-messages/inbox` — Message threads (supports pagination)
 - `GET /api/program/intelligence` — Program health analytics (async)
 - `GET /api/events` — Events list (async)
 - `POST /api/ai/auto-insight` — Coach Watch + AI insight (cached)
@@ -120,6 +128,7 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - `/app/backend/middleware/security.py` — Rate limiting, security headers, HTTPS redirect
 - `/app/backend/middleware/error_handling.py` — Request ID, structured error responses, global exception handlers
 - `/app/backend/services/athlete_store.py` — Data access layer (async, DB-direct)
+- `/app/backend/services/pagination.py` — Pagination utilities (in-memory + MongoDB cursor)
 - `/app/backend/services/startup.py` — Indexes + data seeding
 - `/app/backend/program_engine.py` — Program intelligence (async)
 - `/app/backend/event_engine.py` — Event engine (async)
