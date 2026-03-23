@@ -7,94 +7,71 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - **Frontend**: React (CRA) + TailwindCSS + Shadcn/UI
 - **Backend**: FastAPI + MongoDB (Motor async driver)
 - **AI**: Claude Sonnet via Emergent LLM Key
-- **Auth**: JWT-based custom authentication
+- **Auth**: JWT-based custom authentication (access + refresh tokens)
+- **Data Layer**: Direct MongoDB queries (no in-memory cache) + TTL-cached derived data
 
 ## What's Been Implemented
 
-### P0 Cache Staleness Fix — Systemic Data Synchronization (Mar 23, 2026)
-- **Problem**: `athlete_store.py` in-memory cache was not refreshed when athletes completed tasks, marked replies, sent follow-ups, or resolved blockers. Coach and Director dashboards showed stale/ghost data.
-- **Fix**: Added `await recompute_derived_data()` to ALL write endpoints across the backend:
-  - `athlete_dashboard.py`: create_interaction, mark_as_replied, mark_follow_up_sent, create_program, update_program, delete_program
-  - `coach_inbox.py`: coach_escalate
-  - `athletes.py`: assign_owner, send_message
-  - `athlete_onboarding.py`: save_recruiting_profile
-  - Previously patched: athlete_profile.py, school_pod.py, coach_flags.py, support_pods.py, director_actions.py, roster.py, invites.py
-- **Testing**: 100% pass rate (iteration_237) — 11/11 backend tests + frontend verification
+### Production Readiness Item #2: Data Architecture Refactor (Mar 23, 2026)
+- **Problem**: `athlete_store.py` used a single-process in-memory cache (`_CACHE`) that prevented horizontal scaling (multiple backend pods = stale data) and caused data desync between roles.
+- **Fix**: Complete rewrite of `athlete_store.py`:
+  - `get_all()` and `get_by_id()` now query MongoDB directly (always fresh)
+  - Derived data (interventions, signals, alerts) uses TTL-cached pattern (30s auto-refresh)
+  - `recompute_derived_data()` simplified to force-invalidate derived cache after writes
+  - All ~25+ consumer files updated: sync functions converted to async, all callers now use `await`
+  - Affected files: `program_engine.py`, `event_engine.py`, `support_pod.py`, `advocacy_engine.py`, and all routers
+- **MongoDB Indexes Added**: 
+  - `athletes`: id (unique), tenant_id, primary_coach_id, user_id
+  - `programs`: program_id (unique), athlete_id, tenant_id, compound (athlete_id + recruiting_status)
+  - `interactions`: athlete_id, program_id, compound (athlete_id + created_at), tenant_id
+  - `users`: id (unique), email (unique), org_id
+  - `support_messages`: thread_id, compound (thread_id + created_at), tenant_id
+  - `notifications`: compound (user_id + read), tenant_id
+  - `refresh_tokens`: TTL index on expires_at (auto-expiring), user_id
+- **Testing**: 100% pass rate (iteration_239) — 19/19 backend tests + all 3 frontend roles verified
 
-### Authentication & Security Hardening (Mar 23, 2026)
-- **Refresh tokens**: Short-lived access tokens (1h) + long-lived refresh tokens (7d) with rotation. Frontend axios interceptor auto-refreshes on 401. `POST /api/auth/refresh` + `POST /api/auth/logout` endpoints.
-- **Rate limiting**: IP-based rate limiting middleware — login (10/min), register (5/min), forgot-password (3/min), file upload (20/min). Uses X-Forwarded-For for proxy environments.
-- **CORS**: Configurable via `CORS_ORIGINS` env var (default `*` for dev, lock to domain in production).
-- **Input sanitization**: All user text (message body, subject) stripped of HTML tags via `bleach`. Prevents XSS.
-- **File upload content validation**: Magic byte header checks for PDF/PNG/JPG/GIF + extension whitelist + python-magic MIME detection. Blocks disguised executables.
+### Production Readiness Item #1: Authentication & Security Hardening (Mar 23, 2026)
+- **Refresh tokens**: Short-lived access tokens (1h) + long-lived refresh tokens (7d) with rotation
+- **Rate limiting**: IP-based — login (10/min), register (5/min), upload (20/min)
+- **CORS**: Configurable via `CORS_ORIGINS` env var
+- **Input sanitization**: bleach HTML stripping for XSS prevention
+- **File upload validation**: Magic byte header checks + extension whitelist
+
+### P0 Cache Staleness Fix (Mar 23, 2026)
+- Added `await recompute_derived_data()` to ALL write endpoints
+- 100% pass rate (iteration_237)
 
 ### File Upload in Messages (Mar 23, 2026)
-- **Backend**: `POST /api/files/upload` (multipart, 10MB max, images/PDF/docs/CSV/TXT) + `GET /api/files/{file_id}/download`
-- **Storage**: Emergent Object Storage via `services/storage.py`
-- **Messages**: `attachments` array added to reply and send models — stored as `[{file_id, filename, content_type, size}]`
-- **Frontend**: Paperclip button in reply box, file preview chips before send, `AttachmentBubble` in messages with click-to-download
-- **Verified**: All 3 roles (athlete, coach, director), upload/download/validation/display — 16/16 backend + all frontend tests pass
+- `POST /api/files/upload` (10MB max), download endpoint, attachment bubbles in messages
+- 16/16 backend + frontend tests pass (iteration_238)
 
 ### Pipeline & Journey UI Refinements (Mar 23, 2026)
-- Pipeline summary rewritten: action-driven ("Emory needs immediate attention — 5 others need follow-up") instead of generic counts
-- Hero card refined: "Follow up with X now" action, merged context line, COACH WAITING chip, risk context, action-aligned CTA
-- Vertical "Where you are" rail added to both Pipeline hero and Journey header (replacing horizontal rail)
-- Hero card hidden in Pipeline (kanban) view, only shows in Priority view
-- "Why this matters" panel redesigned: top 3 reasons, merged momentum, 2 reasons per school max, simplified language
-- Toggle buttons moved to right, white background removed
+- Pipeline summary, hero cards, vertical stage rail, "Why this matters" panel redesign
 
 ### SchoolPod.js Refactor (Mar 23, 2026)
-- **Before**: 1070-line monolith with 9 internal sub-components
-- **After**: Main page reduced to 441 lines, 9 extracted components in `/components/school-pod/`
-  - `constants.js` (32 lines) — shared configs, API helpers, stage/severity constants
-  - `SignalCard.js` (28 lines) — signal severity card
-  - `TaskItem.js` (203 lines) — task with edit/nudge/reassign/menu
-  - `AddTaskModal.js` (129 lines) — task creation modal
-  - `TimelineItem.js` (14 lines) — timeline event row
-  - `Section.js` (39 lines) — section wrapper + AddNoteForm
-  - `PipelineStatus.js` (35 lines) — pipeline stage bar
-  - `RelationshipTracker.js` (98 lines) — relationship strength tracker
-  - `PlaybookSection.js` (59 lines) — collapsible playbook
-- **Zero logic changes** — exact same behavior, props, and data-testid attributes preserved
-- **Verified**: Screenshot confirms all sections render correctly
+- 1070-line monolith → 441-line main + 9 extracted components
 
 ### Coach Watch V2 — Unified Intelligence Card (Mar 22, 2026)
-- **New endpoint**: `POST /api/ai/auto-insight` — computes Coach Watch state + calls LLM for explanation
-- **Response contract**: `{ state, headline, recommended_action, recommended_action_text, confidence, ai: { insight, urgency }, signals[] }`
-- **Caching**: Per (athlete + school) with 2hr TTL, invalidated on new interactions/replies/follow-ups
-- **Updated existing endpoints**: `ai/next-step` and `ai/journey-summary` now inject Coach Watch context (state, headline, recommended_action, confidence, signals) into LLM prompts
-- **LLM Rule**: "Explain, don't decide" — AI aligns with Coach Watch, never contradicts
-- **New component**: `CoachWatchCardV2.js` — unified card replacing old CoachWatchCard + separate AI buttons
-- **Layout**: Status Chip + Confidence → Headline → Recommended Action → AI Insight → Why Signals
-- **Motion**: Skeleton shimmer on load, fade-in + de-blur for AI insight
-- **Testing**: 100% pass rate (iteration_236)
+- `POST /api/ai/auto-insight` — Coach Watch state + LLM insight
+- Per-athlete cached with 2hr TTL
 
-### Event Signal in Journey Timeline (Mar 22, 2026)
-- Backend fetches `athlete_notes` tagged `event_signal`, renders as `coach_signal` in timeline
-- Frontend `ConversationBubble.js` renders blue center-aligned bubbles with Radio icon
+### Previous Work
+- Event Signal in Journey Timeline, Coach Photo Upload, Notification Redirect Fix, Preview Public Profile Fix
+- Breakdown Drawer, Live Event Capture V2, Event Summary, SchoolPod mobile, Event Signal routing
 
-### Coach Photo Upload (Mar 22, 2026)
-- `POST /api/profile/photo` endpoint for base64 photo upload
-- Clickable avatar on coach profile page with camera hover overlay
-- Photo propagates to sidebar + top bar via auth context
-
-### Notification Redirect Fix (Mar 22, 2026)
-- Fixed `action_url` from non-existent `/my-schools` to `/messages`
-
-### Preview Public Profile Fix (Mar 22, 2026)
-- Backend accepts `staff_preview` param to bypass published check
-- Frontend forwards `?staff_preview=true` to API call
-
-### Previous Session Work (Completed)
-- Breakdown Drawer refinement (progressive reveal, AI narrative)
-- Live Event Capture V2 (full-screen, multi-select, Live Impact Panel)
-- Event Summary "Post-Tournament Control Center"
-- SchoolPod mobile responsiveness
-- Event Signal data routing (pipeline priority + journey tasks)
+## Production Readiness Checklist Status
+1. **Auth & Security** — DONE
+2. **Data Architecture** — DONE
+3. **Environment & Config** — TODO: Remove hardcoded URLs, enforce HTTPS, secure secrets
+4. **Error Handling** — TODO: Global frontend error boundary, structured backend errors, Sentry
+5. **Performance** — TODO: API pagination, frontend bundle splitting
 
 ## Prioritized Backlog
 
 ### P1 — Upcoming
+- Environment & Config hardening
+- Error Handling improvements
+- Performance (pagination, bundle splitting)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
 
@@ -103,23 +80,23 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - AI-Powered Coach Summary
 - Club Billing (Stripe)
 - Multi-Agent Intelligence Pipeline
-- Cross-school AI prioritization ("2 need attention now, 1 safe to wait")
 
 ## Key API Endpoints
-- `POST /api/ai/auto-insight` — Unified Coach Watch + AI insight (cached)
-- `POST /api/ai/next-step` — AI next step (Coach Watch aligned)
-- `POST /api/ai/journey-summary` — AI journey summary (Coach Watch aligned)
-- `GET /api/athlete/programs/{program_id}/journey` — Timeline events
-- `POST /api/events/{event_id}/signals` — Live event signals
-- `POST /api/profile/photo` — Coach photo upload
-- `GET /api/public/profile/{slug}` — Public athlete profile
+- `POST /api/auth/login` / `POST /api/auth/refresh` / `POST /api/auth/logout`
+- `GET /api/mission-control` — Role-based dashboard data
+- `GET /api/athletes` — All athletes (direct MongoDB query)
+- `GET /api/program/intelligence` — Program health analytics (async)
+- `GET /api/events` — Events list (async)
+- `POST /api/ai/auto-insight` — Coach Watch + AI insight (cached)
+- `POST /api/files/upload` — File upload with validation
 
 ## Key Files
-- `/app/backend/routers/ai_features.py` — All AI endpoints
-- `/app/backend/routers/athlete_dashboard.py` — Coach Watch engine, journey timeline
-- `/app/frontend/src/components/journey/CoachWatchCardV2.js` — Unified intelligence card
-- `/app/frontend/src/pages/athlete/JourneyPage.js` — Journey page
-- `/app/frontend/src/pages/ProfilePage.js` — Coach profile with photo upload
+- `/app/backend/services/athlete_store.py` — Data access layer (async, DB-direct)
+- `/app/backend/services/startup.py` — Indexes + data seeding
+- `/app/backend/program_engine.py` — Program intelligence (async)
+- `/app/backend/event_engine.py` — Event engine (async)
+- `/app/backend/support_pod.py` — Support pod helpers (async)
+- `/app/backend/routers/mission_control.py` — Mission control dashboard
 
 ## Test Credentials
 - **Athlete**: emma.chen@athlete.capymatch.com / athlete123
