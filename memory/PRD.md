@@ -21,6 +21,21 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
   - Previously patched: athlete_profile.py, school_pod.py, coach_flags.py, support_pods.py, director_actions.py, roster.py, invites.py
 - **Testing**: 100% pass rate (iteration_237) — 11/11 backend tests + frontend verification
 
+### File Upload in Messages (Mar 23, 2026)
+- **Backend**: `POST /api/files/upload` (multipart, 10MB max, images/PDF/docs/CSV/TXT) + `GET /api/files/{file_id}/download`
+- **Storage**: Emergent Object Storage via `services/storage.py`
+- **Messages**: `attachments` array added to reply and send models — stored as `[{file_id, filename, content_type, size}]`
+- **Frontend**: Paperclip button in reply box, file preview chips before send, `AttachmentBubble` in messages with click-to-download
+- **Verified**: All 3 roles (athlete, coach, director), upload/download/validation/display — 16/16 backend + all frontend tests pass
+
+### Pipeline & Journey UI Refinements (Mar 23, 2026)
+- Pipeline summary rewritten: action-driven ("Emory needs immediate attention — 5 others need follow-up") instead of generic counts
+- Hero card refined: "Follow up with X now" action, merged context line, COACH WAITING chip, risk context, action-aligned CTA
+- Vertical "Where you are" rail added to both Pipeline hero and Journey header (replacing horizontal rail)
+- Hero card hidden in Pipeline (kanban) view, only shows in Priority view
+- "Why this matters" panel redesigned: top 3 reasons, merged momentum, 2 reasons per school max, simplified language
+- Toggle buttons moved to right, white background removed
+
 ### SchoolPod.js Refactor (Mar 23, 2026)
 - **Before**: 1070-line monolith with 9 internal sub-components
 - **After**: Main page reduced to 441 lines, 9 extracted components in `/components/school-pod/`
