@@ -3,55 +3,61 @@ import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { ThemeProvider } from "./ThemeContext";
 import { SubscriptionProvider } from "./lib/subscription";
+import ErrorBoundary from "./components/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
+import { lazy, Suspense } from "react";
+
+// ── Eagerly loaded (auth flow — needed immediately) ──
 import LoginPage from "./pages/LoginPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import MissionControl from "./pages/MissionControl";
-import SupportPod from "./pages/SupportPod";
-import SchoolPod from "./pages/SchoolPod";
-import EventHome from "./pages/EventHome";
-import EventPrep from "./pages/EventPrep";
-import LiveEvent from "./pages/LiveEvent";
-import EventSummary from "./pages/EventSummary";
-import AdvocacyHome from "./pages/AdvocacyHome";
-import RecommendationBuilder from "./pages/RecommendationBuilder";
-import RecommendationDetail from "./pages/RecommendationDetail";
-import RelationshipDetail from "./pages/RelationshipDetail";
-import ProgramIntelligence from "./pages/ProgramIntelligence";
-import InvitesPage from "./pages/InvitesPage";
-import AcceptInvitePage from "./pages/AcceptInvitePage";
-import AdminStatus from "./pages/AdminStatus";
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-import AdminIntegrationsPage from "./pages/admin/AdminIntegrationsPage";
-import AdminUniversitiesPage from "./pages/admin/AdminUniversitiesPage";
-import AdminUsersPage from "./pages/admin/AdminUsersPage";
-import AdminUserDetailPage from "./pages/admin/AdminUserDetailPage";
-import AdminSubscriptionsPage from "./pages/admin/AdminSubscriptionsPage";
-import AdminOrganizationsPage from "./pages/admin/AdminOrganizationsPage";
-import RosterPage from "./pages/RosterPage";
-import ProfilePage from "./pages/ProfilePage";
-import AthleteComingSoonPage from "./pages/AthleteComingSoonPage";
-import AthleteSettingsPage from "./pages/athlete/SettingsPage";
-import AthleteAccountPage from "./pages/athlete/AccountPage";
-import AthleteBillingPage from "./pages/athlete/BillingPage";
-import AthleteDashboard from "./pages/AthleteDashboard";
-import AthleteProfilePage from "./pages/athlete/ProfilePage";
-import RecapPage from "./pages/athlete/RecapPage";
-import AthleteCalendarPage from "./pages/athlete/CalendarPage";
-import AthleteSchoolsPage from "./pages/athlete/SchoolsPage";
-import AthleteSchoolDetailPage from "./pages/athlete/SchoolDetailPage";
-import AthletePipelinePage from "./pages/athlete/PipelinePage";
-import AthleteJourneyPage from "./pages/athlete/JourneyPage";
-import AthleteOnboardingQuiz from "./pages/athlete/OnboardingQuiz";
-import AthletePublicProfile from "./pages/public/AthletePublicProfile";
-import InternalAthleteProfile from "./pages/staff/InternalAthleteProfile";
-import LoopInsightsPage from "./pages/staff/LoopInsightsPage";
-import AthleteInboxPage from "./pages/athlete/InboxPage";
-import AthleteMessagesPage from "./pages/athlete/MessagesPage";
-import AthleteOutreachPage from "./pages/athlete/OutreachAnalysisPage";
-import AthleteHighlightPage from "./pages/athlete/HighlightAdvisorPage";
-import SocialSpotlight from "./pages/SocialSpotlight";
+
+// ── Lazy-loaded pages (code-split into separate chunks) ──
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const MissionControl = lazy(() => import("./pages/MissionControl"));
+const SupportPod = lazy(() => import("./pages/SupportPod"));
+const SchoolPod = lazy(() => import("./pages/SchoolPod"));
+const EventHome = lazy(() => import("./pages/EventHome"));
+const EventPrep = lazy(() => import("./pages/EventPrep"));
+const LiveEvent = lazy(() => import("./pages/LiveEvent"));
+const EventSummary = lazy(() => import("./pages/EventSummary"));
+const AdvocacyHome = lazy(() => import("./pages/AdvocacyHome"));
+const RecommendationBuilder = lazy(() => import("./pages/RecommendationBuilder"));
+const RecommendationDetail = lazy(() => import("./pages/RecommendationDetail"));
+const RelationshipDetail = lazy(() => import("./pages/RelationshipDetail"));
+const ProgramIntelligence = lazy(() => import("./pages/ProgramIntelligence"));
+const InvitesPage = lazy(() => import("./pages/InvitesPage"));
+const AcceptInvitePage = lazy(() => import("./pages/AcceptInvitePage"));
+const AdminStatus = lazy(() => import("./pages/AdminStatus"));
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const AdminIntegrationsPage = lazy(() => import("./pages/admin/AdminIntegrationsPage"));
+const AdminUniversitiesPage = lazy(() => import("./pages/admin/AdminUniversitiesPage"));
+const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
+const AdminUserDetailPage = lazy(() => import("./pages/admin/AdminUserDetailPage"));
+const AdminSubscriptionsPage = lazy(() => import("./pages/admin/AdminSubscriptionsPage"));
+const AdminOrganizationsPage = lazy(() => import("./pages/admin/AdminOrganizationsPage"));
+const RosterPage = lazy(() => import("./pages/RosterPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const AthleteComingSoonPage = lazy(() => import("./pages/AthleteComingSoonPage"));
+const AthleteSettingsPage = lazy(() => import("./pages/athlete/SettingsPage"));
+const AthleteAccountPage = lazy(() => import("./pages/athlete/AccountPage"));
+const AthleteBillingPage = lazy(() => import("./pages/athlete/BillingPage"));
+const AthleteDashboard = lazy(() => import("./pages/AthleteDashboard"));
+const AthleteProfilePage = lazy(() => import("./pages/athlete/ProfilePage"));
+const RecapPage = lazy(() => import("./pages/athlete/RecapPage"));
+const AthleteCalendarPage = lazy(() => import("./pages/athlete/CalendarPage"));
+const AthleteSchoolsPage = lazy(() => import("./pages/athlete/SchoolsPage"));
+const AthleteSchoolDetailPage = lazy(() => import("./pages/athlete/SchoolDetailPage"));
+const AthletePipelinePage = lazy(() => import("./pages/athlete/PipelinePage"));
+const AthleteJourneyPage = lazy(() => import("./pages/athlete/JourneyPage"));
+const AthleteOnboardingQuiz = lazy(() => import("./pages/athlete/OnboardingQuiz"));
+const AthletePublicProfile = lazy(() => import("./pages/public/AthletePublicProfile"));
+const InternalAthleteProfile = lazy(() => import("./pages/staff/InternalAthleteProfile"));
+const LoopInsightsPage = lazy(() => import("./pages/staff/LoopInsightsPage"));
+const AthleteInboxPage = lazy(() => import("./pages/athlete/InboxPage"));
+const AthleteMessagesPage = lazy(() => import("./pages/athlete/MessagesPage"));
+const AthleteOutreachPage = lazy(() => import("./pages/athlete/OutreachAnalysisPage"));
+const AthleteHighlightPage = lazy(() => import("./pages/athlete/HighlightAdvisorPage"));
+const SocialSpotlight = lazy(() => import("./pages/SocialSpotlight"));
 
 function getHomeRoute(role, onboardingDone) {
   if (role === "platform_admin") return "/admin/dashboard";
@@ -89,21 +95,26 @@ function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
   return children;
 }
 
+function LazyFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+    </div>
+  );
+}
+
 function AppRoutes() {
   const { user, loading, onboardingDone } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
-      </div>
-    );
+    return <LazyFallback />;
   }
 
   const home = user ? getHomeRoute(user.role, onboardingDone) : "/login";
 
   return (
-    <Routes>
+    <Suspense fallback={<LazyFallback />}>
+      <Routes>
       <Route path="/login" element={user ? <Navigate to={home} replace /> : <LoginPage />} />
       <Route path="/forgot-password" element={user ? <Navigate to={home} replace /> : <ForgotPasswordPage />} />
       <Route path="/reset-password" element={user ? <Navigate to={home} replace /> : <ResetPasswordPage />} />
@@ -160,11 +171,10 @@ function AppRoutes() {
       <Route path="/s/:shortId" element={<AthletePublicProfile />} />
 
       <Route path="*" element={<Navigate to={home} replace />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
-
-import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   return (

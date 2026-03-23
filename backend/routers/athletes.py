@@ -1,21 +1,30 @@
 """Athletes — athlete listing, quick actions, timeline."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, timezone
+from typing import Optional
 import uuid
 from db_client import db
 from auth_middleware import get_current_user_dep
 from services.ownership import get_visible_athlete_ids, can_access_athlete
 from services.athlete_store import get_all as get_athletes, get_by_id as get_athlete_by_id
+from services.pagination import paginate_list, paginate_query
 from models import NoteCreate, AssignCreate, MessageCreate
 
 router = APIRouter()
 
 
 @router.get("/athletes")
-async def get_all_athletes(current_user: dict = get_current_user_dep()):
+async def get_all_athletes(
+    page: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1, le=200),
+    current_user: dict = get_current_user_dep(),
+):
     visible = get_visible_athlete_ids(current_user)
-    return [a for a in await get_athletes() if a["id"] in visible]
+    all_athletes = [a for a in await get_athletes() if a["id"] in visible]
+    if page is not None:
+        return paginate_list(all_athletes, page=page, page_size=page_size or 50)
+    return all_athletes
 
 
 @router.get("/athletes/{athlete_id}")
@@ -164,10 +173,29 @@ async def send_message(athlete_id: str, message: MessageCreate, current_user: di
 
 
 @router.get("/athletes/{athlete_id}/timeline")
-async def get_athlete_timeline(athlete_id: str, current_user: dict = get_current_user_dep()):
+async def get_athlete_timeline(
+    athlete_id: str,
+    page: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1, le=200),
+    current_user: dict = get_current_user_dep(),
+):
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
     """Get all notes, assignments, messages for an athlete"""
+    if page is not None:
+        ps = page_size or 50
+        notes_page = await paginate_query(
+            db.athlete_notes, {"athlete_id": athlete_id}, {"_id": 0},
+            sort=[("created_at", -1)], page=page, page_size=ps,
+        )
+        assignments = await db.assignments.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+        messages = await db.messages.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
+        return {
+            "notes": notes_page["items"],
+            "assignments": assignments,
+            "messages": messages,
+            **{k: notes_page[k] for k in ("total", "page", "page_size", "total_pages")},
+        }
     notes = await db.athlete_notes.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
     assignments = await db.assignments.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
     messages = await db.messages.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
@@ -175,9 +203,20 @@ async def get_athlete_timeline(athlete_id: str, current_user: dict = get_current
 
 
 @router.get("/athletes/{athlete_id}/notes")
-async def get_athlete_notes(athlete_id: str, current_user: dict = get_current_user_dep()):
+async def get_athlete_notes(
+    athlete_id: str,
+    page: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1, le=200),
+    current_user: dict = get_current_user_dep(),
+):
     if not can_access_athlete(current_user, athlete_id):
         raise HTTPException(status_code=403, detail="You don't have access to this athlete")
+    if page is not None:
+        result = await paginate_query(
+            db.athlete_notes, {"athlete_id": athlete_id}, {"_id": 0},
+            sort=[("created_at", -1)], page=page, page_size=page_size or 50,
+        )
+        return {"notes": result["items"], **{k: result[k] for k in ("total", "page", "page_size", "total_pages")}}
     notes = await db.athlete_notes.find(
         {"athlete_id": athlete_id}, {"_id": 0}
     ).sort("created_at", -1).to_list(50)

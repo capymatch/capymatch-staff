@@ -9,7 +9,7 @@ import os
 import uuid
 import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
 from db_client import db
@@ -271,7 +271,11 @@ async def reply_to_thread(thread_id: str, reply: ReplyMessage, current_user: dic
 
 
 @router.get("/support-messages/inbox")
-async def get_inbox(current_user: dict = get_current_user_dep()):
+async def get_inbox(
+    page: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1, le=200),
+    current_user: dict = get_current_user_dep(),
+):
     """Get all support message threads for the current user."""
     user_id = current_user["id"]
     athlete_id = current_user.get("athlete_id")
@@ -318,6 +322,15 @@ async def get_inbox(current_user: dict = get_current_user_dep()):
         t["unread_count"] = unread
 
     total_unread = sum(t["unread_count"] for t in threads)
+
+    if page is not None:
+        from services.pagination import paginate_list
+        result = paginate_list(threads, page=page, page_size=page_size or 20)
+        return {
+            "threads": result["items"],
+            "total_unread": total_unread,
+            **{k: result[k] for k in ("total", "page", "page_size", "total_pages")},
+        }
 
     return {
         "threads": threads,

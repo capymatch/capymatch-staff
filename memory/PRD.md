@@ -12,6 +12,14 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### Production Readiness Item #5: Redis Shared Cache (Mar 23, 2026)
+- **Redis-backed cache layer** (`services/cache.py`): Replaces process-local `_derived_cache` with Redis, shared across all workers. Structured keys (`cm:athletes:all`, `cm:athlete:{id}`, `cm:derived:{name}`). 30s TTL (configurable via `CACHE_TTL_SECONDS`).
+- **Graceful DB fallback**: If Redis is unavailable, all reads fall through to MongoDB directly. App never crashes due to cache. Warning logged, not error.
+- **Cross-worker invalidation**: `recompute_derived_data()` and `invalidate_athlete()` delete Redis keys, visible to all workers instantly.
+- **Observability**: `/api/cache/stats` endpoint returns `{available, stats: {hits, misses, errors, hit_rate_pct}}`. 98.3% hit rate observed in testing.
+- **Config**: `REDIS_URL`, `CACHE_ENABLED`, `CACHE_TTL_SECONDS` in `.env` and `config.py`.
+- **Testing**: 100% pass rate (iteration_242) — 16/16 backend + frontend + graceful fallback verified.
+
 ### Production Readiness Item #4: Error Handling (Mar 23, 2026)
 - **Request ID middleware**: Every request gets a unique `X-Request-ID` (generated or forwarded). Attached to `request.state` and response header. Included in all error responses for tracing.
 - **Global exception handlers**: 4 handlers — `HTTPException`, `StarletteHTTPException`, `RequestValidationError`, `Exception` catch-all. All return structured `{error: {code, message, request_id}}`. No stack traces exposed.

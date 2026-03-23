@@ -8,10 +8,12 @@ v3: Enriched with Risk Engine — severity, trajectory, confidence,
 """
 
 from datetime import datetime, timezone
-from fastapi import APIRouter
+from typing import Optional
+from fastapi import APIRouter, Query
 from auth_middleware import get_current_user_dep
 from db_client import db
 from services.athlete_store import get_all as get_athletes
+from services.pagination import paginate_list
 from advocacy_engine import RECOMMENDATIONS
 from risk_engine import evaluate_risk
 
@@ -84,7 +86,11 @@ def _days_between(dt, now):
 
 
 @router.get("/director-inbox")
-async def get_director_inbox(current_user: dict = get_current_user_dep()):
+async def get_director_inbox(
+    page: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1, le=200),
+    current_user: dict = get_current_user_dep(),
+):
     raw_items = []
     now = datetime.now(timezone.utc)
 
@@ -374,4 +380,7 @@ async def get_director_inbox(current_user: dict = get_current_user_dep()):
     merged.sort(key=lambda x: (-x["riskScore"], x["timestamp"]))
 
     high_count = sum(1 for m in merged if m["priority"] == "high")
+    if page is not None:
+        result = paginate_list(merged, page=page, page_size=page_size or 20)
+        return {**result, "count": len(merged), "highCount": high_count}
     return {"items": merged, "count": len(merged), "highCount": high_count}
