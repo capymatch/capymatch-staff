@@ -224,10 +224,12 @@ export default function PipelinePage() {
       {/* ═══ CONTEXT LAYER: Live Summary ═══ */}
       {viewMode === "priority" && <MomentumInsight attention={allAttention} recapData={recapData} onViewBreakdown={() => setBreakdownOpen(true)} />}
 
-      {/* ═══ HERO ═══ */}
+      {/* ═══ HERO — only in Priority view ═══ */}
+      {viewMode === "priority" && (
       <div style={{ marginBottom: 24 }}>
         <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
       </div>
+      )}
 
       {/* ═══ UPGRADE PROMPT ═══ */}
       {nearLimit && !usage.unlimited && usage.limit > 0 && (
