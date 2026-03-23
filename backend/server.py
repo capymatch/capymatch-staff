@@ -70,6 +70,7 @@ from routers.admin_user_management import router as admin_user_mgmt_router
 from routers.program_metrics import router as program_metrics_router
 from routers.public_profile import router as public_profile_router
 from routers.youtube_feed import router as youtube_feed_router
+from routers.file_upload import router as file_upload_router
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +190,11 @@ async def startup():
     await run_startup(db)
     coach_watch_task = asyncio.create_task(coach_watch_weekly_scan())
     logger.info("Coach Watch background task started (7-day interval)")
+    try:
+        from services.storage import init_storage
+        init_storage()
+    except Exception as e:
+        logger.warning(f"Storage init failed (non-fatal): {e}")
 
 
 @app.on_event("shutdown")
@@ -283,6 +289,7 @@ api_router.include_router(school_pod_router)
 api_router.include_router(momentum_recap_router)
 api_router.include_router(loop_analytics_router)
 api_router.include_router(youtube_feed_router)
+api_router.include_router(file_upload_router)
 
 app.include_router(api_router)
 

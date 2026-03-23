@@ -32,9 +32,11 @@ class SendMessage(BaseModel):
     recipient_ids: list[str] = []       # user IDs of recipients
     school_id: Optional[str] = None     # optional school context link
     thread_id: Optional[str] = None     # reply to existing thread
+    attachments: list[dict] = []        # [{file_id, filename, content_type, size}]
 
 class ReplyMessage(BaseModel):
     body: str
+    attachments: list[dict] = []  # [{file_id, filename, content_type, size}]
 
 
 # ─── Helpers ──────────────────────────────────────────────────
@@ -121,6 +123,7 @@ async def send_message(msg: SendMessage, current_user: dict = get_current_user_d
         "recipients": [{"id": r["id"], "name": r["name"]} for r in recipients],
         "subject": msg.subject,
         "body": msg.body,
+        "attachments": msg.attachments or [],
         "read_by": [current_user["id"]],
         "created_at": now,
     }
@@ -215,6 +218,7 @@ async def reply_to_thread(thread_id: str, reply: ReplyMessage, current_user: dic
         "recipients": [],  # reply goes to all thread participants
         "subject": f"Re: {thread.get('subject', '')}",
         "body": reply.body,
+        "attachments": reply.attachments or [],
         "read_by": [current_user["id"]],
         "created_at": now,
     }

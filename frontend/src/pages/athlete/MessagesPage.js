@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { MessageSquare, Send, ChevronLeft, Loader2 } from "lucide-react";
+import { MessageSquare, Send, ChevronLeft, Loader2, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -139,12 +139,58 @@ function ThreadList({ threads, onSelect }) {
   );
 }
 
+/* ── Attachment display ── */
+function AttachmentBubble({ att }) {
+  const isImage = att.content_type?.startsWith("image/");
+  const token = localStorage.getItem("capymatch_token");
+
+  const handleDownload = async () => {
+    try {
+      const res = await axios.get(`${API}/files/${att.file_id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = att.filename || "file";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download file");
+    }
+  };
+
+  return (
+    <button
+      onClick={handleDownload}
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors hover:bg-slate-50"
+      style={{ borderColor: "#e2e8f0", background: "#fafafa", cursor: "pointer" }}
+      data-testid={`attachment-${att.file_id}`}
+    >
+      {isImage ? <ImageIcon style={{ width: 14, height: 14, color: "#0d9488" }} /> : <FileText style={{ width: 14, height: 14, color: "#6366f1" }} />}
+      <span style={{ fontSize: 12, color: "#334155", fontWeight: 500, maxWidth: 160 }} className="truncate">{att.filename}</span>
+      <span style={{ fontSize: 10, color: "#94a3b8" }}>{formatFileSize(att.size)}</span>
+    </button>
+  );
+}
+
+function formatFileSize(bytes) {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /* ── Thread Detail / Conversation View ── */
 function ThreadDetail({ threadId, onBack }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchThread = useCallback(async () => {
     try {
@@ -159,12 +205,47 @@ function ThreadDetail({ threadId, onBack }) {
 
   useEffect(() => { fetchThread(); }, [fetchThread]);
 
+  const handleFileSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const token = localStorage.getItem("capymatch_token");
+    setUploading(true);
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is too large (max 10 MB)`); continue; }
+      try {
+        const form = new FormData();
+        form.append("file", file);
+        const res = await axios.post(`${API}/files/upload`, form, {
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+        });
+        setAttachments(prev => [...prev, res.data]);
+      } catch {
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAttachment = (fileId) => {
+    setAttachments(prev => prev.filter(a => a.file_id !== fileId));
+  };
+
   const sendReply = async () => {
-    if (!reply.trim()) return;
+    if (!reply.trim() && attachments.length === 0) return;
     setSending(true);
     try {
-      await axios.post(`${API}/support-messages/${threadId}/reply`, { body: reply.trim() });
+      await axios.post(`${API}/support-messages/${threadId}/reply`, {
+        body: reply.trim(),
+        attachments: attachments.map(a => ({
+          file_id: a.file_id,
+          filename: a.filename,
+          content_type: a.content_type,
+          size: a.size,
+        })),
+      });
       setReply("");
+      setAttachments([]);
       fetchThread();
     } catch {
       toast.error("Failed to send reply");
@@ -202,6 +283,7 @@ function ThreadDetail({ threadId, onBack }) {
       <div style={{ flex: 1, padding: "16px 0", display: "flex", flexDirection: "column", gap: 12 }}>
         {messages.map(m => {
           const isCoach = m.sender_role === "club_coach" || m.sender_role === "director";
+          const msgAttachments = m.attachments || [];
           return (
             <div key={m.id} style={{ border: "1px solid #e8eaed", borderRadius: 8, overflow: "hidden" }} data-testid={`message-${m.id}`}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", backgroundColor: "#fafafa" }}>
@@ -222,15 +304,60 @@ function ThreadDetail({ threadId, onBack }) {
               </div>
               <div style={{ padding: "14px 16px 14px 56px" }}>
                 <p style={{ fontSize: 14, color: "#202124", lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0 }}>{m.body}</p>
+                {msgAttachments.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                    {msgAttachments.map(att => <AttachmentBubble key={att.file_id} att={att} />)}
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Reply box */}
+      {/* Reply box with upload */}
       <div style={{ border: "1px solid #e8eaed", borderRadius: 8, padding: 12, marginTop: 8 }}>
+        {/* Attachment previews */}
+        {attachments.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }} data-testid="reply-attachments">
+            {attachments.map(att => (
+              <div key={att.file_id} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md" style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }}>
+                <Paperclip style={{ width: 12, height: 12, color: "#64748b" }} />
+                <span style={{ fontSize: 11, color: "#334155", fontWeight: 500, maxWidth: 120 }} className="truncate">{att.filename}</span>
+                <button onClick={() => removeAttachment(att.file_id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }} data-testid={`remove-attachment-${att.file_id}`}>
+                  <X style={{ width: 12, height: 12, color: "#94a3b8" }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+          {/* Upload button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+            onChange={handleFileSelect}
+            style={{ display: "none" }}
+            data-testid="file-input"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            style={{
+              padding: 8, borderRadius: 8, border: "1px solid #e8eaed",
+              background: "transparent", cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center",
+              opacity: uploading ? 0.5 : 1, flexShrink: 0,
+            }}
+            title="Attach file"
+            data-testid="attach-file-btn"
+          >
+            {uploading ? <Loader2 style={{ width: 16, height: 16, color: "#80868b" }} className="animate-spin" /> : <Paperclip style={{ width: 16, height: 16, color: "#80868b" }} />}
+          </button>
+
           <textarea
             value={reply}
             onChange={e => setReply(e.target.value)}
@@ -246,12 +373,12 @@ function ThreadDetail({ threadId, onBack }) {
           />
           <button
             onClick={sendReply}
-            disabled={!reply.trim() || sending}
+            disabled={(!reply.trim() && attachments.length === 0) || sending}
             style={{
               padding: "8px 20px", borderRadius: 18, border: "none",
               background: "#0d9488", color: "white", fontSize: 13, fontWeight: 600,
               cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-              opacity: !reply.trim() || sending ? 0.4 : 1,
+              opacity: (!reply.trim() && attachments.length === 0) || sending ? 0.4 : 1,
             }}
             data-testid="thread-reply-send"
           >
