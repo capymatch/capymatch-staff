@@ -2,6 +2,7 @@
 Object storage service — wraps Emergent Object Storage for file uploads.
 """
 import os
+import re
 import uuid
 import logging
 import requests
@@ -54,8 +55,11 @@ def get_object(path: str) -> tuple:
 
 
 def upload_file(data: bytes, filename: str, content_type: str, user_id: str) -> dict:
-    ext = filename.rsplit(".", 1)[-1] if "." in filename else "bin"
+    # Extract extension — only allow alphanumeric (no path traversal via extension)
+    raw_ext = filename.rsplit(".", 1)[-1] if "." in filename else "bin"
+    ext = re.sub(r"[^a-zA-Z0-9]", "", raw_ext)[:10] or "bin"
     file_id = str(uuid.uuid4())
+    # UUID-based path — no user-supplied components in the directory structure
     path = f"{APP_NAME}/uploads/{user_id}/{file_id}.{ext}"
     result = put_object(path, data, content_type)
     return {
