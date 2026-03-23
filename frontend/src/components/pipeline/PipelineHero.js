@@ -231,6 +231,10 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       {/* ── SLIDE CONTENT ── */}
       <div className={`relative z-[1] ds-hero-content ${slideClass} px-4 sm:px-6 py-3 sm:py-4`}
       >
+        <div className="flex gap-4">
+        {/* LEFT: badges, school, action, CTA */}
+        <div className="flex-1 min-w-0">
+
         {/* BADGE ROW — priority + timing + coach signal */}
         <div className="flex items-center gap-2 flex-wrap mb-2.5" data-testid="hero-status-row">
           <span className="ds-badge" style={{
@@ -324,16 +328,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         </div>
         )}
 
-        {/* STAGE LABEL — simplified from full timeline */}
-        {!compact && rail && (
-          <div className="mt-3 flex items-center gap-2" data-testid="hero-progress-rail">
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: "rgba(255,255,255,0.30)", textTransform: "uppercase" }}>Stage:</span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.65)" }} data-testid="hero-stage-label">
-              {RAIL_STAGES[activeStageIdx]?.label || "Added"}
-            </span>
-          </div>
-        )}
-
         {/* CTA ROW */}
         <div className="flex items-center gap-4 mt-3">
           <button
@@ -345,7 +339,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
                   school_name: p.university_name || "",
                   priority_source: current.prioritySource || "live",
                   recap_rank: current.recapRank || null,
-                  cta_label: "Open school",
+                  cta_label: current.ctaLabel || "Open school",
                 });
                 navigate(`/pipeline/${p.program_id}`);
               }
@@ -356,6 +350,56 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             {current.ctaLabel || "Open school"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
+
+        </div>{/* end LEFT */}
+
+        {/* RIGHT: Vertical stage rail */}
+        {!compact && rail && (
+          <div className="hidden sm:flex flex-col items-start pt-1 pl-4 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: 130 }} data-testid="hero-progress-rail">
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.30)", marginBottom: 10 }}>
+              Where you are
+            </div>
+            <div className="flex flex-col gap-0">
+              {RAIL_STAGES.map((s, stIdx) => {
+                const isActive = stIdx === activeStageIdx;
+                const isPast = stIdx < activeStageIdx;
+                const isLast = stIdx === RAIL_STAGES.length - 1;
+                return (
+                  <div key={s.key} className="flex items-start gap-2.5" data-testid={`rail-stage-${s.key}`}>
+                    <div className="flex flex-col items-center" style={{ width: 12 }}>
+                      <div style={{
+                        width: isActive ? 10 : 6,
+                        height: isActive ? 10 : 6,
+                        borderRadius: "50%",
+                        background: isActive ? "#2ec4b6" : isPast ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.10)",
+                        boxShadow: isActive ? "0 0 8px rgba(46,196,182,0.5)" : "none",
+                        flexShrink: 0,
+                        marginTop: isActive ? 3 : 5,
+                      }} />
+                      {!isLast && (
+                        <div style={{
+                          width: 1.5,
+                          height: 14,
+                          background: isPast ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+                        }} />
+                      )}
+                    </div>
+                    <span style={{
+                      fontSize: 12,
+                      fontWeight: isActive ? 700 : 400,
+                      color: isActive ? "#2ec4b6" : isPast ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.20)",
+                      lineHeight: isActive ? "16px" : "22px",
+                    }}>
+                      {s.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        </div>{/* end flex row */}
 
         {/* Carousel dot indicators */}
         {total > 1 && (
