@@ -57,7 +57,8 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
             if created:
                 try:
                     days = (now - datetime.fromisoformat(created)).days
-                except Exception:
+                except Exception as e:  # noqa: E722
+                    log.debug("Non-critical error (handled): %s", e)
                     days = 0
                 if days >= 3:
                     status = "needs_support"
@@ -278,7 +279,8 @@ def _format_ago(iso: str) -> str:
         if days < 7:
             return f"{days}d ago"
         return f"{days // 7}w ago"
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (fallback): %s", e)
         return "Unknown"
 
 

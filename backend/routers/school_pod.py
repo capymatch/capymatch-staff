@@ -1,9 +1,11 @@
+import logging
 """School Pod — per-school workspace for coaches.
 
 Provides school-level data scoped to a specific athlete-school relationship.
 """
 
 from datetime import datetime, timezone, timedelta
+log = logging.getLogger(__name__)
 from fastapi import APIRouter, HTTPException, Query
 from auth_middleware import get_current_user_dep
 from services.ownership import can_access_athlete
@@ -463,7 +465,8 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
         for p in programs:
             try:
                 await recompute_metrics(p["program_id"], p.get("tenant_id", ""))
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (silenced): %s", e)
                 pass
 
     metrics_map = {}
@@ -529,7 +532,8 @@ async def get_athlete_schools(athlete_id: str, refresh: bool = Query(False), cur
                 else:
                     lc_date = last_evt_at if last_evt_at.tzinfo else last_evt_at.replace(tzinfo=timezone.utc)
                 actual_days = (now - lc_date).days
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (silenced): %s", e)
                 pass
 
         # Check if playbook is complete for this school
@@ -592,7 +596,8 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
     tenant_id = program.get("tenant_id", "")
     try:
         metrics = await recompute_metrics(program_id, tenant_id)
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (handled): %s", e)
         metrics = await db.program_metrics.find_one(
             {"program_id": program_id, "athlete_id": athlete_id}, {"_id": 0}
         )
@@ -728,7 +733,8 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
             lc = last_contact if isinstance(last_contact, str) else str(last_contact)
             lc_date = dt_cls.fromisoformat(lc.replace("Z", "+00:00")) if isinstance(lc, str) else lc
             actual_days = (datetime.now(timezone.utc) - lc_date).days if hasattr(lc_date, 'day') else days_eng
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (handled): %s", e)
             actual_days = days_eng
     else:
         actual_days = days_eng
@@ -803,7 +809,8 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
                 # Use stage_entered_at only if it's after initial contact (real stage transition)
                 if entered_dt > contact_dt:
                     stage_date_str = entered_at
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (silenced): %s", e)
                 pass
     else:
         stage_date_str = program.get("stage_entered_at") or program.get("created_at")
@@ -812,7 +819,8 @@ async def get_school_pod(athlete_id: str, program_id: str, current_user: dict = 
         try:
             stage_date = datetime.fromisoformat(str(stage_date_str).replace("Z", "+00:00"))
             stage_days = max(0, (datetime.now(timezone.utc) - stage_date).days)
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (silenced): %s", e)
             pass
 
     # Now compute signals with actual contact context

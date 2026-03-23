@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import httpx
 import os
 import logging
+log = logging.getLogger(__name__)
 import asyncio
 from urllib.parse import urlparse
 
@@ -111,7 +112,8 @@ def _extract_domain(url):
         if host.startswith("www."):
             host = host[4:]
         return host
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (fallback): %s", e)
         return ""
 
 
@@ -252,7 +254,8 @@ async def sync_schools(request: Request):
     body = {}
     try:
         body = await request.json()
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (silenced): %s", e)
         pass
     force = body.get("force", False)
     if force:

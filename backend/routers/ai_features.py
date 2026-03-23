@@ -12,6 +12,7 @@ import os
 import uuid
 import json
 import logging
+log = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -183,7 +184,8 @@ async def auto_insight(data: AutoInsightRequest, request: Request):
                 cached_dt = cached_dt.replace(tzinfo=timezone.utc)
             if (now - cached_dt).total_seconds() < INSIGHT_CACHE_TTL_SECONDS:
                 return cached["payload"]
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (silenced): %s", e)
             pass
 
     # Compute Coach Watch
@@ -447,7 +449,8 @@ async def ai_next_step(data: NextStepRequest, request: Request):
             try:
                 last_dt = datetime.fromisoformat(last["date_time"].replace("Z", "+00:00"))
                 days_since = (datetime.now(timezone.utc) - last_dt).days
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (handled): %s", e)
                 days_since = "unknown"
 
     division = program.get("division", "")
@@ -872,7 +875,8 @@ async def get_school_insight(program_id: str, request: Request):
             cache_dt = datetime.fromisoformat(cached.get("created_at", ""))
             if (datetime.now(timezone.utc) - cache_dt).total_seconds() / 3600 < 24:
                 return cached.get("insight", cached)
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (silenced): %s", e)
             pass
 
     program = await db.programs.find_one({"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0})

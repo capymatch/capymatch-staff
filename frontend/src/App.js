@@ -164,19 +164,23 @@ function AppRoutes() {
   );
 }
 
+import ErrorBoundary from "./components/ErrorBoundary";
+
 function App() {
   return (
     <div className="App">
       <Toaster position="bottom-right" richColors />
-      <ThemeProvider>
-        <AuthProvider>
-          <SubscriptionProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </SubscriptionProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <AuthProvider>
+            <SubscriptionProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </SubscriptionProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </ErrorBoundary>
     </div>
   );
 }

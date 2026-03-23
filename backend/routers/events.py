@@ -1,5 +1,7 @@
+import logging
 """Event Mode — capture, prep, live, summary, routing, schools."""
 
+log = logging.getLogger(__name__)
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone, timedelta
 import uuid
@@ -83,7 +85,8 @@ async def create_event(body: EventCreate, current_user: dict = get_current_user_
         event_date = datetime.fromisoformat(body.date.replace("Z", "+00:00"))
         if event_date.tzinfo is None:
             event_date = event_date.replace(tzinfo=timezone.utc)
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (handled): %s", e)
         event_date = datetime.now(timezone.utc) + timedelta(days=7)
 
     days_away = (event_date - datetime.now(timezone.utc)).days

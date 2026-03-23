@@ -1,9 +1,11 @@
+import logging
 """Athlete-facing routes: programs CRUD, college coaches, interactions, dashboard.
 
 All data is scoped by `tenant_id`, resolved from the athlete's claimed record.
 Uses the unified JWT auth middleware throughout.
 """
 
+log = logging.getLogger(__name__)
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, timezone, timedelta
 from typing import Optional
@@ -54,7 +56,8 @@ def _compute_signals_from_interactions(interactions: list) -> dict:
             dt = datetime.fromisoformat(str(dt_str).replace("Z", "+00:00"))
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (handled): %s", e)
             dt = None
 
         if dt and (last_activity_date is None or dt > last_activity_date):
@@ -187,7 +190,8 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             return dt
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (fallback): %s", e)
             return None
 
     reply_status = (program.get("reply_status") or "").lower()

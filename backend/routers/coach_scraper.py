@@ -13,6 +13,7 @@ import httpx
 import re
 import asyncio
 import logging
+log = logging.getLogger(__name__)
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -228,7 +229,8 @@ async def discover_athletics_domain(http_client, domain):
                 if parsed.netloc and parsed.netloc != domain and f"www.{domain}" not in parsed.netloc:
                     found.add(f"{parsed.scheme}://{parsed.netloc}")
         return list(found)[:3]
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (fallback): %s", e)
         return []
 
 
@@ -267,7 +269,8 @@ async def _try_candidates(http_client, urls):
                     coaches = assign_titles(coaches)
             if coaches:
                 return {"url": str(resp.url), "coaches": coaches}
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (skipped): %s", e)
             continue
     return None
 
@@ -343,7 +346,8 @@ async def start_scrape(request: Request):
     body = {}
     try:
         body = await request.json()
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (silenced): %s", e)
         pass
     force = body.get("force", False)
     if force:
@@ -402,7 +406,8 @@ async def _discover_volleyball_url(http_client, domain, university_name=""):
                 resp = await http_client.get(url, headers=HEADERS, follow_redirects=True, timeout=8)
                 if resp.status_code == 200 and "volleyball" in resp.text.lower():
                     return str(resp.url).rstrip("/")
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (skipped): %s", e)
                 continue
     ath_domains = await discover_athletics_domain(http_client, domain)
     for ath_base in ath_domains:
@@ -412,7 +417,8 @@ async def _discover_volleyball_url(http_client, domain, university_name=""):
                 resp = await http_client.get(url, headers=HEADERS, follow_redirects=True, timeout=8)
                 if resp.status_code == 200 and "volleyball" in resp.text.lower():
                     return str(resp.url).rstrip("/")
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (skipped): %s", e)
                 continue
     return None
 

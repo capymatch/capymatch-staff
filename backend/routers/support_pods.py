@@ -1,5 +1,7 @@
+import logging
 """Support Pods — treatment and coordination environment."""
 
+log = logging.getLogger(__name__)
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone, timedelta
 import uuid
@@ -86,7 +88,8 @@ async def _compute_status_intelligence(athlete_id: str, athlete: dict, intervent
                 else:
                     lc_date = last_evt if last_evt.tzinfo else last_evt.replace(tzinfo=timezone.utc)
                 actual_days = (now - lc_date).days
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (silenced): %s", e)
                 pass
         health = classify_school_health(p, m, actual_days_since_contact=actual_days)
         if health in ("at_risk", "cooling_off", "needs_attention", "needs_follow_up"):
@@ -343,7 +346,8 @@ async def create_pod_action(athlete_id: str, action: ActionCreate, current_user:
             due_date=doc["due_date"],
             assigned_by=current_user["name"],
         ))
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (handled): %s", e)
         pass  # Email is best-effort
 
     return doc

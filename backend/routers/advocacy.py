@@ -1,5 +1,7 @@
+import logging
 """Advocacy Mode — recommendations, relationships, response tracking."""
 
+log = logging.getLogger(__name__)
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone, timedelta
 import uuid
@@ -80,7 +82,8 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
                             "school_name": r.get("school_name"),
                             "fit_summary": r.get("fit_summary", ""),
                         })
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (silenced): %s", e)
         pass
 
     return {

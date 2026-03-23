@@ -11,6 +11,7 @@ import uuid
 import os
 import re
 import logging
+log = logging.getLogger(__name__)
 import asyncio
 
 from auth_middleware import get_current_user_dep
@@ -138,7 +139,8 @@ async def get_school_by_domain(domain: str, request: Request):
                     uni["on_board"] = False
                     uni["match_score"] = 0
                     uni["match_reasons"] = []
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (handled): %s", e)
         uni.setdefault("on_board", False)
         uni.setdefault("match_score", 0)
         uni.setdefault("match_reasons", [])

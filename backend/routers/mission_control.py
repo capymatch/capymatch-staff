@@ -1,6 +1,8 @@
+import logging
 """Mission Control — role-specific command surface endpoints."""
 
 from datetime import datetime, timedelta, timezone
+log = logging.getLogger(__name__)
 from fastapi import APIRouter
 from auth_middleware import get_current_user_dep
 from services.ownership import (
@@ -292,7 +294,8 @@ async def _compute_trends(current_status):
                 "engagementDelta": momentum_pct,
             },
         }
-    except Exception:
+    except Exception as e:  # noqa: E722
+        log.debug("Non-critical error (fallback): %s", e)
         return {
             "needAttentionDelta": 0,
             "momentum": {"state": "stable", "engagementDelta": 0},
@@ -331,7 +334,8 @@ async def _get_coach_health(coach_map):
                 from datetime import datetime, timezone
                 last_dt = datetime.fromisoformat(last_active)
                 days_inactive = (datetime.now(timezone.utc) - last_dt).days
-            except Exception:
+            except Exception as e:  # noqa: E722
+                log.debug("Non-critical error (silenced): %s", e)
                 pass
 
         if days_inactive is not None and days_inactive < 3 and completed >= total:
@@ -554,7 +558,8 @@ async def _compute_unified_statuses(roster: list):
                     else:
                         lc_date = last_evt if last_evt.tzinfo else last_evt.replace(tzinfo=timezone.utc)
                     actual_days = (now - lc_date).days
-                except Exception:
+                except Exception as e:  # noqa: E722
+                    log.debug("Non-critical error (silenced): %s", e)
                     pass
 
             health = classify_school_health(p, m, actual_days_since_contact=actual_days)

@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime, timezone
 import asyncio
 import logging
+log = logging.getLogger(__name__)
 import os
 
 from auth_middleware import get_current_user_dep
@@ -226,7 +227,8 @@ async def _run_social_scraper():
                     else:
                         _jobs[job]["failed"] += 1
 
-                except Exception:
+                except Exception as e:  # noqa: E722
+                    log.debug("Non-critical error (handled): %s", e)
                     _jobs[job]["failed"] += 1
 
                 _jobs[job]["processed"] += 1
@@ -293,7 +295,8 @@ async def _run_diversity_scraper():
                     else:
                         _jobs[job]["failed"] += 1
 
-                except Exception:
+                except Exception as e:  # noqa: E722
+                    log.debug("Non-critical error (handled): %s", e)
                     _jobs[job]["failed"] += 1
 
                 _jobs[job]["processed"] += 1

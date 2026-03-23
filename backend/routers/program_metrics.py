@@ -1,3 +1,4 @@
+import logging
 """Program Metrics — internal API for derived metrics layer.
 
 Exposes pre-computed recruiting metrics per athlete-school relationship.
@@ -5,6 +6,7 @@ Intended for consumption by intelligence cards and internal services.
 """
 
 from typing import List
+log = logging.getLogger(__name__)
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from auth_middleware import _get_current_user
@@ -47,7 +49,8 @@ async def batch_metrics(
         try:
             m = await get_metrics(pid, tenant_id)
             results[pid] = m
-        except Exception:
+        except Exception as e:  # noqa: E722
+            log.debug("Non-critical error (handled): %s", e)
             pass  # skip programs that fail or don't exist
 
     return {"metrics": results}

@@ -4,7 +4,7 @@ Slim orchestrator: creates the FastAPI app, registers routers,
 runs the startup pipeline, and manages background tasks.
 """
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 import os
 import asyncio
@@ -293,6 +293,27 @@ api_router.include_router(file_upload_router)
 
 app.include_router(api_router)
 
+
+# ── Request ID ──
+
+from middleware.error_handling import (
+    RequestIDMiddleware,
+    http_exception_handler,
+    global_exception_handler,
+    starlette_http_exception_handler,
+    validation_exception_handler,
+)
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.exceptions import RequestValidationError
+
+app.add_middleware(RequestIDMiddleware)
+
+# ── Global Exception Handlers ──
+
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(StarletteHTTPException, starlette_http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, global_exception_handler)
 
 # ── CORS ──
 
