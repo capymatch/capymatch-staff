@@ -6,7 +6,12 @@ Fails fast in production if required variables are missing.
 
 import os
 import logging
+from pathlib import Path
 from urllib.parse import urlparse
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent / ".env")
 
 log = logging.getLogger(__name__)
 
@@ -36,11 +41,19 @@ FRONTEND_HOSTNAME = get_frontend_hostname()
 
 # ── CORS / Allowed Origins ────────────────────────────────────
 
-_extra_origins = [
-    o.strip().rstrip("/")
-    for o in os.getenv("ALLOWED_ORIGINS", "").split(",")
-    if o.strip()
-]
+def _parse_origins(raw: str) -> list[str]:
+    """Parse a comma-separated origin string, normalizing each entry."""
+    seen: set[str] = set()
+    result: list[str] = []
+    for o in raw.split(","):
+        cleaned = o.strip().rstrip("/")
+        if cleaned and cleaned not in seen:
+            seen.add(cleaned)
+            result.append(cleaned)
+    return result
+
+
+_extra_origins = _parse_origins(os.getenv("ALLOWED_ORIGINS", ""))
 
 
 def get_allowed_origins() -> list[str]:

@@ -84,8 +84,8 @@ def sanitize_dict(data: dict) -> dict:
 
 # ── Security Headers ──────────────────────────────────────────
 
-SECURITY_HEADERS = {
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+# Base headers (always safe)
+_BASE_SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -93,20 +93,35 @@ SECURITY_HEADERS = {
         "default-src 'self'; "
         "img-src 'self' data: https:; "
         "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "font-src 'self' https:; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com https:; "
         "connect-src 'self' https:;"
     ),
 }
 
+# HSTS — only added when the request actually arrived over HTTPS
+_HSTS_VALUE = "max-age=31536000; includeSubDomains"
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Adds production security headers to every response."""
+    """Adds production security headers to every response.
+
+    HSTS is only added when the request came over HTTPS (via
+    X-Forwarded-Proto or native scheme) to avoid poisoning
+    browsers in local HTTP development.
+    """
 
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
-        for header, value in SECURITY_HEADERS.items():
+
+        for header, value in _BASE_SECURITY_HEADERS.items():
             response.headers.setdefault(header, value)
+
+        # Only set HSTS when actually serving over HTTPS
+        proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+        if proto == "https":
+            response.headers.setdefault("Strict-Transport-Security", _HSTS_VALUE)
+
         return response
 
 
@@ -115,12 +130,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
     """Redirects HTTP → HTTPS in production.
 
-    Respects X-Forwarded-Proto from reverse proxies to avoid redirect loops.
+    ONLY redirects when X-Forwarded-Proto is explicitly set to 'http'
+    by the reverse proxy. Never redirects based on request.url.scheme
+    alone (which is always 'http' behind a TLS-terminating proxy),
+    preventing infinite redirect loops.
     """
 
     async def dispatch(self, request: Request, call_next):
-        proto = request.headers.get("x-forwarded-proto", request.url.scheme)
-        if proto == "http":
+        forwarded_proto = request.headers.get("x-forwarded-proto")
+        if forwarded_proto == "http":
             url = request.url.replace(scheme="https")
             return RedirectResponse(url=str(url), status_code=301)
         return await call_next(request)

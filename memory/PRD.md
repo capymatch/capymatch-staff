@@ -13,13 +13,13 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 ## What's Been Implemented
 
 ### Production Readiness Item #3: Environment & Config Hardening (Mar 23, 2026)
-- **Centralized config** (`config.py`): `APP_ENV`, `FRONTEND_URL`, `get_allowed_origins()`, `ENABLE_HTTPS_REDIRECT`, `ENABLE_SECURITY_HEADERS`. Fails fast in production if `FRONTEND_URL` missing.
+- **Centralized config** (`config.py`): `APP_ENV`, `FRONTEND_URL`, `get_allowed_origins()`, `ENABLE_HTTPS_REDIRECT`, `ENABLE_SECURITY_HEADERS`. Loads `.env` via `dotenv`. Fails fast in production if `FRONTEND_URL` missing.
 - **Hardcoded URLs removed**: `invites.py` fallback URL → `config.FRONTEND_URL`. `athlete_gmail.py` domain check → `config.FRONTEND_HOSTNAME`. `auth.py` reset URL → `config.FRONTEND_URL`.
-- **CORS locked down**: No more `*` wildcard. Origins built from `FRONTEND_URL` + `ALLOWED_ORIGINS` + localhost in dev.
-- **Security headers middleware**: HSTS (`max-age=31536000`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, CSP.
-- **HTTPS redirect middleware**: 301 redirect HTTP→HTTPS when `ENABLE_HTTPS_REDIRECT=true` + `APP_ENV=production`. Respects `X-Forwarded-Proto`.
+- **CORS locked down**: No more `*` wildcard. Origins built from `FRONTEND_URL` + `ALLOWED_ORIGINS` + localhost in dev. `_parse_origins()` handles whitespace, duplicates, trailing slashes.
+- **Security headers middleware**: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, CSP (with Google Fonts allowlist). HSTS only sent when request arrives over HTTPS (prevents localhost poisoning).
+- **HTTPS redirect middleware**: Only redirects when `X-Forwarded-Proto` is explicitly "http" (never based on `request.url.scheme` alone — prevents infinite loops behind TLS-terminating proxies). Gated by `ENABLE_HTTPS_REDIRECT=true` + `APP_ENV=production`.
 - **Config logging at startup**: Logs resolved config (no secrets) for ops visibility.
-- **Testing**: 100% pass rate (iteration_240) — 16/16 backend + all 3 frontend roles verified.
+- **Testing**: 100% pass rate (iteration_240) — 16/16 backend + all 3 frontend roles verified. Additional manual verification of preflight OPTIONS, HSTS behavior, redirect safety, CSP completeness, and origin parsing edge cases.
 
 ### Production Readiness Item #2: Data Architecture Refactor (Mar 23, 2026)
 - **Problem**: `athlete_store.py` used a single-process in-memory cache (`_CACHE`) that prevented horizontal scaling (multiple backend pods = stale data) and caused data desync between roles.
