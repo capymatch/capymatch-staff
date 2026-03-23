@@ -12,6 +12,15 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### Production Readiness Item #3: Environment & Config Hardening (Mar 23, 2026)
+- **Centralized config** (`config.py`): `APP_ENV`, `FRONTEND_URL`, `get_allowed_origins()`, `ENABLE_HTTPS_REDIRECT`, `ENABLE_SECURITY_HEADERS`. Fails fast in production if `FRONTEND_URL` missing.
+- **Hardcoded URLs removed**: `invites.py` fallback URL → `config.FRONTEND_URL`. `athlete_gmail.py` domain check → `config.FRONTEND_HOSTNAME`. `auth.py` reset URL → `config.FRONTEND_URL`.
+- **CORS locked down**: No more `*` wildcard. Origins built from `FRONTEND_URL` + `ALLOWED_ORIGINS` + localhost in dev.
+- **Security headers middleware**: HSTS (`max-age=31536000`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, CSP.
+- **HTTPS redirect middleware**: 301 redirect HTTP→HTTPS when `ENABLE_HTTPS_REDIRECT=true` + `APP_ENV=production`. Respects `X-Forwarded-Proto`.
+- **Config logging at startup**: Logs resolved config (no secrets) for ops visibility.
+- **Testing**: 100% pass rate (iteration_240) — 16/16 backend + all 3 frontend roles verified.
+
 ### Production Readiness Item #2: Data Architecture Refactor (Mar 23, 2026)
 - **Problem**: `athlete_store.py` used a single-process in-memory cache (`_CACHE`) that prevented horizontal scaling (multiple backend pods = stale data) and caused data desync between roles.
 - **Fix**: Complete rewrite of `athlete_store.py`:
@@ -33,7 +42,6 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 ### Production Readiness Item #1: Authentication & Security Hardening (Mar 23, 2026)
 - **Refresh tokens**: Short-lived access tokens (1h) + long-lived refresh tokens (7d) with rotation
 - **Rate limiting**: IP-based — login (10/min), register (5/min), upload (20/min)
-- **CORS**: Configurable via `CORS_ORIGINS` env var
 - **Input sanitization**: bleach HTML stripping for XSS prevention
 - **File upload validation**: Magic byte header checks + extension whitelist
 
@@ -62,7 +70,7 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 ## Production Readiness Checklist Status
 1. **Auth & Security** — DONE
 2. **Data Architecture** — DONE
-3. **Environment & Config** — TODO: Remove hardcoded URLs, enforce HTTPS, secure secrets
+3. **Environment & Config** — DONE
 4. **Error Handling** — TODO: Global frontend error boundary, structured backend errors, Sentry
 5. **Performance** — TODO: API pagination, frontend bundle splitting
 
@@ -91,6 +99,8 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - `POST /api/files/upload` — File upload with validation
 
 ## Key Files
+- `/app/backend/config.py` — Centralized environment config (CORS, security toggles, fail-fast)
+- `/app/backend/middleware/security.py` — Rate limiting, security headers, HTTPS redirect
 - `/app/backend/services/athlete_store.py` — Data access layer (async, DB-direct)
 - `/app/backend/services/startup.py` — Indexes + data seeding
 - `/app/backend/program_engine.py` — Program intelligence (async)
