@@ -65,7 +65,7 @@ def _classify_momentum(program, interactions_in_period, interactions_before, now
             last_dt = datetime.fromisoformat(last_dt_str.replace("Z", "+00:00"))
             days_since = (now - last_dt).days
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (silenced): %s", e)
+            log.warning("Handled exception (silenced): %s", e)
             pass
 
     # Build reasons
@@ -422,7 +422,7 @@ async def get_momentum_recap(current_user: dict = get_current_user_dep()):
                 period_label = f"Since {event_name}"
                 break
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (skipped): %s", e)
+            log.warning("Handled exception (skipped): %s", e)
             continue
 
     # Check cache: return stored recap if same period and < 1 hour old
@@ -439,7 +439,7 @@ async def get_momentum_recap(current_user: dict = get_current_user_dep()):
             if cached_period == period_start.isoformat() and age_minutes < 60:
                 return cached["full_response"]
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (silenced): %s", e)
+            log.warning("Handled exception (silenced): %s", e)
             pass
 
     # Cache miss — recompute
@@ -480,7 +480,7 @@ async def refresh_momentum_recap(current_user: dict = get_current_user_dep()):
                 period_label = f"Since {event_name}"
                 break
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (skipped): %s", e)
+            log.warning("Handled exception (skipped): %s", e)
             continue
 
     return await _compute_and_cache_recap(tenant_id, now, period_start, period_label, event_name)
@@ -523,7 +523,7 @@ async def _compute_and_cache_recap(tenant_id, now, period_start, period_label, e
                 else:
                     before_period.append(ix)
             except Exception as e:  # noqa: E722
-                log.debug("Non-critical error (handled): %s", e)
+                log.warning("Handled exception (handled): %s", e)
                 before_period.append(ix)
 
         item = _classify_momentum(prog, in_period, before_period, now)

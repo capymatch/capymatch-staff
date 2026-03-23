@@ -57,7 +57,7 @@ def _compute_signals_from_interactions(interactions: list) -> dict:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (handled): %s", e)
+            log.warning("Handled exception (handled): %s", e)
             dt = None
 
         if dt and (last_activity_date is None or dt > last_activity_date):
@@ -191,7 +191,7 @@ def _compute_coach_watch(program: dict, interactions: list, email_tracking: list
                 dt = dt.replace(tzinfo=timezone.utc)
             return dt
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (fallback): %s", e)
+            log.warning("Handled exception (fallback): %s", e)
             return None
 
     reply_status = (program.get("reply_status") or "").lower()

@@ -86,7 +86,7 @@ async def create_event(body: EventCreate, current_user: dict = get_current_user_
         if event_date.tzinfo is None:
             event_date = event_date.replace(tzinfo=timezone.utc)
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (handled): %s", e)
+        log.warning("Handled exception (handled): %s", e)
         event_date = datetime.now(timezone.utc) + timedelta(days=7)
 
     days_away = (event_date - datetime.now(timezone.utc)).days

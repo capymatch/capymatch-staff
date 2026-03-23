@@ -113,7 +113,7 @@ def _extract_domain(url):
             host = host[4:]
         return host
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (fallback): %s", e)
+        log.warning("Handled exception (fallback): %s", e)
         return ""
 
 
@@ -255,7 +255,7 @@ async def sync_schools(request: Request):
     try:
         body = await request.json()
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (silenced): %s", e)
+        log.warning("Handled exception (silenced): %s", e)
         pass
     force = body.get("force", False)
     if force:

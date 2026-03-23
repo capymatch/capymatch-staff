@@ -335,7 +335,7 @@ async def suggested_actions(current_user: dict = get_current_user_dep()):
                 days = (datetime.now(timezone.utc) - datetime.fromisoformat(created)).days
                 r["days_since_sent"] = days
             except Exception as e:  # noqa: E722
-                log.debug("Non-critical error (handled): %s", e)
+                log.warning("Handled exception (handled): %s", e)
                 r["days_since_sent"] = "?"
 
     data = {

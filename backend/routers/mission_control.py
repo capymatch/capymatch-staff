@@ -295,7 +295,7 @@ async def _compute_trends(current_status):
             },
         }
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (fallback): %s", e)
+        log.warning("Handled exception (fallback): %s", e)
         return {
             "needAttentionDelta": 0,
             "momentum": {"state": "stable", "engagementDelta": 0},
@@ -335,7 +335,7 @@ async def _get_coach_health(coach_map):
                 last_dt = datetime.fromisoformat(last_active)
                 days_inactive = (datetime.now(timezone.utc) - last_dt).days
             except Exception as e:  # noqa: E722
-                log.debug("Non-critical error (silenced): %s", e)
+                log.warning("Handled exception (silenced): %s", e)
                 pass
 
         if days_inactive is not None and days_inactive < 3 and completed >= total:
@@ -559,7 +559,7 @@ async def _compute_unified_statuses(roster: list):
                         lc_date = last_evt if last_evt.tzinfo else last_evt.replace(tzinfo=timezone.utc)
                     actual_days = (now - lc_date).days
                 except Exception as e:  # noqa: E722
-                    log.debug("Non-critical error (silenced): %s", e)
+                    log.warning("Handled exception (silenced): %s", e)
                     pass
 
             health = classify_school_health(p, m, actual_days_since_contact=actual_days)

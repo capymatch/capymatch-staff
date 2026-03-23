@@ -83,7 +83,7 @@ async def get_athlete_recruiting_context(athlete_id: str, school_id: str, curren
                             "fit_summary": r.get("fit_summary", ""),
                         })
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (silenced): %s", e)
+        log.warning("Handled exception (silenced): %s", e)
         pass
 
     return {

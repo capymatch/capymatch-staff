@@ -430,7 +430,7 @@ async def reset_password(body: dict):
     except HTTPException:
         raise
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (handled): %s", e)
+        log.warning("Handled exception (handled): %s", e)
         raise HTTPException(status_code=400, detail="Invalid reset link")
 
     # Update password

@@ -107,7 +107,7 @@ async def get_checkout_status(session_id: str, current_user: dict = get_current_
     try:
         status = await stripe.get_checkout_status(session_id)
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (handled): %s", e)
+        log.warning("Handled exception (handled): %s", e)
         raise HTTPException(404, "Session not found")
 
     # Try to extract and save stripe_customer_id from raw session

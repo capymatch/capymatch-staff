@@ -416,7 +416,7 @@ def _derive_status(coach_data: dict) -> str:
             accepted_dt = datetime.fromisoformat(accepted_at)
             days_since_accept = (datetime.now(timezone.utc) - accepted_dt).days
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (handled): %s", e)
+            log.warning("Handled exception (handled): %s", e)
             days_since_accept = 0
     else:
         days_since_accept = 0
@@ -426,7 +426,7 @@ def _derive_status(coach_data: dict) -> str:
             last_dt = datetime.fromisoformat(last_active)
             days_inactive = (datetime.now(timezone.utc) - last_dt).days
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (handled): %s", e)
+            log.warning("Handled exception (handled): %s", e)
             days_inactive = 999
     else:
         days_inactive = 999
@@ -644,7 +644,7 @@ async def nudge_coach(body: dict, current_user: dict = get_current_user_dep()):
         except HTTPException:
             raise
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (silenced): %s", e)
+            log.warning("Handled exception (silenced): %s", e)
             pass
 
     # Send email via Resend

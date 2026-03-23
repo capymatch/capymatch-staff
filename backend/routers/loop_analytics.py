@@ -101,7 +101,7 @@ async def get_loop_metrics(days: int = 30, current_user: dict = get_current_user
                 if 0 < delay_sec < 86400:  # within 24h
                     action_delays.append(delay_sec)
             except Exception as e:  # noqa: E722
-                log.debug("Non-critical error (silenced): %s", e)
+                log.warning("Handled exception (silenced): %s", e)
                 pass
 
     avg_time_to_action = round(sum(action_delays) / len(action_delays), 1) if action_delays else None
@@ -129,7 +129,7 @@ async def get_loop_metrics(days: int = 30, current_user: dict = get_current_user
                 if (act_ts - why_ts).total_seconds() < 300:  # within 5 min
                     why_then_action += 1
             except Exception as e:  # noqa: E722
-                log.debug("Non-critical error (silenced): %s", e)
+                log.warning("Handled exception (silenced): %s", e)
                 pass
             last_why_time = None
 
@@ -209,7 +209,7 @@ def _compute_metrics_from_events(events):
                 if 0 < delay < 86400:
                     action_delays.append(delay)
             except Exception as e:  # noqa: E722
-                log.debug("Non-critical error (silenced): %s", e)
+                log.warning("Handled exception (silenced): %s", e)
                 pass
 
     avg_tta = round(sum(action_delays) / len(action_delays), 1) if action_delays else None
@@ -227,7 +227,7 @@ def _compute_metrics_from_events(events):
                 if (at - wt).total_seconds() < 300:
                     why_then_action += 1
             except Exception as e:  # noqa: E722
-                log.debug("Non-critical error (silenced): %s", e)
+                log.warning("Handled exception (silenced): %s", e)
                 pass
             last_why = None
 
@@ -285,7 +285,7 @@ async def get_admin_loop_metrics(days: int = 30, current_user: dict = get_curren
             day = e["timestamp"][:10]
             daily[day] = daily.get(day, 0) + 1
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (silenced): %s", e)
+            log.warning("Handled exception (silenced): %s", e)
             pass
     metrics["daily_trend"] = [{"date": d, "count": c} for d, c in sorted(daily.items())]
 

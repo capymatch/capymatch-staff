@@ -50,7 +50,7 @@ async def batch_metrics(
             m = await get_metrics(pid, tenant_id)
             results[pid] = m
         except Exception as e:  # noqa: E722
-            log.debug("Non-critical error (handled): %s", e)
+            log.warning("Handled exception (handled): %s", e)
             pass  # skip programs that fail or don't exist
 
     return {"metrics": results}

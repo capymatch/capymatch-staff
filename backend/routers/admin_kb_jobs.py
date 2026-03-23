@@ -228,7 +228,7 @@ async def _run_social_scraper():
                         _jobs[job]["failed"] += 1
 
                 except Exception as e:  # noqa: E722
-                    log.debug("Non-critical error (handled): %s", e)
+                    log.warning("Handled exception (handled): %s", e)
                     _jobs[job]["failed"] += 1
 
                 _jobs[job]["processed"] += 1
@@ -296,7 +296,7 @@ async def _run_diversity_scraper():
                         _jobs[job]["failed"] += 1
 
                 except Exception as e:  # noqa: E722
-                    log.debug("Non-critical error (handled): %s", e)
+                    log.warning("Handled exception (handled): %s", e)
                     _jobs[job]["failed"] += 1
 
                 _jobs[job]["processed"] += 1

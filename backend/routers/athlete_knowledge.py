@@ -140,7 +140,7 @@ async def get_school_by_domain(domain: str, request: Request):
                     uni["match_score"] = 0
                     uni["match_reasons"] = []
     except Exception as e:  # noqa: E722
-        log.debug("Non-critical error (handled): %s", e)
+        log.warning("Handled exception (handled): %s", e)
         uni.setdefault("on_board", False)
         uni.setdefault("match_score", 0)
         uni.setdefault("match_reasons", [])
