@@ -12,6 +12,15 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### Production Readiness Item #4: Error Handling (Mar 23, 2026)
+- **Request ID middleware**: Every request gets a unique `X-Request-ID` (generated or forwarded). Attached to `request.state` and response header. Included in all error responses for tracing.
+- **Global exception handlers**: 4 handlers — `HTTPException`, `StarletteHTTPException`, `RequestValidationError`, `Exception` catch-all. All return structured `{error: {code, message, request_id}}`. No stack traces exposed.
+- **Error code mapping**: `401→UNAUTHORIZED`, `404→NOT_FOUND`, `422→VALIDATION_ERROR`, `429→RATE_LIMITED`, `500→INTERNAL_ERROR`.
+- **Frontend ErrorBoundary**: Wraps entire app. Shows "Something went wrong" with Retry/Reload buttons. Captures error + component stack to console.
+- **API error utility**: `parseApiError()` / `getErrorMessage()` handle structured, legacy, and network errors.
+- **Silent exception fix**: 47 bare `except Exception:` blocks → `except Exception as e:` with `log.debug` for observability.
+- **Testing**: 100% pass rate (iteration_241) — 23/23 backend + frontend verified.
+
 ### Production Readiness Item #3: Environment & Config Hardening (Mar 23, 2026)
 - **Centralized config** (`config.py`): `APP_ENV`, `FRONTEND_URL`, `get_allowed_origins()`, `ENABLE_HTTPS_REDIRECT`, `ENABLE_SECURITY_HEADERS`. Loads `.env` via `dotenv`. Fails fast in production if `FRONTEND_URL` missing.
 - **Hardcoded URLs removed**: `invites.py` fallback URL → `config.FRONTEND_URL`. `athlete_gmail.py` domain check → `config.FRONTEND_HOSTNAME`. `auth.py` reset URL → `config.FRONTEND_URL`.
@@ -71,7 +80,7 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 1. **Auth & Security** — DONE
 2. **Data Architecture** — DONE
 3. **Environment & Config** — DONE
-4. **Error Handling** — TODO: Global frontend error boundary, structured backend errors, Sentry
+4. **Error Handling** — DONE
 5. **Performance** — TODO: API pagination, frontend bundle splitting
 
 ## Prioritized Backlog
@@ -101,6 +110,7 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 ## Key Files
 - `/app/backend/config.py` — Centralized environment config (CORS, security toggles, fail-fast)
 - `/app/backend/middleware/security.py` — Rate limiting, security headers, HTTPS redirect
+- `/app/backend/middleware/error_handling.py` — Request ID, structured error responses, global exception handlers
 - `/app/backend/services/athlete_store.py` — Data access layer (async, DB-direct)
 - `/app/backend/services/startup.py` — Indexes + data seeding
 - `/app/backend/program_engine.py` — Program intelligence (async)
