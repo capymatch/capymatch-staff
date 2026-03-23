@@ -1,31 +1,20 @@
 """Canonical athlete data access layer.
 
 All athlete reads go through this module.
-MongoDB `athletes` collection is the single source of truth.
-Primary reads (get_all, get_by_id) always query MongoDB directly.
-Derived data (interventions, signals, etc.) is cached with a short TTL
-and recomputed on demand from fresh DB data.
+MongoDB is the single source of truth.
+Redis provides a shared cache layer across all workers.
+If Redis is down, all reads fall through to MongoDB directly.
 
 NO code should import ATHLETES from mock_data for runtime reads.
 """
 
-import time
 import logging
 from datetime import datetime, timezone
 from db_client import db
+from services import cache
+from services.cache import Keys
 
 log = logging.getLogger(__name__)
-
-# ── TTL cache for derived data (process-local, auto-expires) ──
-_derived_cache = {
-    "interventions": [],
-    "needing_attention": [],
-    "momentum_signals": [],
-    "program_snapshot": {},
-    "priority_alerts": [],
-    "last_computed": 0,
-}
-_CACHE_TTL = 30  # seconds
 
 
 # Stage weights for pipeline momentum (recruiting progress, NOT activity)
@@ -47,39 +36,71 @@ STAGE_WEIGHTS = {
 
 
 # ═══════════════════════════════════════════════════════════════
-# Primary reads — always query MongoDB directly
+# Primary reads — Redis cache → MongoDB fallback
 # ═══════════════════════════════════════════════════════════════
 
 async def get_all() -> list[dict]:
-    """All athletes — always fresh from MongoDB."""
+    """All athletes.  Cached in Redis; falls back to MongoDB."""
+    key = Keys.athletes_all()
+    cached = await cache.get(key)
+    if cached is not None:
+        return cached
+
     athletes = await db.athletes.find({}, {"_id": 0}).to_list(10000)
     _recompute_time_fields(athletes)
     await _compute_pipeline_momentum(athletes)
+
+    await cache.set(key, athletes)
     return athletes
 
 
 async def get_by_id(athlete_id: str) -> dict | None:
-    """Single athlete lookup — always fresh from MongoDB."""
+    """Single athlete lookup.  Cached individually in Redis."""
+    key = Keys.athlete(athlete_id)
+    cached = await cache.get(key)
+    if cached is not None:
+        return cached
+
     doc = await db.athletes.find_one({"id": athlete_id}, {"_id": 0})
     if doc:
         _recompute_time_fields([doc])
         await _compute_pipeline_momentum([doc])
+        await cache.set(key, doc)
     return doc
 
 
 # ═══════════════════════════════════════════════════════════════
-# Derived data — cached with TTL, computed from fresh DB data
+# Derived data — Redis cache → compute on miss
 # ═══════════════════════════════════════════════════════════════
 
-async def _ensure_derived():
-    """Refresh derived cache if stale (older than _CACHE_TTL seconds)."""
-    if time.time() - _derived_cache["last_computed"] < _CACHE_TTL:
-        return
+async def _ensure_derived(name: str) -> list | dict:
+    """Return derived data from cache, or recompute all derived and return requested key."""
+    key = Keys.derived(name)
+    cached = await cache.get(key)
+    if cached is not None:
+        return cached
+
+    # Cache miss — recompute everything and store each piece
     await _recompute_derived()
+    # Re-read from cache (just populated) or return direct
+    fresh = await cache.get(key)
+    if fresh is not None:
+        return fresh
+
+    # Redis down — compute was done but couldn't cache.  Return from local fallback.
+    return _local_derived.get(name, [] if name != "program_snapshot" else {})
+
+
+# Thread-local fallback for when Redis is completely unavailable
+_local_derived: dict = {}
 
 
 async def _recompute_derived():
-    """Reload athletes from DB and recompute ALL derived caches."""
+    """Reload athletes from DB and recompute ALL derived data.
+
+    Results are stored in Redis (shared across workers).
+    Also kept in _local_derived as a last-resort fallback.
+    """
     from decision_engine import (
         detect_all_interventions,
         rank_interventions,
@@ -95,53 +116,72 @@ async def _recompute_derived():
         interventions.extend(detect_all_interventions(athlete, UPCOMING_EVENTS))
     ranked = rank_interventions(interventions)
 
-    _derived_cache["interventions"] = ranked
-    _derived_cache["priority_alerts"] = compute_alerts(ranked)
-    _derived_cache["needing_attention"] = compute_needing_attention(ranked)
-    _derived_cache["momentum_signals"] = generate_momentum_signals(athletes)
-    _derived_cache["program_snapshot"] = get_program_snapshot(athletes)
-    _derived_cache["last_computed"] = time.time()
+    derived = {
+        "interventions": ranked,
+        "priority_alerts": compute_alerts(ranked),
+        "needing_attention": compute_needing_attention(ranked),
+        "momentum_signals": generate_momentum_signals(athletes),
+        "program_snapshot": get_program_snapshot(athletes),
+    }
+
+    # Store each piece in Redis with TTL
+    for name, value in derived.items():
+        await cache.set(Keys.derived(name), value)
+
+    # Local fallback copy
+    _local_derived.update(derived)
 
     log.info(
-        f"athlete_store: derived data refreshed — "
-        f"{len(ranked)} interventions, "
-        f"{len(_derived_cache['needing_attention'])} needing attention, "
-        f"{len(_derived_cache['momentum_signals'])} signals"
+        "athlete_store: derived data refreshed — "
+        "%d interventions, %d needing attention, %d signals (cache=%s)",
+        len(ranked),
+        len(derived["needing_attention"]),
+        len(derived["momentum_signals"]),
+        "redis" if cache.is_available() else "local-only",
     )
 
 
 async def get_interventions() -> list:
-    await _ensure_derived()
-    return _derived_cache["interventions"]
+    return await _ensure_derived("interventions")
 
 
 async def get_needing_attention() -> list:
-    await _ensure_derived()
-    return _derived_cache["needing_attention"]
+    return await _ensure_derived("needing_attention")
 
 
 async def get_signals() -> list:
-    await _ensure_derived()
-    return _derived_cache["momentum_signals"]
+    return await _ensure_derived("momentum_signals")
 
 
 async def get_snapshot() -> dict:
-    await _ensure_derived()
-    return _derived_cache["program_snapshot"]
+    return await _ensure_derived("program_snapshot")
 
 
 async def get_alerts() -> list:
-    await _ensure_derived()
-    return _derived_cache["priority_alerts"]
+    return await _ensure_derived("priority_alerts")
 
 
 # ═══════════════════════════════════════════════════════════════
-# Write-path cache invalidation
+# Write-path cache invalidation (cross-worker via Redis)
 # ═══════════════════════════════════════════════════════════════
 
 async def recompute_derived_data():
-    """Force-refresh derived data cache. Called after write operations."""
+    """Invalidate ALL caches and recompute.  Called after write operations."""
+    # Invalidate athlete caches (forces fresh DB read on next access)
+    await cache.invalidate(Keys.athletes_all())
+    await cache.invalidate_pattern(f"{cache.PREFIX}:athlete:*")
+    # Invalidate derived caches
+    await cache.invalidate_pattern(Keys.derived_all())
+    # Recompute derived data and populate caches
     await _recompute_derived()
+
+
+async def invalidate_athlete(athlete_id: str):
+    """Invalidate a single athlete's cache.  Use after single-athlete writes."""
+    await cache.invalidate(
+        Keys.athlete(athlete_id),
+        Keys.athletes_all(),
+    )
 
 
 # ═══════════════════════════════════════════════════════════════

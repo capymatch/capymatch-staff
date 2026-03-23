@@ -94,6 +94,13 @@ ENABLE_HTTPS_REDIRECT = os.getenv("ENABLE_HTTPS_REDIRECT", "false").lower() == "
 ENABLE_SECURITY_HEADERS = os.getenv("ENABLE_SECURITY_HEADERS", "true").lower() == "true"
 
 
+# ── Cache ─────────────────────────────────────────────────────
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() == "true"
+CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "30"))
+
+
 # ── Startup Logging ───────────────────────────────────────────
 
 def log_config():
@@ -104,6 +111,9 @@ def log_config():
     log.info(f"config: ALLOWED_ORIGINS={ALLOWED_ORIGINS}")
     log.info(f"config: ENABLE_HTTPS_REDIRECT={ENABLE_HTTPS_REDIRECT}")
     log.info(f"config: ENABLE_SECURITY_HEADERS={ENABLE_SECURITY_HEADERS}")
+    log.info(f"config: CACHE_ENABLED={CACHE_ENABLED}")
+    log.info(f"config: REDIS_URL={REDIS_URL or '(not set)'}")
+    log.info(f"config: CACHE_TTL_SECONDS={CACHE_TTL_SECONDS}")
 
     if IS_PRODUCTION:
         if not FRONTEND_URL:

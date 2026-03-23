@@ -187,6 +187,10 @@ If no changes found, return []"""
 @app.on_event("startup")
 async def startup():
     global coach_watch_task
+    # Connect Redis cache
+    from services import cache as cache_service
+    await cache_service.connect()
+
     await run_startup(db)
     coach_watch_task = asyncio.create_task(coach_watch_weekly_scan())
     logger.info("Coach Watch background task started (7-day interval)")
@@ -207,6 +211,9 @@ async def shutdown():
         except asyncio.CancelledError:
             pass
     client.close()
+    # Close Redis connection
+    from services import cache as cache_service
+    await cache_service.close()
 
 
 # ── Root + Status (kept here — too small for their own router) ──
@@ -214,6 +221,16 @@ async def shutdown():
 @api_router.get("/")
 async def root():
     return {"message": "CapyMatch Mission Control API"}
+
+
+@api_router.get("/cache/stats")
+async def cache_stats():
+    """Cache observability endpoint — hit/miss rates, availability."""
+    from services import cache as cache_service
+    return {
+        "available": cache_service.is_available(),
+        "stats": cache_service.get_stats(),
+    }
 
 
 @api_router.post("/status", response_model=StatusCheck)
