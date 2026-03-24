@@ -172,23 +172,21 @@ export default function CoachView({ data, userName }) {
               <p className="text-sm mt-0.5" style={{ color: "#5c5e6a" }}>
                 Here's what's happening with your athletes today
               </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
               <span
-                className="flex items-center gap-1.5"
+                className="flex items-center gap-1.5 mt-1"
                 style={{ fontSize: 11, color: "#3d3f4a" }}
                 data-testid="live-updated-label"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Updated {timeSinceLabel}
               </span>
-              <span
-                className="hidden sm:inline-block text-[10px] font-semibold px-2.5 py-1 rounded-md"
-                style={{ background: "rgba(255,255,255,0.06)", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.06)" }}
-              >
-                {getDateLabel()}
-              </span>
             </div>
+            <span
+              className="hidden sm:inline-block text-[10px] font-semibold px-2.5 py-1 rounded-md shrink-0"
+              style={{ background: "rgba(255,255,255,0.06)", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              {getDateLabel()}
+            </span>
           </div>
 
           {/* KPIs */}
