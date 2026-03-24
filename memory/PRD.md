@@ -12,11 +12,9 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
-### UI Refactor — Event Prep Dark Theme (Mar 24, 2026)
-- **Full page restyle**: Converted `EventPrep.js` from light to premium dark theme (`#161921` cards, `rgba(255,255,255,0.06)` borders, `#f0f0f2` text)
-- **Sections restyled**: Header, summary bar, blockers, athletes, target schools, prep checklist, and both dialogs (AddAthletesDialog, ManageSchoolsDialog)
+### UI Refactor — Event Prep Header Dark Theme (Mar 24, 2026)
+- **Header only**: Applied premium dark theme to the top hero header card of `EventPrep.js` (`#161921` bg, light text, red "Go Live" button). All other sections remain light theme.
 - **Code cleanup**: Fixed ESLint `react-hooks/exhaustive-deps` warning in `ClubBillingPage.js` (wrapped `pollCheckoutStatus` in `useCallback`). Confirmed unused `UpgradePrompt.js` already deleted.
-- **Testing**: 100% pass rate (iteration_247) — all frontend tests passed.
 
 ### UI Refactor — Mission Control, Sidebar, Billing (Mar 24, 2026)
 - Reskinned Mission Control (TopPriorityCard, DirectorView, DirectorInbox) to premium dark theme
