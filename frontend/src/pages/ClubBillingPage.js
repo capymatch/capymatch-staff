@@ -223,7 +223,7 @@ export default function ClubBillingPage() {
   const isOverLimit = overAthletes || overCoaches;
 
   return (
-    <div data-testid="club-billing-page" className="max-w-5xl mx-auto space-y-10" style={{ color: "#f0f0f2" }}>
+    <div data-testid="club-billing-page" className="max-w-5xl mx-auto space-y-5" style={{ color: "#f0f0f2" }}>
 
       {/* Current Plan Status Dashboard */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#161921", border: `1px solid ${activeMeta.accent}30` }}>
