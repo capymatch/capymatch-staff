@@ -144,32 +144,32 @@ export default function DirectorView({ data, userName }) {
             </span>
           </div>
 
-          <div className="flex items-center gap-5 sm:gap-7 mt-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {kpis.map((kpi) => (
-              <div key={kpi.label} className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-[20px] sm:text-[22px] font-bold tabular-nums" style={{ color: kpi.color, lineHeight: 1 }}>
+          <div className="grid grid-cols-5 mt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+            {kpis.map((kpi, i) => (
+              <div key={kpi.label} className="flex flex-col items-center text-center" style={i < 4 ? { borderRight: "1px solid rgba(255,255,255,0.04)" } : {}}>
+                <span className="text-[22px] sm:text-[26px] font-bold tabular-nums" style={{ color: kpi.emphasized ? kpi.color : "#f0f0f2", lineHeight: 1 }}>
                   {kpi.value}
                 </span>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: kpi.emphasized ? kpi.color : "#5c5e6a", lineHeight: 1.2 }}>
-                    {kpi.label}
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em] mt-1.5 block" style={{ color: kpi.emphasized ? kpi.color : "#5c5e6a" }}>
+                  {kpi.label}
+                </span>
+                {kpi.trend !== undefined && kpi.trend !== 0 ? (
+                  <span className="text-[9px] font-medium mt-0.5" style={{ color: kpi.trend > 0 ? "#ef4444" : "rgba(74,222,128,0.5)" }}>
+                    {kpi.trend > 0 ? "+" : ""}{kpi.trend} this week
                   </span>
-                  {kpi.trend !== undefined && kpi.trend !== 0 && (
-                    <span className="text-[9px] font-medium" style={{ color: kpi.trend > 0 ? "#ef4444" : "rgba(74,222,128,0.5)" }}>
-                      {kpi.trend > 0 ? "+" : ""}{kpi.trend} this week
-                    </span>
-                  )}
-                </div>
+                ) : (
+                  <span className="text-[9px] mt-0.5" style={{ color: "transparent" }}>&nbsp;</span>
+                )}
               </div>
             ))}
           </div>
 
-          <div className="flex items-center gap-2.5 mt-3.5 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#5c5e6a" }}>Momentum</span>
-            <MomIcon className="w-3 h-3" style={{ color: momCfg.color }} />
-            <span className="text-[11px] font-semibold" style={{ color: momCfg.color }}>{momCfg.label}</span>
+          <div className="flex items-center justify-center gap-2.5 mt-3 pt-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+            <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#3d3f4a" }}>Momentum</span>
+            <MomIcon className="w-3 h-3" style={{ color: momCfg.color, opacity: 0.7 }} />
+            <span className="text-[10px] font-semibold" style={{ color: momCfg.color, opacity: 0.7 }}>{momCfg.label}</span>
             {momentum.engagementDelta !== 0 && (
-              <span className="text-[10px] hidden sm:inline" style={{ color: "#5c5e6a" }}>
+              <span className="text-[10px] hidden sm:inline" style={{ color: "#3d3f4a" }}>
                 {momentum.engagementDelta > 0 ? "+" : ""}{momentum.engagementDelta}% engagement
               </span>
             )}
