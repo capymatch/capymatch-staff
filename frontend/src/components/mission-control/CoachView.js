@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Target, AlertTriangle, Calendar, MessageCircle, Focus } from "lucide-react";
+import { Target, AlertTriangle, Calendar, MessageCircle, Focus, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import RosterSection from "./RosterSection";
 import UpcomingEventsCard from "./UpcomingEventsCard";
@@ -167,7 +167,7 @@ export default function CoachView({ data, userName }) {
               </p>
               <span
                 className="flex items-center gap-1.5 mt-1"
-                style={{ fontSize: 11, color: "#3d3f4a" }}
+                style={{ fontSize: 11, color: "#5c5e6a" }}
                 data-testid="live-updated-label"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -183,8 +183,8 @@ export default function CoachView({ data, userName }) {
           </div>
 
           {/* KPIs — Asymmetric: Need Attention dominant, others secondary */}
-          <div className="mt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
-            <div className="flex items-stretch gap-4 sm:gap-5">
+          <div className="mt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: 16 }}>
+            <div className="flex items-stretch gap-5 sm:gap-6">
 
               {/* ── PRIMARY: Need Attention ── */}
               <div className="flex-shrink-0" data-testid="kpi-primary-block">
@@ -212,15 +212,12 @@ export default function CoachView({ data, userName }) {
                 </p>
               </div>
 
-              {/* ── Divider ── */}
-              <div className="w-px self-stretch" style={{ background: "rgba(255,255,255,0.06)" }} />
-
-              {/* ── SECONDARY: Compact row ── */}
-              <div className="flex items-center gap-5 sm:gap-8 flex-1 min-w-0" data-testid="kpi-secondary-block">
+              {/* ── SECONDARY: Spaced row, neutral ── */}
+              <div className="flex items-center gap-6 sm:gap-10 flex-1 min-w-0 pl-5 sm:pl-6" style={{ borderLeft: "1px solid rgba(255,255,255,0.03)" }} data-testid="kpi-secondary-block">
                 {[
                   { value: summary.athleteCount || 0, label: "Athletes", key: "MY ATHLETES" },
                   { value: summary.upcomingEvents || 0, label: "Events", key: "EVENTS THIS WEEK" },
-                  { value: directorRequestCount, label: "Requests", key: "DIRECTOR REQUESTS", alert: directorRequestCount > 0 },
+                  { value: directorRequestCount, label: "Requests", key: "DIRECTOR REQUESTS" },
                 ].map((m) => {
                   const isPulsing = pulseKeys.has(m.key);
                   return (
@@ -229,7 +226,7 @@ export default function CoachView({ data, userName }) {
                         <span
                           className="text-[18px] sm:text-[22px] font-bold tabular-nums leading-none"
                           style={{
-                            color: m.alert ? "#f59e0b" : "#8b8d98",
+                            color: "#5c5e6a",
                             transition: "transform 0.3s ease",
                             transform: isPulsing ? "scale(1.08)" : "scale(1)",
                           }}
@@ -238,10 +235,10 @@ export default function CoachView({ data, userName }) {
                           {m.value}
                         </span>
                         {isPulsing && (
-                          <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ backgroundColor: m.alert ? "#f59e0b" : "#8b8d98" }} data-testid={`kpi-pulse-${m.key.toLowerCase().replace(/\s+/g, "-")}`} />
+                          <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ backgroundColor: "#5c5e6a" }} data-testid={`kpi-pulse-${m.key.toLowerCase().replace(/\s+/g, "-")}`} />
                         )}
                       </div>
-                      <span className="text-[9px] font-semibold uppercase tracking-[0.08em] mt-1" style={{ color: m.alert ? "rgba(245,158,11,0.6)" : "#3d3f4a" }}>
+                      <span className="text-[9px] font-semibold uppercase tracking-[0.08em] mt-1" style={{ color: "#3d3f4a" }}>
                         {m.label}
                       </span>
                     </div>
@@ -250,6 +247,32 @@ export default function CoachView({ data, userName }) {
               </div>
             </div>
           </div>
+
+          {/* ── Top Priority action row ── */}
+          {priorities.length > 0 && (() => {
+            const top = priorities[0];
+            return (
+              <div
+                className="flex items-center justify-between gap-3 mt-4 pt-3"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+                data-testid="hero-top-priority"
+              >
+                <p className="text-[12px] min-w-0" style={{ color: "#8b8d98" }}>
+                  <span style={{ color: "#5c5e6a" }}>Top priority: </span>
+                  <span className="font-semibold" style={{ color: "#f0f0f2" }}>{top.athleteName || top.athlete_name}</span>
+                  {top.schoolName && <span style={{ color: "#5c5e6a" }}> — {top.schoolName}</span>}
+                </p>
+                <button
+                  onClick={() => navigate(`/support-pods/${top.athleteId || top.athlete_id}`)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold rounded-lg shrink-0 transition-colors"
+                  style={{ color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}
+                  data-testid="hero-top-priority-cta"
+                >
+                  Review blocker <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </section>
 
