@@ -97,19 +97,12 @@ export default function DirectorInbox() {
         .inbox-row {
           display: flex;
           align-items: flex-start;
-          gap: 8px;
+          gap: 10px;
           padding: 12px 16px;
           cursor: pointer;
           transition: background 80ms ease-out;
         }
         .inbox-row:hover { background: #f8fafc; }
-        .inbox-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          flex-shrink: 0;
-          margin-top: 10px;
-        }
         .inbox-text {
           min-width: 0;
           flex: 1;
