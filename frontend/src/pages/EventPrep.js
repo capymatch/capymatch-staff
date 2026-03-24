@@ -313,10 +313,10 @@ function EventPrep() {
         </div>
       </header>
 
-      <main className="max-w-[1200px] mx-auto px-2 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
+      <main className="max-w-[1200px] mx-auto px-0 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
 
         {/* ─── Quick Summary Bar ─── */}
-        <div className="flex items-center gap-3 flex-wrap" data-testid="prep-summary-bar">
+        <div className="flex items-center gap-3 flex-wrap px-3 sm:px-0" data-testid="prep-summary-bar">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
             <Users className="w-3.5 h-3.5 text-slate-500" />
             <span className="font-semibold text-slate-800">{athletes.length}</span>
@@ -350,7 +350,7 @@ function EventPrep() {
 
         {/* ─── Blockers — Promoted to Top ─── */}
         {blockers.length > 0 && (
-          <section className="rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(220,38,38,0.30)" }} data-testid="prep-blockers-section">
+          <section className="sm:rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(220,38,38,0.30)" }} data-testid="prep-blockers-section">
             <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(220,38,38,0.15)" }}>
               <Shield className="w-4 h-4" style={{ color: "#ef4444" }} />
               <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>Blockers — Resolve Before Event</h2>
@@ -386,7 +386,7 @@ function EventPrep() {
         )}
 
         {/* ─── Athletes — Sorted by Readiness ─── */}
-        <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-athletes-section">
+        <section className="bg-white border border-gray-100 sm:rounded-xl overflow-hidden" data-testid="prep-athletes-section">
           <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Athletes ({athletes.length})</h2>
             <button
@@ -460,7 +460,7 @@ function EventPrep() {
         {/* ─── Target Schools + Checklist side by side ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Schools — Ranked by athlete overlap */}
-          <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-schools-section">
+          <section className="bg-white border border-gray-100 sm:rounded-xl overflow-hidden" data-testid="prep-schools-section">
             <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
               <div>
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Target Schools ({targetSchools.length})</h2>
@@ -510,7 +510,7 @@ function EventPrep() {
           </section>
 
           {/* Prep Checklist */}
-          <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-checklist-section">
+          <section className="bg-white border border-gray-100 sm:rounded-xl overflow-hidden" data-testid="prep-checklist-section">
             <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
               <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Prep Checklist</h2>
               <span className="text-[11px] font-semibold text-gray-500">{completed}/{checklist.length}</span>
