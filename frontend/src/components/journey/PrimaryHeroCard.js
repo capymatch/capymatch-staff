@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Pencil } from "lucide-react";
 import "../pipeline/pipeline-premium.css";
 
 export function PrimaryHeroCard({ hero, program }) {
@@ -17,8 +17,24 @@ export function PrimaryHeroCard({ hero, program }) {
   const Icon = hero.icon;
   const isCommitted = hero.type === "committed";
 
-  // Build rail from program data - not used in card anymore
-  const hasRail = false;
+  // Extract urgency line from whyThis (first item that mentions days/overdue)
+  const urgencyLine = (hero.whyThis || []).find(w =>
+    /no response|overdue|days|time to follow/i.test(w)
+  );
+
+  // Format message into short paragraphs for readability
+  const formatMessage = (msg) => {
+    if (!msg) return null;
+    const parts = msg.split(/(?<=[.!?])\s+/).filter(Boolean);
+    if (parts.length <= 1) return msg;
+    // Group into 2-3 paragraphs
+    if (parts.length === 2) return [parts[0], parts[1]];
+    return [parts[0], parts.slice(1, -1).join(" "), parts[parts.length - 1]];
+  };
+
+  const messageParagraphs = hero.isCommunication
+    ? formatMessage(hero.suggestedMessage || hero.suggestedReply)
+    : null;
 
   /* ── Committed milestone — special golden treatment ── */
   if (isCommitted) {
@@ -53,7 +69,7 @@ export function PrimaryHeroCard({ hero, program }) {
       <div className="relative z-[1] px-5 sm:px-7 py-5 sm:py-6">
         <div className="flex gap-4">
 
-        {/* LEFT: badges, title, context, CTAs */}
+        {/* LEFT: badges, title, urgency, message, CTAs, why this */}
         <div className="flex-1 min-w-0">
 
         {/* BADGE ROW */}
@@ -73,8 +89,8 @@ export function PrimaryHeroCard({ hero, program }) {
           ))}
         </div>
 
-        {/* ICON + TITLE */}
-        <div className="flex items-start gap-3.5 mb-2">
+        {/* 1. ICON + TITLE */}
+        <div className="flex items-start gap-3.5 mb-1.5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
             style={{ backgroundColor: `${hero.accent}18` }}>
             <Icon className="w-5 h-5" style={{ color: hero.accent }} />
@@ -88,40 +104,68 @@ export function PrimaryHeroCard({ hero, program }) {
           </div>
         </div>
 
-        {/* SUGGESTED MESSAGE — only for communication tasks */}
-        {hero.isCommunication && (hero.suggestedMessage || hero.suggestedReply) && (
-          <div className="mb-3 ml-[54px] rounded-lg px-3.5 py-2.5"
+        {/* 2. URGENCY LINE — above message */}
+        {hero.isCommunication && urgencyLine && (
+          <p className="text-[12px] font-medium ml-[54px] mb-2.5"
+            style={{ color: "#f87171" }}
+            data-testid="hero-urgency-line">
+            {urgencyLine}
+          </p>
+        )}
+
+        {/* 3. MESSAGE BLOCK — formatted paragraphs */}
+        {hero.isCommunication && messageParagraphs && (
+          <div className="mb-3 ml-[54px] rounded-lg px-3.5 py-3"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
             data-testid="hero-suggested-message">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1.5"
-              style={{ color: "rgba(255,255,255,0.25)" }}>
-              Suggested message
-            </p>
-            <p className="text-[14px] leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.55)", display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-              "{hero.suggestedMessage || hero.suggestedReply}"
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em]"
+                style={{ color: "rgba(255,255,255,0.25)" }}>
+                Message to coach
+              </p>
+              <span className="flex items-center gap-1 text-[10px]"
+                style={{ color: "rgba(255,255,255,0.20)", cursor: "pointer" }}>
+                <Pencil className="w-2.5 h-2.5" /> Tap to edit
+              </span>
+            </div>
+            {Array.isArray(messageParagraphs) ? (
+              <div className="space-y-2">
+                {messageParagraphs.map((p, i) => (
+                  <p key={i} className="text-[14px] leading-relaxed"
+                    style={{ color: "rgba(255,255,255,0.55)" }}>
+                    {i === 0 ? `"${p}` : i === messageParagraphs.length - 1 ? `${p}"` : p}
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[14px] leading-relaxed"
+                style={{ color: "rgba(255,255,255,0.55)" }}>
+                "{messageParagraphs}"
+              </p>
+            )}
           </div>
         )}
 
-        {/* CTA ROW — prominent, action-first */}
-        <div className="flex items-center gap-3 ml-[54px] mb-3">
+        {/* 4. PRIMARY CTA — prominent */}
+        <div className="flex items-center gap-3 ml-[54px] mb-2">
           {hero.primaryCta && (
             <button onClick={hero.primaryCta.handler} disabled={hero.primaryCta.loading}
-              className="ds-btn-primary text-[12px] sm:text-[13px] py-2 px-3.5 sm:py-2.5 sm:px-5"
+              className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-2.5 sm:px-5"
               style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1 }}
               data-testid="hero-primary-cta">
               {hero.primaryCta.loading
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 : hero.primaryCta.icon && <hero.primaryCta.icon className="w-3.5 h-3.5" />}
-              {hero.primaryCta.label}
+              {hero.isCommunication ? "Send to coach" : hero.primaryCta.label}
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
+
+          {/* 5. SECONDARY CTA — de-emphasized */}
           {hero.secondaryCta && (
             <button onClick={hero.secondaryCta.handler}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-colors"
-              style={{ color: "rgba(255,255,255,0.30)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }}
+              className="inline-flex items-center gap-1 text-[11px] font-medium transition-colors"
+              style={{ color: "rgba(255,255,255,0.20)", background: "none", border: "none", cursor: "pointer", padding: "6px 4px" }}
               data-testid="hero-secondary-cta">
               {hero.secondaryCta.icon && <hero.secondaryCta.icon className="w-3 h-3" />}
               {hero.secondaryCta.label}
@@ -129,9 +173,9 @@ export function PrimaryHeroCard({ hero, program }) {
           )}
         </div>
 
-        {/* CONTEXT LINE — why this? */}
+        {/* 6. WHY THIS — unchanged */}
         {hero.whyThis?.length > 0 && (
-          <div className="ml-[54px] mb-2 transition-all duration-300"
+          <div className="ml-[54px] mb-2 mt-3 transition-all duration-300"
             style={{
               opacity: whyVisible ? 1 : 0,
               transform: whyVisible ? "translateY(0)" : "translateY(4px)",

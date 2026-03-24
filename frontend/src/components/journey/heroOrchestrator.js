@@ -37,20 +37,21 @@ export function computeHeroSelection({
     return reasons.slice(0, 3);
   }
 
-  // ── Build a suggested reply based on context ──
+  // ── Build a suggested message based on context ──
   function buildSuggestedReply(taskTitle) {
-    const daysSince = signals.days_since_activity;
     const coachName = program?.college_coaches?.[0]?.coach_name;
     const greeting = coachName ? `Hi Coach ${coachName.split(" ").pop()}` : "Hi Coach";
 
     if ((taskTitle || "").toLowerCase().includes("follow up") || (taskTitle || "").toLowerCase().includes("follow-up")) {
-      if (daysSince > 14) return `${greeting}, I wanted to check in and reaffirm my strong interest in your program. I'd love to find a time to connect about next steps.`;
-      return `${greeting}, just following up on our last conversation. I'd love to schedule a time to connect and learn more about the program.`;
+      return `${greeting}, I wanted to check in and reaffirm my strong interest in your program. I've been working hard this season and would love to share some updates. Would you have a few minutes to connect this week?`;
     }
     if ((taskTitle || "").toLowerCase().includes("visit") || (taskTitle || "").toLowerCase().includes("campus")) {
-      return `${greeting}, I'm very interested in visiting campus. Would there be a good time in the coming weeks to schedule an unofficial visit?`;
+      return `${greeting}, I'm very interested in visiting campus and learning more about the program in person. Would there be a good time in the coming weeks to schedule an unofficial visit? I'm flexible with dates.`;
     }
-    return `${greeting}, I wanted to reach out and express my continued interest in your program. I'd appreciate any chance to connect.`;
+    if ((taskTitle || "").toLowerCase().includes("schedule call") || (taskTitle || "").toLowerCase().includes("schedule")) {
+      return `${greeting}, I'd love to set up a call to discuss the program and next steps. I'm available most afternoons this week. What time works best for you?`;
+    }
+    return `${greeting}, I wanted to reach out and express my continued interest in your program. I'd really appreciate any chance to connect and learn more about what you're building.`;
   }
 
   // ── P1 — Committed ──
