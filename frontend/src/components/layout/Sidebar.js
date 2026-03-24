@@ -86,11 +86,12 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
     >
       {/* Logo */}
       <div className={`flex items-center gap-2.5 pt-5 pb-4 ${collapsed ? "px-3 justify-center" : "px-5"}`} data-testid="sidebar-logo">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shadow-md shrink-0">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-md shrink-0"
+          style={{ background: "linear-gradient(135deg, #ff6a3d, #ff8a5c)" }}>
           <span className="text-white font-extrabold text-sm tracking-tight">C</span>
         </div>
         {!collapsed && (
-          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: "var(--cm-text)" }}>
+          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: "#f0f0f2" }}>
             CapyMatch
           </span>
         )}
@@ -100,7 +101,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       {!collapsed && (
         <div className="px-5 mb-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-md"
-            style={{ backgroundColor: "var(--cm-accent-light)", color: "var(--cm-accent)" }}>
+            style={{ backgroundColor: "rgba(255,106,61,0.12)", color: "#ff6a3d" }}>
             {user?.role === "director" ? "Director" : user?.role === "club_coach" ? "Coach" : "Athlete"}
           </span>
         </div>
@@ -119,14 +120,14 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
                 className={`w-full flex items-center gap-2.5 py-2.5 rounded-lg text-[13px] font-medium transition-all group ${collapsed ? "px-0 justify-center" : "px-3"}`}
                 style={{
                   backgroundColor: active ? "var(--cm-sidebar-active)" : "transparent",
-                  color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-2)",
+                  color: active ? "var(--cm-sidebar-active-text)" : "#8b8d98",
                 }}
                 data-testid={`nav-${item.id}`}
               >
-                <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
+                <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "#5c5e6a" }} />
                 {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
                 {!collapsed && item.id === "messages" && unreadMessages > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-teal-500 text-white leading-none" data-testid="messages-badge">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white leading-none" style={{ background: "#ff6a3d" }} data-testid="messages-badge">
                     {unreadMessages}
                   </span>
                 )}
@@ -141,10 +142,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
           <>
             {!collapsed && (
               <div className="mt-4 mb-2 px-3">
-                <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--cm-text-4)" }}>Admin</span>
+                <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "#5c5e6a" }}>Admin</span>
               </div>
             )}
-            {collapsed && <div className="mt-3 mb-1 mx-auto w-6 border-t" style={{ borderColor: "var(--cm-border)" }} />}
+            {collapsed && <div className="mt-3 mb-1 mx-auto w-6 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />}
             <div className="space-y-0.5">
               {ADMIN_NAV.map((item) => {
                 const active = isActive(item.path);
@@ -156,11 +157,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
                     className={`w-full flex items-center gap-2.5 py-2.5 rounded-lg text-[13px] font-medium transition-all group ${collapsed ? "px-0 justify-center" : "px-3"}`}
                     style={{
                       backgroundColor: active ? "var(--cm-sidebar-active)" : "transparent",
-                      color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-2)",
+                      color: active ? "var(--cm-sidebar-active-text)" : "#8b8d98",
                     }}
                     data-testid={`nav-${item.id}`}
                   >
-                    <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "var(--cm-text-3)" }} />
+                    <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "#5c5e6a" }} />
                     {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
                     {!collapsed && active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
                   </button>
@@ -176,8 +177,8 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
         {/* Collapse toggle */}
         <button
           onClick={onToggleCollapse}
-          className="w-full flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-black/5"
-          style={{ color: "var(--cm-text-3)" }}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/5"
+          style={{ color: "#5c5e6a" }}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           data-testid="sidebar-collapse-btn"
         >
@@ -194,7 +195,8 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
         {/* User info */}
         <div className={`py-3 border-t ${collapsed ? "px-2" : "px-5"}`} style={{ borderColor: "var(--cm-border)" }}>
           <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a8a80] to-[#25a99e] flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+              style={{ background: "linear-gradient(135deg, #ff6a3d, #ff8a5c)" }}>
               {user?.photo_url ? (
                 <img src={user.photo_url} alt={user?.name} className="w-full h-full object-cover" />
               ) : (
@@ -205,10 +207,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>
+                <p className="text-[12px] font-semibold truncate" style={{ color: "#f0f0f2" }}>
                   {user?.name || user?.email || "User"}
                 </p>
-                <p className="text-[10px] truncate" style={{ color: "var(--cm-text-3)" }}>
+                <p className="text-[10px] truncate" style={{ color: "#5c5e6a" }}>
                   {user?.email || ""}
                 </p>
               </div>
