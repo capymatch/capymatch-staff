@@ -12,6 +12,15 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### Stripe Subscription Billing (Mar 24, 2026)
+- **Backend**: `services/stripe_billing.py` — Full subscription lifecycle: checkout session creation (monthly/annual), webhook processing (6 event types), idempotent event handling via `stripe_events` collection, subscription sync to `club_subscriptions`, billing portal, cancel/reactivate flows.
+- **Router**: `routers/stripe_checkout.py` — 8 endpoints: `/stripe/checkout`, `/stripe/checkout/status/{id}`, `/stripe/portal`, `/stripe/webhook`, `/stripe/billing-info`, `/stripe/cancel`, `/stripe/reactivate`, `/stripe/plans`.
+- **Webhook handler**: Handles `checkout.session.completed`, `customer.subscription.{created,updated,deleted}`, `invoice.{paid,payment_failed}`. Idempotent via event_id dedup. Subscription sync → plan entitlements update automatically.
+- **Frontend**: ClubBillingPage with real Stripe Checkout, billing cycle toggle (monthly/annual with ~15% savings), current plan status, next renewal, usage bars, cancel/reactivate, billing portal link.
+- **Pricing**: Starter $199/mo ($2,028/yr), Growth $329/mo ($3,348/yr), Club Pro $449/mo ($4,584/yr), Elite $699/mo ($7,128/yr), Enterprise custom.
+- **Edge cases**: Failed payments → past_due status, canceled subscriptions → downgrade to starter, duplicate webhooks safely rejected, AuthenticationError fallback for demo mode.
+- **Testing**: 100% pass rate (iteration_246) — 20 backend + all frontend tests.
+
 ### Club Billing V2 — Entitlement Refactor (Mar 24, 2026)
 - **New entitlement architecture**: 3 types — `access` (bool), `depth` (basic/detailed/advanced/full), `limit` (int, -1=unlimited). Replaced flat True/False map.
 - **Backend**: `ClubPlan` enum, `E` (EntitlementKey) enum, `DEFAULT_ENTITLEMENTS` (Starter baseline), `PLAN_OVERRIDES` (per-plan deltas). Helpers: `has_feature()`, `get_feature_value()`, `get_plan_entitlements()`.
@@ -120,11 +129,12 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 ### P1 — Upcoming
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
+- V2 page-level route gating (Program Intelligence, Loop Insights)
+- Usage metering (AI drafts, advocacy recs per plan)
 
 ### P2 — Future
 - Parent/Family Experience
 - AI-Powered Coach Summary
-- Club Billing (Stripe)
 - Multi-Agent Intelligence Pipeline
 
 ## Key API Endpoints
