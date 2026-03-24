@@ -350,7 +350,7 @@ function EventPrep() {
 
         {/* ─── Blockers — Promoted to Top ─── */}
         {blockers.length > 0 && (
-          <section className="sm:rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(220,38,38,0.30)" }} data-testid="prep-blockers-section">
+          <section className="rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(220,38,38,0.30)" }} data-testid="prep-blockers-section">
             <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(220,38,38,0.15)" }}>
               <Shield className="w-4 h-4" style={{ color: "#ef4444" }} />
               <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>Blockers — Resolve Before Event</h2>
