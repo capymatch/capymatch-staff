@@ -130,32 +130,32 @@ export default function DirectorView({ data, userName }) {
 
       {/* ═══ 1. COMPACT CONTEXT STRIP — always visible ═══ */}
       <section
-        className="rounded-lg overflow-hidden"
-        style={{ backgroundColor: "#1E213A" }}
+        className="rounded-xl overflow-hidden"
+        style={{ background: "#161921", border: "1px solid rgba(255,255,255,0.06)" }}
         data-testid="director-hero"
       >
-        <div className="px-4 py-3 sm:px-5 sm:py-3.5">
+        <div className="px-5 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-[15px] sm:text-[17px] font-semibold text-white leading-tight">
-              {getGreeting()}, <span style={{ color: "#30C5BE" }}>{firstName}</span>
+            <h2 className="text-[17px] sm:text-[20px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.01em" }}>
+              {getGreeting()}, <span style={{ color: "#2dd4bf" }}>{firstName}</span>
             </h2>
-            <span className="text-[10px] font-medium px-2 py-1 rounded" style={{ background: "#2D3548", color: "#94a3b8" }}>
+            <span className="text-[10px] font-semibold px-2.5 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.06)", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.06)" }}>
               {getDateLabel()}
             </span>
           </div>
 
-          <div className="flex items-center gap-4 sm:gap-6 mt-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <div className="flex items-center gap-5 sm:gap-7 mt-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
             {kpis.map((kpi) => (
-              <div key={kpi.label} className="flex items-center gap-1.5 flex-shrink-0">
-                <span className="text-[18px] sm:text-[20px] font-bold tabular-nums" style={{ color: kpi.color, lineHeight: 1 }}>
+              <div key={kpi.label} className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-[20px] sm:text-[22px] font-bold tabular-nums" style={{ color: kpi.color, lineHeight: 1 }}>
                   {kpi.value}
                 </span>
                 <div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider block" style={{ color: kpi.emphasized ? kpi.color : "#8A92A3", lineHeight: 1.2 }}>
+                  <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: kpi.emphasized ? kpi.color : "#5c5e6a", lineHeight: 1.2 }}>
                     {kpi.label}
                   </span>
                   {kpi.trend !== undefined && kpi.trend !== 0 && (
-                    <span className="text-[9px] font-medium" style={{ color: kpi.trend > 0 ? "#FF6B6B" : "#30C5BE" }}>
+                    <span className="text-[9px] font-medium" style={{ color: kpi.trend > 0 ? "#FF6B6B" : "#2dd4bf" }}>
                       {kpi.trend > 0 ? "+" : ""}{kpi.trend} this week
                     </span>
                   )}
@@ -164,12 +164,12 @@ export default function DirectorView({ data, userName }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 mt-2.5 pt-2" style={{ borderTop: "1px solid #2D3548" }}>
-            <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#64748B" }}>Momentum</span>
+          <div className="flex items-center gap-2.5 mt-3.5 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#5c5e6a" }}>Momentum</span>
             <MomIcon className="w-3 h-3" style={{ color: momCfg.color }} />
             <span className="text-[11px] font-semibold" style={{ color: momCfg.color }}>{momCfg.label}</span>
             {momentum.engagementDelta !== 0 && (
-              <span className="text-[10px] hidden sm:inline" style={{ color: "#64748B" }}>
+              <span className="text-[10px] hidden sm:inline" style={{ color: "#5c5e6a" }}>
                 {momentum.engagementDelta > 0 ? "+" : ""}{momentum.engagementDelta}% engagement
               </span>
             )}
