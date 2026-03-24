@@ -12,7 +12,17 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
-### Club Billing — Plan-Based Access Tiers (Mar 24, 2026)
+### Club Billing V2 — Entitlement Refactor (Mar 24, 2026)
+- **New entitlement architecture**: 3 types — `access` (bool), `depth` (basic/detailed/advanced/full), `limit` (int, -1=unlimited). Replaced flat True/False map.
+- **Backend**: `ClubPlan` enum, `E` (EntitlementKey) enum, `DEFAULT_ENTITLEMENTS` (Starter baseline), `PLAN_OVERRIDES` (per-plan deltas). Helpers: `has_feature()`, `get_feature_value()`, `get_plan_entitlements()`.
+- **Core Director OS always visible**: Inbox, Outbox, Recruiting Signals, Coach Health, Escalations, Workflow Visibility — True on ALL plans including Starter.
+- **Depth gating**: Starter gets basic signals/coach health, Growth gets detailed signals, Club Pro gets advanced signals + detailed coach health, Elite gets advanced everything + full AI.
+- **Limit gating**: Starter gets 15 inbox/outbox items, Growth gets 100, Club Pro+ unlimited (-1).
+- **Frontend**: Refactored `PlanContext` with `can()`, `hasDepth()`, `getDepth()`, `getLimit()`. New `PlanGate` with 3 modes (access/depth/limit). New `UpgradeNudge` component (inline + card variants).
+- **DirectorView**: Inbox/Outbox/Signals/Coach Health shown on all plans. Depth props passed to components. Inline nudges on Starter ("See trends with Growth", "Unlock workload tracking with Club Pro").
+- **Testing**: 100% pass rate (iteration_245) — 32 backend + frontend tests.
+
+### Club Billing V1 — Plan-Based Access Tiers (Mar 24, 2026)
 - **5 Club Plans**: Starter ($199, 25 athletes, 3 coaches), Growth ($329, 50, 6), Club Pro ($449, 75, 10), Elite ($699, 125, 20), Enterprise (custom, unlimited)
 - **Backend**: `club_plans.py` defines 35 feature entitlements across all plans. `routers/club_plans.py` provides 5 API endpoints: list plans, get current, check feature, set plan, bulk entitlements. Plan data stored in `club_subscriptions` collection.
 - **Frontend**: `PlanContext.js` hydrates entitlements on login, exposes `can(featureId)`. `PlanGate.js` wraps sections and shows `UpgradePrompt.js` when locked. `ClubBillingPage.js` shows plan cards, usage bars, and plan switching.
