@@ -80,7 +80,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
         lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       style={{
         backgroundColor: "var(--cm-sidebar)",
-        borderColor: "var(--cm-border)",
+        borderColor: "#f1f5f9",
       }}
       data-testid="sidebar"
     >
@@ -91,7 +91,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
           <span className="text-white font-extrabold text-sm tracking-tight">C</span>
         </div>
         {!collapsed && (
-          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: "#f0f0f2" }}>
+          <span className="text-[15px] font-extrabold tracking-tight" style={{ color: "#1e293b" }}>
             CapyMatch
           </span>
         )}
@@ -120,18 +120,18 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
                 className={`w-full flex items-center gap-2.5 py-2.5 rounded-lg text-[13px] font-medium transition-all group ${collapsed ? "px-0 justify-center" : "px-3"}`}
                 style={{
                   backgroundColor: active ? "var(--cm-sidebar-active)" : "transparent",
-                  color: active ? "var(--cm-sidebar-active-text)" : "#8b8d98",
+                  color: active ? "var(--cm-sidebar-active-text)" : "#64748b",
                 }}
                 data-testid={`nav-${item.id}`}
               >
-                <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "#5c5e6a" }} />
+                <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "#94a3b8" }} />
                 {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
                 {!collapsed && item.id === "messages" && unreadMessages > 0 && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white leading-none" style={{ background: "#ff6a3d" }} data-testid="messages-badge">
                     {unreadMessages}
                   </span>
                 )}
-                {!collapsed && active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
+                {!collapsed && active && <ChevronRight className="w-3.5 h-3.5 opacity-40" />}
               </button>
             );
           })}
@@ -142,10 +142,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
           <>
             {!collapsed && (
               <div className="mt-4 mb-2 px-3">
-                <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "#5c5e6a" }}>Admin</span>
+                <span className="text-[9px] font-bold uppercase tracking-[1.5px]" style={{ color: "#94a3b8" }}>Admin</span>
               </div>
             )}
-            {collapsed && <div className="mt-3 mb-1 mx-auto w-6 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />}
+            {collapsed && <div className="mt-3 mb-1 mx-auto w-6 border-t" style={{ borderColor: "#f1f5f9" }} />}
             <div className="space-y-0.5">
               {ADMIN_NAV.map((item) => {
                 const active = isActive(item.path);
@@ -157,11 +157,11 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
                     className={`w-full flex items-center gap-2.5 py-2.5 rounded-lg text-[13px] font-medium transition-all group ${collapsed ? "px-0 justify-center" : "px-3"}`}
                     style={{
                       backgroundColor: active ? "var(--cm-sidebar-active)" : "transparent",
-                      color: active ? "var(--cm-sidebar-active-text)" : "#8b8d98",
+                      color: active ? "var(--cm-sidebar-active-text)" : "#64748b",
                     }}
                     data-testid={`nav-${item.id}`}
                   >
-                    <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "#5c5e6a" }} />
+                    <item.icon className="w-[18px] h-[18px] shrink-0" style={{ color: active ? "var(--cm-sidebar-active-text)" : "#94a3b8" }} />
                     {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
                     {!collapsed && active && <ChevronRight className="w-3.5 h-3.5 opacity-50" />}
                   </button>
@@ -173,12 +173,12 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
       </nav>
 
       {/* Bottom: user + collapse toggle */}
-      <div className="border-t" style={{ borderColor: "var(--cm-border)" }}>
+      <div className="border-t" style={{ borderColor: "#f1f5f9" }}>
         {/* Collapse toggle */}
         <button
           onClick={onToggleCollapse}
-          className="w-full flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/5"
-          style={{ color: "#5c5e6a" }}
+          className="w-full flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-gray-50"
+          style={{ color: "#94a3b8" }}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           data-testid="sidebar-collapse-btn"
         >
@@ -193,7 +193,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
         </button>
 
         {/* User info */}
-        <div className={`py-3 border-t ${collapsed ? "px-2" : "px-5"}`} style={{ borderColor: "var(--cm-border)" }}>
+        <div className={`py-3 border-t ${collapsed ? "px-2" : "px-5"}`} style={{ borderColor: "#f1f5f9" }}>
           <div className={`flex items-center ${collapsed ? "justify-center" : "gap-2.5"}`}>
             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
               style={{ background: "linear-gradient(135deg, #ff6a3d, #ff8a5c)" }}>
@@ -207,10 +207,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold truncate" style={{ color: "#f0f0f2" }}>
+                <p className="text-[12px] font-semibold truncate" style={{ color: "#1e293b" }}>
                   {user?.name || user?.email || "User"}
                 </p>
-                <p className="text-[10px] truncate" style={{ color: "#5c5e6a" }}>
+                <p className="text-[10px] truncate" style={{ color: "#94a3b8" }}>
                   {user?.email || ""}
                 </p>
               </div>
