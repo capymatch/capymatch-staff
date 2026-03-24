@@ -168,16 +168,11 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
       style={{
-        background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
+        background: "#161921",
         borderRadius: undefined,
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)",
+        border: "1px solid rgba(255,255,255,0.06)",
       }}
     >
-      {/* Glow orbs */}
-      <div className="ds-glow-teal" />
-      <div className="ds-glow-purple" />
-
       {/* ── TOP BAR: Filter pills + Carousel nav ── */}
       <div
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-7 pt-3 sm:pt-3.5 pb-2.5 sm:pb-3 relative z-[1] gap-2 sm:gap-0"
