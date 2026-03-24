@@ -734,7 +734,7 @@ export default function AthleteDashboard() {
         <div className="flex items-start justify-between px-5 py-4 sm:px-6 sm:py-5">
           <div>
             <h2 className="text-[17px] sm:text-[20px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.01em" }} data-testid="dashboard-greeting">
-              {greeting}, <span style={{ color: "#f0f0f2" }}>{firstName}</span>
+              {greeting}, <span style={{ color: "#ff6a3d" }}>{firstName}</span>
             </h2>
             <p className="text-sm mt-0.5" style={{ color: "#5c5e6a" }}>
               Here's what's happening with your recruiting today
