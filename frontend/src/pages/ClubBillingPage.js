@@ -106,23 +106,7 @@ export default function ClubBillingPage() {
     }
   }, []);
 
-  // Handle return from Stripe checkout
-  useEffect(() => {
-    const sessionId = searchParams.get("session_id");
-    const checkoutStatus = searchParams.get("checkout");
-
-    if (sessionId && checkoutStatus === "success") {
-      pollCheckoutStatus(sessionId);
-      setSearchParams({}, { replace: true });
-    } else if (checkoutStatus === "cancelled") {
-      toast.info("Checkout cancelled");
-      setSearchParams({}, { replace: true });
-    }
-  }, [searchParams, setSearchParams]);
-
-  useEffect(() => { loadData(); }, [loadData]);
-
-  const pollCheckoutStatus = async (sessionId, attempt = 0) => {
+  const pollCheckoutStatus = useCallback(async (sessionId, attempt = 0) => {
     if (attempt >= 5) {
       toast.error("Payment status check timed out");
       return;
@@ -139,7 +123,23 @@ export default function ClubBillingPage() {
     } catch {
       toast.error("Error checking payment status");
     }
-  };
+  }, [loadData, refetch]);
+
+  // Handle return from Stripe checkout
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    const checkoutStatus = searchParams.get("checkout");
+
+    if (sessionId && checkoutStatus === "success") {
+      pollCheckoutStatus(sessionId);
+      setSearchParams({}, { replace: true });
+    } else if (checkoutStatus === "cancelled") {
+      toast.info("Checkout cancelled");
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, pollCheckoutStatus]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const handleSelectPlan = async (planId) => {
     if (planId === "enterprise") {

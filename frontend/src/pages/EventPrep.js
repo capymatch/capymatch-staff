@@ -58,13 +58,13 @@ function AddAthletesDialog({ open, onOpenChange, eventId, currentAthleteIds, onU
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px] bg-white" data-testid="add-athletes-dialog">
+      <DialogContent className="sm:max-w-[440px]" style={{ background: "#161921", border: "1px solid rgba(255,255,255,0.08)" }} data-testid="add-athletes-dialog">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-gray-900">Manage Athletes</DialogTitle>
-          <DialogDescription className="text-xs text-gray-500">Add or remove athletes from this event.</DialogDescription>
+          <DialogTitle className="text-base font-semibold" style={{ color: "#f0f0f2" }}>Manage Athletes</DialogTitle>
+          <DialogDescription className="text-xs" style={{ color: "#5c5e6a" }}>Add or remove athletes from this event.</DialogDescription>
         </DialogHeader>
         {loading ? (
-          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400" /></div>
+          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: "#5c5e6a" }} /></div>
         ) : (
           <div className="space-y-1 mt-2 max-h-[400px] overflow-y-auto">
             {roster.map((a) => {
@@ -73,30 +73,35 @@ function AddAthletesDialog({ open, onOpenChange, eventId, currentAthleteIds, onU
               return (
                 <div
                   key={a.id}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${isAdded ? "bg-emerald-50 border border-emerald-100" : "bg-gray-50 border border-gray-100"}`}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors"
+                  style={{
+                    background: isAdded ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${isAdded ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.06)"}`,
+                  }}
                   data-testid={`roster-athlete-${a.id}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {a.photo_url ? (
                       <img src={a.photo_url} alt={a.name} className="w-8 h-8 rounded-full object-cover" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-500">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.08)", color: "#8b8d98" }}>
                         {(a.name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{a.name}</p>
-                      <p className="text-[10px] text-gray-500">{a.position} · {a.grad_year}</p>
+                      <p className="text-sm font-medium truncate" style={{ color: "#f0f0f2" }}>{a.name}</p>
+                      <p className="text-[10px]" style={{ color: "#5c5e6a" }}>{a.position} · {a.grad_year}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => toggleAthlete(a.id, isAdded)}
                     disabled={isLoading}
-                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                      isAdded
-                        ? "text-red-600 bg-red-50 hover:bg-red-100 border border-red-200"
-                        : "text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-200"
-                    } ${isLoading ? "opacity-50" : ""}`}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${isLoading ? "opacity-50" : ""}`}
+                    style={{
+                      color: isAdded ? "#ef4444" : "#10b981",
+                      background: isAdded ? "rgba(239,68,68,0.08)" : "rgba(16,185,129,0.08)",
+                      border: `1px solid ${isAdded ? "rgba(239,68,68,0.20)" : "rgba(16,185,129,0.20)"}`,
+                    }}
                     data-testid={`toggle-athlete-${a.id}`}
                   >
                     {isLoading ? "..." : isAdded ? (<><X className="w-3 h-3" /> Remove</>) : (<><Plus className="w-3 h-3" /> Add</>)}
@@ -104,7 +109,7 @@ function AddAthletesDialog({ open, onOpenChange, eventId, currentAthleteIds, onU
                 </div>
               );
             })}
-            {roster.length === 0 && <p className="text-sm text-gray-400 text-center py-6">No athletes in your roster</p>}
+            {roster.length === 0 && <p className="text-sm text-center py-6" style={{ color: "#5c5e6a" }}>No athletes in your roster</p>}
           </div>
         )}
       </DialogContent>
@@ -169,10 +174,10 @@ function ManageSchoolsDialog({ open, onOpenChange, eventId, currentSchoolIds, on
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[460px] bg-white" data-testid="manage-schools-dialog">
+      <DialogContent className="sm:max-w-[460px]" style={{ background: "#161921", border: "1px solid rgba(255,255,255,0.08)" }} data-testid="manage-schools-dialog">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold text-gray-900">Manage Schools</DialogTitle>
-          <DialogDescription className="text-xs text-gray-500">Add or remove schools attending this event.</DialogDescription>
+          <DialogTitle className="text-base font-semibold" style={{ color: "#f0f0f2" }}>Manage Schools</DialogTitle>
+          <DialogDescription className="text-xs" style={{ color: "#5c5e6a" }}>Add or remove schools attending this event.</DialogDescription>
         </DialogHeader>
 
         {/* Add custom school */}
@@ -180,7 +185,8 @@ function ManageSchoolsDialog({ open, onOpenChange, eventId, currentSchoolIds, on
           <input
             type="text"
             placeholder="Add a school not listed..."
-            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            className="flex-1 px-3 py-2 text-sm rounded-lg focus:outline-none"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#f0f0f2" }}
             value={customName}
             onChange={(e) => setCustomName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addCustomSchool()}
@@ -189,7 +195,8 @@ function ManageSchoolsDialog({ open, onOpenChange, eventId, currentSchoolIds, on
           <button
             onClick={addCustomSchool}
             disabled={addingCustom || !customName.trim()}
-            className="px-3 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg transition-colors"
+            className="px-3 py-2 text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+            style={{ background: "#ff6a3d", color: "#fff" }}
             data-testid="custom-school-add-btn"
           >
             {addingCustom ? "..." : "Add"}
@@ -197,7 +204,7 @@ function ManageSchoolsDialog({ open, onOpenChange, eventId, currentSchoolIds, on
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400" /></div>
+          <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: "#5c5e6a" }} /></div>
         ) : (
           <div className="space-y-1 mt-2 max-h-[350px] overflow-y-auto">
             {allSchools.map((s) => {
@@ -206,26 +213,31 @@ function ManageSchoolsDialog({ open, onOpenChange, eventId, currentSchoolIds, on
               return (
                 <div
                   key={s.id}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${isAdded ? "bg-emerald-50 border border-emerald-100" : "bg-gray-50 border border-gray-100"}`}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors"
+                  style={{
+                    background: isAdded ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${isAdded ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.06)"}`,
+                  }}
                   data-testid={`school-item-${s.id}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                      <GraduationCap className="w-4 h-4 text-slate-500" />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <GraduationCap className="w-4 h-4" style={{ color: "#8b8d98" }} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{s.name}</p>
-                      {s.division && <p className="text-[10px] text-gray-500">{s.division}</p>}
+                      <p className="text-sm font-medium truncate" style={{ color: "#f0f0f2" }}>{s.name}</p>
+                      {s.division && <p className="text-[10px]" style={{ color: "#5c5e6a" }}>{s.division}</p>}
                     </div>
                   </div>
                   <button
                     onClick={() => toggleSchool(s.id, isAdded)}
                     disabled={isLoading}
-                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                      isAdded
-                        ? "text-red-600 bg-red-50 hover:bg-red-100 border border-red-200"
-                        : "text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border border-emerald-200"
-                    } ${isLoading ? "opacity-50" : ""}`}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${isLoading ? "opacity-50" : ""}`}
+                    style={{
+                      color: isAdded ? "#ef4444" : "#10b981",
+                      background: isAdded ? "rgba(239,68,68,0.08)" : "rgba(16,185,129,0.08)",
+                      border: `1px solid ${isAdded ? "rgba(239,68,68,0.20)" : "rgba(16,185,129,0.20)"}`,
+                    }}
                     data-testid={`toggle-school-${s.id}`}
                   >
                     {isLoading ? "..." : isAdded ? (<><X className="w-3 h-3" /> Remove</>) : (<><Plus className="w-3 h-3" /> Add</>)}
@@ -233,7 +245,7 @@ function ManageSchoolsDialog({ open, onOpenChange, eventId, currentSchoolIds, on
                 </div>
               );
             })}
-            {allSchools.length === 0 && <p className="text-sm text-gray-400 text-center py-6">No schools available</p>}
+            {allSchools.length === 0 && <p className="text-sm text-center py-6" style={{ color: "#5c5e6a" }}>No schools available</p>}
           </div>
         )}
       </DialogContent>
@@ -275,8 +287,8 @@ function EventPrep() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center py-32"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400" /></div>;
-  if (!data || data.error) return <div className="flex items-center justify-center py-32"><p className="text-gray-500">Event not found</p></div>;
+  if (loading) return <div className="flex items-center justify-center py-32"><div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: "#5c5e6a" }} /></div>;
+  if (!data || data.error) return <div className="flex items-center justify-center py-32"><p style={{ color: "#5c5e6a" }}>Event not found</p></div>;
 
   const { event, athletes, targetSchools, checklist, blockers } = data;
   const completed = checklist.filter((c) => c.completed).length;
@@ -288,24 +300,25 @@ function EventPrep() {
   return (
     <div data-testid="event-prep-page">
       {/* Header */}
-      <header className="bg-white/95 border-b border-gray-100">
+      <header style={{ background: "#161921", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <button onClick={() => navigate("/events")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors shrink-0" data-testid="back-to-events">
+            <button onClick={() => navigate("/events")} className="flex items-center gap-1.5 text-sm transition-colors shrink-0" style={{ color: "#8b8d98" }} data-testid="back-to-events">
               <ArrowLeft className="w-4 h-4" /><span className="hidden sm:inline">Events</span>
             </button>
-            <div className="h-5 w-px bg-gray-200 shrink-0" />
+            <div className="h-5 w-px shrink-0" style={{ background: "rgba(255,255,255,0.08)" }} />
             <div className="min-w-0">
-              <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="prep-event-name">{event.name} — Prep</h1>
-              <div className="flex items-center gap-3 text-xs text-gray-500">
+              <h1 className="font-semibold text-sm sm:text-base leading-tight truncate" style={{ color: "#f0f0f2" }} data-testid="prep-event-name">{event.name} — Prep</h1>
+              <div className="flex items-center gap-3 text-xs" style={{ color: "#5c5e6a" }}>
                 <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{event.location}</span>
-                <span className="font-medium shrink-0">{event.daysAway <= 1 ? "TOMORROW" : `IN ${event.daysAway} DAYS`}</span>
+                <span className="font-medium shrink-0" style={{ color: event.daysAway <= 2 ? "#ef4444" : "#8b8d98" }}>{event.daysAway <= 1 ? "TOMORROW" : `IN ${event.daysAway} DAYS`}</span>
               </div>
             </div>
           </div>
           <button
             onClick={() => navigate(`/events/${eventId}/live`)}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold text-white rounded-lg transition-colors shrink-0"
+            style={{ background: "#dc2626" }}
             data-testid="go-live-btn"
           >
             <Zap className="w-3.5 h-3.5" /> Go Live <ChevronRight className="w-3 h-3" />
@@ -317,63 +330,64 @@ function EventPrep() {
 
         {/* ─── Quick Summary Bar ─── */}
         <div className="flex items-center gap-3 flex-wrap" data-testid="prep-summary-bar">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
-            <Users className="w-3.5 h-3.5 text-slate-500" />
-            <span className="font-semibold text-slate-800">{athletes.length}</span>
-            <span className="text-slate-500">athletes</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <Users className="w-3.5 h-3.5" style={{ color: "#5c5e6a" }} />
+            <span className="font-semibold" style={{ color: "#f0f0f2" }}>{athletes.length}</span>
+            <span style={{ color: "#5c5e6a" }}>athletes</span>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
-            <GraduationCap className="w-3.5 h-3.5 text-slate-500" />
-            <span className="font-semibold text-slate-800">{targetSchools.length}</span>
-            <span className="text-slate-500">schools</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <GraduationCap className="w-3.5 h-3.5" style={{ color: "#5c5e6a" }} />
+            <span className="font-semibold" style={{ color: "#f0f0f2" }}>{targetSchools.length}</span>
+            <span style={{ color: "#5c5e6a" }}>schools</span>
           </div>
           {readyCt > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100 text-xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="font-semibold text-emerald-700">{readyCt}</span>
-              <span className="text-emerald-600">ready</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)" }}>
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#10b981" }} />
+              <span className="font-semibold" style={{ color: "#10b981" }}>{readyCt}</span>
+              <span style={{ color: "rgba(16,185,129,0.7)" }}>ready</span>
             </div>
           )}
           {notReadyCt > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-100 text-xs">
-              <Clock className="w-3.5 h-3.5 text-amber-600" />
-              <span className="font-semibold text-amber-700">{notReadyCt}</span>
-              <span className="text-amber-600">need{notReadyCt > 1 ? "" : "s"} attention</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)" }}>
+              <Clock className="w-3.5 h-3.5" style={{ color: "#f59e0b" }} />
+              <span className="font-semibold" style={{ color: "#f59e0b" }}>{notReadyCt}</span>
+              <span style={{ color: "rgba(245,158,11,0.7)" }}>need{notReadyCt > 1 ? "" : "s"} attention</span>
             </div>
           )}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-100 text-xs">
-            <Check className="w-3.5 h-3.5 text-slate-500" />
-            <span className="font-semibold text-slate-800">{completed}/{checklist.length}</span>
-            <span className="text-slate-500">prep done</span>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <Check className="w-3.5 h-3.5" style={{ color: "#5c5e6a" }} />
+            <span className="font-semibold" style={{ color: "#f0f0f2" }}>{completed}/{checklist.length}</span>
+            <span style={{ color: "#5c5e6a" }}>prep done</span>
           </div>
         </div>
 
         {/* ─── Blockers — Promoted to Top ─── */}
         {blockers.length > 0 && (
-          <section className="rounded-xl border-2 border-red-200 bg-red-50/50 overflow-hidden" data-testid="prep-blockers-section">
-            <div className="px-4 py-3 border-b border-red-100 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-red-600" />
-              <h2 className="text-xs font-bold text-red-700 uppercase tracking-wider">Blockers — Resolve Before Event</h2>
+          <section className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(220,38,38,0.25)", background: "rgba(220,38,38,0.06)" }} data-testid="prep-blockers-section">
+            <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(220,38,38,0.15)" }}>
+              <Shield className="w-4 h-4" style={{ color: "#ef4444" }} />
+              <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>Blockers — Resolve Before Event</h2>
             </div>
-            <div className="divide-y divide-red-100">
+            <div style={{ borderTop: "none" }}>
               {blockers.map((b, i) => (
-                <div key={i} className="px-4 py-3 flex items-start justify-between gap-4">
+                <div key={i} className="px-4 py-3 flex items-start justify-between gap-4" style={i > 0 ? { borderTop: "1px solid rgba(220,38,38,0.10)" } : {}}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                      <span className="text-sm font-semibold text-gray-900">{b.athleteName}</span>
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: "#ef4444" }} />
+                      <span className="text-sm font-semibold" style={{ color: "#f0f0f2" }}>{b.athleteName}</span>
                     </div>
-                    <p className="text-xs text-gray-700 ml-5.5">{b.impact}</p>
+                    <p className="text-xs ml-5.5" style={{ color: "#8b8d98" }}>{b.impact}</p>
                     {b.recommended_action && (
-                      <p className="text-[11px] text-red-600 font-medium mt-1 ml-5.5">Next: {b.recommended_action}</p>
+                      <p className="text-[11px] font-medium mt-1 ml-5.5" style={{ color: "#f87171" }}>Next: {b.recommended_action}</p>
                     )}
                     {b.owner && (
-                      <p className="text-[10px] text-gray-400 mt-0.5 ml-5.5">Owner: {b.owner}</p>
+                      <p className="text-[10px] mt-0.5 ml-5.5" style={{ color: "#5c5e6a" }}>Owner: {b.owner}</p>
                     )}
                   </div>
                   <button
                     onClick={() => navigate(`/support-pods/${b.athleteId}`)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md transition-colors shrink-0"
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors shrink-0"
+                    style={{ color: "#f87171", background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.20)" }}
                     data-testid={`blocker-pod-${b.athleteId}`}
                   >
                     Open Pod <ExternalLink className="w-3 h-3" />
@@ -385,68 +399,71 @@ function EventPrep() {
         )}
 
         {/* ─── Athletes — Sorted by Readiness ─── */}
-        <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-athletes-section">
-          <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Athletes ({athletes.length})</h2>
+        <section className="rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(255,255,255,0.06)" }} data-testid="prep-athletes-section">
+          <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "#5c5e6a" }}>Athletes ({athletes.length})</h2>
             <button
               onClick={() => setShowAddAthletes(true)}
-              className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold rounded-lg transition-colors"
+              style={{ color: "#ff6a3d", background: "rgba(255,106,61,0.08)", border: "1px solid rgba(255,106,61,0.20)" }}
               data-testid="add-athletes-button"
             >
               <Plus className="w-3 h-3" /> Manage Athletes
             </button>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div>
             {sortedAthletes.length === 0 && (
               <div className="px-4 py-8 text-center">
-                <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">No athletes assigned yet</p>
+                <Users className="w-8 h-8 mx-auto mb-2" style={{ color: "#3d3f4a" }} />
+                <p className="text-sm" style={{ color: "#5c5e6a" }}>No athletes assigned yet</p>
                 <button
                   onClick={() => setShowAddAthletes(true)}
-                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors"
+                  style={{ color: "#ff6a3d", background: "rgba(255,106,61,0.08)", border: "1px solid rgba(255,106,61,0.20)" }}
                   data-testid="add-athletes-empty-cta"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Athletes
                 </button>
               </div>
             )}
-            {sortedAthletes.map((a) => {
+            {sortedAthletes.map((a, idx) => {
               const cfg = PREP_CONFIG[a.prepStatus] || PREP_CONFIG.ready;
               return (
-                <div key={a.id} className="px-4 py-3 flex items-center justify-between gap-3" data-testid={`prep-athlete-${a.id}`}>
+                <div key={a.id} className="px-4 py-3 flex items-center justify-between gap-3" style={idx > 0 ? { borderTop: "1px solid rgba(255,255,255,0.04)" } : {}} data-testid={`prep-athlete-${a.id}`}>
                   <div className="flex-1 min-w-0 flex items-start gap-3">
                     <div className="relative shrink-0 mt-0.5">
                       {a.photo_url ? (
                         <img src={a.photo_url} alt={a.full_name} className="w-8 h-8 rounded-full object-cover" data-testid={`prep-avatar-${a.id}`} />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-500" data-testid={`prep-avatar-${a.id}`}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.08)", color: "#8b8d98" }} data-testid={`prep-avatar-${a.id}`}>
                           {(a.full_name || "").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
                         </div>
                       )}
-                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${cfg.dot}`} />
+                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${cfg.dot}`} style={{ borderColor: "#161921" }} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-medium text-sm text-gray-900">{a.full_name}</span>
-                        <span className="text-[10px] text-gray-400">{a.grad_year} · {a.position}</span>
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.text}`}>{cfg.label}</span>
+                        <span className="font-medium text-sm" style={{ color: "#f0f0f2" }}>{a.full_name}</span>
+                        <span className="text-[10px]" style={{ color: "#5c5e6a" }}>{a.grad_year} · {a.position}</span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: cfg.bg, color: cfg.text }}>{cfg.label}</span>
                       </div>
                     {a.targetSchoolsAtEvent.length > 0 && (
                       <div className="flex items-center gap-1 ml-4 mt-1 flex-wrap">
-                        <Target className="w-3 h-3 text-gray-300 shrink-0" />
+                        <Target className="w-3 h-3 shrink-0" style={{ color: "#3d3f4a" }} />
                         {a.targetSchoolsAtEvent.map((s, i) => (
-                          <span key={i} className="text-[10px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded border border-gray-100">{s}</span>
+                          <span key={i} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(255,255,255,0.04)", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.06)" }}>{s}</span>
                         ))}
                       </div>
                     )}
                     {a.blockers?.length > 0 && (
-                      <p className="text-[11px] text-red-600 mt-1 ml-4">{a.blockers[0].why_this_surfaced || a.blockers[0].recommended_action}</p>
+                      <p className="text-[11px] mt-1 ml-4" style={{ color: "#f87171" }}>{a.blockers[0].why_this_surfaced || a.blockers[0].recommended_action}</p>
                     )}
                     </div>
                   </div>
                   <button
                     onClick={() => navigate(`/support-pods/${a.id}`)}
-                    className="text-[10px] text-gray-400 hover:text-gray-700 flex items-center gap-0.5 transition-colors shrink-0"
+                    className="text-[10px] flex items-center gap-0.5 transition-colors shrink-0"
+                    style={{ color: "#5c5e6a" }}
                   >
                     Pod <ExternalLink className="w-3 h-3" />
                   </button>
@@ -459,28 +476,30 @@ function EventPrep() {
         {/* ─── Target Schools + Checklist side by side ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Schools — Ranked by athlete overlap */}
-          <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-schools-section">
-            <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+          <section className="rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(255,255,255,0.06)" }} data-testid="prep-schools-section">
+            <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <div>
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Target Schools ({targetSchools.length})</h2>
-                <p className="text-[10px] text-gray-400 mt-0.5">Ranked by how many of your athletes target them</p>
+                <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "#5c5e6a" }}>Target Schools ({targetSchools.length})</h2>
+                <p className="text-[10px] mt-0.5" style={{ color: "#3d3f4a" }}>Ranked by how many of your athletes target them</p>
               </div>
               <button
                 onClick={() => setShowManageSchools(true)}
-                className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold rounded-lg transition-colors"
+                style={{ color: "#ff6a3d", background: "rgba(255,106,61,0.08)", border: "1px solid rgba(255,106,61,0.20)" }}
                 data-testid="manage-schools-button"
               >
                 <Plus className="w-3 h-3" /> Manage Schools
               </button>
             </div>
-            <div className="divide-y divide-gray-50">
+            <div>
               {sortedSchools.length === 0 && (
                 <div className="px-4 py-8 text-center">
-                  <GraduationCap className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-400">No schools added yet</p>
+                  <GraduationCap className="w-8 h-8 mx-auto mb-2" style={{ color: "#3d3f4a" }} />
+                  <p className="text-sm" style={{ color: "#5c5e6a" }}>No schools added yet</p>
                   <button
                     onClick={() => setShowManageSchools(true)}
-                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors"
+                    style={{ color: "#ff6a3d", background: "rgba(255,106,61,0.08)", border: "1px solid rgba(255,106,61,0.20)" }}
                     data-testid="add-schools-empty-cta"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add Schools
@@ -488,20 +507,20 @@ function EventPrep() {
                 </div>
               )}
               {sortedSchools.map((s, i) => (
-                <div key={s.id} className="px-4 py-2.5 flex items-center justify-between" data-testid={`prep-school-${s.id}`}>
+                <div key={s.id} className="px-4 py-2.5 flex items-center justify-between" style={i > 0 ? { borderTop: "1px solid rgba(255,255,255,0.04)" } : {}} data-testid={`prep-school-${s.id}`}>
                   <div className="flex items-center gap-2.5">
                     <UniversityLogo domain={s.domain} name={s.name} logoUrl={s.logo_url} size={28} />
                     <div>
-                      <span className="text-sm font-medium text-gray-900">{s.name}</span>
-                      <span className="text-[10px] text-gray-400 ml-1.5">{s.division}</span>
+                      <span className="text-sm font-medium" style={{ color: "#f0f0f2" }}>{s.name}</span>
+                      <span className="text-[10px] ml-1.5" style={{ color: "#5c5e6a" }}>{s.division}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-3 h-3 text-gray-300" />
-                    <span className={`text-[11px] font-semibold ${s.athleteOverlap > 0 ? "text-slate-700" : "text-gray-300"}`}>
+                    <Users className="w-3 h-3" style={{ color: "#3d3f4a" }} />
+                    <span className="text-[11px] font-semibold" style={{ color: s.athleteOverlap > 0 ? "#f0f0f2" : "#3d3f4a" }}>
                       {s.athleteOverlap}
                     </span>
-                    <span className="text-[10px] text-gray-400">athlete{s.athleteOverlap !== 1 ? "s" : ""}</span>
+                    <span className="text-[10px]" style={{ color: "#5c5e6a" }}>athlete{s.athleteOverlap !== 1 ? "s" : ""}</span>
                   </div>
                 </div>
               ))}
@@ -509,31 +528,33 @@ function EventPrep() {
           </section>
 
           {/* Prep Checklist */}
-          <section className="bg-white border border-gray-100 rounded-xl overflow-hidden" data-testid="prep-checklist-section">
-            <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Prep Checklist</h2>
-              <span className="text-[11px] font-semibold text-gray-500">{completed}/{checklist.length}</span>
+          <section className="rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(255,255,255,0.06)" }} data-testid="prep-checklist-section">
+            <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "#5c5e6a" }}>Prep Checklist</h2>
+              <span className="text-[11px] font-semibold" style={{ color: "#8b8d98" }}>{completed}/{checklist.length}</span>
             </div>
-            <div className="px-4 py-2 divide-y divide-gray-50">
-              {checklist.map((item) => (
+            <div className="px-4 py-2">
+              {checklist.map((item, idx) => (
                 <button
                   key={item.id}
                   onClick={() => toggleCheck(item.id)}
-                  className="w-full flex items-center gap-3 py-2.5 text-left hover:bg-gray-50/50 transition-colors rounded"
+                  className="w-full flex items-center gap-3 py-2.5 text-left rounded transition-colors"
+                  style={idx > 0 ? { borderTop: "1px solid rgba(255,255,255,0.04)" } : {}}
                   data-testid={`checklist-${item.id}`}
                 >
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                    item.completed ? "bg-emerald-500 border-emerald-500" : "border-gray-300 hover:border-emerald-400"
-                  }`}>
+                  <div className="w-5 h-5 rounded flex items-center justify-center transition-all shrink-0" style={{
+                    background: item.completed ? "#10b981" : "transparent",
+                    border: item.completed ? "2px solid #10b981" : "2px solid #5c5e6a",
+                  }}>
                     {item.completed && <Check className="w-3 h-3 text-white" />}
                   </div>
-                  <span className={`text-sm ${item.completed ? "text-gray-400 line-through" : "text-gray-700"}`}>{item.label}</span>
+                  <span className="text-sm" style={{ color: item.completed ? "#5c5e6a" : "#f0f0f2", textDecoration: item.completed ? "line-through" : "none" }}>{item.label}</span>
                 </button>
               ))}
             </div>
             <div className="px-4 pb-3">
-              <div className="w-full bg-gray-100 rounded-full h-1.5">
-                <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${checklist.length > 0 ? (completed / checklist.length) * 100 : 0}%` }} />
+              <div className="w-full rounded-full h-1.5" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-1.5 rounded-full transition-all" style={{ background: "#10b981", width: `${checklist.length > 0 ? (completed / checklist.length) * 100 : 0}%` }} />
               </div>
             </div>
           </section>
