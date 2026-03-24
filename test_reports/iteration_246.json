@@ -1,0 +1,105 @@
+{
+  "summary": "Stripe subscription billing integration testing complete. All 20 backend tests passed (100%). Frontend tests verified: Club Billing page loads with all 5 plan cards, billing cycle toggle works (Monthly/Annual), Subscribe button redirects to Stripe checkout, coach cannot access billing page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_stripe_billing_integration.py",
+    "/app/test_reports/pytest/pytest_stripe_billing_integration.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "stripe_billing.py: Correctly handles Stripe AuthenticationError by falling back to direct plan activation (demo mode)",
+    "stripe_billing.py: PLAN_PRICES correctly defines all 5 plans with monthly/annual pricing",
+    "stripe_billing.py: Webhook processing is idempotent - uses stripe_events collection to track processed event_ids",
+    "stripe_checkout.py: POST /api/stripe/checkout correctly rejects non-director users with 403",
+    "stripe_checkout.py: POST /api/stripe/checkout correctly rejects 'enterprise' plan with 400",
+    "stripe_checkout.py: Webhook endpoint accepts JSON payloads without signature verification when STRIPE_WEBHOOK_SECRET is not set",
+    "ClubBillingPage.js: All 5 plan cards render with correct pricing (Starter $199, Growth $329, Club Pro $449, Elite $699, Enterprise custom)",
+    "ClubBillingPage.js: Billing cycle toggle correctly switches between Monthly and Annual pricing",
+    "ClubBillingPage.js: Subscribe button correctly redirects to Stripe checkout",
+    "ClubBillingPage.js: Usage bars show Athletes and Coaches usage"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_stripe_billing_integration.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (All UI tests passed)"
+  },
+  "test_credentials": {
+    "director_email": "director@capymatch.com",
+    "director_password": "director123",
+    "coach_email": "coach.williams@capymatch.com",
+    "coach_password": "coach123"
+  },
+  "seed_data_creation": "No new seed data created - used existing demo accounts",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Stripe billing integration testing complete (iteration 246). The Stripe API key (sk_test_emergent) is actually working - it creates real Stripe checkout sessions (redirects to stripe.com). The fallback to direct plan activation only happens when Stripe API returns AuthenticationError. Backend tests cover: GET /api/stripe/plans (5 plans with pricing), POST /api/stripe/checkout (creates session, rejects coach with 403, rejects enterprise with 400), GET /api/stripe/billing-info, POST /api/stripe/cancel, POST /api/stripe/reactivate, POST /api/stripe/webhook (handles checkout.session.completed, subscription.updated, subscription.deleted, invoice.payment_failed, invoice.paid), webhook idempotency. Frontend verified: Club Billing page loads, all 5 plan cards render, billing cycle toggle works, Subscribe redirects to Stripe, coach cannot access billing page.",
+  "tests_verified": {
+    "backend_stripe_plans": {
+      "get_plans_returns_5_plans": "PASS",
+      "starter_monthly_199": "PASS",
+      "growth_monthly_329": "PASS",
+      "club_pro_monthly_449": "PASS",
+      "elite_monthly_699": "PASS",
+      "enterprise_custom_pricing": "PASS",
+      "starter_annual_2028": "PASS",
+      "growth_annual_3348": "PASS",
+      "club_pro_annual_4584": "PASS",
+      "elite_annual_7128": "PASS",
+      "annual_monthly_equivalent_calculated": "PASS"
+    },
+    "backend_stripe_checkout": {
+      "checkout_creates_session_or_activates_directly": "PASS",
+      "checkout_rejects_coach_with_403": "PASS",
+      "checkout_rejects_enterprise_with_400": "PASS",
+      "checkout_accepts_annual_billing_cycle": "PASS"
+    },
+    "backend_stripe_billing_info": {
+      "billing_info_returns_current_plan": "PASS",
+      "billing_info_has_subscription_field": "PASS"
+    },
+    "backend_stripe_cancel_reactivate": {
+      "cancel_requires_director_role": "PASS",
+      "reactivate_requires_director_role": "PASS"
+    },
+    "backend_stripe_webhook": {
+      "webhook_handles_checkout_session_completed": "PASS",
+      "webhook_handles_subscription_updated": "PASS",
+      "webhook_handles_subscription_deleted": "PASS",
+      "webhook_handles_invoice_payment_failed": "PASS",
+      "webhook_handles_invoice_paid": "PASS",
+      "webhook_idempotency_replaying_same_event": "PASS"
+    },
+    "backend_subscription_sync": {
+      "checkout_returns_valid_response": "PASS",
+      "subscription_deleted_downgrades_to_starter": "PASS"
+    },
+    "frontend_club_billing": {
+      "page_loads": "PASS - data-testid='club-billing-page'",
+      "current_plan_displayed": "PASS - Shows 'Club Pro' with 'ACTIVE' status",
+      "usage_bars_visible": "PASS - Athletes and Coaches usage bars",
+      "all_5_plan_cards": "PASS - starter, growth, club_pro, elite, enterprise",
+      "correct_monthly_pricing": "PASS - $199, $329, $449, $699, Custom",
+      "billing_cycle_toggle": "PASS - Monthly/Annual toggle works",
+      "annual_pricing_displayed": "PASS - $169, $279, $382, $594 (with Save ~15%)",
+      "subscribe_button_works": "PASS - Redirects to Stripe checkout (stripe.com)",
+      "feature_lists_visible": "PASS - Each plan shows feature list"
+    },
+    "frontend_coach_access": {
+      "club_billing_not_in_sidebar": "PASS",
+      "coach_redirected_from_billing_page": "PASS - Redirected to /mission-control"
+    }
+  },
+  "mocked_apis": {
+    "note": "Stripe API key (sk_test_emergent) is working - creates real Stripe checkout sessions. Fallback to direct activation only happens on AuthenticationError."
+  }
+}

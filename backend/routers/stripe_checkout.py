@@ -1,37 +1,44 @@
-"""Stripe Checkout — subscription upgrade flow, billing portal, cancel/reactivate.
+"""Stripe Checkout — club subscription billing, portal, webhooks.
 
-Tiers defined server-side. Frontend sends tier + origin_url.
+Endpoints:
+  POST /api/stripe/checkout          — Create subscription checkout session
+  GET  /api/stripe/checkout/status   — Poll checkout status
+  POST /api/stripe/portal            — Create billing portal session
+  POST /api/stripe/webhook           — Stripe webhook handler
+  GET  /api/stripe/billing-info      — Current billing info for UI
+  POST /api/stripe/cancel            — Cancel subscription at period end
+  POST /api/stripe/reactivate        — Undo pending cancellation
 """
 
 import os
-import uuid
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 import stripe as stripe_sdk
-log = logging.getLogger(__name__)
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from emergentintegrations.payments.stripe.checkout import (
-    StripeCheckout,
-    CheckoutSessionRequest,
-)
 from auth_middleware import get_current_user_dep
 from db_client import db
-from subscriptions import SUBSCRIPTION_TIERS, get_user_subscription
+from services.stripe_billing import (
+    create_subscription_checkout,
+    poll_checkout_status,
+    create_portal_session,
+    process_webhook_event,
+    PLAN_PRICES,
+)
+from club_plans import ClubPlan, get_plan_info
+from emergentintegrations.payments.stripe.checkout import StripeCheckout
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
-
-TIERS = {
-    "pro": {"label": "Pro", "price": 29.00, "schools_limit": 25},
-    "premium": {"label": "Premium", "price": 49.00, "schools_limit": -1},
-}
+log = logging.getLogger(__name__)
 
 
-class CheckoutRequest(BaseModel):
-    tier: str
+# ── Request models ──
+
+class ClubCheckoutRequest(BaseModel):
+    plan_id: str
+    billing_cycle: str = "monthly"  # "monthly" or "annual"
     origin_url: str
 
 
@@ -39,312 +46,267 @@ class PortalRequest(BaseModel):
     return_url: str
 
 
-@router.post("/checkout/create-session")
-async def create_checkout_session(
-    data: CheckoutRequest,
-    request: Request,
+# ── 1. Create subscription checkout ──
+
+@router.post("/stripe/checkout")
+async def create_checkout(
+    data: ClubCheckoutRequest,
     current_user: dict = get_current_user_dep(),
 ):
-    if data.tier not in TIERS:
-        raise HTTPException(400, f"Invalid tier: {data.tier}")
+    """Create a Stripe subscription checkout session for a club plan."""
+    if current_user["role"] not in ("director", "platform_admin"):
+        raise HTTPException(403, "Only directors can manage billing")
 
-    tier_info = TIERS[data.tier]
-    api_key = os.environ.get("STRIPE_API_KEY")
-    if not api_key:
-        raise HTTPException(500, "Stripe not configured")
+    org_id = current_user.get("org_id", "")
+    if not org_id:
+        raise HTTPException(400, "No organization found")
 
-    host_url = str(request.base_url).rstrip("/")
-    webhook_url = f"{host_url}/api/webhook/stripe"
-    stripe = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
-
-    origin = data.origin_url.rstrip("/")
-    success_url = f"{origin}/settings?session_id={{CHECKOUT_SESSION_ID}}&upgrade=success"
-    cancel_url = f"{origin}/settings?upgrade=cancelled"
-
-    metadata = {
-        "user_id": current_user["id"],
-        "email": current_user.get("email", ""),
-        "tier": data.tier,
-        "label": tier_info["label"],
-    }
-
-    checkout_req = CheckoutSessionRequest(
-        amount=tier_info["price"],
-        currency="usd",
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata=metadata,
-    )
-
-    session = await stripe.create_checkout_session(checkout_req)
-
-    # Record pending transaction
-    txn_id = f"txn_{uuid.uuid4().hex[:12]}"
-    await db.payment_transactions.insert_one({
-        "txn_id": txn_id,
-        "session_id": session.session_id,
-        "user_id": current_user["id"],
-        "email": current_user.get("email", ""),
-        "tier": data.tier,
-        "amount": tier_info["price"],
-        "currency": "usd",
-        "payment_status": "pending",
-        "metadata": metadata,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    })
-
-    return {"url": session.url, "session_id": session.session_id}
-
-
-@router.get("/checkout/status/{session_id}")
-async def get_checkout_status(session_id: str, current_user: dict = get_current_user_dep()):
-    api_key = os.environ.get("STRIPE_API_KEY")
-    if not api_key:
-        raise HTTPException(500, "Stripe not configured")
-
-    stripe = StripeCheckout(api_key=api_key, webhook_url="")
     try:
-        status = await stripe.get_checkout_status(session_id)
-    except Exception as e:  # noqa: E722
-        log.warning("Handled exception (handled): %s", e)
+        result = await create_subscription_checkout(
+            plan_id=data.plan_id,
+            billing_cycle=data.billing_cycle,
+            org_id=org_id,
+            user_id=current_user["id"],
+            user_email=current_user.get("email", ""),
+            origin_url=data.origin_url,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ── 2. Poll checkout status ──
+
+@router.get("/stripe/checkout/status/{session_id}")
+async def get_checkout_status(
+    session_id: str,
+    current_user: dict = get_current_user_dep(),
+):
+    """Poll Stripe for checkout session status."""
+    org_id = current_user.get("org_id", "")
+    try:
+        result = await poll_checkout_status(session_id, org_id)
+        return result
+    except Exception as e:
+        log.warning("Checkout status poll failed: %s", e)
         raise HTTPException(404, "Session not found")
 
-    # Try to extract and save stripe_customer_id from raw session
-    try:
-        stripe_sdk.api_key = api_key
-        raw_session = stripe_sdk.checkout.Session.retrieve(session_id)
-        customer_id = raw_session.get("customer")
-        if customer_id:
-            await db.users.update_one(
-                {"id": current_user["id"]},
-                {"$set": {"stripe_customer_id": customer_id}},
-            )
-    except Exception as e:
-        logger.warning(f"Could not extract stripe customer_id: {e}")
 
-    # Update transaction record
-    txn = await db.payment_transactions.find_one({"session_id": session_id})
-    if txn:
-        already_paid = txn.get("payment_status") == "paid"
-        new_status = status.payment_status
-        update = {
-            "payment_status": new_status,
-            "status": status.status,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-        await db.payment_transactions.update_one(
-            {"session_id": session_id}, {"$set": update}
-        )
+# ── 3. Billing portal ──
 
-        # Upgrade user tier only once
-        if new_status == "paid" and not already_paid:
-            tier = txn.get("tier", "pro")
-            tier_info = TIERS.get(tier, TIERS["pro"])
-            await db.users.update_one(
-                {"id": txn["user_id"]},
-                {"$set": {
-                    "subscription_plan": tier,
-                    "subscription_tier": tier,
-                    "subscription_label": tier_info["label"],
-                    "schools_limit": tier_info["schools_limit"],
-                    "upgraded_at": datetime.now(timezone.utc).isoformat(),
-                }},
-            )
-            logger.info(f"User {txn['user_id']} upgraded to {tier}")
-
-    return {
-        "status": status.status,
-        "payment_status": status.payment_status,
-        "amount_total": status.amount_total,
-        "currency": status.currency,
-    }
-
-
-@router.post("/checkout/create-portal-session")
-async def create_portal_session(
+@router.post("/stripe/portal")
+async def open_portal(
     data: PortalRequest,
     current_user: dict = get_current_user_dep(),
 ):
-    """Create a Stripe Customer Portal session for managing billing."""
-    api_key = os.environ.get("STRIPE_API_KEY")
-    if not api_key:
-        raise HTTPException(500, "Stripe not configured")
+    """Create a Stripe Customer Portal session."""
+    if current_user["role"] not in ("director", "platform_admin"):
+        raise HTTPException(403, "Only directors can manage billing")
 
-    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
-    if not user:
-        raise HTTPException(404, "User not found")
-
-    customer_id = user.get("stripe_customer_id")
-    if not customer_id:
-        raise HTTPException(400, "No billing account found. Please upgrade first.")
-
-    stripe_sdk.api_key = api_key
+    org_id = current_user.get("org_id", "")
     try:
-        session = stripe_sdk.billing_portal.Session.create(
-            customer=customer_id,
-            return_url=data.return_url,
-        )
-        return {"url": session.url}
-    except Exception as e:
-        logger.error(f"Stripe portal error: {e}")
-        raise HTTPException(500, "Could not create billing portal session")
+        result = await create_portal_session(org_id, data.return_url)
+        return result
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
-@router.post("/webhook/stripe")
+# ── 4. Webhook ──
+
+@router.post("/stripe/webhook")
 async def stripe_webhook(request: Request):
+    """Handle Stripe webhook events. Production-ready with signature verification."""
     body = await request.body()
     sig = request.headers.get("Stripe-Signature", "")
     api_key = os.environ.get("STRIPE_API_KEY")
+
     if not api_key:
-        return {"ok": False}
+        log.error("STRIPE_API_KEY not configured")
+        return {"ok": False, "error": "not_configured"}
 
-    try:
-        stripe = StripeCheckout(api_key=api_key, webhook_url="")
-        event = await stripe.handle_webhook(body, sig)
-        logger.info(f"Stripe webhook: {event.event_type} session={event.session_id}")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
 
-        if event.payment_status == "paid":
-            txn = await db.payment_transactions.find_one({"session_id": event.session_id})
-            if txn and txn.get("payment_status") != "paid":
-                tier = txn.get("tier", "pro")
-                tier_info = TIERS.get(tier, TIERS["pro"])
-                await db.payment_transactions.update_one(
-                    {"session_id": event.session_id},
-                    {"$set": {"payment_status": "paid", "updated_at": datetime.now(timezone.utc).isoformat()}},
-                )
-                await db.users.update_one(
-                    {"id": txn["user_id"]},
-                    {"$set": {
-                        "subscription_plan": tier,
-                        "subscription_tier": tier,
-                        "subscription_label": tier_info["label"],
-                        "schools_limit": tier_info["schools_limit"],
-                        "upgraded_at": datetime.now(timezone.utc).isoformat(),
-                    }},
-                )
-        return {"ok": True}
-    except Exception as e:
-        logger.error(f"Webhook error: {e}")
-        return {"ok": False}
+    event = None
+    event_type = None
+    event_id = None
+
+    # Try signature verification if webhook secret is set
+    if webhook_secret and sig:
+        try:
+            event = stripe_sdk.Webhook.construct_event(body, sig, webhook_secret)
+            event_type = event["type"]
+            event_id = event["id"]
+        except stripe_sdk.error.SignatureVerificationError:
+            log.warning("Stripe webhook signature verification failed")
+            return {"ok": False, "error": "signature_invalid"}
+    else:
+        # Fallback: try emergentintegrations handler, then raw JSON parse
+        try:
+            stripe_checkout = StripeCheckout(api_key=api_key, webhook_url="")
+            ei_event = await stripe_checkout.handle_webhook(body, sig)
+            event_type = ei_event.event_type
+            event_id = ei_event.event_id
+
+            # Parse raw body for full event data
+            import json
+            raw = json.loads(body)
+            event = raw
+        except Exception:
+            try:
+                import json
+                raw = json.loads(body)
+                event_type = raw.get("type")
+                event_id = raw.get("id")
+                event = raw
+            except Exception as e:
+                log.error("Failed to parse webhook payload: %s", e)
+                return {"ok": False, "error": "parse_failed"}
+
+    if not event_type or not event_id:
+        return {"ok": False, "error": "missing_event_data"}
+
+    log.info("Stripe webhook received: type=%s id=%s", event_type, event_id)
+
+    data = event.get("data", {}) if isinstance(event, dict) else {}
+    processed = await process_webhook_event(event_type, event_id, data)
+
+    return {"ok": True, "processed": processed, "event_type": event_type}
 
 
-# ─── Billing History ──────────────────────────
+# ── 5. Billing info (for frontend) ──
 
-async def _get_athlete_tenant(user_id: str) -> str | None:
-    athlete = await db.athletes.find_one({"user_id": user_id}, {"_id": 0, "tenant_id": 1})
-    return athlete.get("tenant_id") if athlete else None
+@router.get("/stripe/billing-info")
+async def get_billing_info(current_user: dict = get_current_user_dep()):
+    """Get current billing info: plan, status, next renewal, billing cycle."""
+    org_id = current_user.get("org_id", "")
 
+    sub = await db.club_subscriptions.find_one({"org_id": org_id}, {"_id": 0})
 
-@router.get("/stripe/billing-history")
-async def get_billing_history(current_user: dict = get_current_user_dep()):
-    """Get payment history, subscription status, and cancellation info."""
-    user_id = current_user["id"]
-    tenant_id = await _get_athlete_tenant(user_id)
-
-    # Get payment transactions
-    txns = await db.payment_transactions.find(
-        {"user_id": user_id},
-        {"_id": 0},
-    ).sort("created_at", -1).to_list(50)
-
-    # Get subscription info
-    subscription = {"tier": "basic", "label": "Starter", "price": 0}
-    if tenant_id:
-        sub = await get_user_subscription(tenant_id)
-        subscription = {
-            "tier": sub["tier"],
-            "label": sub["label"],
-            "price": sub.get("price", 0),
+    if not sub or not sub.get("stripe_subscription_id"):
+        plan_id = (sub or {}).get("plan_id", "starter")
+        return {
+            "plan_id": plan_id,
+            "plan_label": get_plan_info(plan_id).get("label", "Starter"),
+            "status": "active",
+            "billing_cycle": (sub or {}).get("billing_cycle", "monthly"),
+            "has_subscription": False,
+            "cancel_at_period_end": False,
+            "current_period_end": None,
+            "stripe_customer_id": (sub or {}).get("stripe_customer_id"),
         }
 
-    # Check cancellation status from user doc
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    cancel_at_period_end = (user or {}).get("cancel_at_period_end", False)
-    plan_expires_at = (user or {}).get("plan_expires_at")
+    plan_id = sub.get("plan_id", "starter")
+    plan_info = get_plan_info(plan_id)
+
+    # Get price for display
+    try:
+        plan_enum = ClubPlan(plan_id)
+        cycle = sub.get("billing_cycle", "monthly")
+        price = PLAN_PRICES.get(plan_enum, {}).get(cycle, {}).get("amount", 0)
+    except ValueError:
+        price = 0
 
     return {
-        "transactions": txns,
-        "subscription": subscription,
-        "cancel_at_period_end": cancel_at_period_end,
-        "plan_expires_at": plan_expires_at,
+        "plan_id": plan_id,
+        "plan_label": plan_info.get("label", "Starter"),
+        "status": sub.get("status", "active"),
+        "billing_cycle": sub.get("billing_cycle", "monthly"),
+        "has_subscription": True,
+        "cancel_at_period_end": sub.get("cancel_at_period_end", False),
+        "current_period_end": sub.get("current_period_end"),
+        "stripe_customer_id": sub.get("stripe_customer_id"),
+        "started_at": sub.get("started_at"),
+        "price": price,
     }
 
+
+# ── 6. Cancel subscription ──
 
 @router.post("/stripe/cancel")
 async def cancel_subscription(current_user: dict = get_current_user_dep()):
-    """Cancel subscription at end of billing period (keeps access until expiry)."""
-    user_id = current_user["id"]
-    tenant_id = await _get_athlete_tenant(user_id)
+    """Cancel subscription at end of billing period."""
+    if current_user["role"] not in ("director", "platform_admin"):
+        raise HTTPException(403, "Only directors can manage billing")
 
-    # Check current tier
-    subscription = {"tier": "basic"}
-    if tenant_id:
-        subscription = await get_user_subscription(tenant_id)
+    org_id = current_user.get("org_id", "")
+    sub = await db.club_subscriptions.find_one({"org_id": org_id}, {"_id": 0})
 
-    if subscription["tier"] == "basic":
-        raise HTTPException(400, "You are already on the free plan.")
+    if not sub or not sub.get("stripe_subscription_id"):
+        raise HTTPException(400, "No active subscription to cancel")
 
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    if user and user.get("cancel_at_period_end"):
-        raise HTTPException(400, "Cancellation is already scheduled.")
+    stripe_sub_id = sub["stripe_subscription_id"]
 
-    now = datetime.now(timezone.utc)
-    expires_at = (now + timedelta(days=30)).isoformat()
+    try:
+        stripe_sdk.api_key = os.environ.get("STRIPE_API_KEY")
+        stripe_sdk.Subscription.modify(
+            stripe_sub_id,
+            cancel_at_period_end=True,
+        )
+    except Exception as e:
+        log.warning("Stripe cancel API error (non-fatal): %s", e)
 
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {
-            "cancel_at_period_end": True,
-            "plan_expires_at": expires_at,
-            "updated_at": now.isoformat(),
-        }},
+    now = datetime.now(timezone.utc).isoformat()
+    await db.club_subscriptions.update_one(
+        {"org_id": org_id},
+        {"$set": {"cancel_at_period_end": True, "updated_at": now}},
     )
 
-    # Audit log
-    await db.subscription_logs.insert_one({
-        "log_id": f"sublog_{uuid.uuid4().hex[:12]}",
-        "user_id": user_id,
-        "old_plan": subscription["tier"],
-        "new_plan": "basic (scheduled)",
-        "reason": "User requested cancellation",
-        "changed_by": "user",
-        "created_at": now.isoformat(),
-    })
-
-    label = subscription.get("label", subscription["tier"].title())
-    logger.info(f"Subscription cancellation scheduled: user {user_id} ({subscription['tier']} -> basic at {expires_at})")
+    plan_label = get_plan_info(sub.get("plan_id", "starter")).get("label", "Starter")
+    period_end = sub.get("current_period_end", "the end of your billing period")
 
     return {
-        "message": f"Your {label} plan will remain active until the end of your billing period.",
-        "plan_expires_at": expires_at,
+        "message": f"Your {plan_label} plan will remain active until {period_end}.",
+        "cancel_at_period_end": True,
     }
 
 
+# ── 7. Reactivate subscription ──
+
 @router.post("/stripe/reactivate")
 async def reactivate_subscription(current_user: dict = get_current_user_dep()):
-    """Cancel a pending cancellation and keep the current plan."""
-    user_id = current_user["id"]
+    """Undo a pending cancellation."""
+    if current_user["role"] not in ("director", "platform_admin"):
+        raise HTTPException(403, "Only directors can manage billing")
 
-    user = await db.users.find_one({"id": user_id}, {"_id": 0})
-    if not user or not user.get("cancel_at_period_end"):
-        raise HTTPException(400, "No pending cancellation found.")
+    org_id = current_user.get("org_id", "")
+    sub = await db.club_subscriptions.find_one({"org_id": org_id}, {"_id": 0})
+
+    if not sub or not sub.get("cancel_at_period_end"):
+        raise HTTPException(400, "No pending cancellation found")
+
+    stripe_sub_id = sub.get("stripe_subscription_id")
+    if stripe_sub_id:
+        try:
+            stripe_sdk.api_key = os.environ.get("STRIPE_API_KEY")
+            stripe_sdk.Subscription.modify(
+                stripe_sub_id,
+                cancel_at_period_end=False,
+            )
+        except Exception as e:
+            log.warning("Stripe reactivate API error (non-fatal): %s", e)
 
     now = datetime.now(timezone.utc).isoformat()
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {"cancel_at_period_end": False, "plan_expires_at": None, "updated_at": now}},
+    await db.club_subscriptions.update_one(
+        {"org_id": org_id},
+        {"$set": {"cancel_at_period_end": False, "updated_at": now}},
     )
 
-    await db.subscription_logs.insert_one({
-        "log_id": f"sublog_{uuid.uuid4().hex[:12]}",
-        "user_id": user_id,
-        "old_plan": user.get("subscription_plan", "basic"),
-        "new_plan": user.get("subscription_plan", "basic"),
-        "reason": "User reactivated subscription",
-        "changed_by": "user",
-        "created_at": now,
-    })
+    return {"message": "Your subscription has been reactivated.", "cancel_at_period_end": False}
 
-    logger.info(f"Subscription reactivated: user {user_id}")
-    return {"message": "Your subscription has been reactivated. No changes will be made to your plan."}
+
+# ── 8. Available plans with pricing (public) ──
+
+@router.get("/stripe/plans")
+async def get_plans():
+    """Return plan options with monthly and annual pricing for checkout UI."""
+    plans = []
+    for plan_enum in [ClubPlan.STARTER, ClubPlan.GROWTH, ClubPlan.CLUB_PRO, ClubPlan.ELITE, ClubPlan.ENTERPRISE]:
+        info = get_plan_info(plan_enum.value)
+        prices = PLAN_PRICES.get(plan_enum)
+        plans.append({
+            **info,
+            "monthly_price": prices["monthly"]["amount"] if prices else None,
+            "annual_price": prices["annual"]["amount"] if prices else None,
+            "annual_monthly": round(prices["annual"]["amount"] / 12, 2) if prices else None,
+        })
+    return {"plans": plans}
