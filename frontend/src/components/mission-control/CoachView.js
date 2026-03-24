@@ -147,38 +147,10 @@ export default function CoachView({ data, userName }) {
   const { pulseKeys, timeSinceLabel } = useLiveIndicators(data, directorRequestCount);
 
   const kpis = [
-    {
-      value: summary.athleteCount || 0,
-      label: "MY ATHLETES",
-      subtitle: "Assigned to you",
-      color: "#30C5BE",
-      icon: Target,
-      iconBg: "#363D59",
-    },
-    {
-      value: summary.needingAction || 0,
-      label: "NEED ATTENTION",
-      subtitle: "Athletes need attention",
-      color: summary.needingAction > 0 ? "#FFC649" : "#30C5BE",
-      icon: AlertTriangle,
-      iconBg: summary.needingAction > 0 ? "#4A3C36" : "#363D59",
-    },
-    {
-      value: summary.upcomingEvents || 0,
-      label: "EVENTS THIS WEEK",
-      subtitle: "Coming up",
-      color: "#7F92FF",
-      icon: Calendar,
-      iconBg: "#363D59",
-    },
-    {
-      value: directorRequestCount,
-      label: "DIRECTOR REQUESTS",
-      subtitle: directorRequestCount > 0 ? "Need your attention" : "All clear",
-      color: directorRequestCount > 0 ? "#FFC649" : "#30C5BE",
-      icon: MessageCircle,
-      iconBg: directorRequestCount > 0 ? "#4A3C36" : "#363D59",
-    },
+    { value: summary.athleteCount || 0, label: "MY ATHLETES", icon: Target },
+    { value: summary.needingAction || 0, label: "NEED ATTENTION", icon: AlertTriangle },
+    { value: summary.upcomingEvents || 0, label: "EVENTS THIS WEEK", icon: Calendar },
+    { value: directorRequestCount, label: "DIRECTOR REQUESTS", icon: MessageCircle },
   ];
 
   return (
@@ -187,108 +159,81 @@ export default function CoachView({ data, userName }) {
 
       {/* ── Hero Card ── */}
       <section
-        className="relative rounded-[10px] overflow-hidden"
-        style={{ backgroundColor: "#1E213A", padding: "20px 24px" }}
+        className="relative rounded-xl overflow-hidden"
+        style={{ background: "#161921", border: "1px solid rgba(255,255,255,0.06)" }}
         data-testid="coach-hero"
       >
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
-          <div>
-            <h2 className="text-xl sm:text-[26px] font-semibold text-white leading-tight">
-              {getGreeting()},{" "}
-              <span style={{ color: "#30C5BE" }}>{firstName}</span>
-            </h2>
-            <p className="text-sm mt-0.5" style={{ color: "#8A92A3" }}>
-              Here's what's happening with your athletes today
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span
-              className="flex items-center gap-1.5"
-              style={{ fontSize: 11, color: "#5a6278" }}
-              data-testid="live-updated-label"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Updated {timeSinceLabel}
-            </span>
-            <span
-              className="hidden sm:inline-block font-medium"
-              style={{
-                backgroundColor: "#363D59",
-                color: "#E5E5E5",
-                fontSize: 13,
-                padding: "6px 14px",
-                borderRadius: 6,
-              }}
-            >
-              {getDateLabel()}
-            </span>
-          </div>
-        </div>
-
-        <div style={{ borderTop: "1px solid #363D59", margin: "0 0 16px 0" }} />
-
-        {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-0">
-          {kpis.map((kpi, idx) => {
-            const Icon = kpi.icon;
-            const isPulsing = pulseKeys.has(kpi.label);
-            return (
-              <div
-                key={kpi.label}
-                className="sm:flex-1 sm:min-w-0"
-                style={{
-                  paddingRight: idx < kpis.length - 1 ? "clamp(8px, 2vw, 20px)" : 0,
-                  paddingLeft: idx > 0 ? "clamp(8px, 2vw, 20px)" : 0,
-                  borderRight: idx < kpis.length - 1 ? "1px solid #363D59" : "none",
-                  marginTop: 8,
-                  marginBottom: 8,
-                }}
+        <div className="px-5 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-[17px] sm:text-[20px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.01em" }}>
+                {getGreeting()}, <span style={{ color: "#f0f0f2" }}>{firstName}</span>
+              </h2>
+              <p className="text-sm mt-0.5" style={{ color: "#5c5e6a" }}>
+                Here's what's happening with your athletes today
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span
+                className="flex items-center gap-1.5"
+                style={{ fontSize: 11, color: "#3d3f4a" }}
+                data-testid="live-updated-label"
               >
-                <div className="flex items-start justify-between w-full">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p
-                        className="text-2xl sm:text-3xl font-bold leading-none mb-1.5"
-                        style={{
-                          color: kpi.color,
-                          transition: "transform 0.3s ease",
-                          transform: isPulsing ? "scale(1.08)" : "scale(1)",
-                        }}
-                        data-testid={`kpi-value-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
-                      >
-                        {kpi.value}
-                      </p>
-                      {isPulsing && (
-                        <span
-                          className="w-2 h-2 rounded-full animate-ping"
-                          style={{ backgroundColor: kpi.color, marginBottom: 6 }}
-                          data-testid={`kpi-pulse-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
-                        />
-                      )}
-                    </div>
-                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mb-0.5" style={{ color: "#8A92A3" }}>
-                      {kpi.label}
-                    </p>
-                    <p className="text-[11px] hidden sm:block" style={{ color: "#8A92A3" }}>
-                      {kpi.subtitle}
-                    </p>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Updated {timeSinceLabel}
+              </span>
+              <span
+                className="hidden sm:inline-block text-[10px] font-semibold px-2.5 py-1 rounded-md"
+                style={{ background: "rgba(255,255,255,0.06)", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                {getDateLabel()}
+              </span>
+            </div>
+          </div>
+
+          {/* KPIs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 mt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16 }}>
+            {kpis.map((kpi, idx) => {
+              const Icon = kpi.icon;
+              const isPulsing = pulseKeys.has(kpi.label);
+              const isAlert = kpi.label === "NEED ATTENTION" && kpi.value > 0;
+              const isRequest = kpi.label === "DIRECTOR REQUESTS" && kpi.value > 0;
+              const valueColor = isAlert ? "#ef4444" : isRequest ? "#f59e0b" : "#f0f0f2";
+              const labelColor = isAlert ? "#ef4444" : isRequest ? "#f59e0b" : "#5c5e6a";
+              return (
+                <div
+                  key={kpi.label}
+                  className="flex flex-col items-center text-center py-2"
+                  style={idx < kpis.length - 1 ? { borderRight: "1px solid rgba(255,255,255,0.04)" } : {}}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="text-[22px] sm:text-[26px] font-bold tabular-nums"
+                      style={{
+                        color: valueColor,
+                        lineHeight: 1,
+                        transition: "transform 0.3s ease",
+                        transform: isPulsing ? "scale(1.08)" : "scale(1)",
+                      }}
+                      data-testid={`kpi-value-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
+                    >
+                      {kpi.value}
+                    </span>
+                    {isPulsing && (
+                      <span
+                        className="w-2 h-2 rounded-full animate-ping"
+                        style={{ backgroundColor: valueColor, marginBottom: 6 }}
+                        data-testid={`kpi-pulse-${kpi.label.toLowerCase().replace(/\s+/g, "-")}`}
+                      />
+                    )}
                   </div>
-                  <div
-                    className="hidden sm:flex items-center justify-center shrink-0"
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "50%",
-                      backgroundColor: kpi.iconBg,
-                      marginTop: 2,
-                    }}
-                  >
-                    <Icon style={{ width: 16, height: 16, color: kpi.color }} />
-                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] mt-1.5 block" style={{ color: labelColor }}>
+                    {kpi.label}
+                  </span>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </section>
 
