@@ -236,11 +236,24 @@ async def _build_director_response(alerts, attention, signals, events):
 _trend_cache = {"data": None, "ts": 0.0}
 
 async def _compute_trends(current_status):
-    """Compute trend deltas from historical snapshots for KPIs and momentum."""
+    """Compute trend deltas from historical snapshots for KPIs and momentum.
+    
+    Result is persisted in DB so it stays stable across restarts.
+    """
     import time as _time
-    # Cache for 120s to prevent momentum flicker
-    if _trend_cache["data"] is not None and (_time.monotonic() - _trend_cache["ts"]) < 120:
+
+    # In-memory cache first (hot path)
+    if _trend_cache["data"] is not None and (_time.monotonic() - _trend_cache["ts"]) < 300:
         return _trend_cache["data"]
+
+    # Check DB-persisted trend (survives restarts)
+    today_key = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    persisted = await db.computed_trends.find_one({"date": today_key}, {"_id": 0})
+    if persisted and "result" in persisted:
+        _trend_cache["data"] = persisted["result"]
+        _trend_cache["ts"] = _time.monotonic()
+        return persisted["result"]
+
     try:
         today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         cursor = db.program_snapshots.find(
@@ -300,6 +313,12 @@ async def _compute_trends(current_status):
                 "engagementDelta": momentum_pct,
             },
         }
+        # Persist to DB so result survives restarts for the whole day
+        await db.computed_trends.update_one(
+            {"date": today_key},
+            {"$set": {"date": today_key, "result": result, "computed_at": datetime.now(timezone.utc).isoformat()}},
+            upsert=True,
+        )
         _trend_cache["data"] = result
         _trend_cache["ts"] = _time.monotonic()
         return result

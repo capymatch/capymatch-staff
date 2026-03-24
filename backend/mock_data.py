@@ -140,12 +140,16 @@ def generate_momentum_signals(athletes):
     active_athletes = [a for a in athletes if a.get("days_since_activity", 999) <= 7]
     inactive_athletes = [a for a in athletes if a.get("days_since_activity", 999) > 7]
 
+    # Deterministic hour offsets (no randomness)
+    pos_hours = [2, 5, 8, 12, 18]
+    neg_hours = [4, 10, 22]
+
     # 5 positive signals from active athletes
     for i in range(5):
         athlete = active_athletes[i % len(active_athletes)]
         template = signal_templates[i % 3]  # cycle positive types
         school = schools[i % len(schools)]
-        hours_ago = random.randint(1, 24)
+        hours_ago = pos_hours[i]
 
         signals.append({
             "id": f"signal_{i+1}",
@@ -170,7 +174,7 @@ def generate_momentum_signals(athletes):
             template = signal_templates[4]  # stage_change
             description = template["template"]
 
-        hours_ago = random.randint(2, 36)
+        hours_ago = neg_hours[i]
 
         signals.append({
             "id": f"signal_{len(signals)+1}",
