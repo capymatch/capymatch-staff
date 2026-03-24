@@ -24,7 +24,7 @@ export function computeHeroSelection({
   function buildWhyThis(extras) {
     const reasons = [];
     const daysSince = signals.days_since_activity;
-    if (daysSince != null && daysSince > 0) reasons.push(`Last interaction was ${daysSince} day${daysSince === 1 ? "" : "s"} ago`);
+    if (daysSince != null && daysSince > 0) reasons.push(`No response in ${daysSince} day${daysSince === 1 ? "" : "s"} — time to follow up`);
     if (signals.has_coach_reply) reasons.push("Coach showed interest");
     if (signals.coach_engagement === "high") reasons.push("Coach engagement is high");
     if (rail.active && rail.active !== "added") {
@@ -35,6 +35,22 @@ export function computeHeroSelection({
     if (program?.risk_badges?.some(b => b.key === "timeline_awareness")) reasons.push("Recruiting window is active");
     if (extras) reasons.push(...extras);
     return reasons.slice(0, 3);
+  }
+
+  // ── Build a suggested reply based on context ──
+  function buildSuggestedReply(taskTitle) {
+    const daysSince = signals.days_since_activity;
+    const coachName = program?.college_coaches?.[0]?.coach_name;
+    const greeting = coachName ? `Hi Coach ${coachName.split(" ").pop()}` : "Hi Coach";
+
+    if ((taskTitle || "").toLowerCase().includes("follow up") || (taskTitle || "").toLowerCase().includes("follow-up")) {
+      if (daysSince > 14) return `${greeting}, I wanted to check in and reaffirm my strong interest in your program. I'd love to find a time to connect about next steps.`;
+      return `${greeting}, just following up on our last conversation. I'd love to schedule a time to connect and learn more about the program.`;
+    }
+    if ((taskTitle || "").toLowerCase().includes("visit") || (taskTitle || "").toLowerCase().includes("campus")) {
+      return `${greeting}, I'm very interested in visiting campus. Would there be a good time in the coming weeks to schedule an unofficial visit?`;
+    }
+    return `${greeting}, I wanted to reach out and express my continued interest in your program. I'd appreciate any chance to connect.`;
   }
 
   // ── P1 — Committed ──
@@ -71,6 +87,7 @@ export function computeHeroSelection({
     const effectiveType = isFollowUp && a.action_type !== "send_email" ? "send_email" : a.action_type;
 
     const cta = ctaMap[effectiveType] || ctaMap.general;
+    const isCommunication = ["send_email", "reply"].includes(effectiveType);
     const h = effectiveType === "send_email" ? handlers.onEmail
       : effectiveType === "reply" ? () => handlers.onNavigate("/messages")
       : effectiveType === "profile_update" ? () => handlers.onNavigate("/profile")
@@ -82,14 +99,22 @@ export function computeHeroSelection({
       title: a.title,
       subtitle: a.note_text
         ? `"${a.note_text}" — ${a.created_by || "your coach"}`
-        : `Assigned by ${a.created_by || "your coach"} for ${a.school_name || uni}`,
+        : `Added by ${a.created_by ? "your coach" : "your coach"} for ${a.school_name || uni}`,
       accent: "#0d9488", icon: ClipboardCheck, iconColor: "#0d9488", iconBg: "rgba(13,148,136,0.15)",
       pills: [
         a.due_date && { label: `Due ${new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` },
         { label: `From ${a.created_by || "Coach"}` },
       ].filter(Boolean),
-      primaryCta: { label: cta.label, icon: cta.icon, handler: h },
-      secondaryCta: null,
+      isCommunication,
+      suggestedReply: isCommunication ? buildSuggestedReply(a.title) : null,
+      emailHandler: handlers.onEmail,
+      markDoneHandler: () => handlers.onMarkActionDone(a.id),
+      primaryCta: isCommunication
+        ? { label: "Reply to coach", icon: Send, handler: handlers.onEmail }
+        : { label: cta.label, icon: cta.icon, handler: h },
+      secondaryCta: isCommunication
+        ? { label: "Mark done", icon: Check, handler: () => handlers.onMarkActionDone(a.id) }
+        : null,
       whyThis: buildWhyThis(a.due_date ? [`Due ${new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`] : []),
       dot: "bg-teal-500", tag: "Supporting",
     });

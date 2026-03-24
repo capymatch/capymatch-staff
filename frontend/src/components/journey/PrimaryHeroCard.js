@@ -57,7 +57,7 @@ export function PrimaryHeroCard({ hero, program }) {
         <div className="flex-1 min-w-0">
 
         {/* BADGE ROW */}
-        <div className="flex items-center gap-2.5 flex-wrap mb-4" data-testid="hero-badge-row">
+        <div className="flex items-center gap-2.5 flex-wrap mb-3" data-testid="hero-badge-row">
           <span className="ds-badge" style={{
             background: `${hero.accent}20`, color: hero.accent,
           }} data-testid="hero-kicker">
@@ -74,7 +74,7 @@ export function PrimaryHeroCard({ hero, program }) {
         </div>
 
         {/* ICON + TITLE */}
-        <div className="flex items-start gap-3.5 mb-3">
+        <div className="flex items-start gap-3.5 mb-2">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
             style={{ backgroundColor: `${hero.accent}18` }}>
             <Icon className="w-5 h-5" style={{ color: hero.accent }} />
@@ -88,37 +88,27 @@ export function PrimaryHeroCard({ hero, program }) {
           </div>
         </div>
 
-        {/* CONTEXT LINE */}
-        {hero.whyThis?.length > 0 && (
-          <div className="mb-3 transition-all duration-300"
-            style={{
-              opacity: whyVisible ? 1 : 0,
-              transform: whyVisible ? "translateY(0)" : "translateY(4px)",
-            }}
-            data-testid="hero-why-this">
+        {/* SUGGESTED REPLY — only for communication tasks */}
+        {hero.isCommunication && hero.suggestedReply && (
+          <div className="mb-3 ml-[54px] rounded-lg px-3.5 py-2.5"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            data-testid="hero-suggested-reply">
             <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1"
-              style={{ color: "rgba(255,255,255,0.35)" }}>
-              Why this?
+              style={{ color: "rgba(255,255,255,0.30)" }}>
+              Suggested reply
             </p>
             <p className="text-[12px] leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.55)" }}>
-              {hero.whyThis.join(" \u2022 ")}
+              style={{ color: "rgba(255,255,255,0.60)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              "{hero.suggestedReply}"
             </p>
           </div>
         )}
 
-        {/* SUBTITLE / QUOTE */}
-        <p className="text-[13px] mb-5"
-          style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}
-          data-testid="hero-subtitle">
-          {hero.subtitle}
-        </p>
-
-        {/* CTA ROW */}
-        <div className="flex items-center gap-3">
+        {/* CTA ROW — prominent, action-first */}
+        <div className="flex items-center gap-3 ml-[54px] mb-3">
           {hero.primaryCta && (
             <button onClick={hero.primaryCta.handler} disabled={hero.primaryCta.loading}
-              className="ds-btn-primary text-[12px] sm:text-[13px] py-2 px-3.5 sm:py-2 sm:px-4"
+              className="ds-btn-primary text-[12px] sm:text-[13px] py-2 px-3.5 sm:py-2.5 sm:px-5"
               style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1 }}
               data-testid="hero-primary-cta">
               {hero.primaryCta.loading
@@ -130,16 +120,40 @@ export function PrimaryHeroCard({ hero, program }) {
           )}
           {hero.secondaryCta && (
             <button onClick={hero.secondaryCta.handler}
-              className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors"
-              style={{ color: "rgba(255,255,255,0.40)", background: "none", border: "none", cursor: "pointer" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.40)"; }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-colors"
+              style={{ color: "rgba(255,255,255,0.30)", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", cursor: "pointer" }}
               data-testid="hero-secondary-cta">
-              {hero.secondaryCta.icon && <hero.secondaryCta.icon className="w-3.5 h-3.5" />}
+              {hero.secondaryCta.icon && <hero.secondaryCta.icon className="w-3 h-3" />}
               {hero.secondaryCta.label}
             </button>
           )}
         </div>
+
+        {/* CONTEXT LINE — why this? */}
+        {hero.whyThis?.length > 0 && (
+          <div className="ml-[54px] mb-2 transition-all duration-300"
+            style={{
+              opacity: whyVisible ? 1 : 0,
+              transform: whyVisible ? "translateY(0)" : "translateY(4px)",
+            }}
+            data-testid="hero-why-this">
+            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1"
+              style={{ color: "rgba(255,255,255,0.25)" }}>
+              Why this?
+            </p>
+            <p className="text-[11px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.40)" }}>
+              {hero.whyThis.join(" \u2022 ")}
+            </p>
+          </div>
+        )}
+
+        {/* SUBTITLE / Metadata */}
+        <p className="text-[12px] ml-[54px]"
+          style={{ color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}
+          data-testid="hero-subtitle">
+          {hero.subtitle}
+        </p>
 
         </div>{/* end LEFT */}
 
