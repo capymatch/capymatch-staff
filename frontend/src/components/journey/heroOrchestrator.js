@@ -78,25 +78,37 @@ export function computeHeroSelection({
       general: { label: "Mark Done", icon: Check },
     };
 
-    // Smart CTA: detect follow-up / email / outreach tasks regardless of action_type
+    // Smart CTA: detect communication / outreach tasks regardless of action_type
     const titleLower = (a.title || "").toLowerCase();
-    const isFollowUp = titleLower.includes("follow up") || titleLower.includes("follow-up")
+    const isCommunication = titleLower.includes("follow up") || titleLower.includes("follow-up")
       || titleLower.includes("email") || titleLower.includes("reach out")
       || titleLower.includes("send") || titleLower.includes("message")
-      || titleLower.includes("contact");
-    const effectiveType = isFollowUp && a.action_type !== "send_email" ? "send_email" : a.action_type;
+      || titleLower.includes("contact") || titleLower.includes("schedule call")
+      || titleLower.includes("reply") || titleLower.includes("schedule")
+      || ["send_email", "reply"].includes(a.action_type);
+    const effectiveType = isCommunication && a.action_type !== "send_email" && a.action_type !== "reply" ? "send_email" : a.action_type;
 
     const cta = ctaMap[effectiveType] || ctaMap.general;
-    const isCommunication = ["send_email", "reply"].includes(effectiveType);
     const h = effectiveType === "send_email" ? handlers.onEmail
       : effectiveType === "reply" ? () => handlers.onNavigate("/messages")
       : effectiveType === "profile_update" ? () => handlers.onNavigate("/profile")
       : ["log_visit", "log_interaction"].includes(effectiveType) ? handlers.onLog
       : () => handlers.onMarkActionDone(a.id);
+
+    // Build a more personal, action-driven title
+    const personalTitle = (() => {
+      const t = a.title || "";
+      // "Schedule call to discuss X campus visit" → "Schedule your X campus visit call"
+      const scheduleMatch = t.match(/schedule\s+call\s+to\s+discuss\s+(.+?)(?:\s+campus)?\s*visit/i);
+      if (scheduleMatch) return `Schedule your ${scheduleMatch[1].trim()} campus visit call`;
+      // "Follow up with X" → "Follow up with X"  (already personal)
+      return t;
+    })();
+
     all.push({
       id: `task-${a.id}`, priority: 2 + i * 0.1, type: "coach_task",
       kicker: `Coach Task${a.due_date ? ` \u00B7 Due ${new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}`,
-      title: a.title,
+      title: personalTitle,
       subtitle: a.note_text
         ? `"${a.note_text}" — ${a.created_by || "your coach"}`
         : `Added by ${a.created_by ? "your coach" : "your coach"} for ${a.school_name || uni}`,
@@ -106,11 +118,11 @@ export function computeHeroSelection({
         { label: `From ${a.created_by || "Coach"}` },
       ].filter(Boolean),
       isCommunication,
-      suggestedReply: isCommunication ? buildSuggestedReply(a.title) : null,
+      suggestedMessage: isCommunication ? buildSuggestedReply(a.title) : null,
       emailHandler: handlers.onEmail,
       markDoneHandler: () => handlers.onMarkActionDone(a.id),
       primaryCta: isCommunication
-        ? { label: "Reply to coach", icon: Send, handler: handlers.onEmail }
+        ? { label: "Send message", icon: Send, handler: handlers.onEmail }
         : { label: cta.label, icon: cta.icon, handler: h },
       secondaryCta: isCommunication
         ? { label: "Mark done", icon: Check, handler: () => handlers.onMarkActionDone(a.id) }
@@ -142,11 +154,13 @@ export function computeHeroSelection({
     all.push({
       id: "cw-hot", priority: 4, type: "hot_opportunity",
       kicker: "Hot Opportunity",
-      title: coachWatch.whyThisMatters || "Act now \u2014 this is a high-opportunity moment.",
+      title: coachWatch.whyThisMatters || "Act now — this is a high-opportunity moment.",
       subtitle: coachWatch.summary,
       accent: "#22c55e", icon: Flame, iconColor: "#22c55e", iconBg: "rgba(34,197,94,0.15)",
       pills: [{ label: "High confidence" }],
-      primaryCta: { label: coachWatch.primaryCta || "Respond Now", icon: Send, handler: handlers.onEmail },
+      isCommunication: true,
+      suggestedMessage: buildSuggestedReply("follow up"),
+      primaryCta: { label: "Send message", icon: Send, handler: handlers.onEmail },
       secondaryCta: null,
       whyThis: buildWhyThis(["High-opportunity moment"]),
       dot: "bg-green-500", tag: "Supporting",
@@ -162,7 +176,9 @@ export function computeHeroSelection({
       subtitle: coachWatch.summary,
       accent: "#3b82f6", icon: MessageCircle, iconColor: "#3b82f6", iconBg: "rgba(59,130,246,0.15)",
       pills: [{ label: "High confidence" }],
-      primaryCta: { label: coachWatch.primaryCta || "Reply Promptly", icon: Send, handler: handlers.onEmail },
+      isCommunication: true,
+      suggestedMessage: buildSuggestedReply("reply"),
+      primaryCta: { label: "Send message", icon: Send, handler: handlers.onEmail },
       secondaryCta: null,
       whyThis: buildWhyThis(["Conversation is active"]),
       dot: "bg-blue-500", tag: "Supporting",
@@ -178,7 +194,9 @@ export function computeHeroSelection({
       subtitle: program?.next_action || "Send a follow-up to stay on their radar and show continued interest.",
       accent: "#f97316", icon: AlertCircle, iconColor: "#f97316", iconBg: "rgba(249,115,22,0.15)",
       pills: [{ label: `${daysOverdue}d overdue` }],
-      primaryCta: { label: "Send Email", icon: Mail, handler: handlers.onEmail },
+      isCommunication: true,
+      suggestedMessage: buildSuggestedReply("follow up"),
+      primaryCta: { label: "Send message", icon: Mail, handler: handlers.onEmail },
       secondaryCta: { label: "Reschedule", icon: Clock, handler: handlers.onFollowup },
       whyThis: buildWhyThis([`${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`]),
       dot: "bg-orange-500", tag: "Supporting",
@@ -193,10 +211,12 @@ export function computeHeroSelection({
     all.push({
       id: "celebration", priority: 7, type: "celebration",
       kicker: `Coach replied ${tt}`, title: `${cn} is interested!`,
-      subtitle: "Keep the momentum going \u2014 respond quickly to show you're serious.",
+      subtitle: "Keep the momentum going — respond quickly to show you're serious.",
       accent: "#10b981", icon: Mail, iconColor: "#10b981", iconBg: "rgba(16,185,129,0.15)",
       pills: [],
-      primaryCta: { label: "Send Thank You", icon: Mail, handler: handlers.onEmail },
+      isCommunication: true,
+      suggestedMessage: buildSuggestedReply("reply"),
+      primaryCta: { label: "Send message", icon: Mail, handler: handlers.onEmail },
       secondaryCta: { label: "Log a Note", icon: FileText, handler: handlers.onLog },
       whyThis: buildWhyThis([`Coach replied ${tt}`]),
       dot: "bg-emerald-500", tag: "Supporting",

@@ -88,18 +88,18 @@ export function PrimaryHeroCard({ hero, program }) {
           </div>
         </div>
 
-        {/* SUGGESTED REPLY — only for communication tasks */}
-        {hero.isCommunication && hero.suggestedReply && (
+        {/* SUGGESTED MESSAGE — only for communication tasks */}
+        {hero.isCommunication && (hero.suggestedMessage || hero.suggestedReply) && (
           <div className="mb-3 ml-[54px] rounded-lg px-3.5 py-2.5"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
-            data-testid="hero-suggested-reply">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1"
-              style={{ color: "rgba(255,255,255,0.30)" }}>
-              Suggested reply
+            data-testid="hero-suggested-message">
+            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1.5"
+              style={{ color: "rgba(255,255,255,0.25)" }}>
+              Suggested message
             </p>
-            <p className="text-[12px] leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.60)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-              "{hero.suggestedReply}"
+            <p className="text-[14px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)", display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              "{hero.suggestedMessage || hero.suggestedReply}"
             </p>
           </div>
         )}
