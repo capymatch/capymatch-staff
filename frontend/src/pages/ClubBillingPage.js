@@ -9,8 +9,8 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const PLAN_META = {
   starter: {
-    icon: Zap, accent: "#64748b", accentBg: "rgba(100,116,139,0.15)",
-    gradient: "from-slate-600 to-slate-700", checkColor: "#64748b",
+    icon: Zap, accent: "#64748b", accentBg: "rgba(100,116,139,0.08)",
+    checkColor: "#64748b",
     features: [
       "Full Director OS: Inbox, Outbox, Signals, Coach Health",
       "Up to 25 athletes, 3 coaches",
@@ -20,8 +20,8 @@ const PLAN_META = {
     ],
   },
   growth: {
-    icon: Shield, accent: "#10b981", accentBg: "rgba(16,185,129,0.15)",
-    gradient: "from-emerald-600 to-teal-700", checkColor: "#10b981",
+    icon: Shield, accent: "#10b981", accentBg: "rgba(16,185,129,0.08)",
+    checkColor: "#10b981",
     features: [
       "Everything in Starter +",
       "Up to 50 athletes, 6 coaches",
@@ -34,8 +34,8 @@ const PLAN_META = {
     ],
   },
   club_pro: {
-    icon: Crown, accent: "#3b82f6", accentBg: "rgba(59,130,246,0.15)",
-    gradient: "from-blue-600 to-indigo-700", checkColor: "#3b82f6", popular: true,
+    icon: Crown, accent: "#ff6a3d", accentBg: "rgba(255,106,61,0.06)",
+    checkColor: "#ff6a3d", popular: true,
     features: [
       "Everything in Growth +",
       "Up to 75 athletes, 10 coaches",
@@ -49,8 +49,8 @@ const PLAN_META = {
     ],
   },
   elite: {
-    icon: Crown, accent: "#8b5cf6", accentBg: "rgba(139,92,246,0.15)",
-    gradient: "from-violet-600 to-purple-700", checkColor: "#8b5cf6",
+    icon: Crown, accent: "#8b5cf6", accentBg: "rgba(139,92,246,0.06)",
+    checkColor: "#8b5cf6",
     features: [
       "Everything in Club Pro +",
       "Up to 125 athletes, 20 coaches",
@@ -64,8 +64,8 @@ const PLAN_META = {
     ],
   },
   enterprise: {
-    icon: Building2, accent: "#f59e0b", accentBg: "rgba(245,158,11,0.15)",
-    gradient: "from-amber-600 to-orange-700", checkColor: "#f59e0b",
+    icon: Building2, accent: "#f59e0b", accentBg: "rgba(245,158,11,0.06)",
+    checkColor: "#f59e0b",
     features: [
       "Everything in Elite +",
       "Unlimited athletes & coaches",
@@ -227,40 +227,40 @@ export default function ClubBillingPage() {
   const statusCfg = STATUS_DISPLAY[billingInfo?.status] || STATUS_DISPLAY.active;
 
   return (
-    <div data-testid="club-billing-page" className="max-w-6xl mx-auto space-y-8">
+    <div data-testid="club-billing-page" className="max-w-6xl mx-auto space-y-8" style={{ color: "#f0f0f2" }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "#f1f5f9" }}>Club Billing</h1>
-          <p className="text-sm mt-1" style={{ color: "#94a3b8" }}>Manage your club subscription</p>
+          <h1 className="text-2xl font-bold" style={{ color: "#f0f0f2" }}>Club Billing</h1>
+          <p className="text-sm mt-1" style={{ color: "#5c5e6a" }}>Manage your club subscription</p>
         </div>
         {hasStripe && (
           <button
             onClick={handleManageBilling}
             data-testid="manage-billing-btn"
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80"
-            style={{ backgroundColor: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "1px solid rgba(59,130,246,0.2)" }}
+            style={{ backgroundColor: "rgba(255,106,61,0.10)", color: "#ff6a3d", border: "1px solid rgba(255,106,61,0.18)" }}
           >
             <ExternalLink className="w-3.5 h-3.5" /> Manage Billing
           </button>
         )}
       </div>
 
-      {/* Current Plan + Billing Status */}
+      {/* Current Plan + Usage */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="col-span-2 rounded-xl p-5" style={{ border: "1px solid rgba(51,65,85,0.6)", backgroundColor: "rgba(30,41,59,0.5)" }}>
+        <div className="col-span-2 rounded-xl p-5" style={{ backgroundColor: "#161921", border: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${PLAN_META[activePlanId]?.gradient || "from-slate-600 to-slate-700"} flex items-center justify-center`}>
-                {(() => { const Icon = PLAN_META[activePlanId]?.icon || Zap; return <Icon className="w-5 h-5 text-white" />; })()}
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `${PLAN_META[activePlanId]?.accent || "#64748b"}18`, border: `1px solid ${PLAN_META[activePlanId]?.accent || "#64748b"}25` }}>
+                {(() => { const Icon = PLAN_META[activePlanId]?.icon || Zap; return <Icon className="w-5 h-5" style={{ color: PLAN_META[activePlanId]?.accent || "#64748b" }} />; })()}
               </div>
               <div>
-                <p className="text-xs uppercase tracking-wider" style={{ color: "#94a3b8" }}>Current Plan</p>
-                <p className="text-lg font-bold" style={{ color: "#f1f5f9" }}>{billingInfo?.plan_label || "Starter"}</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "#5c5e6a" }}>Current Plan</p>
+                <p className="text-lg font-bold" style={{ color: "#f0f0f2" }}>{billingInfo?.plan_label || "Starter"}</p>
               </div>
             </div>
             <span
-              className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
+              className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider"
               style={{ backgroundColor: statusCfg.bg, color: statusCfg.color }}
             >
               {statusCfg.label}
@@ -270,19 +270,19 @@ export default function ClubBillingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
             {billingInfo?.price > 0 && (
               <div className="flex items-center gap-2">
-                <CreditCard className="w-3.5 h-3.5" style={{ color: "#64748b" }} />
+                <CreditCard className="w-3.5 h-3.5" style={{ color: "#5c5e6a" }} />
                 <div>
-                  <p style={{ color: "#94a3b8" }}>Billing</p>
-                  <p className="font-semibold" style={{ color: "#e2e8f0" }}>${billingInfo.price}/{billingInfo.billing_cycle === "annual" ? "yr" : "mo"}</p>
+                  <p style={{ color: "#5c5e6a" }}>Billing</p>
+                  <p className="font-semibold" style={{ color: "#f0f0f2" }}>${billingInfo.price}/{billingInfo.billing_cycle === "annual" ? "yr" : "mo"}</p>
                 </div>
               </div>
             )}
             {billingInfo?.current_period_end && (
               <div className="flex items-center gap-2">
-                <Calendar className="w-3.5 h-3.5" style={{ color: "#64748b" }} />
+                <Calendar className="w-3.5 h-3.5" style={{ color: "#5c5e6a" }} />
                 <div>
-                  <p style={{ color: "#94a3b8" }}>Next renewal</p>
-                  <p className="font-semibold" style={{ color: "#e2e8f0" }}>{new Date(billingInfo.current_period_end).toLocaleDateString()}</p>
+                  <p style={{ color: "#5c5e6a" }}>Next renewal</p>
+                  <p className="font-semibold" style={{ color: "#f0f0f2" }}>{new Date(billingInfo.current_period_end).toLocaleDateString()}</p>
                 </div>
               </div>
             )}
@@ -291,32 +291,21 @@ export default function ClubBillingPage() {
                 <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#f59e0b" }} />
                 <div>
                   <p style={{ color: "#f59e0b" }}>Canceling</p>
-                  <button
-                    onClick={handleReactivate}
-                    className="text-xs font-semibold underline" style={{ color: "#3b82f6" }}
-                    data-testid="reactivate-btn"
-                  >
-                    Reactivate
-                  </button>
+                  <button onClick={handleReactivate} className="text-xs font-semibold underline" style={{ color: "#ff6a3d" }} data-testid="reactivate-btn">Reactivate</button>
                 </div>
               </div>
             )}
           </div>
 
           {hasStripe && !billingInfo?.cancel_at_period_end && (
-            <button
-              onClick={handleCancel}
-              className="mt-4 text-[11px] font-medium hover:underline"
-              style={{ color: "#64748b" }}
-              data-testid="cancel-subscription-btn"
-            >
+            <button onClick={handleCancel} className="mt-4 text-[11px] font-medium hover:underline" style={{ color: "#5c5e6a" }} data-testid="cancel-subscription-btn">
               Cancel subscription
             </button>
           )}
         </div>
 
-        <div className="rounded-xl p-5 space-y-3" style={{ border: "1px solid rgba(51,65,85,0.6)", backgroundColor: "rgba(30,41,59,0.5)" }}>
-          <p className="text-xs uppercase tracking-wider" style={{ color: "#94a3b8" }}>Usage</p>
+        <div className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "#161921", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <p className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "#5c5e6a" }}>Usage</p>
           {usage && (
             <>
               <UsageBar label="Athletes" current={usage.athletes} max={usage.max_athletes} />
@@ -327,14 +316,13 @@ export default function ClubBillingPage() {
       </div>
 
       {/* Billing Cycle Toggle */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-1" style={{ backgroundColor: "#161921", borderRadius: 10, padding: "4px", width: "fit-content", margin: "0 auto", border: "1px solid rgba(255,255,255,0.06)" }}>
         <button
           onClick={() => setBillingCycle("monthly")}
-          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+          className="px-5 py-2 rounded-lg text-xs font-semibold transition-all"
           style={{
-            backgroundColor: billingCycle === "monthly" ? "#3b82f6" : "transparent",
-            color: billingCycle === "monthly" ? "#fff" : "#94a3b8",
-            border: billingCycle === "monthly" ? "none" : "1px solid rgba(51,65,85,0.6)",
+            backgroundColor: billingCycle === "monthly" ? "#ff6a3d" : "transparent",
+            color: billingCycle === "monthly" ? "#fff" : "#5c5e6a",
           }}
           data-testid="toggle-monthly"
         >
@@ -342,15 +330,14 @@ export default function ClubBillingPage() {
         </button>
         <button
           onClick={() => setBillingCycle("annual")}
-          className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"
+          className="px-5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"
           style={{
-            backgroundColor: billingCycle === "annual" ? "#3b82f6" : "transparent",
-            color: billingCycle === "annual" ? "#fff" : "#94a3b8",
-            border: billingCycle === "annual" ? "none" : "1px solid rgba(51,65,85,0.6)",
+            backgroundColor: billingCycle === "annual" ? "#ff6a3d" : "transparent",
+            color: billingCycle === "annual" ? "#fff" : "#5c5e6a",
           }}
           data-testid="toggle-annual"
         >
-          Annual <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: billingCycle === "annual" ? "rgba(255,255,255,0.2)" : "#10b98120", color: billingCycle === "annual" ? "#fff" : "#10b981" }}>Save ~15%</span>
+          Annual <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: billingCycle === "annual" ? "rgba(255,255,255,0.2)" : "rgba(16,185,129,0.12)", color: billingCycle === "annual" ? "#fff" : "#10b981" }}>Save ~15%</span>
         </button>
       </div>
 
@@ -366,59 +353,57 @@ export default function ClubBillingPage() {
           const isDowngrade = thisIdx < activeIdx;
           const Icon = meta.icon || Zap;
 
-          const price = billingCycle === "annual"
-            ? plan.annual_monthly
-            : plan.monthly_price;
+          const price = billingCycle === "annual" ? plan.annual_monthly : plan.monthly_price;
           const totalAnnual = plan.annual_price;
 
           return (
             <div
               key={pid}
               data-testid={`plan-card-${pid}`}
-              className="relative rounded-xl border p-5 transition-all"
+              className="relative rounded-xl p-5 transition-all"
               style={{
-                borderColor: isActive ? meta.accent : "rgba(51,65,85,0.6)",
-                backgroundColor: isActive ? meta.accentBg : "rgba(30,41,59,0.4)",
-                boxShadow: isActive ? `0 0 0 1px ${meta.accent}33` : "none",
+                backgroundColor: "#161921",
+                border: `1px solid ${isActive ? meta.accent + "40" : "rgba(255,255,255,0.06)"}`,
+                boxShadow: isActive ? `0 0 20px ${meta.accent}15` : "none",
               }}
             >
               {meta.popular && (
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wider" style={{ backgroundColor: "#3b82f6" }}>
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[9px] font-bold text-white uppercase tracking-wider" style={{ backgroundColor: "#ff6a3d" }}>
                   Most Popular
                 </div>
               )}
 
-              <div className="flex items-center gap-2.5 mb-3 mt-1">
-                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
-                  <Icon className="w-4 h-4 text-white" />
+              <div className="flex items-center gap-2.5 mb-4 mt-1">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${meta.accent}15`, border: `1px solid ${meta.accent}20` }}>
+                  <Icon className="w-4 h-4" style={{ color: meta.accent }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold" style={{ color: "#e2e8f0" }}>{plan.label}</p>
-                  <p className="text-[10px]" style={{ color: "#94a3b8" }}>{plan.tagline}</p>
+                  <p className="text-sm font-bold" style={{ color: "#f0f0f2" }}>{plan.label}</p>
+                  {plan.tagline && <p className="text-[10px]" style={{ color: "#5c5e6a" }}>{plan.tagline}</p>}
                 </div>
               </div>
 
-              <div className="mb-4">
+              <div className="mb-5">
                 {price ? (
                   <div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold" style={{ color: "#f1f5f9" }}>${Math.round(price)}</span>
-                      <span className="text-xs" style={{ color: "#94a3b8" }}>/month</span>
+                      <span className="text-[28px] font-bold" style={{ color: "#f0f0f2", letterSpacing: "-0.02em" }}>${Math.round(price)}</span>
+                      <span className="text-xs" style={{ color: "#5c5e6a" }}>/month</span>
                     </div>
                     {billingCycle === "annual" && totalAnnual && (
-                      <p className="text-[10px] mt-0.5" style={{ color: "#64748b" }}>
+                      <p className="text-[10px] mt-0.5" style={{ color: "#3d3f4a" }}>
                         ${totalAnnual.toLocaleString()}/year billed annually
                       </p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm font-semibold" style={{ color: "#cbd5e1" }}>Custom pricing</p>
+                  <p className="text-sm font-semibold" style={{ color: "#8b8d98" }}>Custom pricing</p>
                 )}
               </div>
 
-              <ul className="space-y-1.5 mb-5">
+              <ul className="space-y-2 mb-6">
                 {(meta.features || []).map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs" style={{ color: "#94a3b8" }}>
+                  <li key={i} className="flex items-start gap-2.5 text-[12px]" style={{ color: "#8b8d98" }}>
                     <Check className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: meta.checkColor }} />
                     <span>{f}</span>
                   </li>
@@ -429,11 +414,13 @@ export default function ClubBillingPage() {
                 data-testid={`select-plan-${pid}`}
                 onClick={() => handleSelectPlan(pid)}
                 disabled={isActive && hasStripe}
-                className="w-full py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-[0.03em] transition-all flex items-center justify-center gap-1.5"
                 style={{
-                  background: (isActive && hasStripe) ? "rgba(51,65,85,0.5)" : isDowngrade ? "rgba(51,65,85,0.5)" : `linear-gradient(135deg, ${meta.accent}, ${meta.accent}dd)`,
-                  color: (isActive && hasStripe) ? "#94a3b8" : isDowngrade ? "#94a3b8" : "#ffffff",
+                  background: (isActive && hasStripe) ? "rgba(255,255,255,0.04)" : isDowngrade ? "rgba(255,255,255,0.04)" : meta.accent,
+                  color: (isActive && hasStripe) ? "#5c5e6a" : isDowngrade ? "#5c5e6a" : "#ffffff",
+                  border: (isActive && hasStripe) || isDowngrade ? "1px solid rgba(255,255,255,0.06)" : "none",
                   cursor: (isActive && hasStripe) ? "default" : "pointer",
+                  boxShadow: !((isActive && hasStripe) || isDowngrade) ? `0 0 16px ${meta.accent}25` : "none",
                 }}
               >
                 {checkingOut === pid ? (
@@ -463,15 +450,15 @@ function UsageBar({ label, current, max }) {
   return (
     <div>
       <div className="flex items-center justify-between text-xs mb-1">
-        <span style={{ color: "#94a3b8" }}>{label}</span>
-        <span style={{ color: isOver ? "#ef4444" : "#64748b" }} className={isOver ? "font-semibold" : ""}>
+        <span style={{ color: "#8b8d98" }}>{label}</span>
+        <span style={{ color: isOver ? "#ef4444" : "#5c5e6a" }} className={isOver ? "font-semibold" : ""}>
           {current}{max > 0 ? ` / ${max}` : ""}
         </span>
       </div>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(51,65,85,0.6)" }}>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${max > 0 ? pct : 0}%`, backgroundColor: isOver ? "#ef4444" : isHigh ? "#f59e0b" : "#10b981" }}
+          style={{ width: `${max > 0 ? pct : 0}%`, backgroundColor: isOver ? "#ef4444" : isHigh ? "#f59e0b" : "#ff6a3d" }}
         />
       </div>
     </div>
