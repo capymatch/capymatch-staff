@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Users, Eye, Bell, ArrowRightLeft } from "lucide-react";
+import UpgradeNudge from "@/components/UpgradeNudge";
 
 const STATUS_CONFIG = {
   active: { label: "Active", dot: "bg-emerald-500", bg: "bg-emerald-50", text: "text-emerald-700" },
@@ -44,7 +45,7 @@ function ActionButton({ icon: Icon, label, onClick, testId }) {
   );
 }
 
-export default function CoachHealthCard({ coaches = [] }) {
+export default function CoachHealthCard({ coaches = [], depth = "basic" }) {
   const navigate = useNavigate();
 
   if (!coaches.length) {
@@ -62,20 +63,25 @@ export default function CoachHealthCard({ coaches = [] }) {
   }
 
   const totalAthletes = coaches.reduce((sum, c) => sum + (c.athleteCount || 0), 0);
+  const showActions = depth === "detailed" || depth === "advanced";
+  const showWorkloadBar = depth !== "basic";
 
   return (
     <section data-testid="coach-health-card">
-      {/* Section header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Coach Health</span>
+          {depth === "basic" && (
+            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#10b98114", color: "#10b981" }}>
+              Basic
+            </span>
+          )}
         </div>
         <span className="text-xs text-slate-400">
           {coaches.length} coach{coaches.length !== 1 ? "es" : ""} · {totalAthletes} athletes managed
         </span>
       </div>
 
-      {/* Coach cards grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {coaches.map((coach) => {
           const status = STATUS_CONFIG[coach.status] || STATUS_CONFIG.activating;
@@ -87,9 +93,7 @@ export default function CoachHealthCard({ coaches = [] }) {
               data-testid={`coach-health-${coach.id}`}
               className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col"
             >
-              {/* Card body */}
               <div className="px-5 pt-5 pb-4 flex-1">
-                {/* Name + status */}
                 <div className="flex items-start justify-between mb-3">
                   <p className="text-sm font-semibold text-slate-900">{coach.name}</p>
                   <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold shrink-0 ${status.bg} ${status.text}`}>
@@ -98,51 +102,49 @@ export default function CoachHealthCard({ coaches = [] }) {
                   </span>
                 </div>
 
-                {/* Athletes assigned */}
                 <div className="mb-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs text-slate-500">
                       {coach.athleteCount} athlete{coach.athleteCount !== 1 ? "s" : ""} assigned
                     </span>
-                    <span className={`text-[10px] font-medium ${workload.color}`}>{workload.label}</span>
+                    {showWorkloadBar && (
+                      <span className={`text-[10px] font-medium ${workload.color}`}>{workload.label}</span>
+                    )}
                   </div>
-                  {/* Workload bar */}
-                  <div className="h-1 rounded-full bg-slate-100 overflow-hidden">
-                    <div className={`h-full rounded-full ${workload.bar} ${workload.width} transition-all`} />
-                  </div>
+                  {showWorkloadBar && (
+                    <div className="h-1 rounded-full bg-slate-100 overflow-hidden">
+                      <div className={`h-full rounded-full ${workload.bar} ${workload.width} transition-all`} />
+                    </div>
+                  )}
                 </div>
 
-                {/* Last activity */}
                 <p className="text-xs">
                   <ActivitySignal daysInactive={coach.daysInactive} />
                 </p>
               </div>
 
-              {/* Action buttons */}
-              <div className="px-5 py-3 border-t border-slate-50 flex items-center gap-2 bg-slate-50/30">
-                <ActionButton
-                  icon={Eye}
-                  label="View Roster"
-                  onClick={() => navigate("/roster")}
-                  testId={`coach-view-roster-${coach.id}`}
-                />
-                <ActionButton
-                  icon={Bell}
-                  label="Send Nudge"
-                  onClick={() => navigate("/roster")}
-                  testId={`coach-send-nudge-${coach.id}`}
-                />
-                <ActionButton
-                  icon={ArrowRightLeft}
-                  label="Reassign"
-                  onClick={() => navigate("/roster")}
-                  testId={`coach-reassign-${coach.id}`}
-                />
-              </div>
+              {/* Action buttons — visible on detailed+ depth */}
+              {showActions && (
+                <div className="px-5 py-3 border-t border-slate-50 flex items-center gap-2 bg-slate-50/30">
+                  <ActionButton icon={Eye} label="View Roster" onClick={() => navigate("/roster")} testId={`coach-view-roster-${coach.id}`} />
+                  <ActionButton icon={Bell} label="Send Nudge" onClick={() => navigate("/roster")} testId={`coach-send-nudge-${coach.id}`} />
+                  <ActionButton icon={ArrowRightLeft} label="Reassign" onClick={() => navigate("/roster")} testId={`coach-reassign-${coach.id}`} />
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+
+      {/* Depth nudge for basic tier */}
+      {depth === "basic" && coaches.length > 0 && (
+        <UpgradeNudge
+          featureName="coach health"
+          planLabel="Club Pro"
+          message="Unlock workload tracking and quick actions with Club Pro"
+          inline
+        />
+      )}
     </section>
   );
 }

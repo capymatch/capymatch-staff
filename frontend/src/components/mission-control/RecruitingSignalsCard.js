@@ -1,6 +1,7 @@
 import { TrendingUp, TrendingDown, Minus, Flame, Mail, FileText } from "lucide-react";
+import UpgradeNudge from "@/components/UpgradeNudge";
 
-export default function RecruitingSignalsCard({ signals }) {
+export default function RecruitingSignalsCard({ signals, depth = "basic" }) {
   if (!signals) return null;
 
   const items = [
@@ -39,10 +40,19 @@ export default function RecruitingSignalsCard({ signals }) {
 
   const hasSignals = items.some((i) => i.value > 0);
 
+  // Depth determines how much detail we show
+  const showTrends = depth === "detailed" || depth === "advanced";
+  const showExplanations = depth === "advanced";
+
   return (
     <section data-testid="recruiting-signals-card">
       <div className="flex items-center gap-2 mb-4">
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Recruiting Signals</span>
+        {depth === "basic" && (
+          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#10b98114", color: "#10b981" }}>
+            Basic
+          </span>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
@@ -53,17 +63,23 @@ export default function RecruitingSignalsCard({ signals }) {
               const arrow = trendArrow[item.trend] || "\u2192";
               return (
                 <div key={idx} className="px-6 py-6 text-center" data-testid={`signal-item-${idx}`}>
-                  {/* Big prominent number */}
                   <p className="text-4xl font-extrabold text-slate-900 tracking-tight leading-none">{item.value}</p>
-
-                  {/* Label */}
                   <p className="text-sm text-slate-500 mt-2">{item.label}</p>
 
-                  {/* Trend with arrow */}
-                  <div className="flex items-center justify-center gap-1.5 mt-3">
-                    <span className={`text-sm font-semibold ${arrowColor}`}>{arrow}</span>
-                    <span className={`text-xs font-medium ${arrowColor}`}>{item.delta}</span>
-                  </div>
+                  {/* Trends visible on detailed+ depth */}
+                  {showTrends && (
+                    <div className="flex items-center justify-center gap-1.5 mt-3">
+                      <span className={`text-sm font-semibold ${arrowColor}`}>{arrow}</span>
+                      <span className={`text-xs font-medium ${arrowColor}`}>{item.delta}</span>
+                    </div>
+                  )}
+
+                  {/* AI explanations visible on advanced depth */}
+                  {showExplanations && (
+                    <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
+                      AI-powered signal analysis available
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -75,6 +91,16 @@ export default function RecruitingSignalsCard({ signals }) {
           </div>
         )}
       </div>
+
+      {/* Depth nudge for basic tier */}
+      {depth === "basic" && hasSignals && (
+        <UpgradeNudge
+          featureName="signal trends and insights"
+          planLabel="Growth"
+          message="See trends and deeper signal analysis with Growth"
+          inline
+        />
+      )}
     </section>
   );
 }

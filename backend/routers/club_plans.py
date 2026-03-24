@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -11,17 +10,17 @@ from db_client import db
 from auth_middleware import get_current_user_dep
 from club_plans import (
     CLUB_PLANS,
-    FEATURE_ENTITLEMENTS,
-    check_club_feature,
+    PLAN_ORDER,
+    ClubPlan,
     get_plan_entitlements,
     get_plan_limits,
+    get_plan_info,
+    check_club_feature,
 )
 
 router = APIRouter()
 log = logging.getLogger(__name__)
 
-
-# ── Models ──
 
 class SetPlanRequest(BaseModel):
     plan_id: str
@@ -31,9 +30,7 @@ class SetPlanRequest(BaseModel):
 
 async def get_org_plan(org_id: str) -> dict:
     """Get the current club plan for an org. Default to 'starter'."""
-    sub = await db.club_subscriptions.find_one(
-        {"org_id": org_id}, {"_id": 0}
-    )
+    sub = await db.club_subscriptions.find_one({"org_id": org_id}, {"_id": 0})
     if not sub:
         return {
             "org_id": org_id,
@@ -59,19 +56,16 @@ async def get_user_club_plan(user: dict) -> str:
 
 @router.get("/club-plans")
 async def list_plans():
-    """Return all club plans with pricing and features."""
+    """Return all club plans with pricing, entitlements, and limits."""
     plans = []
-    for plan_id, plan in CLUB_PLANS.items():
-        features = []
-        for feat_id, feat_plans in FEATURE_ENTITLEMENTS.items():
-            access = feat_plans.get(plan_id, False)
-            if access and access is not False:
-                features.append(feat_id)
+    for plan_enum in PLAN_ORDER:
+        info = CLUB_PLANS[plan_enum]
+        ent = get_plan_entitlements(plan_enum.value)
+        limits = get_plan_limits(plan_enum.value)
         plans.append({
-            **plan,
-            "features": features,
-            "entitlements": get_plan_entitlements(plan_id),
-            "limits": get_plan_limits(plan_id),
+            **info,
+            "entitlements": ent,
+            "limits": limits,
         })
     return {"plans": plans}
 
@@ -80,19 +74,20 @@ async def list_plans():
 
 @router.get("/club-plans/current")
 async def get_current_plan(current_user: dict = get_current_user_dep()):
-    """Get the current org's club plan + entitlements."""
+    """Get the current org's club plan + entitlements + usage."""
     plan_id = await get_user_club_plan(current_user)
-    plan = CLUB_PLANS.get(plan_id, CLUB_PLANS["starter"])
-
+    plan = get_plan_info(plan_id)
     org_id = current_user.get("org_id", "")
     sub = await get_org_plan(org_id)
 
-    # Get current usage counts
     athlete_count = await db.athletes.count_documents({"tenant_id": org_id}) if org_id else 0
     coach_count = await db.users.count_documents({"role": "club_coach", "org_id": org_id}) if org_id else 0
 
     limits = get_plan_limits(plan_id)
     entitlements = get_plan_entitlements(plan_id)
+
+    max_a = limits["max_athletes"]
+    max_c = limits["max_coaches"]
 
     return {
         "plan": plan,
@@ -100,10 +95,10 @@ async def get_current_plan(current_user: dict = get_current_user_dep()):
         "usage": {
             "athletes": athlete_count,
             "coaches": coach_count,
-            "max_athletes": limits["max_athletes"],
-            "max_coaches": limits["max_coaches"],
-            "athletes_pct": round(athlete_count / limits["max_athletes"] * 100) if limits["max_athletes"] > 0 else 0,
-            "coaches_pct": round(coach_count / limits["max_coaches"] * 100) if limits["max_coaches"] > 0 else 0,
+            "max_athletes": max_a,
+            "max_coaches": max_c,
+            "athletes_pct": round(athlete_count / max_a * 100) if max_a > 0 else 0,
+            "coaches_pct": round(coach_count / max_c * 100) if max_c > 0 else 0,
         },
         "entitlements": entitlements,
     }
@@ -120,7 +115,7 @@ async def check_feature(feature_id: str, current_user: dict = get_current_user_d
     return result
 
 
-# ── 4. Set plan (admin/director-only, for demo/testing) ──
+# ── 4. Set plan (director-only) ──
 
 @router.post("/club-plans/set")
 async def set_plan(data: SetPlanRequest, current_user: dict = get_current_user_dep()):
@@ -128,7 +123,8 @@ async def set_plan(data: SetPlanRequest, current_user: dict = get_current_user_d
     if current_user["role"] not in ("director", "platform_admin"):
         raise HTTPException(403, "Only directors can change the club plan")
 
-    if data.plan_id not in CLUB_PLANS:
+    valid_ids = [p.value for p in ClubPlan]
+    if data.plan_id not in valid_ids:
         raise HTTPException(400, f"Invalid plan: {data.plan_id}")
 
     org_id = current_user.get("org_id", "")
@@ -150,12 +146,13 @@ async def set_plan(data: SetPlanRequest, current_user: dict = get_current_user_d
         upsert=True,
     )
 
+    info = get_plan_info(data.plan_id)
     log.info("Club plan updated: org=%s plan=%s by=%s", org_id, data.plan_id, current_user["id"])
 
     return {
         "plan_id": data.plan_id,
-        "label": CLUB_PLANS[data.plan_id]["label"],
-        "message": f"Plan updated to {CLUB_PLANS[data.plan_id]['label']}",
+        "label": info["label"],
+        "message": f"Plan updated to {info['label']}",
     }
 
 
@@ -163,15 +160,16 @@ async def set_plan(data: SetPlanRequest, current_user: dict = get_current_user_d
 
 @router.get("/club-plans/entitlements")
 async def get_entitlements(current_user: dict = get_current_user_dep()):
-    """Return all feature entitlements for the current org's plan.
-    Used by frontend to hydrate the PlanGate context."""
+    """Return all entitlements for the current org's plan.
+    Used by frontend to hydrate the PlanContext."""
     plan_id = await get_user_club_plan(current_user)
+    info = get_plan_info(plan_id)
     limits = get_plan_limits(plan_id)
     entitlements = get_plan_entitlements(plan_id)
 
     return {
         "plan_id": plan_id,
-        "plan_label": CLUB_PLANS.get(plan_id, {}).get("label", "Starter"),
+        "plan_label": info.get("label", "Starter"),
         "limits": limits,
         "entitlements": entitlements,
     }

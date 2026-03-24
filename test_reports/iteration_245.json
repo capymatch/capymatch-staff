@@ -1,0 +1,111 @@
+{
+  "summary": "Club Plans Entitlements V2 testing complete. All 32 backend tests passed (100%). Frontend tests verified: Core Director OS (inbox, outbox, signals, coach health) visible on ALL plans including Starter. Starter shows 'Basic' badges and inline upgrade nudges. Club Pro shows trends in signals and workload bars in coach health. AI Program Brief correctly access-gated (shows upgrade card on non-Elite plans). Club Billing page shows all 5 plans with correct pricing. Coach login works without Club Billing access.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_club_plans_entitlements_v2.py",
+    "/app/test_reports/pytest/pytest_club_plans_entitlements_v2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "club_plans.py: New 3-type entitlement system correctly implemented (access=bool, depth=str, limit=int)",
+    "club_plans.py: Core Director OS (inbox, outbox, signals, coach health, escalations) have access=True on ALL plans",
+    "club_plans.py: Starter has basic depth (signal_detail_level=basic, coach_health_detail_level=basic, ai_detail_level=preview)",
+    "club_plans.py: Starter has limited items (director_inbox_item_limit=15)",
+    "club_plans.py: Growth has detailed signals, 100 inbox limit, advanced_filters_access=True, csv_export_access=True",
+    "club_plans.py: Club Pro has unlimited inbox (-1), advanced signals, detailed coach health, bulk_actions_access=True, autopilot_access=True",
+    "club_plans.py: Elite has ai_brief_access=True, ai_detail_level=full, automation_access=True, weekly_digest_access=True, loop_insights_access=True",
+    "club_plans.py: Enterprise has sso_access=True, admin_panel_access=True, athlete_limit=-1 (unlimited)",
+    "routers/club_plans.py: POST /api/club-plans/set correctly returns 403 for coach role",
+    "PlanContext.js: Correctly provides can(), hasDepth(), getDepth(), getLimit(), getValue() hooks",
+    "DirectorView.js: Core OS modules (inbox, outbox, signals, coach health) are NOT wrapped in PlanGate access checks - always shown",
+    "DirectorView.js: AI Program Brief correctly uses access gating (ai_brief_access)",
+    "RecruitingSignalsCard.js: Shows 'Basic' badge on basic depth, shows trends on detailed+ depth, shows inline upgrade nudge on basic",
+    "CoachHealthCard.js: Shows 'Basic' badge on basic depth, shows workload bars on detailed+ depth, shows inline upgrade nudge on basic",
+    "ClubBillingPage.js: Updated feature lists reflecting new philosophy (Core OS on all plans, depth/limits vary)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_club_plans_entitlements_v2.py"
+  ],
+  "success_rate": {
+    "backend": "100% (32/32 tests passed)",
+    "frontend": "100% (All UI tests passed)"
+  },
+  "test_credentials": {
+    "director_email": "director@capymatch.com",
+    "director_password": "director123",
+    "coach_email": "coach.williams@capymatch.com",
+    "coach_password": "coach123"
+  },
+  "seed_data_creation": "No new seed data created - used existing demo accounts",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Club Plans Entitlements V2 testing complete (iteration 245). The new 3-type entitlement system is working correctly: access (bool), depth (basic/detailed/advanced/full), limit (int, -1=unlimited). Key change from old system: Core Director OS modules (inbox, outbox, signals, coach health, escalations) are ALWAYS visible on all plans - they are NOT hidden behind PlanGate access checks. Instead, lower tiers get limited depth/items with tasteful inline upgrade nudges. Only AI Brief uses access gating (it's not part of the core OS). Backend tests in /app/backend/tests/test_club_plans_entitlements_v2.py cover all 5 plan tiers and their specific entitlements. Frontend verified: Starter shows Basic badges and nudges, Club Pro shows trends and workload bars, AI Brief shows upgrade card on non-Elite plans.",
+  "tests_verified": {
+    "backend_entitlements_v2": {
+      "starter_core_os_access_true": "PASS - director_inbox_access, director_outbox_access, recruiting_signals_access, coach_health_access, escalations_access, workflow_visibility_access all True",
+      "starter_inbox_limit_15": "PASS",
+      "starter_signal_detail_basic": "PASS",
+      "starter_coach_health_detail_basic": "PASS",
+      "starter_ai_detail_preview": "PASS",
+      "growth_inbox_limit_100": "PASS",
+      "growth_signal_detail_detailed": "PASS",
+      "growth_advanced_filters_access": "PASS",
+      "growth_csv_export_access": "PASS",
+      "club_pro_inbox_limit_unlimited": "PASS - director_inbox_item_limit=-1",
+      "club_pro_signal_detail_advanced": "PASS",
+      "club_pro_coach_health_detail_detailed": "PASS",
+      "club_pro_bulk_actions_access": "PASS",
+      "club_pro_autopilot_access": "PASS",
+      "elite_ai_brief_access": "PASS",
+      "elite_ai_detail_full": "PASS",
+      "elite_automation_access": "PASS",
+      "elite_weekly_digest_access": "PASS",
+      "elite_loop_insights_access": "PASS",
+      "enterprise_sso_access": "PASS",
+      "enterprise_admin_panel_access": "PASS",
+      "enterprise_athlete_limit_unlimited": "PASS - athlete_limit=-1",
+      "director_can_set_plan": "PASS",
+      "coach_cannot_set_plan": "PASS - returns 403",
+      "list_all_plans_returns_5": "PASS",
+      "starter_pricing_199": "PASS",
+      "growth_pricing_329": "PASS",
+      "club_pro_pricing_449": "PASS",
+      "elite_pricing_699": "PASS",
+      "enterprise_custom_pricing": "PASS - price_monthly=None"
+    },
+    "frontend_starter_plan": {
+      "director_login": "PASS",
+      "director_inbox_visible": "PASS - not hidden on Starter",
+      "outbox_strip_visible": "PASS - not hidden (may be empty)",
+      "recruiting_signals_visible": "PASS - shows Basic badge",
+      "recruiting_signals_inline_nudge": "PASS - 'See trends and deeper signal analysis with Growth'",
+      "coach_health_visible": "PASS - shows Basic badge",
+      "coach_health_inline_nudge": "PASS - 'Unlock workload tracking and quick actions with Club Pro'",
+      "ai_program_brief_upgrade_card": "PASS - 'Available on Elite and above' with 'Upgrade to Elite' button"
+    },
+    "frontend_club_pro_plan": {
+      "recruiting_signals_no_basic_badge": "PASS",
+      "recruiting_signals_shows_trends": "PASS - '+6 this week', 'same as last week', '+12 this week'",
+      "coach_health_no_basic_badge": "PASS",
+      "coach_health_shows_workload": "PASS - 'Light' workload indicators visible"
+    },
+    "frontend_club_billing": {
+      "page_loads": "PASS - data-testid='club-billing-page'",
+      "all_5_plan_cards": "PASS - starter, growth, club_pro, elite, enterprise",
+      "correct_pricing": "PASS - $199, $329, $449, $699, Custom",
+      "plan_switching": "PASS - toast shows 'Plan updated to Club Pro'"
+    },
+    "frontend_coach_login": {
+      "coach_login": "PASS - navigates to mission-control",
+      "coach_no_club_billing": "PASS - Club Billing not in sidebar"
+    }
+  }
+}

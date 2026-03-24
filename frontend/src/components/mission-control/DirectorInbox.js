@@ -4,11 +4,15 @@ import axios from "axios";
 import { API, getTopPriority } from "./inbox-utils";
 import { InboxRow, GroupLabel } from "./InboxRow";
 import { TopPriorityCard } from "./TopPriorityCard";
+import { usePlan } from "@/PlanContext";
+import UpgradeNudge from "@/components/UpgradeNudge";
 
 export default function DirectorInbox() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const { getLimit } = usePlan();
+  const inboxLimit = getLimit("director_inbox_item_limit");
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -33,8 +37,14 @@ export default function DirectorInbox() {
   }, []);
 
   const topItem = getTopPriority(items);
-  const highItems = items.filter(i => i.group === "high");
-  const atRiskItems = items.filter(i => i.group === "at_risk");
+
+  // Apply plan limit: -1 = unlimited
+  const isLimited = inboxLimit > 0 && items.length > inboxLimit;
+  const visibleItems = isLimited ? items.slice(0, inboxLimit) : items;
+  const hiddenCount = isLimited ? items.length - inboxLimit : 0;
+
+  const highItems = visibleItems.filter(i => i.group === "high");
+  const atRiskItems = visibleItems.filter(i => i.group === "at_risk");
 
   if (loading) {
     return (
@@ -217,6 +227,16 @@ export default function DirectorInbox() {
           </>
         )}
       </section>
+
+      {/* Limit nudge — shown when plan caps visible items */}
+      {isLimited && (
+        <UpgradeNudge
+          featureName="inbox items"
+          planLabel="Growth"
+          remaining={hiddenCount}
+          inline
+        />
+      )}
     </div>
   );
 }

@@ -62,7 +62,6 @@ function OutboxStrip({ summary }) {
   if (in_progress > 0) parts.push(`${in_progress} in progress`);
   if (resolved_this_week > 0) parts.push(`${resolved_this_week} resolved this week`);
 
-  // Insight text
   let insight = "";
   let insightColor = "#64748B";
   if (critical_pending > 0) {
@@ -105,7 +104,7 @@ function OutboxStrip({ summary }) {
 
 export default function DirectorView({ data, userName }) {
   const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
-  const { can } = usePlan();
+  const { can, getDepth, getLimit } = usePlan();
   const firstName = userName?.split(" ")[0] || "Director";
   const ps = data.programStatus || {};
   const trend = data.trendData || {};
@@ -113,6 +112,10 @@ export default function DirectorView({ data, userName }) {
   const needDelta = trend.needAttentionDelta || 0;
   const momCfg = MOM_CFG[momentum.state] || MOM_CFG.stable;
   const MomIcon = momCfg.icon;
+
+  const signalDepth = getDepth("signal_detail_level");
+  const coachDepth = getDepth("coach_health_detail_level");
+  const aiDepth = getDepth("ai_detail_level");
 
   const kpis = [
     { value: ps.totalAthletes || 0, label: "Athletes", color: "#30C5BE", icon: Target },
@@ -125,14 +128,13 @@ export default function DirectorView({ data, userName }) {
   return (
     <div className="space-y-6 overflow-x-hidden" data-testid="director-mission-control" style={{ maxWidth: 960 }}>
 
-      {/* ═══ 1. COMPACT CONTEXT STRIP ═══ */}
+      {/* ═══ 1. COMPACT CONTEXT STRIP — always visible ═══ */}
       <section
         className="rounded-lg overflow-hidden"
         style={{ backgroundColor: "#1E213A" }}
         data-testid="director-hero"
       >
         <div className="px-4 py-3 sm:px-5 sm:py-3.5">
-          {/* Row 1: Greeting + date */}
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] sm:text-[17px] font-semibold text-white leading-tight">
               {getGreeting()}, <span style={{ color: "#30C5BE" }}>{firstName}</span>
@@ -142,9 +144,8 @@ export default function DirectorView({ data, userName }) {
             </span>
           </div>
 
-          {/* Row 2: KPI metrics — single tight row */}
           <div className="flex items-center gap-4 sm:gap-6 mt-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-            {kpis.map((kpi, idx) => (
+            {kpis.map((kpi) => (
               <div key={kpi.label} className="flex items-center gap-1.5 flex-shrink-0">
                 <span className="text-[18px] sm:text-[20px] font-bold tabular-nums" style={{ color: kpi.color, lineHeight: 1 }}>
                   {kpi.value}
@@ -163,7 +164,6 @@ export default function DirectorView({ data, userName }) {
             ))}
           </div>
 
-          {/* Row 3: Momentum — subtle bottom line */}
           <div className="flex items-center gap-2 mt-2.5 pt-2" style={{ borderTop: "1px solid #2D3548" }}>
             <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#64748B" }}>Momentum</span>
             <MomIcon className="w-3 h-3" style={{ color: momCfg.color }} />
@@ -177,40 +177,48 @@ export default function DirectorView({ data, userName }) {
         </div>
       </section>
 
-      {/* ═══ 2. DIRECTOR INBOX — DOMINANT ═══ */}
-      <PlanGate feature="director_inbox" name="Director Inbox" minPlan="growth">
-        <DirectorInbox />
-      </PlanGate>
+      {/* ═══ 2. DIRECTOR INBOX — always shown, limit-gated ═══ */}
+      <DirectorInbox />
 
-      {/* ═══ 3. OUTBOX STRIP ═══ */}
-      <PlanGate feature="review_requests" name="Director Outbox" minPlan="growth">
-        <OutboxStrip summary={data.outbox_summary} />
-      </PlanGate>
+      {/* ═══ 3. OUTBOX STRIP — always shown ═══ */}
+      <OutboxStrip summary={data.outbox_summary} />
 
       {/* ═══ 4. SECONDARY SECTIONS — ALL COLLAPSED ═══ */}
       <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
-        <PlanGate feature="ai_program_brief" name="AI Program Brief" minPlan="elite">
+
+        {/* AI Program Brief — access-gated (preview vs full) */}
+        {aiDepth === "full" ? (
           <CollapsibleSection title="Program Insights" testId="section-program-insights">
             <AIProgramBrief />
           </CollapsibleSection>
-        </PlanGate>
+        ) : (
+          <PlanGate
+            access="ai_brief_access"
+            name="AI Program Brief"
+            upgrade="Elite"
+          >
+            <CollapsibleSection title="Program Insights" testId="section-program-insights">
+              <AIProgramBrief />
+            </CollapsibleSection>
+          </PlanGate>
+        )}
 
-        <PlanGate feature="recruiting_signals" name="Recruiting Signals" minPlan="growth">
-          <CollapsibleSection title="Recruiting Signals" testId="section-recruiting-signals">
-            <RecruitingSignalsCard signals={data.recruitingSignals} />
-          </CollapsibleSection>
-        </PlanGate>
+        {/* Recruiting Signals — always shown, depth nudge */}
+        <CollapsibleSection title="Recruiting Signals" testId="section-recruiting-signals">
+          <RecruitingSignalsCard signals={data.recruitingSignals} depth={signalDepth} />
+        </CollapsibleSection>
 
-        <PlanGate feature="coach_health" name="Coach Health" minPlan="club_pro">
-          <CollapsibleSection title="Coach Health" testId="section-coach-health">
-            <CoachHealthCard coaches={data.coachHealth || []} />
-          </CollapsibleSection>
-        </PlanGate>
+        {/* Coach Health — always shown, depth nudge */}
+        <CollapsibleSection title="Coach Health" testId="section-coach-health">
+          <CoachHealthCard coaches={data.coachHealth || []} depth={coachDepth} />
+        </CollapsibleSection>
 
+        {/* Upcoming Events — always shown */}
         <CollapsibleSection title="Upcoming Events" testId="section-upcoming-events">
           <UpcomingEventsCard events={data.upcomingEvents || []} />
         </CollapsibleSection>
 
+        {/* Activity — always shown */}
         <CollapsibleSection title="Activity" testId="section-activity">
           <ActivityFeed items={data.programActivity || []} title="Program Activity" />
         </CollapsibleSection>
