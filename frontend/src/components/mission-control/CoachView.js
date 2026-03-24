@@ -294,7 +294,7 @@ export default function CoachView({ data, userName }) {
       </div>
 
       {/* ── Risk Engine v3 Coach Inbox ── */}
-      <CoachInbox />
+      <CoachInbox excludeAthleteId={priorities.length > 0 ? (priorities[0].athleteId || priorities[0].athlete_id) : null} />
 
       {/* ── Athletes Requiring Attention + On Track + Event Prep ── */}
       <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} excludeIds={inboxAthleteIds} />

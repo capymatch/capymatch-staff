@@ -363,7 +363,7 @@ function UpNextRow({ item, onDismiss }) {
 /* ═══════════════════════════════════════════════ */
 /* Main: CoachInbox                                */
 /* ═══════════════════════════════════════════════ */
-export default function CoachInbox() {
+export default function CoachInbox({ excludeAthleteId }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dismissed, setDismissed] = useState(new Set());
@@ -385,7 +385,7 @@ export default function CoachInbox() {
 
   if (loading) return null;
 
-  const visible = items.filter(i => !dismissed.has(i.id));
+  const visible = items.filter(i => !dismissed.has(i.id) && i.athleteId !== excludeAthleteId);
   if (visible.length === 0) return null;
 
   const topItem = visible[0];
