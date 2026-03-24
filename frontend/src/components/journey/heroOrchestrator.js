@@ -43,15 +43,15 @@ export function computeHeroSelection({
     const greeting = coachName ? `Hi Coach ${coachName.split(" ").pop()}` : "Hi Coach";
 
     if ((taskTitle || "").toLowerCase().includes("follow up") || (taskTitle || "").toLowerCase().includes("follow-up")) {
-      return `${greeting}, I wanted to check in and reaffirm my strong interest in your program. I've been working hard this season and would love to share some updates. Would you have a few minutes to connect this week?`;
+      return `${greeting},\n\nJust checking in — I'm still very interested in your program. I've been working hard this season and would love to share some updates.\n\nWould you have a few minutes to connect this week?`;
     }
     if ((taskTitle || "").toLowerCase().includes("visit") || (taskTitle || "").toLowerCase().includes("campus")) {
-      return `${greeting}, I'm very interested in visiting campus and learning more about the program in person. Would there be a good time in the coming weeks to schedule an unofficial visit? I'm flexible with dates.`;
+      return `${greeting},\n\nI'd love to visit campus and learn more about the program in person.\n\nWould there be a good time in the coming weeks to schedule an unofficial visit?`;
     }
     if ((taskTitle || "").toLowerCase().includes("schedule call") || (taskTitle || "").toLowerCase().includes("schedule")) {
-      return `${greeting}, I'd love to set up a call to discuss the program and next steps. I'm available most afternoons this week. What time works best for you?`;
+      return `${greeting},\n\nI'd love to set up a call to discuss the program and next steps.\n\nI'm available most afternoons this week — what works best for you?`;
     }
-    return `${greeting}, I wanted to reach out and express my continued interest in your program. I'd really appreciate any chance to connect and learn more about what you're building.`;
+    return `${greeting},\n\nI wanted to reach out and express my continued interest in your program.\n\nI'd really appreciate any chance to connect — let me know what works.`;
   }
 
   // ── P1 — Committed ──

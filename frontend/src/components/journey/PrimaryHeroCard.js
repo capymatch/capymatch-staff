@@ -25,9 +25,12 @@ export function PrimaryHeroCard({ hero, program }) {
   // Format message into short paragraphs for readability
   const formatMessage = (msg) => {
     if (!msg) return null;
+    // Split on explicit double newlines first
+    const byBreaks = msg.split(/\n\n/).map(s => s.trim()).filter(Boolean);
+    if (byBreaks.length > 1) return byBreaks;
+    // Fallback: split on sentences
     const parts = msg.split(/(?<=[.!?])\s+/).filter(Boolean);
     if (parts.length <= 1) return msg;
-    // Group into 2-3 paragraphs
     if (parts.length === 2) return [parts[0], parts[1]];
     return [parts[0], parts.slice(1, -1).join(" "), parts[parts.length - 1]];
   };
@@ -113,12 +116,12 @@ export function PrimaryHeroCard({ hero, program }) {
           </div>
         )}
 
-        {/* 3. MESSAGE TO COACH — tighter, brighter, interactive */}
+        {/* 3. MESSAGE TO COACH */}
         {hero.isCommunication && messageParagraphs && (
-          <div className="mb-3 ml-[54px] rounded-lg px-3 py-2.5 transition-colors"
-            style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.07)" }}
+          <div className="mb-3 ml-[54px] rounded-lg px-2.5 py-2 transition-colors"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
             data-testid="hero-suggested-message">
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center justify-between mb-1">
               <p className="text-[9px] font-bold uppercase tracking-[0.12em]"
                 style={{ color: "rgba(255,255,255,0.30)" }}>
                 Message to coach
@@ -129,17 +132,17 @@ export function PrimaryHeroCard({ hero, program }) {
               </span>
             </div>
             {Array.isArray(messageParagraphs) ? (
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {messageParagraphs.map((p, i) => (
                   <p key={i} className="text-[13px]"
-                    style={{ color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
+                    style={{ color: "rgba(255,255,255,0.70)", lineHeight: 1.45 }}>
                     {i === 0 ? `"${p}` : i === messageParagraphs.length - 1 ? `${p}"` : p}
                   </p>
                 ))}
               </div>
             ) : (
               <p className="text-[13px]"
-                style={{ color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
+                style={{ color: "rgba(255,255,255,0.70)", lineHeight: 1.45 }}>
                 "{messageParagraphs}"
               </p>
             )}
@@ -147,13 +150,13 @@ export function PrimaryHeroCard({ hero, program }) {
         )}
 
         {/* 4. CTA ROW */}
-        <div className="flex items-center gap-3 ml-[54px] mb-2">
+        <div className="flex items-center gap-3 ml-[54px] mt-3 mb-2">
           {hero.primaryCta && (
-            <div className="flex flex-col gap-1.5">
-              {/* Ready signal */}
+            <div className="flex flex-col gap-1">
+              {/* Ready signal — rotating copy */}
               {hero.isCommunication && (
                 <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "rgba(16,185,129,0.7)" }} data-testid="hero-ready-signal">
-                  <Check className="w-3 h-3" /> Ready to send
+                  <Check className="w-3 h-3" /> {["Ready to send", "Looks good to send", "Quick follow-up ready"][Math.abs((hero.id || "").length) % 3]}
                 </span>
               )}
               <button onClick={hero.primaryCta.handler} disabled={hero.primaryCta.loading}
@@ -169,13 +172,12 @@ export function PrimaryHeroCard({ hero, program }) {
             </div>
           )}
 
-          {/* 5. SECONDARY CTA — ghost, minimal */}
+          {/* 5. SECONDARY CTA — text only, low opacity */}
           {hero.secondaryCta && (
             <button onClick={hero.secondaryCta.handler}
-              className="inline-flex items-center gap-1 text-[10px] font-medium self-end mb-0.5"
-              style={{ color: "rgba(255,255,255,0.15)", background: "none", border: "none", cursor: "pointer", padding: "4px 2px" }}
+              className="inline-flex items-center gap-1 text-[10px] self-end mb-0.5"
+              style={{ color: "rgba(255,255,255,0.12)", background: "none", border: "none", cursor: "pointer", padding: "4px 2px", fontWeight: 400 }}
               data-testid="hero-secondary-cta">
-              {hero.secondaryCta.icon && <hero.secondaryCta.icon className="w-2.5 h-2.5" />}
               {hero.secondaryCta.label}
             </button>
           )}
