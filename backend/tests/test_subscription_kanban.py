@@ -10,7 +10,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://api-optimize-2.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://premium-dark-ui-6.preview.emergentagent.com").rstrip("/")
 
 # Test credentials
 ATHLETE_EMAIL = "emma.chen@athlete.capymatch.com"

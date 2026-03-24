@@ -1,123 +1,211 @@
-<analysis>original_problem_statement: The user requested extensive UI/UX refinements and AI integration improvements across the CapyMatch application. Core requests included replacing fragmented AI buttons with a unified Coach Watch V2 intelligence card, redesigning Journey hero cards to match Pipeline hero aesthetics, adding Why this? contextual signals to tasks, fixing mobile responsiveness (margins/padding), and fixing several critical bugs related to notifications, profile previews, and systemic data staleness (blockers showing on coach dashboards for athletes who had already resolved the issues).
+<analysis>original_problem_statement: The user initially requested performance improvements (API pagination, frontend code splitting). The priority then shifted to implementing a multi-tiered subscription model for CapyMatch Clubs. This involved defining a detailed product strategy, implementing a 5-tier plan system (Starter, Growth, Club Pro, Elite, Enterprise), and integrating Stripe for subscription billing. A major part of this task was refactoring the entitlement system to a more granular model based on , , and  to ensure the core Director OS is functional even on the lowest paid tier.
+
+The most recent request is a UI/UX refactor of the hero card on the Mission Control dashboard to match a premium dark design. The user has explicitly instructed to **CREATE AN HTML MOCKUP FIRST** and make no changes to the application code until the mockup is approved.
 
 **User's preferred language**: English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool. The Journey page now features a unified AI Coach Watch V2 card that loads automatically, explaining recommended actions. Journey Hero cards visually match the Pipeline cards and include a new Why this? contextual layer. A major systemic data synchronization issue was identified and is currently being patched: backend endpoints were reading from a static  cache that did not auto-refresh when athletes completed tasks or updated profiles. 
+The application is a full-stack (React, FastAPI, MongoDB, Redis) athlete management tool called CapyMatch. It features a production-ready backend with Redis caching, centralized configuration, and global error handling. The app now includes a complete, multi-tiered club subscription system with five plans, driven by a sophisticated entitlement model that controls feature , , and . Stripe is fully integrated for handling subscriptions, including checkout, a billing portal, and a webhook endpoint to sync subscription status with the application's database. User-provided test keys for Stripe are configured in the environment.
 
 **Last working item**:
-    - Last item agent was working: Systemic fix for stale cache data. The agent was injecting  into all backend write endpoints (action completions, flag resolutions, inbox dismissals) so that when an athlete or coach resolves an issue, the global  cache updates immediately and clears the blocker from the Coach and Director dashboards.
-    - Status: IN PROGRESS
-    - Agent Testing Done: N (For the final batch of endpoints)
-    - Which testing method agent to use? manual testing by curl / python -c to verify cache recomputes, and screenshot tool to verify UI clears the issue.
+    - Last item agent was working: The user requested a UI refactor for the main hero card component (). The agent's task is to create a static HTML mockup of the new design before implementing it in React. The agent has analyzed the user's reference image and viewed the existing component code to gather context.
+    - Status: NOT STARTED
+    - Agent Testing Done: N
+    - Which testing method agent to use? The first step is to create a static HTML mockup and present it to the user. After approval, the agent will implement the changes in the React component and use the  to verify the visual transformation.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
-  Issue 1: Resolving actions/tasks does not automatically update coach/director boards (P0)
-     - Attempted fixes: The agent already fixed this for Profile Saves (), but realized task completions and flag dismissals also need cache invalidation. The agent successfully added  to , , , and .
-     - Next debug checklist: 
-         1. Add  to  endpoints (e.g., , ).
-         2. Check  for any dismiss/resolve endpoints () and add the cache refresh there too.
-         3. Verify the full loop: Complete a task as an athlete -> verify the coach's inbox/dashboard clears the task automatically without requiring a backend restart.
-     - Why fix this issue and what will be achieved with the fix? Ensures complete data synchronization across the app. Coaches and Directors will no longer see ghost blockers for athletes who have already completed their requirements.
-     - Status: IN PROGRESS
-     - Is recurring issue? Y (Stale cache data has caused multiple UI inconsistencies)
-     - Should Test frontend/backend/both after fix? Both (Backend data verification + Frontend dashboard rendering)
-     - Blocked on other issue: None
+  None. The last work items were feature implementations and refactors, not bug fixes.
 
 **In progress Task List**: 
-None currently (All ongoing work is captured in Issue 1).
+  Task 1:  Hero Card UI Refactor (P0)
+     - Where to resume: Create a static HTML file () to build the new UI design for the hero card, based on the user's reference image and the data fields available in . **CRITICAL: Do not modify any application code yet.** Present the mockup to the user for approval first.
+     - What will be achieved with this? A visual mockup for the user to approve before refactoring the live React component, ensuring the design meets expectations.
+     - Status:  NOT STARTED
+     - Should Test frontend/backend/both after fix? Frontend (using screenshot tool after implementation).
+     - Blocked on something: User approval of the HTML mockup.
 
 **Upcoming and Future Tasks**
-  - **Upcoming Tasks:**
-    - (P1) CSV Import Tool: Bulk import functionality for school/coach data.
-    - (P1) Bulk Approve Mode: Allow selecting/approving multiple items at once in Director Inbox.
-    - (P1) Refactor : Break down the massive 1000+ line component.
-  - **Future Tasks:**
-    - Parent/Family Experience
-    - AI-Powered Coach Summary
-    - Club Billing (Stripe)
-    - Multi-Agent Intelligence Pipeline
+    Upcoming Tasks:
+    - (P1) CSV Import Tool: For bulk import of school/coach data.
+    - (P1) Bulk Approve Mode: Allow selecting/approving multiple items at once in the Director Inbox.
+    
+    Future Tasks:
+    - (P2) Parent/Family Experience.
+    - (P2) AI-Powered Coach Summary.
+    - (P2) Multi-Agent Intelligence Pipeline.
+    - (P2) Page-level route gating strategy (V2): The user deferred refining the gating for advanced pages like  and .
+    - (P2) Usage-based/metered billing for AI features.
 
 **Completed work in this session**
-- Event Signal in Journey Timeline: Added  to config and rendered properly in timeline (DONE).
-- Notification Click Redirect Bug: Fixed  pointing to non-existent  route, now correctly routes to  (DONE).
-- Public Profile Preview: Fixed invisible preview button in  and fixed backend ignoring  for unpublished profiles (DONE).
-- Sidebar Cleanup: Removed Social Spotlight from coach/staff sidebar (DONE).
-- Coach Photo Upload: Added backend  and clickable avatar upload on  (DONE).
-- Coach Watch V2 Unified Intelligence: Created  and . Unified AI insight into one auto-loading card instead of separate buttons (DONE).
-- Pipeline Summary Cleanup: Removed redundant momentum text and Top Priority experimental line to keep the summary concise (DONE).
-- Journey Hero Card Redesign: Updated  and Journey header to use dark gradient/glow styling matching the Pipeline page (DONE).
-- Follow-up Task CTA Fix: Mapped tasks containing words like follow up or email to open the Email Composer instead of a generic Mark Done (DONE).
-- Mobile Padding Reductions: Removed excess  side padding on Pipeline and Journey pages, adjusted border radii (DONE).
-- Why this? Hero Context: Added dynamic text string generation (days since activity, interest level, stage) directly above quotes in Journey Hero cards (DONE).
-- Sarah Martinez Blocker Fix (Phase 1 & 2): Fixed  and  desync. Added action buttons (Nudge to Complete Profile & View Details) to Support Pod blockers. Synced  boolean with percentage calculation in DB (DONE).
+- **Performance Improvements**: Implemented API pagination for 6 key endpoints and frontend code-splitting using  in .
+- **Club Billing V2 (Entitlement Refactor)**: Replaced the initial flat feature gating with a production-ready system supporting  (boolean),  (enum), and  (numeric) controls. This ensures the Core Director OS (Inbox, Signals, etc.) is visible on all paid plans, just with reduced functionality on lower tiers. The core files for this are , , and .
+- **Stripe Subscription Billing Integration**: Implemented a full subscription lifecycle integration with Stripe. This includes creating checkout sessions, a customer billing portal, and a robust webhook handler () for 6 event types to keep the local  database in sync with Stripe. The user's test keys have been successfully configured in .
+- **Strategy Documentation**: Created a comprehensive strategy document for the club billing feature at  and provided it as a PDF.
 
 **Earlier issues found/mentioned but not fixed**
-None.
+   - **Issue 1: ESLint Warning**
+     - A  warning exists in . This is a low-priority code quality issue that should be fixed.
+     - **Debug checklist:** Add  to the dependency array of the  hook on line 129 of the file.
+     - **Why to solve this issue and what will be achieved with this?** Fixes a linting warning and prevents potential stale closure bugs in the React component.
+     - **Should Test frontend/backend/both after fix:** Frontend (briefly, to ensure no regressions).
+     - **Is recurring issue?** N
+   - **Issue 2: Unused Component File**
+     - The file  was replaced by  but was not deleted.
+     - **Debug checklist:** Confirm no other component imports  and then delete the file using .
+     - **Why to solve this issue and what will be achieved with this?** Improves code hygiene by removing dead code.
+     - **Should Test frontend/backend/both after fix:** None.
+     - **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: None
-  - Recurrence count: 0
-  - Status: RESOLVED
+  - **Issue recurrence in this fork**: 
+  - **Description**: The backend service fails to start due to a missing  shared library, a dependency of the  package used in file uploads.
+  - **Recurrence count**: 4+ times in this session.
+  - **Fix**: Running Hit:1 https://cloudfront.debian.net/debian bookworm InRelease
+Get:2 https://cloudfront.debian.net/debian bookworm-updates InRelease [55.4 kB]
+Get:3 https://cloudfront.debian.net/debian-security bookworm-security InRelease [48.0 kB]
+Get:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
+Get:5 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
+Get:6 https://cloudfront.debian.net/debian-security bookworm-security/main arm64 Packages [290 kB]
+Get:7 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [109 kB]
+Get:8 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.7 kB]
+Get:9 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [107 kB]
+Fetched 638 kB in 1s (674 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Suggested packages:
+  file
+The following NEW packages will be installed:
+  libmagic-mgc libmagic1
+0 upgraded, 2 newly installed, 0 to remove and 11 not upgraded.
+Need to get 403 kB of archives.
+After this operation, 8587 kB of additional disk space will be used.
+Get:1 https://cloudfront.debian.net/debian bookworm/main arm64 libmagic-mgc arm64 1:5.44-3 [305 kB]
+Get:2 https://cloudfront.debian.net/debian bookworm/main arm64 libmagic1 arm64 1:5.44-3 [98.5 kB]
+Fetched 403 kB in 0s (1384 kB/s)
+Selecting previously unselected package libmagic-mgc.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 46697 files and directories currently installed.)
+Preparing to unpack .../libmagic-mgc_1%3a5.44-3_arm64.deb ...
+Unpacking libmagic-mgc (1:5.44-3) ...
+Selecting previously unselected package libmagic1:arm64.
+Preparing to unpack .../libmagic1_1%3a5.44-3_arm64.deb ...
+Unpacking libmagic1:arm64 (1:5.44-3) ...
+Setting up libmagic-mgc (1:5.44-3) ...
+Setting up libmagic1:arm64 (1:5.44-3) ...
+Processing triggers for libc-bin (2.36-9+deb12u13) ... and then restarting the backend service (backend: stopped
+backend: started) resolves the issue. This appears to be a container environment setup problem.
+  - **Status**: RESOLVED (but may recur).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- React, FastAPI, MongoDB.
-- **Coach Watch Engine**: A 10-state deterministic relationship matrix now paired with LLM context via .
-- **Data Flow / Staleness**:  caches athlete data on startup. Direct MongoDB writes bypass this cache unless  is explicitly called.
+- **Tiered Entitlement System**: A granular system gating features by  (boolean),  (string enum), and  (integer). This allows core modules to remain visible on all plans but with varying levels of functionality.
+- **Stripe Subscription Integration**: End-to-end management of subscriptions using Stripe Checkout, the Billing Portal, and a webhook endpoint to sync state changes (, , ).
+- **Webhook Idempotency**: The webhook handler is designed to safely process duplicate events from Stripe, ensuring each event's action is performed only once.
+- **API Pagination**: A standardized approach for paginating large data sets from the backend using  and  query parameters.
+- **Frontend Code Splitting**: Using  and  to split JavaScript bundles by route, improving initial page load performance.
 
 **key DB schema**
-  - : Added  (boolean) synced with  (dict).
-  - : Stores communications (cache invalidation added on insert).
+  - **club_subscriptions**:  (This new collection tracks the billing state of each club).
 
 **changes in tech stack**
-  - None
+  - : Installed via pip to generate a PDF from markdown.
+  - , : Installed via apt 2.6.1 (arm64)
+Usage: apt-get [options] command
+       apt-get [options] install|remove pkg1 [pkg2 ...]
+       apt-get [options] source pkg1 [pkg2 ...]
+
+apt-get is a command line interface for retrieval of packages
+and information about them from authenticated sources and
+for installation, upgrade and removal of packages together
+with their dependencies.
+
+Most used commands:
+  update - Retrieve new lists of packages
+  upgrade - Perform an upgrade
+  install - Install new packages (pkg is libc6 not libc6.deb)
+  reinstall - Reinstall packages (pkg is libc6 not libc6.deb)
+  remove - Remove packages
+  purge - Remove packages and config files
+  autoremove - Remove automatically all unused packages
+  dist-upgrade - Distribution upgrade, see apt-get(8)
+  dselect-upgrade - Follow dselect selections
+  build-dep - Configure build-dependencies for source packages
+  satisfy - Satisfy dependency strings
+  clean - Erase downloaded archive files
+  autoclean - Erase old downloaded archive files
+  check - Verify that there are no broken dependencies
+  source - Download source archives
+  download - Download the binary package into the current directory
+  changelog - Download and display the changelog for the given package
+
+See apt-get(8) for more information about the available commands.
+Configuration options and syntax is detailed in apt.conf(5).
+Information about how to configure sources can be found in sources.list(5).
+Package and version choices can be expressed via apt_preferences(5).
+Security details are available in apt-secure(8).
+                                        This APT has Super Cow Powers. to fix a recurring backend dependency issue.
 
 **All files of reference**
-  - : Global athlete cache handling.
-  - : Contains action resolution endpoints currently being patched with cache refresh.
-  - : Computes Journey Hero details and  context signals.
-  - : Newly created AI intelligence view.
+- : The new source of truth for all plan entitlements.
+- : The frontend context for accessing plan entitlements.
+- : The main component where the new entitlement gating is applied.
+- : The core logic for Stripe integration.
+- : The API endpoints for Stripe checkout, portal, and webhooks.
+- : The UI for selecting and managing subscription plans.
+- : The component to be refactored next.
 
-**Areas that need refactoring**
-  -  (over 1000 lines).
-  - Global cache management: Currently  requires manual invalidation hooks scattered across 10+ backend files.
+**Areas that need refactoring**:
+- The ESLint warning in  should be fixed.
+- The unused file  should be deleted.
 
 **key api endpoints**
-  - : New Coach Watch V2 AI explanation endpoint.
-  - : New endpoint to ping athletes about blockers.
-  - : Task completion.
+- : Returns definitions and pricing for all public plans.
+- : Returns the current user's club plan, subscription status, and full entitlements map.
+- : Creates a Stripe Checkout session for subscribing to or changing a plan.
+- : Creates a Stripe Billing Portal session for managing payment methods and invoices.
+- : Receives and processes all subscription-related events from Stripe.
 
 **Critical Info for New Agent**
-The application suffers from cache staleness because  holds athlete objects in memory. The previous agent successfully tracked this down after fixing the Sarah Martinez Blocker bug. You must finish adding  (imported from ) to the remaining action-resolution endpoints (specifically inside  and ) so that when a task/flag/action is resolved, the cache updates and removes the blocker from the coach dashboard. 
+- **MOCKUP FIRST**: The user's current request is to create a **static HTML mockup** of the new hero card design. **Do not modify any React code** until the user explicitly approves the HTML file.
+- **Entitlement System**: The feature gating logic has been completely refactored. Do not use simple boolean checks to hide entire components. Instead, use the  hook from  to check , , and  for granular control.
+- **Stripe is Live (in Test Mode)**: The user has provided test Stripe keys which are configured in the  file. API calls to create checkout sessions will redirect to a real Stripe test payment page.
 
 **documents and test reports created in this job**
-  -  (Coach Watch V2 tests - 100% pass)
-  -  (Updated)
+- 
+- 
+- 
+-  (Performance)
+-  (Club Billing V1)
+-  (Entitlement Refactor V2)
+-  (Stripe Integration)
 
-**Last 10 User Messages and any pending HUMAN messages**
-- **User**: What about when an athlete completes for example a task that was overdue, will it update in the coach and director area ?
-- **Agent**: (Acknowledged No, proceeded to add  to various completion endpoints across the backend, but ran out of context before finishing  and ).
-- **User**: Was this fixed just for the profile or any other data? We need to make sure coach and director get their boards updated when the athlete clears the issue
-- **User**: Sarah has completed her profile, but it is still showing blocker in the coach’s area [Images]
-- **User**: Nudge to complete profile redirects to the message area, details does not do anything! [Image]
-- **User**: Blocker does not have action buttons [Image]
-- **User**: Please check inconsistency with Sarah Martinez [Image showing in both UP NEXT and ALL CLEAR]
-- **User**: Refactor the Action Hero Card to include a clear Why this? explanation that connects the action to the school context above...
+**Last 10 User Messages and any pending HUMAN messages** 
+10. **User**: Provided Stripe webhook and secret keys. (Completed)
+9. **User**: Asked how to provide keys securely. (Answered)
+8. **User**: Provided screenshot of Stripe webhook setup page, asking for next step. (Answered)
+7. **User**: Provided another screenshot of webhook setup, asking for next step. (Answered)
+6. **User**: Provided screenshot of webhook destination page, asking for next step. (Answered)
+5. **User**: Asked where to find the Stripe keys. (Answered)
+4. **User**: Asked if they need to send keys for each plan. (Answered)
+3. **User**: Asked how to link subscription tiers with Stripe. (Answered)
+2. **User**: Requested a UI refactor of the hero card to a premium dark design, with a reference image. (In Progress)
+1. **User**: **CRITICAL INSTRUCTION**: CREATE A HTML MOCKUP FIRST. DO NOT MAKE ANY CHANGES TO THE APP YET. I WANT TO SEE THE MOCKUP FIRST (Pending Action)
 
 **Project Health Check:**
-- Broken: None. 
-- Mocked:  acts as a local memory cache, which behaves like mocked data if not actively refreshed.
+- Broken: None
+- Mocked: The Stripe integration is using test keys but is fully functional against the Stripe test environment. There is no local mocking.
 
 **3rd Party Integrations**
-- OpenAI GPT-4o — uses Emergent LLM Key (Used heavily in the new  endpoint)
-- Stripe (Payments) — requires User API Key
+- **OpenAI GPT-4o**: Uses Emergent LLM Key.
+- **Object Storage**: Uses internal  and Emergent LLM Key environment defaults.
+- **Stripe (Payments)**: **Active**. Integrated for club subscriptions using user-provided test API keys ( and ).
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Iteration 236 for Coach Watch V2).
+  - Testing agent used after significant changes: YES. Used successfully after the Performance, Billing V2, and Stripe integration tasks, with 100% pass rates reported.
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
@@ -128,4 +216,5 @@ The application suffers from cache staleness because  holds athlete objects in m
 - **Coach:**  / 
 
 **What agent forgot to execute**
-The agent was in the middle of executing a systemic backend cache fix. They successfully added  to , , , and . They forgot/ran out of context to add it to the final few files:  (specifically  and ) and . Resume by finishing these imports and function calls, then verifying the cache flow end-to-end.</analysis>
+- Did not fix the ESLint warning in .
+- Did not delete the now-unused component file .</analysis>

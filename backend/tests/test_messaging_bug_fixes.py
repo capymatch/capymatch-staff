@@ -21,7 +21,7 @@ import uuid
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://api-optimize-2.preview.emergentagent.com"
+    BASE_URL = "https://premium-dark-ui-6.preview.emergentagent.com"
 
 # Test credentials
 COACH_EMAIL = "coach.williams@capymatch.com"
