@@ -16,6 +16,14 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - Moved carousel navigation arrows (prev/next + counter) from the top bar row (alongside filter pills) to an absolute-positioned top-right corner of the hero card in `PipelineHero.js`
 - Filter pills remain in the top bar; arrows float independently at the top right
 
+### Journey Card → Email Modal Integration (Mar 25, 2026)
+- Connected hero card's "Send to coach" CTA to the email modal with pre-filled subject, body, and recipient
+- Subject auto-generated from task context (e.g., "Following up — Marcus Johnson", "Campus visit — Athlete Name")
+- Message body pre-filled from the hero card's suggested message
+- Added inline editing ("Tap to edit") for the message block — edited version flows to the modal
+- Floating action bar "Email" button still opens clean (no pre-fill) modal
+- AI Draft and all existing modal features preserved
+
 ### UI Refactor — Event Prep Header Dark Theme (Mar 24, 2026)
 - **Header only**: Applied premium dark theme to the top hero header card of `EventPrep.js` (`#161921` bg, light text, red "Go Live" button). All other sections remain light theme.
 - **Code cleanup**: Fixed ESLint `react-hooks/exhaustive-deps` warning in `ClubBillingPage.js` (wrapped `pollCheckoutStatus` in `useCallback`). Confirmed unused `UpgradePrompt.js` already deleted.
