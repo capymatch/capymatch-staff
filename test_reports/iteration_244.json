@@ -1,0 +1,80 @@
+{
+  "summary": "Club Billing feature testing complete. All 27 backend tests passed (100%). Frontend tests verified: Club Billing page loads with all 5 plan cards, plan switching works, PlanGate correctly shows UpgradePrompt on Starter plan and actual content on Club Pro, Coach login works without Club Billing access.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_club_plans.py",
+    "/app/test_reports/pytest/pytest_club_plans.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "club_plans.py: CLUB_PLANS dict correctly defines 5 tiers with pricing (Starter $199/25 athletes, Growth $329/50, Club Pro $449/75, Elite $699/125, Enterprise custom/-1)",
+    "club_plans.py: FEATURE_ENTITLEMENTS correctly maps 30+ features to plan access levels (True/False/int limits)",
+    "club_plans.py: check_club_feature() and get_plan_entitlements() correctly compute access for any plan/feature combo",
+    "routers/club_plans.py: All 5 endpoints implemented correctly with proper auth checks (director-only for /set)",
+    "PlanContext.js: Correctly hydrates entitlements on login for staff roles, provides can() and getAccess() hooks",
+    "PlanGate.js: Correctly wraps children and shows UpgradePrompt when feature is locked",
+    "ClubBillingPage.js: Shows all 5 plan cards with correct pricing, usage bars, and plan switching functionality",
+    "DirectorView.js: PlanGate correctly wraps director_inbox, review_requests, ai_program_brief, recruiting_signals, coach_health sections",
+    "Sidebar.js: Club Billing nav item correctly shown only for Director role (line 22)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_club_plans.py"
+  ],
+  "success_rate": {
+    "backend": "100% (27/27 tests passed)",
+    "frontend": "100% (All UI tests passed)"
+  },
+  "test_credentials": {
+    "director_email": "director@capymatch.com",
+    "director_password": "director123",
+    "coach_email": "coach.williams@capymatch.com",
+    "coach_password": "coach123"
+  },
+  "seed_data_creation": "No new seed data created - used existing demo accounts",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Club Billing feature testing complete (iteration 244). Backend: All 5 club plan endpoints working correctly - GET /api/club-plans returns 5 plans with entitlements, GET /api/club-plans/current returns plan+usage, GET /api/club-plans/entitlements returns all feature entitlements, GET /api/club-plans/check/{feature_id} returns access info, POST /api/club-plans/set switches plan (director-only). Feature gating verified: Starter blocks director_inbox (min_plan=growth), ai_email_draft (min_plan=club_pro gives 50 limit, elite gives unlimited). Frontend: Club Billing page shows all 5 plan cards with correct pricing, usage bars work, plan switching updates PlanContext. PlanGate correctly shows UpgradePrompt on Starter and actual content on Club Pro. Coach login works without Club Billing sidebar access.",
+  "tests_verified": {
+    "backend_club_plans": {
+      "list_all_plans": "PASS - returns 5 plans with entitlements",
+      "starter_pricing": "PASS - $199/mo, 25 athletes, 3 coaches",
+      "growth_pricing": "PASS - $329/mo, 50 athletes, 6 coaches",
+      "club_pro_pricing": "PASS - $449/mo, 75 athletes, 10 coaches",
+      "elite_pricing": "PASS - $699/mo, 125 athletes, 20 coaches",
+      "enterprise_pricing": "PASS - custom pricing, unlimited",
+      "get_current_plan": "PASS - returns plan, subscription, usage, entitlements",
+      "usage_counts": "PASS - athletes and coaches counts with percentages",
+      "get_entitlements": "PASS - returns plan_id, plan_label, limits, entitlements",
+      "check_feature_director_inbox": "PASS - returns allowed, access, min_plan, current_plan",
+      "check_unknown_feature": "PASS - returns allowed=True",
+      "director_set_plan": "PASS - can switch to any valid plan",
+      "coach_cannot_set_plan": "PASS - returns 403",
+      "invalid_plan_returns_400": "PASS",
+      "starter_blocks_director_inbox": "PASS - allowed=False, min_plan=growth",
+      "growth_allows_director_inbox": "PASS - allowed=True",
+      "starter_blocks_ai_email_draft": "PASS - allowed=False, min_plan=club_pro",
+      "club_pro_gives_50_limit": "PASS - access=50",
+      "elite_gives_unlimited": "PASS - access=True"
+    },
+    "frontend_club_billing": {
+      "director_login": "PASS",
+      "club_billing_sidebar_link": "PASS - visible for Director",
+      "club_billing_page_loads": "PASS - data-testid='club-billing-page'",
+      "all_5_plan_cards": "PASS - starter, growth, club_pro, elite, enterprise",
+      "plan_switching": "PASS - clicking Upgrade changes plan",
+      "usage_bars": "PASS - athletes and coaches usage displayed",
+      "plan_gate_starter": "PASS - UpgradePrompt shown for director_inbox",
+      "plan_gate_club_pro": "PASS - DirectorInbox content shown",
+      "coach_login": "PASS - navigates to mission-control",
+      "coach_no_club_billing": "PASS - Club Billing not in sidebar"
+    }
+  }
+}

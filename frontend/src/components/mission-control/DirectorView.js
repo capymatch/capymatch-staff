@@ -7,6 +7,8 @@ import RecruitingSignalsCard from "./RecruitingSignalsCard";
 import ActivityFeed from "./ActivityFeed";
 import AthletePipelinePanel from "./AthletePipelinePanel";
 import DirectorInbox from "./DirectorInbox";
+import PlanGate from "@/components/PlanGate";
+import { usePlan } from "@/PlanContext";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -103,6 +105,7 @@ function OutboxStrip({ summary }) {
 
 export default function DirectorView({ data, userName }) {
   const [pipelineAthleteId, setPipelineAthleteId] = useState(null);
+  const { can } = usePlan();
   const firstName = userName?.split(" ")[0] || "Director";
   const ps = data.programStatus || {};
   const trend = data.trendData || {};
@@ -175,24 +178,34 @@ export default function DirectorView({ data, userName }) {
       </section>
 
       {/* ═══ 2. DIRECTOR INBOX — DOMINANT ═══ */}
-      <DirectorInbox />
+      <PlanGate feature="director_inbox" name="Director Inbox" minPlan="growth">
+        <DirectorInbox />
+      </PlanGate>
 
       {/* ═══ 3. OUTBOX STRIP ═══ */}
-      <OutboxStrip summary={data.outbox_summary} />
+      <PlanGate feature="review_requests" name="Director Outbox" minPlan="growth">
+        <OutboxStrip summary={data.outbox_summary} />
+      </PlanGate>
 
       {/* ═══ 4. SECONDARY SECTIONS — ALL COLLAPSED ═══ */}
       <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
-        <CollapsibleSection title="Program Insights" testId="section-program-insights">
-          <AIProgramBrief />
-        </CollapsibleSection>
+        <PlanGate feature="ai_program_brief" name="AI Program Brief" minPlan="elite">
+          <CollapsibleSection title="Program Insights" testId="section-program-insights">
+            <AIProgramBrief />
+          </CollapsibleSection>
+        </PlanGate>
 
-        <CollapsibleSection title="Recruiting Signals" testId="section-recruiting-signals">
-          <RecruitingSignalsCard signals={data.recruitingSignals} />
-        </CollapsibleSection>
+        <PlanGate feature="recruiting_signals" name="Recruiting Signals" minPlan="growth">
+          <CollapsibleSection title="Recruiting Signals" testId="section-recruiting-signals">
+            <RecruitingSignalsCard signals={data.recruitingSignals} />
+          </CollapsibleSection>
+        </PlanGate>
 
-        <CollapsibleSection title="Coach Health" testId="section-coach-health">
-          <CoachHealthCard coaches={data.coachHealth || []} />
-        </CollapsibleSection>
+        <PlanGate feature="coach_health" name="Coach Health" minPlan="club_pro">
+          <CollapsibleSection title="Coach Health" testId="section-coach-health">
+            <CoachHealthCard coaches={data.coachHealth || []} />
+          </CollapsibleSection>
+        </PlanGate>
 
         <CollapsibleSection title="Upcoming Events" testId="section-upcoming-events">
           <UpcomingEventsCard events={data.upcomingEvents || []} />

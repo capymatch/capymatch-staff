@@ -19,6 +19,7 @@ const STAFF_NAV = [
 
 const DIRECTOR_EXTRA = [
   { id: "roster", label: "Roster", icon: Users, path: "/roster" },
+  { id: "club-billing", label: "Club Billing", icon: CreditCard, path: "/club-billing" },
 ];
 
 const ADMIN_NAV = [

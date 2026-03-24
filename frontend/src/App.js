@@ -5,6 +5,7 @@ import { ThemeProvider } from "./ThemeContext";
 import { SubscriptionProvider } from "./lib/subscription";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
+import { PlanProvider } from "./PlanContext";
 import { lazy, Suspense } from "react";
 
 // ── Eagerly loaded (auth flow — needed immediately) ──
@@ -58,6 +59,7 @@ const AthleteMessagesPage = lazy(() => import("./pages/athlete/MessagesPage"));
 const AthleteOutreachPage = lazy(() => import("./pages/athlete/OutreachAnalysisPage"));
 const AthleteHighlightPage = lazy(() => import("./pages/athlete/HighlightAdvisorPage"));
 const SocialSpotlight = lazy(() => import("./pages/SocialSpotlight"));
+const ClubBillingPage = lazy(() => import("./pages/ClubBillingPage"));
 
 function getHomeRoute(role, onboardingDone) {
   if (role === "platform_admin") return "/admin/dashboard";
@@ -133,6 +135,7 @@ function AppRoutes() {
       <Route path="/program" element={<ProtectedRoute allowedRoles={["director","club_coach"]}><ProgramIntelligence /></ProtectedRoute>} />
       <Route path="/invites" element={<ProtectedRoute allowedRoles={["director"]}><InvitesPage /></ProtectedRoute>} />
       <Route path="/roster" element={<ProtectedRoute allowedRoles={["director"]}><RosterPage /></ProtectedRoute>} />
+      <Route path="/club-billing" element={<ProtectedRoute allowedRoles={["director"]}><ClubBillingPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminStatus /></ProtectedRoute>} />
       <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["director","platform_admin"]}><AdminDashboardPage /></ProtectedRoute>} />
@@ -184,9 +187,11 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <SubscriptionProvider>
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
+              <PlanProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </PlanProvider>
             </SubscriptionProvider>
           </AuthProvider>
         </ThemeProvider>
