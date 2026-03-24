@@ -12,6 +12,14 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### Club Billing — Plan-Based Access Tiers (Mar 24, 2026)
+- **5 Club Plans**: Starter ($199, 25 athletes, 3 coaches), Growth ($329, 50, 6), Club Pro ($449, 75, 10), Elite ($699, 125, 20), Enterprise (custom, unlimited)
+- **Backend**: `club_plans.py` defines 35 feature entitlements across all plans. `routers/club_plans.py` provides 5 API endpoints: list plans, get current, check feature, set plan, bulk entitlements. Plan data stored in `club_subscriptions` collection.
+- **Frontend**: `PlanContext.js` hydrates entitlements on login, exposes `can(featureId)`. `PlanGate.js` wraps sections and shows `UpgradePrompt.js` when locked. `ClubBillingPage.js` shows plan cards, usage bars, and plan switching.
+- **Director Mission Control gating**: Director Inbox (Growth+), Outbox (Growth+), AI Program Brief (Elite+), Coach Health (Club Pro+), Recruiting Signals (Growth+)
+- **Strategy doc**: `/app/docs/CLUB_BILLING_STRATEGY.md` with packaging philosophy, feature matrix, gating rules, upgrade triggers, V1 rollout plan.
+- **Testing**: 100% pass rate (iteration_244) — 27 backend + frontend tests.
+
 ### Production Readiness Item #6: Performance — Pagination & Code Splitting (Mar 23, 2026)
 - **API Pagination**: Created `services/pagination.py` with `paginate_list()` (in-memory) and `paginate_query()` (MongoDB cursor) utilities. Added optional `?page=N&page_size=N` query params to 6 key endpoints: athletes, director-inbox, notifications, athlete timeline, athlete notes, support-messages inbox. All endpoints are fully backward-compatible — without params they return the original format.
 - **Pagination envelope**: `{items/data, total, page, page_size, total_pages}`. Max page_size capped at 200.
@@ -118,22 +126,29 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - `GET /api/athletes/{id}/timeline` — Timeline (supports pagination)
 - `GET /api/athletes/{id}/notes` — Notes (supports pagination)
 - `GET /api/support-messages/inbox` — Message threads (supports pagination)
+- `GET /api/club-plans` — List all 5 club plans with entitlements
+- `GET /api/club-plans/current` — Current org plan + usage
+- `GET /api/club-plans/entitlements` — Bulk entitlements for frontend hydration
+- `GET /api/club-plans/check/{feature_id}` — Check single feature access
+- `POST /api/club-plans/set` — Set org plan (director only)
 - `GET /api/program/intelligence` — Program health analytics (async)
 - `GET /api/events` — Events list (async)
 - `POST /api/ai/auto-insight` — Coach Watch + AI insight (cached)
 - `POST /api/files/upload` — File upload with validation
 
 ## Key Files
+- `/app/backend/club_plans.py` — Plan definitions, 35 feature entitlements, gating functions
+- `/app/backend/routers/club_plans.py` — 5 API endpoints for plan management
 - `/app/backend/config.py` — Centralized environment config (CORS, security toggles, fail-fast)
 - `/app/backend/middleware/security.py` — Rate limiting, security headers, HTTPS redirect
 - `/app/backend/middleware/error_handling.py` — Request ID, structured error responses, global exception handlers
 - `/app/backend/services/athlete_store.py` — Data access layer (async, DB-direct)
 - `/app/backend/services/pagination.py` — Pagination utilities (in-memory + MongoDB cursor)
-- `/app/backend/services/startup.py` — Indexes + data seeding
-- `/app/backend/program_engine.py` — Program intelligence (async)
-- `/app/backend/event_engine.py` — Event engine (async)
-- `/app/backend/support_pod.py` — Support pod helpers (async)
-- `/app/backend/routers/mission_control.py` — Mission control dashboard
+- `/app/frontend/src/PlanContext.js` — React context: can(featureId), getAccess(featureId)
+- `/app/frontend/src/components/PlanGate.js` — Feature gating wrapper component
+- `/app/frontend/src/components/UpgradePrompt.js` — Upgrade prompt UI
+- `/app/frontend/src/pages/ClubBillingPage.js` — Plan selection and billing page
+- `/app/docs/CLUB_BILLING_STRATEGY.md` — Full packaging strategy document
 
 ## Test Credentials
 - **Athlete**: emma.chen@athlete.capymatch.com / athlete123
