@@ -45,15 +45,10 @@ export function PrimaryHeroCard({ hero, program }) {
   return (
     <div className="mb-4 rounded-[12px] sm:rounded-[28px] overflow-hidden relative"
       style={{
-        background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)",
+        background: "#161921",
+        border: "1px solid rgba(255,255,255,0.06)",
       }}
       data-testid="primary-hero-card">
-
-      {/* Glow orbs */}
-      <div className="ds-glow-teal" />
-      <div className="ds-glow-purple" />
 
       <div className="relative z-[1] px-5 sm:px-7 py-5 sm:py-6">
         <div className="flex gap-4">

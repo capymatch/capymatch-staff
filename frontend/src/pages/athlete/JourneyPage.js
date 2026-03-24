@@ -383,10 +383,7 @@ export default function JourneyPage() {
     <div className="min-h-screen pb-28" style={{ backgroundColor: "var(--cm-bg)" }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 pt-6 pb-4">
-        <div style={{ background: "linear-gradient(135deg, #111b34 0%, #17254a 55%, #1c3568 100%)", borderRadius: "12px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 70px rgba(19, 33, 58, 0.10)" }} className="sm:!rounded-[22px]">
-          {/* Glow orbs */}
-          <div className="ds-glow-teal" />
-          <div className="ds-glow-purple" />
+        <div style={{ background: "#161921", borderRadius: "12px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.06)" }} className="sm:!rounded-[22px]">
           <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
           {/* Back & Actions */}
           <div className="flex items-center justify-between mb-4">
