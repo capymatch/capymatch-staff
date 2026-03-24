@@ -176,7 +176,7 @@ class TestCORS:
 
     def test_cors_allows_frontend_url(self):
         """CORS should allow the FRONTEND_URL origin"""
-        frontend_url = "https://capymatch-refactor.preview.emergentagent.com"
+        frontend_url = "https://action-first-3.preview.emergentagent.com"
         response = requests.options(
             f"{LOCAL_URL}/api/auth/login",
             headers={
@@ -273,7 +273,7 @@ class TestFrontendIntegration:
             json=CREDENTIALS["athlete"],
             headers={
                 "Content-Type": "application/json",
-                "Origin": "https://capymatch-refactor.preview.emergentagent.com"
+                "Origin": "https://action-first-3.preview.emergentagent.com"
             }
         )
         assert response.status_code == 200, f"Frontend login failed: {response.text}"
@@ -294,7 +294,7 @@ class TestFrontendIntegration:
             f"{BASE_URL}/api/mission-control",
             headers={
                 "Authorization": f"Bearer {token}",
-                "Origin": "https://capymatch-refactor.preview.emergentagent.com"
+                "Origin": "https://action-first-3.preview.emergentagent.com"
             }
         )
         assert response.status_code == 200, f"Mission control access failed: {response.text}"

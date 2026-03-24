@@ -173,9 +173,28 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         border: "1px solid rgba(255,255,255,0.06)",
       }}
     >
-      {/* ── TOP BAR: Filter pills + Carousel nav ── */}
+      {/* ── Carousel nav — absolute top-right ── */}
+      {total > 1 && (
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-5 z-[2] flex items-center gap-2 sm:gap-2.5" style={{ opacity: 0.5 }} data-testid="hero-carousel-nav">
+          <button onClick={() => handleGoTo(-1)} data-testid="carousel-prev"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
+            <ChevronLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          </button>
+          <span className="text-[10px] sm:text-[11px] font-bold tabular-nums min-w-[20px] text-center" style={{ color: "rgba(255,255,255,0.3)" }} data-testid="carousel-counter">
+            {safeIdx + 1}/{total}
+          </span>
+          <button onClick={() => handleGoTo(1)} data-testid="carousel-next"
+            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
+            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
+            <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* ── TOP BAR: Filter pills ── */}
       <div
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-7 pt-3 sm:pt-3.5 pb-2.5 sm:pb-3 relative z-[1] gap-2 sm:gap-0"
+        className="flex items-center px-4 sm:px-7 pt-3 sm:pt-3.5 pb-2.5 sm:pb-3 relative z-[1]"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
         data-testid="hero-top-bar"
       >
@@ -204,23 +223,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             </button>
           ))}
         </div>
-        {total > 1 && (
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0" style={{ opacity: 0.5 }} data-testid="hero-carousel-nav">
-            <button onClick={() => handleGoTo(-1)} data-testid="carousel-prev"
-              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
-              <ChevronLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            </button>
-            <span className="text-[10px] sm:text-[11px] font-bold tabular-nums min-w-[20px] text-center" style={{ color: "rgba(255,255,255,0.3)" }} data-testid="carousel-counter">
-              {safeIdx + 1}/{total}
-            </span>
-            <button onClick={() => handleGoTo(1)} data-testid="carousel-next"
-              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
-              <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ── SLIDE CONTENT ── */}

@@ -12,6 +12,10 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### UI Refactor — Pipeline Hero Carousel Arrows (Mar 25, 2026)
+- Moved carousel navigation arrows (prev/next + counter) from the top bar row (alongside filter pills) to an absolute-positioned top-right corner of the hero card in `PipelineHero.js`
+- Filter pills remain in the top bar; arrows float independently at the top right
+
 ### UI Refactor — Event Prep Header Dark Theme (Mar 24, 2026)
 - **Header only**: Applied premium dark theme to the top hero header card of `EventPrep.js` (`#161921` bg, light text, red "Go Live" button). All other sections remain light theme.
 - **Code cleanup**: Fixed ESLint `react-hooks/exhaustive-deps` warning in `ClubBillingPage.js` (wrapped `pollCheckoutStatus` in `useCallback`). Confirmed unused `UpgradePrompt.js` already deleted.

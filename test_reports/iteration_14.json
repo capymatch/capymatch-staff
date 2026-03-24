@@ -33,7 +33,7 @@
   "seed_data_creation": "TEST_REFACTOR prefixed data created during testing: notes, actions, events, recommendations",
   "retest_needed": false,
   "should_main_agent_self_test": false,
-  "context_for_next_testing_agent": "Server refactoring verified. All routes in 8 router modules tested. MongoDB persistence working. API URL: https://capymatch-refactor.preview.emergentagent.com. Phase 2 persistence active. Startup order: athletes → events → event_notes → recommendations → recompute.",
+  "context_for_next_testing_agent": "Server refactoring verified. All routes in 8 router modules tested. MongoDB persistence working. API URL: https://action-first-3.preview.emergentagent.com. Phase 2 persistence active. Startup order: athletes → events → event_notes → recommendations → recompute.",
   "tests_passed": {
     "backend": {
       "root_endpoints": [
