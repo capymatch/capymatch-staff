@@ -111,10 +111,10 @@ export default function CoachView({ data, userName }) {
   const [directorRequestCount, setDirectorRequestCount] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
   const [inboxAthleteIds, setInboxAthleteIds] = useState([]);
+  const [topInboxItem, setTopInboxItem] = useState(null);
   const navigate = useNavigate();
   const firstName = userName?.split(" ")[0] || "Coach";
   const summary = data.todays_summary || {};
-  const priorities = data.priorities || [];
 
   const fetchDirectorCount = useCallback(async () => {
     try {
@@ -128,13 +128,15 @@ export default function CoachView({ data, userName }) {
     } catch {}
   }, []);
 
-  // Fetch coach-inbox athlete IDs to exclude from "All Clear"
+  // Fetch coach-inbox to get top priority + IDs to exclude from "All Clear"
   const fetchInboxIds = useCallback(async () => {
     try {
       const token = localStorage.getItem("capymatch_token");
       const res = await axios.get(`${API}/coach-inbox`, { headers: { Authorization: `Bearer ${token}` } });
-      const ids = (res.data.items || []).map(i => i.athleteId).filter(Boolean);
+      const items = res.data.items || [];
+      const ids = items.map(i => i.athleteId).filter(Boolean);
       setInboxAthleteIds(ids);
+      if (items.length > 0) setTopInboxItem(items[0]);
     } catch {}
   }, []);
 
@@ -249,8 +251,8 @@ export default function CoachView({ data, userName }) {
           </div>
 
           {/* ── Top Priority action row ── */}
-          {priorities.length > 0 && (() => {
-            const top = priorities[0];
+          {topInboxItem && (() => {
+            const top = topInboxItem;
             return (
               <div
                 className="flex items-center justify-between gap-3 mt-4 pt-3"
@@ -259,11 +261,11 @@ export default function CoachView({ data, userName }) {
               >
                 <p className="text-[12px] min-w-0" style={{ color: "#8b8d98" }}>
                   <span style={{ color: "#5c5e6a" }}>Top priority: </span>
-                  <span className="font-semibold" style={{ color: "#f0f0f2" }}>{top.athleteName || top.athlete_name}</span>
+                  <span className="font-semibold" style={{ color: "#f0f0f2" }}>{top.athleteName}</span>
                   {top.schoolName && <span style={{ color: "#5c5e6a" }}> — {top.schoolName}</span>}
                 </p>
                 <button
-                  onClick={() => navigate(`/support-pods/${top.athleteId || top.athlete_id}`)}
+                  onClick={() => navigate(`/support-pods/${top.athleteId}`)}
                   className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-semibold rounded-lg shrink-0 transition-colors"
                   style={{ color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}
                   data-testid="hero-top-priority-cta"
@@ -294,10 +296,10 @@ export default function CoachView({ data, userName }) {
       </div>
 
       {/* ── Risk Engine v3 Coach Inbox ── */}
-      <CoachInbox excludeAthleteId={priorities.length > 0 ? (priorities[0].athleteId || priorities[0].athlete_id) : null} />
+      <CoachInbox excludeAthleteId={topInboxItem?.athleteId} />
 
       {/* ── Athletes Requiring Attention + On Track + Event Prep ── */}
-      <RosterSection athletes={data.myRoster || []} eventPrep={priorities.filter(p => p.urgency === "event_prep")} excludeIds={inboxAthleteIds} />
+      <RosterSection athletes={data.myRoster || []} eventPrep={(data.priorities || []).filter(p => p.urgency === "event_prep")} excludeIds={inboxAthleteIds} />
 
       {/* ── Upcoming Events (hidden in focus mode) ── */}
       {!focusMode && (
