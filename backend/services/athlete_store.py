@@ -75,10 +75,16 @@ async def get_by_id(athlete_id: str) -> dict | None:
 
 async def _ensure_derived(name: str) -> list | dict:
     """Return derived data from cache, or recompute all derived and return requested key."""
+    import time as _time
+
     key = Keys.derived(name)
     cached = await cache.get(key)
     if cached is not None:
         return cached
+
+    # Local TTL — avoid recomputing on every request when Redis is down
+    if name in _local_derived and (_time.monotonic() - _local_derived_ts) < _LOCAL_TTL:
+        return _local_derived[name]
 
     # Cache miss — recompute everything and store each piece
     await _recompute_derived()
@@ -93,6 +99,8 @@ async def _ensure_derived(name: str) -> list | dict:
 
 # Thread-local fallback for when Redis is completely unavailable
 _local_derived: dict = {}
+_local_derived_ts: float = 0.0   # last recompute timestamp
+_LOCAL_TTL = 120                  # 2-minute local cache to prevent flicker
 
 
 async def _recompute_derived():
@@ -130,6 +138,9 @@ async def _recompute_derived():
 
     # Local fallback copy
     _local_derived.update(derived)
+    global _local_derived_ts
+    import time as _time
+    _local_derived_ts = _time.monotonic()
 
     log.info(
         "athlete_store: derived data refreshed — "

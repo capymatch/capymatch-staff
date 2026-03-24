@@ -96,7 +96,7 @@ export default function DirectorInbox() {
         .inbox-row-wrap:last-child { border-bottom: none; }
         .inbox-row {
           display: grid;
-          grid-template-columns: 14px 1fr auto;
+          grid-template-columns: 14px 28px 1fr auto;
           align-items: start;
           gap: 0 8px;
           padding: 12px 16px;
@@ -109,7 +109,7 @@ export default function DirectorInbox() {
           height: 7px;
           border-radius: 50%;
           justify-self: start;
-          margin-top: 6px;
+          margin-top: 10px;
         }
         .inbox-text {
           min-width: 0;

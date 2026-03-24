@@ -528,6 +528,7 @@ def detect_all_interventions(athlete: Dict, upcoming_events: List[Dict]) -> List
         if intervention:
             intervention['athlete_id'] = athlete['id']
             intervention['athlete_name'] = athlete['full_name']
+            intervention['photo_url'] = athlete.get('photo_url')
             intervention['grad_year'] = athlete['grad_year']
             intervention['position'] = athlete['position']
             intervention['momentum_score'] = athlete['momentum_score']

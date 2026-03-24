@@ -48,6 +48,23 @@ export function InboxRow({ item }) {
     <div className="inbox-row-wrap" data-testid={`inbox-row-${item.id}`}>
       <div className="inbox-row">
         <span className="inbox-dot" style={{ background: dot }} />
+        {item.photoUrl ? (
+          <img
+            src={item.photoUrl}
+            alt={item.athleteName}
+            className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+            style={{ border: "2px solid rgba(255,255,255,0.08)" }}
+            data-testid={`inbox-photo-${item.id}`}
+          />
+        ) : (
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold"
+            style={{ background: "rgba(255,255,255,0.06)", color: "#8b8d98", border: "2px solid rgba(255,255,255,0.08)" }}
+            data-testid={`inbox-avatar-${item.id}`}
+          >
+            {(item.athleteName || "?").charAt(0)}
+          </div>
+        )}
         <div className="inbox-text">
           <p className="inbox-title">{title}</p>
           <div className="flex items-center gap-2" style={{ marginTop: 2 }}>

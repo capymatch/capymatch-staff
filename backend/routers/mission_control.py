@@ -233,8 +233,14 @@ async def _build_director_response(alerts, attention, signals, events):
     }
 
 
+_trend_cache = {"data": None, "ts": 0.0}
+
 async def _compute_trends(current_status):
     """Compute trend deltas from historical snapshots for KPIs and momentum."""
+    import time as _time
+    # Cache for 120s to prevent momentum flicker
+    if _trend_cache["data"] is not None and (_time.monotonic() - _trend_cache["ts"]) < 120:
+        return _trend_cache["data"]
     try:
         today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         cursor = db.program_snapshots.find(
@@ -287,19 +293,25 @@ async def _compute_trends(current_status):
         if current_healthy > 0 and prev:
             momentum_pct = round((health_delta / max(prev_healthy, 1)) * 100)
 
-        return {
+        result = {
             "needAttentionDelta": attention_delta,
             "momentum": {
                 "state": momentum_state,
                 "engagementDelta": momentum_pct,
             },
         }
+        _trend_cache["data"] = result
+        _trend_cache["ts"] = _time.monotonic()
+        return result
     except Exception as e:  # noqa: E722
         log.warning("Handled exception (fallback): %s", e)
-        return {
+        fallback = {
             "needAttentionDelta": 0,
             "momentum": {"state": "stable", "engagementDelta": 0},
         }
+        _trend_cache["data"] = fallback
+        _trend_cache["ts"] = _time.monotonic()
+        return fallback
 
 
 async def _get_coach_health(coach_map):
