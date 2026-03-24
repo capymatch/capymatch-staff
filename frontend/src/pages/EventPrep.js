@@ -313,7 +313,7 @@ function EventPrep() {
         </div>
       </header>
 
-      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 space-y-5">
+      <main className="max-w-[1200px] mx-auto px-2 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
 
         {/* ─── Quick Summary Bar ─── */}
         <div className="flex items-center gap-3 flex-wrap" data-testid="prep-summary-bar">
