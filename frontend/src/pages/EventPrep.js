@@ -14,9 +14,9 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const PREP_ORDER = { blocker: 0, needs_attention: 1, ready: 2 };
 const PREP_CONFIG = {
-  blocker: { label: "Blocker", bg: "bg-red-50", border: "border-red-100", text: "text-red-700", dot: "bg-red-500" },
-  needs_attention: { label: "Needs Attention", bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
-  ready: { label: "Ready", bg: "bg-emerald-50", border: "border-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500" },
+  blocker: { label: "Blocker", bg: "rgba(220,38,38,0.10)", border: "rgba(220,38,38,0.20)", text: "#ef4444", dot: "bg-red-500" },
+  needs_attention: { label: "Needs Attention", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.20)", text: "#f59e0b", dot: "bg-amber-500" },
+  ready: { label: "Ready", bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.20)", text: "#10b981", dot: "bg-emerald-500" },
 };
 
 function AddAthletesDialog({ open, onOpenChange, eventId, currentAthleteIds, onUpdated }) {
