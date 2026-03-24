@@ -351,30 +351,31 @@ function EventPrep() {
 
         {/* ─── Blockers — Promoted to Top ─── */}
         {blockers.length > 0 && (
-          <section className="rounded-xl border-2 border-red-200 bg-red-50/50 overflow-hidden" data-testid="prep-blockers-section">
-            <div className="px-4 py-3 border-b border-red-100 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-red-600" />
-              <h2 className="text-xs font-bold text-red-700 uppercase tracking-wider">Blockers — Resolve Before Event</h2>
+          <section className="rounded-xl overflow-hidden" style={{ background: "#161921", border: "1px solid rgba(220,38,38,0.30)" }} data-testid="prep-blockers-section">
+            <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(220,38,38,0.15)" }}>
+              <Shield className="w-4 h-4" style={{ color: "#ef4444" }} />
+              <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>Blockers — Resolve Before Event</h2>
             </div>
-            <div className="divide-y divide-red-100">
+            <div>
               {blockers.map((b, i) => (
-                <div key={i} className="px-4 py-3 flex items-start justify-between gap-4">
+                <div key={i} className="px-4 py-3 flex items-start justify-between gap-4" style={i > 0 ? { borderTop: "1px solid rgba(255,255,255,0.06)" } : {}}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                      <span className="text-sm font-semibold text-gray-900">{b.athleteName}</span>
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: "#ef4444" }} />
+                      <span className="text-sm font-semibold" style={{ color: "#f0f0f2" }}>{b.athleteName}</span>
                     </div>
-                    <p className="text-xs text-gray-700 ml-5.5">{b.impact}</p>
+                    <p className="text-xs ml-5.5" style={{ color: "#8b8d98" }}>{b.impact}</p>
                     {b.recommended_action && (
-                      <p className="text-[11px] text-red-600 font-medium mt-1 ml-5.5">Next: {b.recommended_action}</p>
+                      <p className="text-[11px] font-medium mt-1 ml-5.5" style={{ color: "#f87171" }}>Next: {b.recommended_action}</p>
                     )}
                     {b.owner && (
-                      <p className="text-[10px] text-gray-400 mt-0.5 ml-5.5">Owner: {b.owner}</p>
+                      <p className="text-[10px] mt-0.5 ml-5.5" style={{ color: "#5c5e6a" }}>Owner: {b.owner}</p>
                     )}
                   </div>
                   <button
                     onClick={() => navigate(`/support-pods/${b.athleteId}`)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md transition-colors shrink-0"
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors shrink-0"
+                    style={{ color: "#f87171", background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.25)" }}
                     data-testid={`blocker-pod-${b.athleteId}`}
                   >
                     Open Pod <ExternalLink className="w-3 h-3" />
