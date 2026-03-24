@@ -95,10 +95,9 @@ export default function DirectorInbox() {
         }
         .inbox-row-wrap:last-child { border-bottom: none; }
         .inbox-row {
-          display: grid;
-          grid-template-columns: 14px 28px 1fr auto;
-          align-items: start;
-          gap: 0 8px;
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
           padding: 12px 16px;
           cursor: pointer;
           transition: background 80ms ease-out;
@@ -108,11 +107,12 @@ export default function DirectorInbox() {
           width: 7px;
           height: 7px;
           border-radius: 50%;
-          justify-self: start;
+          flex-shrink: 0;
           margin-top: 10px;
         }
         .inbox-text {
           min-width: 0;
+          flex: 1;
         }
         .inbox-title {
           font-size: 13px;
@@ -143,6 +143,7 @@ export default function DirectorInbox() {
           cursor: pointer;
           transition: color 80ms;
           margin-top: 4px;
+          flex-shrink: 0;
         }
         .inbox-cta:hover { color: #1e293b; }
         .inbox-action-link {
