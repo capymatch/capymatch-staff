@@ -176,48 +176,48 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       {/* ── TOP BAR: Filter pills + Carousel nav ── */}
       <div
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 sm:px-7 pt-3 sm:pt-3.5 pb-2.5 sm:pb-3 relative z-[1] gap-2 sm:gap-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
         data-testid="hero-top-bar"
       >
-        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap" data-testid="hero-filter-pills">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap" style={{ opacity: 0.7 }} data-testid="hero-filter-pills">
           {pills.map(pill => (
             <button
               key={pill.key}
               onClick={() => handleFilter(pill.key)}
               data-testid={`hero-filter-${pill.key}`}
-              className="flex items-center gap-1 sm:gap-1.5 rounded-full text-[12px] sm:text-[13px] font-bold pm-pill"
+              className="flex items-center gap-1 sm:gap-1.5 rounded-full text-[11px] sm:text-[12px] font-bold pm-pill"
               style={{
-                padding: "6px 10px",
+                padding: "5px 9px",
                 borderRadius: 999,
-                background: filter === pill.key ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)",
-                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.4)",
-                border: `1px solid ${filter === pill.key ? "rgba(255,255,255,0.08)" : "transparent"}`,
+                background: filter === pill.key ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.02)",
+                color: filter === pill.key ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+                border: `1px solid ${filter === pill.key ? "rgba(255,255,255,0.06)" : "transparent"}`,
                 cursor: "pointer", fontFamily: "inherit",
               }}
             >
               {pill.label}
               <span className="pm-pill-badge" style={{
-                fontSize: 10, fontWeight: 800, padding: "1px 5px", borderRadius: 6,
-                background: filter === pill.key ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-                color: filter === pill.key ? "#fff" : "rgba(255,255,255,0.3)",
+                fontSize: 9, fontWeight: 800, padding: "1px 4px", borderRadius: 5,
+                background: filter === pill.key ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
+                color: filter === pill.key ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)",
               }}>{pill.count}</span>
             </button>
           ))}
         </div>
         {total > 1 && (
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0" data-testid="hero-carousel-nav">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0" style={{ opacity: 0.5 }} data-testid="hero-carousel-nav">
             <button onClick={() => handleGoTo(-1)} data-testid="carousel-prev"
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
+              <ChevronLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </button>
-            <span className="text-[11px] sm:text-[12px] font-bold tabular-nums min-w-[24px] sm:min-w-[28px] text-center" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="carousel-counter">
+            <span className="text-[10px] sm:text-[11px] font-bold tabular-nums min-w-[20px] text-center" style={{ color: "rgba(255,255,255,0.3)" }} data-testid="carousel-counter">
               {safeIdx + 1}/{total}
             </span>
             <button onClick={() => handleGoTo(1)} data-testid="carousel-next"
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center cursor-pointer pm-nav-hover"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)" }}>
-              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
+              <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </button>
           </div>
         )}
@@ -227,71 +227,51 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
       <div className={`relative z-[1] ds-hero-content ${slideClass} px-4 sm:px-6 py-3 sm:py-4`}
       >
         <div className="flex gap-4">
-        {/* LEFT: badges, school, action, CTA */}
+        {/* LEFT: signal, headline, risk, CTA */}
         <div className="flex-1 min-w-0">
 
-        {/* BADGE ROW — priority + timing + coach signal */}
-        <div className="flex items-center gap-2 flex-wrap mb-2.5" data-testid="hero-status-row">
+        {/* SIGNAL ROW — 1 primary + 1 merged secondary */}
+        <div className="flex items-center gap-2 flex-wrap mb-2" data-testid="hero-status-row">
           <span className="ds-badge" style={{
             background: "rgba(239,68,68,0.12)",
             color: "#fca5a5",
           }} data-testid="hero-top-priority-badge">
             Top Priority
           </span>
-          {current.timingLabel && (
-            <span className="ds-badge" style={{
-              background: "rgba(255,255,255,0.06)",
-              color: "rgba(255,255,255,0.68)",
-            }} data-testid="hero-timing-label">
-              {current.timingLabel}
-            </span>
-          )}
-          {current.coachWaiting && (
-            <span className="ds-badge" style={{
-              background: "rgba(251,191,36,0.14)",
-              color: "#fcd34d",
-            }} data-testid="hero-coach-waiting-badge">
-              Coach Waiting
+          {(current.coachWaiting || current.timingLabel) && (
+            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }} data-testid="hero-merged-signal">
+              {[current.coachWaiting ? "Coach waiting" : null, current.timingLabel].filter(Boolean).join(" · ")}
             </span>
           )}
         </div>
 
-        {/* SCHOOL NAME — large, prominent */}
+        {/* HEADLINE — conversational action with school logo inline */}
         {!compact && (
-          <div className="flex items-center gap-3 mb-1" data-testid="hero-school-row">
+          <div className="flex items-center gap-2.5 mb-0.5" data-testid="hero-school-row">
             {p && (
               <UniversityLogo
                 name={p.university_name}
                 logoUrl={ms?.logo_url || p.logo_url}
                 domain={ms?.domain || p.domain}
-                size={28}
+                size={24}
                 className="rounded-lg flex-shrink-0"
               />
             )}
-            <h3 className="text-[18px] sm:text-[22px]" style={{ fontWeight: 600, color: "#fff", letterSpacing: "-0.04em", margin: 0, lineHeight: 1.1 }} data-testid="hero-school-name">
-              {p?.university_name || "School"}
+            <h3 className="text-[16px] sm:text-[19px]" style={{ fontWeight: 700, color: "#fff", letterSpacing: "-0.03em", margin: 0, lineHeight: 1.15 }} data-testid="hero-school-name">
+              {current.primaryAction || `Follow up with ${p?.university_name || "School"}`}
             </h3>
           </div>
         )}
 
-        {/* PRIMARY ACTION / TASK */}
+        {/* RISK CONTEXT — elevated, right under headline */}
         <div data-testid="hero-advice-box">
-          <div style={{
-            fontSize: compact ? 15 : 16,
-            fontWeight: 500,
-            letterSpacing: "-0.02em",
-            color: "#fff",
-            lineHeight: 1.3,
-            margin: "6px 0 6px",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }} data-testid="hero-advice-text">
-            {current.primaryAction || ""}
-          </div>
-          {/* Merged context line */}
-          <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 13, fontWeight: 400, lineHeight: 1.4 }} data-testid="hero-descriptive-reason">
+          {current.riskContext && (
+            <div style={{ color: "#f87171", fontSize: 12, fontWeight: 600, lineHeight: 1.4, marginTop: 2, marginBottom: 2 }} data-testid="hero-risk-context">
+              {current.riskContext}
+            </div>
+          )}
+          {/* Supporting context */}
+          <div style={{ color: "rgba(255,255,255,0.40)", fontSize: 13, fontWeight: 400, lineHeight: 1.4, marginTop: 2 }} data-testid="hero-descriptive-reason">
             {(() => {
               const hr = (current.heroReason || "").trim();
               if (hr) return hr;
@@ -302,13 +282,6 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               return "On track \u2014 keep momentum";
             })()}
           </div>
-
-          {/* Risk context — one line, visible for at-risk conversations */}
-          {current.riskContext && (
-            <div style={{ color: "rgba(255,107,127,0.7)", fontSize: 12, fontWeight: 500, lineHeight: 1.4, marginTop: 4 }} data-testid="hero-risk-context">
-              {current.riskContext}
-            </div>
-          )}
         </div>
 
         {/* META: Owner — only show when it's not the athlete's own task */}
@@ -342,7 +315,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
             data-testid="hero-cta-btn"
             className="ds-btn-primary text-[12px] sm:text-[13px] py-2 px-3.5 sm:py-2 sm:px-4"
           >
-            {current.ctaLabel || "Open school"} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            {current.coachWaiting ? "Reply to coach" : (current.ctaLabel || "Open school")} <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
@@ -350,8 +323,8 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
         {/* RIGHT: Vertical stage rail */}
         {!compact && rail && (
-          <div className="hidden sm:flex flex-col items-start pt-1 pl-4 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: 130 }} data-testid="hero-progress-rail">
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.30)", marginBottom: 10 }}>
+          <div className="hidden sm:flex flex-col items-start pt-1 pl-4 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.04)", minWidth: 130 }} data-testid="hero-progress-rail">
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.20)", marginBottom: 10 }}>
               Where you are
             </div>
             <div className="flex flex-col gap-0">
@@ -398,11 +371,11 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
 
         {/* Carousel dot indicators */}
         {total > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 10 }} data-testid="hero-carousel-dots">
+          <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 10, opacity: 0.5 }} data-testid="hero-carousel-dots">
             {Array.from({ length: total }).map((_, i) => (
               <button key={i} onClick={() => { setIdx(i); setFilter("all"); }} style={{
-                width: i === safeIdx ? 16 : 6, height: 6, borderRadius: 3,
-                background: i === safeIdx ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)",
+                width: i === safeIdx ? 14 : 5, height: 5, borderRadius: 3,
+                background: i === safeIdx ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.12)",
                 border: "none", cursor: "pointer", padding: 0,
                 transition: "all 200ms ease",
               }} />
