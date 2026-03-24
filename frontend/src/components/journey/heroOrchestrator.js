@@ -13,12 +13,31 @@ export function computeHeroSelection({
   followUpOverdue, followUpUpcoming, daysOverdue, daysUntilDue,
   hasCoachReply, isCommitted, latestEvent, nextStepDismissed,
   coaches, questNudgeDismissed, completingFlag,
-  handlers,
+  handlers, athleteName,
 }) {
   const all = [];
   const uni = program?.university_name || "this school";
   const signals = program?.signals || {};
   const rail = program?.journey_rail || {};
+
+  // ── Build a subject line based on task context ──
+  function buildSubject(title, type) {
+    const t = (title || "").toLowerCase();
+    const name = athleteName || "";
+    if (t.includes("follow up") || t.includes("follow-up") || type === "overdue_followup" || type === "upcoming_followup") {
+      return name ? `Following up \u2014 ${name}` : "Following up";
+    }
+    if (t.includes("visit") || t.includes("campus")) {
+      return name ? `Campus visit \u2014 ${name}` : "Campus visit inquiry";
+    }
+    if (t.includes("schedule") || t.includes("call")) {
+      return name ? `Scheduling a call \u2014 ${name}` : "Scheduling a call";
+    }
+    if (t.includes("reply") || type === "celebration" || type === "active_conversation") {
+      return name ? `Re: ${name} \u2014 Recruiting` : "Re: Recruiting";
+    }
+    return name ? `${name} \u2014 Recruiting` : "Recruiting inquiry";
+  }
 
   // ── Build contextual "why this" signals from program data ──
   function buildWhyThis(extras) {
@@ -106,6 +125,9 @@ export function computeHeroSelection({
       return t;
     })();
 
+    const taskMsg = isCommunication ? buildSuggestedReply(a.title) : null;
+    const taskSubject = isCommunication ? buildSubject(a.title, "coach_task") : null;
+
     all.push({
       id: `task-${a.id}`, priority: 2 + i * 0.1, type: "coach_task",
       kicker: `Coach Task${a.due_date ? ` \u00B7 Due ${new Date(a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}`,
@@ -119,7 +141,8 @@ export function computeHeroSelection({
         { label: `From ${a.created_by || "Coach"}` },
       ].filter(Boolean),
       isCommunication,
-      suggestedMessage: isCommunication ? buildSuggestedReply(a.title) : null,
+      suggestedMessage: taskMsg,
+      suggestedSubject: taskSubject,
       emailHandler: handlers.onEmail,
       markDoneHandler: () => handlers.onMarkActionDone(a.id),
       primaryCta: isCommunication
@@ -161,6 +184,7 @@ export function computeHeroSelection({
       pills: [{ label: "High confidence" }],
       isCommunication: true,
       suggestedMessage: buildSuggestedReply("follow up"),
+      suggestedSubject: buildSubject("follow up", "hot_opportunity"),
       primaryCta: { label: "Send message", icon: Send, handler: handlers.onEmail },
       secondaryCta: null,
       whyThis: buildWhyThis(["High-opportunity moment"]),
@@ -179,6 +203,7 @@ export function computeHeroSelection({
       pills: [{ label: "High confidence" }],
       isCommunication: true,
       suggestedMessage: buildSuggestedReply("reply"),
+      suggestedSubject: buildSubject("reply", "active_conversation"),
       primaryCta: { label: "Send message", icon: Send, handler: handlers.onEmail },
       secondaryCta: null,
       whyThis: buildWhyThis(["Conversation is active"]),
@@ -197,6 +222,7 @@ export function computeHeroSelection({
       pills: [{ label: `${daysOverdue}d overdue` }],
       isCommunication: true,
       suggestedMessage: buildSuggestedReply("follow up"),
+      suggestedSubject: buildSubject("follow up", "overdue_followup"),
       primaryCta: { label: "Send message", icon: Mail, handler: handlers.onEmail },
       secondaryCta: { label: "Reschedule", icon: Clock, handler: handlers.onFollowup },
       whyThis: buildWhyThis([`${daysOverdue} day${daysOverdue === 1 ? "" : "s"} overdue`]),
@@ -217,6 +243,7 @@ export function computeHeroSelection({
       pills: [],
       isCommunication: true,
       suggestedMessage: buildSuggestedReply("reply"),
+      suggestedSubject: buildSubject("reply", "celebration"),
       primaryCta: { label: "Send message", icon: Mail, handler: handlers.onEmail },
       secondaryCta: { label: "Log a Note", icon: FileText, handler: handlers.onLog },
       whyThis: buildWhyThis([`Coach replied ${tt}`]),

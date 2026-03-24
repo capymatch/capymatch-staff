@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2, ArrowRight, Pencil, Check } from "lucide-react";
 import "../pipeline/pipeline-premium.css";
 
 export function PrimaryHeroCard({ hero, program }) {
   const [whyVisible, setWhyVisible] = useState(false);
+  const [editedMessage, setEditedMessage] = useState(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     if (hero?.whyThis?.length > 0) {
@@ -12,6 +14,11 @@ export function PrimaryHeroCard({ hero, program }) {
     }
     setWhyVisible(false);
   }, [hero]);
+
+  // Reset edited message when hero changes
+  useEffect(() => {
+    setEditedMessage(null);
+  }, [hero?.id]);
 
   if (!hero) return null;
   const Icon = hero.icon;
@@ -116,7 +123,7 @@ export function PrimaryHeroCard({ hero, program }) {
           </div>
         )}
 
-        {/* 3. MESSAGE TO COACH */}
+        {/* 3. MESSAGE TO COACH — editable */}
         {hero.isCommunication && messageParagraphs && (
           <div className="mb-3 ml-[54px] rounded-lg px-2.5 py-2 transition-colors"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
@@ -127,11 +134,30 @@ export function PrimaryHeroCard({ hero, program }) {
                 Message to coach
               </p>
               <span className="flex items-center gap-1 text-[10px]"
-                style={{ color: "rgba(255,255,255,0.22)", cursor: "pointer" }}>
-                <Pencil className="w-2.5 h-2.5" /> Tap to edit
+                style={{ color: editedMessage != null ? "rgba(46,196,182,0.6)" : "rgba(255,255,255,0.22)", cursor: "pointer" }}
+                onClick={() => {
+                  if (editedMessage == null) {
+                    const raw = hero.suggestedMessage || hero.suggestedReply || "";
+                    setEditedMessage(raw);
+                    setTimeout(() => textareaRef.current?.focus(), 50);
+                  }
+                }}>
+                <Pencil className="w-2.5 h-2.5" /> {editedMessage != null ? "Editing" : "Tap to edit"}
               </span>
             </div>
-            {Array.isArray(messageParagraphs) ? (
+            {editedMessage != null ? (
+              <textarea
+                ref={textareaRef}
+                value={editedMessage}
+                onChange={(e) => setEditedMessage(e.target.value)}
+                className="w-full text-[13px] resize-none outline-none"
+                style={{
+                  color: "rgba(255,255,255,0.70)", lineHeight: 1.45,
+                  background: "transparent", border: "none", minHeight: 80,
+                }}
+                data-testid="hero-message-editor"
+              />
+            ) : Array.isArray(messageParagraphs) ? (
               <div className="space-y-1">
                 {messageParagraphs.map((p, i) => (
                   <p key={i} className="text-[13px]"
@@ -159,7 +185,16 @@ export function PrimaryHeroCard({ hero, program }) {
                   <Check className="w-3 h-3" /> {["Ready to send", "Looks good to send", "Quick follow-up ready"][Math.abs((hero.id || "").length) % 3]}
                 </span>
               )}
-              <button onClick={hero.primaryCta.handler} disabled={hero.primaryCta.loading}
+              <button onClick={() => {
+                  if (hero.isCommunication && hero.primaryCta?.handler) {
+                    hero.primaryCta.handler({
+                      subject: hero.suggestedSubject || "",
+                      body: editedMessage != null ? editedMessage : (hero.suggestedMessage || hero.suggestedReply || ""),
+                    });
+                  } else if (hero.primaryCta?.handler) {
+                    hero.primaryCta.handler();
+                  }
+                }} disabled={hero.primaryCta.loading}
                 className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-2.5 sm:px-5"
                 style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1 }}
                 data-testid="hero-primary-cta">

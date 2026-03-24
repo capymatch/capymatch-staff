@@ -204,9 +204,12 @@ export default function JourneyPage() {
     setActiveAction("email");
   };
 
-  // J4: Gated email open
-  const openGatedEmail = () => {
+  // J4: Gated email open — accepts optional prefill from hero cards
+  const openGatedEmail = (prefill) => {
     if (isBasic) { toast.info("Email integration is available on Pro and Premium plans", { action: { label: "Upgrade", onClick: () => navigate("/settings") } }); return; }
+    if (prefill && (prefill.subject || prefill.body)) {
+      setEmailInitial({ subject: prefill.subject || "", body: prefill.body || "" });
+    }
     setShowEmail(true);
     setActiveAction("email");
   };
@@ -377,6 +380,7 @@ export default function JourneyPage() {
     hasCoachReply, isCommitted, latestEvent, nextStepDismissed,
     coaches, questNudgeDismissed, completingFlag,
     handlers: heroHandlers,
+    athleteName: profileData?.athlete_name || profileData?.full_name || profileData?.name || "",
   });
 
   return (
