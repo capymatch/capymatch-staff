@@ -89,6 +89,35 @@ export function TopPriorityCard({ item, onActionComplete }) {
           )}
         </div>
 
+        {/* Athlete identity row */}
+        <div className="flex items-center gap-3 mb-2.5">
+          {item.photoUrl ? (
+            <img
+              src={item.photoUrl}
+              alt={item.athleteName}
+              className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+              style={{ border: `2px solid ${labelColor}20` }}
+              data-testid="athlete-photo"
+            />
+          ) : (
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-[14px] font-bold"
+              style={{ background: `${labelColor}18`, color: labelColor, border: `2px solid ${labelColor}20` }}
+              data-testid="athlete-avatar"
+            >
+              {(item.athleteName || "?").charAt(0)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: textMuted, margin: 0 }}>
+              Athlete
+            </p>
+            <p className="text-[13px] font-semibold truncate" style={{ color: textPrimary, margin: 0, lineHeight: 1.2 }}>
+              {item.athleteName}
+            </p>
+          </div>
+        </div>
+
         {/* Title */}
         <p className="text-[16px] font-bold" style={{ color: textPrimary, margin: 0, lineHeight: 1.3, letterSpacing: "-0.01em" }}>
           {title}

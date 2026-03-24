@@ -235,10 +235,12 @@ async def get_director_inbox(
                 "stage_entered_days_ago": entered_days,
             }
 
-    # Build athlete -> days inactive mapping
+    # Build athlete -> days inactive mapping + photo lookup
     athlete_days_inactive = {}
+    athlete_photo_map = {}
     for ath in athletes:
         athlete_days_inactive[ath["id"]] = ath.get("days_since_activity", 0)
+        athlete_photo_map[ath["id"]] = ath.get("photo_url")
 
     # ── AGGREGATE by athlete (one row per athlete) ──
     ISSUE_SEVERITY = {"escalation": 6, "missing_documents": 5, "no_coach_assigned": 5,
@@ -348,6 +350,7 @@ async def get_director_inbox(
             "id": f"inbox_{ag['athleteId']}",
             "athleteId": ag["athleteId"],
             "athleteName": ag["athleteName"],
+            "photoUrl": athlete_photo_map.get(ag["athleteId"]),
             "schoolName": school_name,
             "titleSuffix": title_suffix,
             "schoolCount": school_count,
