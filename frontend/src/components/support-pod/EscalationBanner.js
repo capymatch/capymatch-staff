@@ -29,7 +29,7 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
   const isOpen = escalation.status === "open";
   const isAcknowledged = !!escalation.acknowledged_at;
   const isResolved = escalation.status === "resolved";
-  const accentColor = isResolved ? "#10b981" : isAcknowledged ? "#6366f1" : "#dc2626";
+  const accentColor = isResolved ? "#10b981" : isAcknowledged ? "#ff6a3d" : "#dc2626";
 
   const handleAcknowledge = async () => {
     setAcknowledging(true);
@@ -94,8 +94,8 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
   if (!isDirector || !expanded) {
     return (
       <div
-        className="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors hover:bg-opacity-80"
-        style={{ backgroundColor: `${accentColor}08`, borderColor: `${accentColor}20` }}
+        className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg cursor-pointer transition-colors"
+        style={{ backgroundColor: "#161921", border: "1px solid rgba(255,255,255,0.06)" }}
         onClick={() => isDirector && setExpanded(true)}
         data-testid="escalation-chip"
       >
@@ -103,10 +103,10 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
         <span className="text-[11px] font-semibold" style={{ color: accentColor }}>
           {isResolved ? "Escalation Resolved" : isAcknowledged ? "Escalation Acknowledged" : "Escalated"}
         </span>
-        <span className="text-[10px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+        <span className="text-[10px]" style={{ color: "#5c5e6a" }}>
           by {escalation.coach_name || "Coach"} on {formatDate(escalation.created_at)}
         </span>
-        {isDirector && <ChevronDown className="w-3 h-3 ml-auto" style={{ color: "var(--cm-text-4)" }} />}
+        {isDirector && <ChevronDown className="w-3 h-3 ml-auto" style={{ color: "#5c5e6a" }} />}
       </div>
     );
   }
@@ -114,64 +114,64 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
   // Full banner mode (director, expanded)
   return (
     <div
-      className="rounded-xl border overflow-hidden"
-      style={{ backgroundColor: "#1a1530", borderColor: `${accentColor}30` }}
+      className="rounded-xl overflow-hidden"
+      style={{ backgroundColor: "#161921", border: `1px solid ${isOpen && !isAcknowledged ? "rgba(220,38,38,0.20)" : "rgba(255,255,255,0.06)"}` }}
       data-testid="escalation-banner"
     >
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${accentColor}15` }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accentColor}15` }}>
+      <div className="px-5 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accentColor}12`, border: `1px solid ${accentColor}20` }}>
             <Shield className="w-4 h-4" style={{ color: accentColor }} />
           </div>
           <div>
-            <p className="text-xs font-bold text-white">
+            <p className="text-[13px] font-bold" style={{ color: "#f0f0f2" }}>
               {isResolved ? "Escalation Resolved" : isAcknowledged ? "Escalation Under Review" : "Escalated Issue"}
             </p>
-            <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <p className="text-[10px]" style={{ color: "#5c5e6a" }}>
               by {escalation.coach_name || "Coach"} &middot; {formatDate(escalation.created_at)}
-              {escalation.urgency && <> &middot; <span className="uppercase font-bold" style={{ color: escalation.urgency === "high" ? "#ef4444" : "#d97706" }}>{escalation.urgency}</span></>}
+              {escalation.urgency && <> &middot; <span className="uppercase font-bold text-[9px] tracking-wider" style={{ color: escalation.urgency === "high" ? "#ef4444" : "#f59e0b" }}>{escalation.urgency}</span></>}
             </p>
           </div>
         </div>
-        <button onClick={() => setExpanded(false)} className="p-1 rounded hover:bg-white/10" data-testid="escalation-minimize">
-          <ChevronUp className="w-4 h-4" style={{ color: "rgba(255,255,255,0.4)" }} />
+        <button onClick={() => setExpanded(false)} className="p-1.5 rounded-lg transition-colors" style={{ border: "1px solid rgba(255,255,255,0.06)" }} data-testid="escalation-minimize">
+          <ChevronUp className="w-3.5 h-3.5" style={{ color: "#5c5e6a" }} />
         </button>
       </div>
 
       {/* Reason */}
-      <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>Reason</p>
-        <p className="text-xs text-white/90">{escalation.reason_label || escalation.reason || "Coach escalation"}</p>
-        {escalation.note && <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.5)" }}>{escalation.note}</p>}
+      <div className="px-5 py-3.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <p className="text-[9px] font-bold uppercase tracking-[0.1em] mb-1.5" style={{ color: "#5c5e6a" }}>Reason</p>
+        <p className="text-[13px] font-semibold" style={{ color: "#f0f0f2", lineHeight: 1.4 }}>{escalation.reason_label || escalation.reason || "Coach escalation"}</p>
+        {escalation.note && <p className="text-[11.5px] mt-1.5" style={{ color: "#8b8d98", lineHeight: 1.5 }}>{escalation.note}</p>}
       </div>
 
       {/* Actions */}
       {!isResolved && (
-        <div className="px-4 py-3 flex flex-wrap gap-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="px-5 py-3.5 flex flex-wrap gap-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           {isOpen && !isAcknowledged && (
             <button onClick={handleAcknowledge} disabled={acknowledging}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ backgroundColor: "rgba(99,102,241,0.15)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.2)" }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-[0.03em] transition-all hover:brightness-110 disabled:opacity-50"
+              style={{ backgroundColor: "#ff6a3d", color: "#fff", border: "none", boxShadow: "0 0 16px rgba(255,106,61,0.20)" }}
               data-testid="escalation-acknowledge-btn">
               <CheckCircle2 className="w-3 h-3" />{acknowledging ? "..." : "Acknowledge"}
             </button>
           )}
           <button onClick={() => { setShowNoteForm(!showNoteForm); setShowTaskForm(false); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90"
-            style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)" }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-semibold transition-all"
+            style={{ backgroundColor: "transparent", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.10)" }}
             data-testid="escalation-add-note-btn">
             <Send className="w-3 h-3" />Add Guidance
           </button>
           <button onClick={() => { setShowTaskForm(!showTaskForm); setShowNoteForm(false); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90"
-            style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.1)" }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-semibold transition-all"
+            style={{ backgroundColor: "transparent", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.10)" }}
             data-testid="escalation-add-task-btn">
             <Plus className="w-3 h-3" />Assign Task
           </button>
           <button onClick={handleResolve} disabled={resolving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundColor: "rgba(16,185,129,0.12)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.2)" }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-bold transition-all hover:brightness-110 disabled:opacity-50"
+            style={{ backgroundColor: "rgba(16,185,129,0.10)", color: "#6ee7b7", border: "1px solid rgba(16,185,129,0.18)" }}
             data-testid="escalation-resolve-btn">
             <CheckCircle2 className="w-3 h-3" />{resolving ? "..." : "Resolve"}
           </button>
@@ -180,56 +180,56 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
 
       {/* Guidance note form */}
       {showNoteForm && (
-        <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} data-testid="escalation-note-form">
+        <div className="px-5 py-3.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} data-testid="escalation-note-form">
           <textarea
             autoFocus value={noteText} onChange={e => setNoteText(e.target.value)}
             placeholder="Add guidance for the coach..."
-            className="w-full px-3 py-2 rounded-lg border text-xs resize-none outline-none focus:ring-1 focus:ring-indigo-500"
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0", minHeight: 60 }}
+            className="w-full px-3 py-2.5 rounded-lg text-[12px] resize-none outline-none focus:ring-1 focus:ring-orange-500/30"
+            style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f0f0f2", minHeight: 60 }}
             rows={2}
           />
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-2 mt-2.5">
             <button onClick={handleAddNote} disabled={sendingNote || !noteText.trim()}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+              className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-[0.03em] text-white transition-all disabled:opacity-40"
+              style={{ background: "#ff6a3d", boxShadow: "0 0 12px rgba(255,106,61,0.15)" }}>
               {sendingNote ? "Sending..." : "Add Note"}
             </button>
             <button onClick={() => { setShowNoteForm(false); setNoteText(""); }}
-              className="px-3 py-1.5 text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>Cancel</button>
+              className="px-3 py-2 text-[11px] font-medium" style={{ color: "#5c5e6a" }}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* Intervention task form */}
       {showTaskForm && (
-        <div className="px-4 py-3 space-y-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} data-testid="escalation-task-form">
+        <div className="px-5 py-3.5 space-y-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} data-testid="escalation-task-form">
           <input
             autoFocus value={taskTitle} onChange={e => setTaskTitle(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleCreateTask()}
             placeholder="Coach follow-up required by Friday..."
-            className="w-full px-3 py-2 rounded-lg border text-xs outline-none focus:ring-1 focus:ring-indigo-500"
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0" }}
+            className="w-full px-3 py-2.5 rounded-lg text-[12px] outline-none focus:ring-1 focus:ring-orange-500/30"
+            style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#f0f0f2" }}
           />
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>Assign to</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: "#5c5e6a" }}>Assign to</span>
               {["Coach", "Athlete", "Director"].map(r => (
                 <button key={r} onClick={() => setTaskAssignee(r)}
-                  className="px-2 py-1 rounded text-[10px] font-semibold transition-colors"
+                  className="px-2.5 py-1 rounded-md text-[10px] font-semibold transition-colors"
                   style={{
-                    backgroundColor: taskAssignee === r ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.05)",
-                    color: taskAssignee === r ? "#a5b4fc" : "rgba(255,255,255,0.4)",
-                    border: `1px solid ${taskAssignee === r ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.08)"}`,
+                    backgroundColor: taskAssignee === r ? "rgba(255,106,61,0.12)" : "rgba(255,255,255,0.04)",
+                    color: taskAssignee === r ? "#ff6a3d" : "#5c5e6a",
+                    border: `1px solid ${taskAssignee === r ? "rgba(255,106,61,0.20)" : "rgba(255,255,255,0.06)"}`,
                   }}>
                   {r}
                 </button>
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="w-3 h-3" style={{ color: "rgba(255,255,255,0.3)" }} />
+              <Clock className="w-3 h-3" style={{ color: "#5c5e6a" }} />
               <select value={taskDueDays} onChange={e => setTaskDueDays(Number(e.target.value))}
-                className="text-[10px] px-2 py-1 rounded border outline-none"
-                style={{ backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#e2e8f0", colorScheme: "dark" }}>
+                className="text-[10px] px-2.5 py-1 rounded-md outline-none"
+                style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#8b8d98", colorScheme: "dark" }}>
                 <option value={1}>Due tomorrow</option>
                 <option value={3}>Due in 3 days</option>
                 <option value={7}>Due in 1 week</option>
@@ -239,12 +239,12 @@ export default function EscalationBanner({ escalation, athleteId, onRefresh, isD
           </div>
           <div className="flex items-center gap-2 pt-1">
             <button onClick={handleCreateTask} disabled={sendingTask || !taskTitle.trim()}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
+              className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-[0.03em] text-white transition-all disabled:opacity-40"
+              style={{ background: "#ff6a3d", boxShadow: "0 0 12px rgba(255,106,61,0.15)" }}>
               {sendingTask ? "Creating..." : "Create Task"}
             </button>
             <button onClick={() => { setShowTaskForm(false); setTaskTitle(""); }}
-              className="px-3 py-1.5 text-xs font-medium" style={{ color: "rgba(255,255,255,0.4)" }}>Cancel</button>
+              className="px-3 py-2 text-[11px] font-medium" style={{ color: "#5c5e6a" }}>Cancel</button>
           </div>
         </div>
       )}
