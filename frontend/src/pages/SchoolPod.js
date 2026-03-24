@@ -165,9 +165,9 @@ export default function SchoolPod() {
           <div className="lg:col-span-3 space-y-4">
 
             {/* Hero: Current Issue */}
-            <div className="rounded-xl border relative overflow-hidden" style={{
-              backgroundColor: `${heroColor}06`,
-              borderColor: `${heroColor}20`,
+            <div className="rounded-xl relative overflow-hidden" style={{
+              backgroundColor: "#161921",
+              border: `1px solid ${heroColor}30`,
             }} data-testid="school-hero">
               <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: heroColor }} />
               <div className="px-4 py-3 sm:px-5 sm:py-4">
@@ -176,24 +176,24 @@ export default function SchoolPod() {
                     {heroLabel}
                   </span>
                 </div>
-                <h2 className="text-sm sm:text-base font-bold" style={{ color: "var(--cm-text, #1e293b)" }} data-testid="school-hero-title">
+                <h2 className="text-sm sm:text-base font-bold" style={{ color: "#f0f0f2" }} data-testid="school-hero-title">
                   {heroTitle}
                 </h2>
-                <p className="text-xs mt-1" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
+                <p className="text-xs mt-1" style={{ color: "#8b8d98" }}>
                   {heroDesc}
                 </p>
-                <div className="flex flex-wrap gap-3 mt-3 text-[11px]" style={{ color: "var(--cm-text-2, #64748b)" }}>
+                <div className="flex flex-wrap gap-3 mt-3 text-[11px]" style={{ color: "#5c5e6a" }}>
                   {metrics.days_since_last_engagement != null && metrics.days_since_last_engagement > 0 && metrics.days_since_last_engagement < 999 && (
-                    <span>Last contact <strong>{metrics.days_since_last_engagement} day{metrics.days_since_last_engagement !== 1 ? "s" : ""} ago</strong></span>
+                    <span>Last contact <strong style={{ color: "#f0f0f2" }}>{metrics.days_since_last_engagement} day{metrics.days_since_last_engagement !== 1 ? "s" : ""} ago</strong></span>
                   )}
                   {metrics.days_since_last_engagement === 0 && (
-                    <span>Contacted <strong>today</strong></span>
+                    <span>Contacted <strong style={{ color: "#f0f0f2" }}>today</strong></span>
                   )}
                   {metrics.reply_rate != null && (
-                    <span>Reply rate: <strong>{Math.round(metrics.reply_rate * 100)}%</strong></span>
+                    <span>Reply rate: <strong style={{ color: "#f0f0f2" }}>{Math.round(metrics.reply_rate * 100)}%</strong></span>
                   )}
                   {metrics.meaningful_interaction_count > 0 && (
-                    <span>Interactions: <strong>{metrics.meaningful_interaction_count}</strong></span>
+                    <span>Interactions: <strong style={{ color: "#f0f0f2" }}>{metrics.meaningful_interaction_count}</strong></span>
                   )}
                 </div>
               </div>
