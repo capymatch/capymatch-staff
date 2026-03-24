@@ -22,9 +22,9 @@ function getDateLabel() {
 }
 
 const MOM_CFG = {
-  improving: { label: "Improving", icon: TrendingUp, color: "#30C5BE" },
-  stable: { label: "Stable", icon: Minus, color: "#8A92A3" },
-  declining: { label: "Declining", icon: TrendingDown, color: "#FF6B6B" },
+  improving: { label: "Improving", icon: TrendingUp, color: "rgba(74,222,128,0.5)" },
+  stable: { label: "Stable", icon: Minus, color: "#5c5e6a" },
+  declining: { label: "Declining", icon: TrendingDown, color: "#ef4444" },
 };
 
 /* ── Collapsible wrapper for secondary sections ── */
@@ -88,7 +88,7 @@ function OutboxStrip({ summary }) {
           <span className="mx-1.5" style={{ color: "#cbd5e1" }}>—</span>
           {parts.join(" · ")}
         </p>
-        <span className="text-[11px] font-semibold flex items-center gap-0.5" style={{ color: "#0d9488" }}>
+        <span className="text-[11px] font-semibold flex items-center gap-0.5" style={{ color: "#64748b" }}>
           {expanded ? "Hide" : "View details"}
           <ChevronRight className="w-3 h-3 transition-transform duration-150" style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)" }} />
         </span>
@@ -118,11 +118,11 @@ export default function DirectorView({ data, userName }) {
   const aiDepth = getDepth("ai_detail_level");
 
   const kpis = [
-    { value: ps.totalAthletes || 0, label: "Athletes", color: "#30C5BE", icon: Target },
-    { value: ps.activeCoaches || 0, label: "Coaches", color: "#7F92FF", icon: MessageCircle },
-    { value: ps.needingAttention || 0, label: "Need Attention", color: "#FF6B6B", icon: AlertTriangle, emphasized: ps.needingAttention > 0, trend: needDelta },
-    { value: ps.upcomingEvents || 0, label: "Events", color: "#30C5BE", icon: Mail },
-    { value: ps.unassignedCount || 0, label: "Unassigned", color: ps.unassignedCount > 0 ? "#FFC649" : "#30C5BE", icon: Clock },
+    { value: ps.totalAthletes || 0, label: "Athletes", color: "#f0f0f2", icon: Target },
+    { value: ps.activeCoaches || 0, label: "Coaches", color: "#f0f0f2", icon: MessageCircle },
+    { value: ps.needingAttention || 0, label: "Need Attention", color: "#ef4444", icon: AlertTriangle, emphasized: ps.needingAttention > 0, trend: needDelta },
+    { value: ps.upcomingEvents || 0, label: "Events", color: "#f0f0f2", icon: Mail },
+    { value: ps.unassignedCount || 0, label: "Unassigned", color: ps.unassignedCount > 0 ? "#8b8d98" : "#f0f0f2", icon: Clock },
   ];
 
   return (
@@ -137,7 +137,7 @@ export default function DirectorView({ data, userName }) {
         <div className="px-5 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center justify-between">
             <h2 className="text-[17px] sm:text-[20px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.01em" }}>
-              {getGreeting()}, <span style={{ color: "#2dd4bf" }}>{firstName}</span>
+              {getGreeting()}, <span style={{ color: "#f0f0f2" }}>{firstName}</span>
             </h2>
             <span className="text-[10px] font-semibold px-2.5 py-1 rounded-md" style={{ background: "rgba(255,255,255,0.06)", color: "#8b8d98", border: "1px solid rgba(255,255,255,0.06)" }}>
               {getDateLabel()}
@@ -155,7 +155,7 @@ export default function DirectorView({ data, userName }) {
                     {kpi.label}
                   </span>
                   {kpi.trend !== undefined && kpi.trend !== 0 && (
-                    <span className="text-[9px] font-medium" style={{ color: kpi.trend > 0 ? "#FF6B6B" : "#2dd4bf" }}>
+                    <span className="text-[9px] font-medium" style={{ color: kpi.trend > 0 ? "#ef4444" : "rgba(74,222,128,0.5)" }}>
                       {kpi.trend > 0 ? "+" : ""}{kpi.trend} this week
                     </span>
                   )}

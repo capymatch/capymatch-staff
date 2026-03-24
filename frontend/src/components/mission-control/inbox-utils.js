@@ -2,13 +2,13 @@ import { Send, UserPlus, FileText, MessageCircle, RefreshCw } from "lucide-react
 
 export const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-export const DOT_COLOR = { high: "#ef4444", medium: "#f59e0b" };
+export const DOT_COLOR = { high: "#b91c1c", medium: "#78716c" };
 
 /* ── Trajectory display ── */
 export const TRAJECTORY = {
   worsening: { symbol: "\u2198", label: "Worsening", color: "#dc2626" },
-  stable:    { symbol: "\u2192", label: "Stable",    color: "#94a3b8" },
-  improving: { symbol: "\u2197", label: "Improving", color: "#10b981" },
+  stable:    { symbol: "\u2192", label: "Stable",    color: "#64748b" },
+  improving: { symbol: "\u2197", label: "Improving", color: "rgba(74,222,128,0.6)" },
 };
 
 /* ── Short explanation for high priority rows ── */

@@ -66,8 +66,8 @@ h1, h2, h3, h4, h5, h6 {
         --cm-hero-from: #e8eff5;
         --cm-hero-to: #dce7f0;
         --cm-sidebar: #0f1117;
-        --cm-sidebar-active: rgba(255,106,61,0.10);
-        --cm-sidebar-active-text: #ff6a3d;
+        --cm-sidebar-active: rgba(255,255,255,0.06);
+        --cm-sidebar-active-text: #f0f0f2;
         --cm-topbar: #FFFFFF;
         --cm-badge-bg: #f0fdf4;
         --cm-badge-text: #16a34a;
@@ -116,8 +116,8 @@ h1, h2, h3, h4, h5, h6 {
         --cm-hero-from: #0f1219;
         --cm-hero-to: #1e2640;
         --cm-sidebar: #0f1117;
-        --cm-sidebar-active: rgba(255,106,61,0.10);
-        --cm-sidebar-active-text: #ff6a3d;
+        --cm-sidebar-active: rgba(255,255,255,0.06);
+        --cm-sidebar-active-text: #f0f0f2;
         --cm-topbar: #111827;
         --cm-badge-bg: rgba(16,185,129,0.1);
         --cm-badge-text: #34d399;

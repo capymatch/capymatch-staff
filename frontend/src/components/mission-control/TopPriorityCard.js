@@ -32,16 +32,15 @@ export function TopPriorityCard({ item, onActionComplete }) {
 
   /* ── dark-theme palette ── */
   const cardBg = "#161921";
-  const cardBorder = "rgba(255,255,255,0.06)";
-  const badgeBg    = isCritical ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)";
-  const badgeBorder= isCritical ? "rgba(239,68,68,0.22)" : "rgba(245,158,11,0.22)";
-  const labelColor = isCritical ? "#ef4444" : "#f59e0b";
+  const cardBorder = isCritical ? "rgba(220,38,38,0.20)" : "rgba(255,255,255,0.06)";
+  const badgeBg    = isCritical ? "rgba(220,38,38,0.10)" : "rgba(245,158,11,0.10)";
+  const badgeBorder= isCritical ? "rgba(220,38,38,0.20)" : "rgba(245,158,11,0.20)";
+  const labelColor = isCritical ? "#dc2626" : "#f59e0b";
   const issueColor = isCritical ? "#f87171" : "#fbbf24";
   const textPrimary   = "#f0f0f2";
   const textSecondary = "#8b8d98";
   const textMuted     = "#5c5e6a";
   const borderSubtle  = "rgba(255,255,255,0.06)";
-  const accentTeal    = "#2dd4bf";
 
   function handleApprove(e) {
     e.stopPropagation();
@@ -64,9 +63,9 @@ export function TopPriorityCard({ item, onActionComplete }) {
     if (onActionComplete) onActionComplete(item.id);
   }
 
-  /* button accent per intervention */
-  const btnAccent = isBlocker ? "#ef4444" : isEscalate ? "#f59e0b" : "#ff6a3d";
-  const btnGlow   = isBlocker ? "rgba(239,68,68,0.25)" : isEscalate ? "rgba(245,158,11,0.25)" : "rgba(255,106,61,0.25)";
+  /* button accent: red = problem, orange = action */
+  const btnAccent = isBlocker ? "#dc2626" : isEscalate ? "#dc2626" : "#ff6a3d";
+  const btnGlow   = isBlocker ? "rgba(220,38,38,0.20)" : isEscalate ? "rgba(220,38,38,0.20)" : "rgba(255,106,61,0.20)";
 
   return (
     <div
@@ -160,8 +159,8 @@ export function TopPriorityCard({ item, onActionComplete }) {
               </p>
             )}
             <div className="flex items-center gap-2 mb-3">
-              {isBlocker && <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#ef4444" }} />}
-              {!isBlocker && <nudge.Icon className="w-3.5 h-3.5" style={{ color: accentTeal }} />}
+              {isBlocker && <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />}
+              {!isBlocker && <nudge.Icon className="w-3.5 h-3.5" style={{ color: "#ff6a3d" }} />}
               <span className="text-[12.5px] font-semibold" style={{ color: textPrimary }}>
                 {nudge.label}
               </span>

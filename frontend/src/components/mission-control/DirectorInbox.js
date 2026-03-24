@@ -151,7 +151,7 @@ export default function DirectorInbox() {
           gap: 3px;
           font-size: 11px;
           font-weight: 600;
-          color: #0d9488;
+          color: #ff6a3d;
           cursor: pointer;
           margin-top: 3px;
           transition: opacity 80ms;
@@ -162,7 +162,7 @@ export default function DirectorInbox() {
           font-weight: 700;
         }
         .inbox-action-escalate {
-          color: #b45309;
+          color: #dc2626;
         }
 
         /* ── Mobile: stack CTA below text ── */
@@ -182,7 +182,7 @@ export default function DirectorInbox() {
             justify-self: start;
             margin-top: 6px;
             font-size: 11px;
-            color: #0d9488;
+            color: #ff6a3d;
           }
         }
       `}</style>
