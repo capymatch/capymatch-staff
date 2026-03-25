@@ -364,22 +364,16 @@ async def migrate_to_prod():
         prod_client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=10000)
         prod_db = prod_client[db_name]
 
-        # Collections to migrate
-        collections_to_migrate = [
-            "users", "athletes", "programs", "interactions",
-            "university_knowledge_base", "coach_watch_alerts",
-            "app_config", "email_log", "subscriptions",
-        ]
+        # Migrate ALL collections from dev
+        dev_collections = await db.list_collection_names()
 
         results = {}
-        for coll_name in collections_to_migrate:
+        for coll_name in sorted(dev_collections):
             try:
                 docs = await db[coll_name].find({}).to_list(None)
                 if docs:
-                    # Remove _id to avoid conflicts
                     for d in docs:
                         d.pop("_id", None)
-                    # Check if already has data
                     existing = await prod_db[coll_name].count_documents({})
                     if existing > 0:
                         results[coll_name] = f"skipped ({existing} existing docs)"
@@ -387,7 +381,7 @@ async def migrate_to_prod():
                         await prod_db[coll_name].insert_many(docs)
                         results[coll_name] = f"migrated {len(docs)} docs"
                 else:
-                    results[coll_name] = "empty (nothing to migrate)"
+                    results[coll_name] = "empty"
             except Exception as e:
                 results[coll_name] = f"error: {str(e)}"
 
