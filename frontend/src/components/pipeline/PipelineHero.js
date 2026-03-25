@@ -175,18 +175,18 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
     >
       {/* ── Carousel nav — absolute top-right ── */}
       {total > 1 && (
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-5 z-[2] flex items-center gap-2 sm:gap-2.5" style={{ opacity: 0.5 }} data-testid="hero-carousel-nav">
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-5 z-[2] flex items-center gap-2 sm:gap-2.5" data-testid="hero-carousel-nav">
           <button onClick={() => handleGoTo(-1)} data-testid="carousel-prev"
             className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.55)" }}>
             <ChevronLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </button>
-          <span className="text-[10px] sm:text-[11px] font-bold tabular-nums min-w-[20px] text-center" style={{ color: "rgba(255,255,255,0.3)" }} data-testid="carousel-counter">
+          <span className="text-[10px] sm:text-[11px] font-bold tabular-nums min-w-[20px] text-center" style={{ color: "rgba(255,255,255,0.50)" }} data-testid="carousel-counter">
             {safeIdx + 1}/{total}
           </span>
           <button onClick={() => handleGoTo(1)} data-testid="carousel-next"
             className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center cursor-pointer pm-nav-hover"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }}>
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.55)" }}>
             <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </button>
         </div>
@@ -198,7 +198,7 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
         style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
         data-testid="hero-top-bar"
       >
-        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap" style={{ opacity: 0.7 }} data-testid="hero-filter-pills">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap" data-testid="hero-filter-pills">
           {pills.map(pill => (
             <button
               key={pill.key}
@@ -208,17 +208,17 @@ export default function PipelineHero({ heroItems, matchScores, navigate }) {
               style={{
                 padding: "5px 9px",
                 borderRadius: 999,
-                background: filter === pill.key ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.02)",
-                color: filter === pill.key ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
-                border: `1px solid ${filter === pill.key ? "rgba(255,255,255,0.06)" : "transparent"}`,
+                background: filter === pill.key ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
+                color: filter === pill.key ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.50)",
+                border: `1px solid ${filter === pill.key ? "rgba(255,255,255,0.12)" : "transparent"}`,
                 cursor: "pointer", fontFamily: "inherit",
               }}
             >
               {pill.label}
               <span className="pm-pill-badge" style={{
                 fontSize: 9, fontWeight: 800, padding: "1px 4px", borderRadius: 5,
-                background: filter === pill.key ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
-                color: filter === pill.key ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)",
+                background: filter === pill.key ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.06)",
+                color: filter === pill.key ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.40)",
               }}>{pill.count}</span>
             </button>
           ))}
