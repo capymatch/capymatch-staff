@@ -86,8 +86,68 @@ function SectionCard({ title, summary, status, icon, children, defaultOpen = fal
   );
 }
 
+/* ── Field Validation Rules ── */
+const FIELD_RULES = {
+  weight:          { filter: /[^0-9]/g, min: 50, max: 400, unit: "lbs" },
+  jersey_number:   { filter: /[^0-9]/g, min: 0, max: 99 },
+  gpa:             { filter: /[^0-9.]/g, min: 0, max: 5.0, step: 0.1 },
+  sat_score:       { filter: /[^0-9]/g, min: 400, max: 1600 },
+  act_score:       { filter: /[^0-9]/g, min: 1, max: 36 },
+  standing_reach:  { filter: /[^0-9.'″"]/g, min: 60, max: 130, unit: "in" },
+  approach_touch:  { filter: /[^0-9.'″"]/g, min: 60, max: 150, unit: "in" },
+  block_touch:     { filter: /[^0-9.'″"]/g, min: 60, max: 140, unit: "in" },
+  wingspan:        { filter: /[^0-9.'″"]/g, min: 50, max: 110, unit: "in" },
+  graduation_year: { filter: /[^0-9]/g, min: 2020, max: 2035, exact: 4 },
+  contact_email:   { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, msg: "Enter a valid email" },
+  video_link:      { pattern: /^https?:\/\/.+/i, msg: "Enter a valid URL (https://...)" },
+};
+
+function parseInches(v) {
+  if (!v) return null;
+  const ft = v.match(/^(\d+)'?\s*(\d+)?/);
+  if (ft && ft[1] && Number(ft[1]) < 20) return Number(ft[1]) * 12 + Number(ft[2] || 0);
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
+function validateField(key, value) {
+  const rule = FIELD_RULES[key];
+  if (!rule || !value) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  if (rule.pattern) return rule.pattern.test(s) ? null : rule.msg;
+  if (rule.exact && s.length !== rule.exact) return `Must be ${rule.exact} digits`;
+  const num = rule.unit === "in" ? parseInches(s) : parseFloat(s);
+  if (num === null || isNaN(num)) return "Enter a valid number";
+  if (rule.min != null && num < rule.min) return `Min ${rule.min}`;
+  if (rule.max != null && num > rule.max) return `Max ${rule.max}`;
+  return null;
+}
+
+function filterInput(key, value) {
+  const rule = FIELD_RULES[key];
+  if (!rule || !rule.filter) return value;
+  return value.replace(rule.filter, "");
+}
+
 /* ── Field Input ── */
-function Field({ label, value, onChange, placeholder, type = "text", coachVisible, testId }) {
+function Field({ label, value, onChange, placeholder, type = "text", coachVisible, testId, fieldKey }) {
+  const [error, setError] = useState(null);
+  const [touched, setTouched] = useState(false);
+
+  const handleChange = (raw) => {
+    const filtered = fieldKey ? filterInput(fieldKey, raw) : raw;
+    onChange(filtered);
+    if (touched) setError(validateField(fieldKey, filtered));
+  };
+
+  const handleBlur = () => {
+    setTouched(true);
+    setError(validateField(fieldKey, value));
+  };
+
+  const hasError = touched && error;
+
   return (
     <div>
       <div className="flex items-center gap-1 mb-1">
@@ -96,19 +156,20 @@ function Field({ label, value, onChange, placeholder, type = "text", coachVisibl
       </div>
       {type === "textarea" ? (
         <textarea data-testid={testId} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none transition-all resize-none min-h-[70px] focus:border-emerald-400"
-          style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
-          value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+          style={{ backgroundColor: "var(--cm-input-bg)", borderColor: hasError ? "#ef4444" : "var(--cm-border)", color: "var(--cm-text)" }}
+          value={value || ""} onChange={(e) => handleChange(e.target.value)} onBlur={handleBlur} placeholder={placeholder} />
       ) : type === "select" ? (
         <select data-testid={testId} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none"
           style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
-          value={value || ""} onChange={(e) => onChange(e.target.value)}>
+          value={value || ""} onChange={(e) => { onChange(e.target.value); setError(null); }}>
           <option value="">Select...</option><option value="Right">Right</option><option value="Left">Left</option>
         </select>
       ) : (
         <input data-testid={testId} type={type} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none transition-all focus:border-emerald-400"
-          style={{ backgroundColor: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
-          value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+          style={{ backgroundColor: "var(--cm-input-bg)", borderColor: hasError ? "#ef4444" : "var(--cm-border)", color: "var(--cm-text)" }}
+          value={value || ""} onChange={(e) => handleChange(e.target.value)} onBlur={handleBlur} placeholder={placeholder} />
       )}
+      {hasError && <p className="text-[10px] mt-0.5 text-red-500" data-testid={testId ? `${testId}-error` : undefined}>{error}</p>}
     </div>
   );
 }
@@ -348,13 +409,13 @@ export default function ProfilePage() {
           <Field testId="field-athlete-name" label="Full Name" value={profile.athlete_name} onChange={(v) => updateField("athlete_name", v)} coachVisible />
         </div>
         <div className="grid grid-cols-2 gap-2.5 mb-2.5">
-          <Field testId="field-grad-year" label="Graduation Year" value={profile.graduation_year} onChange={(v) => updateField("graduation_year", v)} />
+          <Field testId="field-grad-year" label="Graduation Year" value={profile.graduation_year} onChange={(v) => updateField("graduation_year", v)} fieldKey="graduation_year" />
           <Field testId="field-position" label="Position" value={profile.position} onChange={(v) => updateField("position", v)} coachVisible />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           <Field testId="field-height" label="Height" value={profile.height} onChange={(v) => updateField("height", v)} coachVisible />
-          <Field testId="field-weight" label="Weight (lbs)" value={profile.weight} onChange={(v) => updateField("weight", v)} />
-          <Field testId="field-jersey" label="Jersey #" value={profile.jersey_number} onChange={(v) => updateField("jersey_number", v)} />
+          <Field testId="field-weight" label="Weight (lbs)" value={profile.weight} onChange={(v) => updateField("weight", v)} fieldKey="weight" />
+          <Field testId="field-jersey" label="Jersey #" value={profile.jersey_number} onChange={(v) => updateField("jersey_number", v)} fieldKey="jersey_number" />
         </div>
       </SectionCard>
 
@@ -378,18 +439,18 @@ export default function ProfilePage() {
         status={sectionStatus(["standing_reach", "approach_touch", "block_touch"])}>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-2.5">
           <Field testId="field-handed" label="Handed" value={profile.handed} onChange={(v) => updateField("handed", v)} type="select" />
-          <Field testId="field-standing-reach" label="Standing Reach" value={profile.standing_reach} onChange={(v) => updateField("standing_reach", v)} coachVisible />
-          <Field testId="field-approach-touch" label="Approach Touch" value={profile.approach_touch} onChange={(v) => updateField("approach_touch", v)} coachVisible />
+          <Field testId="field-standing-reach" label="Standing Reach" value={profile.standing_reach} onChange={(v) => updateField("standing_reach", v)} coachVisible fieldKey="standing_reach" />
+          <Field testId="field-approach-touch" label="Approach Touch" value={profile.approach_touch} onChange={(v) => updateField("approach_touch", v)} coachVisible fieldKey="approach_touch" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-          <Field testId="field-block-touch" label="Block Touch" value={profile.block_touch} onChange={(v) => updateField("block_touch", v)} coachVisible />
-          <Field testId="field-wingspan" label="Wingspan" value={profile.wingspan} onChange={(v) => updateField("wingspan", v)} />
-          <Field testId="field-gpa" label="GPA" value={profile.gpa} onChange={(v) => updateField("gpa", v)} coachVisible />
+          <Field testId="field-block-touch" label="Block Touch" value={profile.block_touch} onChange={(v) => updateField("block_touch", v)} coachVisible fieldKey="block_touch" />
+          <Field testId="field-wingspan" label="Wingspan" value={profile.wingspan} onChange={(v) => updateField("wingspan", v)} fieldKey="wingspan" />
+          <Field testId="field-gpa" label="GPA" value={profile.gpa} onChange={(v) => updateField("gpa", v)} coachVisible fieldKey="gpa" />
         </div>
         <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cm-border)" }}>
           <div className="grid grid-cols-2 gap-2.5">
-            <Field testId="field-sat-score" label="SAT Score" value={profile.sat_score} onChange={(v) => updateField("sat_score", v)} placeholder="e.g. 1200" coachVisible />
-            <Field testId="field-act-score" label="ACT Score" value={profile.act_score} onChange={(v) => updateField("act_score", v)} placeholder="e.g. 28" coachVisible />
+            <Field testId="field-sat-score" label="SAT Score" value={profile.sat_score} onChange={(v) => updateField("sat_score", v)} placeholder="e.g. 1200" coachVisible fieldKey="sat_score" />
+            <Field testId="field-act-score" label="ACT Score" value={profile.act_score} onChange={(v) => updateField("act_score", v)} placeholder="e.g. 28" coachVisible fieldKey="act_score" />
           </div>
         </div>
       </SectionCard>
@@ -416,7 +477,7 @@ export default function ProfilePage() {
         status={profile.bio ? "complete" : "partial"}>
         <div className="grid gap-2.5">
           <Field testId="field-hudl" label="Hudl Profile Link" value={profile.hudl_profile_url} onChange={(v) => updateField("hudl_profile_url", v)} placeholder="https://hudl.com/..." />
-          <Field testId="field-video" label="Highlights Video Link" value={profile.video_link} onChange={(v) => updateField("video_link", v)} placeholder="https://youtube.com/..." />
+          <Field testId="field-video" label="Highlights Video Link" value={profile.video_link} onChange={(v) => updateField("video_link", v)} placeholder="https://youtube.com/..." fieldKey="video_link" />
           <Field testId="field-bio" label="Bio" value={profile.bio} onChange={(v) => updateField("bio", v)} type="textarea" placeholder="Tell coaches about yourself..." coachVisible />
         </div>
       </SectionCard>
@@ -428,7 +489,7 @@ export default function ProfilePage() {
         status={sectionStatus(["contact_email", "parent_name"])}>
         <p className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--cm-text-3)" }}>Athlete</p>
         <div className="grid grid-cols-2 gap-2.5 mb-3">
-          <Field testId="field-contact-email" label="Email" value={profile.contact_email} onChange={(v) => updateField("contact_email", v)} coachVisible />
+          <Field testId="field-contact-email" label="Email" value={profile.contact_email} onChange={(v) => updateField("contact_email", v)} coachVisible fieldKey="contact_email" />
           <Field testId="field-contact-phone" label="Phone" value={profile.contact_phone} onChange={(v) => updateField("contact_phone", v)} />
         </div>
         <div className="mb-3 h-px" style={{ backgroundColor: "var(--cm-border)" }} />
