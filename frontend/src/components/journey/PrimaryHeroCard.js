@@ -143,13 +143,21 @@ export function PrimaryHeroCard({ hero, program }) {
           </div>
         )}
 
-        {/* 4. CTA ROW */}
-        <div className="flex items-center gap-3 ml-[54px] mt-3 mb-2">
+        {/* 4. HELPER TEXT — above CTA */}
+        {hero.isCommunication && messageParagraphs && (
+          <p className="ml-[54px] mt-1 mb-2 text-[10px] sm:text-[11px]"
+            style={{ color: "rgba(255,255,255,0.30)" }}
+            data-testid="hero-edit-hint">
+            You can edit before sending
+          </p>
+        )}
+
+        {/* 5. PRIMARY CTA */}
+        <div className="ml-[54px] mt-2">
           {hero.primaryCta && (
-            <div className="flex flex-col gap-0.5">
-              {/* Ready signal */}
+            <>
               {hero.isCommunication && (
-                <span className="flex items-center gap-1 text-[10px] font-medium" style={{ color: "rgba(16,185,129,0.7)" }} data-testid="hero-ready-signal">
+                <span className="flex items-center gap-1 text-[10px] font-medium mb-1" style={{ color: "rgba(16,185,129,0.65)" }} data-testid="hero-ready-signal">
                   <Check className="w-3 h-3" /> {["Ready to send", "Looks good to send", "Quick follow-up ready"][Math.abs((hero.id || "").length) % 3]}
                 </span>
               )}
@@ -164,7 +172,7 @@ export function PrimaryHeroCard({ hero, program }) {
                   }
                 }} disabled={hero.primaryCta.loading}
                 className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-2.5 sm:px-5"
-                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1 }}
+                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1, boxShadow: `0 0 12px ${hero.accent}25` }}
                 data-testid="hero-primary-cta">
                 {hero.primaryCta.loading
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -172,32 +180,30 @@ export function PrimaryHeroCard({ hero, program }) {
                 {hero.isCommunication ? "Send to coach" : hero.primaryCta.label}
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-              {/* Helper text */}
-              {hero.isCommunication && (
-                <span className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.20)" }} data-testid="hero-edit-hint">
-                  You can edit before sending
-                </span>
-              )}
-            </div>
+            </>
           )}
 
-          {/* 5. SECONDARY CTA — text only, low opacity */}
+          {/* 6. SECONDARY CTA — own row, below primary */}
           {hero.secondaryCta && (
-            <button onClick={hero.secondaryCta.handler}
-              className="inline-flex items-center gap-1 text-[10px] self-end mb-0.5"
-              style={{ color: "rgba(255,255,255,0.12)", background: "none", border: "none", cursor: "pointer", padding: "4px 2px", fontWeight: 400 }}
-              data-testid="hero-secondary-cta">
-              {hero.secondaryCta.label}
-            </button>
+            <div className="mt-3">
+              <button onClick={hero.secondaryCta.handler}
+                className="inline-flex items-center gap-1 text-[10px] sm:text-[11px]"
+                style={{ color: "rgba(255,255,255,0.25)", background: "none", border: "none", cursor: "pointer", padding: "2px 0", fontWeight: 400 }}
+                data-testid="hero-secondary-cta">
+                {hero.secondaryCta.label}
+              </button>
+            </div>
           )}
         </div>
 
-        {/* 6. WHY THIS — de-emphasized */}
+        {/* 7. WHY THIS — separated, breathable */}
         {hero.whyThis?.length > 0 && (
-          <div className="ml-[54px] mb-1.5 mt-3 transition-all duration-300"
+          <div className="ml-[54px] mt-5 mb-1 transition-all duration-300"
             style={{
               opacity: whyVisible ? 1 : 0,
               transform: whyVisible ? "translateY(0)" : "translateY(4px)",
+              borderTop: "1px solid rgba(255,255,255,0.04)",
+              paddingTop: 12,
             }}
             data-testid="hero-why-this">
             <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-0.5"
@@ -211,8 +217,8 @@ export function PrimaryHeroCard({ hero, program }) {
           </div>
         )}
 
-        {/* METADATA */}
-        <p className="text-[11px] ml-[54px]"
+        {/* 8. METADATA */}
+        <p className="text-[11px] ml-[54px] mt-2"
           style={{ color: "rgba(255,255,255,0.25)", lineHeight: 1.5 }}
           data-testid="hero-subtitle">
           {hero.subtitle}
