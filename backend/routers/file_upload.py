@@ -12,7 +12,11 @@ Security layers (in order):
 """
 
 import re
-import magic
+try:
+    import magic
+    _HAS_MAGIC = True
+except (ImportError, OSError):
+    _HAS_MAGIC = False
 import logging
 import unicodedata
 from datetime import datetime, timezone
@@ -153,8 +157,11 @@ async def upload(file: UploadFile = File(...), current_user: dict = get_current_
         log.warning("Upload blocked (magic mismatch): ext=%s user=%s", ext, current_user["id"])
         raise HTTPException(400, "File content does not match its declared type")
 
-    # 5. python-magic content type detection
-    detected_type = magic.from_buffer(data, mime=True)
+    # 5. python-magic content type detection (graceful fallback if libmagic unavailable)
+    if _HAS_MAGIC:
+        detected_type = magic.from_buffer(data, mime=True)
+    else:
+        detected_type = file.content_type or "application/octet-stream"
     declared_type = file.content_type or "application/octet-stream"
 
     # Office XML formats (docx/xlsx) detect as application/zip — allow if extension matches
