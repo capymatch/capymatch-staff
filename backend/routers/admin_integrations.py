@@ -71,6 +71,14 @@ async def get_integrations_status():
         {"$or": [{"website": ""}, {"website": {"$exists": False}}]}
     )
 
+    # ── Resend ──
+    resend_config = await db.app_config.find_one({"key": "resend"}, {"_id": 0})
+    resend_api_key = (resend_config or {}).get("api_key", "")
+    resend_sender = (resend_config or {}).get("sender_email", "onboarding@resend.dev")
+    resend_connected = bool(resend_api_key)
+    resend_key_masked = f"re_...{resend_api_key[-6:]}" if len(resend_api_key) > 10 else ("Set" if resend_api_key else "Not set")
+    resend_emails_sent = await db.email_log.count_documents({"provider": "resend"})
+
     return {
         "gmail": {
             "connected": len(gmail_connected_users) > 0,
@@ -121,6 +129,14 @@ async def get_integrations_status():
                 "total": total_universities,
             },
         },
+        "resend": {
+            "connected": resend_connected,
+            "key_masked": resend_key_masked,
+            "sender_email": resend_sender,
+            "stats": {
+                "emails_sent": resend_emails_sent,
+            },
+        },
     }
 
 
@@ -130,3 +146,81 @@ async def disconnect_gmail(user_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Gmail connection not found for this user")
     return {"ok": True}
+
+
+# ── Resend Config ──
+
+from pydantic import BaseModel
+import asyncio
+
+
+class ResendConfigPayload(BaseModel):
+    api_key: str
+    sender_email: str = "onboarding@resend.dev"
+
+
+class ResendTestPayload(BaseModel):
+    to_email: str
+    subject: str = "CapyMatch Test Email"
+    body: str = "This is a test email from CapyMatch via Resend."
+
+
+@router.put("/resend/config")
+async def save_resend_config(payload: ResendConfigPayload):
+    """Save Resend API key and sender email in app_config."""
+    await db.app_config.update_one(
+        {"key": "resend"},
+        {"$set": {
+            "key": "resend",
+            "api_key": payload.api_key,
+            "sender_email": payload.sender_email,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True,
+    )
+    return {"ok": True, "message": "Resend configuration saved"}
+
+
+@router.post("/resend/test")
+async def test_resend(payload: ResendTestPayload):
+    """Send a test email via Resend to verify the API key works."""
+    import resend
+
+    config = await db.app_config.find_one({"key": "resend"}, {"_id": 0})
+    if not config or not config.get("api_key"):
+        raise HTTPException(400, "Resend API key not configured")
+
+    resend.api_key = config["api_key"]
+    sender = config.get("sender_email", "onboarding@resend.dev")
+
+    try:
+        params = {
+            "from": sender,
+            "to": [payload.to_email],
+            "subject": payload.subject,
+            "html": f"<div style='font-family:sans-serif;padding:20px;'><h2 style='color:#ff6a3d;'>CapyMatch</h2><p>{payload.body}</p><hr style='border:none;border-top:1px solid #eee;margin:20px 0'/><p style='font-size:12px;color:#999;'>Sent via Resend integration</p></div>",
+        }
+        email = await asyncio.to_thread(resend.Emails.send, params)
+        email_id = email.get("id") if isinstance(email, dict) else getattr(email, "id", str(email))
+
+        # Log it
+        await db.email_log.insert_one({
+            "provider": "resend",
+            "to": payload.to_email,
+            "subject": payload.subject,
+            "email_id": email_id,
+            "status": "sent",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+
+        return {"ok": True, "message": f"Test email sent to {payload.to_email}", "email_id": email_id}
+    except Exception as e:
+        logger.error(f"Resend test failed: {e}")
+        raise HTTPException(500, f"Failed to send test email: {str(e)}")
+
+
+@router.delete("/resend/config")
+async def delete_resend_config():
+    """Remove Resend configuration."""
+    await db.app_config.delete_one({"key": "resend"})
+    return {"ok": True, "message": "Resend configuration removed"}

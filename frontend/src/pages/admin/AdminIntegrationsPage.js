@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import {
   Mail, CreditCard, Brain, GraduationCap,
   RefreshCw, CheckCircle, XCircle, Loader2,
-  Globe, UserSearch, Link2
+  Globe, UserSearch, Link2, Send, Eye, EyeOff, Trash2, Save
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -52,6 +52,139 @@ function IntegrationCard({ icon: Icon, title, subtitle, color, status, children 
       </div>
       {children}
     </div>
+  );
+}
+
+function ResendCard({ data, onRefresh }) {
+  const [apiKey, setApiKey] = useState("");
+  const [senderEmail, setSenderEmail] = useState(data?.sender_email || "onboarding@resend.dev");
+  const [showKey, setShowKey] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSave = async () => {
+    if (!apiKey.trim()) { toast.error("API key is required"); return; }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/admin/integrations/resend/config`, {
+        api_key: apiKey.trim(),
+        sender_email: senderEmail.trim() || "onboarding@resend.dev",
+      }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      toast.success("Resend configuration saved");
+      setApiKey("");
+      onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to save");
+    } finally { setSaving(false); }
+  };
+
+  const handleTest = async () => {
+    if (!testEmail.trim()) { toast.error("Enter a test email address"); return; }
+    setTesting(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API}/admin/integrations/resend/test`, {
+        to_email: testEmail.trim(),
+      }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      toast.success(`Test email sent to ${testEmail}`);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to send test email");
+    } finally { setTesting(false); }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API}/admin/integrations/resend/config`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      toast.success("Resend configuration removed");
+      onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to remove");
+    } finally { setDeleting(false); }
+  };
+
+  return (
+    <IntegrationCard icon={Send} title="Resend" subtitle="Transactional email delivery" color="#000"
+      status={<StatusBadge connected={data?.connected} />}>
+      <StatRow label="API Key" value={data?.key_masked || "Not set"} />
+      <StatRow label="Sender" value={data?.sender_email || "Not set"} />
+      <StatRow label="Emails Sent" value={data?.stats?.emails_sent || 0} />
+
+      {/* Config form */}
+      <div className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--cm-border)" }}>
+        <div className="relative">
+          <input
+            type={showKey ? "text" : "password"}
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder={data?.connected ? "Enter new key to update..." : "re_..."}
+            className="w-full text-[11px] py-2 pl-3 pr-8 rounded-lg border outline-none"
+            style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+            data-testid="resend-api-key-input"
+          />
+          <button onClick={() => setShowKey(p => !p)} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5" style={{ color: "var(--cm-text-3)" }}>
+            {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+        <input
+          type="text"
+          value={senderEmail}
+          onChange={e => setSenderEmail(e.target.value)}
+          placeholder="Sender email (e.g. noreply@yourdomain.com)"
+          className="w-full text-[11px] py-2 px-3 rounded-lg border outline-none"
+          style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+          data-testid="resend-sender-input"
+        />
+        <div className="flex gap-2">
+          <button onClick={handleSave} disabled={saving || !apiKey.trim()}
+            className="flex-1 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+            style={{ backgroundColor: apiKey.trim() ? "rgba(16,185,129,0.08)" : "var(--cm-surface-2)", color: apiKey.trim() ? "#10b981" : "var(--cm-text-4)", border: `1px solid ${apiKey.trim() ? "rgba(16,185,129,0.2)" : "var(--cm-border)"}` }}
+            data-testid="resend-save-btn">
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+            Save Key
+          </button>
+          {data?.connected && (
+            <button onClick={handleDelete} disabled={deleting}
+              className="text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+              style={{ backgroundColor: "rgba(239,68,68,0.06)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.15)" }}
+              data-testid="resend-delete-btn">
+              {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Test email */}
+      {data?.connected && (
+        <div className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--cm-border)" }}>
+          <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>Send Test Email</p>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={testEmail}
+              onChange={e => setTestEmail(e.target.value)}
+              placeholder="recipient@example.com"
+              className="flex-1 text-[11px] py-2 px-3 rounded-lg border outline-none"
+              style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+              data-testid="resend-test-email-input"
+            />
+            <button onClick={handleTest} disabled={testing || !testEmail.trim()}
+              className="text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+              style={{ backgroundColor: "rgba(0,0,0,0.06)", color: "var(--cm-text)", border: "1px solid var(--cm-border)" }}
+              data-testid="resend-test-btn">
+              {testing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+              Test
+            </button>
+          </div>
+        </div>
+      )}
+    </IntegrationCard>
   );
 }
 
@@ -223,7 +356,7 @@ export default function AdminIntegrationsPage() {
           <StatRow label="Has Website URL" value={data.url_discovery.stats.has_website} total={data.url_discovery.stats.total} />
           <StatRow label="Missing URL" value={data.url_discovery.stats.missing_website} />
           <div className="mt-3 flex gap-2">
-            <button onClick={() => trigger("/admin/coach-scraper/discover-urls", "url-discover", setUrlStatus)}
+            <button onClick={() => trigger("/admin/integrations/scorecard/sync", "url-discover", setUrlStatus)}
               disabled={triggering["url-discover"]}
               className="flex-1 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
               style={{ backgroundColor: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}
@@ -243,6 +376,9 @@ export default function AdminIntegrationsPage() {
             </div>
           )}
         </IntegrationCard>
+
+        {/* Resend */}
+        <ResendCard data={data.resend} onRefresh={fetchData} />
 
       </div>
     </div>
