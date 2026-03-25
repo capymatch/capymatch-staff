@@ -20,6 +20,7 @@ COMPLETENESS_FIELDS = {
     "position": "Position",
     "grad_year": "Graduation Year",
     "height": "Height",
+    "weight": "Weight",
     "bio": "Bio",
     "video_link": "Highlight Video",
     "email": "Contact Email",
@@ -27,6 +28,11 @@ COMPLETENESS_FIELDS = {
     "city": "City",
     "state": "State",
     "gpa": "GPA",
+    "handed": "Handed",
+    "standing_reach": "Standing Reach",
+    "approach_touch": "Approach Touch",
+    "block_touch": "Block Touch",
+    "wingspan": "Wingspan",
 }
 
 MEASURABLE_FIELDS = [

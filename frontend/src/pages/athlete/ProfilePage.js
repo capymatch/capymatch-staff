@@ -16,6 +16,7 @@ const PROFILE_FIELDS = [
   { key: "position", label: "Position" },
   { key: "graduation_year", label: "Graduation Year" },
   { key: "height", label: "Height" },
+  { key: "weight", label: "Weight" },
   { key: "bio", label: "Bio" },
   { key: "video_link", label: "Highlights Video" },
   { key: "contact_email", label: "Email" },
@@ -23,6 +24,11 @@ const PROFILE_FIELDS = [
   { key: "city", label: "City" },
   { key: "state", label: "State" },
   { key: "gpa", label: "GPA" },
+  { key: "handed", label: "Handed" },
+  { key: "standing_reach", label: "Standing Reach" },
+  { key: "approach_touch", label: "Approach Touch" },
+  { key: "block_touch", label: "Block Touch" },
+  { key: "wingspan", label: "Wingspan" },
 ];
 
 function getCompleteness(profile) {
