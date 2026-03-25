@@ -64,7 +64,10 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
     };
     fetchUnread();
     const interval = setInterval(fetchUnread, 60000);
-    return () => clearInterval(interval);
+    // Re-fetch immediately when a message thread is opened
+    const onRead = () => setTimeout(fetchUnread, 500);
+    window.addEventListener("messages-read", onRead);
+    return () => { clearInterval(interval); window.removeEventListener("messages-read", onRead); };
   }, [user]);
 
   let navItems = isAthlete ? ATHLETE_NAV : [...STAFF_NAV, ...(isDirector ? DIRECTOR_EXTRA : [])];

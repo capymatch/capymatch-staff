@@ -415,6 +415,8 @@ export default function MessagesPage() {
     setThreads(prev => prev.map(t =>
       t.thread_id === threadId ? { ...t, unread_count: 0 } : t
     ));
+    // Signal sidebar to refresh unread badge immediately
+    window.dispatchEvent(new Event("messages-read"));
   }, []);
 
   if (loading) {
