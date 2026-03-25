@@ -628,18 +628,18 @@ export default function JourneyPage() {
 
           {/* RIGHT: Vertical stage rail */}
           {rail && (
-            <div className="hidden sm:flex flex-col items-start pt-1 pl-5 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: 210 }} data-testid="journey-header-rail">
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.30)", marginBottom: 18 }}>
+            <div className="hidden sm:flex flex-col items-start pt-1 pl-5 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: 160 }} data-testid="journey-header-rail">
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.30)", marginBottom: 14 }}>
                 Where you are
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col" style={{ position: "relative" }}>
                 {[
-                  { key: "added", label: "Added", desc: "" },
-                  { key: "outreach", label: "Outreach", desc: "Sending film & info" },
-                  { key: "in_conversation", label: "Talking", desc: "Active communication" },
-                  { key: "campus_visit", label: "Visit", desc: "Campus visit stage" },
-                  { key: "offer", label: "Offered", desc: "Evaluating offer terms" },
-                  { key: "committed", label: "Committed", desc: "" },
+                  { key: "added", label: "Added" },
+                  { key: "outreach", label: "Outreach" },
+                  { key: "in_conversation", label: "Talking" },
+                  { key: "campus_visit", label: "Visit" },
+                  { key: "offer", label: "Offer" },
+                  { key: "committed", label: "Committed" },
                 ].map((s, stIdx, arr) => {
                   const activeKey = rail.active || "added";
                   const activeIdx = arr.findIndex(x => x.key === activeKey);
@@ -647,50 +647,33 @@ export default function JourneyPage() {
                   const isPast = stIdx < activeIdx;
                   const isFuture = stIdx > activeIdx;
                   const isLast = stIdx === arr.length - 1;
-                  const statusLabel = isActive ? "Current Focus" : isPast ? "Completed" : "Next Up";
-                  const accent = isActive ? "#f97316" : isPast ? "#2ec4b6" : "rgba(255,255,255,0.12)";
+                  const dotColor = isActive ? "#2dd4bf" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.15)";
+                  const dotSize = isActive ? 12 : 8;
                   return (
-                    <div key={s.key} className="flex items-start gap-3 cursor-pointer" onClick={() => handleStageClick && handleStageClick(s.key)} data-testid={`header-rail-stage-${s.key}`}>
-                      {/* Track: icon + line */}
-                      <div className="flex flex-col items-center" style={{ width: 28, flexShrink: 0 }}>
+                    <div key={s.key} className="flex items-center gap-3 cursor-pointer" onClick={() => handleStageClick && handleStageClick(s.key)} data-testid={`header-rail-stage-${s.key}`}>
+                      <div className="flex flex-col items-center" style={{ width: 12, flexShrink: 0 }}>
                         <div style={{
-                          width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                          background: isActive ? "rgba(249,115,22,0.15)" : isPast ? "rgba(46,196,182,0.12)" : "rgba(255,255,255,0.03)",
-                          border: `1.5px solid ${isActive ? "rgba(249,115,22,0.5)" : isPast ? "rgba(46,196,182,0.35)" : "rgba(255,255,255,0.08)"}`,
-                          boxShadow: isActive ? "0 0 12px rgba(249,115,22,0.2)" : "none",
-                        }}>
-                          {isPast ? (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2ec4b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          ) : isActive ? (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                          ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                          )}
-                        </div>
+                          width: dotSize, height: dotSize, borderRadius: "50%",
+                          backgroundColor: dotColor,
+                          boxShadow: isActive ? "0 0 8px rgba(45,212,191,0.5)" : "none",
+                          transition: "all 0.2s ease",
+                        }} />
                         {!isLast && (
-                          <div style={{ width: 2, height: 28, background: isPast ? "rgba(46,196,182,0.20)" : isActive ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)" }} />
+                          <div style={{ width: 2, height: 20, backgroundColor: isPast ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)" }} />
                         )}
                       </div>
-                      {/* Content */}
-                      <div style={{ paddingTop: 2, paddingBottom: isLast ? 0 : 18 }}>
-                        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: accent, marginBottom: 2 }}>
-                          {statusLabel}
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: isActive ? 700 : 600, color: isFuture ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.85)", lineHeight: 1.3 }}>
-                          {s.label}
-                        </div>
-                        {isActive && s.desc && (
-                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2, lineHeight: 1.4 }}>{s.desc}</div>
-                        )}
+                      <div style={{
+                        fontSize: 14,
+                        fontWeight: isActive ? 700 : 500,
+                        color: isActive ? "#2dd4bf" : isPast ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.25)",
+                        lineHeight: 1,
+                        paddingBottom: isLast ? 0 : 14,
+                      }}>
+                        {s.label}
                       </div>
                     </div>
                   );
                 })}
-              </div>
-              {/* Trajectory */}
-              <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "rgba(255,255,255,0.40)" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2ec4b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                Trajectory: <strong style={{ color: "#2ec4b6", fontWeight: 700 }}>Rising</strong>
               </div>
             </div>
           )}
