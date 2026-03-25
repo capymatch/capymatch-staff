@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import {
   Mail, CreditCard, Brain, GraduationCap,
   RefreshCw, CheckCircle, XCircle, Loader2,
-  Globe, UserSearch, Link2, Send, Eye, EyeOff, Trash2, Save
+  Globe, UserSearch, Link2, Send, Eye, EyeOff, Trash2, Save,
+  Database, ArrowUpCircle
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -286,6 +287,149 @@ function ResendCard({ data, onRefresh }) {
   );
 }
 
+function MongoDBCard({ data, onRefresh }) {
+  const [connStr, setConnStr] = useState("");
+  const [dbName, setDbName] = useState("capymatch-prod");
+  const [showStr, setShowStr] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [migrateResult, setMigrateResult] = useState(null);
+
+  const handleSave = async () => {
+    if (!connStr.trim()) { toast.error("Connection string is required"); return; }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/admin/integrations/mongodb/config`, {
+        connection_string: connStr.trim(),
+        db_name: dbName.trim() || "capymatch-prod",
+      }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      toast.success("MongoDB production config saved");
+      setConnStr("");
+      onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to save");
+    } finally { setSaving(false); }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(`${API}/admin/integrations/mongodb/test`, {}, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      setTestResult(res.data);
+      toast.success("Connection successful!");
+    } catch (err) {
+      setTestResult({ ok: false, error: err.response?.data?.detail || "Connection failed" });
+      toast.error(err.response?.data?.detail || "Connection failed");
+    } finally { setTesting(false); }
+  };
+
+  const handleMigrate = async () => {
+    if (!window.confirm("This will copy dev data to production. Collections with existing data will be skipped. Continue?")) return;
+    setMigrating(true);
+    setMigrateResult(null);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(`${API}/admin/integrations/mongodb/migrate`, {}, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      setMigrateResult(res.data.results);
+      toast.success("Migration complete!");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Migration failed");
+    } finally { setMigrating(false); }
+  };
+
+  return (
+    <IntegrationCard icon={Database} title="MongoDB" subtitle="Production database" color="#00ed64"
+      status={<StatusBadge connected={data?.configured} />}>
+      <StatRow label="Host" value={data?.host || "Not set"} />
+      <StatRow label="Database" value={data?.db_name || "Not set"} />
+
+      <div className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--cm-border)" }}>
+        <div className="relative">
+          <input
+            type={showStr ? "text" : "password"}
+            value={connStr}
+            onChange={e => setConnStr(e.target.value)}
+            placeholder={data?.configured ? "Enter new connection string to update..." : "mongodb+srv://user:pass@cluster.mongodb.net/db"}
+            className="w-full text-[11px] py-2 pl-3 pr-8 rounded-lg border outline-none"
+            style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+            data-testid="mongodb-conn-string-input"
+          />
+          <button onClick={() => setShowStr(p => !p)} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5" style={{ color: "var(--cm-text-3)" }}>
+            {showStr ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+        <input
+          type="text"
+          value={dbName}
+          onChange={e => setDbName(e.target.value)}
+          placeholder="Database name"
+          className="w-full text-[11px] py-2 px-3 rounded-lg border outline-none"
+          style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+          data-testid="mongodb-db-name-input"
+        />
+        <div className="flex gap-2">
+          <button onClick={handleSave} disabled={saving || !connStr.trim()}
+            className="flex-1 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+            style={{ backgroundColor: connStr.trim() ? "rgba(0,237,100,0.08)" : "var(--cm-surface-2)", color: connStr.trim() ? "#00ed64" : "var(--cm-text-4)", border: `1px solid ${connStr.trim() ? "rgba(0,237,100,0.2)" : "var(--cm-border)"}` }}
+            data-testid="mongodb-save-btn">
+            {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+            Save
+          </button>
+          {data?.configured && (
+            <button onClick={handleTest} disabled={testing}
+              className="flex-1 text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+              style={{ backgroundColor: "rgba(0,237,100,0.06)", color: "#00ed64", border: "1px solid rgba(0,237,100,0.15)" }}
+              data-testid="mongodb-test-btn">
+              {testing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+              Test
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Test result */}
+      {testResult && (
+        <div className="mt-2 p-2 rounded-lg text-[10px]" style={{ backgroundColor: "var(--cm-surface-2)", color: testResult.ok ? "#00ed64" : "#ef4444" }}>
+          {testResult.ok ? (
+            <>MongoDB v{testResult.version} | {testResult.collections} collections: {(testResult.collection_names || []).join(", ") || "empty"}</>
+          ) : (
+            <>{testResult.error}</>
+          )}
+        </div>
+      )}
+
+      {/* Migrate */}
+      {data?.configured && (
+        <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cm-border)" }}>
+          <button onClick={handleMigrate} disabled={migrating}
+            className="w-full text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+            style={{ backgroundColor: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}
+            data-testid="mongodb-migrate-btn">
+            {migrating ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowUpCircle className="w-3 h-3" />}
+            Migrate Dev Data to Production
+          </button>
+          {migrateResult && (
+            <div className="mt-2 p-2 rounded-lg text-[10px] space-y-0.5" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>
+              {Object.entries(migrateResult).map(([k, v]) => (
+                <div key={k}><span className="font-semibold" style={{ color: "var(--cm-text-2)" }}>{k}:</span> {v}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </IntegrationCard>
+  );
+}
+
 export default function AdminIntegrationsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -473,6 +617,9 @@ export default function AdminIntegrationsPage() {
 
         {/* Resend */}
         <ResendCard data={data.resend} onRefresh={fetchData} />
+
+        {/* MongoDB Production */}
+        <MongoDBCard data={data.mongodb_prod} onRefresh={fetchData} />
 
       </div>
     </div>

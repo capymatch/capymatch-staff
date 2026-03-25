@@ -79,6 +79,20 @@ async def get_integrations_status():
     resend_key_masked = f"re_...{resend_api_key[-6:]}" if len(resend_api_key) > 10 else ("Set" if resend_api_key else "Not set")
     resend_emails_sent = await db.email_log.count_documents({"provider": "resend"})
 
+    # ── MongoDB Prod ──
+    mongo_config = await db.app_config.find_one({"key": "mongodb_prod"}, {"_id": 0})
+    mongo_uri = (mongo_config or {}).get("connection_string", "")
+    mongo_db_name = (mongo_config or {}).get("db_name", "")
+    mongo_configured = bool(mongo_uri and mongo_db_name)
+    mongo_host = ""
+    if mongo_uri:
+        try:
+            at_idx = mongo_uri.find("@")
+            if at_idx != -1:
+                mongo_host = mongo_uri[at_idx + 1:].split("/")[0].split("?")[0]
+        except Exception:
+            pass
+
     return {
         "gmail": {
             "connected": len(gmail_connected_users) > 0,
@@ -136,6 +150,11 @@ async def get_integrations_status():
             "stats": {
                 "emails_sent": resend_emails_sent,
             },
+        },
+        "mongodb_prod": {
+            "configured": mongo_configured,
+            "host": mongo_host,
+            "db_name": mongo_db_name,
         },
     }
 
@@ -273,3 +292,107 @@ async def delete_resend_config():
     """Remove Resend configuration."""
     await db.app_config.delete_one({"key": "resend"})
     return {"ok": True, "message": "Resend configuration removed"}
+
+
+# ── MongoDB Production Config ──
+
+class MongoDBProdPayload(BaseModel):
+    connection_string: str
+    db_name: str = "capymatch-prod"
+
+
+@router.put("/mongodb/config")
+async def save_mongodb_prod_config(payload: MongoDBProdPayload):
+    """Save production MongoDB connection string in app_config."""
+    if not payload.connection_string.strip():
+        raise HTTPException(400, "Connection string is required")
+    await db.app_config.update_one(
+        {"key": "mongodb_prod"},
+        {"$set": {
+            "key": "mongodb_prod",
+            "connection_string": payload.connection_string.strip(),
+            "db_name": payload.db_name.strip(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True,
+    )
+    return {"ok": True, "message": "MongoDB production config saved"}
+
+
+@router.post("/mongodb/test")
+async def test_mongodb_prod():
+    """Test connectivity to the production MongoDB."""
+    from motor.motor_asyncio import AsyncIOMotorClient
+
+    config = await db.app_config.find_one({"key": "mongodb_prod"}, {"_id": 0})
+    if not config or not config.get("connection_string"):
+        raise HTTPException(400, "MongoDB production connection string not configured")
+
+    uri = config["connection_string"]
+    db_name = config.get("db_name", "capymatch-prod")
+
+    try:
+        client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=10000)
+        info = await client.server_info()
+        target_db = client[db_name]
+        collections = await target_db.list_collection_names()
+        client.close()
+        return {
+            "ok": True,
+            "version": info.get("version", "?"),
+            "collections": len(collections),
+            "collection_names": collections[:20],
+        }
+    except Exception as e:
+        logger.error(f"MongoDB prod test failed: {e}")
+        raise HTTPException(500, f"Connection failed: {str(e)}")
+
+
+@router.post("/mongodb/migrate")
+async def migrate_to_prod():
+    """Migrate current dev data to production MongoDB."""
+    from motor.motor_asyncio import AsyncIOMotorClient
+
+    config = await db.app_config.find_one({"key": "mongodb_prod"}, {"_id": 0})
+    if not config or not config.get("connection_string"):
+        raise HTTPException(400, "MongoDB production connection not configured")
+
+    uri = config["connection_string"]
+    db_name = config.get("db_name", "capymatch-prod")
+
+    try:
+        prod_client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=10000)
+        prod_db = prod_client[db_name]
+
+        # Collections to migrate
+        collections_to_migrate = [
+            "users", "athletes", "programs", "interactions",
+            "university_knowledge_base", "coach_watch_alerts",
+            "app_config", "email_log", "subscriptions",
+        ]
+
+        results = {}
+        for coll_name in collections_to_migrate:
+            try:
+                docs = await db[coll_name].find({}).to_list(None)
+                if docs:
+                    # Remove _id to avoid conflicts
+                    for d in docs:
+                        d.pop("_id", None)
+                    # Check if already has data
+                    existing = await prod_db[coll_name].count_documents({})
+                    if existing > 0:
+                        results[coll_name] = f"skipped ({existing} existing docs)"
+                    else:
+                        await prod_db[coll_name].insert_many(docs)
+                        results[coll_name] = f"migrated {len(docs)} docs"
+                else:
+                    results[coll_name] = "empty (nothing to migrate)"
+            except Exception as e:
+                results[coll_name] = f"error: {str(e)}"
+
+        prod_client.close()
+        return {"ok": True, "results": results}
+    except Exception as e:
+        logger.error(f"Migration failed: {e}")
+        raise HTTPException(500, f"Migration failed: {str(e)}")
