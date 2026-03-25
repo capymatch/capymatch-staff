@@ -218,3 +218,42 @@ curl -X POST https://api.capymatch.com/api/auth/login \
 # Check Railway logs
 railway logs
 ```
+
+
+---
+
+## 9. Troubleshooting Railway Deployment
+
+### "Application not found" on Railway URL
+
+If `https://capymatch-staff.up.railway.app` returns `{"status":"error","code":404,"message":"Application not found"}`:
+
+1. **Check service is deployed**: Go to Railway Dashboard → Your Project → Service
+   - Look for a green "Active" deployment, not "Failed" or "Crashed"
+   - If "Failed": click the deployment to see build logs — likely a dependency issue
+
+2. **Check build logs**: Click on the latest deployment → "Build Logs"
+   - Common errors: `emergentintegrations` not found (fixed: `--extra-index-url` added to nixpacks.toml)
+   - `libmagic` not found (fixed: added `file` to nixPkgs and `libmagic1` to Dockerfile)
+
+3. **Verify the service has a public domain**:
+   - Railway Dashboard → Service → Settings → Networking
+   - Ensure "Generate Domain" is clicked (creates the `*.up.railway.app` URL)
+   - This default domain must be active before custom domains work
+
+4. **Re-deploy**: Push a new commit or click "Deploy" in Railway dashboard
+
+### SSL Certificate Not Provisioning for Custom Domain
+
+If `api.capymatch.com` shows "Validating domain ownership":
+
+1. **Verify DNS**: Run `dig api.capymatch.com CNAME` — should return `capymatch-staff.up.railway.app`
+2. **Wait**: SSL provisioning can take 10-30 minutes after DNS propagates
+3. **Remove & re-add**: If stuck >1 hour, remove the custom domain in Railway and re-add it
+4. **Check Railway status**: https://status.railway.app for platform outages
+
+### Common Railway Environment Issues
+
+- **PORT**: Railway injects a `PORT` env variable. Our Procfile/Dockerfile uses `${PORT:-8001}` to respect it. Do NOT hardcode port in Railway env vars.
+- **REDIS_URL**: If not using Railway Redis add-on, leave `REDIS_URL` empty or unset. The app gracefully falls back to DB-only mode.
+- **MONGO_URL encoding**: Special characters in password (like `^`, `#`) must be URL-encoded: `%5E` for `^`, `%23` for `#`

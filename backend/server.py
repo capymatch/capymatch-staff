@@ -225,6 +225,17 @@ async def root():
     return {"message": "CapyMatch Mission Control API"}
 
 
+@api_router.get("/health")
+async def health_check():
+    """Simple health endpoint for Railway / load balancer probes."""
+    try:
+        await db.command("ping")
+        db_ok = True
+    except Exception:
+        db_ok = False
+    return {"status": "ok" if db_ok else "degraded", "db": db_ok}
+
+
 @api_router.get("/cache/stats")
 async def cache_stats():
     """Cache observability endpoint — hit/miss rates, availability."""
