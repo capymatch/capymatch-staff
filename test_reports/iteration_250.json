@@ -1,0 +1,86 @@
+{
+  "summary": "Pre-production deployment smoke test PASSED. All critical flows verified: auth (athlete/director/platform_admin), mission control, athlete programs, coaching stability, Gmail status, admin integrations (Gmail, Stripe, Resend, MongoDB all connected), Stripe checkout. Fixed KeyError bug in athlete_tasks.py. No hardcoded preview URLs found in API responses.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/athlete/tasks",
+        "issue": "KeyError: 'flag_id' when coach_flags collection has records without flag_id field",
+        "priority": "FIXED",
+        "fix_applied": "Added null check for flag_id in athlete_tasks.py line 69"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_preproduction_smoke.py",
+    "/app/test_reports/pytest/pytest_preproduction_smoke.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend config.py: FRONTEND_URL properly configured from env, CORS origins correctly built",
+    "Backend admin_integrations.py: All integration statuses returned correctly (gmail, stripe, ai, resend, mongodb_prod)",
+    "Backend stripe_checkout.py: Checkout session creation working, returns Stripe checkout URL",
+    "Backend coaching_stability.py: Returns cached or on-demand scanned stability data",
+    "Frontend AdminIntegrationsPage.js: All integration cards display correctly with proper data-testid attributes",
+    "Frontend JourneyPage.js: Coaching stability badge displays correctly with 'Stable' status",
+    "Gmail redirect_uri uses FRONTEND_URL from config, not hardcoded"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_preproduction_smoke.py",
+    "/app/backend/routers/athlete_tasks.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 core tests passed)",
+    "frontend": "100% (5/5 UI tests passed)"
+  },
+  "test_credentials": {
+    "athlete_email": "emma.chen@athlete.capymatch.com",
+    "athlete_password": "athlete123",
+    "director_email": "director@capymatch.com",
+    "director_password": "director123",
+    "platform_admin_email": "douglas@capymatch.com",
+    "platform_admin_password": "capymatch2026",
+    "test_program_id": "cd5c0908-c3ea-49d1-8a5f-d57d18f32116"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pre-production smoke test complete. All critical paths verified for Vercel/Railway deployment. Backend integrations all connected: Gmail (database config), Stripe (test mode), AI/LLM, Resend, MongoDB (capymatch-prod.63nymfu.mongodb.net with 55 collections). Coaching stability feature working with real DuckDuckGo + AI analysis. Fixed minor bug in athlete_tasks.py (KeyError on missing flag_id).",
+  "tests_verified": {
+    "auth_athlete_login": {"status": "PASS", "details": "Returns token, refresh_token, user with role=athlete"},
+    "auth_director_login": {"status": "PASS", "details": "Returns token with role=director"},
+    "auth_platform_admin_login": {"status": "PASS", "details": "Returns token with role=platform_admin"},
+    "auth_refresh_token": {"status": "PASS", "details": "Exchanges refresh_token for new token pair"},
+    "auth_invalid_credentials": {"status": "PASS", "details": "Returns 401 for invalid credentials"},
+    "mission_control": {"status": "PASS", "details": "Returns dashboard data for athlete"},
+    "athlete_programs": {"status": "PASS", "details": "Returns program list"},
+    "coaching_stability": {"status": "PASS", "details": "Returns stability data with severity/change_type"},
+    "gmail_status": {"status": "PASS", "details": "Returns connected=false for test user"},
+    "admin_integrations": {"status": "PASS", "details": "Returns all integration statuses (gmail, stripe, ai, resend, mongodb_prod)"},
+    "gmail_oauth_config": {"status": "PASS", "details": "Returns configured=true"},
+    "mongodb_test": {"status": "PASS", "details": "Returns ok=true, version=8.0.20, 55 collections"},
+    "stripe_plans": {"status": "PASS", "details": "Returns 5 plans"},
+    "stripe_checkout": {"status": "PASS", "details": "Returns checkout URL and session_id"},
+    "gmail_connect_redirect": {"status": "PASS", "details": "Redirect URI uses FRONTEND_URL, not hardcoded"},
+    "frontend_login_page": {"status": "PASS", "details": "Login form loads with email/password inputs"},
+    "frontend_athlete_login": {"status": "PASS", "details": "Navigates to /board after successful login"},
+    "frontend_pipeline_page": {"status": "PASS", "details": "Shows school cards"},
+    "frontend_journey_page": {"status": "PASS", "details": "Shows Stanford University with coaching stability badge"},
+    "frontend_admin_integrations": {"status": "PASS", "details": "Shows Gmail, Stripe, Resend, MongoDB cards"}
+  },
+  "integration_status": {
+    "gmail": {"configured": true, "config_source": "database"},
+    "stripe": {"connected": true, "mode": "Test"},
+    "ai": {"connected": true, "provider": "Emergent LLM (Claude / GPT)"},
+    "resend": {"connected": true, "sender": "noreply@capymatch.com"},
+    "mongodb_prod": {"configured": true, "host": "capymatch-prod.63nymfu.mongodb.net", "db_name": "capymatch-prod", "collections": 55}
+  },
+  "mocked_apis": {
+    "note": "No APIs are mocked - all integrations are real (Gmail OAuth, Stripe test mode, Resend, MongoDB Atlas, Emergent LLM)"
+  }
+}

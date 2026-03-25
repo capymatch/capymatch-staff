@@ -67,6 +67,11 @@ async def get_tasks(current_user: dict = get_current_user_dep()):
     ).sort("created_at", -1).to_list(50)
 
     for f in flags:
+        # Skip flags without flag_id
+        flag_id = f.get("flag_id")
+        if not flag_id:
+            continue
+            
         due_label = ""
         days_diff = 999
         if f.get("due_date"):
@@ -89,7 +94,7 @@ async def get_tasks(current_user: dict = get_current_user_dep()):
             desc += f" — {f['note']}"
 
         tasks.append({
-            "task_id": f["flag_id"],
+            "task_id": flag_id,
             "type": "coach_flag",
             "source": "coach",
             "priority": "high",
@@ -102,7 +107,7 @@ async def get_tasks(current_user: dict = get_current_user_dep()):
             "days_diff": days_diff,
             "link": f"/pipeline/{f.get('program_id', '')}",
             "flagged_by_name": f.get("flagged_by_name", "Coach"),
-            "flag_id": f["flag_id"],
+            "flag_id": flag_id,
         })
 
     tasks.sort(key=lambda t: (0 if t.get("source") == "coach" else 1, t.get("days_diff") or 999))
