@@ -2,7 +2,7 @@
 
 **Version**: 1.0
 **Date**: March 23, 2026
-**App URL**: https://action-first-3.preview.emergentagent.com
+**App URL**: https://coaching-stability.preview.emergentagent.com
 
 ---
 

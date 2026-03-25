@@ -72,6 +72,7 @@ from routers.public_profile import router as public_profile_router
 from routers.youtube_feed import router as youtube_feed_router
 from routers.file_upload import router as file_upload_router
 from routers.club_plans import router as club_plans_router
+from routers.coaching_stability import router as coaching_stability_router
 
 logger = logging.getLogger(__name__)
 
@@ -309,6 +310,7 @@ api_router.include_router(loop_analytics_router)
 api_router.include_router(youtube_feed_router)
 api_router.include_router(file_upload_router)
 api_router.include_router(club_plans_router)
+api_router.include_router(coaching_stability_router)
 
 app.include_router(api_router)
 

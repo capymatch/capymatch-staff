@@ -1,124 +1,45 @@
-<analysis>**original_problem_statement**: The user initially requested performance improvements. The priority then shifted to implementing a subscription model, which was completed. The current session has been a series of rapid, iterative UI/UX refactors to implement and refine a consistent premium dark theme across the entire application. The user has been providing very specific, incremental feedback via images and text prompts to guide the visual and functional evolution of multiple pages, including dashboards, event pages, and athlete-facing journey and pipeline views. The core goal is to create a mission control feel that is highly action-oriented.
+<analysis>**original_problem_statement**: The user is rapidly polishing the application for production readiness. Focus has been on refining the Action-first UX on the Journey page (making emails pre-fill, refining layouts), fixing profile completion logic and validations, and permanently resolving environment stability issues. The current priority has shifted to implementing a net-new Coaching Stability feature that monitors university head coaches' job status via automated web search and AI analysis.
 
 **User's preferred language**: English
+*(INSTRUCT: Next agent must respond in English)*
 
-**what currently exists?**
-The application is a full-stack (React, FastAPI, MongoDB) athlete management tool named CapyMatch with an integrated Stripe subscription system. A premium dark theme ( background with red, orange, and teal accents) has been established and applied to most key pages, including the Mission Control dashboards (for both Director and Coach roles), the Athlete Dashboard, the Event Prep page, the School Pod page, the Athlete Pipeline, and the Athlete Journey page. Many of these pages have undergone multiple rounds of refinement to improve information hierarchy and create an action-first user experience, featuring elements like suggested messages and contextual CTAs. A recurring backend dependency issue () has a known fix.
+**what currently exists?** 
+CapyMatch is a full-stack (React, FastAPI, MongoDB) athlete management platform. It features a premium dark UI theme, Stripe subscription gating, an action-first athlete journey pipeline, and comprehensive coach-tracking tools. The app currently uses mock data but is preparing for a production database migration. A long-standing environment bug causing backend crashes () has been permanently patched.
 
 **Last working item**:
-    - Last item agent was working: Moving the carousel navigation arrows to the top right of the  component, as requested by the user.
+    - Last item agent was working: Implementing the Coaching Stability feature. The user requested a system that tracks if a university coach's position is stable (e.g., Stable, New Head Coach, Fired) and displays a badge on the Journey page coach card.
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? screenshot tool
+    - Which testing method agent to use? backend testing agent (for the scheduler/cron task) / screenshot tool (for frontend UI).
     - User Testing Done: N
+    - Reasoning: The agent successfully crawled the user's old GitHub repo, found the historical context, and agreed on a plan: A weekly automated backend job using Web Search + Emergent LLM Key to evaluate coaching stability, feed an API, and display a badge on the UI. The agent *just* pulled the  for the Emergent LLM Key but has not written the implementation code yet.
 
 **All Pending/In progress Issue list**:
-  - **Issue 1 (P0): Backend Stability -  error**
-     - **Description**: The backend service can crash due to a missing  shared library dependency. This is a known, recurring environment issue. If the backend is unresponsive or logs show , this fix is required.
-     - **Attempted fixes**: The issue is consistently resolved by running Get:1 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
-Hit:2 https://cloudfront.debian.net/debian bookworm InRelease
-Get:3 https://cloudfront.debian.net/debian bookworm-updates InRelease [55.4 kB]
-Get:4 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease [3005 B]
-Get:5 https://cloudfront.debian.net/debian-security bookworm-security InRelease [48.0 kB]
-Get:6 https://deb.nodesource.com/node_20.x nodistro/main arm64 Packages [13.7 kB]
-Get:7 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse amd64 Packages [109 kB]
-Get:8 https://cloudfront.debian.net/debian-security bookworm-security/main arm64 Packages [290 kB]
-Get:9 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0/multiverse arm64 Packages [107 kB]
-Fetched 638 kB in 1s (786 kB/s)
-Reading package lists...
-Reading package lists...
-Building dependency tree...
-Reading state information...
-Suggested packages:
-  file
-The following NEW packages will be installed:
-  libmagic-mgc libmagic1
-0 upgraded, 2 newly installed, 0 to remove and 11 not upgraded.
-Need to get 403 kB of archives.
-After this operation, 8587 kB of additional disk space will be used.
-Get:1 https://cloudfront.debian.net/debian bookworm/main arm64 libmagic-mgc arm64 1:5.44-3 [305 kB]
-Get:2 https://cloudfront.debian.net/debian bookworm/main arm64 libmagic1 arm64 1:5.44-3 [98.5 kB]
-Fetched 403 kB in 0s (2697 kB/s)
-Selecting previously unselected package libmagic-mgc.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 46697 files and directories currently installed.)
-Preparing to unpack .../libmagic-mgc_1%3a5.44-3_arm64.deb ...
-Unpacking libmagic-mgc (1:5.44-3) ...
-Selecting previously unselected package libmagic1:arm64.
-Preparing to unpack .../libmagic1_1%3a5.44-3_arm64.deb ...
-Unpacking libmagic1:arm64 (1:5.44-3) ...
-Setting up libmagic-mgc (1:5.44-3) ...
-Setting up libmagic1:arm64 (1:5.44-3) ...
-Processing triggers for libc-bin (2.36-9+deb12u13) ... and then restarting the backend service with backend: stopped
-backend: started.
-     - **Next debug checklist**:
-       1. Check backend logs: ==> /var/log/supervisor/backend.err.log <==
-WARNING:  WatchFiles detected changes in 'tests/test_match_drawer.py', 'tests/test_messaging_bug_fixes.py', 'tests/test_subscription_kanban.py', 'tests/test_unmocked_features.py', 'tests/test_env_config_hardening.py', 'tests/test_team_aware_invites.py'. Reloading...
-2026-03-24 23:36:11,409 - config - INFO - config: APP_ENV=development
-2026-03-24 23:36:11,409 - config - INFO - config: FRONTEND_URL=https://action-first-3.preview.emergentagent.com
-2026-03-24 23:36:11,409 - config - INFO - config: FRONTEND_HOSTNAME=action-first-3.preview.emergentagent.com
-2026-03-24 23:36:11,409 - config - INFO - config: ALLOWED_ORIGINS=['http://127.0.0.1:8001', 'http://127.0.0.1:3000', 'https://action-first-3.preview.emergentagent.com', 'http://localhost:3000', 'http://localhost:8001']
-2026-03-24 23:36:11,409 - config - INFO - config: ENABLE_HTTPS_REDIRECT=False
-2026-03-24 23:36:11,409 - config - INFO - config: ENABLE_SECURITY_HEADERS=True
-2026-03-24 23:36:11,409 - config - INFO - config: CACHE_ENABLED=True
-2026-03-24 23:36:11,409 - config - INFO - config: REDIS_URL=redis://localhost:6379/0
-2026-03-24 23:36:11,409 - config - INFO - config: CACHE_TTL_SECONDS=30
-INFO:     Started server process [409]
-INFO:     Waiting for application startup.
-2026-03-24 23:36:11,412 - services.cache - WARNING - cache: Redis unavailable (Error Multiple exceptions: [Errno 111] Connect call failed ('127.0.0.1', 6379), [Errno 99] Cannot assign requested address connecting to localhost:6379.), falling back to DB-only
-2026-03-24 23:36:11,440 - services.org_foundation - INFO - Organization already exists: CapyMatch Club
-2026-03-24 23:36:11,471 - services.org_foundation - INFO - Ensured athlete_user_links for 11 claimed athletes
-2026-03-24 23:36:11,475 - services.org_foundation - INFO - Org foundation verified: 6 orgs, 11 athletes, 24 users, 11 athlete_user_links
-2026-03-24 23:36:11,475 - services.startup - INFO - Users collection already has 25 docs — skipping seed.
-2026-03-24 23:36:11,475 - database - INFO - athletes already has 11 docs — skipping seed
-2026-03-24 23:36:11,491 - database - INFO - events already has 3 docs — skipping seed
-2026-03-24 23:36:11,495 - database - INFO - event_notes already has 16 docs — skipping seed
-2026-03-24 23:36:11,498 - database - INFO - recommendations already has 4 docs — skipping seed
-2026-03-24 23:36:11,502 - services.startup - WARNING - Not enough seed coaches to assign — skipping.
-2026-03-24 23:36:11,502 - database - INFO - Loaded 3 events from DB
-2026-03-24 23:36:11,503 - database - INFO - Loaded 16 event notes into memory across 2 events
-2026-03-24 23:36:11,503 - database - INFO - Loaded 4 recommendations from DB
-2026-03-24 23:36:11,514 - services.athlete_store - INFO - athlete_store: derived data refreshed — 9 interventions, 8 needing attention, 8 signals (cache=local-only)
-2026-03-24 23:36:11,525 - services.snapshots - INFO - program_snapshots already has 5 docs — skipping seed
-2026-03-24 23:36:11,541 - services.startup - INFO - MongoDB indexes ensured on all core collections
-2026-03-24 23:36:11,553 - services.startup - INFO - Knowledge Base: 1057 schools present (indexes ensured)
-2026-03-24 23:36:11,555 - services.startup - INFO - Persistence startup complete: 11 athletes, 3 events, 9 interventions recomputed
-2026-03-24 23:36:11,555 - migrations.schema_v2_signals - INFO - Schema V2 migration: starting...
-2026-03-24 23:36:11,562 - migrations.schema_v2_signals - INFO -   athletes: profile_completeness computed
-2026-03-24 23:36:11,576 - migrations.schema_v2_signals - INFO -   program_stage_history: indexes created
-2026-03-24 23:36:11,577 - migrations.schema_v2_signals - INFO -   program_signals: indexes created
-2026-03-24 23:36:11,578 - migrations.schema_v2_signals - INFO -   program_outcomes: indexes created
-2026-03-24 23:36:11,578 - migrations.schema_v2_signals - INFO -   intelligence_cache: indexes created
-2026-03-24 23:36:11,579 - migrations.schema_v2_signals - INFO -   program_metrics: indexes created
-2026-03-24 23:36:11,579 - migrations.schema_v2_signals - INFO - Schema V2 migration: complete
-2026-03-24 23:36:11,579 - server - INFO - Coach Watch background task started (7-day interval)
-2026-03-24 23:36:11,668 - services.storage - INFO - Object storage initialized
-INFO:     Application startup complete.
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [409]
-INFO:     Stopping reloader process [48]
-INFO:     Will watch for changes in these directories: ['/app/backend']
-INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     Started reloader process [546] using WatchFiles
-
-==> /var/log/supervisor/backend.out.log <== for the .
-       2. If the error is present, apply the known fix command.
-     - **Why fix this issue and what will be achieved with the fix?** This is a blocking issue. Fixing it makes the entire application's backend functional.
-     - **Status**: RESOLVED (but may recur)
-     - **Is recurring issue?** Y
-     - **Should Test frontend/backend/both after fix?** Backend (e.g., via  to a login endpoint).
+  Issue 1: Coaching Stability Background Job & UI (P0)
+     - Attempted fixes: Gathering playbook for Emergent LLM Key. (No implementation started yet).
+     - Next debug checklist: 
+       1. Create the backend weekly scheduler task (likely in  or ).
+       2. Implement the Web Search + AI parsing loop per school.
+       3. Update the knowledge base / program DB schema to store stability status.
+       4. Surface this data on the Frontend ( / Coach Contact card).
+     - Why fix this issue and what will be achieved with the fix? It is a highly requested feature from the user's legacy app, crucial for athletes to know if the coach they are talking to is still employed.
+     - Status: IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**:
-  - **Task 1: Move Pipeline Hero Carousel Arrows (P0)**
-     - **Where to resume**: Edit . The carousel arrows, currently rendered next to filter pills, need to be moved to the top right of the hero card, likely using absolute positioning.
-     - **What will be achieved with this?** Fulfills the user's latest UI request for the pipeline hero card.
-     - **Status**: IN PROGRESS
-     - **Should Test frontend/backend/both after fix?** Frontend (using screenshot tool).
-     - **Blocked on something**: Nothing.
+  Task 1: Build Coaching Stability Tracker (P0)
+     - Where to resume: You have the  output in context. Begin writing the backend service that executes a web search (e.g., [School] volleyball head coach news) and uses the Emergent LLM key to parse the result into a stability status. Schedule it weekly.
+     - What will be achieved with this? Fulfills user request for automated coach tracking.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on something: None.
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
+    - (P0) School Knowledge Base Migration: Migrate existing school data to the production DB.
+    - (P0) Real Email Delivery Integration: Connect a real email provider (SendGrid/Resend) or Gmail OAuth so the Send to coach modal actually sends emails.
     - (P1) CSV Import Tool: For bulk import of school/coach data.
     - (P1) Bulk Approve Mode: Allow selecting/approving multiple items at once in the Director Inbox.
     
@@ -130,98 +51,87 @@ INFO:     Started reloader process [546] using WatchFiles
     - (P2) Usage-based/metered billing for AI features.
 
 **Completed work in this session**
-- **UI Refactor - Full-App Visual Alignment**:
-  - **Event Prep Page ()**: Applied dark theme to the hero header and blockers card, reverted the rest to light theme, and fixed mobile padding issues.
-  - **Coach Dashboard ()**: Refactored the hero card twice to improve hierarchy, created an asymmetric layout to emphasize Need Attention, and added a Top Priority row with a clear CTA.
-  - **Athlete Dashboard ()**: Applied dark theme to the hero card and styled the athlete's name in orange.
-  - **SchoolPod Page ()**: Applied dark theme to the CRITICAL hero card.
-  - **Global Layout ()**: Adjusted global padding on mobile for an edge-to-edge card design.
-- **Action-First UX Transformation**:
-  - **Pipeline Hero ()**: Restyled and refined the layout to merge signals, create a conversational headline, elevate risk context, and improve the CTA.
-  - **Journey Page (, , )**: Transformed the task card into an execution card by detecting communication tasks and dynamically adding a Message to coach block with a pre-written, multi-paragraph reply. The primary CTA was changed to Send to coach →, while the Mark done action was de-emphasized.
-- **Bug Fix - Data Consistency**:
-  - Aligned the Coach Dashboard hero card's Top Priority to use the same data source () as the main inbox, fixing an issue where different athletes were shown as the top priority in different components.
-- **Code Hygiene**:
-  - Fixed a  ESLint warning in .
-  - Confirmed the unused  file was already deleted.
+- **Journey Card → Email Modal Integration (DONE)**: Connected the Send to coach → CTA to open the email modal completely pre-filled (suggested message, recipient, and auto-generated subject).
+- **Journey Card UI Refinements (DONE)**: Removed inline editing (textarea) to make the message a read-only preview. Adjusted mobile layout for better breathing room below the CTA. Increased contrast on Why this? text. Removed em-dashes from generated messages.
+- **Pipeline Hero UI Fix (DONE)**: Increased contrast for filter pills and carousel arrows.
+- **Mark Done Bug Fix (DONE)**: Fixed a bug where marking an action Done didn't log it to the athlete's timeline. Added DB insert to  collection and updated frontend state.
+- **Profile Completeness Fix (DONE)**: Fixed the completion ring showing 100% when measurables were empty. Added 6 measurable fields to  in backend and frontend.
+- **Profile Validations & Privacy (DONE)**: Removed SAT/ACT privacy restrictions (now visible to coaches). Added real-time numeric filtering and on-blur range validations (e.g., GPA max 5.0, SAT max 1600) to .
+- **Where You Are Rail Redesign (DONE)**: Replaced dot-timeline with a custom milestone-style vertical rail matching user's mockup.
+- **Coach Watch Card Fix (DONE)**: Fixed  disappearing when AI insights 404'd by providing fallback base data.
+- **Permanent Backend Crash Fix (DONE)**: Wrapped  in a  block in . The recurring  crash is now permanently resolved.
 
 **Earlier issues found/mentioned but not fixed**
-   - None. All known minor issues were resolved in this session.
+   - None.
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in this fork**: 
-  - **Recurrence count**: 5+
-  - **Status**: RESOLVED (but environment may lose the dependency again on a new fork). The fix is documented in the pending issues list.
+  - Issue recurrence in previous fork: 
+  - Recurrence count: 5+
+  - Status: RESOLVED PERMANENTLY. The agent applied a graceful fallback in  using declared MIME types if the system package is missing. This should no longer block the backend.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Iterative UI/UX Refinement**: The entire session was driven by rapid, incremental UI changes based on specific user feedback (often image-based). This involved modifying styling, hierarchy, spacing, and microcopy.
-- **Conditional Rendering for UX**: Heavy use of frontend logic (e.g., in ) to create an action-first experience. The UI dynamically changes based on task type (e.g., showing a Suggested Message block only for communication tasks).
-- **Component-Scoped Styling**: Extensive use of Tailwind CSS and inline styles to mix light and dark theme elements on the same page and apply highly specific visual treatments.
-- **Data Flow Correction**: Resolved a UX bug by tracing data sources for different components ( hero vs. ) and unifying them to a single source of truth, passed down via props.
+- **Action-First UX**: Heavy emphasis on pre-filling data (like the email modal) to remove user friction.
+- **Robust Forms**: Frontend uses real-time keystroke filtering (blocking letters in number fields) combined with on-blur validation messages.
+- **Automated Intelligence Pipelines**: Moving toward scheduled cron/background tasks combining Web Search + AI to enrich data (Coaching Stability feature).
 
 **key DB schema**
-  - No database schema changes were made in this session.
+  - : Timeline events for athletes (used for Mark done logging).
+  -  / : Needs update to accommodate the new  properties.
+
+**changes in tech stack**
+  - Introduction of automated background scheduled tasks utilizing Web Search and Emergent LLM keys.
 
 **All files of reference**
--  (Currently being worked on)
--  (Heavily modified)
--  (Heavily modified)
--  (Heavily modified)
--  (Heavily modified)
--  (Modified)
--  (Modified)
--  (Modified)
+-  (UI layout, Rail component)
+-  (Action-first card)
+-  (Validations)
+-  (libmagic patch location)
 
 **Areas that need refactoring**:
-- None. Minor issues from the previous session were resolved.
+- None explicitly required right now, but creating a dedicated  or similar for the Coaching Stability weekly job is recommended.
 
 **key api endpoints**
-- : Provides summary data for dashboards. Its priority data for the coach view has been superseded.
-- : Now serves as the single source of truth for the coach's highest priority items, feeding both the main hero card and the inbox list.
+- : Patched to update .
+- New API endpoint required: To serve Coaching Stability data to the frontend.
 
 **Critical Info for New Agent**
-- **User-Driven UI Iteration**: The user directs development with very specific, often image-based, feedback for UI changes. Expect to work in a rapid-fire loop: implement change, take screenshot, get feedback, repeat. The user is highly focused on visual hierarchy, spacing, and microcopy.
-- **Action-First UX Principle**: A key goal is to transform passive information cards into execution cards that help the user take the next step instantly. This is achieved through UI-level logic, such as showing suggested messages and contextual CTAs.
-- **Premium Dark Theme**: The established aesthetic is a dark theme ( bg) with colored accents (red for alerts, orange for names/secondary actions, teal for primary CTAs). New components should match this style.
-- **Backend Stability**: Be aware of the recurring  backend crash. If the API is unresponsive, check the backend logs for this  first and apply the known fix.
+- **Coaching Stability Feature Details**: The user chose Option A. You must build a **weekly automated background job** that uses Web Search to find coach news, passes it to the **Emergent LLM Key**, and determines if the coach is Stable, New Hire, etc. Display this as a badge on the  coach contact card.
+- **Emergent LLM Key**: You must strictly follow the playbook provided by  in the final messages of the history.
+- **Environment**: The  backend crash has been gracefully handled in code. You should not need to run Reading package lists...
+Building dependency tree...
+Reading state information...
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded. for it anymore.
 
 **documents and test reports created in this job**
 - 
--  (updated multiple times)
+- 
 
 **Last 10 User Messages and any pending HUMAN messages** 
-10. Refine the Journey message card with microcopy, spacing, and style tweaks. (Completed)
-9.  **Move the carousel arrows on the pipeline hero to the top right. (IN PROGRESS)**
-8.  Refine the Journey task card again to enhance its ready-to-send feel. (Completed)
-7.  Refine the Journey task card to be action-first with a suggested reply and split CTAs. (Completed)
-6.  Apply the new dark style to the Athlete's Journey page hero cards. (Completed)
-5.  Refine the Pipeline hero card for clarity and simplicity. (Completed)
-4.  Apply the new dark style to the Pipeline hero card. (Completed)
-3.  Change the athlete's name color to orange on the Athlete Dashboard. (Completed)
-2.  Apply the new dark style to the Athlete's Dashboard. (Completed)
-1.  Apply the new dark style to the SchoolPod's CRITICAL hero card. (Completed)
+1. (User) Asked where the coach watch feature went (provided screenshot).
+2. (User) Asked about the feature that checks if the coach's position is stable.
+3. (User) I think it is called Coach Watch in the old app.
+4. (User) Clarified that the feature used to watch university websites and news, there was a job to search the internet for that data.
+5. (User) Noted they cannot scrape Productive Recruit website anymore.
+6. (User) Selected Option A (Web search + AI analysis).
+7. (User) Finalized requirements: 1. Option A (Web search + AI), 2. Automated weekly, 3. Coaching Stability indicator on Journey page coach card, 4. Use Emergent LLM Key.
 
 **Project Health Check:**
-- **Broken**: None. The  issue is a recurring environmental problem, not broken application code.
-- **Mocked**: Backend data is generated by . The data is deterministic.
+- Broken: None.  backend crash fixed.
+- Mocked: Most backend data ().
 
 **3rd Party Integrations**
-- **OpenAI GPT-4o**: Uses Emergent LLM Key.
-- **Object Storage**: Uses internal  and Emergent LLM Key environment defaults.
-- **Stripe (Payments)**: **Active**. Integrated for club subscriptions.
+- **OpenAI GPT-4o**: Uses Emergent LLM Key. (Will be used for Coaching Stability).
+- **Web Search**: Required for Coaching Stability.
+- **Stripe (Payments)**: Active. Requires User API Key.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Once, for  changes, which passed)
+  - Testing agent used after significant changes: YES (Verified Email Modal data flow).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
 
-**Credentials to test flow:**
-- **Director:**  / 
-- **Coach:**  / 
-
 **What agent forgot to execute**
-- Nothing. The agent was highly responsive to the user's iterative requests and completed all specified tasks and fixes from the previous handoff.</analysis>
+- Nothing was forgotten. The agent gathered all requirements and the integration playbook for the Coaching Stability feature, and is perfectly positioned for the next fork to write the code.</analysis>

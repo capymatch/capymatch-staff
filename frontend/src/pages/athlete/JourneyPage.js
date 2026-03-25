@@ -9,6 +9,7 @@ import {
   Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
   Eye, Send, Share2,
   GitCompare, ChevronDown, ChevronUp, Lock, Flag, Check,
+  ShieldCheck, ShieldAlert, RefreshCw,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import {
@@ -54,6 +55,106 @@ function SchoolSocialLinks({ links }) {
         </a>
       ))}
     </span>
+  );
+}
+
+/* ── Coaching Stability Badge ── */
+const STABILITY_CONFIG = {
+  departure:        { label: "Coach Departed",   color: "#ef4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.25)",  Icon: ShieldAlert },
+  new_hire:         { label: "New Head Coach",   color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.25)", Icon: AlertCircle },
+  staff_change:     { label: "Staff Change",     color: "#f59e0b", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.25)", Icon: AlertCircle },
+  contract_update:  { label: "Contract Update",  color: "#3b82f6", bg: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.25)", Icon: Clock },
+  extension:        { label: "Stable (Extended)", color: "#22c55e", bg: "rgba(34,197,94,0.10)",  border: "rgba(34,197,94,0.25)",  Icon: ShieldCheck },
+  stable:           { label: "Stable",           color: "#22c55e", bg: "rgba(34,197,94,0.10)",  border: "rgba(34,197,94,0.25)",  Icon: ShieldCheck },
+};
+
+function CoachingStabilityBadge({ stability, programId, onRefreshed }) {
+  const [refreshing, setRefreshing] = useState(false);
+
+  if (!stability) return null;
+
+  const changeType = stability.change_type || "stable";
+  const config = STABILITY_CONFIG[changeType] || STABILITY_CONFIG.stable;
+  const BadgeIcon = config.Icon;
+
+  const handleRefresh = async (e) => {
+    e.stopPropagation();
+    setRefreshing(true);
+    try {
+      const res = await axios.post(`${API}/coaching-stability/${programId}/refresh`);
+      if (onRefreshed) onRefreshed(res.data?.stability || null);
+    } catch { /* silent */ }
+    setRefreshing(false);
+  };
+
+  return (
+    <div
+      className="rounded-xl border px-4 py-3"
+      style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
+      data-testid="coaching-stability-card"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
+          Coaching Stability
+        </h3>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="p-1 rounded transition-colors hover:bg-white/5"
+          style={{ color: "var(--cm-text-3)" }}
+          data-testid="coaching-stability-refresh-btn"
+        >
+          <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2.5 mb-2">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
+        >
+          <BadgeIcon className="w-4 h-4" style={{ color: config.color }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span
+            className="text-[11px] font-bold px-2 py-0.5 rounded-full inline-block"
+            style={{ color: config.color, backgroundColor: config.bg, border: `1px solid ${config.border}` }}
+            data-testid="coaching-stability-badge"
+          >
+            {config.label}
+          </span>
+          {stability.coach_name && (
+            <p className="text-[9px] mt-0.5 truncate" style={{ color: "var(--cm-text-3)" }}>
+              {stability.coach_name}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {stability.headline && (
+        <p className="text-[11px] font-medium mb-1" style={{ color: "var(--cm-text)" }} data-testid="coaching-stability-headline">
+          {stability.headline}
+        </p>
+      )}
+
+      {stability.summary && (
+        <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: "var(--cm-text-2)" }} data-testid="coaching-stability-summary">
+          {stability.summary}
+        </p>
+      )}
+
+      {stability.recommendation && (
+        <p className="text-[9px] leading-relaxed" style={{ color: "var(--cm-text-3)" }} data-testid="coaching-stability-recommendation">
+          {stability.recommendation}
+        </p>
+      )}
+
+      {stability.created_at && (
+        <p className="text-[8px] mt-2 opacity-50" style={{ color: "var(--cm-text-3)" }}>
+          Last checked: {new Date(stability.created_at).toLocaleDateString()}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -104,6 +205,9 @@ export default function JourneyPage() {
 
   // Coach Watch (real API)
   const [coachWatch, setCoachWatch] = useState(null);
+
+  // Coaching Stability
+  const [coachingStability, setCoachingStability] = useState(null);
 
   // Coach flags for this program
   const [coachFlags, setCoachFlags] = useState([]);
@@ -160,6 +264,11 @@ export default function JourneyPage() {
       // Coach Watch — new relationship state engine
       axios.get(`${API}/coach-watch/${programId}`)
         .then(r => setCoachWatch(r.data))
+        .catch(() => {});
+
+      // Coaching Stability — head coach job stability
+      axios.get(`${API}/coaching-stability/${programId}`)
+        .then(r => setCoachingStability(r.data?.stability || null))
         .catch(() => {});
 
       // Fetch coach flags for this program
@@ -782,6 +891,13 @@ export default function JourneyPage() {
             {/* Section 1: Unified Coach Watch V2 (Coach Watch + AI Insight) */}
             <CoachWatchCardV2 insight={autoInsight} loading={autoInsightLoading} coachWatch={coachWatch} />
 
+            {/* Section 1.5: Coaching Stability Badge */}
+            <CoachingStabilityBadge
+              stability={coachingStability}
+              programId={programId}
+              onRefreshed={setCoachingStability}
+            />
+
             {/* Section 2: Key Contacts (compact, max 2) */}
             <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="key-contacts-card">
               <div className="flex items-center justify-between mb-2.5">
@@ -835,9 +951,22 @@ export default function JourneyPage() {
                           <User className="w-3 h-3" style={{ color: statusColor }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <p className="text-[11px] font-semibold truncate" style={{ color: "var(--cm-text)" }}>{c.coach_name}</p>
                             <span className="text-[9px] flex-shrink-0" style={{ color: "var(--cm-text-3)" }}>{c.role || "Coach"}</span>
+                            {coachingStability && (
+                              <span
+                                className="text-[8px] font-bold px-1.5 py-px rounded-full flex-shrink-0"
+                                style={{
+                                  color: (STABILITY_CONFIG[coachingStability.change_type] || STABILITY_CONFIG.stable).color,
+                                  backgroundColor: (STABILITY_CONFIG[coachingStability.change_type] || STABILITY_CONFIG.stable).bg,
+                                  border: `1px solid ${(STABILITY_CONFIG[coachingStability.change_type] || STABILITY_CONFIG.stable).border}`,
+                                }}
+                                data-testid={`coach-stability-inline-${c.coach_id}`}
+                              >
+                                {(STABILITY_CONFIG[coachingStability.change_type] || STABILITY_CONFIG.stable).label}
+                              </span>
+                            )}
                           </div>
                           <p className="text-[9px] mt-0.5" style={{ color: statusColor }}>{statusLine}</p>
                           {c.email && (
