@@ -20,7 +20,7 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - Connected hero card's "Send to coach" CTA to the email modal with pre-filled subject, body, and recipient
 - Subject auto-generated from task context (e.g., "Following up — Marcus Johnson", "Campus visit — Athlete Name")
 - Message body pre-filled from the hero card's suggested message
-- Added inline editing ("Tap to edit") for the message block — edited version flows to the modal
+- Message block is read-only preview with "You can edit before sending" hint under CTA
 - Floating action bar "Email" button still opens clean (no pre-fill) modal
 - AI Draft and all existing modal features preserved
 
