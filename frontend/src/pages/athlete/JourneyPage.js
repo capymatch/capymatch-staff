@@ -70,6 +70,7 @@ const STABILITY_CONFIG = {
 
 function CoachingStabilityBadge({ stability, programId, onRefreshed }) {
   const [refreshing, setRefreshing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   if (!stability) return null;
 
@@ -93,6 +94,7 @@ function CoachingStabilityBadge({ stability, programId, onRefreshed }) {
       style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
       data-testid="coaching-stability-card"
     >
+      {/* Collapsed: header + badge + learn more */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
           Coaching Stability
@@ -108,51 +110,56 @@ function CoachingStabilityBadge({ stability, programId, onRefreshed }) {
         </button>
       </div>
 
-      <div className="flex items-center gap-2.5 mb-2">
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
-        >
-          <BadgeIcon className="w-4 h-4" style={{ color: config.color }} />
-        </div>
-        <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: config.bg, border: `1px solid ${config.border}` }}
+          >
+            <BadgeIcon className="w-4 h-4" style={{ color: config.color }} />
+          </div>
           <span
-            className="text-[11px] font-bold px-2 py-0.5 rounded-full inline-block"
+            className="text-[11px] font-bold px-2 py-0.5 rounded-full"
             style={{ color: config.color, backgroundColor: config.bg, border: `1px solid ${config.border}` }}
             data-testid="coaching-stability-badge"
           >
             {config.label}
           </span>
-          {stability.coach_name && (
-            <p className="text-[9px] mt-0.5 truncate" style={{ color: "var(--cm-text-3)" }}>
-              {stability.coach_name}
+        </div>
+        <button
+          onClick={() => setExpanded(prev => !prev)}
+          className="text-[10px] font-semibold transition-colors hover:underline"
+          style={{ color: "var(--cm-text-3)" }}
+          data-testid="coaching-stability-learn-more"
+        >
+          {expanded ? "Show less" : "Learn more"}
+        </button>
+      </div>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cm-border)" }}>
+          {stability.headline && (
+            <p className="text-[11px] font-medium mb-1" style={{ color: "var(--cm-text)" }} data-testid="coaching-stability-headline">
+              {stability.headline}
+            </p>
+          )}
+          {stability.summary && (
+            <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: "var(--cm-text-2)" }} data-testid="coaching-stability-summary">
+              {stability.summary}
+            </p>
+          )}
+          {stability.recommendation && (
+            <p className="text-[9px] leading-relaxed" style={{ color: "var(--cm-text-3)" }} data-testid="coaching-stability-recommendation">
+              {stability.recommendation}
+            </p>
+          )}
+          {stability.created_at && (
+            <p className="text-[8px] mt-2 opacity-50" style={{ color: "var(--cm-text-3)" }}>
+              Last checked: {new Date(stability.created_at).toLocaleDateString()}
             </p>
           )}
         </div>
-      </div>
-
-      {stability.headline && (
-        <p className="text-[11px] font-medium mb-1" style={{ color: "var(--cm-text)" }} data-testid="coaching-stability-headline">
-          {stability.headline}
-        </p>
-      )}
-
-      {stability.summary && (
-        <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: "var(--cm-text-2)" }} data-testid="coaching-stability-summary">
-          {stability.summary}
-        </p>
-      )}
-
-      {stability.recommendation && (
-        <p className="text-[9px] leading-relaxed" style={{ color: "var(--cm-text-3)" }} data-testid="coaching-stability-recommendation">
-          {stability.recommendation}
-        </p>
-      )}
-
-      {stability.created_at && (
-        <p className="text-[8px] mt-2 opacity-50" style={{ color: "var(--cm-text-3)" }}>
-          Last checked: {new Date(stability.created_at).toLocaleDateString()}
-        </p>
       )}
     </div>
   );
