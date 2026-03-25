@@ -202,16 +202,16 @@ export function PrimaryHeroCard({ hero, program }) {
             style={{
               opacity: whyVisible ? 1 : 0,
               transform: whyVisible ? "translateY(0)" : "translateY(4px)",
-              borderTop: "1px solid rgba(255,255,255,0.04)",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
               paddingTop: 12,
             }}
             data-testid="hero-why-this">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-0.5"
-              style={{ color: "rgba(255,255,255,0.20)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1"
+              style={{ color: "rgba(255,255,255,0.40)" }}>
               Why this?
             </p>
-            <p className="text-[11px] leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.30)" }}>
+            <p className="text-[11px] sm:text-[12px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.50)" }}>
               {hero.whyThis.join(" \u2022 ")}
             </p>
           </div>
