@@ -148,10 +148,59 @@ async def disconnect_gmail(user_id: str):
     return {"ok": True}
 
 
-# ── Resend Config ──
+# ── Gmail OAuth Config (Admin) ──
 
 from pydantic import BaseModel
 import asyncio
+
+
+class GmailOAuthConfigPayload(BaseModel):
+    client_id: str
+    client_secret: str
+    redirect_uri: str = ""
+
+
+@router.put("/gmail/oauth-config")
+async def save_gmail_oauth_config(payload: GmailOAuthConfigPayload):
+    """Save Gmail OAuth Client ID, Secret, and Redirect URI in app_config."""
+    if not payload.client_id.strip() or not payload.client_secret.strip():
+        raise HTTPException(400, "client_id and client_secret are required")
+    await db.app_config.update_one(
+        {"key": "gmail_oauth"},
+        {"$set": {
+            "key": "gmail_oauth",
+            "client_id": payload.client_id.strip(),
+            "client_secret": payload.client_secret.strip(),
+            "redirect_uri": payload.redirect_uri.strip() or os.environ.get("GMAIL_REDIRECT_URI", ""),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True,
+    )
+    # Clear the cached config in the gmail router
+    try:
+        from routers.athlete_gmail import _cached_gmail_creds
+        _cached_gmail_creds["data"] = None
+        _cached_gmail_creds["fetched_at"] = 0
+    except Exception:
+        pass
+    return {"ok": True, "client_id_prefix": payload.client_id[:20] + "..."}
+
+
+@router.get("/gmail/oauth-config")
+async def get_gmail_oauth_config():
+    """Get current Gmail OAuth config (masked secrets)."""
+    doc = await db.app_config.find_one({"key": "gmail_oauth"}, {"_id": 0})
+    if not doc:
+        return {"configured": False}
+    return {
+        "configured": True,
+        "client_id_prefix": doc.get("client_id", "")[:20] + "..." if doc.get("client_id") else "",
+        "redirect_uri": doc.get("redirect_uri", ""),
+        "updated_at": doc.get("updated_at", ""),
+    }
+
+
+# ── Resend Config ──
 
 
 class ResendConfigPayload(BaseModel):

@@ -55,6 +55,104 @@ function IntegrationCard({ icon: Icon, title, subtitle, color, status, children 
   );
 }
 
+function GmailConfigCard({ data, onRefresh }) {
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [redirectUri, setRedirectUri] = useState("https://app.capymatch.com/api/gmail/callback");
+  const [showSecret, setShowSecret] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${API}/admin/integrations/gmail/oauth-config`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.data?.redirect_uri) setRedirectUri(res.data.redirect_uri);
+      } catch { /* ignore */ }
+      setLoadingConfig(false);
+    };
+    loadConfig();
+  }, []);
+
+  const handleSave = async () => {
+    if (!clientId.trim() || !clientSecret.trim()) { toast.error("Client ID and Secret are required"); return; }
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API}/admin/integrations/gmail/oauth-config`, {
+        client_id: clientId.trim(),
+        client_secret: clientSecret.trim(),
+        redirect_uri: redirectUri.trim(),
+      }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      toast.success("Gmail OAuth config saved");
+      setClientId("");
+      setClientSecret("");
+      onRefresh();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to save");
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <IntegrationCard icon={Mail} title="Gmail" subtitle="Email sync & inbox intelligence" color="#ea4335"
+      status={<StatusBadge connected={data?.configured} />}>
+      <StatRow label="Connected Users" value={data?.total_connected || 0} />
+      <StatRow label="Config Source" value={data?.config_source || "none"} />
+
+      <div className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--cm-border)" }}>
+        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>
+          Google OAuth Credentials
+        </p>
+        <input
+          type="text"
+          value={clientId}
+          onChange={e => setClientId(e.target.value)}
+          placeholder={data?.configured ? "Enter new Client ID to update..." : "Google OAuth Client ID"}
+          className="w-full text-[11px] py-2 px-3 rounded-lg border outline-none"
+          style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+          data-testid="gmail-client-id-input"
+        />
+        <div className="relative">
+          <input
+            type={showSecret ? "text" : "password"}
+            value={clientSecret}
+            onChange={e => setClientSecret(e.target.value)}
+            placeholder={data?.configured ? "Enter new Client Secret to update..." : "Google OAuth Client Secret"}
+            className="w-full text-[11px] py-2 pl-3 pr-8 rounded-lg border outline-none"
+            style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+            data-testid="gmail-client-secret-input"
+          />
+          <button onClick={() => setShowSecret(p => !p)} className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5" style={{ color: "var(--cm-text-3)" }}>
+            {showSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+        <input
+          type="text"
+          value={redirectUri}
+          onChange={e => setRedirectUri(e.target.value)}
+          placeholder="https://app.capymatch.com/api/gmail/callback"
+          className="w-full text-[11px] py-2 px-3 rounded-lg border outline-none"
+          style={{ backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }}
+          data-testid="gmail-redirect-uri-input"
+        />
+        <p className="text-[9px] leading-relaxed" style={{ color: "var(--cm-text-4)" }}>
+          Add this redirect URI in Google Cloud Console &rarr; Credentials &rarr; OAuth Client &rarr; Authorized redirect URIs
+        </p>
+        <button onClick={handleSave} disabled={saving || !clientId.trim() || !clientSecret.trim()}
+          className="w-full text-[10px] font-bold py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1"
+          style={{ backgroundColor: clientId.trim() && clientSecret.trim() ? "rgba(234,67,53,0.08)" : "var(--cm-surface-2)", color: clientId.trim() && clientSecret.trim() ? "#ea4335" : "var(--cm-text-4)", border: `1px solid ${clientId.trim() && clientSecret.trim() ? "rgba(234,67,53,0.2)" : "var(--cm-border)"}` }}
+          data-testid="gmail-save-btn">
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          Save Gmail OAuth Config
+        </button>
+      </div>
+    </IntegrationCard>
+  );
+}
+
 function ResendCard({ data, onRefresh }) {
   const [apiKey, setApiKey] = useState("");
   const [senderEmail, setSenderEmail] = useState(data?.sender_email || "onboarding@resend.dev");
@@ -263,11 +361,7 @@ export default function AdminIntegrationsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Gmail */}
-        <IntegrationCard icon={Mail} title="Gmail" subtitle="Email sync & inbox intelligence" color="#ea4335"
-          status={<StatusBadge connected={data.gmail.configured} />}>
-          <StatRow label="Connected Users" value={data.gmail.total_connected} />
-          <StatRow label="Config Source" value={data.gmail.config_source} />
-        </IntegrationCard>
+        <GmailConfigCard data={data.gmail} onRefresh={fetchData} />
 
         {/* Stripe */}
         <IntegrationCard icon={CreditCard} title="Stripe" subtitle={`Mode: ${data.stripe.mode}`} color="#635bff"
