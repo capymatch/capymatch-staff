@@ -117,6 +117,9 @@ export default function JourneyPage() {
       await axios.patch(`${API}/athletes/me/assigned-actions/${actionId}/complete`);
       toast.success("Marked as done!");
       setAssignedActions(prev => prev.filter(a => a.id !== actionId));
+      // Refresh timeline so the completion shows up
+      const jRes = await axios.get(`${API}/athlete/programs/${programId}/journey`);
+      setTimeline(jRes.data.timeline || []);
     } catch { toast.error("Failed to mark as done"); }
   };
 

@@ -16,6 +16,11 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - Moved carousel navigation arrows (prev/next + counter) from the top bar row (alongside filter pills) to an absolute-positioned top-right corner of the hero card in `PipelineHero.js`
 - Filter pills remain in the top bar; arrows float independently at the top right
 
+### Bug Fix — "Mark Done" Now Logs to Journey Timeline (Mar 25, 2026)
+- Fixed: clicking "Mark done" on a coach task hero card now inserts a completion event into the `interactions` collection (with correct `tenant_id` resolved from athlete record)
+- Also logs to `pod_action_events` for the coach-facing timeline
+- Frontend refreshes timeline data after marking done so the event appears immediately
+
 ### Journey Card → Email Modal Integration (Mar 25, 2026)
 - Connected hero card's "Send to coach" CTA to the email modal with pre-filled subject, body, and recipient
 - Subject auto-generated from task context (e.g., "Following up — Marcus Johnson", "Campus visit — Athlete Name")

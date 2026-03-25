@@ -1124,12 +1124,57 @@ async def complete_my_assigned_action(action_id: str, current_user: dict = get_c
     """Athlete marks a coach-assigned action as completed."""
     athlete_id = current_user.get("athlete_id", current_user.get("id", ""))
     now = datetime.now(timezone.utc).isoformat()
-    result = await db.pod_actions.update_one(
+
+    # Fetch action details before updating so we can log them
+    action = await db.pod_actions.find_one(
         {"id": action_id, "athlete_id": athlete_id, "assigned_to_athlete": True},
+        {"_id": 0},
+    )
+    if not action:
+        raise HTTPException(404, "Action not found")
+
+    result = await db.pod_actions.update_one(
+        {"id": action_id},
         {"$set": {"status": "completed", "completed_at": now, "completed_by": "athlete"}},
     )
     if result.modified_count == 0:
         raise HTTPException(404, "Action not found")
+
+    # Resolve tenant_id from athlete record for timeline
+    athlete_doc = await db.athletes.find_one(
+        {"user_id": current_user["id"]}, {"_id": 0, "tenant_id": 1}
+    )
+    tenant_id = (athlete_doc or {}).get("tenant_id", "")
+
+    # Log to journey timeline (interactions collection) so athlete sees it
+    task_title = action.get("title", "Coach task")
+    program_id = action.get("program_id", "")
+    await db.interactions.insert_one({
+        "interaction_id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "program_id": program_id,
+        "athlete_id": athlete_id,
+        "type": "flag_completed",
+        "university_name": action.get("school_name", ""),
+        "notes": f"Completed: {task_title}",
+        "outcome": "completed",
+        "date_time": now,
+        "created_at": now,
+        "created_by": athlete_id,
+        "created_by_name": current_user.get("name", "Athlete"),
+    })
+
+    # Log to pod_action_events for coach-facing timeline
+    await db.pod_action_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "athlete_id": athlete_id,
+        "type": "action_completed",
+        "description": f'Athlete completed "{task_title}"',
+        "actor": current_user.get("name", "Athlete"),
+        "action_id": action_id,
+        "created_at": now,
+    })
+
     from services.athlete_store import recompute_derived_data
     await recompute_derived_data()
     return {"status": "completed", "completed_at": now}
