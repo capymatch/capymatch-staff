@@ -43,22 +43,32 @@ function Skeleton({ className }) {
   );
 }
 
-export default function CoachWatchCardV2({ insight, loading }) {
+export default function CoachWatchCardV2({ insight, loading, coachWatch }) {
   const [visible, setVisible] = useState(false);
   const [aiVisible, setAiVisible] = useState(false);
 
+  // Build effective data — prefer autoInsight, fall back to coachWatch
+  const effective = insight || (coachWatch ? {
+    state: coachWatch.state || "no_signals",
+    confidence: coachWatch.confidenceLevel || "medium",
+    headline: coachWatch.headline || coachWatch.summary || "Coach Watch",
+    recommended_action_text: coachWatch.recommendedAction || coachWatch.whyThisMatters || "",
+    signals: coachWatch.whyLine ? [coachWatch.whyLine] : [],
+    ai: null,
+  } : null);
+
   useEffect(() => {
-    if (insight && !loading) {
+    if (effective && !loading) {
       const t1 = setTimeout(() => setVisible(true), 50);
       const t2 = setTimeout(() => setAiVisible(true), 200);
       return () => { clearTimeout(t1); clearTimeout(t2); };
     }
     setVisible(false);
     setAiVisible(false);
-  }, [insight, loading]);
+  }, [effective, loading]);
 
-  const chip = STATE_CHIP[insight?.state] || STATE_CHIP.no_signals;
-  const conf = CONFIDENCE_META[insight?.confidence] || CONFIDENCE_META.low;
+  const chip = STATE_CHIP[effective?.state] || STATE_CHIP.no_signals;
+  const conf = CONFIDENCE_META[effective?.confidence] || CONFIDENCE_META.low;
   const ConfIcon = conf.Icon;
 
   /* Loading skeleton */
@@ -81,7 +91,7 @@ export default function CoachWatchCardV2({ insight, loading }) {
     );
   }
 
-  if (!insight) return null;
+  if (!effective) return null;
 
   return (
     <div
@@ -111,44 +121,48 @@ export default function CoachWatchCardV2({ insight, loading }) {
 
       {/* Row 2: Headline */}
       <h3 className="text-[16px] font-semibold mb-2" style={{ color: "var(--cm-text)" }} data-testid="cw2-headline">
-        {insight.headline}
+        {effective.headline}
       </h3>
 
       {/* Row 3: Recommended Action */}
-      <div className="flex items-center gap-2 mb-3" data-testid="cw2-action">
-        <ActionIcon text={insight.recommended_action_text} />
-        <p className="text-[12px] font-semibold" style={{ color: "var(--cm-text)" }}>
-          <span className="font-normal" style={{ color: "var(--cm-text-3)" }}>Recommended: </span>
-          {insight.recommended_action_text}
-        </p>
-      </div>
+      {effective.recommended_action_text && (
+        <div className="flex items-center gap-2 mb-3" data-testid="cw2-action">
+          <ActionIcon text={effective.recommended_action_text} />
+          <p className="text-[12px] font-semibold" style={{ color: "var(--cm-text)" }}>
+            <span className="font-normal" style={{ color: "var(--cm-text-3)" }}>Recommended: </span>
+            {effective.recommended_action_text}
+          </p>
+        </div>
+      )}
 
       {/* Divider */}
       <div className="mb-3" style={{ borderTop: "1px solid var(--cm-border)" }} />
 
-      {/* Row 4: AI Insight */}
-      <div
-        className="transition-all duration-500"
-        style={{
-          opacity: aiVisible ? 1 : 0,
-          filter: aiVisible ? "blur(0px)" : "blur(4px)",
-        }}
-        data-testid="cw2-ai-insight"
-      >
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <Sparkles className="w-3 h-3 text-[#1a8a80]" />
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1a8a80" }}>AI Insight</span>
+      {/* Row 4: AI Insight (only when available) */}
+      {effective.ai?.insight && (
+        <div
+          className="transition-all duration-500"
+          style={{
+            opacity: aiVisible ? 1 : 0,
+            filter: aiVisible ? "blur(0px)" : "blur(4px)",
+          }}
+          data-testid="cw2-ai-insight"
+        >
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Sparkles className="w-3 h-3 text-[#1a8a80]" />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1a8a80" }}>AI Insight</span>
+          </div>
+          <p className="text-[11.5px] leading-relaxed mb-2" style={{ color: "var(--cm-text-2)" }}>
+            {effective.ai.insight}
+          </p>
         </div>
-        <p className="text-[11.5px] leading-relaxed mb-2" style={{ color: "var(--cm-text-2)" }}>
-          {insight.ai?.insight}
-        </p>
-      </div>
+      )}
 
       {/* Row 5: Why signals */}
-      {insight.signals?.length > 0 && (
+      {effective.signals?.length > 0 && (
         <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }} data-testid="cw2-signals">
           <span className="font-semibold">Why: </span>
-          {insight.signals.join(" \u2022 ")}
+          {effective.signals.join(" \u2022 ")}
         </p>
       )}
     </div>

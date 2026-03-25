@@ -780,7 +780,7 @@ export default function JourneyPage() {
           {/* RIGHT: Sidebar — Coach Watch Intelligence Layer */}
           <div className="space-y-5">
             {/* Section 1: Unified Coach Watch V2 (Coach Watch + AI Insight) */}
-            <CoachWatchCardV2 insight={autoInsight} loading={autoInsightLoading} />
+            <CoachWatchCardV2 insight={autoInsight} loading={autoInsightLoading} coachWatch={coachWatch} />
 
             {/* Section 2: Key Contacts (compact, max 2) */}
             <div className="rounded-xl border px-4 py-3" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="key-contacts-card">
