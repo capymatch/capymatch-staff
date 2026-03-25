@@ -4,62 +4,64 @@
 CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for college-bound student-athletes. The platform helps athletes manage their recruiting pipeline, track coach engagement, and make data-driven decisions about which schools to pursue.
 
 ## Core Architecture
-- **Frontend**: React (CRA) + TailwindCSS + Shadcn/UI
-- **Backend**: FastAPI + MongoDB (Motor async driver)
+- **Frontend**: React (CRA) + TailwindCSS + Shadcn/UI → **Vercel** (app.capymatch.com)
+- **Backend**: FastAPI + MongoDB (Motor async driver) → **Railway** (api.capymatch.com)
+- **Database**: MongoDB Atlas (capymatch-prod.63nymfu.mongodb.net)
 - **AI**: Claude Sonnet via Emergent LLM Key
 - **Auth**: JWT-based custom authentication (access + refresh tokens)
-- **Data Layer**: Direct MongoDB queries (no in-memory cache) + TTL-cached derived data
 
 ## What's Been Implemented
 
+### Production Deployment Prep (Mar 25, 2026)
+- Created `DEPLOYMENT.md` with full Vercel + Railway deployment guide
+- Created `.env.production` templates for backend and frontend
+- Created `Procfile` for Railway
+- Audited codebase: no hardcoded preview URLs in source code
+- CORS properly reads from env vars for production
+- Pre-production smoke test: 100% pass (17/17 tests)
+- Fixed minor KeyError bug in `athlete_tasks.py`
+
+### MongoDB Production Setup (Mar 25, 2026)
+- Connected to Atlas cluster `capymatch-prod.63nymfu.mongodb.net` (v8.0.20)
+- Migrated all 69 collections from dev to production
+- Added MongoDB admin card with Test + Migrate buttons
+
+### Resend Email Integration (Mar 25, 2026)
+- Admin UI for API key management, test email sending
+- Config stored in MongoDB `app_config`, not .env
+- Verified: emails delivered successfully
+
+### Gmail OAuth Admin Config (Mar 25, 2026)
+- Admin UI for Client ID, Secret, Redirect URI
+- Config stored in DB for environment portability
+- Production redirect: `https://api.capymatch.com/api/gmail/callback`
+
 ### Coaching Stability Feature (Mar 25, 2026)
-- **Backend**: New `/api/coaching-stability/{program_id}` endpoint that returns coach job stability for a university
-- **Backend**: `/api/coaching-stability/{program_id}/refresh` to force re-scan
-- **AI Pipeline**: Uses DuckDuckGo web search to find coaching news + Claude Sonnet (Emergent LLM Key) to analyze results
-- **Caching**: Results cached in `coach_watch_alerts` MongoDB collection for 7 days
-- **Frontend**: Coaching Stability card in Journey page right sidebar showing:
-  - Color-coded badge: green (Stable/Extended), yellow (New Hire/Staff Change), red (Departed)
-  - Headline, summary, and recommendation text
-  - Refresh button for on-demand re-scan
-  - Inline mini-badge on each coach contact card
-- **Background Job**: Weekly automated scan (`coach_watch_weekly_scan`) in `server.py` for premium tenants
-- **Testing**: 100% pass rate (16/16 backend, all frontend tests passed)
+- Backend: DuckDuckGo web search + Claude Sonnet AI analysis
+- Cached in `coach_watch_alerts` for 7 days
+- Frontend: Collapsed card with badge + "Learn more" expand
+- Inline mini-badge on coach contact cards
 
-### UI Refactor — Pipeline Hero Carousel Arrows (Mar 25, 2026)
-- Moved carousel navigation arrows from top bar to absolute-positioned top-right of hero card
-
-### Bug Fix — "Mark Done" Now Logs to Journey Timeline (Mar 25, 2026)
-- Fixed: clicking "Mark done" inserts completion event into `interactions` collection
-
-### Journey Card → Email Modal Integration (Mar 25, 2026)
-- Connected hero card's "Send to coach" CTA to email modal with pre-filled subject, body, and recipient
-
-### UI Refactor — Event Prep Header Dark Theme (Mar 24, 2026)
-- Applied premium dark theme to EventPrep header
-
-### UI Refactor — Mission Control, Sidebar, Billing (Mar 24, 2026)
-- Reskinned Mission Control, Sidebar, Club Billing to premium dark theme
-
-### Bug Fix — Flickering Momentum Status (Mar 24, 2026)
-- Implemented multi-layer cache for stable momentum metrics
-
-### Stripe Subscription Billing (Mar 24, 2026)
-- Full subscription lifecycle: checkout, webhooks, cancel/reactivate, billing portal
-- 5 pricing tiers with monthly/annual toggle
-
-### Club Billing V2 — Entitlement Refactor (Mar 24, 2026)
-- 3 entitlement types with `PlanContext` and `PlanGate` components
-
-### Production Readiness (Mar 23, 2026)
-- Auth, security, data architecture, environment config, error handling, performance
+### Previous Work (Mar 23-25, 2026)
+- Journey Card → Email Modal Integration
+- Pipeline Hero UI, Mark Done bug fix
+- Profile Completeness & Validations
+- Where You Are rail (simple dot-and-line style)
+- Coach Watch Card fallback logic
+- Permanent libmagic backend crash fix
+- Stripe subscription billing (5 tiers)
+- Club Billing V2 with entitlements
+- Premium dark theme across all pages
 
 ## Prioritized Backlog
 
-### P0 — Upcoming
-- School Knowledge Base Migration: Migrate school data to production DB
-- Real Email Delivery Integration: Connect SendGrid/Resend/Gmail for actual email sending
+### P0 — Ready to Deploy
+- Deploy backend to Railway (api.capymatch.com)
+- Deploy frontend to Vercel (app.capymatch.com)
+- Switch Stripe to live keys
+- Verify Gmail OAuth in production
 
-### P1 — Upcoming
+### P1 — Post-Deploy
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
 
@@ -70,25 +72,23 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - V2 page-level route gating
 - Usage-based/metered billing for AI features
 
-## Key API Endpoints
-- `POST /api/auth/login` / `POST /api/auth/refresh` / `POST /api/auth/logout`
-- `GET /api/mission-control` — Role-based dashboard
-- `GET /api/coaching-stability/{program_id}` — Coaching stability data
-- `POST /api/coaching-stability/{program_id}/refresh` — Force re-scan
-- `GET /api/ai/coach-watch/alerts` — All coach watch alerts
-- `POST /api/ai/coach-watch/scan` — Manual full pipeline scan
-- `GET /api/club-plans` — List all 5 club plans
-- `POST /api/stripe/checkout` — Create Stripe checkout session
+## Key Files
+- `/app/DEPLOYMENT.md` — Full deployment guide
+- `/app/backend/.env.production` — Railway env template
+- `/app/frontend/.env.production` — Vercel env template
+- `/app/backend/Procfile` — Railway startup
+- `/app/backend/config.py` — Environment config
+- `/app/backend/routers/admin_integrations.py` — All integration management
 
 ## Test Credentials
 - **Athlete**: emma.chen@athlete.capymatch.com / athlete123
-- **Coach**: coach.williams@capymatch.com / coach123
 - **Director**: director@capymatch.com / director123
+- **Platform Admin**: douglas@capymatch.com / capymatch2026
 
 ## 3rd Party Integrations
 - OpenAI/Claude via Emergent LLM Key
-- DuckDuckGo Search (for coaching news)
-- Stripe (Payments) — requires User API Key
-
-## Known Issues
-- None currently. `libmagic` backend crash permanently resolved.
+- DuckDuckGo Search (coaching news)
+- Stripe Payments (test → switch to live)
+- Resend (transactional email)
+- Gmail OAuth (athlete email)
+- MongoDB Atlas (production database)
