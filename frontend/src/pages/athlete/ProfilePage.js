@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   User, Camera, Check, Copy, ExternalLink, ChevronDown,
-  Eye, EyeOff, Share2, Loader2, AlertTriangle, ChevronRight, ArrowRight,
+  Eye, Share2, Loader2, AlertTriangle, ChevronRight, ArrowRight,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -87,13 +87,12 @@ function SectionCard({ title, summary, status, icon, children, defaultOpen = fal
 }
 
 /* ── Field Input ── */
-function Field({ label, value, onChange, placeholder, type = "text", coachVisible, privateField, testId }) {
+function Field({ label, value, onChange, placeholder, type = "text", coachVisible, testId }) {
   return (
     <div>
       <div className="flex items-center gap-1 mb-1">
         <label className="text-[11px] font-medium" style={{ color: "var(--cm-text-3)" }}>{label}</label>
         {coachVisible && <Eye className="w-3 h-3 text-indigo-400" title="Visible on public profile" />}
-        {privateField && <EyeOff className="w-3 h-3 text-red-400" title="Private — not shared" />}
       </div>
       {type === "textarea" ? (
         <textarea data-testid={testId} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none transition-all resize-none min-h-[70px] focus:border-emerald-400"
@@ -388,13 +387,9 @@ export default function ProfilePage() {
           <Field testId="field-gpa" label="GPA" value={profile.gpa} onChange={(v) => updateField("gpa", v)} coachVisible />
         </div>
         <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cm-border)" }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <EyeOff className="w-3 h-3 text-red-400" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-red-500">Private — not shared publicly</span>
-          </div>
           <div className="grid grid-cols-2 gap-2.5">
-            <Field testId="field-sat-score" label="SAT Score" value={profile.sat_score} onChange={(v) => updateField("sat_score", v)} placeholder="e.g. 1200" privateField />
-            <Field testId="field-act-score" label="ACT Score" value={profile.act_score} onChange={(v) => updateField("act_score", v)} placeholder="e.g. 28" privateField />
+            <Field testId="field-sat-score" label="SAT Score" value={profile.sat_score} onChange={(v) => updateField("sat_score", v)} placeholder="e.g. 1200" coachVisible />
+            <Field testId="field-act-score" label="ACT Score" value={profile.act_score} onChange={(v) => updateField("act_score", v)} placeholder="e.g. 28" coachVisible />
           </div>
         </div>
       </SectionCard>

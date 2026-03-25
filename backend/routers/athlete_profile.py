@@ -264,8 +264,6 @@ async def get_share_link(current_user: dict = get_current_user_dep()):
 
 # ── Public Profile (no auth) ──────────────────────────────────────────
 
-PRIVATE_FIELDS = {"sat_score", "act_score"}
-
 
 @router.get("/public/athlete/{tenant_id}")
 async def public_athlete_profile(tenant_id: str):
@@ -277,8 +275,6 @@ async def public_athlete_profile(tenant_id: str):
         raise HTTPException(404, "Athlete not found")
 
     profile = _athlete_to_profile(athlete)
-    # Strip private fields
-    safe_profile = {k: v for k, v in profile.items() if k not in PRIVATE_FIELDS}
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -293,7 +289,7 @@ async def public_athlete_profile(tenant_id: str):
     ).sort("start_date", -1).to_list(20)
 
     return {
-        "profile": safe_profile,
+        "profile": profile,
         "upcoming_events": upcoming,
         "past_events": past,
     }
