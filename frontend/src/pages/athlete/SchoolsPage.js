@@ -308,6 +308,7 @@ export default function SchoolsPage() {
       setLastRefreshed(res.data?.last_refreshed || null);
       setProfileChanged(res.data?.profile_changed_since_last_run || false);
     }).catch(() => {}).finally(() => setSmartLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshMatches = async () => {
@@ -357,6 +358,7 @@ export default function SchoolsPage() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterRegion, filterDivision, filterConference, filterState, page]);
 
   useEffect(() => { fetchUniversities(); }, [fetchUniversities]);

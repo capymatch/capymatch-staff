@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Zap, Clock, Send, ShieldCheck, Shield, ShieldAlert, Sparkles,
 } from "lucide-react";
@@ -48,14 +48,14 @@ export default function CoachWatchCardV2({ insight, loading, coachWatch }) {
   const [aiVisible, setAiVisible] = useState(false);
 
   // Build effective data — prefer autoInsight, fall back to coachWatch
-  const effective = insight || (coachWatch ? {
+  const effective = useMemo(() => insight || (coachWatch ? {
     state: coachWatch.state || "no_signals",
     confidence: coachWatch.confidenceLevel || "medium",
     headline: coachWatch.headline || coachWatch.summary || "Coach Watch",
     recommended_action_text: coachWatch.recommendedAction || coachWatch.whyThisMatters || "",
     signals: coachWatch.whyLine ? [coachWatch.whyLine] : [],
     ai: null,
-  } : null);
+  } : null), [insight, coachWatch]);
 
   useEffect(() => {
     if (effective && !loading) {

@@ -235,6 +235,7 @@ export default function SchoolDetailPage() {
       .then(res => setSchool(res.data))
       .catch(() => { toast.error("School not found"); navigate("/schools"); })
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain, navigate]);
 
   // Fetch V2 match data for this school (if on board)
@@ -247,6 +248,7 @@ export default function SchoolDetailPage() {
         if (found) setMatchData(found);
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [school?.university_name]);
 
   const addToBoard = async () => {

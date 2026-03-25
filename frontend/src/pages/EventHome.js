@@ -325,6 +325,7 @@ function EventHome() {
     }
   }, [user]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchEvents(); }, [typeFilter]);
 
   const events = tab === "upcoming" ? data.upcoming : data.past;

@@ -68,6 +68,7 @@ export default function AdminUserDetailPage() {
     }).finally(() => setLoading(false));
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchDetail(); }, [userId]);
 
   const handleSave = async () => {

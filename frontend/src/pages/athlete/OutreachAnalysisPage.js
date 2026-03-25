@@ -45,6 +45,7 @@ export default function OutreachAnalysisPage() {
     finally { setLoading(false); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchAnalysis(); }, []);
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 text-[#1a8a80] animate-spin" /></div>;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { X, Send, Sparkles, MessageCircle, Plus, ChevronLeft, Loader2 } from "lucide-react";
 import axios from "axios";
 
@@ -20,7 +20,7 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
   const messagesEnd = useRef(null);
   const inputRef = useRef(null);
   const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = useMemo(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
   const scrollToBottom = () => messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(() => { scrollToBottom(); }, [messages]);
@@ -38,7 +38,7 @@ export default function AIAssistantDrawer({ isOpen, onClose }) {
       const res = await axios.get(`${API}/ai/assistant/sessions`, { headers });
       setSessions(res.data.sessions || []);
     } catch {}
-  }, []);
+  }, [headers]);
 
   useEffect(() => { if (isOpen) loadSessions(); }, [isOpen, loadSessions]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ function ComposeModal({ open, onClose, replyTo, threadId, messageId, onSent }) {
   const [draftProgramId, setDraftProgramId] = useState("");
   const [programs, setPrograms] = useState([]);
   const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers = useMemo(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
   useEffect(() => {
     if (open) {
@@ -33,6 +33,7 @@ function ComposeModal({ open, onClose, replyTo, threadId, messageId, onSent }) {
       }
       axios.get(`${API}/athlete/programs`, { headers }).then(r => setPrograms(r.data || [])).catch(() => {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, replyTo]);
 
   const handleSend = async () => {
@@ -182,8 +183,8 @@ export default function InboxPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [threadInsights, setThreadInsights] = useState({});
 
-  const token = localStorage.getItem("token");
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const token2 = localStorage.getItem("token");
+  const headers = useMemo(() => token2 ? { Authorization: `Bearer ${token2}` } : {}, [token2]);
 
   const checkGmail = useCallback(async () => {
     try {
@@ -191,7 +192,7 @@ export default function InboxPage() {
       setGmailConnected(res.data.connected);
       return res.data.connected;
     } catch { setGmailConnected(false); return false; }
-  }, []);
+  }, [headers]);
 
   const fetchEmails = useCallback(async (q = "", pageToken = null) => {
     setLoading(true);
@@ -208,11 +209,11 @@ export default function InboxPage() {
         toast.error("Gmail disconnected. Please reconnect.");
       }
     } finally { setLoading(false); }
-  }, []);
+  }, [headers]);
 
   useEffect(() => {
     checkGmail().then(connected => { if (connected) fetchEmails(); else setLoading(false); });
-  }, []);
+  }, [checkGmail, fetchEmails]);
 
   // Fetch gmail intelligence insights indexed by thread_id
   useEffect(() => {
@@ -225,7 +226,7 @@ export default function InboxPage() {
         setThreadInsights(byThread);
       })
       .catch(() => {});
-  }, [emails.length]);
+  }, [emails.length, headers]);
 
   const openThread = async (threadId) => {
     setLoadingThread(true);

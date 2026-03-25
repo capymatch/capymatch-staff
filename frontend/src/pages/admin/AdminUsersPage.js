@@ -120,6 +120,7 @@ export default function AdminUsersPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchUsers(); }, [search, planFilter, page]);
 
   const totalPages = Math.ceil(total / 50);

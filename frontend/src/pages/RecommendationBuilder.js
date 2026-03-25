@@ -188,6 +188,7 @@ function RecommendationBuilder() {
         }
       })
       .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAthlete, selectedSchool, selectedSchoolName]);
 
   // Athlete search

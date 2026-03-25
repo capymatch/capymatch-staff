@@ -139,6 +139,7 @@ export default function PipelinePage() {
       toast.error("Failed to update stage");
       fetchAll();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAll]);
 
   const handleDragUpdate = useCallback((update) => {
