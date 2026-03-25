@@ -1,45 +1,43 @@
-<analysis>**original_problem_statement**: The user is rapidly polishing the application for production readiness. Focus has been on refining the Action-first UX on the Journey page (making emails pre-fill, refining layouts), fixing profile completion logic and validations, and permanently resolving environment stability issues. The current priority has shifted to implementing a net-new Coaching Stability feature that monitors university head coaches' job status via automated web search and AI analysis.
+<analysis>**original_problem_statement**: 
+The user is rapidly polishing the application for production readiness. Priorities included completing the Coaching Stability feature, adjusting specific UI elements (Where You Are rail, Messaging badge), setting up and migrating data to production environments (MongoDB, Resend, Gmail OAuth), and finally deploying the application to Vercel (frontend) and Railway (backend). 
 
 **User's preferred language**: English
 *(INSTRUCT: Next agent must respond in English)*
 
 **what currently exists?** 
-CapyMatch is a full-stack (React, FastAPI, MongoDB) athlete management platform. It features a premium dark UI theme, Stripe subscription gating, an action-first athlete journey pipeline, and comprehensive coach-tracking tools. The app currently uses mock data but is preparing for a production database migration. A long-standing environment bug causing backend crashes () has been permanently patched.
+CapyMatch is a production-ready full-stack (React, FastAPI, MongoDB) athlete management platform. It now features fully functional third-party integrations manageable via an Admin UI (Resend, Gmail OAuth, Stripe, Production DB). The application is configured for deployment with Vercel for the frontend () and Railway for the backend (). All development data has been migrated to the production MongoDB cluster.
 
 **Last working item**:
-    - Last item agent was working: Implementing the Coaching Stability feature. The user requested a system that tracks if a university coach's position is stable (e.g., Stable, New Head Coach, Fired) and displays a badge on the Journey page coach card.
-    - Status: IN PROGRESS
-    - Agent Testing Done: N
-    - Which testing method agent to use? backend testing agent (for the scheduler/cron task) / screenshot tool (for frontend UI).
+    - Last item agent was working: Troubleshooting Production SSL/DNS configuration for Railway. The frontend is deployed to Vercel but API calls are failing with an  error because the Railway backend () is stuck on Validating domain ownership for its custom domain. 
+    - Status: BLOCKED
+    - Agent Testing Done: Y (Locally passed all smoke tests, but prod deployment is blocked by external SSL/DNS issue).
+    - Which testing method agent to use? manual testing by curl / screenshot tool.
     - User Testing Done: N
-    - Reasoning: The agent successfully crawled the user's old GitHub repo, found the historical context, and agreed on a plan: A weekly automated backend job using Web Search + Emergent LLM Key to evaluate coaching stability, feed an API, and display a badge on the UI. The agent *just* pulled the  for the Emergent LLM Key but has not written the implementation code yet.
+    - Reasoning: The agent successfully deployed the code to Vercel and Railway, but the user's custom domain DNS settings (CNAME for ) haven't propagated yet. The Railway SSL certificate cannot provision until this completes.
 
 **All Pending/In progress Issue list**:
-  Issue 1: Coaching Stability Background Job & UI (P0)
-     - Attempted fixes: Gathering playbook for Emergent LLM Key. (No implementation started yet).
-     - Next debug checklist: 
-       1. Create the backend weekly scheduler task (likely in  or ).
-       2. Implement the Web Search + AI parsing loop per school.
-       3. Update the knowledge base / program DB schema to store stability status.
-       4. Surface this data on the Frontend ( / Coach Contact card).
-     - Why fix this issue and what will be achieved with the fix? It is a highly requested feature from the user's legacy app, crucial for athletes to know if the coach they are talking to is still employed.
-     - Status: IN PROGRESS
+  Issue 1: Production SSL/DNS Validation on Railway (P0)
+     - Attempted fixes: Instructed the user to add a CNAME record in their DNS provider pointing  to Railway's provided domain. Wait for propagation.
+     - Next debug checklist: Check if Railway domain settings show Active instead of Validating domain ownership. Verify  works via curl.
+     - Why fix this issue and what will be achieved with the fix? It is required for the production frontend to securely communicate with the production backend.
+     - Status: BLOCKED (Waiting on external DNS propagation)
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? Both
-     - Blocked on other issue: None
+     - Blocked on other issue: DNS Propagation
+
+  Issue 2: Stale Service Worker Cache on Frontend (P1)
+     - Attempted fixes: The agent removed the  script and Made with Emergent badge from  and asked the user to unregister service workers in their browser dev tools.
+     - Next debug checklist: If the user still cannot log in after SSL is fixed, ensure the service worker from the preview environment isn't intercepting requests on the production domain.
+     - Why fix this issue and what will be achieved with the fix? Prevents fake network errors (401s) caused by stale cache.
+     - Status: USER VERIFICATION PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Frontend
 
 **In progress Task List**:
-  Task 1: Build Coaching Stability Tracker (P0)
-     - Where to resume: You have the  output in context. Begin writing the backend service that executes a web search (e.g., [School] volleyball head coach news) and uses the Emergent LLM key to parse the result into a stability status. Schedule it weekly.
-     - What will be achieved with this? Fulfills user request for automated coach tracking.
-     - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix? Both
-     - Blocked on something: None.
+  None. All deployment tasks are complete on the codebase side.
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - (P0) School Knowledge Base Migration: Migrate existing school data to the production DB.
-    - (P0) Real Email Delivery Integration: Connect a real email provider (SendGrid/Resend) or Gmail OAuth so the Send to coach modal actually sends emails.
     - (P1) CSV Import Tool: For bulk import of school/coach data.
     - (P1) Bulk Approve Mode: Allow selecting/approving multiple items at once in the Director Inbox.
     
@@ -47,91 +45,89 @@ CapyMatch is a full-stack (React, FastAPI, MongoDB) athlete management platform.
     - (P2) Parent/Family Experience.
     - (P2) AI-Powered Coach Summary.
     - (P2) Multi-Agent Intelligence Pipeline.
-    - (P2) Page-level route gating strategy (V2).
-    - (P2) Usage-based/metered billing for AI features.
 
 **Completed work in this session**
-- **Journey Card → Email Modal Integration (DONE)**: Connected the Send to coach → CTA to open the email modal completely pre-filled (suggested message, recipient, and auto-generated subject).
-- **Journey Card UI Refinements (DONE)**: Removed inline editing (textarea) to make the message a read-only preview. Adjusted mobile layout for better breathing room below the CTA. Increased contrast on Why this? text. Removed em-dashes from generated messages.
-- **Pipeline Hero UI Fix (DONE)**: Increased contrast for filter pills and carousel arrows.
-- **Mark Done Bug Fix (DONE)**: Fixed a bug where marking an action Done didn't log it to the athlete's timeline. Added DB insert to  collection and updated frontend state.
-- **Profile Completeness Fix (DONE)**: Fixed the completion ring showing 100% when measurables were empty. Added 6 measurable fields to  in backend and frontend.
-- **Profile Validations & Privacy (DONE)**: Removed SAT/ACT privacy restrictions (now visible to coaches). Added real-time numeric filtering and on-blur range validations (e.g., GPA max 5.0, SAT max 1600) to .
-- **Where You Are Rail Redesign (DONE)**: Replaced dot-timeline with a custom milestone-style vertical rail matching user's mockup.
-- **Coach Watch Card Fix (DONE)**: Fixed  disappearing when AI insights 404'd by providing fallback base data.
-- **Permanent Backend Crash Fix (DONE)**: Wrapped  in a  block in . The recurring  crash is now permanently resolved.
+- **Coaching Stability Feature (DONE)**: Built backend API and frontend card. Card is collapsed by default showing a badge and Learn more toggle.
+- **Where You Are Rail Revert (DONE)**: Reverted the milestone-style rail back to a simple dot-and-line design in .
+- **Unread Messages Badge Sync (DONE)**: Fixed a bug where the sidebar message badge didn't update instantly upon clicking an email. Implemented custom  event dispatching.
+- **Admin Integrations UI (DONE)**: Added a comprehensive Integrations management page () for Platform Admins to set up Resend, Gmail OAuth, and MongoDB Production URIs directly into the DB.
+- **Production Data Migration (DONE)**: Built a migration tool and copied 69 collections (users, athletes, knowledge base, etc.) from the dev DB to the Production MongoDB cluster.
+- **Vercel Build Fixes (DONE)**: Fixed 15  warnings causing  build failures on Vercel. 
+- **Railway Deployment Config (DONE)**: Added  and  to the backend. Configured  custom pip index. URL-encoded the MongoDB password to bypass URI parser errors.
+- **Emergent Branding Removed (DONE)**: Removed the Made with Emergent badge and  from .
 
 **Earlier issues found/mentioned but not fixed**
-   - None.
+   - None
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: 
-  - Recurrence count: 5+
-  - Status: RESOLVED PERMANENTLY. The agent applied a graceful fallback in  using declared MIME types if the system package is missing. This should no longer block the backend.
+  - Issue recurrence in previous fork: None. The  issue from the previous fork remains resolved.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Action-First UX**: Heavy emphasis on pre-filling data (like the email modal) to remove user friction.
-- **Robust Forms**: Frontend uses real-time keystroke filtering (blocking letters in number fields) combined with on-blur validation messages.
-- **Automated Intelligence Pipelines**: Moving toward scheduled cron/background tasks combining Web Search + AI to enrich data (Coaching Stability feature).
+- **Database-Stored Configs**: Production keys (Gmail OAuth, Resend, DB connection string) are stored in the  collection via the Admin UI, allowing dynamic configuration without  restarts for certain features.
+- **Deployment Build Environments**: Vercel strict CI mode requires all React Hook dependency warnings to be properly addressed. Railway relies on  and  targeting the nested backend folder.
 
 **key DB schema**
-  - : Timeline events for athletes (used for Mark done logging).
-  -  / : Needs update to accommodate the new  properties.
+  - : Holds JSON documents for , , and .
 
 **changes in tech stack**
-  - Introduction of automated background scheduled tasks utilizing Web Search and Emergent LLM keys.
+  - Addition of Railway () and Vercel () as explicit production targets.
+  - Usage of custom  with  for the  pip package.
 
 **All files of reference**
--  (UI layout, Rail component)
--  (Action-first card)
--  (Validations)
--  (libmagic patch location)
+-  (New admin logic)
+-  (New admin UI)
+-  (Fixed unread message events)
+-  (UI layout fixes)
+-  (Railway configuration)
 
 **Areas that need refactoring**:
-- None explicitly required right now, but creating a dedicated  or similar for the Coaching Stability weekly job is recommended.
+- None identified at this time.
 
 **key api endpoints**
-- : Patched to update .
-- New API endpoint required: To serve Coaching Stability data to the frontend.
+- 
+- 
+-  (Copies all 69 dev collections to prod)
 
 **Critical Info for New Agent**
-- **Coaching Stability Feature Details**: The user chose Option A. You must build a **weekly automated background job** that uses Web Search to find coach news, passes it to the **Emergent LLM Key**, and determines if the coach is Stable, New Hire, etc. Display this as a badge on the  coach contact card.
-- **Emergent LLM Key**: You must strictly follow the playbook provided by  in the final messages of the history.
-- **Environment**: The  backend crash has been gracefully handled in code. You should not need to run Reading package lists...
-Building dependency tree...
-Reading state information...
-0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded. for it anymore.
+- **MongoDB Password Encoding:** If you ever need to change the Railway , ensure special characters in the password (like  and ) are URL encoded (e.g. , ). Failing to do so throws a port parser error in motor/pymongo.
+- **Emergent PIP Index:** The backend  relies on  to install . Do not remove this.
+- **Production URLs:** The live frontend is  and backend is . 
+- **Stale Service Worker:** If the user experiences random 401s or CORS errors on production login, remind them to hard-clear their browser cache. The old  service worker was intercepting and blocking auth requests.
 
 **documents and test reports created in this job**
 - 
 - 
+-  (Coaching Stability tests)
+-  (Full Production Smoke Test)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. (User) Asked where the coach watch feature went (provided screenshot).
-2. (User) Asked about the feature that checks if the coach's position is stable.
-3. (User) I think it is called Coach Watch in the old app.
-4. (User) Clarified that the feature used to watch university websites and news, there was a job to search the internet for that data.
-5. (User) Noted they cannot scrape Productive Recruit website anymore.
-6. (User) Selected Option A (Web search + AI analysis).
-7. (User) Finalized requirements: 1. Option A (Web search + AI), 2. Automated weekly, 3. Coaching Stability indicator on Journey page coach card, 4. Use Emergent LLM Key.
+1. (User) Asked how to hide the Made with Emergent badge.
+2. (User) Provided a screenshot indicating they were unable to login in prod.
+3. (User) Replied that none of the accounts work, asking if they need to create a new one.
+4. (User) Shared a screenshot showing a network error.
+5. (User) Shared a screenshot showing an SSL Error  alongside the Made with Emergent badge still being visible.
+6. (User) Shared a screenshot showing they do not see the Networking settings in Railway.
+7. (User) Shared a screenshot showing the domain is still Validating in Railway.
 
 **Project Health Check:**
-- Broken: None.  backend crash fixed.
-- Mocked: Most backend data ().
+- Broken: Production environment temporarily blocked by external Railway SSL/DNS propagation.
+- Mocked: None
 
-**3rd Party Integrations**
-- **OpenAI GPT-4o**: Uses Emergent LLM Key. (Will be used for Coaching Stability).
-- **Web Search**: Required for Coaching Stability.
-- **Stripe (Payments)**: Active. Requires User API Key.
+**3rd Party Integrations** 
+- **OpenAI GPT-4o / Claude** — uses Emergent LLM Key (Universal Key) via .
+- **Stripe (Payments)** — requires User API Key. User currently setting up production webhooks.
+- **Resend (Email)** — requires User API Key. Configured in Admin.
+- **Gmail OAuth** — requires User Client ID/Secret. Configured in Admin.
+- **College Scorecard API** — Optional key for scraping data.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Verified Email Modal data flow).
+  - Testing agent used after significant changes: YES (Full Production Smoke Test passed locally).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
 
 **What agent forgot to execute**
-- Nothing was forgotten. The agent gathered all requirements and the integration playbook for the Coaching Stability feature, and is perfectly positioned for the next fork to write the code.</analysis>
+- The agent properly identified all issues, but execution on the final problem is blocked by the external DNS propagation time needed for the user's custom domain on Railway.</analysis>
