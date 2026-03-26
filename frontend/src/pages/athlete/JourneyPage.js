@@ -18,7 +18,7 @@ import {
 } from "../../components/ui/alert-dialog";
 import {
   ProgressRail, PulseIndicator, GettingStartedChecklist,
-  ConversationBubble, computeHeroSelection, PrimaryHeroCard, RadarStrip,
+  ConversationBubble, computeHeroSelection, PrimaryHeroCard,
   FloatingActionBar, StageLogModal, LogInteractionForm,
   EmailComposer, FollowUpScheduler, MarkAsRepliedModal, CoachForm,
 } from "../../components/journey";
