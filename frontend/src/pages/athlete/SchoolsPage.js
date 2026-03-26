@@ -681,8 +681,8 @@ export default function SchoolsPage() {
             </div>
           ) : (
             <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-3"} data-testid="kb-grid">
-              {enriched.map(uni => (
-                <SchoolCard key={uni.domain || uni.university_name} uni={uni} adding={adding} addToBoard={addToBoard} boardSchools={boardSchools} navigate={navigate} />
+              {enriched.map((uni, idx) => (
+                <SchoolCard key={`${uni.domain || uni.university_name}-${idx}`} uni={uni} adding={adding} addToBoard={addToBoard} boardSchools={boardSchools} navigate={navigate} />
               ))}
             </div>
           )}

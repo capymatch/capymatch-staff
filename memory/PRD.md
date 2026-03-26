@@ -9,26 +9,20 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 - **AI**: OpenAI GPT-4o / Claude via Emergent LLM Key
 - **Deployment**: Railway (backend), Vercel (frontend)
 
-## Design System
-- **Page Background**: `#F7FAFC`
-- **Top Bar**: `rgba(255,255,255,0.95)`, backdrop-blur 12px, box-shadow `0 1px 3px rgba(0,0,0,0.03)`, border-b border-gray-100/80
-- **Hero Card**: `bg: #1a1e28`, shadow `0 6px 24px rgba(0,0,0,0.14)`
-- **Progress Rail**: 4px track, 16px active dot w/glow
-- **Hero Chips**: gap-1, px-1.5, py-px, low contrast
-- **Message Preview**: bg 0.018 alpha, borderless, line-height 1.8
-- **CTA**: 14px 24px, font-bold, glow, mt-4
-- **Timeline Cards**: border #ddd5c8, text var(--cm-text), shadow 0.04
-- **Floating Action Bar**: bg 0.95, shadow 28px blur, backdrop-blur 16px
-
 ## Completed Work
 - Login page redesign
 - Pipeline/Priority page premium UI
-- Journey page visual alignment & neutral timeline
-- Journey Page UI Polish (8-point refinement)
-- Hero Card Deep Refinement (command center polish)
-- Header Progress Rail (light-mode)
-- Final Visual Refinement + Final Visual Polish passes
-- **TopBar unified styling** (Mar 2026): Global TopBar updated to match Journey header — white/95, backdrop-blur, subtle shadow
+- Journey page visual alignment, hero card, progress rail, final polish passes
+- TopBar + Pipeline header unified styling (flush edge-to-edge)
+- **Schools Page Full Redesign** (Mar 2026):
+  - Hero section with "Find Schools" title + summary stats
+  - Featured Match cards (6 max, editorial style)
+  - Sticky search/filter bar with division quick-filters
+  - Smart bucket chips (All, Dream D1, Strong Match 80%+, Close to Home, Academics)
+  - Refined directory cards with premium spacing
+  - Filter panel slide-in redesign
+  - Intelligence copy (fit reason labels)
+  - AppLayout overflow-x fix for sticky support
 
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
