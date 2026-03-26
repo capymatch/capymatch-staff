@@ -96,33 +96,33 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
             </div>
 
             {/* HEADLINE */}
-            <div className="flex items-center gap-3 mb-1" data-testid="hero-school-row">
+            <div className="flex items-center gap-3 mb-2.5" data-testid="hero-school-row">
               {p && (
                 <UniversityLogo
                   name={p.university_name}
                   logoUrl={ms?.logo_url || p.logo_url}
                   domain={ms?.domain || p.domain}
-                  size={26}
+                  size={28}
                   className="rounded-lg flex-shrink-0"
                 />
               )}
               <h3 style={{
-                fontSize: "clamp(17px, 2vw, 20px)", fontWeight: 800,
-                color: "#fff", letterSpacing: "-0.03em",
-                margin: 0, lineHeight: 1.2,
+                fontSize: 19, fontWeight: 600,
+                color: "#fff", letterSpacing: "-0.025em",
+                margin: 0, lineHeight: 1.15,
               }} data-testid="hero-school-name">
                 {current.primaryAction || `Follow up with ${p?.university_name || "School"}`}
               </h3>
             </div>
 
             {/* RISK CONTEXT */}
-            <div data-testid="hero-advice-box">
+            <div data-testid="hero-advice-box" style={{ marginBottom: 4 }}>
               {current.riskContext && (
-                <div style={{ color: "#ffb088", fontSize: 12, fontWeight: 600, lineHeight: 1.4, marginTop: 4, marginBottom: 2 }} data-testid="hero-risk-context">
+                <div style={{ color: "#ffb088", fontSize: 14, fontWeight: 600, lineHeight: 1.4, marginBottom: 4 }} data-testid="hero-risk-context">
                   {current.riskContext}
                 </div>
               )}
-              <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 400, lineHeight: 1.5, marginTop: 3 }} data-testid="hero-descriptive-reason">
+              <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.5 }} data-testid="hero-descriptive-reason">
                 {(() => {
                   const hr = (current.heroReason || "").trim();
                   if (hr) return hr;
@@ -149,7 +149,7 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
             )}
 
             {/* CTA ROW */}
-            <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-4 mt-5">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -166,9 +166,9 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                 data-testid="hero-cta-btn"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
-                  padding: "10px 20px",
+                  padding: "12px 24px",
                   background: "#ff5a1f",
-                  color: "#fff", fontSize: 13, fontWeight: 700,
+                  color: "#fff", fontSize: 14, fontWeight: 700,
                   border: "none", borderRadius: 12, cursor: "pointer",
                   boxShadow: "0 8px 24px rgba(255,90,31,0.25)",
                   transition: "transform 80ms ease, box-shadow 80ms ease",
