@@ -225,7 +225,7 @@ export default function PipelinePage() {
 
       {/* ═══ HERO — only in Priority view ═══ */}
       {viewMode === "priority" && (
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 32 }}>
         <PipelineHero heroItem={heroItem} matchScores={matchScores} navigate={navigate} />
       </div>
       )}

@@ -25,30 +25,30 @@ const P = {
 const TIER_CONFIG = {
   top: {
     badge: "Attention needed",
-    badgeColor: "rgba(199,80,0,0.55)",
-    borderColor: "#d4783a",
+    badgeColor: "rgba(199,80,0,0.40)",
+    borderColor: "rgba(212,120,58,0.50)",
     Icon: AlertCircle,
-    iconBg: "rgba(199,80,0,0.05)",
+    iconBg: "rgba(199,80,0,0.04)",
     iconColor: "#c06830",
     cardBg: P.boneCard,
   },
   secondary: {
     badge: "Follow up",
-    badgeColor: "rgba(176,136,0,0.55)",
-    borderColor: "#c9a845",
+    badgeColor: "rgba(176,136,0,0.40)",
+    borderColor: "rgba(201,168,69,0.45)",
     Icon: ChevronRight,
-    iconBg: "rgba(176,136,0,0.04)",
+    iconBg: "rgba(176,136,0,0.03)",
     iconColor: "#a08520",
     cardBg: P.boneCard,
   },
   watch: {
     badge: "On track",
-    badgeColor: "rgba(94,148,112,0.6)",
-    borderColor: "#b0d4bb",
+    badgeColor: "rgba(94,148,112,0.45)",
+    borderColor: "rgba(176,212,187,0.55)",
     Icon: Eye,
-    iconBg: P.thistleSoft,
+    iconBg: "rgba(94,148,112,0.025)",
     iconColor: "#7aaa8c",
-    cardBg: "rgba(94,148,112,0.015)",
+    cardBg: "rgba(94,148,112,0.012)",
   },
 };
 
@@ -60,8 +60,8 @@ const SECTIONS = [
     ranks: ["top"],
     headerIcon: AlertCircle,
     headerColor: P.ochre,
-    wrapBg: P.ochreSoft,
-    wrapped: true,
+    wrapBg: "transparent",
+    wrapped: false,
   },
   {
     key: "secondary",
@@ -84,9 +84,11 @@ const SECTIONS = [
 ];
 
 /* ── Single move card ── */
-function RecapMoveCard({ priority, navigate }) {
+function RecapMoveCard({ priority, navigate, isFirst }) {
   const config = TIER_CONFIG[priority.rank] || TIER_CONFIG.watch;
   const { Icon } = config;
+  const isOnTrack = priority.rank === "watch";
+  const firstOnTrackLift = isOnTrack && isFirst;
 
   return (
     <div
@@ -94,12 +96,14 @@ function RecapMoveCard({ priority, navigate }) {
       onClick={() => navigate && navigate(`/pipeline/${priority.program_id}`)}
       style={{
         background: config.cardBg,
-        borderLeft: `3px solid ${config.borderColor}`,
+        borderLeft: `2px solid ${config.borderColor}`,
         borderRadius: 18,
-        padding: "20px 22px",
+        padding: "24px 24px",
         cursor: "pointer",
         transition: "transform 120ms ease, box-shadow 120ms ease",
-        boxShadow: P.shadowRest,
+        boxShadow: firstOnTrackLift
+          ? "0 3px 12px rgba(80,60,30,0.04), 0 0.5px 2px rgba(80,60,30,0.02)"
+          : P.shadowRest,
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = "translateY(-2px)";
@@ -107,7 +111,9 @@ function RecapMoveCard({ priority, navigate }) {
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = "";
-        e.currentTarget.style.boxShadow = P.shadowRest;
+        e.currentTarget.style.boxShadow = firstOnTrackLift
+          ? "0 3px 12px rgba(80,60,30,0.04), 0 0.5px 2px rgba(80,60,30,0.02)"
+          : P.shadowRest;
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
@@ -122,7 +128,7 @@ function RecapMoveCard({ priority, navigate }) {
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <span data-testid={`move-badge-${priority.rank}`} style={{
-            fontSize: 10, fontWeight: 600, letterSpacing: "0.04em",
+            fontSize: 10, fontWeight: 500, letterSpacing: "0.04em",
             textTransform: "uppercase",
             color: config.badgeColor,
             display: "inline-block", marginBottom: 5,
@@ -140,7 +146,7 @@ function RecapMoveCard({ priority, navigate }) {
 
           <div data-testid={`move-reason-${priority.program_id}`} style={{
             fontSize: 13, fontWeight: 400, color: P.textMuted,
-            lineHeight: 1.5,
+            lineHeight: 1.5, opacity: 0.85,
           }}>
             {priority.reason?.startsWith("\u2192") ? priority.reason : `\u2192 ${priority.reason}`}
           </div>
@@ -148,7 +154,7 @@ function RecapMoveCard({ priority, navigate }) {
           {priority.urgency_note && (
             <div data-testid="move-urgency-note" style={{
               fontSize: 12, fontWeight: 400, color: P.textMuted,
-              fontStyle: "italic", marginTop: 6, opacity: 0.65,
+              fontStyle: "italic", marginTop: 6, opacity: 0.55,
             }}>
               {priority.urgency_note}
             </div>
@@ -198,7 +204,7 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
   if (allCards.length === 0) return null;
 
   return (
-    <div data-testid="priority-board" style={{ marginTop: 6, fontFamily: FONT }}>
+    <div data-testid="priority-board" style={{ marginTop: 10, fontFamily: FONT }}>
       {/* ── All-on-track banner (only when no urgent items) ── */}
       {allOnTrack && (
         <div style={{
@@ -213,47 +219,40 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
       )}
 
       {/* ── Sections ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         {sectionData.map(section => {
           const HeaderIcon = section.headerIcon;
 
           return (
-            <div
-              key={section.key}
-              data-testid={`urgency-group-${section.key}`}
-              style={{
-                background: section.wrapBg,
-                borderRadius: section.wrapped ? 20 : 0,
-                padding: section.wrapped ? "18px 18px 14px" : 0,
-              }}
-            >
-              {/* Section header — count integrated */}
+            <div key={section.key} data-testid={`urgency-group-${section.key}`}>
+              {/* Section header */}
               <div style={{
                 display: "flex", alignItems: "center", gap: 7,
-                marginBottom: 12,
+                marginBottom: 14,
               }}>
-                <HeaderIcon style={{ width: 13, height: 13, color: section.headerColor, opacity: 0.7 }} />
+                <HeaderIcon style={{ width: 13, height: 13, color: section.headerColor, opacity: 0.6 }} />
                 <span style={{
-                  fontSize: 12, fontWeight: 700, letterSpacing: "-0.01em",
+                  fontSize: 12, fontWeight: 600, letterSpacing: "-0.01em",
                   color: section.headerColor,
                 }}>
                   {section.label}
                 </span>
                 <span style={{
-                  fontSize: 12, fontWeight: 500,
-                  color: section.headerColor, opacity: 0.5,
+                  fontSize: 12, fontWeight: 400,
+                  color: section.headerColor, opacity: 0.4,
                 }}>
                   ({section.items.length})
                 </span>
               </div>
 
               {/* Cards */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {section.items.map((p) => (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {section.items.map((p, idx) => (
                   <RecapMoveCard
                     key={p.program_id}
                     priority={p}
                     navigate={navigate}
+                    isFirst={idx === 0}
                   />
                 ))}
               </div>
