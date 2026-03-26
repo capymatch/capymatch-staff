@@ -65,7 +65,8 @@ export function PrimaryHeroCard({ hero, program }) {
     <div className="mb-4 rounded-[12px] sm:rounded-[28px] overflow-hidden relative"
       style={{
         background: "#161921",
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)",
       }}
       data-testid="primary-hero-card">
 
@@ -83,8 +84,9 @@ export function PrimaryHeroCard({ hero, program }) {
           </span>
           {hero.pills?.map((pill, i) => (
             <span key={i} className="ds-badge" style={{
-              background: "rgba(255,255,255,0.06)",
-              color: "rgba(255,255,255,0.55)",
+              background: "rgba(255,255,255,0.04)",
+              color: "rgba(255,255,255,0.38)",
+              fontSize: "10px",
             }}>
               {pill.label}
             </span>
@@ -98,8 +100,8 @@ export function PrimaryHeroCard({ hero, program }) {
             <Icon className="w-5 h-5" style={{ color: hero.accent }} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg sm:text-xl font-semibold tracking-tight"
-              style={{ color: "#fff", lineHeight: 1.25, letterSpacing: "-0.03em" }}
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight"
+              style={{ color: "#fff", lineHeight: 1.2, letterSpacing: "-0.025em" }}
               data-testid="hero-title">
               {hero.title}
             </h3>
@@ -110,7 +112,7 @@ export function PrimaryHeroCard({ hero, program }) {
         {hero.isCommunication && urgencyLine && (
           <div className="flex items-center gap-1.5 ml-[54px] mb-2.5" data-testid="hero-urgency-line">
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#ef4444" }} />
-            <p className="text-[12px] font-semibold" style={{ color: "#f87171" }}>
+            <p className="text-[13px] font-semibold leading-snug" style={{ color: "#f87171" }}>
               {urgencyLine}
             </p>
           </div>
@@ -118,8 +120,8 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 3. MESSAGE TO COACH — read-only preview */}
         {hero.isCommunication && messageParagraphs && (
-          <div className="mb-4 ml-[54px] rounded-xl px-4 py-3"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+          <div className="mb-4 ml-[54px] rounded-xl px-5 py-4"
+            style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)" }}
             data-testid="hero-suggested-message">
             <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2"
               style={{ color: "rgba(255,255,255,0.35)" }}>
@@ -171,8 +173,8 @@ export function PrimaryHeroCard({ hero, program }) {
                     hero.primaryCta.handler();
                   }
                 }} disabled={hero.primaryCta.loading}
-                className="ds-btn-primary text-[13px] sm:text-[14px] py-2.5 px-4 sm:py-2.5 sm:px-5"
-                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1, boxShadow: `0 0 12px ${hero.accent}25` }}
+                className="ds-btn-primary text-[14px] sm:text-[15px] py-3 px-5 sm:py-3 sm:px-6 font-semibold"
+                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1, boxShadow: `0 0 24px ${hero.accent}30, 0 2px 8px ${hero.accent}18` }}
                 data-testid="hero-primary-cta">
                 {hero.primaryCta.loading
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />

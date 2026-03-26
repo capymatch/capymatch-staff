@@ -516,7 +516,7 @@ export default function JourneyPage() {
       backgroundColor: 'var(--cm-bg)',
     }} data-testid="journey-page">
       {/* ─── HEADER BAR ─── */}
-      <header className="bg-white/95 border-b border-gray-100 -mx-2 -mt-4 sm:-mx-6 sm:-mt-6 mb-4" data-testid="journey-header-bar">
+      <header className="bg-white/95 border-b border-gray-100/80 -mx-2 -mt-4 sm:-mx-6 sm:-mt-6 mb-4" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.03), 0 0.5px 1px rgba(0,0,0,0.02)" }} data-testid="journey-header-bar">
         <div className="px-2 sm:px-4 py-2.5 sm:py-3" style={{ maxWidth: 1120, margin: "0 auto" }}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <button
@@ -637,10 +637,10 @@ export default function JourneyPage() {
         <PrimaryHeroCard hero={featuredHero} program={program} />
 
         {/* Signal chips — inline context replacing floating blocks */}
-        <div className="flex flex-wrap items-center gap-2 mt-3 mb-4" data-testid="journey-signal-chips">
+        <div className="flex flex-wrap items-center gap-1.5 mt-2 mb-3" data-testid="journey-signal-chips">
           {featuredHero?.badge && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold"
-              style={{ background: "rgba(199,80,0,0.06)", color: "#c75000" }}
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+              style={{ background: "rgba(199,80,0,0.05)", color: "#c75000" }}
               data-testid="chip-hero-badge">
               {featuredHero.badge}
             </span>
@@ -650,23 +650,23 @@ export default function JourneyPage() {
             const latest = new Date(Math.max(...timeline.map(t => new Date(t.date || t.created_at || 0))));
             const days = Math.floor((Date.now() - latest.getTime()) / 86400000);
             return (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium"
-                style={{ background: "#f8fafc", color: "#475569", border: "1px solid #e7dfd4" }}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+                style={{ background: "#f8fafc", color: "#64748b", border: "1px solid rgba(231,223,212,0.6)" }}
                 data-testid="chip-last-activity">
                 {days === 0 ? "Active today" : `Last activity \u00b7 ${days}d ago`}
               </span>
             );
           })()}
           {matchScore?.match_score != null && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium"
-              style={{ background: "#f8fafc", color: "#475569", border: "1px solid #e7dfd4" }}
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+              style={{ background: "#f8fafc", color: "#64748b", border: "1px solid rgba(231,223,212,0.6)" }}
               data-testid="chip-match-score">
-              Match score: {matchScore.match_score}
+              Match: {matchScore.match_score}
             </span>
           )}
           {rail?.active && rail.active !== "added" && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium"
-              style={{ background: "rgba(94,148,112,0.06)", color: "#5e9470", border: "1px solid rgba(94,148,112,0.15)" }}
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium"
+              style={{ background: "rgba(94,148,112,0.05)", color: "#5e9470", border: "1px solid rgba(94,148,112,0.12)" }}
               data-testid="chip-stage">
               {rail.active.charAt(0).toUpperCase() + rail.active.slice(1).replace(/_/g, " ")}
             </span>
@@ -747,7 +747,7 @@ export default function JourneyPage() {
           <>
 
         {/* ─── GRID: Timeline + Sidebar ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* LEFT: Timeline */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
