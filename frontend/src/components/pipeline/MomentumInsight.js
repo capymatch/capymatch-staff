@@ -39,7 +39,7 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
     <div data-testid="live-summary" style={{ padding: "0 0 0" }}>
       {/* Headline */}
       <p data-testid="summary-headline" style={{
-        fontSize: 14, fontWeight: 500, color: "#334155",
+        fontSize: 15, fontWeight: 500, color: "#2d2a25",
         lineHeight: 1.4, margin: "0 0 4px",
       }}>
         {headline}
@@ -52,12 +52,12 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
           onClick={() => { trackEvent("view_full_breakdown_clicked"); onViewBreakdown?.(); }}
           style={{
             background: "none", border: "none", cursor: "pointer",
-            fontSize: 11, fontWeight: 600, color: "#94a3b8",
+            fontSize: 11, fontWeight: 500, color: "#8a847a",
             padding: 0, display: "inline-flex", alignItems: "center", gap: 3,
             transition: "color 100ms", whiteSpace: "nowrap",
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = "#475569"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "#94a3b8"; }}
+          onMouseEnter={e => { e.currentTarget.style.color = "#4a453e"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = "#8a847a"; }}
         >
           View full breakdown <ArrowRight style={{ width: 11, height: 11 }} />
         </button>

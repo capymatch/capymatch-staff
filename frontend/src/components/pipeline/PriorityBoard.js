@@ -8,8 +8,8 @@ const P = {
   bone:       "#f7f3ec",
   boneCard:   "#fbf9f6",
   textDark:   "#1a1a1a",
-  textMid:    "#4a453e",
-  textMuted:  "#9e978d",
+  textBody:   "#3d3830",
+  textSub:    "#6b6358",
   ochre:      "#c75000",
   ochreSoft:  "rgba(199,80,0,0.035)",
   lemon:      "#b08800",
@@ -25,7 +25,7 @@ const P = {
 const TIER_CONFIG = {
   top: {
     badge: "Attention needed",
-    badgeColor: "rgba(199,80,0,0.40)",
+    badgeColor: "#b84a00",
     borderColor: "rgba(212,120,58,0.50)",
     Icon: AlertCircle,
     iconBg: "rgba(199,80,0,0.04)",
@@ -34,7 +34,7 @@ const TIER_CONFIG = {
   },
   secondary: {
     badge: "Follow up",
-    badgeColor: "rgba(176,136,0,0.40)",
+    badgeColor: "#957200",
     borderColor: "rgba(201,168,69,0.45)",
     Icon: ChevronRight,
     iconBg: "rgba(176,136,0,0.03)",
@@ -43,7 +43,7 @@ const TIER_CONFIG = {
   },
   watch: {
     badge: "On track",
-    badgeColor: "rgba(94,148,112,0.45)",
+    badgeColor: "#4d8360",
     borderColor: "rgba(176,212,187,0.55)",
     Icon: Eye,
     iconBg: "rgba(94,148,112,0.025)",
@@ -137,7 +137,7 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
           </span>
 
           <div data-testid={`move-action-${priority.program_id}`} style={{
-            fontSize: 15, fontWeight: 700, color: P.textDark,
+            fontSize: 16, fontWeight: 600, color: P.textDark,
             lineHeight: 1.35, marginBottom: 5,
             letterSpacing: "-0.015em",
           }}>
@@ -145,16 +145,16 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
           </div>
 
           <div data-testid={`move-reason-${priority.program_id}`} style={{
-            fontSize: 13, fontWeight: 400, color: P.textMuted,
-            lineHeight: 1.5, opacity: 0.85,
+            fontSize: 14, fontWeight: 450, color: P.textSub,
+            lineHeight: 1.5,
           }}>
             {priority.reason?.startsWith("\u2192") ? priority.reason : `\u2192 ${priority.reason}`}
           </div>
 
           {priority.urgency_note && (
             <div data-testid="move-urgency-note" style={{
-              fontSize: 12, fontWeight: 400, color: P.textMuted,
-              fontStyle: "italic", marginTop: 6, opacity: 0.55,
+              fontSize: 13, fontWeight: 400, color: P.textSub,
+              fontStyle: "italic", marginTop: 6, opacity: 0.7,
             }}>
               {priority.urgency_note}
             </div>
@@ -214,7 +214,7 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
         }} data-testid="all-on-track-banner">
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: P.thistle, flexShrink: 0 }} />
           <span style={{ fontSize: 13, fontWeight: 500, color: P.textDark }}>All schools on track</span>
-          <span style={{ fontSize: 12, fontWeight: 400, color: P.textMuted }}>— no action needed right now</span>
+          <span style={{ fontSize: 13, fontWeight: 400, color: P.textSub }}>— no action needed right now</span>
         </div>
       )}
 
@@ -230,16 +230,16 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
                 display: "flex", alignItems: "center", gap: 7,
                 marginBottom: 14,
               }}>
-                <HeaderIcon style={{ width: 13, height: 13, color: section.headerColor, opacity: 0.6 }} />
+                <HeaderIcon style={{ width: 13, height: 13, color: section.headerColor, opacity: 0.7 }} />
                 <span style={{
-                  fontSize: 12, fontWeight: 600, letterSpacing: "-0.01em",
+                  fontSize: 13, fontWeight: 600, letterSpacing: "-0.01em",
                   color: section.headerColor,
                 }}>
                   {section.label}
                 </span>
                 <span style={{
-                  fontSize: 12, fontWeight: 400,
-                  color: section.headerColor, opacity: 0.4,
+                  fontSize: 13, fontWeight: 450,
+                  color: section.headerColor, opacity: 0.5,
                 }}>
                   ({section.items.length})
                 </span>
