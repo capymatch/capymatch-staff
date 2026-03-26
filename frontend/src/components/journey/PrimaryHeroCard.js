@@ -75,18 +75,17 @@ export function PrimaryHeroCard({ hero, program }) {
 
         <div className="flex-1 min-w-0">
 
-        {/* BADGE ROW */}
-        <div className="flex items-center gap-2.5 flex-wrap mb-3" data-testid="hero-badge-row">
-          <span className="ds-badge" style={{
-            background: `${hero.accent}20`, color: hero.accent,
+        {/* METADATA CHIPS — compact, low-dominance */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-2" data-testid="hero-badge-row">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide" style={{
+            background: `${hero.accent}15`, color: hero.accent,
           }} data-testid="hero-kicker">
             {hero.kicker}
           </span>
           {hero.pills?.map((pill, i) => (
-            <span key={i} className="ds-badge" style={{
+            <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-medium" style={{
               background: "rgba(255,255,255,0.04)",
-              color: "rgba(255,255,255,0.38)",
-              fontSize: "10px",
+              color: "rgba(255,255,255,0.32)",
             }}>
               {pill.label}
             </span>
@@ -94,14 +93,14 @@ export function PrimaryHeroCard({ hero, program }) {
         </div>
 
         {/* 1. ICON + TITLE */}
-        <div className="flex items-start gap-3.5 mb-1">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
-            style={{ backgroundColor: `${hero.accent}18` }}>
-            <Icon className="w-5 h-5" style={{ color: hero.accent }} />
+        <div className="flex items-start gap-3.5 mb-0.5">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: `${hero.accent}18`, boxShadow: `0 0 16px ${hero.accent}12` }}>
+            <Icon className="w-[22px] h-[22px]" style={{ color: hero.accent }} />
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight"
-              style={{ color: "#fff", lineHeight: 1.2, letterSpacing: "-0.025em" }}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <h3 className="text-[22px] sm:text-[26px] font-extrabold tracking-tight"
+              style={{ color: "#fff", lineHeight: 1.15, letterSpacing: "-0.025em" }}
               data-testid="hero-title">
               {hero.title}
             </h3>
@@ -110,9 +109,9 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 2. URGENCY LINE */}
         {hero.isCommunication && urgencyLine && (
-          <div className="flex items-center gap-1.5 ml-[54px] mb-2.5" data-testid="hero-urgency-line">
+          <div className="flex items-center gap-1.5 ml-[58px] mt-1 mb-2" data-testid="hero-urgency-line">
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#ef4444" }} />
-            <p className="text-[13px] font-semibold leading-snug" style={{ color: "#f87171" }}>
+            <p className="text-[13px] font-bold" style={{ color: "rgba(248,113,113,0.9)", lineHeight: 1.4 }}>
               {urgencyLine}
             </p>
           </div>
@@ -120,26 +119,26 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 3. MESSAGE TO COACH — read-only preview */}
         {hero.isCommunication && messageParagraphs && (
-          <div className="mb-4 ml-[54px] rounded-xl px-5 py-4"
-            style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(255,255,255,0.06)" }}
+          <div className="mb-3 ml-[58px] rounded-2xl px-6 py-5"
+            style={{ background: "rgba(255,255,255,0.03)" }}
             data-testid="hero-suggested-message">
-            <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2"
-              style={{ color: "rgba(255,255,255,0.35)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2.5"
+              style={{ color: "rgba(255,255,255,0.30)" }}>
               Message to coach
             </p>
             {Array.isArray(messageParagraphs) ? (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {messageParagraphs.map((p, i) => (
-                  <p key={i} className="text-[13px] leading-[1.6]"
-                    style={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.55 }}>
-                    {i === 0 ? `"${p}` : i === messageParagraphs.length - 1 ? `${p}"` : p}
+                  <p key={i} className="text-[13px]"
+                    style={{ color: "rgba(255,255,255,0.72)", lineHeight: 1.7 }}>
+                    {i === 0 ? `\u201c${p}` : i === messageParagraphs.length - 1 ? `${p}\u201d` : p}
                   </p>
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] leading-[1.6]"
-                style={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.55 }}>
-                "{messageParagraphs}"
+              <p className="text-[13px]"
+                style={{ color: "rgba(255,255,255,0.72)", lineHeight: 1.7 }}>
+                &ldquo;{messageParagraphs}&rdquo;
               </p>
             )}
           </div>
@@ -147,15 +146,15 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 4. HELPER TEXT — above CTA */}
         {hero.isCommunication && messageParagraphs && (
-          <p className="ml-[54px] mt-1.5 mb-2.5 text-[10px] sm:text-[11px]"
-            style={{ color: "rgba(255,255,255,0.35)" }}
+          <p className="ml-[58px] mt-1 mb-2 text-[10px]"
+            style={{ color: "rgba(255,255,255,0.28)" }}
             data-testid="hero-edit-hint">
             You can edit before sending
           </p>
         )}
 
         {/* 5. PRIMARY CTA */}
-        <div className="ml-[54px] mt-2">
+        <div className="ml-[58px] mt-1.5">
           {hero.primaryCta && (
             <>
               {hero.isCommunication && (
@@ -173,8 +172,8 @@ export function PrimaryHeroCard({ hero, program }) {
                     hero.primaryCta.handler();
                   }
                 }} disabled={hero.primaryCta.loading}
-                className="ds-btn-primary text-[14px] sm:text-[15px] py-3 px-5 sm:py-3 sm:px-6 font-semibold"
-                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1, boxShadow: `0 0 24px ${hero.accent}30, 0 2px 8px ${hero.accent}18` }}
+                className="ds-btn-primary text-[14px] sm:text-[15px] py-3.5 px-6 sm:py-3.5 sm:px-7 font-bold"
+                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1, boxShadow: `0 0 28px ${hero.accent}35, 0 4px 12px ${hero.accent}20` }}
                 data-testid="hero-primary-cta">
                 {hero.primaryCta.loading
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -198,30 +197,30 @@ export function PrimaryHeroCard({ hero, program }) {
           )}
         </div>
 
-        {/* 7. WHY THIS — separated, breathable */}
+        {/* 7. WHY THIS — intentional, readable */}
         {hero.whyThis?.length > 0 && (
-          <div className="ml-[54px] mt-5 mb-1 transition-all duration-300"
+          <div className="ml-[58px] mt-5 mb-1 transition-all duration-300"
             style={{
               opacity: whyVisible ? 1 : 0,
               transform: whyVisible ? "translateY(0)" : "translateY(4px)",
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              paddingTop: 12,
+              borderTop: "1px solid rgba(255,255,255,0.07)",
+              paddingTop: 14,
             }}
             data-testid="hero-why-this">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1"
-              style={{ color: "rgba(255,255,255,0.40)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-1.5"
+              style={{ color: "rgba(255,255,255,0.50)" }}>
               Why this?
             </p>
-            <p className="text-[11px] sm:text-[12px] leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.50)" }}>
+            <p className="text-[12px] sm:text-[13px]"
+              style={{ color: "rgba(255,255,255,0.60)", lineHeight: 1.6 }}>
               {hero.whyThis.join(" \u2022 ")}
             </p>
           </div>
         )}
 
         {/* 8. METADATA */}
-        <p className="text-[11px] ml-[54px] mt-2"
-          style={{ color: "rgba(255,255,255,0.25)", lineHeight: 1.5 }}
+        <p className="text-[10px] ml-[58px] mt-2"
+          style={{ color: "rgba(255,255,255,0.22)", lineHeight: 1.5 }}
           data-testid="hero-subtitle">
           {hero.subtitle}
         </p>
