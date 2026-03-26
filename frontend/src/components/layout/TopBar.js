@@ -25,8 +25,8 @@ export default function TopBar({ title, icon: Icon, onMenuToggle }) {
   const initial = (user?.name || user?.email || "U").charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 sm:px-6 border-b"
-      style={{ backgroundColor: "var(--cm-topbar)", borderColor: "var(--cm-border)" }}
+    <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 sm:px-6 border-b border-gray-100/80"
+      style={{ backgroundColor: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", boxShadow: "0 1px 3px rgba(0,0,0,0.03), 0 0.5px 1px rgba(0,0,0,0.02)" }}
       data-testid="topbar">
       <div className="flex items-center gap-3">
         <button onClick={onMenuToggle} className="lg:hidden p-1.5 rounded-lg" style={{ color: "var(--cm-text-3)" }} data-testid="mobile-menu-toggle">
