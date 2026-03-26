@@ -76,16 +76,16 @@ export function PrimaryHeroCard({ hero, program }) {
         <div className="flex-1 min-w-0">
 
         {/* METADATA CHIPS — compact, low-dominance */}
-        <div className="flex items-center gap-1.5 flex-wrap mb-1.5" data-testid="hero-badge-row">
-          <span className="inline-flex items-center px-2 py-px rounded-md text-[9px] font-semibold uppercase tracking-wide" style={{
-            background: `${hero.accent}15`, color: hero.accent,
+        <div className="flex items-center gap-1 flex-wrap mb-1.5" data-testid="hero-badge-row">
+          <span className="inline-flex items-center px-1.5 py-px rounded text-[9px] font-semibold uppercase tracking-wide" style={{
+            background: `${hero.accent}12`, color: hero.accent,
           }} data-testid="hero-kicker">
             {hero.kicker}
           </span>
           {hero.pills?.map((pill, i) => (
-            <span key={i} className="inline-flex items-center px-2 py-px rounded-md text-[9px] font-medium" style={{
-              background: "rgba(255,255,255,0.04)",
-              color: "rgba(255,255,255,0.32)",
+            <span key={i} className="inline-flex items-center px-1.5 py-px rounded text-[9px] font-medium" style={{
+              background: "rgba(255,255,255,0.03)",
+              color: "rgba(255,255,255,0.26)",
             }}>
               {pill.label}
             </span>
@@ -120,24 +120,24 @@ export function PrimaryHeroCard({ hero, program }) {
         {/* 3. MESSAGE TO COACH — read-only preview */}
         {hero.isCommunication && messageParagraphs && (
           <div className="mb-3 ml-[58px] rounded-2xl px-6 py-5"
-            style={{ background: "rgba(255,255,255,0.025)" }}
+            style={{ background: "rgba(255,255,255,0.018)" }}
             data-testid="hero-suggested-message">
             <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2.5"
-              style={{ color: "rgba(255,255,255,0.28)" }}>
+              style={{ color: "rgba(255,255,255,0.24)" }}>
               Message to coach
             </p>
             {Array.isArray(messageParagraphs) ? (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {messageParagraphs.map((p, i) => (
                   <p key={i} className="text-[13px]"
-                    style={{ color: "rgba(255,255,255,0.70)", lineHeight: 1.75 }}>
+                    style={{ color: "rgba(255,255,255,0.68)", lineHeight: 1.8 }}>
                     {i === 0 ? `\u201c${p}` : i === messageParagraphs.length - 1 ? `${p}\u201d` : p}
                   </p>
                 ))}
               </div>
             ) : (
               <p className="text-[13px]"
-                style={{ color: "rgba(255,255,255,0.70)", lineHeight: 1.75 }}>
+                style={{ color: "rgba(255,255,255,0.68)", lineHeight: 1.8 }}>
                 &ldquo;{messageParagraphs}&rdquo;
               </p>
             )}
@@ -154,11 +154,11 @@ export function PrimaryHeroCard({ hero, program }) {
         )}
 
         {/* 5. PRIMARY CTA */}
-        <div className="ml-[58px] mt-3">
+        <div className="ml-[58px] mt-4">
           {hero.primaryCta && (
             <>
               {hero.isCommunication && (
-                <span className="flex items-center gap-1 text-[10px] font-semibold mb-1.5" style={{ color: "rgba(16,185,129,0.75)" }} data-testid="hero-ready-signal">
+                <span className="flex items-center gap-1 text-[11px] font-semibold mb-1.5" style={{ color: "rgba(16,185,129,0.85)" }} data-testid="hero-ready-signal">
                   <Check className="w-3 h-3" /> {["Ready to send", "Looks good to send", "Quick follow-up ready"][Math.abs((hero.id || "").length) % 3]}
                 </span>
               )}
@@ -199,20 +199,20 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 7. WHY THIS — intentional, readable */}
         {hero.whyThis?.length > 0 && (
-          <div className="ml-[58px] mt-5 mb-1 transition-all duration-300"
+          <div className="ml-[58px] mt-4 mb-1 transition-all duration-300"
             style={{
               opacity: whyVisible ? 1 : 0,
               transform: whyVisible ? "translateY(0)" : "translateY(4px)",
               borderTop: "1px solid rgba(255,255,255,0.08)",
-              paddingTop: 14,
+              paddingTop: 12,
             }}
             data-testid="hero-why-this">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] mb-2"
-              style={{ color: "rgba(255,255,255,0.55)" }}>
+            <p className="text-[11px] font-bold uppercase tracking-[0.1em] mb-1.5"
+              style={{ color: "rgba(255,255,255,0.60)" }}>
               Why this?
             </p>
             <p className="text-[12px] sm:text-[13px]"
-              style={{ color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>
+              style={{ color: "rgba(255,255,255,0.70)", lineHeight: 1.65 }}>
               {hero.whyThis.join(" \u2022 ")}
             </p>
           </div>

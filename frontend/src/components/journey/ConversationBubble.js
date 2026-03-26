@@ -138,15 +138,15 @@ export function ConversationBubble({ event }) {
             : "rounded-bl-sm"
       }`} style={{
         background: "#ffffff",
-        border: `1px solid ${isAiInsight ? "rgba(139,92,246,0.10)" : "#e7dfd4"}`,
-        boxShadow: "0 1px 3px rgba(80,60,30,0.02)",
+        border: `1px solid ${isAiInsight ? "rgba(139,92,246,0.12)" : "#ddd5c8"}`,
+        boxShadow: "0 1px 4px rgba(80,60,30,0.04)",
       }}>
         <p className="text-[10px] font-bold uppercase tracking-wider mb-1"
           style={{ color: isAiInsight ? "#8b5cf6" : isRight ? "#0d9488" : "#6b6358" }}>
           {isAiInsight ? "AI Intelligence" : isRight ? "You" : (event.coach_name || "Coach")}
         </p>
         {displayText && (
-          <div className="text-[13px] leading-relaxed" style={{ color: "var(--cm-text-2)" }}>
+          <div className="text-[13px] leading-relaxed" style={{ color: "var(--cm-text)" }}>
             {hasLong && !isExpanded ? (
               <>
                 <p className="line-clamp-3">{snippet}</p>

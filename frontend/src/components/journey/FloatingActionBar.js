@@ -4,10 +4,10 @@ export function FloatingActionBar({ onEmail, onCall, onLog, onFollowUp }) {
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full border shadow-lg"
       style={{
-        backgroundColor: "#fff",
-        borderColor: "rgba(20,37,68,0.06)",
-        boxShadow: "0 -1px 0 rgba(0,0,0,0.03), 0 4px 24px rgba(15,23,42,0.12), 0 1px 6px rgba(15,23,42,0.06)",
-        backdropFilter: "blur(12px)",
+        backgroundColor: "rgba(255,255,255,0.95)",
+        borderColor: "rgba(20,37,68,0.08)",
+        boxShadow: "0 -2px 0 rgba(0,0,0,0.02), 0 6px 28px rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.08)",
+        backdropFilter: "blur(16px)",
       }}
       data-testid="floating-action-bar">
       <button onClick={onEmail}
