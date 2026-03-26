@@ -1,9 +1,9 @@
 import React from "react";
-import { AlertCircle, ChevronRight, Eye } from "lucide-react";
+import { AlertCircle, ChevronRight, Eye, AlertTriangle } from "lucide-react";
 
 const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
 
-/* ── Tier config for YOUR NEXT MOVES cards ── */
+/* ── Tier config for card badges ── */
 const TIER_CONFIG = {
   top: {
     badge: "NEEDS YOUR ATTENTION NOW",
@@ -15,7 +15,7 @@ const TIER_CONFIG = {
     iconColor: "#ef4444",
   },
   secondary: {
-    badge: "SECONDARY",
+    badge: "FOLLOW UP",
     badgeBg: "rgba(245,158,11,0.08)",
     badgeColor: "#d97706",
     borderColor: "#f59e0b",
@@ -24,25 +24,55 @@ const TIER_CONFIG = {
     iconColor: "#f59e0b",
   },
   watch: {
-    badge: "WATCH",
-    badgeBg: "rgba(100,116,139,0.08)",
-    badgeColor: "#64748b",
-    borderColor: "#94a3b8",
+    badge: "MONITORING",
+    badgeBg: "rgba(100,116,139,0.06)",
+    badgeColor: "#94a3b8",
+    borderColor: "#cbd5e1",
     Icon: Eye,
-    iconBg: "rgba(100,116,139,0.08)",
+    iconBg: "rgba(100,116,139,0.06)",
     iconColor: "#94a3b8",
   },
 };
 
-/* ── Urgency group definitions ── */
-const URGENCY_GROUPS = [
-  { key: "top", label: "Needs action now", ranks: ["top"] },
-  { key: "secondary", label: "Follow up soon", ranks: ["secondary"] },
-  { key: "watch", label: "On track", ranks: ["watch"] },
+/* ── Section definitions ── */
+const SECTIONS = [
+  {
+    key: "top",
+    label: "Needs attention now",
+    ranks: ["top"],
+    headerIcon: AlertCircle,
+    headerColor: "#dc2626",
+    countBg: "rgba(239,68,68,0.08)",
+    wrapBg: "rgba(239,68,68,0.02)",
+    wrapBorder: "rgba(239,68,68,0.06)",
+    wrapped: true,
+  },
+  {
+    key: "secondary",
+    label: "Follow up soon",
+    ranks: ["secondary"],
+    headerIcon: ChevronRight,
+    headerColor: "#d97706",
+    countBg: "rgba(245,158,11,0.06)",
+    wrapBg: "transparent",
+    wrapBorder: "transparent",
+    wrapped: false,
+  },
+  {
+    key: "watch",
+    label: "On track",
+    ranks: ["watch"],
+    headerIcon: Eye,
+    headerColor: "#94a3b8",
+    countBg: "rgba(100,116,139,0.05)",
+    wrapBg: "transparent",
+    wrapBorder: "transparent",
+    wrapped: false,
+  },
 ];
 
-/* ── Single recap-driven move card (ORIGINAL — unchanged) ── */
-function RecapMoveCard({ priority, navigate }) {
+/* ── Single move card (original styling preserved) ── */
+function RecapMoveCard({ priority, navigate, passive }) {
   const config = TIER_CONFIG[priority.rank] || TIER_CONFIG.watch;
   const { Icon } = config;
 
@@ -58,18 +88,20 @@ function RecapMoveCard({ priority, navigate }) {
         padding: "18px 20px",
         cursor: "pointer",
         transition: "transform 80ms ease, box-shadow 80ms ease",
+        opacity: passive ? 0.65 : 1,
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = "translateY(-1px)";
         e.currentTarget.style.boxShadow = "0 6px 20px rgba(19,33,58,0.08)";
+        e.currentTarget.style.opacity = "1";
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = "";
         e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.opacity = passive ? "0.65" : "1";
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-        {/* Icon */}
         <div style={{
           width: 36, height: 36, borderRadius: "50%",
           background: config.iconBg,
@@ -80,7 +112,6 @@ function RecapMoveCard({ priority, navigate }) {
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Badge */}
           <span data-testid={`move-badge-${priority.rank}`} style={{
             fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
             textTransform: "uppercase",
@@ -90,7 +121,6 @@ function RecapMoveCard({ priority, navigate }) {
             {config.badge}
           </span>
 
-          {/* Action title */}
           <div data-testid={`move-action-${priority.program_id}`} style={{
             fontSize: 15, fontWeight: 600, color: "#0f172a",
             lineHeight: 1.4, marginBottom: 4,
@@ -98,7 +128,6 @@ function RecapMoveCard({ priority, navigate }) {
             {priority.action}
           </div>
 
-          {/* Reason */}
           <div data-testid={`move-reason-${priority.program_id}`} style={{
             fontSize: 13, fontWeight: 400, color: "#64748b",
             lineHeight: 1.5,
@@ -106,7 +135,6 @@ function RecapMoveCard({ priority, navigate }) {
             {priority.reason?.startsWith("\u2192") ? priority.reason : `\u2192 ${priority.reason}`}
           </div>
 
-          {/* Urgency note (top priority only) */}
           {priority.urgency_note && (
             <div data-testid="move-urgency-note" style={{
               fontSize: 12, fontWeight: 400, color: "#94a3b8",
@@ -123,96 +151,135 @@ function RecapMoveCard({ priority, navigate }) {
 
 /* ── Main PriorityBoard ── */
 export default function PriorityBoard({ items, navigate, heroItemId, recapData }) {
-  // Get recap priorities, exclude the hero school
-  const priorities = (recapData?.priorities || []).filter(p => p.program_id !== heroItemId);
+  // Recap priorities excluding hero, ordered by urgency
+  const RANK_ORDER = { top: 0, secondary: 1, watch: 2 };
+  const priorities = (recapData?.priorities || [])
+    .filter(p => p.program_id !== heroItemId)
+    .sort((a, b) => (RANK_ORDER[a.rank] ?? 9) - (RANK_ORDER[b.rank] ?? 9));
 
-  // Count schools needing attention (top + secondary ranks)
-  const needsAttentionCount = priorities.filter(p => p.rank === "top" || p.rank === "secondary").length;
+  // Also include attention items not in recap
+  const recapIds = new Set(priorities.map(p => p.program_id));
+  const extraItems = (items || [])
+    .filter(i => i.programId !== heroItemId && !recapIds.has(i.programId))
+    .map(i => ({
+      program_id: i.programId,
+      rank: i.tier === "high" ? "top" : i.tier === "medium" ? "secondary" : "watch",
+      action: i.primaryAction || `Follow up with ${i.program?.university_name || "school"}`,
+      reason: i.reasonShort || i.reason || "Keep your pipeline moving",
+      urgency_note: i.riskContext || null,
+    }));
 
-  // Group by urgency
-  const groups = URGENCY_GROUPS.map(group => ({
-    ...group,
-    items: priorities.filter(p => group.ranks.includes(p.rank)),
-  })).filter(g => g.items.length > 0);
+  const allCards = [...priorities, ...extraItems]
+    .sort((a, b) => (RANK_ORDER[a.rank] ?? 9) - (RANK_ORDER[b.rank] ?? 9));
 
-  // All on track
-  const allOnTrack = items?.every(i => i.tier === "low") && items?.length > 0 && priorities.length === 0;
+  // Promote top 2–3 items to "Needs attention now" (regardless of original rank)
+  const IMMEDIATE_COUNT = Math.min(3, Math.max(1, allCards.filter(c => c.rank !== "watch").length));
+  const immediateItems = allCards.slice(0, IMMEDIATE_COUNT);
+  const remainingItems = allCards.slice(IMMEDIATE_COUNT);
 
-  if (priorities.length === 0 && !allOnTrack) return null;
+  // Override rank for immediate items to show urgent styling
+  const immediateCards = immediateItems.map(c => ({ ...c, rank: "top" }));
+
+  // Split remaining into follow-up and on-track
+  const followUpCards = remainingItems.filter(c => c.rank === "top" || c.rank === "secondary");
+  const onTrackCards = remainingItems.filter(c => c.rank === "watch");
+
+  // Build section data
+  const sectionData = [
+    { ...SECTIONS[0], items: immediateCards },
+    { ...SECTIONS[1], items: followUpCards },
+    { ...SECTIONS[2], items: onTrackCards },
+  ].filter(s => s.items.length > 0);
+
+  // Counts for header
+  const urgentCount = immediateCards.length;
+  const followUpCount = followUpCards.length;
+  const totalAttention = urgentCount + followUpCount;
+  const allOnTrack = allCards.length > 0 && immediateCards.length === 0 && followUpCards.length === 0;
+
+  if (allCards.length === 0) return null;
 
   return (
-    <div data-testid="priority-board" style={{ marginTop: 8, fontFamily: FONT }}>
-      {/* ── Attention summary header ── */}
-      {needsAttentionCount > 0 && (
+    <div data-testid="priority-board" style={{ marginTop: 4, fontFamily: FONT }}>
+      {/* ── Smart header ── */}
+      {totalAttention > 0 ? (
         <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "12px 16px", borderRadius: 12,
-          background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.08)",
-          marginBottom: 16,
-        }} data-testid="attention-summary">
-          <AlertCircle style={{ width: 16, height: 16, color: "#dc2626", flexShrink: 0 }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>
-            {needsAttentionCount} school{needsAttentionCount !== 1 ? "s" : ""} need{needsAttentionCount === 1 ? "s" : ""} attention
+          display: "flex", alignItems: "center", gap: 6,
+          marginBottom: 14,
+        }} data-testid="attention-header">
+          <AlertTriangle style={{ width: 14, height: 14, color: "#d97706", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>
+            {urgentCount > 0 && (
+              <span style={{ color: "#dc2626" }}>{urgentCount} urgent</span>
+            )}
+            {urgentCount > 0 && followUpCount > 0 && (
+              <span style={{ color: "#cbd5e1" }}> · </span>
+            )}
+            {followUpCount > 0 && (
+              <span style={{ color: "#d97706" }}>{followUpCount} need follow-up</span>
+            )}
           </span>
         </div>
-      )}
-
-      {allOnTrack && (
+      ) : allOnTrack ? (
         <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "14px 18px", borderRadius: 12,
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "10px 14px", borderRadius: 10,
           background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.10)",
-          marginBottom: 20,
+          marginBottom: 14,
         }} data-testid="all-on-track-banner">
-          <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-          <span style={{ fontSize: 14, fontWeight: 500, color: "#1e293b" }}>Everything is on track</span>
-          <span style={{ fontSize: 13, fontWeight: 400, color: "#64748b" }}> — no programs need immediate attention</span>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 500, color: "#1e293b" }}>All schools on track</span>
+          <span style={{ fontSize: 12, fontWeight: 400, color: "#64748b" }}>— no action needed right now</span>
         </div>
-      )}
+      ) : null}
 
-      {/* ── Section divider ── */}
-      {priorities.length > 0 && (
-        <div style={{
-          fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
-          textTransform: "uppercase", color: "#94a3b8",
-          marginBottom: 16, paddingBottom: 10,
-          borderBottom: "1px solid rgba(20,37,68,0.06)",
-        }} data-testid="other-schools-divider">
-          Other schools needing attention
-        </div>
-      )}
+      {/* ── Sections ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {sectionData.map(section => {
+          const isPassive = section.key === "watch";
+          const HeaderIcon = section.headerIcon;
 
-      {/* ── Grouped list ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        {groups.map(group => {
-          const groupConfig = TIER_CONFIG[group.key] || TIER_CONFIG.watch;
           return (
-            <div key={group.key} data-testid={`urgency-group-${group.key}`}>
-              {/* Group header */}
+            <div
+              key={section.key}
+              data-testid={`urgency-group-${section.key}`}
+              style={{
+                background: section.wrapBg,
+                border: `1px solid ${section.wrapBorder}`,
+                borderRadius: section.wrapped ? 14 : 0,
+                padding: section.wrapped ? "14px 14px 10px" : 0,
+              }}
+            >
+              {/* Section header */}
               <div style={{
-                display: "flex", alignItems: "center", gap: 8,
-                marginBottom: 10, padding: "0 2px",
+                display: "flex", alignItems: "center", gap: 7,
+                marginBottom: 8,
               }}>
-                <groupConfig.Icon style={{ width: 14, height: 14, color: groupConfig.iconColor }} />
+                <HeaderIcon style={{ width: 13, height: 13, color: section.headerColor }} />
                 <span style={{
-                  fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
-                  textTransform: "uppercase", color: groupConfig.badgeColor,
+                  fontSize: 11, fontWeight: 800, letterSpacing: "0.05em",
+                  textTransform: "uppercase", color: section.headerColor,
                 }}>
-                  {group.label}
+                  {section.label}
                 </span>
                 <span style={{
                   fontSize: 10, fontWeight: 700,
-                  padding: "2px 7px", borderRadius: 6,
-                  background: groupConfig.badgeBg, color: groupConfig.badgeColor,
+                  padding: "1px 6px", borderRadius: 5,
+                  background: section.countBg, color: section.headerColor,
                 }}>
-                  {group.items.length}
+                  {section.items.length}
                 </span>
               </div>
 
-              {/* Group items — original RecapMoveCard */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {group.items.map((p) => (
-                  <RecapMoveCard key={p.program_id} priority={p} navigate={navigate} />
+              {/* Cards */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {section.items.map((p) => (
+                  <RecapMoveCard
+                    key={p.program_id}
+                    priority={p}
+                    navigate={navigate}
+                    passive={isPassive}
+                  />
                 ))}
               </div>
             </div>
