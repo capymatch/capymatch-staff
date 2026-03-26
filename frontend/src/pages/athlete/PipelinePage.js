@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Loader2, AlertTriangle, Archive, ChevronRight, RotateCcw } from "lucide-react";
+import { Loader2, AlertTriangle, Archive, ChevronRight, RotateCcw, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { triggerReinforcement } from "../../lib/reinforcement";
 import ReinforcementToast from "../../components/reinforcement/ReinforcementToast";
@@ -207,9 +207,19 @@ export default function PipelinePage() {
 
       {/* ═══ PAGE HEADER ═══ */}
       <div className="-mx-2 sm:-mx-1 -mt-4 sm:-mt-6 mb-5 sm:mb-8 bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }} data-testid="pipeline-header">
-        <div className="px-4 sm:px-4 py-3 sm:py-4 flex items-start justify-between gap-4" style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <div className="px-4 sm:px-4 py-3 sm:py-4 flex items-center gap-3" style={{ maxWidth: 1120, margin: "0 auto" }}>
+        {/* Back to Dashboard */}
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors shrink-0"
+          data-testid="back-to-dashboard"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline">Pipeline</span>
+        </button>
+        <div className="h-5 w-px bg-gray-200 hidden sm:block" />
         {/* Left: live summary */}
-        <div className="flex-1 min-w-0 pt-1">
+        <div className="flex-1 min-w-0 pt-0.5">
           {viewMode === "priority" && <MomentumInsight attention={allAttention} recapData={recapData} onViewBreakdown={() => setBreakdownOpen(true)} />}
         </div>
 
