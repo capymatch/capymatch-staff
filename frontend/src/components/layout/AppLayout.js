@@ -81,7 +81,7 @@ export default function AppLayout({ children, title, icon }) {
       {isAthlete && (
         <button onClick={() => setAiOpen(true)}
           className="fixed bottom-6 right-6 w-12 h-12 rounded-full shadow-lg z-[80] flex items-center justify-center transition-transform hover:scale-110"
-          style={{ background: "linear-gradient(135deg, #1a8a80, #6366f1)" }}
+          style={{ background: "#1e293b" }}
           data-testid="ai-fab">
           <Sparkles className="w-5 h-5 text-white" />
         </button>

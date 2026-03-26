@@ -163,7 +163,7 @@ function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDe
           <span className="text-lg font-extrabold text-gray-900">
             {school.match_score}
           </span>
-          <span className="text-[8px] font-semibold text-teal-600 -mt-0.5">MATCH</span>
+          <span className="text-[8px] font-semibold -mt-0.5" style={{ color: "#8B3F1F" }}>MATCH</span>
         </div>
       </div>
 
@@ -187,13 +187,16 @@ function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDe
 
       <div className="flex items-center gap-2 pt-3 border-t border-gray-100" onClick={e => e.stopPropagation()}>
         {school.in_pipeline || isOnBoard ? (
-          <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-600">
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: "#8B3F1F" }}>
             <Check className="w-3.5 h-3.5" /> In Pipeline
           </span>
         ) : (
           <button onClick={() => addToBoard({ university_name: school.university_name })}
             disabled={adding[school.university_name]}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-white text-teal-700 border border-teal-200 hover:bg-teal-50/50 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-white transition-all"
+            style={{ color: "#8B3F1F", border: "1px solid #8B3F1F30" }}
+            onMouseEnter={e => e.currentTarget.style.background = "#8B3F1F08"}
+            onMouseLeave={e => e.currentTarget.style.background = "white"}
             data-testid={`add-featured-${school.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
             {adding[school.university_name] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
             Add to Pipeline
@@ -230,7 +233,7 @@ function SchoolCard({ uni, adding, addToBoard, boardSchools, navigate }) {
           </div>
         </div>
         {uni.match_score > 0 && (
-          <span className="text-xl font-extrabold text-gray-900 flex-shrink-0" data-testid="card-match-score">{uni.match_score}<span className="text-[11px] font-semibold text-teal-600">%</span></span>
+          <span className="text-xl font-extrabold text-gray-900 flex-shrink-0" data-testid="card-match-score">{uni.match_score}<span className="text-[11px] font-semibold" style={{ color: "#8B3F1F" }}>%</span></span>
         )}
       </div>
 
@@ -257,7 +260,10 @@ function SchoolCard({ uni, adding, addToBoard, boardSchools, navigate }) {
       <div className="flex gap-2 pt-3 border-t border-gray-50" onClick={e => e.stopPropagation()}>
         <button onClick={() => !isOnBoard && addToBoard(uni)} disabled={adding[uni.university_name] || isOnBoard}
           data-testid={`add-board-${(uni.domain || "").replace(/\./g, "-")}`}
-          className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold text-center transition-all ${isOnBoard ? "bg-white text-emerald-600 border border-emerald-200" : "bg-white text-teal-700 border border-teal-200 hover:bg-teal-50/50"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold text-center transition-all bg-white`}
+          style={isOnBoard ? { color: "#8B3F1F", border: "1px solid #8B3F1F25" } : { color: "#8B3F1F", border: "1px solid #8B3F1F30" }}
+          onMouseEnter={e => { if (!isOnBoard) e.currentTarget.style.background = "#8B3F1F08"; }}
+          onMouseLeave={e => { if (!isOnBoard) e.currentTarget.style.background = "white"; }}>
           {isOnBoard ? <><Check className="w-3.5 h-3.5 inline mr-1" />In Pipeline</> : adding[uni.university_name] ? "Adding..." : <><Plus className="w-3.5 h-3.5 inline mr-1" />Add</>}
         </button>
         <button onClick={() => uni.domain && navigate(`/schools/${uni.domain}`)}
@@ -492,12 +498,12 @@ export default function SchoolsPage() {
               </div>
               <div className="w-px h-8 bg-gray-200" />
               <div className="text-center">
-                <div className="text-xl sm:text-2xl font-extrabold text-teal-600">{strongMatchCount}</div>
+                <div className="text-xl sm:text-2xl font-extrabold" style={{ color: "#8B3F1F" }}>{strongMatchCount}</div>
                 <div className="text-[10px] sm:text-[11px] text-gray-400 font-medium">Strong Matches</div>
               </div>
               <div className="w-px h-8 bg-gray-200" />
               <div className="text-center">
-                <div className="text-xl sm:text-2xl font-extrabold text-amber-500">{smartMatches.length}</div>
+                <div className="text-xl sm:text-2xl font-extrabold" style={{ color: "#8B3F1F" }}>{smartMatches.length}</div>
                 <div className="text-[10px] sm:text-[11px] text-gray-400 font-medium">Recommended</div>
               </div>
             </div>
@@ -511,14 +517,15 @@ export default function SchoolsPage() {
         {!smartLoading && smartMatches.length > 0 && (
           <div className="mb-10" data-testid="smart-match-section">
             {profileChanged && (
-              <div className="mb-4 flex items-center gap-2.5 px-5 py-3 rounded-2xl border border-amber-200 bg-amber-50"
+              <div className="mb-4 flex items-center gap-2.5 px-5 py-3 rounded-2xl" style={{ border: "1px solid #8B3F1F20", background: "#8B3F1F06" }}
                 data-testid="profile-changed-banner">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-600" />
-                <span className="text-[12px] font-medium flex-1 text-amber-700">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: "#8B3F1F" }} />
+                <span className="text-[12px] font-medium flex-1" style={{ color: "#8B3F1F" }}>
                   Your profile has been updated since these recommendations were generated.
                 </span>
                 <button onClick={refreshMatches} disabled={refreshing}
-                  className="text-[11px] font-bold px-4 py-1.5 rounded-xl flex items-center gap-1.5 bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-all"
+                  className="text-[11px] font-bold px-4 py-1.5 rounded-xl flex items-center gap-1.5 transition-all"
+                  style={{ background: "#8B3F1F10", color: "#8B3F1F", border: "1px solid #8B3F1F20" }}
                   data-testid="refresh-from-banner">
                   {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                   Refresh Now
