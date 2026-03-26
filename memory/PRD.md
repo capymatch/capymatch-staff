@@ -12,36 +12,38 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 ## Design System (Unified)
 - **Page Background**: `var(--cm-bg)` = `#F7FAFC`
 - **Light Card**: `bg: #fff`, `border: 1px solid #e7dfd4`, `radius: 18px`
-- **Dark Card (action hero only)**: `bg: #161921`, shadow: `0 8px 32px rgba(0,0,0,0.18)`
-- **Header Bar**: Matches SupportPod — `bg-white/95 border-b border-gray-100/80`, subtle box-shadow, inline layout
+- **Dark Hero Card**: `bg: #161921`, shadow: `0 8px 32px rgba(0,0,0,0.18)`
+- **Header Bar**: `bg-white/95 border-b border-gray-100/80`, subtle box-shadow
 - **Signal Chips**: `text-[10px]`, lighter borders/colors, `gap-1.5`
-- **Hero Title**: `text-xl sm:text-2xl font-bold`, white
-- **Hero CTA**: `text-[14px] sm:text-[15px] py-3 px-5`, accent glow shadow
-- **Floating Action Bar**: white pill, backdrop-blur, upward shadow anchoring
+- **Hero Card Hierarchy**:
+  - Metadata chips: 9px, rounded-md, muted colors (alpha 0.15/0.32)
+  - Title: 22px/26px font-extrabold, line-height 1.15
+  - Icon: w-11 h-11 with accent glow
+  - Urgency: 13px font-bold, rgba(248,113,113,0.9)
+  - Message preview: borderless, bg 0.03 alpha, px-6 py-5, line-height 1.7
+  - CTA: 14px/15px font-bold, padding 14px 24px, glow shadow
+  - Why This: 10px label (0.50 alpha), 12-13px text (0.60 alpha)
+- **Floating Action Bar**: white pill, backdrop-blur(12px), upward shadow
 - **Text**: gray-900 (heading), gray-500 (subtext), gray-400 (icons)
 
 ## Completed Work
 - Login page redesign (pixel-perfect from HTML mockup)
 - Pipeline/Priority page premium UI
-- Journey page complete visual alignment:
-  - Header bar matches SupportPod exactly (bg-white/95, border-b, inline layout, health badge)
-  - Signal chips replacing floating blocks
-  - Unified light card system
-  - Feed-style neutral timeline
-  - Green-tinted backgrounds removed
-- Journey Page Final UI Polish (8-point refinement) — DONE Mar 2026:
-  1. Header subtle shadow separation
-  2. Signal chips reduced visual weight (10px, lighter colors)
-  3. Hero title prominence (xl/2xl bold)
-  4. Urgency line readability (13px)
-  5. Message preview softened contrast + padding
-  6. CTA button enlarged with glow
-  7. Metadata pills reduced dominance
-  8. Hero card depth shadow + FAB anchoring
+- Journey page complete visual alignment
+- Journey Page Final UI Polish — 8-point refinement (Mar 2026)
+- **Hero Card Deep Refinement** — 8-point command center polish (Mar 2026):
+  1. Metadata row: compact chips (9px, rounded-md, reduced dominance)
+  2. Title: extrabold 22/26px, line-height 1.15
+  3. Icon: w-11 h-11 with glow, aligned with title
+  4. Urgency line: font-bold, improved contrast
+  5. Message preview: borderless, airy padding, line-height 1.7
+  6. CTA button: 14px 24px padding via inline style (CSS override fix), stronger glow
+  7. Internal spacing: tighter metadata→title→reason flow
+  8. Why This: improved contrast (0.50/0.60), better spacing
 - Railway production deployment fix
 
 ## Pending Issues
-- P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app` (user manual step)
+- P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
 ## Upcoming Tasks (P1)
 - CSV Import Tool: Bulk import for school/coach data

@@ -172,8 +172,8 @@ export function PrimaryHeroCard({ hero, program }) {
                     hero.primaryCta.handler();
                   }
                 }} disabled={hero.primaryCta.loading}
-                className="ds-btn-primary text-[14px] sm:text-[15px] py-3.5 px-6 sm:py-3.5 sm:px-7 font-bold"
-                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1, boxShadow: `0 0 28px ${hero.accent}35, 0 4px 12px ${hero.accent}20` }}
+                className="ds-btn-primary text-[14px] sm:text-[15px] font-bold"
+                style={{ backgroundColor: hero.accent, opacity: hero.primaryCta.loading ? 0.6 : 1, boxShadow: `0 0 28px ${hero.accent}35, 0 4px 12px ${hero.accent}20`, padding: "14px 24px" }}
                 data-testid="hero-primary-cta">
                 {hero.primaryCta.loading
                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
