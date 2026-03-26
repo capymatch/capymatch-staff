@@ -12,21 +12,22 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 ## Design System (Unified)
 - **Page Background**: `var(--cm-bg)` = `#F7FAFC`
 - **Light Card**: `bg: #fff`, `border: 1px solid #e7dfd4`, `radius: 18px`, `shadow: 0 2px 8px rgba(80,60,30,0.03)`
-- **Dark Card (hero)**: `bg: #161921`, `radius: 18-22px`
-- **Text**: `#1a1a1a` (primary), `#3d3830` (body), `#6b6358` (muted)
-- **Green**: Only for small status indicators (dots, labels, icons) — NOT card backgrounds
-- **Accent**: Teal `#0d9488` for CTAs/labels only
+- **Dark Card (action hero only)**: `bg: #161921`
+- **Header Bar**: Light/transparent bg, school info left, icon controls right
+- **Text**: `#1a1a1a` (primary), `#3d3830` (body), `#6b6358` (muted), `#9c917f` (secondary)
+- **Green**: Only for small status indicators — NOT card backgrounds
 
 ## Completed Work
 - Login page redesign (pixel-perfect from HTML mockup)
 - Pipeline/Priority page premium UI (urgency tiers, P tokens)
 - Journey page structural + visual alignment:
+  - Light header bar (matches coach view) replacing dark school card
   - Background: `var(--cm-bg)` matching Pipeline
   - Signal chips replacing RadarStrip + SI preview
   - Unified light card system (18px radius, #e7dfd4 border)
-  - Feed-style timeline (white cards, neutral borders, no color noise)
+  - Feed-style timeline (white cards, neutral borders)
   - "Why this matters" consolidated insight section
-- Visual cleanup: All green-tinted backgrounds removed from timeline, Gmail card, containers
+  - All green-tinted backgrounds removed
 - Railway production deployment fix
 
 ## Pending Issues
