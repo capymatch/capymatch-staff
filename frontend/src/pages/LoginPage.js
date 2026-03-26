@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { Eye, EyeOff, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const { login, register } = useAuth();
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -26,282 +27,314 @@ export default function LoginPage() {
         await register(email, password, name, role);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || "Something went wrong");
+      setError(err.response?.data?.detail || "Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }
   };
 
+  const demoAccounts = [
+    { label: "Athlete Demo", desc: "Student-athlete recruiting workflow", email: "emma.chen@athlete.capymatch.com", pw: "athlete123" },
+    { label: "Coach Demo", desc: "Coach operating system view", email: "coach.williams@capymatch.com", pw: "coach123" },
+    { label: "Director Demo", desc: "Program director dashboard", email: "director@capymatch.com", pw: "director123" },
+  ];
+
   return (
-    <div className="min-h-screen bg-white flex" data-testid="login-page">
-      {/* Left — Branding panel */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden items-center justify-center bg-[#faf9f7]">
-        <div className="relative z-10 max-w-lg px-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-200 bg-white mb-8">
-            <span className="w-2 h-2 rounded-full bg-[#F26522]" />
-            <span className="text-sm text-[#F26522] font-medium">Built for coaches and recruiting staff</span>
+    <div className="min-h-screen flex" data-testid="login-page">
+      {/* Left — Branding panel with grid background */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden items-start pt-16 px-12 xl:px-20" style={{ backgroundColor: "#F5F0EB" }}>
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }} />
+
+        <div className="relative z-10 max-w-xl">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-16">
+            <div className="w-10 h-10 rounded-full bg-[#F26522] flex items-center justify-center">
+              <span className="text-white font-black text-lg" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>C</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">CapyMatch</span>
           </div>
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 mb-8">
+            <span className="w-2 h-2 rounded-full bg-[#F26522]" />
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">For Athletes and Families</span>
+          </div>
+
+          {/* Hero text */}
           <h1
-            className="text-5xl font-black text-gray-900 leading-[1.1] tracking-tight mb-6"
+            className="text-[3.5rem] xl:text-[4.2rem] font-black leading-[1.05] tracking-tight text-gray-900 mb-8"
             style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900 }}
           >
-            Run recruiting like{" "}
-            <span className="text-[#F26522]">a system,</span>
-            <br />
-            not a spreadsheet.
+            Turn recruiting<br />chaos into<br />
+            <span className="text-[#F26522]">confident<br />follow-ups.</span>
           </h1>
-          <p className="text-lg text-gray-500 leading-relaxed mb-10">
-            CapyMatch gives you full visibility across athletes, schools, and actions — so nothing falls through the cracks.
+
+          {/* Description */}
+          <p className="text-base text-gray-500 leading-relaxed mb-1">
+            Track schools. Manage coach emails.{" "}
+            <span className="font-bold text-gray-900">Always know</span>
+          </p>
+          <p className="text-base mb-1">
+            <span className="font-bold text-gray-900">what to do next.</span>
+          </p>
+          <p className="text-base text-gray-500 mb-10">
+            No spreadsheets. No missed follow-ups.
           </p>
 
-          {/* Dashboard preview card */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 transform rotate-[-1deg]">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="w-3 h-3 rounded-full bg-red-300" />
-              <span className="w-3 h-3 rounded-full bg-yellow-300" />
-              <span className="w-3 h-3 rounded-full bg-green-300" />
-              <span className="ml-4 text-xs text-gray-400">capymatch.app / coach / dashboard</span>
-            </div>
-            <div className="grid grid-cols-4 gap-3 mb-4">
-              {[
-                { label: "Total Athletes", val: "14" },
-                { label: "Need Attention", val: "3" },
-                { label: "Active Pipelines", val: "47" },
-                { label: "Actions Today", val: "8" },
-              ].map((s) => (
-                <div key={s.label} className="bg-gray-50 rounded-lg p-3 text-center">
-                  <div className="text-[10px] text-gray-400 mb-1">{s.label}</div>
-                  <div className="text-lg font-bold text-gray-900">{s.val}</div>
-                </div>
+          {/* Feature pills */}
+          <div className="flex flex-wrap gap-2 mb-12">
+            {["Track Schools", "Manage Communication", "Know What To Do Next"].map((label) => (
+              <span
+                key={label}
+                className="px-4 py-2 text-xs font-medium text-gray-600 bg-white/80 border border-gray-200 rounded-full"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+
+          {/* Social proof */}
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-1.5">
+              {["bg-emerald-400", "bg-sky-400", "bg-pink-400", "bg-amber-300"].map((color, i) => (
+                <div key={i} className={`w-7 h-7 rounded-full ${color} border-2 border-[#F5F0EB]`} />
               ))}
             </div>
-            <div className="flex items-center gap-3 bg-orange-50 rounded-lg px-4 py-2.5">
-              <span className="w-6 h-6 rounded bg-[#F26522]" />
-              <span className="text-xs text-gray-700 flex-1">Jordan K. — Duke window closing. Act today.</span>
-              <span className="text-xs text-[#F26522] font-medium whitespace-nowrap">Act now &rarr;</span>
-            </div>
+            <span className="text-sm text-gray-500">Used by families managing 10-30+ schools</span>
           </div>
         </div>
-
-        {/* Decorative circle */}
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-orange-100/50" />
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-orange-50/80" />
       </div>
 
       {/* Right — Auth form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[400px]">
-          {/* Mobile branding */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-orange-200 bg-orange-50/50 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#F26522]" />
-              <span className="text-xs text-[#F26522] font-medium">CapyMatch</span>
+      <div className="flex-1 bg-white flex flex-col min-h-screen">
+        <div className="flex-1 flex items-start justify-center pt-8 lg:pt-12 px-6 pb-8 overflow-y-auto">
+          <div className="w-full max-w-[420px]">
+            {/* Logo (top of form) */}
+            <div className="flex items-center gap-2.5 mb-8">
+              <div className="w-8 h-8 rounded-full bg-[#F26522] flex items-center justify-center">
+                <span className="text-white font-black text-sm" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>C</span>
+              </div>
+              <span className="text-lg font-bold text-gray-900 tracking-tight">CapyMatch</span>
             </div>
-          </div>
 
-          {/* Header */}
-          <div className="mb-8">
+            {/* Header */}
             <h2
-              className="text-3xl font-black text-gray-900 tracking-tight mb-2"
+              className="text-2xl font-black text-gray-900 tracking-tight mb-2"
               style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900 }}
             >
               {mode === "login" ? "Welcome back" : "Get started"}
             </h2>
-            <p className="text-gray-500 text-sm">
+            <p className="text-sm text-gray-500 leading-relaxed mb-7">
               {mode === "login"
-                ? "Sign in to your CapyMatch account"
-                : "Create your CapyMatch account"}
+                ? "Sign in to manage your recruiting, review coach conversations, and take your next best action."
+                : "Create your account to start managing your recruiting pipeline."}
             </p>
-          </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100 rounded-full p-1 mb-8" data-testid="auth-tabs">
-            <button
-              onClick={() => { setMode("login"); setError(""); }}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 ${
-                mode === "login"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-              data-testid="tab-login"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMode("register"); setError(""); }}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 ${
-                mode === "register"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-              data-testid="tab-register"
-            >
-              Create Account
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {mode === "register" && (
-              <>
-                <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    placeholder="Your full name"
-                    className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all placeholder:text-gray-400"
-                    data-testid="input-name"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-700 block mb-2">I am a...</label>
-                  <div className="grid grid-cols-3 gap-2" data-testid="role-selector">
-                    {[
-                      { value: "athlete", label: "Athlete" },
-                      { value: "parent", label: "Parent" },
-                      { value: "club_coach", label: "Coach" },
-                    ].map((r) => (
-                      <button
-                        key={r.value}
-                        type="button"
-                        onClick={() => setRole(r.value)}
-                        data-testid={`role-${r.value}`}
-                        className={`py-2.5 text-sm font-semibold rounded-xl border-2 transition-all duration-200 ${
-                          role === r.value
-                            ? "bg-[#F26522] text-white border-[#F26522]"
-                            : "bg-white text-gray-500 border-gray-200 hover:border-[#F26522]/40 hover:text-gray-700"
-                        }`}
-                      >
-                        {r.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-2">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all placeholder:text-gray-400"
-                data-testid="input-email"
-              />
+            {/* Tabs */}
+            <div className="flex border border-gray-200 rounded-xl p-1 mb-7" data-testid="auth-tabs">
+              <button
+                onClick={() => { setMode("login"); setError(""); }}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  mode === "login"
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-100"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                data-testid="tab-login"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setMode("register"); setError(""); }}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  mode === "register"
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-100"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+                data-testid="tab-register"
+              >
+                Create Account
+              </button>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-gray-700 block mb-2">Password</label>
-              <div className="relative">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {mode === "register" && (
+                <>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Full Name</label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      placeholder="Your full name"
+                      className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all placeholder:text-gray-400"
+                      style={{ backgroundColor: "#FAFAF8" }}
+                      data-testid="input-name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">I am a...</label>
+                    <div className="grid grid-cols-3 gap-2" data-testid="role-selector">
+                      {[
+                        { value: "athlete", label: "Athlete" },
+                        { value: "parent", label: "Parent" },
+                        { value: "club_coach", label: "Coach" },
+                      ].map((r) => (
+                        <button
+                          key={r.value}
+                          type="button"
+                          onClick={() => setRole(r.value)}
+                          data-testid={`role-${r.value}`}
+                          className={`py-2.5 text-sm font-semibold rounded-xl border transition-all duration-200 ${
+                            role === r.value
+                              ? "bg-[#F26522] text-white border-[#F26522]"
+                              : "bg-white text-gray-500 border-gray-200 hover:border-[#F26522]/40"
+                          }`}
+                        >
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">Email</label>
                 <input
-                  type={showPw ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="Enter password"
-                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all pr-11 placeholder:text-gray-400"
-                  data-testid="input-password"
+                  placeholder="you@capymatch.com"
+                  className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all placeholder:text-gray-400"
+                  style={{ backgroundColor: "#FAFAF8" }}
+                  data-testid="input-email"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  data-testid="toggle-password"
-                >
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
               </div>
+
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Enter password"
+                    className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all pr-11 placeholder:text-gray-400"
+                    style={{ backgroundColor: "#FAFAF8" }}
+                    data-testid="input-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(!showPw)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    data-testid="toggle-password"
+                  >
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember me + Forgot password */}
               {mode === "login" && (
-                <div className="text-right mt-2">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer" data-testid="remember-me">
+                    <input
+                      type="checkbox"
+                      checked={remember}
+                      onChange={(e) => setRemember(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-[#F26522] focus:ring-[#F26522]/20"
+                    />
+                    <span className="text-sm text-gray-500">Remember me</span>
+                  </label>
                   <Link
                     to="/forgot-password"
-                    className="text-xs text-gray-400 hover:text-[#F26522] transition-colors"
+                    className="text-sm text-gray-400 hover:text-[#F26522] transition-colors"
                     data-testid="forgot-password-link"
                   >
                     Forgot password?
                   </Link>
                 </div>
               )}
-            </div>
 
-            {error && (
-              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-xl" data-testid="auth-error">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
-                {error}
+              {error && (
+                <div
+                  className="text-sm px-4 py-3 rounded-xl"
+                  style={{ backgroundColor: "#FDE8E5", color: "#C0392B" }}
+                  data-testid="auth-error"
+                >
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="w-full py-3.5 bg-[#F26522] text-white text-sm font-bold rounded-full hover:bg-[#d9551a] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                data-testid="auth-submit-btn"
+              >
+                {busy ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                ) : (
+                  <>
+                    {mode === "login" ? "Sign In" : "Create Account"}
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Demo accounts */}
+            {mode === "login" && (
+              <div className="mt-8">
+                {/* Divider */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <button
+                    type="button"
+                    onClick={() => setShowDemo(!showDemo)}
+                    className="text-xs font-semibold text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors"
+                    data-testid="toggle-demo-accounts"
+                  >
+                    Demo Accounts
+                  </button>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+
+                {showDemo && (
+                  <div className="border border-gray-200 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Quick Access</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {demoAccounts.map((d) => (
+                        <div key={d.email} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 transition-colors">
+                          <div>
+                            <div className="text-sm font-semibold text-gray-900">{d.label}</div>
+                            <div className="text-xs text-gray-400 mt-0.5">{d.desc}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setEmail(d.email); setPassword(d.pw); }}
+                            className="px-3.5 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all"
+                            data-testid={`demo-${d.label.toLowerCase().replace(/\s+/g, "-")}`}
+                          >
+                            Use
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full py-3.5 bg-[#F26522] text-white text-sm font-bold rounded-full hover:bg-[#d9551a] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-orange-200/50"
-              data-testid="auth-submit-btn"
-            >
-              {busy ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
-              ) : (
-                <>
-                  {mode === "login" ? "Sign In" : "Create Account"}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Demo accounts (collapsible) */}
-          {mode === "login" && (
-            <div className="mt-8">
-              <button
-                type="button"
-                onClick={() => setShowDemo(!showDemo)}
-                className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors group"
-                data-testid="toggle-demo-accounts"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="h-px w-8 bg-gray-200 group-hover:bg-gray-300 transition-colors" />
-                  <span className="font-medium uppercase tracking-wider">Demo Accounts</span>
-                  <span className="h-px w-8 bg-gray-200 group-hover:bg-gray-300 transition-colors" />
-                </div>
-                {showDemo ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
-
-              {showDemo && (
-                <div className="mt-3 space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {[
-                    { label: "Director", email: "director@capymatch.com", pw: "director123" },
-                    { label: "Coach Williams", email: "coach.williams@capymatch.com", pw: "coach123" },
-                    { label: "Coach Garcia", email: "coach.garcia@capymatch.com", pw: "coach123" },
-                    { label: "Emma Chen (Athlete)", email: "emma.chen@athlete.capymatch.com", pw: "athlete123" },
-                    { label: "Olivia Anderson", email: "olivia.anderson@athlete.capymatch.com", pw: "athlete123" },
-                    { label: "Marcus Johnson", email: "marcus.johnson@athlete.capymatch.com", pw: "athlete123" },
-                    { label: "Lucas Rodriguez", email: "lucas.rodriguez@athlete.capymatch.com", pw: "athlete123" },
-                    { label: "Sarah Martinez", email: "sarah.martinez@athlete.capymatch.com", pw: "athlete123" },
-                  ].map((d) => (
-                    <button
-                      key={d.email}
-                      type="button"
-                      onClick={() => { setEmail(d.email); setPassword(d.pw); }}
-                      className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group"
-                      data-testid={`demo-${d.label.toLowerCase().replace(/\s+/g, "-")}`}
-                    >
-                      <span className="text-gray-600 font-medium">{d.label}</span>
-                      <span className="text-gray-300 group-hover:text-gray-400 text-[10px] transition-colors">{d.email}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Footer */}
-          <p className="text-center text-xs text-gray-400 mt-8">
-            Built for real club and program workflows
-          </p>
+          </div>
         </div>
       </div>
     </div>
