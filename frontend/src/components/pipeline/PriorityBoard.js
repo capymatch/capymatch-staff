@@ -1,55 +1,55 @@
 import React from "react";
-import { AlertCircle, Clock, CheckCircle, ChevronRight } from "lucide-react";
-import UniversityLogo from "../UniversityLogo";
+import { AlertCircle, ChevronRight, Eye } from "lucide-react";
 
 const FONT = '-apple-system, "SF Pro Text", Inter, ui-sans-serif, system-ui, sans-serif';
 
-/* ── Urgency group config ── */
-const URGENCY_GROUPS = [
-  {
-    key: "high",
-    label: "Needs action now",
-    filter: (item) => item.tier === "high",
-    borderColor: "#ef4444",
+/* ── Tier config for YOUR NEXT MOVES cards ── */
+const TIER_CONFIG = {
+  top: {
+    badge: "NEEDS YOUR ATTENTION NOW",
     badgeBg: "rgba(239,68,68,0.08)",
     badgeColor: "#dc2626",
+    borderColor: "#ef4444",
     Icon: AlertCircle,
     iconBg: "rgba(239,68,68,0.08)",
     iconColor: "#ef4444",
   },
-  {
-    key: "medium",
-    label: "Follow up soon",
-    filter: (item) => item.tier === "medium",
-    borderColor: "#f59e0b",
+  secondary: {
+    badge: "SECONDARY",
     badgeBg: "rgba(245,158,11,0.08)",
     badgeColor: "#d97706",
-    Icon: Clock,
+    borderColor: "#f59e0b",
+    Icon: ChevronRight,
     iconBg: "rgba(245,158,11,0.08)",
     iconColor: "#f59e0b",
   },
-  {
-    key: "low",
-    label: "On track",
-    filter: (item) => item.tier === "low",
-    borderColor: "#10b981",
-    badgeBg: "rgba(16,185,129,0.08)",
-    badgeColor: "#059669",
-    Icon: CheckCircle,
-    iconBg: "rgba(16,185,129,0.08)",
-    iconColor: "#10b981",
+  watch: {
+    badge: "WATCH",
+    badgeBg: "rgba(100,116,139,0.08)",
+    badgeColor: "#64748b",
+    borderColor: "#94a3b8",
+    Icon: Eye,
+    iconBg: "rgba(100,116,139,0.08)",
+    iconColor: "#94a3b8",
   },
+};
+
+/* ── Urgency group definitions ── */
+const URGENCY_GROUPS = [
+  { key: "top", label: "Needs action now", ranks: ["top"] },
+  { key: "secondary", label: "Follow up soon", ranks: ["secondary"] },
+  { key: "watch", label: "On track", ranks: ["watch"] },
 ];
 
-/* ── Single school list item ── */
-function SchoolListItem({ item, config, navigate }) {
-  const p = item.program;
+/* ── Single recap-driven move card (ORIGINAL — unchanged) ── */
+function RecapMoveCard({ priority, navigate }) {
+  const config = TIER_CONFIG[priority.rank] || TIER_CONFIG.watch;
   const { Icon } = config;
 
   return (
     <div
-      data-testid={`priority-item-${item.programId}`}
-      onClick={() => navigate && navigate(`/pipeline/${item.programId}`)}
+      data-testid={`next-move-card-${priority.program_id}`}
+      onClick={() => navigate && navigate(`/pipeline/${priority.program_id}`)}
       style={{
         background: "#fff",
         border: "1px solid rgba(20,37,68,0.06)",
@@ -80,50 +80,42 @@ function SchoolListItem({ item, config, navigate }) {
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* School name with logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            {p && (
-              <UniversityLogo
-                name={p.university_name}
-                domain={p.domain}
-                logoUrl={p.logo_url}
-                size={20}
-                className="rounded-md flex-shrink-0"
-              />
-            )}
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", lineHeight: 1.3 }}>
-              {p?.university_name || "School"}
-            </span>
-            {item.timingLabel && (
-              <span style={{
-                fontSize: 10, fontWeight: 600, color: config.badgeColor,
-                background: config.badgeBg, padding: "2px 6px", borderRadius: 6,
-                marginLeft: 4, whiteSpace: "nowrap",
-              }}>
-                {item.timingLabel}
-              </span>
-            )}
-          </div>
-
-          {/* Action */}
-          <div data-testid={`item-action-${item.programId}`} style={{
-            fontSize: 13, fontWeight: 500, color: "#334155",
-            lineHeight: 1.4, marginBottom: 2,
+          {/* Badge */}
+          <span data-testid={`move-badge-${priority.rank}`} style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: config.badgeColor,
+            display: "inline-block", marginBottom: 6,
           }}>
-            {item.primaryAction}
+            {config.badge}
+          </span>
+
+          {/* Action title */}
+          <div data-testid={`move-action-${priority.program_id}`} style={{
+            fontSize: 15, fontWeight: 600, color: "#0f172a",
+            lineHeight: 1.4, marginBottom: 4,
+          }}>
+            {priority.action}
           </div>
 
           {/* Reason */}
-          <div data-testid={`item-reason-${item.programId}`} style={{
-            fontSize: 12, fontWeight: 400, color: "#94a3b8",
-            lineHeight: 1.4,
+          <div data-testid={`move-reason-${priority.program_id}`} style={{
+            fontSize: 13, fontWeight: 400, color: "#64748b",
+            lineHeight: 1.5,
           }}>
-            {item.reasonShort || item.reason}
+            {priority.reason?.startsWith("\u2192") ? priority.reason : `\u2192 ${priority.reason}`}
           </div>
-        </div>
 
-        {/* Navigate chevron */}
-        <ChevronRight style={{ width: 16, height: 16, color: "#cbd5e1", flexShrink: 0, marginTop: 10 }} />
+          {/* Urgency note (top priority only) */}
+          {priority.urgency_note && (
+            <div data-testid="move-urgency-note" style={{
+              fontSize: 12, fontWeight: 400, color: "#94a3b8",
+              fontStyle: "italic", marginTop: 8,
+            }}>
+              {priority.urgency_note}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -131,26 +123,26 @@ function SchoolListItem({ item, config, navigate }) {
 
 /* ── Main PriorityBoard ── */
 export default function PriorityBoard({ items, navigate, heroItemId, recapData }) {
-  // Exclude hero school from the list
-  const listItems = (items || []).filter(i => i.programId !== heroItemId);
+  // Get recap priorities, exclude the hero school
+  const priorities = (recapData?.priorities || []).filter(p => p.program_id !== heroItemId);
 
-  // Count schools needing attention (high + medium tiers)
-  const needsAttentionCount = listItems.filter(i => i.tier === "high" || i.tier === "medium").length;
+  // Count schools needing attention (top + secondary ranks)
+  const needsAttentionCount = priorities.filter(p => p.rank === "top" || p.rank === "secondary").length;
 
-  // Group items by urgency
+  // Group by urgency
   const groups = URGENCY_GROUPS.map(group => ({
     ...group,
-    items: listItems.filter(group.filter),
+    items: priorities.filter(p => group.ranks.includes(p.rank)),
   })).filter(g => g.items.length > 0);
 
   // All on track
-  const allOnTrack = listItems.length > 0 && listItems.every(i => i.tier === "low");
+  const allOnTrack = items?.every(i => i.tier === "low") && items?.length > 0 && priorities.length === 0;
 
-  if (listItems.length === 0) return null;
+  if (priorities.length === 0 && !allOnTrack) return null;
 
   return (
     <div data-testid="priority-board" style={{ marginTop: 8, fontFamily: FONT }}>
-      {/* ── Header summary ── */}
+      {/* ── Attention summary header ── */}
       {needsAttentionCount > 0 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
@@ -170,16 +162,16 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
           display: "flex", alignItems: "center", gap: 10,
           padding: "14px 18px", borderRadius: 12,
           background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.10)",
-          marginBottom: 16,
+          marginBottom: 20,
         }} data-testid="all-on-track-banner">
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
-          <span style={{ fontSize: 14, fontWeight: 500, color: "#1e293b" }}>All other schools are on track</span>
-          <span style={{ fontSize: 13, fontWeight: 400, color: "#64748b" }}> — no additional action needed right now</span>
+          <span style={{ fontSize: 14, fontWeight: 500, color: "#1e293b" }}>Everything is on track</span>
+          <span style={{ fontSize: 13, fontWeight: 400, color: "#64748b" }}> — no programs need immediate attention</span>
         </div>
       )}
 
       {/* ── Section divider ── */}
-      {needsAttentionCount > 0 && (
+      {priorities.length > 0 && (
         <div style={{
           fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
           textTransform: "uppercase", color: "#94a3b8",
@@ -192,42 +184,40 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
 
       {/* ── Grouped list ── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        {groups.map(group => (
-          <div key={group.key} data-testid={`urgency-group-${group.key}`}>
-            {/* Group header */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              marginBottom: 10, padding: "0 2px",
-            }}>
-              <group.Icon style={{ width: 14, height: 14, color: group.iconColor }} />
-              <span style={{
-                fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
-                textTransform: "uppercase", color: group.badgeColor,
+        {groups.map(group => {
+          const groupConfig = TIER_CONFIG[group.key] || TIER_CONFIG.watch;
+          return (
+            <div key={group.key} data-testid={`urgency-group-${group.key}`}>
+              {/* Group header */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                marginBottom: 10, padding: "0 2px",
               }}>
-                {group.label}
-              </span>
-              <span style={{
-                fontSize: 10, fontWeight: 700,
-                padding: "2px 7px", borderRadius: 6,
-                background: group.badgeBg, color: group.badgeColor,
-              }}>
-                {group.items.length}
-              </span>
-            </div>
+                <groupConfig.Icon style={{ width: 14, height: 14, color: groupConfig.iconColor }} />
+                <span style={{
+                  fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
+                  textTransform: "uppercase", color: groupConfig.badgeColor,
+                }}>
+                  {group.label}
+                </span>
+                <span style={{
+                  fontSize: 10, fontWeight: 700,
+                  padding: "2px 7px", borderRadius: 6,
+                  background: groupConfig.badgeBg, color: groupConfig.badgeColor,
+                }}>
+                  {group.items.length}
+                </span>
+              </div>
 
-            {/* Group items */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {group.items.map(item => (
-                <SchoolListItem
-                  key={item.programId}
-                  item={item}
-                  config={group}
-                  navigate={navigate}
-                />
-              ))}
+              {/* Group items — original RecapMoveCard */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {group.items.map((p) => (
+                  <RecapMoveCard key={p.program_id} priority={p} navigate={navigate} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
