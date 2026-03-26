@@ -206,8 +206,14 @@ export default function PipelinePage() {
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER ═══ */}
-      <div className="mb-5 sm:mb-8 px-2 sm:px-0 flex justify-end" data-testid="pipeline-header">
-        <div className="pm-toggle-track inline-flex" style={{ background: "rgba(247,243,236,0.8)", border: "1px solid #e7dfd4", borderRadius: 14, backdropFilter: "blur(8px)" }} data-testid="view-toggle">
+      <div className="mb-5 sm:mb-8 px-2 sm:px-0 flex items-start justify-between gap-4" data-testid="pipeline-header">
+        {/* Left: live summary */}
+        <div className="flex-1 min-w-0 pt-1">
+          {viewMode === "priority" && <MomentumInsight attention={allAttention} recapData={recapData} onViewBreakdown={() => setBreakdownOpen(true)} />}
+        </div>
+
+        {/* Right: toggle */}
+        <div className="pm-toggle-track inline-flex flex-shrink-0" style={{ background: "rgba(247,243,236,0.8)", border: "1px solid #e7dfd4", borderRadius: 14, backdropFilter: "blur(8px)" }} data-testid="view-toggle">
           <div className="pm-toggle-slider" style={{
             left: viewMode === 'priority' ? 2 : (togglePriorityRef.current?.offsetWidth || 60) + 2,
             width: viewMode === 'priority' ? (togglePriorityRef.current?.offsetWidth || 60) : (togglePipelineRef.current?.offsetWidth || 60),
@@ -219,9 +225,6 @@ export default function PipelinePage() {
             style={{ color: viewMode === 'pipeline' ? '#1a1a1a' : '#8a847a', padding: "8px 18px", fontSize: 13 }}>Pipeline</button>
         </div>
       </div>
-
-      {/* ═══ CONTEXT LAYER: Live Summary ═══ */}
-      {viewMode === "priority" && <MomentumInsight attention={allAttention} recapData={recapData} onViewBreakdown={() => setBreakdownOpen(true)} />}
 
       {/* ═══ HERO — only in Priority view ═══ */}
       {viewMode === "priority" && (

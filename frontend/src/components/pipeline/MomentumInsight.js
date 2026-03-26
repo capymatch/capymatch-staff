@@ -36,11 +36,11 @@ export default function MomentumInsight({ attention, recapData, onViewBreakdown 
   }
 
   return (
-    <div data-testid="live-summary" style={{ padding: "10px 0 12px", marginBottom: 8 }}>
+    <div data-testid="live-summary" style={{ padding: "0 0 0" }}>
       {/* Headline */}
       <p data-testid="summary-headline" style={{
         fontSize: 14, fontWeight: 500, color: "#334155",
-        lineHeight: 1.4, margin: "0 0 6px",
+        lineHeight: 1.4, margin: "0 0 4px",
       }}>
         {headline}
       </p>
