@@ -11,20 +11,19 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 
 ## Design System (Unified)
 - **Page Background**: `var(--cm-bg)` = `#F7FAFC`
-- **Light Card**: `bg: #fff`, `border: 1px solid #e7dfd4`, `radius: 18px`, `shadow: 0 2px 8px rgba(80,60,30,0.03)`
+- **Light Card**: `bg: #fff`, `border: 1px solid #e7dfd4`, `radius: 18px`
 - **Dark Card (action hero only)**: `bg: #161921`
-- **Header Bar**: Inline row — back link + avatar + name/subtext | right controls. Bottom border `#ebebeb`
-- **Text**: `#263238` (heading), `#757575` (subtext/muted), `#9E9E9E` (icon controls)
+- **Header Bar**: Matches SupportPod — `<header bg-white/95 border-b border-gray-100>`, inline back link + separator + avatar + name/subtext, right side icon controls
+- **Text**: gray-900 (heading), gray-500 (subtext), gray-400 (icons)
 
 ## Completed Work
 - Login page redesign (pixel-perfect from HTML mockup)
 - Pipeline/Priority page premium UI
 - Journey page complete visual alignment:
-  - Inline header bar matching coach view (← Pipeline + logo + name on one row)
+  - Header bar matches SupportPod exactly (bg-white/95, border-b, inline layout, health badge)
   - Signal chips replacing floating blocks
   - Unified light card system
   - Feed-style neutral timeline
-  - "Why this matters" consolidated insight section
   - Green-tinted backgrounds removed
 - Railway production deployment fix
 
