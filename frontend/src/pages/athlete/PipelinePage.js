@@ -194,10 +194,8 @@ export default function PipelinePage() {
   const allAttention = computeAllAttention(allPrograms, topActionsMap, recapCtx);
   const attentionMap = {};
   allAttention.forEach(a => { attentionMap[a.programId] = a; });
-  const heroItems = allAttention.filter(a => a.heroEligible);
-  const highCount = allAttention.filter(a => a.tier === 'high').length;
-  const medCount = allAttention.filter(a => a.tier === 'medium').length;
-  const lowCount = allAttention.filter(a => a.tier === 'low').length;
+  // Single hero = highest priority item (first in sorted attention list)
+  const heroItem = allAttention.length > 0 ? allAttention[0] : null;
 
   const usage = getUsage(subscription, "schools");
   const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;
@@ -228,7 +226,7 @@ export default function PipelinePage() {
       {/* ═══ HERO — only in Priority view ═══ */}
       {viewMode === "priority" && (
       <div style={{ marginBottom: 24 }}>
-        <PipelineHero heroItems={heroItems} matchScores={matchScores} navigate={navigate} />
+        <PipelineHero heroItem={heroItem} matchScores={matchScores} navigate={navigate} />
       </div>
       )}
 
@@ -258,7 +256,7 @@ export default function PipelinePage() {
         {viewMode === 'pipeline' ? (
           <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
         ) : (
-          <PriorityBoard items={allAttention} navigate={navigate} heroItemIds={heroItems.map(h => h.programId)} recapData={recapData} />
+          <PriorityBoard items={allAttention} navigate={navigate} heroItemId={heroItem?.programId} recapData={recapData} />
         )}
       </div>
 

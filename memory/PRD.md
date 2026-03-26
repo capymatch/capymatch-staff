@@ -12,7 +12,16 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
-### Login Page Redesign V3 (Mar 26, 2026)
+### My Schools Priority Page Refactor (Mar 26, 2026)
+- Replaced carousel hero with single hero card (highest priority school only)
+- Removed all carousel logic (pagination, swipe, dots, filter pills)
+- Added grouped list below hero, organized by urgency: "Needs action now", "Follow up soon", "On track"
+- Hero school excluded from list to avoid duplication
+- Added attention summary header: "X schools need attention"
+- Added section divider: "Other schools needing attention"
+- Each group shows count badge and colored urgency indicators
+- List items maintain existing styling (colored left border, icon, school logo, action, reason)
+- Strong visual hierarchy: hero = dominant focus, list = scannable and dense
 - Pixel-perfect implementation from user's HTML mockup
 - Full-page grid background (#f7f3ec, 44px squares)
 - Glass-morphism auth card (backdrop-filter blur, semi-transparent white, radius 28px)
