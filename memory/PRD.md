@@ -12,15 +12,17 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
-### Login Page Redesign V2 (Mar 26, 2026)
-- Redesigned login/signup page to match new CapyMatch website branding
-- Split layout: left branding panel with squared grid background + right auth form
-- Warm beige (#F5F0EB) left panel, white right panel, orange (#F26522) accents
-- CapyMatch logo with orange circle "C", "FOR ATHLETES AND FAMILIES" badge
-- Bold Barlow Condensed hero text, feature pill badges, social proof element
-- Form with "Remember me" checkbox, "Forgot password?" link
-- Demo accounts in "Quick Access" card layout with "Use" buttons
-- Orange pill-shaped CTA, mobile responsive, all auth flows working
+### Login Page Redesign V3 (Mar 26, 2026)
+- Pixel-perfect implementation from user's HTML mockup
+- Full-page grid background (#f7f3ec, 44px squares)
+- Glass-morphism auth card (backdrop-filter blur, semi-transparent white, radius 28px)
+- Rounded-square orange gradient logo (border-radius 16px)
+- Large typography (34px headings, 18px inputs, 20px button)
+- Uppercase field labels with letter-spacing
+- Custom checkbox, error styling (#fff0ee), orange CTA with glow shadow
+- Demo accounts with "Quick Access" card layout and "Use" buttons
+- Feature pill chips, gradient social proof avatars
+- Mobile responsive, all auth flows working
 
 ### Production Deployment Fixes (Mar 26, 2026)
 - Fixed Dockerfile: added `libmagic1` system dependency (was causing crashes)

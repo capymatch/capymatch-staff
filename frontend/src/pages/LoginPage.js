@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+
+/* ── inline CSS-in-JS for page-level grid background ── */
+const pageStyle = {
+  minHeight: "100vh",
+  background: `
+    linear-gradient(rgba(16,24,40,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,24,40,0.06) 1px, transparent 1px),
+    #f7f3ec`,
+  backgroundSize: "44px 44px, 44px 44px, auto",
+};
 
 export default function LoginPage() {
   const { login, register } = useAuth();
@@ -14,7 +24,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [remember, setRemember] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,148 +45,213 @@ export default function LoginPage() {
   const demoAccounts = [
     { label: "Athlete Demo", desc: "Student-athlete recruiting workflow", email: "emma.chen@athlete.capymatch.com", pw: "athlete123" },
     { label: "Coach Demo", desc: "Coach operating system view", email: "coach.williams@capymatch.com", pw: "coach123" },
-    { label: "Director Demo", desc: "Program director dashboard", email: "director@capymatch.com", pw: "director123" },
+    { label: "Director Demo", desc: "Program oversight and escalations", email: "director@capymatch.com", pw: "director123" },
   ];
 
   return (
-    <div className="min-h-screen flex" data-testid="login-page">
-      {/* Left — Branding panel with grid background */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden items-start pt-16 px-12 xl:px-20" style={{ backgroundColor: "#F5F0EB" }}>
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: "linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }} />
+    <div style={pageStyle} data-testid="login-page">
+      <main className="min-h-screen grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-7 lg:gap-12 items-center p-5 sm:p-7 lg:py-12 lg:px-14">
 
-        <div className="relative z-10 max-w-xl">
+        {/* ── Left: Brand side ── */}
+        <section className="lg:py-6 lg:pl-6 max-w-[700px]">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 rounded-full bg-[#F26522] flex items-center justify-center">
-              <span className="text-white font-black text-lg" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>C</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900 tracking-tight">CapyMatch</span>
+          <div className="flex items-center gap-3.5 mb-12">
+            <div
+              className="w-12 h-12 grid place-items-center text-white font-extrabold text-2xl"
+              style={{
+                borderRadius: 16,
+                background: "linear-gradient(180deg, #ff6d37, #ff5a1f)",
+                boxShadow: "0 18px 34px rgba(255,90,31,0.22)",
+              }}
+            >C</div>
+            <span className="text-[34px] font-extrabold tracking-[-0.04em] text-[#101828]">CapyMatch</span>
           </div>
 
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 mb-8">
-            <span className="w-2 h-2 rounded-full bg-[#F26522]" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">For Athletes and Families</span>
-          </div>
-
-          {/* Hero text */}
-          <h1
-            className="text-[3.5rem] xl:text-[4.2rem] font-black leading-[1.05] tracking-tight text-gray-900 mb-8"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900 }}
+          {/* Eyebrow badge */}
+          <div
+            className="inline-flex items-center gap-2 px-3.5 py-2 mb-6 text-[13px] font-bold tracking-[0.04em]"
+            style={{
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.66)",
+              border: "1px solid rgba(231,223,212,0.9)",
+              color: "#667085",
+            }}
           >
-            Turn recruiting<br />chaos into<br />
-            <span className="text-[#F26522]">confident<br />follow-ups.</span>
+            <span className="w-[7px] h-[7px] rounded-full bg-[#ff5a1f] inline-block" />
+            FOR ATHLETES AND FAMILIES
+          </div>
+
+          {/* Hero heading */}
+          <h1
+            className="mb-6 font-black leading-[0.92] tracking-[-0.07em] max-w-[620px]"
+            style={{ fontSize: "clamp(54px, 6vw, 96px)", color: "#101828" }}
+          >
+            Turn recruiting chaos into{" "}
+            <span className="text-[#ff5a1f]">confident follow-ups.</span>
           </h1>
 
-          {/* Description */}
-          <p className="text-base text-gray-500 leading-relaxed mb-1">
+          {/* Subtext */}
+          <p
+            className="max-w-[560px] mb-7 leading-[1.45] tracking-[-0.03em]"
+            style={{ fontSize: 26, color: "#475467" }}
+          >
             Track schools. Manage coach emails.{" "}
-            <span className="font-bold text-gray-900">Always know</span>
-          </p>
-          <p className="text-base mb-1">
-            <span className="font-bold text-gray-900">what to do next.</span>
-          </p>
-          <p className="text-base text-gray-500 mb-10">
+            <strong className="text-[#101828] font-bold">Always know what to do next.</strong>
+            <br />
             No spreadsheets. No missed follow-ups.
           </p>
 
-          {/* Feature pills */}
-          <div className="flex flex-wrap gap-2 mb-12">
-            {["Track Schools", "Manage Communication", "Know What To Do Next"].map((label) => (
+          {/* Feature chips */}
+          <div className="flex flex-wrap gap-2.5 mb-8">
+            {["Track Schools", "Manage Communication", "Know What To Do Next"].map((t) => (
               <span
-                key={label}
-                className="px-4 py-2 text-xs font-medium text-gray-600 bg-white/80 border border-gray-200 rounded-full"
+                key={t}
+                className="text-sm font-bold"
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.72)",
+                  border: "1px solid rgba(231,223,212,0.95)",
+                  color: "#475467",
+                  boxShadow: "0 6px 18px rgba(16,24,40,0.04)",
+                }}
               >
-                {label}
+                {t}
               </span>
             ))}
           </div>
 
           {/* Social proof */}
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-1.5">
-              {["bg-emerald-400", "bg-sky-400", "bg-pink-400", "bg-amber-300"].map((color, i) => (
-                <div key={i} className={`w-7 h-7 rounded-full ${color} border-2 border-[#F5F0EB]`} />
+          <div className="flex items-center gap-3.5 text-[15px] text-[#667085]">
+            <div className="flex mr-1.5">
+              {[
+                "linear-gradient(180deg, #b8f0d7, #72d2a9)",
+                "linear-gradient(180deg, #ffc2bb, #ff9c8e)",
+                "linear-gradient(180deg, #b6d6ff, #7fb4ff)",
+                "linear-gradient(180deg, #ffe2a6, #ffc55d)",
+              ].map((bg, i) => (
+                <span
+                  key={i}
+                  className="w-[30px] h-[30px] rounded-full border-2 border-[#f7f3ec]"
+                  style={{
+                    background: bg,
+                    marginLeft: i === 0 ? 0 : -8,
+                    boxShadow: "0 6px 14px rgba(16,24,40,0.06)",
+                  }}
+                />
               ))}
             </div>
-            <span className="text-sm text-gray-500">Used by families managing 10-30+ schools</span>
+            Used by families managing 10–30+ schools
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Right — Auth form */}
-      <div className="flex-1 bg-white flex flex-col min-h-screen">
-        <div className="flex-1 flex items-start justify-center pt-8 lg:pt-12 px-6 pb-8 overflow-y-auto">
-          <div className="w-full max-w-[420px]">
-            {/* Logo (top of form) */}
-            <div className="flex items-center gap-2.5 mb-8">
-              <div className="w-8 h-8 rounded-full bg-[#F26522] flex items-center justify-center">
-                <span className="text-white font-black text-sm" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>C</span>
-              </div>
-              <span className="text-lg font-bold text-gray-900 tracking-tight">CapyMatch</span>
+        {/* ── Right: Auth card ── */}
+        <section className="flex justify-center items-center">
+          <div
+            className="w-full max-w-[560px]"
+            style={{
+              background: "rgba(255,255,255,0.88)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(231,223,212,0.92)",
+              borderRadius: 28,
+              boxShadow: "0 30px 80px rgba(16,24,40,0.08)",
+              padding: 26,
+            }}
+          >
+            {/* Mini brand header */}
+            <div className="flex items-center gap-2.5 mb-5">
+              <div
+                className="w-[34px] h-[34px] grid place-items-center text-white font-extrabold text-lg"
+                style={{
+                  borderRadius: 12,
+                  background: "linear-gradient(180deg, #ff6d37, #ff5a1f)",
+                }}
+              >C</div>
+              <span className="text-lg font-extrabold tracking-[-0.03em] text-[#101828]">CapyMatch</span>
             </div>
 
-            {/* Header */}
-            <h2
-              className="text-2xl font-black text-gray-900 tracking-tight mb-2"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900 }}
-            >
-              {mode === "login" ? "Welcome back" : "Get started"}
-            </h2>
-            <p className="text-sm text-gray-500 leading-relaxed mb-7">
-              {mode === "login"
-                ? "Sign in to manage your recruiting, review coach conversations, and take your next best action."
-                : "Create your account to start managing your recruiting pipeline."}
-            </p>
+            {/* Welcome copy */}
+            <div className="mb-5">
+              <h2 className="text-[34px] font-extrabold tracking-[-0.05em] text-[#101828] mb-2 leading-tight">
+                {mode === "login" ? "Welcome back" : "Get started"}
+              </h2>
+              <p className="text-base text-[#667085] leading-[1.55]">
+                {mode === "login"
+                  ? "Sign in to manage your recruiting, review coach conversations, and take your next best action."
+                  : "Create your account to start managing your recruiting pipeline."}
+              </p>
+            </div>
 
-            {/* Tabs */}
-            <div className="flex border border-gray-200 rounded-xl p-1 mb-7" data-testid="auth-tabs">
+            {/* Tab switcher */}
+            <div
+              className="grid grid-cols-2 gap-2 mb-6"
+              style={{
+                padding: 8,
+                borderRadius: 18,
+                background: "#f7f5f1",
+                border: "1px solid #e7dfd4",
+              }}
+              data-testid="auth-tabs"
+            >
               <button
                 onClick={() => { setMode("login"); setError(""); }}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                  mode === "login"
-                    ? "bg-white text-gray-900 shadow-sm border border-gray-100"
-                    : "text-gray-400 hover:text-gray-600"
+                className={`py-3.5 px-4 text-lg font-bold cursor-pointer border-0 transition-all duration-200 ${
+                  mode === "login" ? "text-[#101828]" : "text-[#667085] bg-transparent"
                 }`}
+                style={{
+                  borderRadius: 14,
+                  ...(mode === "login"
+                    ? { background: "white", boxShadow: "0 6px 18px rgba(16,24,40,0.06)" }
+                    : {}),
+                }}
                 data-testid="tab-login"
               >
                 Sign In
               </button>
               <button
                 onClick={() => { setMode("register"); setError(""); }}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                  mode === "register"
-                    ? "bg-white text-gray-900 shadow-sm border border-gray-100"
-                    : "text-gray-400 hover:text-gray-600"
+                className={`py-3.5 px-4 text-lg font-bold cursor-pointer border-0 transition-all duration-200 ${
+                  mode === "register" ? "text-[#101828]" : "text-[#667085] bg-transparent"
                 }`}
+                style={{
+                  borderRadius: 14,
+                  ...(mode === "register"
+                    ? { background: "white", boxShadow: "0 6px 18px rgba(16,24,40,0.06)" }
+                    : {}),
+                }}
                 data-testid="tab-register"
               >
                 Create Account
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit}>
               {mode === "register" && (
                 <>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-2">Full Name</label>
+                  {/* Name field */}
+                  <div className="mb-4">
+                    <label className="block text-[13px] font-extrabold tracking-[0.08em] text-[#667085] mb-2">NAME</label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                       placeholder="Your full name"
-                      className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all placeholder:text-gray-400"
-                      style={{ backgroundColor: "#FAFAF8" }}
+                      className="w-full text-lg text-[#101828] outline-none"
+                      style={{
+                        border: "1px solid #e7dfd4",
+                        borderRadius: 16,
+                        padding: "18px",
+                        background: "#fff",
+                        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+                      }}
                       data-testid="input-name"
                     />
                   </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-2">I am a...</label>
+
+                  {/* Role selector */}
+                  <div className="mb-4">
+                    <label className="block text-[13px] font-extrabold tracking-[0.08em] text-[#667085] mb-2">I AM A...</label>
                     <div className="grid grid-cols-3 gap-2" data-testid="role-selector">
                       {[
                         { value: "athlete", label: "Athlete" },
@@ -189,11 +263,13 @@ export default function LoginPage() {
                           type="button"
                           onClick={() => setRole(r.value)}
                           data-testid={`role-${r.value}`}
-                          className={`py-2.5 text-sm font-semibold rounded-xl border transition-all duration-200 ${
-                            role === r.value
-                              ? "bg-[#F26522] text-white border-[#F26522]"
-                              : "bg-white text-gray-500 border-gray-200 hover:border-[#F26522]/40"
-                          }`}
+                          className="py-3 text-base font-bold cursor-pointer border transition-all duration-200"
+                          style={{
+                            borderRadius: 14,
+                            ...(role === r.value
+                              ? { background: "#ff5a1f", color: "white", borderColor: "#ff5a1f" }
+                              : { background: "white", color: "#667085", borderColor: "#e7dfd4" }),
+                          }}
                         >
                           {r.label}
                         </button>
@@ -203,22 +279,30 @@ export default function LoginPage() {
                 </>
               )}
 
-              <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">Email</label>
+              {/* Email */}
+              <div className="mb-4">
+                <label className="block text-[13px] font-extrabold tracking-[0.08em] text-[#667085] mb-2">EMAIL</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@capymatch.com"
-                  className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all placeholder:text-gray-400"
-                  style={{ backgroundColor: "#FAFAF8" }}
+                  className="w-full text-lg text-[#101828] outline-none placeholder:text-[#98a2b3]"
+                  style={{
+                    border: "1px solid #e7dfd4",
+                    borderRadius: 16,
+                    padding: "18px",
+                    background: "#fff",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+                  }}
                   data-testid="input-email"
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">Password</label>
+              {/* Password */}
+              <div className="mb-4">
+                <label className="block text-[13px] font-extrabold tracking-[0.08em] text-[#667085] mb-2">PASSWORD</label>
                 <div className="relative">
                   <input
                     type={showPw ? "text" : "password"}
@@ -226,36 +310,50 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="Enter password"
-                    className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F26522]/20 focus:border-[#F26522] transition-all pr-11 placeholder:text-gray-400"
-                    style={{ backgroundColor: "#FAFAF8" }}
+                    className="w-full text-lg text-[#101828] outline-none pr-14 placeholder:text-[#98a2b3]"
+                    style={{
+                      border: "1px solid #e7dfd4",
+                      borderRadius: 16,
+                      padding: "18px",
+                      background: "#fff",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+                    }}
                     data-testid="input-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPw(!showPw)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-[18px] top-1/2 -translate-y-1/2 text-[#98a2b3] hover:text-[#667085] transition-colors bg-transparent border-0 cursor-pointer"
                     data-testid="toggle-password"
                   >
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
               {/* Remember me + Forgot password */}
               {mode === "login" && (
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 cursor-pointer" data-testid="remember-me">
-                    <input
-                      type="checkbox"
-                      checked={remember}
-                      onChange={(e) => setRemember(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-[#F26522] focus:ring-[#F26522]/20"
-                    />
-                    <span className="text-sm text-gray-500">Remember me</span>
+                <div className="flex items-center justify-between mb-4 text-sm text-[#667085]">
+                  <label
+                    className="flex items-center gap-2.5 cursor-pointer !text-sm !font-normal !tracking-normal !text-[#667085] !mb-0"
+                    data-testid="remember-me"
+                  >
+                    <span
+                      className="w-[18px] h-[18px] border border-[#e7dfd4] bg-white flex-shrink-0 cursor-pointer flex items-center justify-center"
+                      style={{ borderRadius: 6 }}
+                      onClick={(e) => { e.preventDefault(); setRemember(!remember); }}
+                    >
+                      {remember && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="#ff5a1f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+                    <span onClick={() => setRemember(!remember)} className="cursor-pointer">Remember me</span>
                   </label>
                   <Link
                     to="/forgot-password"
-                    className="text-sm text-gray-400 hover:text-[#F26522] transition-colors"
+                    className="text-[#475467] no-underline hover:text-[#ff5a1f] transition-colors"
                     data-testid="forgot-password-link"
                   >
                     Forgot password?
@@ -263,80 +361,103 @@ export default function LoginPage() {
                 </div>
               )}
 
+              {/* Error */}
               {error && (
                 <div
-                  className="text-sm px-4 py-3 rounded-xl"
-                  style={{ backgroundColor: "#FDE8E5", color: "#C0392B" }}
+                  className="mb-4 text-[15px] font-semibold"
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: 14,
+                    background: "#fff0ee",
+                    border: "1px solid #ffd4cf",
+                    color: "#d92d20",
+                  }}
                   data-testid="auth-error"
                 >
                   {error}
                 </div>
               )}
 
+              {/* Submit button */}
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full py-3.5 bg-[#F26522] text-white text-sm font-bold rounded-full hover:bg-[#d9551a] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full border-0 text-white text-xl font-extrabold tracking-[-0.02em] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 transition-all duration-200 hover:brightness-110 active:scale-[0.98] mb-5"
+                style={{
+                  background: "#ff5a1f",
+                  borderRadius: 18,
+                  padding: "18px 22px",
+                  boxShadow: "0 20px 34px rgba(255,90,31,0.22)",
+                }}
                 data-testid="auth-submit-btn"
               >
                 {busy ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <>
-                    {mode === "login" ? "Sign In" : "Create Account"}
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+                  mode === "login" ? "Sign In" : "Create Account"
                 )}
               </button>
             </form>
 
-            {/* Demo accounts */}
+            {/* Demo accounts divider */}
             {mode === "login" && (
-              <div className="mt-8">
-                {/* Divider */}
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="flex-1 h-px bg-gray-200" />
-                  <button
-                    type="button"
-                    onClick={() => setShowDemo(!showDemo)}
-                    className="text-xs font-semibold text-gray-400 uppercase tracking-widest hover:text-gray-600 transition-colors"
-                    data-testid="toggle-demo-accounts"
+              <>
+                <div className="relative text-center my-5">
+                  <div className="absolute top-1/2 left-0 right-0 h-px bg-[#e7dfd4]" />
+                  <span
+                    className="relative z-10 px-3 text-[13px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]"
+                    style={{ background: "rgba(255,255,255,0.88)" }}
                   >
-                    Demo Accounts
-                  </button>
-                  <div className="flex-1 h-px bg-gray-200" />
+                    Demo accounts
+                  </span>
                 </div>
 
-                {showDemo && (
-                  <div className="border border-gray-200 rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Quick Access</span>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {demoAccounts.map((d) => (
-                        <div key={d.email} className="flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 transition-colors">
-                          <div>
-                            <div className="text-sm font-semibold text-gray-900">{d.label}</div>
-                            <div className="text-xs text-gray-400 mt-0.5">{d.desc}</div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => { setEmail(d.email); setPassword(d.pw); }}
-                            className="px-3.5 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-all"
-                            data-testid={`demo-${d.label.toLowerCase().replace(/\s+/g, "-")}`}
-                          >
-                            Use
-                          </button>
+                {/* Demo box */}
+                <div
+                  style={{
+                    border: "1px solid #e7dfd4",
+                    background: "#fcfbf9",
+                    borderRadius: 20,
+                    padding: 18,
+                  }}
+                >
+                  <h3 className="text-sm font-extrabold uppercase tracking-[0.08em] text-[#667085] mb-2.5 mt-0">
+                    Quick access
+                  </h3>
+                  <div className="grid gap-2.5">
+                    {demoAccounts.map((d) => (
+                      <div
+                        key={d.email}
+                        className="flex items-center justify-between gap-3"
+                        style={{
+                          background: "white",
+                          border: "1px solid #e7dfd4",
+                          borderRadius: 16,
+                          padding: 14,
+                        }}
+                      >
+                        <div>
+                          <strong className="block text-[15px] text-[#101828] mb-0.5">{d.label}</strong>
+                          <span className="text-[13px] text-[#667085]">{d.desc}</span>
                         </div>
-                      ))}
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => { setEmail(d.email); setPassword(d.pw); }}
+                          className="border border-[#e7dfd4] bg-white text-[#101828] font-bold cursor-pointer hover:bg-gray-50 transition-colors text-sm"
+                          style={{ borderRadius: 12, padding: "10px 12px" }}
+                          data-testid={`demo-${d.label.toLowerCase().replace(/\s+/g, "-")}`}
+                        >
+                          Use
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              </>
             )}
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
