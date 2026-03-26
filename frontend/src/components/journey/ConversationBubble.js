@@ -89,8 +89,8 @@ export function ConversationBubble({ event }) {
       <div className="flex justify-center my-2" data-testid={isFlagRelated ? `conv-flag-${evtType}` : "conv-milestone"}>
         <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border"
           style={{
-            backgroundColor: isCoachSignal ? "rgba(59,130,246,0.06)" : isCoachDirective ? "rgba(245,158,11,0.06)" : isFlagCompleted ? "rgba(16,185,129,0.06)" : "var(--cm-surface)",
-            borderColor: isCoachSignal ? "rgba(59,130,246,0.2)" : isCoachDirective ? "rgba(245,158,11,0.2)" : isFlagCompleted ? "rgba(16,185,129,0.2)" : "var(--cm-border)",
+            backgroundColor: "#ffffff",
+            borderColor: isCoachSignal ? "rgba(59,130,246,0.15)" : isCoachDirective ? "rgba(245,158,11,0.15)" : isFlagCompleted ? "rgba(16,185,129,0.15)" : "#e7dfd4",
           }}>
           <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
             isCoachSignal ? "bg-blue-500/10" : isCoachDirective ? "bg-amber-500/10" : isFlagCompleted ? "bg-emerald-500/10" : `bg-${cfg.color}-500/10`
@@ -137,8 +137,8 @@ export function ConversationBubble({ event }) {
             ? "rounded-br-sm"
             : "rounded-bl-sm"
       }`} style={{
-        background: isAiInsight ? "rgba(139,92,246,0.04)" : isRight ? "rgba(13,148,136,0.04)" : "#ffffff",
-        border: `1px solid ${isAiInsight ? "rgba(139,92,246,0.10)" : isRight ? "rgba(13,148,136,0.08)" : "#e7dfd4"}`,
+        background: "#ffffff",
+        border: `1px solid ${isAiInsight ? "rgba(139,92,246,0.10)" : "#e7dfd4"}`,
         boxShadow: "0 1px 3px rgba(80,60,30,0.02)",
       }}>
         <p className="text-[10px] font-bold uppercase tracking-wider mb-1"

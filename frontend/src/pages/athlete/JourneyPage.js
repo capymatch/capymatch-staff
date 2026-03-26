@@ -820,7 +820,7 @@ export default function JourneyPage() {
 
             {/* J3: Gmail Connect Nudge */}
             {!gmailConnected && (
-              <div className="flex items-start gap-3 rounded-[18px] p-4 mb-4" style={{ backgroundColor: "rgba(26,138,128,0.04)", border: "1px solid rgba(26,138,128,0.10)" }} data-testid="gmail-nudge-banner">
+              <div className="flex items-start gap-3 rounded-[18px] p-4 mb-4" style={{ backgroundColor: "#fff", border: "1px solid #e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }} data-testid="gmail-nudge-banner">
                 <Mail className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#1a8a80" }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium" style={{ color: "var(--cm-text)" }}>
