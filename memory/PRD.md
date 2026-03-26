@@ -12,6 +12,23 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## What's Been Implemented
 
+### Login Page Redesign (Mar 26, 2026)
+- Redesigned login/signup page to match new CapyMatch website branding
+- Split layout: left branding panel (desktop) + right auth form
+- Orange (#F26522) accent color, Barlow Condensed headings, pill-shaped buttons
+- Dashboard preview card on left panel
+- Mobile responsive (branding panel hidden, clean form only)
+- Collapsible demo accounts section
+- All existing auth functionality preserved (login, register, role selection)
+
+### Production Deployment Fixes (Mar 26, 2026)
+- Fixed Dockerfile: added `libmagic1` system dependency (was causing crashes)
+- Fixed nixpacks.toml: added `--extra-index-url` for emergentintegrations and `file` package
+- Added `/api/health` endpoint for Railway health check probes
+- Updated DEPLOYMENT.md with Railway troubleshooting guide
+- Railway backend confirmed operational at `capymatch-staff-production.up.railway.app`
+- Custom domain `api.capymatch.com` SSL still validating (Railway plan limit resolved)
+
 ### Production Deployment Prep (Mar 25, 2026)
 - Created `DEPLOYMENT.md` with full Vercel + Railway deployment guide
 - Created `.env.production` templates for backend and frontend
@@ -55,9 +72,11 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 
 ## Prioritized Backlog
 
-### P0 — Ready to Deploy
-- Deploy backend to Railway (api.capymatch.com)
-- Deploy frontend to Vercel (app.capymatch.com)
+### P0 — Production Live
+- ✅ Deploy backend to Railway (capymatch-staff-production.up.railway.app)
+- ✅ Deploy frontend to Vercel (app.capymatch.com)
+- ⏳ Custom domain SSL for api.capymatch.com (validating)
+- Update Vercel REACT_APP_BACKEND_URL to Railway default URL
 - Switch Stripe to live keys
 - Verify Gmail OAuth in production
 
@@ -73,7 +92,10 @@ CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for co
 - Usage-based/metered billing for AI features
 
 ## Key Files
-- `/app/DEPLOYMENT.md` — Full deployment guide
+- `/app/frontend/src/pages/LoginPage.js` — Redesigned login/signup page
+- `/app/DEPLOYMENT.md` — Full deployment guide with troubleshooting
+- `/app/backend/Dockerfile` — Railway deployment config (with libmagic)
+- `/app/backend/nixpacks.toml` — Railway builder config (with emergentintegrations)
 - `/app/backend/.env.production` — Railway env template
 - `/app/frontend/.env.production` — Vercel env template
 - `/app/backend/Procfile` — Railway startup
