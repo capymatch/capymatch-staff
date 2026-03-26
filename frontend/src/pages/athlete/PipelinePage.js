@@ -207,7 +207,7 @@ export default function PipelinePage() {
 
       {/* ═══ PAGE HEADER ═══ */}
       <div className="-mx-2 sm:-mx-1 -mt-4 sm:-mt-6 mb-5 sm:mb-8 bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }} data-testid="pipeline-header">
-        <div className="px-4 sm:px-4 py-3 sm:py-4 flex items-center gap-3" style={{ maxWidth: 1120, margin: "0 auto" }}>
+        <div className="px-2 sm:px-4 py-3 sm:py-4 flex items-center gap-3" style={{ maxWidth: 1120, margin: "0 auto" }}>
         {/* Back to Dashboard */}
         <button
           onClick={() => navigate("/dashboard")}
@@ -215,7 +215,7 @@ export default function PipelinePage() {
           data-testid="back-to-dashboard"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Pipeline</span>
+          <span className="hidden sm:inline">Dashboard</span>
         </button>
         <div className="h-5 w-px bg-gray-200 hidden sm:block" />
         {/* Left: live summary */}
