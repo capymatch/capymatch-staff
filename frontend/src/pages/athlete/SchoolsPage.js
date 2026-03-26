@@ -63,7 +63,7 @@ function FilterPanel({ open, onClose, divisions, regions, conferences, filterDiv
             <div className="flex flex-wrap gap-2">
               {divisions.map(d => (
                 <button key={d} onClick={() => onDivision(d)} data-testid={`filter-div-${d.toLowerCase()}`}
-                  className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterDivision === d ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
+                  className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterDivision === d ? "text-gray-900 bg-gray-100 border-gray-300" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
                   {d}
                 </button>
               ))}
@@ -75,7 +75,7 @@ function FilterPanel({ open, onClose, divisions, regions, conferences, filterDiv
             <div className="flex flex-wrap gap-2">
               {regions.map(r => (
                 <button key={r} onClick={() => onRegion(r)} data-testid={`filter-reg-${r.toLowerCase().replace(/\s+/g, "-")}`}
-                  className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterRegion === r ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
+                  className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterRegion === r ? "text-gray-900 bg-gray-100 border-gray-300" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
                   {r}
                 </button>
               ))}
@@ -88,7 +88,7 @@ function FilterPanel({ open, onClose, divisions, regions, conferences, filterDiv
               <div className="flex flex-wrap gap-2">
                 {visibleConf.map(c => (
                   <button key={c} onClick={() => onConference(c)} data-testid={`filter-conf-${c.toLowerCase().replace(/\s+/g, "-")}`}
-                    className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterConference === c ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
+                    className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterConference === c ? "text-gray-900 bg-gray-100 border-gray-300" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
                     {c}
                   </button>
                 ))}
@@ -104,7 +104,7 @@ function FilterPanel({ open, onClose, divisions, regions, conferences, filterDiv
 
           <button onClick={onApply} data-testid="filter-apply-btn"
             className="w-full py-3.5 rounded-2xl text-[14px] font-bold text-white mt-4 transition-all hover:opacity-90"
-            style={{ background: "linear-gradient(135deg, #0d9488, #14b8a6)" }}>
+            style={{ background: "#1e293b" }}>
             Apply Filters {activeCount > 0 && `(${activeCount})`}
           </button>
           <button onClick={onClear} data-testid="filter-clear-btn"
@@ -125,7 +125,7 @@ function UniversityLogo({ domain, name, logoUrl, size = 40 }) {
     return <img src={logoUrl} alt={name} className="rounded-2xl object-contain bg-gray-50" style={{ width: size, height: size }} onError={() => setImgError(true)} />;
   }
   return (
-    <div className="rounded-2xl flex items-center justify-center text-white font-bold" style={{ width: size, height: size, background: "linear-gradient(135deg, #0d9488, #14b8a6)", fontSize: size * 0.32 }}>
+    <div className="rounded-2xl flex items-center justify-center text-white font-bold" style={{ width: size, height: size, background: "linear-gradient(135deg, #64748b, #94a3b8)", fontSize: size * 0.32 }}>
       {initials || "?"}
     </div>
   );
@@ -149,7 +149,7 @@ function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDe
           <UniversityLogo name={school.university_name} size={56} />
         )}
         <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-bold text-gray-900 truncate group-hover:text-teal-700 transition-colors" data-testid="featured-name">
+          <h3 className="text-[15px] font-bold text-gray-900 truncate group-hover:text-gray-700 transition-colors" data-testid="featured-name">
             {school.university_name}
           </h3>
           <p className="text-[12px] text-gray-400 mt-0.5">
@@ -175,7 +175,7 @@ function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDe
       {chips.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-5">
           {chips.slice(0, 3).map((chip, i) => (
-            <span key={i} className="text-[10px] font-medium px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 border border-teal-100">
+            <span key={i} className="text-[10px] font-medium px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 border border-gray-100">
               {chip}
             </span>
           ))}
@@ -201,7 +201,7 @@ function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDe
           </button>
         )}
         <button onClick={() => school.domain && navigate(`/schools/${school.domain}`)}
-          className="ml-auto inline-flex items-center gap-1 text-[12px] font-medium text-gray-400 hover:text-teal-600 transition-colors group-hover:text-teal-600">
+          className="ml-auto inline-flex items-center gap-1 text-[12px] font-medium text-gray-400 hover:text-gray-700 transition-colors">
           View Details <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -223,9 +223,9 @@ function SchoolCard({ uni, adding, addToBoard, boardSchools, navigate }) {
       <div className="flex items-center gap-3.5 mb-3">
         <UniversityLogo domain={uni.domain} name={uni.university_name} logoUrl={uni.logo_url} size={40} />
         <div className="flex-1 min-w-0">
-          <div className="text-[14px] font-bold truncate text-gray-900 group-hover:text-teal-700 transition-colors">{uni.university_name}</div>
+          <div className="text-[14px] font-bold truncate text-gray-900 group-hover:text-gray-700 transition-colors">{uni.university_name}</div>
           <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400">
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 text-teal-700">{uni.division}</span>
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-100 text-gray-600">{uni.division}</span>
             {uni.region && <span>{uni.region}</span>}
             {uni.conference && <span>{`\u00B7 ${uni.conference}`}</span>}
           </div>
@@ -465,7 +465,7 @@ export default function SchoolsPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32" data-testid="kb-loading">
-        <Loader2 className="w-8 h-8 text-teal-500 animate-spin mb-4" />
+        <Loader2 className="w-8 h-8 text-gray-400 animate-spin mb-4" />
         <p className="text-sm text-gray-400">Finding schools for you...</p>
       </div>
     );
@@ -529,8 +529,8 @@ export default function SchoolsPage() {
 
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-teal-50 border border-teal-100">
-                  <Sparkles className="w-5 h-5 text-teal-600" />
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-gray-100 border border-gray-200">
+                  <Sparkles className="w-5 h-5 text-gray-500" />
                 </div>
                 <div>
                   <h2 className="text-[16px] font-bold text-gray-900">Recommended for You</h2>
@@ -548,7 +548,7 @@ export default function SchoolsPage() {
                 {compareSelected.length >= 2 && (
                   <button onClick={() => setCompareOpen(true)}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-white transition-all hover:opacity-90"
-                    style={{ background: "linear-gradient(135deg, #0d9488, #14b8a6)" }}
+                    style={{ background: "#1e293b" }}
                     data-testid="compare-btn">
                     <BarChart3 className="w-3.5 h-3.5" /> Compare ({compareSelected.length})
                   </button>
@@ -561,7 +561,7 @@ export default function SchoolsPage() {
                 </button>
                 {smartGated && (
                   <button onClick={() => setShowUpgrade(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 hover:bg-teal-100 transition-all"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-all"
                     data-testid="smart-match-unlock-btn">
                     <Lock className="w-3.5 h-3.5" /> Unlock {smartGatedTotal}+ matches
                   </button>
@@ -585,7 +585,7 @@ export default function SchoolsPage() {
             {smartMatches.length > 6 && (
               <div className="text-center mt-5">
                 <button onClick={() => { setFilterDivision(""); setActiveBucket("all"); document.querySelector('[data-testid="search-filter-bar"]')?.scrollIntoView({ behavior: "smooth" }); }}
-                  className="text-[13px] font-semibold text-teal-600 hover:text-teal-700 transition-colors inline-flex items-center gap-1.5">
+                  className="text-[13px] font-semibold text-gray-500 hover:text-gray-800 transition-colors inline-flex items-center gap-1.5">
                   View all {smartMatches.length} recommendations <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -597,7 +597,7 @@ export default function SchoolsPage() {
         <div className="sticky top-14 z-20 -mx-2 sm:-mx-6 px-2 sm:px-6 py-3 bg-[#F7FAFC]/95 backdrop-blur-md" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }} data-testid="search-filter-bar">
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
             <div className="flex gap-3 items-center" data-testid="search-row">
-              <div className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white border border-gray-200 shadow-sm transition-all focus-within:border-teal-300 focus-within:shadow-md">
+              <div className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white border border-gray-200 shadow-sm transition-all focus-within:border-gray-400 focus-within:shadow-md">
                 <Search className="w-[18px] h-[18px] flex-shrink-0 text-gray-300" />
                 <input
                   value={search}
@@ -617,7 +617,7 @@ export default function SchoolsPage() {
               <div className="hidden md:flex items-center gap-1.5">
                 {DIVISIONS.map(d => (
                   <button key={d} onClick={() => toggleDiv(d)}
-                    className={`px-3.5 py-2.5 rounded-xl text-[12px] font-semibold transition-all border ${filterDivision === d ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-400 bg-white border-gray-200 hover:border-gray-300"}`}>
+                    className={`px-3.5 py-2.5 rounded-xl text-[12px] font-semibold transition-all border ${filterDivision === d ? "text-gray-900 bg-gray-100 border-gray-300" : "text-gray-400 bg-white border-gray-200 hover:border-gray-300"}`}>
                     {d}
                   </button>
                 ))}
@@ -628,7 +628,7 @@ export default function SchoolsPage() {
                 <Filter className="w-4 h-4" />
                 <span className="hidden sm:inline">Filters</span>
                 {activeFilterCount > 0 && (
-                  <span className="bg-teal-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{activeFilterCount}</span>
+                  <span className="bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{activeFilterCount}</span>
                 )}
               </button>
             </div>
@@ -641,7 +641,7 @@ export default function SchoolsPage() {
                 const BIcon = b.icon;
                 return (
                   <button key={b.id} onClick={() => handleBucketClick(b)} data-testid={`chip-${b.id}`}
-                    className={`px-4 py-2 rounded-xl text-[12px] font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${isActive ? "text-teal-700 bg-teal-50 border border-teal-200" : "text-gray-400 bg-white border border-gray-200 hover:border-gray-300"}`}>
+                    className={`px-4 py-2 rounded-xl text-[12px] font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${isActive ? "text-gray-900 bg-gray-100 border border-gray-300" : "text-gray-400 bg-white border border-gray-200 hover:border-gray-300"}`}>
                     <BIcon className="w-3.5 h-3.5" />
                     {b.label}
                     {count > 0 && <span className="opacity-50">{count}</span>}
@@ -675,7 +675,7 @@ export default function SchoolsPage() {
             <div className="text-center py-20 bg-white rounded-3xl border border-gray-100" data-testid="no-results">
               <Search className="w-12 h-12 mx-auto mb-4 text-gray-200" />
               <p className="text-[15px] font-medium text-gray-400">No universities match your current filters</p>
-              <button onClick={resetFilters} className="mt-4 text-[13px] font-semibold flex items-center gap-1.5 mx-auto text-teal-600 hover:text-teal-700 transition-colors">
+              <button onClick={resetFilters} className="mt-4 text-[13px] font-semibold flex items-center gap-1.5 mx-auto text-gray-500 hover:text-gray-700 transition-colors">
                 <RotateCcw className="w-4 h-4" /> Reset all filters
               </button>
             </div>
