@@ -24,13 +24,13 @@ const TIER_CONFIG = {
     iconColor: "#f59e0b",
   },
   watch: {
-    badge: "MONITORING",
-    badgeBg: "rgba(100,116,139,0.06)",
-    badgeColor: "#94a3b8",
-    borderColor: "#cbd5e1",
+    badge: "ON TRACK",
+    badgeBg: "rgba(22,163,74,0.06)",
+    badgeColor: "#6b9e7a",
+    borderColor: "#b5d4be",
     Icon: Eye,
-    iconBg: "rgba(100,116,139,0.06)",
-    iconColor: "#94a3b8",
+    iconBg: "rgba(22,163,74,0.06)",
+    iconColor: "#7bae8a",
   },
 };
 
@@ -63,8 +63,8 @@ const SECTIONS = [
     label: "On track",
     ranks: ["watch"],
     headerIcon: Eye,
-    headerColor: "#94a3b8",
-    countBg: "rgba(100,116,139,0.05)",
+    headerColor: "#6b9e7a",
+    countBg: "rgba(22,163,74,0.06)",
     wrapBg: "transparent",
     wrapBorder: "transparent",
     wrapped: false,
@@ -75,30 +75,28 @@ const SECTIONS = [
 function RecapMoveCard({ priority, navigate, passive }) {
   const config = TIER_CONFIG[priority.rank] || TIER_CONFIG.watch;
   const { Icon } = config;
+  const isOnTrack = passive;
 
   return (
     <div
       data-testid={`next-move-card-${priority.program_id}`}
       onClick={() => navigate && navigate(`/pipeline/${priority.program_id}`)}
       style={{
-        background: "#fff",
-        border: "1px solid rgba(20,37,68,0.06)",
+        background: isOnTrack ? "rgba(22,163,74,0.025)" : "#fff",
+        border: `1px solid ${isOnTrack ? "rgba(22,163,74,0.08)" : "rgba(20,37,68,0.06)"}`,
         borderLeft: `4px solid ${config.borderColor}`,
         borderRadius: 14,
         padding: "18px 20px",
         cursor: "pointer",
         transition: "transform 80ms ease, box-shadow 80ms ease",
-        opacity: passive ? 0.65 : 1,
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = "translateY(-1px)";
         e.currentTarget.style.boxShadow = "0 6px 20px rgba(19,33,58,0.08)";
-        e.currentTarget.style.opacity = "1";
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = "";
         e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.opacity = passive ? "0.65" : "1";
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
