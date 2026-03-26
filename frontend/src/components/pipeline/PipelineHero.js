@@ -88,11 +88,6 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
               }} data-testid="hero-top-priority-badge">
                 Top Priority
               </span>
-              {(current.coachWaiting || current.timingLabel) && (
-                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.30)", fontWeight: 500 }} data-testid="hero-merged-signal">
-                  {[current.coachWaiting ? "Coach waiting" : null, current.timingLabel].filter(Boolean).join(" · ")}
-                </span>
-              )}
             </div>
 
             {/* HEADLINE */}
@@ -115,20 +110,18 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
               </h3>
             </div>
 
-            {/* RISK CONTEXT */}
+            {/* SINGLE COMBINED REASON */}
             <div data-testid="hero-advice-box" style={{ marginBottom: 4 }}>
-              {current.riskContext && (
-                <div style={{ color: "#ffb088", fontSize: 14, fontWeight: 600, lineHeight: 1.4, marginBottom: 4 }} data-testid="hero-risk-context">
-                  {current.riskContext}
-                </div>
-              )}
-              <div style={{ color: "rgba(255,255,255,0.50)", fontSize: 14, fontWeight: 400, lineHeight: 1.5 }} data-testid="hero-descriptive-reason">
+              <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 15, fontWeight: 450, lineHeight: 1.5 }} data-testid="hero-descriptive-reason">
                 {(() => {
                   const hr = (current.heroReason || "").trim();
+                  const risk = (current.riskContext || "").trim();
+                  if (hr && risk) return `${hr} — ${risk.charAt(0).toLowerCase() + risk.slice(1)}`;
                   if (hr) return hr;
+                  if (risk) return risk;
                   if (current.tier === "high") {
                     const days = p?.signals?.days_since_activity || p?.signals?.days_since_last_activity;
-                    return days ? `No response in ${days} day${days !== 1 ? 's' : ''}` : "Needs your attention now";
+                    return days ? `No response in ${days} day${days !== 1 ? 's' : ''} — coach is expecting a reply` : "Needs your attention now";
                   }
                   return "On track \u2014 keep momentum";
                 })()}
