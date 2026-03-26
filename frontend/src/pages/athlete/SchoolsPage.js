@@ -156,15 +156,14 @@ function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDe
             {school.division}{school.conference ? ` \u00B7 ${school.conference}` : ""}{school.state ? ` \u00B7 ${school.state}` : ""}
           </p>
         </div>
-        <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center flex-shrink-0"
+        <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center flex-shrink-0 bg-white"
           style={{
-            background: school.match_score >= 80 ? "rgba(13,148,136,0.06)" : school.match_score >= 60 ? "rgba(245,158,11,0.06)" : "#f9fafb",
-            border: `1.5px solid ${school.match_score >= 80 ? "rgba(13,148,136,0.15)" : school.match_score >= 60 ? "rgba(245,158,11,0.15)" : "#e5e7eb"}`,
+            border: "1.5px solid #e5e7eb",
           }}>
-          <span className="text-lg font-extrabold" style={{ color: school.match_score >= 80 ? "#0d9488" : school.match_score >= 60 ? "#d97706" : "#9ca3af" }}>
+          <span className="text-lg font-extrabold text-gray-900">
             {school.match_score}
           </span>
-          <span className="text-[8px] font-semibold text-gray-400 -mt-0.5">MATCH</span>
+          <span className="text-[8px] font-semibold text-teal-600 -mt-0.5">MATCH</span>
         </div>
       </div>
 
@@ -194,7 +193,7 @@ function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDe
         ) : (
           <button onClick={() => addToBoard({ university_name: school.university_name })}
             disabled={adding[school.university_name]}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-teal-50 text-teal-700 border border-teal-100 hover:bg-teal-100 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-white text-teal-700 border border-teal-200 hover:bg-teal-50/50 transition-all"
             data-testid={`add-featured-${school.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
             {adding[school.university_name] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
             Add to Pipeline
@@ -231,7 +230,7 @@ function SchoolCard({ uni, adding, addToBoard, boardSchools, navigate }) {
           </div>
         </div>
         {uni.match_score > 0 && (
-          <span className="text-xl font-extrabold text-teal-600 flex-shrink-0" data-testid="card-match-score">{uni.match_score}%</span>
+          <span className="text-xl font-extrabold text-gray-900 flex-shrink-0" data-testid="card-match-score">{uni.match_score}<span className="text-[11px] font-semibold text-teal-600">%</span></span>
         )}
       </div>
 
@@ -258,7 +257,7 @@ function SchoolCard({ uni, adding, addToBoard, boardSchools, navigate }) {
       <div className="flex gap-2 pt-3 border-t border-gray-50" onClick={e => e.stopPropagation()}>
         <button onClick={() => !isOnBoard && addToBoard(uni)} disabled={adding[uni.university_name] || isOnBoard}
           data-testid={`add-board-${(uni.domain || "").replace(/\./g, "-")}`}
-          className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold text-center transition-all ${isOnBoard ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-teal-50 text-teal-700 border border-teal-100 hover:bg-teal-100"}`}>
+          className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold text-center transition-all ${isOnBoard ? "bg-white text-emerald-600 border border-emerald-200" : "bg-white text-teal-700 border border-teal-200 hover:bg-teal-50/50"}`}>
           {isOnBoard ? <><Check className="w-3.5 h-3.5 inline mr-1" />In Pipeline</> : adding[uni.university_name] ? "Adding..." : <><Plus className="w-3.5 h-3.5 inline mr-1" />Add</>}
         </button>
         <button onClick={() => uni.domain && navigate(`/schools/${uni.domain}`)}
