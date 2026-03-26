@@ -516,7 +516,7 @@ export default function JourneyPage() {
       backgroundColor: 'var(--cm-bg)',
     }} data-testid="journey-page">
       {/* ─── HEADER BAR ─── */}
-      <header className="bg-white/95 border-b border-gray-100" data-testid="journey-header-bar">
+      <header className="bg-white/95 border-b border-gray-100 -mx-2 -mt-4 sm:-mx-6 sm:-mt-6 mb-4" data-testid="journey-header-bar">
         <div className="px-2 sm:px-4 py-2.5 sm:py-3" style={{ maxWidth: 1120, margin: "0 auto" }}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <button
