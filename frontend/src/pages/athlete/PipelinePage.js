@@ -206,7 +206,8 @@ export default function PipelinePage() {
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER ═══ */}
-      <div className="mb-5 sm:mb-8 px-2 sm:px-0 flex items-start justify-between gap-4" data-testid="pipeline-header">
+      <div className="-mx-2 sm:-mx-1 -mt-4 sm:-mt-6 mb-5 sm:mb-8 bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }} data-testid="pipeline-header">
+        <div className="px-4 sm:px-4 py-3 sm:py-4 flex items-start justify-between gap-4" style={{ maxWidth: 1120, margin: "0 auto" }}>
         {/* Left: live summary */}
         <div className="flex-1 min-w-0 pt-1">
           {viewMode === "priority" && <MomentumInsight attention={allAttention} recapData={recapData} onViewBreakdown={() => setBreakdownOpen(true)} />}
@@ -223,6 +224,7 @@ export default function PipelinePage() {
             style={{ color: viewMode === 'priority' ? '#1a1a1a' : '#8a847a', padding: "8px 18px", fontSize: 13 }}>Priority</button>
           <button ref={togglePipelineRef} onClick={() => toggleView('pipeline')} data-testid="toggle-pipeline" className="pm-toggle-btn"
             style={{ color: viewMode === 'pipeline' ? '#1a1a1a' : '#8a847a', padding: "8px 18px", fontSize: 13 }}>Pipeline</button>
+        </div>
         </div>
       </div>
 
