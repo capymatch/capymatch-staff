@@ -74,8 +74,8 @@ export default function CoachWatchCardV2({ insight, loading, coachWatch }) {
   /* Loading skeleton */
   if (loading) {
     return (
-      <div className="rounded-2xl border p-4 space-y-3"
-        style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
+      <div className="rounded-[20px] border p-5 space-y-3"
+        style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }}
         data-testid="coach-watch-v2-skeleton">
         <div className="flex items-center justify-between">
           <Skeleton className="h-5 w-16" />
@@ -95,10 +95,11 @@ export default function CoachWatchCardV2({ insight, loading, coachWatch }) {
 
   return (
     <div
-      className="rounded-2xl border p-4 transition-all duration-500"
+      className="rounded-[20px] border p-5 transition-all duration-500"
       style={{
         backgroundColor: "var(--cm-surface)",
         borderColor: "var(--cm-border)",
+        boxShadow: "0 2px 12px rgba(19,33,58,0.05)",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(8px)",
       }}
@@ -150,7 +151,7 @@ export default function CoachWatchCardV2({ insight, loading, coachWatch }) {
         >
           <div className="flex items-center gap-1.5 mb-1.5">
             <Sparkles className="w-3 h-3 text-[#1a8a80]" />
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1a8a80" }}>AI Insight</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1a8a80" }}>Why this matters</span>
           </div>
           <p className="text-[11.5px] leading-relaxed mb-2" style={{ color: "var(--cm-text-2)" }}>
             {effective.ai.insight}

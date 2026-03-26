@@ -87,7 +87,7 @@ export function ConversationBubble({ event }) {
 
     return (
       <div className="flex justify-center my-2" data-testid={isFlagRelated ? `conv-flag-${evtType}` : "conv-milestone"}>
-        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border"
+        <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border"
           style={{
             backgroundColor: isCoachSignal ? "rgba(59,130,246,0.06)" : isCoachDirective ? "rgba(245,158,11,0.06)" : isFlagCompleted ? "rgba(16,185,129,0.06)" : "var(--cm-surface)",
             borderColor: isCoachSignal ? "rgba(59,130,246,0.2)" : isCoachDirective ? "rgba(245,158,11,0.2)" : isFlagCompleted ? "rgba(16,185,129,0.2)" : "var(--cm-border)",
@@ -129,15 +129,20 @@ export function ConversationBubble({ event }) {
   const isAiInsight = evtType === "ai_gmail_insight";
 
   return (
-    <div className={`flex ${isRight ? "justify-end" : "justify-start"} my-1`} data-testid={`conv-bubble-${isRight ? "right" : "left"}`}>
-      <div className={`max-w-[80%] sm:max-w-[70%] rounded-lg px-4 py-3 border relative ${
+    <div className={`flex ${isRight ? "justify-end" : "justify-start"} my-2`} data-testid={`conv-bubble-${isRight ? "right" : "left"}`}>
+      <div className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-4 py-3 relative ${
         isAiInsight
-          ? "rounded-bl-md border-violet-500/25"
+          ? "rounded-bl-md"
           : isRight
-            ? "rounded-br-md bg-teal-800/[0.10] border-teal-700/25"
-            : "rounded-bl-md bg-teal-700/[0.08] border-slate-500/20"
-      }`} style={isAiInsight ? { background: "rgba(139,92,246,0.08)" } : undefined}>
-        <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isAiInsight ? "text-violet-500" : isRight ? "text-teal-700" : "text-slate-500"}`}>
+            ? "rounded-br-sm"
+            : "rounded-bl-sm"
+      }`} style={{
+        background: isAiInsight ? "rgba(139,92,246,0.05)" : isRight ? "rgba(13,148,136,0.05)" : "#ffffff",
+        border: `1px solid ${isAiInsight ? "rgba(139,92,246,0.12)" : isRight ? "rgba(13,148,136,0.10)" : "rgba(209,199,186,0.30)"}`,
+        boxShadow: "0 1px 4px rgba(19,33,58,0.03)",
+      }}>
+        <p className="text-[10px] font-bold uppercase tracking-wider mb-1"
+          style={{ color: isAiInsight ? "#8b5cf6" : isRight ? "#0d9488" : "#6b6358" }}>
           {isAiInsight ? "AI Intelligence" : isRight ? "You" : (event.coach_name || "Coach")}
         </p>
         {displayText && (

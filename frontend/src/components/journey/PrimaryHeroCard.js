@@ -118,25 +118,25 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 3. MESSAGE TO COACH — read-only preview */}
         {hero.isCommunication && messageParagraphs && (
-          <div className="mb-3 ml-[54px] rounded-lg px-2.5 py-2"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
+          <div className="mb-4 ml-[54px] rounded-xl px-4 py-3"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
             data-testid="hero-suggested-message">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] mb-1"
-              style={{ color: "rgba(255,255,255,0.30)" }}>
+            <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2"
+              style={{ color: "rgba(255,255,255,0.35)" }}>
               Message to coach
             </p>
             {Array.isArray(messageParagraphs) ? (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {messageParagraphs.map((p, i) => (
-                  <p key={i} className="text-[13px]"
-                    style={{ color: "rgba(255,255,255,0.70)", lineHeight: 1.45 }}>
+                  <p key={i} className="text-[13px] leading-[1.6]"
+                    style={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.55 }}>
                     {i === 0 ? `"${p}` : i === messageParagraphs.length - 1 ? `${p}"` : p}
                   </p>
                 ))}
               </div>
             ) : (
-              <p className="text-[13px]"
-                style={{ color: "rgba(255,255,255,0.70)", lineHeight: 1.45 }}>
+              <p className="text-[13px] leading-[1.6]"
+                style={{ color: "rgba(255,255,255,0.75)", lineHeight: 1.55 }}>
                 "{messageParagraphs}"
               </p>
             )}
@@ -145,8 +145,8 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 4. HELPER TEXT — above CTA */}
         {hero.isCommunication && messageParagraphs && (
-          <p className="ml-[54px] mt-1 mb-2 text-[10px] sm:text-[11px]"
-            style={{ color: "rgba(255,255,255,0.30)" }}
+          <p className="ml-[54px] mt-1.5 mb-2.5 text-[10px] sm:text-[11px]"
+            style={{ color: "rgba(255,255,255,0.35)" }}
             data-testid="hero-edit-hint">
             You can edit before sending
           </p>
