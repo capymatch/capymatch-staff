@@ -1,128 +1,95 @@
 # CapyMatch — Product Requirements Document
 
 ## Original Problem Statement
-CapyMatch is a React + FastAPI + MongoDB athlete pipeline management tool for college-bound student-athletes. The platform helps athletes manage their recruiting pipeline, track coach engagement, and make data-driven decisions about which schools to pursue.
+CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB) for student-athletes and their families to manage college recruiting. The platform helps track schools, manage coach communication, and know what to do next.
 
-## Core Architecture
-- **Frontend**: React (CRA) + TailwindCSS + Shadcn/UI → **Vercel** (app.capymatch.com)
-- **Backend**: FastAPI + MongoDB (Motor async driver) → **Railway** (api.capymatch.com)
-- **Database**: MongoDB Atlas (capymatch-prod.63nymfu.mongodb.net)
-- **AI**: Claude Sonnet via Emergent LLM Key
-- **Auth**: JWT-based custom authentication (access + refresh tokens)
+## Architecture
+- **Frontend**: React (Vite-less CRA), Tailwind CSS, Shadcn/UI
+- **Backend**: FastAPI, MongoDB Atlas
+- **AI**: OpenAI GPT-4o / Claude via Emergent LLM Key
+- **Deployment**: Railway (backend), Vercel (frontend)
+- **Auth**: JWT-based (athlete, coach, director roles)
 
-## What's Been Implemented
+## User Personas
+- **Athletes/Families**: Track schools, manage emails, follow AI-guided next steps
+- **Coaches**: Assign tasks, flag athletes, view pipeline
+- **Directors**: Oversight, approve actions, bulk operations
 
-### My Schools Priority Page Refactor (Mar 26, 2026)
-- Replaced carousel hero with single hero card (highest priority school only)
-- Removed all carousel logic (pagination, swipe, dots, filter pills)
-- Added grouped list below hero, organized by urgency: "Needs action now", "Follow up soon", "On track"
-- Hero school excluded from list to avoid duplication
-- Added attention summary header: "X schools need attention"
-- Added section divider: "Other schools needing attention"
-- Each group shows count badge and colored urgency indicators
-- List items maintain existing styling (colored left border, icon, school logo, action, reason)
-- Strong visual hierarchy: hero = dominant focus, list = scannable and dense
-- Pixel-perfect implementation from user's HTML mockup
-- Full-page grid background (#f7f3ec, 44px squares)
-- Glass-morphism auth card (backdrop-filter blur, semi-transparent white, radius 28px)
-- Rounded-square orange gradient logo (border-radius 16px)
-- Large typography (34px headings, 18px inputs, 20px button)
-- Uppercase field labels with letter-spacing
-- Custom checkbox, error styling (#fff0ee), orange CTA with glow shadow
-- Demo accounts with "Quick Access" card layout and "Use" buttons
-- Feature pill chips, gradient social proof avatars
-- Mobile responsive, all auth flows working
+## Core Features (Implemented)
+- Dashboard with recruiting overview
+- School pipeline with priority/urgency tiers (Premium UI)
+- Journey page per school (Premium UI — warm bone palette)
+- Coach Watch intelligence engine
+- Email composer with Gmail integration
+- Match scoring and risk badges
+- School Intelligence drawer
+- Coaching Stability tracking
+- Progress Rail (recruiting stage tracker)
+- Floating action bar (Email, Call, Log, Follow-up)
+- Getting Started checklist for new schools
+- Notes sidebar
+- Highlight videos
+- Analytics page
+- Social Spotlight
+- Calendar integration
+- Coach/Director views
 
-### Production Deployment Fixes (Mar 26, 2026)
-- Fixed Dockerfile: added `libmagic1` system dependency (was causing crashes)
-- Fixed nixpacks.toml: added `--extra-index-url` for emergentintegrations and `file` package
-- Added `/api/health` endpoint for Railway health check probes
-- Updated DEPLOYMENT.md with Railway troubleshooting guide
-- Railway backend confirmed operational at `capymatch-staff-production.up.railway.app`
-- Custom domain `api.capymatch.com` SSL still validating (Railway plan limit resolved)
+## Design System (Premium)
+- **Page Background**: Warm bone `#faf8f5`
+- **Card Background**: White `#ffffff`
+- **Card Borders**: `rgba(209,199,186,0.35)`
+- **Card Radius**: `20px`
+- **Card Shadow**: `0 2px 12px rgba(19,33,58,0.05)`
+- **Primary Text**: `#1a1a1a`
+- **Secondary Text**: `#3d3830`
+- **Muted Text**: `#6b6358`
+- **Hero Header**: Deep navy `#161921` with `#0b1730` gradient
+- **Accent**: Teal `#0d9488`
+- **Urgency**: Ochre `#ff5a1f`
+- **On Track**: Thistle green `#6b9e7a`
 
-### Production Deployment Prep (Mar 25, 2026)
-- Created `DEPLOYMENT.md` with full Vercel + Railway deployment guide
-- Created `.env.production` templates for backend and frontend
-- Created `Procfile` for Railway
-- Audited codebase: no hardcoded preview URLs in source code
-- CORS properly reads from env vars for production
-- Pre-production smoke test: 100% pass (17/17 tests)
-- Fixed minor KeyError bug in `athlete_tasks.py`
+## Production Deployment
+- **Backend**: `capymatch-staff-production.up.railway.app` (Railway default domain)
+- **Frontend**: Vercel (REACT_APP_BACKEND_URL needs updating to Railway URL)
+- **Database**: MongoDB Atlas
 
-### MongoDB Production Setup (Mar 25, 2026)
-- Connected to Atlas cluster `capymatch-prod.63nymfu.mongodb.net` (v8.0.20)
-- Migrated all 69 collections from dev to production
-- Added MongoDB admin card with Test + Migrate buttons
+## Completed Work
+- Login page redesign (pixel-perfect from HTML mockup)
+- Pipeline/Priority page premium UI (urgency tiers, warm palette)
+- Journey page premium UI refactor (warm bone palette, unified cards, feed-style timeline)
+- Railway production deployment fix (libmagic1, nixpacks config)
+- Coach Watch V2 with "Why this matters" consolidated insight section
+- PrimaryHeroCard with improved message preview
 
-### Resend Email Integration (Mar 25, 2026)
-- Admin UI for API key management, test email sending
-- Config stored in MongoDB `app_config`, not .env
-- Verified: emails delivered successfully
+## Pending Issues
+- P0: Update Vercel REACT_APP_BACKEND_URL to `capymatch-staff-production.up.railway.app`
+- P1: Stale service worker cache (user verification pending)
 
-### Gmail OAuth Admin Config (Mar 25, 2026)
-- Admin UI for Client ID, Secret, Redirect URI
-- Config stored in DB for environment portability
-- Production redirect: `https://api.capymatch.com/api/gmail/callback`
+## Upcoming Tasks (P1)
+- CSV Import Tool: Bulk import for school/coach data
+- Bulk Approve Mode: Director Inbox multi-select and bulk approve
 
-### Coaching Stability Feature (Mar 25, 2026)
-- Backend: DuckDuckGo web search + Claude Sonnet AI analysis
-- Cached in `coach_watch_alerts` for 7 days
-- Frontend: Collapsed card with badge + "Learn more" expand
-- Inline mini-badge on coach contact cards
-
-### Previous Work (Mar 23-25, 2026)
-- Journey Card → Email Modal Integration
-- Pipeline Hero UI, Mark Done bug fix
-- Profile Completeness & Validations
-- Where You Are rail (simple dot-and-line style)
-- Coach Watch Card fallback logic
-- Permanent libmagic backend crash fix
-- Stripe subscription billing (5 tiers)
-- Club Billing V2 with entitlements
-- Premium dark theme across all pages
-
-## Prioritized Backlog
-
-### P0 — Production Live
-- ✅ Deploy backend to Railway (capymatch-staff-production.up.railway.app)
-- ✅ Deploy frontend to Vercel (app.capymatch.com)
-- ⏳ Custom domain SSL for api.capymatch.com (validating)
-- Update Vercel REACT_APP_BACKEND_URL to Railway default URL
-- Switch Stripe to live keys
-- Verify Gmail OAuth in production
-
-### P1 — Post-Deploy
-- CSV Import Tool for bulk school/coach data
-- Bulk Approve Mode in Director Inbox
-
-### P2 — Future
+## Future Tasks (P2)
 - Parent/Family Experience
 - AI-Powered Coach Summary
 - Multi-Agent Intelligence Pipeline
-- V2 page-level route gating
-- Usage-based/metered billing for AI features
-
-## Key Files
-- `/app/frontend/src/pages/LoginPage.js` — Redesigned login/signup page
-- `/app/DEPLOYMENT.md` — Full deployment guide with troubleshooting
-- `/app/backend/Dockerfile` — Railway deployment config (with libmagic)
-- `/app/backend/nixpacks.toml` — Railway builder config (with emergentintegrations)
-- `/app/backend/.env.production` — Railway env template
-- `/app/frontend/.env.production` — Vercel env template
-- `/app/backend/Procfile` — Railway startup
-- `/app/backend/config.py` — Environment config
-- `/app/backend/routers/admin_integrations.py` — All integration management
-
-## Test Credentials
-- **Athlete**: emma.chen@athlete.capymatch.com / athlete123
-- **Director**: director@capymatch.com / director123
-- **Platform Admin**: douglas@capymatch.com / capymatch2026
 
 ## 3rd Party Integrations
-- OpenAI/Claude via Emergent LLM Key
-- DuckDuckGo Search (coaching news)
-- Stripe Payments (test → switch to live)
-- Resend (transactional email)
-- Gmail OAuth (athlete email)
-- MongoDB Atlas (production database)
+- OpenAI GPT-4o / Claude — Emergent LLM Key
+- Stripe (Payments) — requires User API Key
+- Resend (Email) — requires User API Key
+- Gmail OAuth — requires User Client ID/Secret
+
+## Key API Endpoints
+- `/api/athlete/momentum-recap` — AI recap for Priority cards
+- `/api/athlete/programs/{id}` — Program details
+- `/api/athlete/programs/{id}/journey` — Timeline data
+- `/api/coach-watch/{id}` — Coach Watch intelligence
+- `/api/coaching-stability/{id}` — Coaching stability data
+- `/api/match-scores` — Match scoring
+- `/api/ai/auto-insight` — AI insight generation
+
+## Demo Accounts
+- Athlete: emma.chen@athlete.capymatch.com / athlete123
+- Coach: available via login page
+- Director: available via login page
