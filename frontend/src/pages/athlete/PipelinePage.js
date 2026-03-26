@@ -206,8 +206,8 @@ export default function PipelinePage() {
       <PipelineStyles />
 
       {/* ═══ PAGE HEADER ═══ */}
-      <div className="-mx-2 sm:-mx-1 -mt-4 sm:-mt-6 mb-5 sm:mb-8 bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }} data-testid="pipeline-header">
-        <div className="px-1 sm:px-2 py-3 sm:py-4 flex items-center gap-3">
+      <div className="-mx-2 sm:-mx-6 -mt-4 sm:-mt-6 mb-5 sm:mb-8 bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }} data-testid="pipeline-header">
+        <div className="px-2 sm:px-4 py-3 sm:py-4 flex items-center gap-3">
         {/* Back to Dashboard */}
         <button
           onClick={() => navigate("/dashboard")}
