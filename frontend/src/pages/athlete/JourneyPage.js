@@ -6,7 +6,7 @@ import "../../components/pipeline/pipeline-premium.css";
 import {
   ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
   Edit2, Trash2, Plus, AlertCircle, Clock, ExternalLink,
-  Sparkles, Loader2, Target, X, CheckCircle2, ClipboardCheck,
+  Sparkles, Loader2, X, CheckCircle2, ClipboardCheck,
   Eye, Send, Share2,
   GitCompare, ChevronDown, ChevronUp, Lock, Flag, Check,
   ShieldCheck, ShieldAlert, RefreshCw,
@@ -515,111 +515,39 @@ export default function JourneyPage() {
       '--cm-card-stat': '#f8fafc',
       backgroundColor: 'var(--cm-bg)',
     }} data-testid="journey-page">
-      {/* ─── HEADER ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 pt-6 pb-4">
-        <div style={{ background: "#161921", borderRadius: "18px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.06)" }} className="sm:!rounded-[22px]">
-          <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
-          {/* Back & Actions */}
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={() => navigate("/pipeline")} className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: "rgba(255,255,255,0.4)" }} data-testid="back-to-pipeline">
-              <ArrowLeft className="w-3.5 h-3.5" />Pipeline
-            </button>
-            <div className="flex items-center gap-2">
-              {/* J4: Compare button */}
-              <button onClick={() => navigate(`/compare?selected=${programId}`)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-white/5"
-                style={{ color: "rgba(255,255,255,0.4)", borderColor: "rgba(255,255,255,0.08)" }}
-                data-testid="compare-btn">
-                <GitCompare className="w-3 h-3" />Compare
-              </button>
-              {program.questionnaire_url && (
-                <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors hover:bg-teal-700/10 text-teal-400 border-teal-700/30"
-                  data-testid="questionnaire-link">
-                  <ExternalLink className="w-3 h-3" />Questionnaire
-                </a>
-              )}
-              {isArchived ? (
-                <Button variant="outline" size="sm" onClick={handleArchiveToggle}
-                  className="text-xs h-7 px-3"
-                  style={{ color: "#2dd4bf", borderColor: "rgba(45,212,191,0.3)" }}
-                  data-testid="reactivate-btn">
-                  <RotateCcw className="w-3 h-3 mr-1" />Reactivate
-                </Button>
-              ) : (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button className="px-3 py-1 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1.5"
-                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}
-                      data-testid="archive-btn">
-                      <Archive className="w-3 h-3" />Archive
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent style={{ background: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle style={{ color: "var(--cm-text)" }}>Archive {program.university_name}?</AlertDialogTitle>
-                      <AlertDialogDescription style={{ color: "var(--cm-text-3)" }}>
-                        This school will be moved to your Archived section on the pipeline. You can reactivate it anytime — nothing is deleted.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel style={{ color: "var(--cm-text-3)" }}>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={async () => {
-                          try {
-                            await axios.put(`${API}/athlete/programs/${programId}`, { recruiting_status: "archived" });
-                            toast.success(`${program.university_name} archived`);
-                            navigate("/pipeline");
-                          } catch { toast.error("Failed to archive"); }
-                        }}
-                        style={{ background: "#94a3b8", color: "white" }}
-                        data-testid="confirm-archive-btn"
-                      >Archive</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
-          </div>
+      {/* ─── HEADER BAR ─── */}
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 pt-4 pb-2">
+        {/* Back link */}
+        <button onClick={() => navigate("/pipeline")}
+          className="flex items-center gap-1.5 text-[13px] font-medium transition-colors hover:opacity-70 mb-4"
+          style={{ color: "#9c917f" }}
+          data-testid="back-to-pipeline">
+          <ArrowLeft className="w-3.5 h-3.5" />Pipeline
+        </button>
 
-          {/* School Info + Logo + Match Score — two-column with rail */}
-          <div className="flex gap-4">
-          <div className="flex-1 min-w-0">
-          <div className="flex items-start gap-4 mb-3">
-            {/* J1: Real university logo */}
-            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-lg" style={{ border: "1px solid rgba(255,255,255,0.06)" }} />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#fff" }} data-testid="journey-school-name">
+        {/* Header row */}
+        <div className="flex items-center justify-between" data-testid="journey-header-bar">
+          {/* Left: Logo + School info */}
+          <div className="flex items-center gap-4">
+            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-full" style={{ border: "2px solid #e7dfd4" }} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#1a1a1a" }} data-testid="journey-school-name">
                   {program.university_name}
                 </h1>
                 <PulseIndicator coachWatchState={coachWatch?.state} />
-                {/* J1: Match score badge */}
-                {matchScore && (
-                  <span
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold"
-                    style={{
-                      background: "rgba(16,185,129,0.12)",
-                      color: matchScore.match_score >= 80 ? "#6ee7b7" : matchScore.match_score >= 60 ? "#fbbf24" : "#94a3b8",
-                    }}
-                    data-testid="journey-match-score"
-                  >
-                    <Target className="w-3 h-3" /> {matchScore.match_score}% Match
-                  </span>
-                )}
               </div>
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap" style={{ color: "#9c917f", fontSize: 12 }}>
                 {program.division && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md" style={{ background: "rgba(13,148,136,0.15)", color: "#2dd4bf" }}>{program.division}</span>
+                  <><span className="font-semibold">{program.division}</span><span style={{ opacity: 0.5 }}>&middot;</span></>
                 )}
                 {program.conference && (
-                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.5)" }}>{program.conference}</span>
+                  <><span>{program.conference}</span><span style={{ opacity: 0.5 }}>&middot;</span></>
                 )}
+                <span>{timeline.length} interactions</span>
                 {program.location && (
-                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{program.location}</span>
+                  <><span style={{ opacity: 0.5 }}>&middot;</span><span>{program.location}</span></>
                 )}
-                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{timeline.length} interactions</span>
-                {/* J4: School Social Links */}
                 {program.social_links && typeof program.social_links === "object" && Object.keys(program.social_links).length > 0 && (
                   <SchoolSocialLinks links={program.social_links} />
                 )}
@@ -627,70 +555,81 @@ export default function JourneyPage() {
             </div>
           </div>
 
-          {/* J1: Risk Badges */}
-          <div className="ml-16 mb-1" data-testid="journey-risk-badges">
-            {riskBadges.length > 0 ? (
-              <RiskBadgeRow badges={riskBadges} onBadgeClick={(b) => setRiskDrawer(b)} />
-            ) : matchScore ? (
-              <RiskBadgeEmpty />
-            ) : null}
+          {/* Right: Lightweight controls */}
+          <div className="flex items-center gap-1.5">
+            {matchScore && (
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                style={{ color: "#6b6358", background: "#f8fafc", border: "1px solid #e7dfd4" }}
+                data-testid="journey-match-score">
+                {matchScore.match_score}%
+              </span>
+            )}
+            <button onClick={() => navigate(`/compare?selected=${programId}`)}
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-black/[0.04]"
+              style={{ color: "#9c917f" }}
+              data-testid="compare-btn"
+              title="Compare">
+              <GitCompare className="w-4 h-4" />
+            </button>
+            {program.questionnaire_url && (
+              <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-black/[0.04]"
+                style={{ color: "#0d9488" }}
+                data-testid="questionnaire-link"
+                title="Questionnaire">
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+            {isArchived ? (
+              <Button variant="outline" size="sm" onClick={handleArchiveToggle}
+                className="text-xs h-7 px-3 rounded-full"
+                style={{ color: "#0d9488", borderColor: "#e7dfd4" }}
+                data-testid="reactivate-btn">
+                <RotateCcw className="w-3 h-3 mr-1" />Reactivate
+              </Button>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button className="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-black/[0.04]"
+                    style={{ color: "#9c917f" }}
+                    data-testid="archive-btn"
+                    title="Archive">
+                    <Archive className="w-4 h-4" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent style={{ background: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle style={{ color: "var(--cm-text)" }}>Archive {program.university_name}?</AlertDialogTitle>
+                    <AlertDialogDescription style={{ color: "var(--cm-text-3)" }}>
+                      This school will be moved to your Archived section on the pipeline. You can reactivate it anytime — nothing is deleted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel style={{ color: "var(--cm-text-3)" }}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          await axios.put(`${API}/athlete/programs/${programId}`, { recruiting_status: "archived" });
+                          toast.success(`${program.university_name} archived`);
+                          navigate("/pipeline");
+                        } catch { toast.error("Failed to archive"); }
+                      }}
+                      style={{ background: "#94a3b8", color: "white" }}
+                      data-testid="confirm-archive-btn"
+                    >Archive</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
-          </div>{/* end left column */}
-
-          {/* RIGHT: Vertical stage rail */}
-          {rail && (
-            <div className="hidden sm:flex flex-col items-start pt-1 pl-5 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: 160 }} data-testid="journey-header-rail">
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.30)", marginBottom: 14 }}>
-                Where you are
-              </div>
-              <div className="flex flex-col" style={{ position: "relative" }}>
-                {[
-                  { key: "added", label: "Added" },
-                  { key: "outreach", label: "Outreach" },
-                  { key: "in_conversation", label: "Talking" },
-                  { key: "campus_visit", label: "Visit" },
-                  { key: "offer", label: "Offer" },
-                  { key: "committed", label: "Committed" },
-                ].map((s, stIdx, arr) => {
-                  const activeKey = rail.active || "added";
-                  const activeIdx = arr.findIndex(x => x.key === activeKey);
-                  const isActive = stIdx === activeIdx;
-                  const isPast = stIdx < activeIdx;
-                  const isFuture = stIdx > activeIdx;
-                  const isLast = stIdx === arr.length - 1;
-                  const dotColor = isActive ? "#2dd4bf" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.15)";
-                  const dotSize = isActive ? 12 : 8;
-                  return (
-                    <div key={s.key} className="flex items-center gap-3 cursor-pointer" onClick={() => handleStageClick && handleStageClick(s.key)} data-testid={`header-rail-stage-${s.key}`}>
-                      <div className="flex flex-col items-center" style={{ width: 12, flexShrink: 0 }}>
-                        <div style={{
-                          width: dotSize, height: dotSize, borderRadius: "50%",
-                          backgroundColor: dotColor,
-                          boxShadow: isActive ? "0 0 8px rgba(45,212,191,0.5)" : "none",
-                          transition: "all 0.2s ease",
-                        }} />
-                        {!isLast && (
-                          <div style={{ width: 2, height: 20, backgroundColor: isPast ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)" }} />
-                        )}
-                      </div>
-                      <div style={{
-                        fontSize: 14,
-                        fontWeight: isActive ? 700 : 500,
-                        color: isActive ? "#2dd4bf" : isPast ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.25)",
-                        lineHeight: 1,
-                        paddingBottom: isLast ? 0 : 14,
-                      }}>
-                        {s.label}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          </div>{/* end two-column flex */}
         </div>
-      </div>
+
+        {/* Risk badges — subtle inline */}
+        <div className="mt-3 ml-16" data-testid="journey-risk-badges">
+          {riskBadges.length > 0 ? (
+            <RiskBadgeRow badges={riskBadges} onBadgeClick={(b) => setRiskDrawer(b)} />
+          ) : null}
+        </div>
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
