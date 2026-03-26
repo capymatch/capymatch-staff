@@ -13,7 +13,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://journey-premium-ui.preview.emergentagent.com")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://hero-card-refine.preview.emergentagent.com")
 
 # Test credentials
 ATHLETE_EMAIL = "emma.chen@athlete.capymatch.com"

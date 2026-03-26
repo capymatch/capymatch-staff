@@ -2,7 +2,7 @@
 
 **Version**: 1.0
 **Date**: March 23, 2026
-**App URL**: https://journey-premium-ui.preview.emergentagent.com
+**App URL**: https://hero-card-refine.preview.emergentagent.com
 
 ---
 

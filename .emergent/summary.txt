@@ -1,44 +1,50 @@
 <analysis>**original_problem_statement**: 
-The user is rapidly polishing the application for production readiness and aligning the visual design with the new premium CapyMatch website. Priorities include resolving the production deployment blocker on Railway, redesigning the Login page to be pixel-perfect with an HTML mockup, overhauling the Pipeline/Priority page layout and visual hierarchy (urgency gradient, warm tones, softened cards), and refactoring the Journey page to match this new premium visual language without altering underlying logic or data.
+The user is rapidly polishing the CapyMatch application for production readiness. The current absolute focus is a strict UI/UX refactor of the Journey Page () to align its visual hierarchy, layout, and styling with the new premium CapyMatch website and Pipeline page. 
+**CRITICAL PRODUCT REQUIREMENT:** Do NOT change any underlying logic, data, API calls, grouping, or order. This is strictly a layout and visual polish task.
 
 **User's preferred language**: English
 *(INSTRUCT: Next agent must respond in English)*
 
 **what currently exists?** 
-CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB). The backend is successfully deployed on Railway using a generated default domain (bypassing custom domain SSL limits). The frontend has a brand-new, premium Login page and a completely refactored Pipeline/Priority page featuring a single Hero focus, urgency-grouped lists, and a warm, sophisticated color palette (bone, ochre, thistle, deep navy) matching the primary website.
+CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB). In the current session, the Journey Page has undergone massive UI refactoring. It now shares the exact background color () as the Pipeline page. The timeline has been converted to a clean, neutral, white inbox-like feed (removing previous heavy green tints). The top dark hero card was replaced with a light, flush, inline header bar that exactly mimics the  header. The dark Action Hero card now sits below this header, alongside metadata chips.
 
 **Last working item**:
-    - Last item agent was working: Refactoring the visual hierarchy of the Journey Page (). The agent was reading the file to understand its structure before applying the new premium visual language (elevating the Hero action block, consolidating insight cards, simplifying timelines, and grouping the sidebar).
+    - Last item agent was working: Refining the internal hierarchy of the Hero Action Card (), styling the metadata chips, adding subtle anchoring to the header/footer, and fixing column alignments in . The agent was just reading the files to begin implementing the user's highly detailed 8-point refinement list.
     - Status: IN PROGRESS
-    - Agent Testing Done: N (Just started reading files)
-    - Which testing method agent to use? screenshot tool (for UI/UX visual validation)
+    - Agent Testing Done: N
+    - Which testing method agent to use? screenshot tool (for rapid UI visual validation), followed by testing_agent_v3_fork once the full batch of UI changes is done.
     - User Testing Done: N
-    - Reasoning: The user requested a strict UI-only refactor of the Journey page to match the Pipeline page's new premium design system. The agent had just run  and viewed the  file contents but hadn't made any edits yet.
 
-**All Pending/In progress Issue list**:
-  Issue 1: Production Frontend Environment Configuration (P0)
-     - Attempted fixes: The backend was successfully deployed to Railway via , but the Vercel frontend has not yet been updated to point to this new URL.
-     - Next debug checklist: Update  in the Vercel project settings to  and trigger a redeploy so the production frontend can talk to the production backend.
-     - Why fix this issue and what will be achieved with the fix? Completes the full production deployment pipeline.
+**All Pending/In progress Issue list**: 
+  Issue 1: Production Frontend Environment Configuration (P0 - Carried over from previous fork)
+     - Attempted fixes: The backend is live on Railway, but the Vercel frontend has not been instructed to point to it yet.
+     - Next debug checklist: Instruct user to update  in their Vercel project settings to  and trigger a redeploy.
+     - Why fix this issue and what will be achieved with the fix? Completes the production deployment pipeline so the live frontend talks to the live backend.
      - Status: NOT STARTED
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Both
-     - Blocked on other issue: None
+     - Should Test frontend/backend/both after fix? NA (User action required)
+     - Blocked on other issue: No
 
-  Issue 2: Stale Service Worker Cache on Frontend (P1)
-     - Attempted fixes: Previously removed the  script. 
-     - Next debug checklist: If user gets 401s on production, instruct them to hard-refresh / clear browser service workers.
-     - Why fix this issue and what will be achieved with the fix? Prevents fake network errors in production.
+  Issue 2: Stale Service Worker Cache on Frontend (P1 - Carried over)
+     - Attempted fixes:  was previously removed.
+     - Next debug checklist: If user gets 401s on production, instruct them to hard-refresh / clear browser cache.
+     - Why fix this issue and what will be achieved with the fix? Prevents fake network errors.
      - Status: USER VERIFICATION PENDING
      - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? Frontend
 
 **In progress Task List**:
-  Task 1: Journey Page UI Refactor (P0)
-     - Where to resume:  and associated components in .
-     - What will be achieved with this? The Journey page will feel like a premium extension of the Pipeline page. Needs: Elevate the Follow up hero card, merge Progress has stalled and AI Insight into Why this matters, simplify the timeline into a feed style, group sidebar items (Stability, Contacts, Activity, School intelligence) with consistent spacing/shadows, and improve message preview readability. **Constraint:** ZERO logic/data changes.
-     - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix? Frontend
+  Task 1: Journey Page Final UI Polish: Hero Card & Alignments (P0)
+     - Where to resume: , , 
+     - What will be achieved with this? A cohesive, premium command center feel. **Action Items required by user:**
+        1. **Header:** Add subtle separation (light bottom border or soft shadow). Perfect vertical alignment of logo/name/back link.
+        2. **Chips (Last activity, Match score, Stage):** Reduce visual weight, tighten spacing to hero card, align left edge exactly with hero content.
+        3. **Hero Action Card ():** Increase Title prominence. Increase Reason line readability. Soften Message preview contrast/increase padding. Increase CTA button prominence. Reduce Metadata chips visual dominance. Add subtle depth/glow to the card.
+        4. **Layout:** Ensure consistent timeline vertical spacing. Align Sidebar top with timeline header and reduce horizontal gap.
+        5. **Bottom Action Bar:** Add subtle anchoring (light top divider or shadow).
+     - Status: IN PROGRESS (Files read, edits pending)
+     - Should Test frontend/backend/both after fix? Frontend (Screenshot first, then Testing Agent)
+     - Blocked on something: No
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
@@ -51,67 +57,62 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
     - (P2) Multi-Agent Intelligence Pipeline.
 
 **Completed work in this session**
-- **Railway Production Deployment Fix (DONE)**: Resolved build failures by injecting  in Dockerfile and configuring nixpacks correctly. Set up backend on default  domain to bypass SSL custom domain limit.
-- **Login Page Redesign (DONE)**: Fully implemented a pixel-perfect redesign of  based on a user-provided HTML mockup (grid background, glass-morphism, distinct layout).
-- **Priority/Pipeline Page Layout Refactor (DONE)**: Modified  to show a single static top priority card. Grouped the remaining items in  into urgency tiers (Needs attention now, Follow up soon, On track) while preserving AI recap logic.
-- **Priority/Pipeline Visual System Redesign (DONE)**: Applied the premium CapyMatch brand language to the Pipeline page (warm bone background, ochre urgency tints, deep navy hero gradients, thistle/green on-track indicators, softened borders, improved typography hierarchy).
+- Journey Page structural & visual alignment with Pipeline (DONE)
+- Neutralized Timeline backgrounds (removed heavy green tints for white inbox feel) (DONE)
+- Implemented SupportPod-style flush, inline header bar on Journey Page (DONE)
+- Fixed chip variables ( instead of ,  instead of ) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
    - None
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: Custom domain SSL blocked on Railway.
-  - Recurrence count: 1
-  - Status: RESOLVED (By pivoting to Railway's auto-generated default domain).
+  - None occurring in this specific session.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **UI-Only Refactoring Constraint**: All design updates must strictly preserve existing React Hooks, selectors, API connections, grouping logic, and AI Recap data structures.
-- **Premium Design System (Tokens)**: The app uses inline styles and Tailwind to achieve a specific palette: Deep Navy/Eerie Black (), Warm Bone (), Ochre/Orange (, ), Thistle Green (). Cards use large border-radiuses (18-20px) and soft drop shadows instead of harsh borders.
+- **Strict UI-Only Constraint:** The current task explicitly forbids altering logic, React hooks, data structures, or API routing. Do not rename props or alter conditional rendering logic unless it is purely for DOM layout alignment.
+- **Premium Design System:** Uses Tailwind CSS and inline styles. Relies on specific CSS variables (, ). Cards use 18-20px border radius and soft drop shadows instead of harsh borders.
 
 **key DB schema**
-  - None altered in this session.
+  - No changes required or made.
 
 **changes in tech stack**
-  - Vercel  needs to be permanently shifted away from custom domain to .
+  - No changes.
 
 **All files of reference**
--  (Overhauled completely)
--  (Overhauled for premium UI)
--  (Overhauled for urgency tiers and premium UI)
--  (Spacing and wrapper updates)
--  (Target for current UI refactor task)
--  (Fixed Railway build deps)
+-  (Main page wrapper, Header, Layout grid)
+-  (Requires internal hierarchy polish)
+-  (Requires anchoring/border shadow)
 
 **Areas that need refactoring**:
--  - Requires layout consolidation, timeline simplification, and UI unification to match the Pipeline page.
+- The Hero card inside  needs structural CSS/Tailwind adjustments to meet the user's specific visual hierarchy requirements.
 
 **key api endpoints**
--  (Provides data structure driving Priority cards)
+- N/A for current UI task.
 
 **Critical Info for New Agent**
-- **UI Strictness:** The user is extremely specific about typography (weights, opacity, spacing) and color hierarchy. Adhere exactly to the design tokens already implemented in  and apply them to . Do not accidentally delete AI generated context (e.g. ) while restructuring elements. 
-- **Railway Domain:**  is abandoned due to SSL limits. The definitive production backend is now .
+- **Zero Logic Changes:** The user has repeatedly emphasized: DO NOT MODIFY LOGIC. This is strictly a UI refinement. If a visual change seems to require a data structure change, you are doing it wrong. Rely on CSS, Tailwind, flexbox, opacity, and padding.
+- **Current State context:** The agent just finished making the header bar flush with negative margins to counteract  padding. The next task is adjusting the visual weights (fonts, opacities, padding) of the dark  right below that header.
 
 **documents and test reports created in this job**
-  - /app/memory/PRD.md
+  -  (Updated regularly with finished UI phases)
+  -  through  (Heavy and successful use of testing agent for UI verification).
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. (User) Asked if a custom domain limit error was the production blocker.
-2. (User) Confirmed the default domain generated: .
-3. (User) Requested login page redesign matching a provided image.
-4. (User) Provided the exact HTML mockup for the login page to be cloned.
-5. (User) Requested Pipeline layout refactor: Single top priority hero, remove carousel, group remaining list by urgency tiers below.
-6. (User) Corrected agent for removing original AI recap card data during the refactor. Demanded exact preservation of old card info.
-7. (User) Requested UI urgency gradient on Pipeline: Strong emphasis on Needs attention now, calm green on On Track.
-8. (User) Requested a full Premium UI pass on Pipeline to match the CapyMatch website (Warm neutral surfaces, no harsh borders).
-9. (User) Requested further UI polish: Remove background tints, soften left accent borders, increase card spacing, align toggle.
-10. (User) **Pending Task**: Refactor the Journey page to match the visual clarity and hierarchy of the Pipeline page (elevate hero, merge insights, simplify timeline, unify cards).
+1. (User) Approved starting plan.
+2. (User) Requested refactoring Journey page visual clarity to match Pipeline (warm bone background, unify cards).
+3. (User) Requested exact structural alignment with Pipeline (change background to #F7FAFC, stack hero cards, remove floating blocks, unify timeline).
+4. (User) Requested visual cleanup (make timeline neutral/white, remove all green backgrounds, keep green only for small dots/icons).
+5. (User) Requested replacing top dark school card with a light header bar matching the Coach view.
+6. (User) Requested making the new header inline (back link, logo, name on one row).
+7. (User) Requested matching the header look *exactly* to  top bar.
+8. (User) Requested removing left and top space from the header to make it flush.
+9. (User) **[PENDING]** Requested 8 highly specific UI refinements to the Header, Chips, Hero Action Card, Layout Alignment, and Bottom Action bar. *Agent was analyzing files when the fork occurred.*
 
 **Project Health Check:**
-- Broken: None. Backend is live.
+- Broken: None. UI is rendering perfectly.
 - Mocked: None.
 
 **3rd Party Integrations**
@@ -121,10 +122,10 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 - Gmail OAuth — requires User Client ID/Secret
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Screenshot UI validation heavily utilized instead).
+  - Testing agent used after significant changes: YES (Extensively used after every UI batch, all tests passing 100%).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None
-  - Known regressions: None
+  - Test files created: JSON test reports via subagent.
+  - Known regressions: None.
 
 **What agent forgot to execute**
-- The agent hasn't instructed the user/system to update the Vercel Production Environment Variables with the new backend URL (). The Vercel deployment step is pending.</analysis>
+- The agent hasn't instructed the user to update the Vercel Production Environment Variables with the new backend URL ().</analysis>
