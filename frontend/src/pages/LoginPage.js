@@ -249,33 +249,7 @@ export default function LoginPage() {
                     />
                   </div>
 
-                  {/* Role selector */}
-                  <div className="mb-4">
-                    <label className="block text-[13px] font-extrabold tracking-[0.08em] text-[#667085] mb-2">I AM A...</label>
-                    <div className="grid grid-cols-3 gap-2" data-testid="role-selector">
-                      {[
-                        { value: "athlete", label: "Athlete" },
-                        { value: "parent", label: "Parent" },
-                        { value: "club_coach", label: "Coach" },
-                      ].map((r) => (
-                        <button
-                          key={r.value}
-                          type="button"
-                          onClick={() => setRole(r.value)}
-                          data-testid={`role-${r.value}`}
-                          className="py-3 text-base font-bold cursor-pointer border transition-all duration-200"
-                          style={{
-                            borderRadius: 14,
-                            ...(role === r.value
-                              ? { background: "#ff5a1f", color: "white", borderColor: "#ff5a1f" }
-                              : { background: "white", color: "#667085", borderColor: "#e7dfd4" }),
-                          }}
-                        >
-                          {r.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Role is defaulted to athlete */}
                 </>
               )}
 
