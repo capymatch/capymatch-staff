@@ -631,15 +631,15 @@ export default function JourneyPage() {
           {/* ── Compact Progress Rail (light-mode) ── */}
           {rail?.active && (
             <div className="mt-2.5 pt-2 hidden sm:block" style={{ borderTop: "1px solid rgba(0,0,0,0.04)" }} data-testid="header-progress-rail">
-              <div style={{ position: "relative", height: 16, display: "flex", alignItems: "center" }}>
+              <div style={{ position: "relative", height: 18, display: "flex", alignItems: "center" }}>
                 {/* Track line */}
-                <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: "translateY(-50%)", height: 2, background: "#e5e7eb", borderRadius: 1 }} />
+                <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: "translateY(-50%)", height: 3, background: "#e2e5ea", borderRadius: 2 }} />
                 {/* Filled line */}
                 {(() => {
                   const aidx = RAIL_STAGES.findIndex(s => s.key === rail.active);
                   const fill = aidx > 0 ? aidx / (RAIL_STAGES.length - 1) : 0;
                   return fill > 0 ? (
-                    <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: `translateY(-50%) scaleX(${fill})`, transformOrigin: "left", height: 2, background: RAIL_STAGES[aidx]?.color || "#0d9488", borderRadius: 1, transition: "transform 0.5s ease" }} />
+                    <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: `translateY(-50%) scaleX(${fill})`, transformOrigin: "left", height: 3, background: RAIL_STAGES[aidx]?.color || "#0d9488", borderRadius: 2, transition: "transform 0.5s ease" }} />
                   ) : null;
                 })()}
                 {/* Stage dots */}
@@ -647,7 +647,7 @@ export default function JourneyPage() {
                   const aidx = RAIL_STAGES.findIndex(st => st.key === rail.active);
                   const isActive = s.key === rail.active;
                   const isPast = aidx >= 0 && idx < aidx;
-                  const dotSize = isActive ? 12 : 8;
+                  const dotSize = isActive ? 14 : 8;
                   return (
                     <button key={s.key} onClick={() => handleStageClick(s.key)}
                       data-testid={`header-rail-${s.key}`}
@@ -655,8 +655,8 @@ export default function JourneyPage() {
                       <div style={{
                         width: dotSize, height: dotSize, borderRadius: "50%",
                         background: isActive || isPast ? s.color : "#fff",
-                        border: `2px solid ${isActive || isPast ? s.color : "#d1d5db"}`,
-                        boxShadow: isActive ? `0 0 8px ${s.color}50, 0 0 3px ${s.color}30` : "none",
+                        border: `2px solid ${isActive || isPast ? s.color : "#cbd5e1"}`,
+                        boxShadow: isActive ? `0 0 10px ${s.color}60, 0 0 4px ${s.color}40` : "none",
                         transition: "all 0.3s",
                       }} />
                     </button>
@@ -673,8 +673,8 @@ export default function JourneyPage() {
                   return (
                     <div key={s.key} style={{ flex: 1, textAlign: "center" }}>
                       <span style={{
-                        fontSize: 9, fontWeight: isActive ? 700 : 500, letterSpacing: "0.02em",
-                        color: isActive ? s.color : isPast ? "#6b7280" : "#c9cdd4",
+                        fontSize: isActive ? 10 : 9, fontWeight: isActive ? 700 : 500, letterSpacing: "0.02em",
+                        color: isActive ? s.color : isPast ? "#6b7280" : "#c0c5cc",
                       }}>{s.label}</span>
                     </div>
                   );
@@ -856,7 +856,7 @@ export default function JourneyPage() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2" data-testid="timeline-list">
+              <div className="space-y-3" data-testid="timeline-list">
                 {timeline.map((ev, idx) => (
                   <ConversationBubble key={ev.id || idx} event={ev} />
                 ))}
