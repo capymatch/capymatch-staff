@@ -137,9 +137,9 @@ export function ConversationBubble({ event }) {
             ? "rounded-br-sm"
             : "rounded-bl-sm"
       }`} style={{
-        background: isAiInsight ? "rgba(139,92,246,0.05)" : isRight ? "rgba(13,148,136,0.05)" : "#ffffff",
-        border: `1px solid ${isAiInsight ? "rgba(139,92,246,0.12)" : isRight ? "rgba(13,148,136,0.10)" : "rgba(209,199,186,0.30)"}`,
-        boxShadow: "0 1px 4px rgba(19,33,58,0.03)",
+        background: isAiInsight ? "rgba(139,92,246,0.04)" : isRight ? "rgba(13,148,136,0.04)" : "#ffffff",
+        border: `1px solid ${isAiInsight ? "rgba(139,92,246,0.10)" : isRight ? "rgba(13,148,136,0.08)" : "#e7dfd4"}`,
+        boxShadow: "0 1px 3px rgba(80,60,30,0.02)",
       }}>
         <p className="text-[10px] font-bold uppercase tracking-wider mb-1"
           style={{ color: isAiInsight ? "#8b5cf6" : isRight ? "#0d9488" : "#6b6358" }}>

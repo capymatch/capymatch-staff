@@ -74,8 +74,8 @@ export default function CoachWatchCardV2({ insight, loading, coachWatch }) {
   /* Loading skeleton */
   if (loading) {
     return (
-      <div className="rounded-[20px] border p-5 space-y-3"
-        style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }}
+      <div className="rounded-[18px] border p-5 space-y-3"
+        style={{ backgroundColor: "#fff", borderColor: "#e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }}
         data-testid="coach-watch-v2-skeleton">
         <div className="flex items-center justify-between">
           <Skeleton className="h-5 w-16" />
@@ -95,11 +95,11 @@ export default function CoachWatchCardV2({ insight, loading, coachWatch }) {
 
   return (
     <div
-      className="rounded-[20px] border p-5 transition-all duration-500"
+      className="rounded-[18px] border p-5 transition-all duration-500"
       style={{
-        backgroundColor: "var(--cm-surface)",
-        borderColor: "var(--cm-border)",
-        boxShadow: "0 2px 12px rgba(19,33,58,0.05)",
+        backgroundColor: "#fff",
+        borderColor: "#e7dfd4",
+        boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(8px)",
       }}

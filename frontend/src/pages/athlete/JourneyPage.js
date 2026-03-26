@@ -90,8 +90,8 @@ function CoachingStabilityBadge({ stability, programId, onRefreshed }) {
 
   return (
     <div
-      className="rounded-[20px] border px-5 py-4"
-      style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }}
+      className="rounded-[18px] border px-5 py-4"
+      style={{ backgroundColor: "#fff", borderColor: "#e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }}
       data-testid="coaching-stability-card"
     >
       {/* Collapsed: header + badge + learn more */}
@@ -441,7 +441,7 @@ export default function JourneyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#faf8f5" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
         <div className="w-8 h-8 border-2 border-teal-700 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -449,7 +449,7 @@ export default function JourneyPage() {
 
   if (!program) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#faf8f5" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
         <p style={{ color: "#3d3830" }}>Program not found</p>
       </div>
     );
@@ -504,23 +504,20 @@ export default function JourneyPage() {
 
   return (
     <div className="min-h-screen pb-28" style={{
-      '--cm-bg': '#faf8f5',
-      '--cm-surface': '#ffffff',
-      '--cm-surface-2': '#f5f0e8',
-      '--cm-surface-hover': '#f7f3ec',
-      '--cm-border': 'rgba(209,199,186,0.35)',
-      '--cm-border-subtle': 'rgba(209,199,186,0.18)',
       '--cm-text': '#1a1a1a',
       '--cm-text-2': '#3d3830',
       '--cm-text-3': '#6b6358',
       '--cm-text-4': '#9c917f',
-      '--cm-card-stat': 'rgba(247,243,236,0.8)',
-      '--cm-shadow': '0 2px 12px rgba(19,33,58,0.05)',
-      backgroundColor: '#faf8f5',
+      '--cm-surface': '#ffffff',
+      '--cm-surface-2': '#f8fafc',
+      '--cm-border': '#e7dfd4',
+      '--cm-border-subtle': 'rgba(231,223,212,0.5)',
+      '--cm-card-stat': '#f8fafc',
+      backgroundColor: 'var(--cm-bg)',
     }} data-testid="journey-page">
       {/* ─── HEADER ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 pt-6 pb-4">
-        <div style={{ background: "#161921", borderRadius: "12px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.06)" }} className="sm:!rounded-[22px]">
+        <div style={{ background: "#161921", borderRadius: "18px", overflow: "hidden", position: "relative", border: "1px solid rgba(255,255,255,0.06)" }} className="sm:!rounded-[22px]">
           <div className="px-5 sm:px-7 pt-4 pb-5" style={{ position: "relative", zIndex: 1 }}>
           {/* Back & Actions */}
           <div className="flex items-center justify-between mb-4">
@@ -697,11 +694,47 @@ export default function JourneyPage() {
       </div>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 mt-4">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 mt-2">
 
         {/* ═══ ORCHESTRATED HERO SECTION ═══ */}
         <PrimaryHeroCard hero={featuredHero} program={program} />
-        {radarItems.length > 0 && <RadarStrip items={radarItems} />}
+
+        {/* Signal chips — inline context replacing floating blocks */}
+        <div className="flex flex-wrap items-center gap-2 mt-3 mb-4" data-testid="journey-signal-chips">
+          {featuredHero?.badge && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-semibold"
+              style={{ background: "rgba(199,80,0,0.06)", color: "#c75000" }}
+              data-testid="chip-hero-badge">
+              {featuredHero.badge}
+            </span>
+          )}
+          {(() => {
+            if (!timeline || timeline.length === 0) return null;
+            const latest = new Date(Math.max(...timeline.map(t => new Date(t.date || t.created_at || 0))));
+            const days = Math.floor((Date.now() - latest.getTime()) / 86400000);
+            return (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium"
+                style={{ background: "#f8fafc", color: "#475569", border: "1px solid #e7dfd4" }}
+                data-testid="chip-last-activity">
+                {days === 0 ? "Active today" : `Last activity \u00b7 ${days}d ago`}
+              </span>
+            );
+          })()}
+          {matchScore?.match_score != null && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium"
+              style={{ background: "#f8fafc", color: "#475569", border: "1px solid #e7dfd4" }}
+              data-testid="chip-match-score">
+              Match score: {matchScore.match_score}
+            </span>
+          )}
+          {rail?.active && rail.active !== "added" && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-medium"
+              style={{ background: "rgba(94,148,112,0.06)", color: "#5e9470", border: "1px solid rgba(94,148,112,0.15)" }}
+              data-testid="chip-stage">
+              {rail.active.charAt(0).toUpperCase() + rail.active.slice(1).replace(/_/g, " ")}
+            </span>
+          )}
+        </div>
 
         {/* Committed toggle */}
         {featuredHero?.type === "committed" && (
@@ -730,7 +763,7 @@ export default function JourneyPage() {
 
         {/* Questionnaire Status (inline status section — not a hero card) */}
         {program.questionnaire_url && (
-          <div className="mb-5 rounded-[20px] border p-5 sm:p-6" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }} data-testid="questionnaire-section">
+          <div className="mb-5 rounded-[18px] border p-5 sm:p-6" style={{ backgroundColor: "#fff", borderColor: "#e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }} data-testid="questionnaire-section">
             <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${program.questionnaire_completed ? "bg-green-500/10" : "bg-teal-600/10"}`}>
@@ -775,70 +808,19 @@ export default function JourneyPage() {
         {/* J4: Hide remaining content when committed and toggle is off */}
         {(!isCommitted || showJourneyDetails) && (
           <>
-        {/* School Intelligence — compact preview (full panel in drawer) */}
-        {!isBasic && (
-          <div className="mb-6">
-            <button
-              onClick={() => setSiDrawerOpen(true)}
-              className="w-full rounded-[20px] border px-5 py-4 text-left transition-colors hover:bg-white/[0.02] group"
-              style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }}
-              data-testid="si-compact-preview"
-            >
-              <div className="flex items-center gap-3">
-                {matchScore?.match_score != null && matchScore.match_score > 0 && (
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{
-                      background: `linear-gradient(135deg, ${matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)"}15, ${matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)"}08)`,
-                      border: `2px solid ${matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)"}40`,
-                    }}>
-                    <span className="text-sm font-extrabold"
-                      style={{ color: matchScore.match_score >= 80 ? "#10b981" : matchScore.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)" }}
-                      data-testid="si-preview-score">{matchScore.match_score}</span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <Target className="w-3 h-3 text-teal-600 flex-shrink-0" />
-                    <span className="text-[10px] font-extrabold uppercase tracking-[1.2px]" style={{ color: "var(--cm-text-3)" }}>School Intelligence</span>
-                    {matchScore?.measurables_fit?.label && matchScore.measurables_fit.label !== "Not Enough Data" && (
-                      <span className="text-[9px] font-bold px-1.5 py-px rounded"
-                        style={{
-                          color: matchScore.measurables_fit.label === "Strong Fit" ? "#16a34a" : matchScore.measurables_fit.label === "Possible Fit" ? "#0d9488" : "#d97706",
-                          backgroundColor: matchScore.measurables_fit.label === "Strong Fit" ? "rgba(22,163,74,0.1)" : matchScore.measurables_fit.label === "Possible Fit" ? "rgba(13,148,136,0.1)" : "rgba(245,158,11,0.08)",
-                        }}
-                        data-testid="si-preview-label">{matchScore.measurables_fit.label}</span>
-                    )}
-                  </div>
-                  <p className="text-[10.5px] leading-snug truncate" style={{ color: "var(--cm-text-2)" }} data-testid="si-preview-summary">
-                    {matchScore?.match_score
-                      ? matchScore.match_score >= 75
-                        ? "Strong academic and athletic fit — view full breakdown"
-                        : matchScore.match_score >= 55
-                          ? "Moderate fit across key dimensions — review strategy"
-                          : "Limited match signals — explore analysis"
-                      : "Fit and strategy analysis available"}
-                  </p>
-                </div>
-                <span className="text-[9px] font-semibold text-teal-600 flex-shrink-0 group-hover:text-teal-400 transition-colors whitespace-nowrap" data-testid="si-preview-cta">
-                  View Full Analysis &rarr;
-                </span>
-              </div>
-            </button>
-          </div>
-        )}
 
         {/* ─── GRID: Timeline + Sidebar ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* LEFT: Timeline */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[11px] font-extrabold uppercase tracking-[1.5px]" style={{ color: "#6b6358" }}>Timeline</h2>
-              <span className="text-[10px] font-semibold text-teal-600" data-testid="timeline-count">{timeline.length} interactions</span>
+              <span className="text-[10px] font-medium" style={{ color: "#6b6358" }} data-testid="timeline-count">{timeline.length} interactions</span>
             </div>
 
             {/* J3: Gmail Connect Nudge */}
             {!gmailConnected && (
-              <div className="flex items-start gap-3 rounded-[20px] p-4 mb-4" style={{ backgroundColor: "rgba(26,138,128,0.06)", border: "1px solid rgba(26,138,128,0.12)" }} data-testid="gmail-nudge-banner">
+              <div className="flex items-start gap-3 rounded-[18px] p-4 mb-4" style={{ backgroundColor: "rgba(26,138,128,0.04)", border: "1px solid rgba(26,138,128,0.10)" }} data-testid="gmail-nudge-banner">
                 <Mail className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#1a8a80" }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium" style={{ color: "var(--cm-text)" }}>
@@ -853,7 +835,7 @@ export default function JourneyPage() {
 
             {/* J3: Send Profile Card */}
             {!isCommitted && !isArchived && coaches.length > 0 && (
-              <div className="rounded-[20px] border p-5 mb-5" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }} data-testid="send-profile-card">
+              <div className="rounded-[18px] border p-5 mb-5" style={{ backgroundColor: "#fff", borderColor: "#e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }} data-testid="send-profile-card">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(26,138,128,0.15)" }}>
                     <Share2 className="w-3.5 h-3.5" style={{ color: "#1a8a80" }} />
@@ -872,7 +854,7 @@ export default function JourneyPage() {
               </div>
             )}
             {timeline.length === 0 ? (
-              <div className="text-center py-16 rounded-[20px] border border-dashed" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }} data-testid="empty-timeline">
+              <div className="text-center py-16 rounded-[18px] border border-dashed" style={{ backgroundColor: "#fff", borderColor: "#e7dfd4" }} data-testid="empty-timeline">
                 <p className="text-sm font-semibold mb-1" style={{ color: "var(--cm-text-2)" }}>No interactions yet</p>
                 <p className="text-xs mb-4" style={{ color: "var(--cm-text-3)" }}>Start your journey by reaching out to a coach</p>
                 <Button size="sm" onClick={() => { setShowEmail(true); setActiveAction("email"); }}
@@ -891,7 +873,7 @@ export default function JourneyPage() {
           </div>
 
           {/* RIGHT: Sidebar — Coach Watch Intelligence Layer */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Section 1: Unified Coach Watch V2 (Coach Watch + AI Insight) */}
             <CoachWatchCardV2 insight={autoInsight} loading={autoInsightLoading} coachWatch={coachWatch} />
 
@@ -903,7 +885,7 @@ export default function JourneyPage() {
             />
 
             {/* Section 2: Key Contacts (compact, max 2) */}
-            <div className="rounded-[20px] border px-5 py-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }} data-testid="key-contacts-card">
+            <div className="rounded-[18px] border px-5 py-4" style={{ backgroundColor: "#fff", borderColor: "#e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }} data-testid="key-contacts-card">
               <div className="flex items-center justify-between mb-2.5">
                 <h3 className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: "var(--cm-text-3)" }}>Key Contacts</h3>
                 <button onClick={() => setShowCoachForm({})} className="flex items-center gap-1 text-[9px] font-semibold text-teal-600 hover:text-teal-500 transition-colors" data-testid="add-coach-btn">
@@ -1011,7 +993,7 @@ export default function JourneyPage() {
             </div>
 
             {/* Section 3: Communication & Activity (compact, low emphasis) */}
-            <div className="rounded-[20px] border px-5 py-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }} data-testid="communication-activity-card">
+            <div className="rounded-[18px] border px-5 py-4" style={{ backgroundColor: "#fff", borderColor: "#e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }} data-testid="communication-activity-card">
               <h3 className="text-[9px] font-extrabold uppercase tracking-widest mb-2" style={{ color: "var(--cm-text-3)" }}>Communication & Activity</h3>
               <div className="grid grid-cols-4 gap-1.5">
                 {[
@@ -1031,7 +1013,7 @@ export default function JourneyPage() {
 
             {/* Section 5: Explore deeper (School Intelligence drawer) */}
             {isPremium && (
-              <div className="rounded-[20px] border px-5 py-4" style={{ backgroundColor: "var(--cm-surface)", borderColor: "rgba(13,148,136,0.12)", boxShadow: "0 2px 12px rgba(19,33,58,0.05)" }} data-testid="ai-section">
+              <div className="rounded-[18px] border px-5 py-4" style={{ backgroundColor: "#fff", borderColor: "#e7dfd4", boxShadow: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)" }} data-testid="ai-section">
                 <button onClick={() => setSiDrawerOpen(true)}
                   className="w-full flex items-center gap-2 p-2 rounded-lg transition-colors hover:bg-white/[0.02]"
                   style={{ backgroundColor: "var(--cm-surface-2)" }}
