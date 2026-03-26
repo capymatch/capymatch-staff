@@ -6,7 +6,7 @@ import {
   Search, Plus, MapPin, Check, LayoutGrid, List, Star,
   Target, MapPinned, GraduationCap, X, Filter, ExternalLink,
   Loader2, RotateCcw, Sparkles, ArrowRight, Database, Lock, Zap,
-  RefreshCw, AlertTriangle, BarChart3
+  RefreshCw, AlertTriangle, BarChart3, ArrowLeft, ChevronRight
 } from "lucide-react";
 import UpgradeModal from "../../components/UpgradeModal";
 import MatchDetailDrawer from "../../components/MatchDetailDrawer";
@@ -26,47 +26,56 @@ const SMART_BUCKETS = [
   { id: "academics", label: "Strong Academics", icon: GraduationCap },
 ];
 
+/* Fit reason copy map */
+const FIT_COPY = {
+  "Strong Academic Fit": "Strong academic and athletic fit",
+  "Good Academic Fit": "Good academic alignment for your goals",
+  "Athletic Fit": "Athletic level matches your profile",
+  "Location Match": "Good regional match with realistic pathway",
+  "Division Fit": "Division level aligned with your ability",
+  "Reach": "Competitive reach opportunity",
+  "Slight Reach": "Slight stretch with upside potential",
+  "Conference Match": "Conference style suits your game",
+};
+
 /* ── Slide-in Filter Panel ── */
 function FilterPanel({ open, onClose, divisions, regions, conferences, filterDivision, filterRegion, filterConference, onDivision, onRegion, onConference, onApply, onClear }) {
   const [showAllConf, setShowAllConf] = useState(false);
   const visibleConf = showAllConf ? conferences : conferences.slice(0, 8);
   const activeCount = (filterDivision ? 1 : 0) + (filterRegion ? 1 : 0) + (filterConference ? 1 : 0);
-  const chipCls = (active) => active ? "text-[#1a8a80] bg-[#1a8a80]/10 border-[#1a8a80]/25" : "";
 
   return (
     <>
-      {open && <div className="fixed inset-0 bg-black/20 z-[199]" onClick={onClose} data-testid="filter-overlay" />}
-      <div className={`fixed top-0 right-0 w-[360px] max-w-[90vw] h-full z-[200] transition-transform duration-300 ease-out overflow-y-auto bg-[var(--cm-surface)] border-l border-[var(--cm-border)] ${open ? "translate-x-0" : "translate-x-full"}`}
-        style={{ boxShadow: open ? "-10px 0 40px rgba(0,0,0,0.3)" : "none" }}
+      {open && <div className="fixed inset-0 bg-black/10 z-[199] backdrop-blur-sm" onClick={onClose} data-testid="filter-overlay" />}
+      <div className={`fixed top-0 right-0 w-[380px] max-w-[90vw] h-full z-[200] transition-transform duration-300 ease-out overflow-y-auto bg-white border-l border-gray-200 ${open ? "translate-x-0" : "translate-x-full"}`}
+        style={{ boxShadow: open ? "-8px 0 30px rgba(0,0,0,0.08)" : "none" }}
         data-testid="filter-panel">
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-[15px] font-bold text-[var(--cm-text)]">Filters</span>
-            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--cm-surface-2)" }} data-testid="filter-close">
-              <X className="w-3.5 h-3.5 text-[var(--cm-text)]/50" />
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-base font-bold text-gray-900">Filters</h3>
+            <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors" data-testid="filter-close">
+              <X className="w-4 h-4 text-gray-500" />
             </button>
           </div>
 
-          <div className="mb-5">
-            <div className="text-[10px] font-bold tracking-[1.2px] uppercase mb-2.5 text-[var(--cm-text)]/40">Division</div>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="mb-6">
+            <div className="text-[11px] font-semibold tracking-wide uppercase mb-3 text-gray-400">Division</div>
+            <div className="flex flex-wrap gap-2">
               {divisions.map(d => (
                 <button key={d} onClick={() => onDivision(d)} data-testid={`filter-div-${d.toLowerCase()}`}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all border ${chipCls(filterDivision === d)}`}
-                  style={filterDivision === d ? {} : { color: "var(--cm-text-2)", backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}>
+                  className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterDivision === d ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
                   {d}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="mb-5">
-            <div className="text-[10px] font-bold tracking-[1.2px] uppercase mb-2.5 text-[var(--cm-text)]/40">Region</div>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="mb-6">
+            <div className="text-[11px] font-semibold tracking-wide uppercase mb-3 text-gray-400">Region</div>
+            <div className="flex flex-wrap gap-2">
               {regions.map(r => (
                 <button key={r} onClick={() => onRegion(r)} data-testid={`filter-reg-${r.toLowerCase().replace(/\s+/g, "-")}`}
-                  className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all border ${chipCls(filterRegion === r)}`}
-                  style={filterRegion === r ? {} : { color: "var(--cm-text-2)", backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}>
+                  className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterRegion === r ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
                   {r}
                 </button>
               ))}
@@ -74,20 +83,18 @@ function FilterPanel({ open, onClose, divisions, regions, conferences, filterDiv
           </div>
 
           {conferences.length > 0 && (
-            <div className="mb-5">
-              <div className="text-[10px] font-bold tracking-[1.2px] uppercase mb-2.5 text-[var(--cm-text)]/40">Conference</div>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="mb-6">
+              <div className="text-[11px] font-semibold tracking-wide uppercase mb-3 text-gray-400">Conference</div>
+              <div className="flex flex-wrap gap-2">
                 {visibleConf.map(c => (
                   <button key={c} onClick={() => onConference(c)} data-testid={`filter-conf-${c.toLowerCase().replace(/\s+/g, "-")}`}
-                    className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all border ${chipCls(filterConference === c)}`}
-                    style={filterConference === c ? {} : { color: "var(--cm-text-2)", backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}>
+                    className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all border ${filterConference === c ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-500 bg-white border-gray-200 hover:border-gray-300"}`}>
                     {c}
                   </button>
                 ))}
                 {conferences.length > 8 && (
                   <button onClick={() => setShowAllConf(!showAllConf)}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold border"
-                    style={{ color: "var(--cm-text-3)", backgroundColor: "var(--cm-surface-2)", borderColor: "var(--cm-border)" }}>
+                    className="px-4 py-2 rounded-xl text-[13px] font-semibold border text-gray-400 bg-gray-50 border-gray-200">
                     {showAllConf ? "Show less" : `+${conferences.length - 8} more`}
                   </button>
                 )}
@@ -96,12 +103,12 @@ function FilterPanel({ open, onClose, divisions, regions, conferences, filterDiv
           )}
 
           <button onClick={onApply} data-testid="filter-apply-btn"
-            className="w-full py-3 rounded-xl text-[13px] font-bold text-[var(--cm-text)] mt-2"
-            style={{ background: "linear-gradient(135deg, #1a8a80, #25a99e)" }}>
+            className="w-full py-3.5 rounded-2xl text-[14px] font-bold text-white mt-4 transition-all hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, #0d9488, #14b8a6)" }}>
             Apply Filters {activeCount > 0 && `(${activeCount})`}
           </button>
           <button onClick={onClear} data-testid="filter-clear-btn"
-            className="w-full py-2.5 rounded-xl text-[12px] font-semibold mt-2 text-[var(--cm-text)]/40 border border-white/10">
+            className="w-full py-3 rounded-2xl text-[13px] font-semibold mt-2 text-gray-400 hover:text-gray-600 transition-colors">
             Clear All
           </button>
         </div>
@@ -110,129 +117,154 @@ function FilterPanel({ open, onClose, divisions, regions, conferences, filterDiv
   );
 }
 
-/* ── Top Match Banner ── */
-function TopMatchBanner({ school, adding, addToBoard, boardSchools, navigate }) {
-  if (!school) return null;
-  const isOnBoard = boardSchools.has(school.university_name);
+/* ── University Logo ── */
+function UniversityLogo({ domain, name, logoUrl, size = 40 }) {
+  const [imgError, setImgError] = useState(false);
+  const initials = (name || "").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  if (logoUrl && !imgError) {
+    return <img src={logoUrl} alt={name} className="rounded-2xl object-contain bg-gray-50" style={{ width: size, height: size }} onError={() => setImgError(true)} />;
+  }
   return (
-    <div className="flex flex-col sm:flex-row rounded-lg overflow-hidden mb-7 border border-[#1a8a80]/12" data-testid="top-match-banner">
-      <div className="flex-1 p-5 sm:p-7" style={{ background: "linear-gradient(135deg, var(--cm-hero-from) 0%, var(--cm-surface) 100%)" }}>
-        <div className="text-[10px] font-bold tracking-[1.5px] uppercase text-[#1a8a80] mb-2.5 flex items-center gap-1.5">
-          <Sparkles className="w-3 h-3" /> Your #1 Match
-        </div>
-        <div className="text-lg sm:text-[22px] font-extrabold text-[var(--cm-text)] mb-2 tracking-tight leading-tight cursor-pointer hover:text-[#1a8a80] transition-colors"
-          onClick={() => school.domain && navigate(`/schools/${school.domain}`)} data-testid="top-match-name">
-          {school.university_name}
-        </div>
-        <div className="flex items-center gap-2 mb-4">
-          <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold" style={{ backgroundColor: "rgba(26,138,128,0.2)", color: "#1a8a80" }}>{school.division}</span>
-          <span className="text-[12px] text-[var(--cm-text)]/40">{school.region} {school.conference && `\u00B7 ${school.conference}`}</span>
-        </div>
-        {school.match_reasons?.length > 0 && (
-          <div className="rounded-xl p-3 sm:p-3.5" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-            <div className="text-[11px] font-bold text-[var(--cm-text)]/60 mb-1">Why this school?</div>
-            <div className="text-[12px] text-[var(--cm-text)]/40 leading-relaxed">
-              {school.match_reasons.some(r => ["Strong Academic Fit", "Good Academic Fit"].includes(r))
-                ? `Strong match across ${school.match_reasons.join(", ").toLowerCase()}.`
-                : `Matches your preferences in ${school.match_reasons.join(", ").toLowerCase()}.`
-              }
-            </div>
-          </div>
+    <div className="rounded-2xl flex items-center justify-center text-white font-bold" style={{ width: size, height: size, background: "linear-gradient(135deg, #0d9488, #14b8a6)", fontSize: size * 0.32 }}>
+      {initials || "?"}
+    </div>
+  );
+}
+
+/* ── Featured Match Card (large, editorial) ── */
+function FeaturedCard({ school, adding, addToBoard, boardSchools, navigate, onDetail }) {
+  const isOnBoard = boardSchools.has(school.university_name);
+  const chips = school.chips || [];
+  const topReason = chips[0] ? (FIT_COPY[chips[0]] || chips[0]) : null;
+
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 p-6 transition-all duration-300 hover:shadow-lg hover:border-gray-200 group cursor-pointer"
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+      onClick={() => onDetail(school)}
+      data-testid={`featured-card-${school.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
+      <div className="flex items-start gap-4 mb-4">
+        {school.logo_url ? (
+          <img src={school.logo_url} alt="" className="w-14 h-14 rounded-2xl object-contain flex-shrink-0 bg-gray-50 border border-gray-100" />
+        ) : (
+          <UniversityLogo name={school.university_name} size={56} />
         )}
-      </div>
-      <div className="sm:w-[280px] flex flex-col items-center justify-center p-5 sm:p-7 gap-4 sm:gap-5 flex-shrink-0" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-        <div className="flex sm:flex-col items-center gap-2 sm:gap-1">
-          <div className="text-[36px] sm:text-[48px] font-extrabold text-[#1a8a80] leading-none">{school.match_score}%</div>
-          <div className="text-[10px] sm:text-[11px] text-[var(--cm-text)]/35 uppercase tracking-[1px] font-semibold">Match Score</div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[15px] font-bold text-gray-900 truncate group-hover:text-teal-700 transition-colors" data-testid="featured-name">
+            {school.university_name}
+          </h3>
+          <p className="text-[12px] text-gray-400 mt-0.5">
+            {school.division}{school.conference ? ` \u00B7 ${school.conference}` : ""}{school.state ? ` \u00B7 ${school.state}` : ""}
+          </p>
         </div>
-        <button onClick={() => !isOnBoard && addToBoard(school)} disabled={adding[school.university_name] || isOnBoard}
-          data-testid="top-match-add-btn"
-          className="w-full py-2.5 rounded-xl text-[13px] font-bold text-[var(--cm-text)] transition-all"
-          style={isOnBoard ? { backgroundColor: "rgba(16,185,129,0.2)", color: "#10b981" } : { background: "linear-gradient(135deg, #1a8a80, #25a99e)" }}>
-          {isOnBoard ? "On Your Board" : adding[school.university_name] ? "Adding..." : "+ Add to Board"}
+        <div className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center flex-shrink-0"
+          style={{
+            background: school.match_score >= 80 ? "rgba(13,148,136,0.06)" : school.match_score >= 60 ? "rgba(245,158,11,0.06)" : "#f9fafb",
+            border: `1.5px solid ${school.match_score >= 80 ? "rgba(13,148,136,0.15)" : school.match_score >= 60 ? "rgba(245,158,11,0.15)" : "#e5e7eb"}`,
+          }}>
+          <span className="text-lg font-extrabold" style={{ color: school.match_score >= 80 ? "#0d9488" : school.match_score >= 60 ? "#d97706" : "#9ca3af" }}>
+            {school.match_score}
+          </span>
+          <span className="text-[8px] font-semibold text-gray-400 -mt-0.5">MATCH</span>
+        </div>
+      </div>
+
+      {topReason && (
+        <p className="text-[13px] text-gray-500 leading-relaxed mb-4">{topReason}</p>
+      )}
+
+      {chips.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-5">
+          {chips.slice(0, 3).map((chip, i) => (
+            <span key={i} className="text-[10px] font-medium px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 border border-teal-100">
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {school.ai_summary && (
+        <p className="text-[12px] text-gray-400 leading-relaxed mb-4 line-clamp-2">{school.ai_summary}</p>
+      )}
+
+      <div className="flex items-center gap-2 pt-3 border-t border-gray-100" onClick={e => e.stopPropagation()}>
+        {school.in_pipeline || isOnBoard ? (
+          <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-600">
+            <Check className="w-3.5 h-3.5" /> In Pipeline
+          </span>
+        ) : (
+          <button onClick={() => addToBoard({ university_name: school.university_name })}
+            disabled={adding[school.university_name]}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold bg-teal-50 text-teal-700 border border-teal-100 hover:bg-teal-100 transition-all"
+            data-testid={`add-featured-${school.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
+            {adding[school.university_name] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+            Add to Pipeline
+          </button>
+        )}
+        <button onClick={() => school.domain && navigate(`/schools/${school.domain}`)}
+          className="ml-auto inline-flex items-center gap-1 text-[12px] font-medium text-gray-400 hover:text-teal-600 transition-colors group-hover:text-teal-600">
+          View Details <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
   );
 }
 
-/* ── University Logo ── */
-function UniversityLogo({ domain, name, logoUrl, size = 32 }) {
-  const [imgError, setImgError] = useState(false);
-  const initials = (name || "").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
-  if (logoUrl && !imgError) {
-    return <img src={logoUrl} alt={name} className="rounded-lg object-contain" style={{ width: size, height: size }} onError={() => setImgError(true)} />;
-  }
-  return (
-    <div className="rounded-lg flex items-center justify-center text-[var(--cm-text)] font-bold" style={{ width: size, height: size, backgroundColor: "#1a8a80", fontSize: size * 0.35 }}>
-      {initials || "?"}
-    </div>
-  );
-}
-
-/* ── School Card ── */
+/* ── Compact School Card (directory) ── */
 function SchoolCard({ uni, adding, addToBoard, boardSchools, navigate }) {
   const isOnBoard = boardSchools.has(uni.university_name);
   const sc = uni.scorecard || {};
+  const topReason = uni.match_reasons?.[0] ? (FIT_COPY[uni.match_reasons[0]] || uni.match_reasons[0]) : null;
+
   return (
-    <div className="rounded-[14px] p-[18px] cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1a8a80]/30 group bg-[var(--cm-surface)] border border-[var(--cm-border)]"
+    <div className="bg-white rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-200 group border border-gray-100"
+      style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}
       onClick={() => uni.domain && navigate(`/schools/${uni.domain}`)}
       data-testid={`school-card-${(uni.domain || "").replace(/\./g, "-")}`}>
-      <div className="flex items-center gap-3 mb-3.5">
-        <UniversityLogo domain={uni.domain} name={uni.university_name} logoUrl={uni.logo_url} size={32} />
+      <div className="flex items-center gap-3.5 mb-3">
+        <UniversityLogo domain={uni.domain} name={uni.university_name} logoUrl={uni.logo_url} size={40} />
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-bold truncate text-[var(--cm-text)]">{uni.university_name}</div>
-          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[var(--cm-text)]/40">
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#1a8a80]/15 text-[#1a8a80]">{uni.division}</span>
+          <div className="text-[14px] font-bold truncate text-gray-900 group-hover:text-teal-700 transition-colors">{uni.university_name}</div>
+          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-gray-400">
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-teal-50 text-teal-700">{uni.division}</span>
             {uni.region && <span>{uni.region}</span>}
             {uni.conference && <span>{`\u00B7 ${uni.conference}`}</span>}
           </div>
         </div>
         {uni.match_score > 0 && (
-          <span className="text-[18px] font-extrabold text-[#1a8a80] flex-shrink-0" data-testid="card-match-score">{uni.match_score}%</span>
+          <span className="text-xl font-extrabold text-teal-600 flex-shrink-0" data-testid="card-match-score">{uni.match_score}%</span>
         )}
       </div>
 
-      {uni.match_reasons?.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3.5">
-          {uni.match_reasons.map(r => {
-            const isReach = ["Reach", "High Reach"].includes(r);
-            const isSlightReach = r === "Slight Reach";
-            const isStrongFit = r === "Strong Academic Fit";
-            const isGoodFit = r === "Good Academic Fit";
-            return (
-              <span key={r} className={`text-[10px] px-1.5 py-0.5 rounded-[5px] ${
-                isReach ? "bg-red-900/30 text-red-400" :
-                isSlightReach ? "bg-amber-900/30 text-amber-400" :
-                isStrongFit ? "bg-emerald-900/30 text-emerald-400" :
-                isGoodFit ? "bg-teal-900/30 text-teal-400" :
-                "bg-white/5 text-[var(--cm-text)]/40"
-              }`}>{r}</span>
-            );
-          })}
+      {topReason && (
+        <p className="text-[12px] text-gray-400 leading-relaxed mb-3 line-clamp-1">{topReason}</p>
+      )}
+
+      {uni.match_reasons?.length > 0 && !topReason && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {uni.match_reasons.slice(0, 2).map(r => (
+            <span key={r} className="text-[10px] px-2 py-0.5 rounded-lg font-medium bg-gray-50 text-gray-500 border border-gray-100">{r}</span>
+          ))}
         </div>
       )}
 
-      {/* Scorecard quick stats */}
       {sc.admission_rate != null && (
-        <div className="flex gap-3 mb-3 text-[10px] text-[var(--cm-text)]/30">
+        <div className="flex gap-3 mb-3 text-[10px] text-gray-400">
           <span>{(sc.admission_rate * 100).toFixed(0)}% accept</span>
           {sc.student_size && <span>{Number(sc.student_size).toLocaleString()} students</span>}
           {sc.sat_avg && <span>SAT {sc.sat_avg}</span>}
         </div>
       )}
 
-      <div className="flex gap-1.5" onClick={e => e.stopPropagation()}>
+      <div className="flex gap-2 pt-3 border-t border-gray-50" onClick={e => e.stopPropagation()}>
         <button onClick={() => !isOnBoard && addToBoard(uni)} disabled={adding[uni.university_name] || isOnBoard}
           data-testid={`add-board-${(uni.domain || "").replace(/\./g, "-")}`}
-          className="flex-1 py-2 rounded-lg text-[11px] font-bold text-center transition-all"
-          style={isOnBoard ? { backgroundColor: "rgba(16,185,129,0.12)", color: "#10b981" } : { backgroundColor: "rgba(26,138,128,0.12)", color: "#1a8a80" }}>
-          {isOnBoard ? <><Check className="w-3 h-3 inline mr-1" />On Board</> : adding[uni.university_name] ? "Adding..." : <><Plus className="w-3 h-3 inline mr-1" />Add to Board</>}
+          className={`flex-1 py-2.5 rounded-xl text-[12px] font-semibold text-center transition-all ${isOnBoard ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-teal-50 text-teal-700 border border-teal-100 hover:bg-teal-100"}`}>
+          {isOnBoard ? <><Check className="w-3.5 h-3.5 inline mr-1" />In Pipeline</> : adding[uni.university_name] ? "Adding..." : <><Plus className="w-3.5 h-3.5 inline mr-1" />Add</>}
         </button>
         <button onClick={() => uni.domain && navigate(`/schools/${uni.domain}`)}
           data-testid={`details-${(uni.domain || "").replace(/\./g, "-")}`}
-          className="py-2 px-3 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 bg-white/5 text-[var(--cm-text)]/40">
-          <ArrowRight className="w-3 h-3" /> Details
+          className="py-2.5 px-4 rounded-xl text-[12px] font-semibold transition-all flex items-center gap-1 bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-100">
+          Details <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -269,7 +301,6 @@ export default function SchoolsPage() {
   const [upgradeMessage, setUpgradeMessage] = useState("");
   const { subscription, refresh: refreshSub } = useSubscription();
 
-  // Smart Match
   const [smartMatches, setSmartMatches] = useState([]);
   const [smartLoading, setSmartLoading] = useState(true);
   const [smartGated, setSmartGated] = useState(false);
@@ -289,18 +320,12 @@ export default function SchoolsPage() {
       if (res.data?.conferences) setConferences(res.data.conferences);
       if (res.data?.regions) setRegions(res.data.regions);
     }).catch(() => {});
-
-    // Load board schools (pipeline programs)
     axios.get(`${API}/athlete/programs`, { headers }).then(res => {
       setBoardSchools(new Set((res.data || []).map(p => p.university_name)));
     }).catch(() => {});
-
-    // Load suggestions
     axios.get(`${API}/suggested-schools`, { headers }).then(res => {
       setSuggestions(res.data?.suggestions || []);
     }).catch(() => {}).finally(() => setSuggestionsLoading(false));
-
-    // Smart Match
     axios.get(`${API}/smart-match/recommendations`, { headers }).then(res => {
       setSmartMatches(res.data?.recommendations || []);
       setSmartGated(res.data?.gated || false);
@@ -412,9 +437,7 @@ export default function SchoolsPage() {
     const bTop5 = top5Names.has(b.university_name);
     if (aTop5 && !bTop5) return -1;
     if (!aTop5 && bTop5) return 1;
-    if (aTop5 && bTop5) {
-      return (suggestionMap[b.university_name]?.match_score || 0) - (suggestionMap[a.university_name]?.match_score || 0);
-    }
+    if (aTop5 && bTop5) return (suggestionMap[b.university_name]?.match_score || 0) - (suggestionMap[a.university_name]?.match_score || 0);
     return a.university_name.localeCompare(b.university_name);
   });
 
@@ -437,258 +460,256 @@ export default function SchoolsPage() {
     academics: Object.values(suggestionMap).filter(s => (s.match_reasons || []).includes("Academics")).length,
   };
 
+  const strongMatchCount = Object.values(suggestionMap).filter(s => s.match_score >= 70).length;
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20" data-testid="kb-loading">
-        <Loader2 className="w-6 h-6 text-[#1a8a80] animate-spin" />
+      <div className="flex flex-col items-center justify-center py-32" data-testid="kb-loading">
+        <Loader2 className="w-8 h-8 text-teal-500 animate-spin mb-4" />
+        <p className="text-sm text-gray-400">Finding schools for you...</p>
       </div>
     );
   }
 
   return (
-    <div data-testid="knowledge-base" className="max-w-[1280px] mx-auto">
+    <div data-testid="knowledge-base">
 
-      {/* ── Smart Match: Recommended for You ── */}
-      {!smartLoading && smartMatches.length > 0 && (
-        <div className="mb-8" data-testid="smart-match-section">
-          {/* Profile changed banner */}
-          {profileChanged && (
-            <div className="mb-3 flex items-center gap-2 px-4 py-2.5 rounded-xl border"
-              style={{ backgroundColor: "rgba(245,158,11,0.06)", borderColor: "rgba(245,158,11,0.2)" }}
-              data-testid="profile-changed-banner">
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#d97706" }} />
-              <span className="text-[11px] font-medium flex-1" style={{ color: "#d97706" }}>
-                Your profile has been updated since these recommendations were generated.
-              </span>
-              <button onClick={refreshMatches} disabled={refreshing}
-                className="text-[10px] font-bold px-3 py-1 rounded-lg flex items-center gap-1"
-                style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#d97706", border: "1px solid rgba(245,158,11,0.3)" }}
-                data-testid="refresh-from-banner">
-                {refreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                Refresh Now
-              </button>
+      {/* ═══ PAGE HERO ═══ */}
+      <div className="-mx-2 sm:-mx-6 -mt-4 sm:-mt-6 mb-8 bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }} data-testid="schools-hero">
+        <div className="px-4 sm:px-6 py-8 sm:py-10" style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" data-testid="schools-hero-title">
+                Find Schools
+              </h1>
+              <p className="text-[14px] sm:text-[15px] text-gray-400 mt-2 leading-relaxed max-w-lg">
+                Discover programs that fit your level, goals, and recruiting journey.
+              </p>
             </div>
-          )}
-
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(13,148,136,0.12)" }}>
-                <Sparkles className="w-4 h-4 text-teal-600" />
+            <div className="flex items-center gap-5 sm:gap-6">
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-extrabold text-gray-900">{totalUniversities.toLocaleString()}</div>
+                <div className="text-[10px] sm:text-[11px] text-gray-400 font-medium">Schools</div>
               </div>
-              <div>
-                <h2 className="text-sm font-bold" style={{ color: "var(--cm-text)" }}>Recommended for You</h2>
-                <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
-                  Based on your profile, division, academics, and location
-                  {lastRefreshed && (
-                    <span className="ml-1.5" style={{ color: "var(--cm-text-4)" }}>
-                      &middot; Updated {new Date(lastRefreshed).toLocaleDateString()}
-                    </span>
-                  )}
-                </p>
+              <div className="w-px h-8 bg-gray-200" />
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-extrabold text-teal-600">{strongMatchCount}</div>
+                <div className="text-[10px] sm:text-[11px] text-gray-400 font-medium">Strong Matches</div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {compareSelected.length >= 2 && (
-                <button onClick={() => setCompareOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all"
-                  style={{ background: "linear-gradient(135deg, #1a8a80, #25a99e)", color: "#fff" }}
-                  data-testid="compare-btn">
-                  <BarChart3 className="w-3 h-3" /> Compare ({compareSelected.length})
-                </button>
-              )}
-              <button onClick={refreshMatches} disabled={refreshing}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all"
-                style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-3)", border: "1px solid var(--cm-border)" }}
-                data-testid="refresh-matches-btn">
-                {refreshing ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                Refresh
-              </button>
-              {smartGated && (
-                <button onClick={() => setShowUpgrade(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all"
-                  style={{ background: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}
-                  data-testid="smart-match-unlock-btn">
-                  <Lock className="w-3 h-3" /> Unlock {smartGatedTotal}+ matches
-                </button>
-              )}
+              <div className="w-px h-8 bg-gray-200" />
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-extrabold text-amber-500">{smartMatches.length}</div>
+                <div className="text-[10px] sm:text-[11px] text-gray-400 font-medium">Recommended</div>
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {smartMatches.map(m => (
-              <div key={m.university_name}
-                className="rounded-lg border p-4 transition-all hover:border-teal-600/30 cursor-pointer group"
-                style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)" }}
-                onClick={() => setDrawerSchool(m)}
-                data-testid={`smart-match-card-${m.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
-                <div className="flex items-start gap-3 mb-3">
-                  {m.logo_url ? (
-                    <img src={m.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain flex-shrink-0" style={{ backgroundColor: "var(--cm-surface-2)" }} />
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-                      <GraduationCap className="w-5 h-5" style={{ color: "var(--cm-text-3)" }} />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xs font-bold truncate" style={{ color: "var(--cm-text)" }}>{m.university_name}</h3>
-                    <p className="text-[10px]" style={{ color: "var(--cm-text-3)" }}>
-                      {m.division}{m.conference ? ` \u00B7 ${m.conference}` : ""}{m.state ? ` \u00B7 ${m.state}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center"
-                    style={{
-                      background: m.match_score >= 80 ? "rgba(16,185,129,0.1)" : m.match_score >= 60 ? "rgba(245,158,11,0.1)" : "var(--cm-surface-2)",
-                      border: `2px solid ${m.match_score >= 80 ? "rgba(16,185,129,0.4)" : m.match_score >= 60 ? "rgba(245,158,11,0.3)" : "var(--cm-border)"}`,
-                    }}>
-                    <span className="text-xs font-extrabold" style={{ color: m.match_score >= 80 ? "#10b981" : m.match_score >= 60 ? "#f59e0b" : "var(--cm-text-3)" }}>
-                      {m.match_score}
-                    </span>
-                  </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+
+        {/* ═══ RECOMMENDED FOR YOU ═══ */}
+        {!smartLoading && smartMatches.length > 0 && (
+          <div className="mb-10" data-testid="smart-match-section">
+            {profileChanged && (
+              <div className="mb-4 flex items-center gap-2.5 px-5 py-3 rounded-2xl border border-amber-200 bg-amber-50"
+                data-testid="profile-changed-banner">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-600" />
+                <span className="text-[12px] font-medium flex-1 text-amber-700">
+                  Your profile has been updated since these recommendations were generated.
+                </span>
+                <button onClick={refreshMatches} disabled={refreshing}
+                  className="text-[11px] font-bold px-4 py-1.5 rounded-xl flex items-center gap-1.5 bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200 transition-all"
+                  data-testid="refresh-from-banner">
+                  {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  Refresh Now
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-teal-50 border border-teal-100">
+                  <Sparkles className="w-5 h-5 text-teal-600" />
                 </div>
-                {/* Reason chips */}
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {m.chips.map((chip, i) => (
-                    <span key={i} className="text-[9px] font-semibold px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: "rgba(13,148,136,0.06)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.15)" }}>
-                      {chip}
-                    </span>
-                  ))}
-                </div>
-                {/* AI summary (Pro/Premium) */}
-                {m.ai_summary && (
-                  <p className="text-[11px] mb-3 leading-relaxed" style={{ color: "var(--cm-text-2)" }}>{m.ai_summary}</p>
-                )}
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); toggleCompare(m); }}
-                    className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all"
-                    style={{
-                      backgroundColor: compareSelected.find(s => s.university_name === m.university_name) ? "#0d9488" : "transparent",
-                      border: compareSelected.find(s => s.university_name === m.university_name) ? "2px solid #0d9488" : "2px solid var(--cm-border)",
-                    }}
-                    data-testid={`compare-check-${m.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
-                    {compareSelected.find(s => s.university_name === m.university_name) && (
-                      <Check className="w-3 h-3 text-white" />
+                <div>
+                  <h2 className="text-[16px] font-bold text-gray-900">Recommended for You</h2>
+                  <p className="text-[12px] text-gray-400 mt-0.5">
+                    Curated matches based on your profile, academics, and goals
+                    {lastRefreshed && (
+                      <span className="ml-1.5 text-gray-300">
+                        &middot; Updated {new Date(lastRefreshed).toLocaleDateString()}
+                      </span>
                     )}
-                  </button>
-                  {m.in_pipeline ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold" style={{ color: "#10b981" }}>
-                      <Check className="w-3 h-3" /> In Pipeline
-                    </span>
-                  ) : (
-                    <button onClick={(e) => { e.stopPropagation(); addToBoard({ university_name: m.university_name }); }}
-                      disabled={adding[m.university_name]}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all"
-                      style={{ backgroundColor: "rgba(13,148,136,0.08)", color: "#0d9488", border: "1px solid rgba(13,148,136,0.2)" }}
-                      data-testid={`add-match-${m.university_name.replace(/\s+/g, "-").toLowerCase()}`}>
-                      {adding[m.university_name] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                      Add to Pipeline
-                    </button>
-                  )}
-                  <span className="text-[10px] ml-auto group-hover:text-teal-600 transition-colors" style={{ color: "var(--cm-text-3)" }}>
-                    View details <ArrowRight className="w-3 h-3 inline" />
-                  </span>
+                  </p>
                 </div>
               </div>
-            ))}
+              <div className="flex items-center gap-2">
+                {compareSelected.length >= 2 && (
+                  <button onClick={() => setCompareOpen(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-bold text-white transition-all hover:opacity-90"
+                    style={{ background: "linear-gradient(135deg, #0d9488, #14b8a6)" }}
+                    data-testid="compare-btn">
+                    <BarChart3 className="w-3.5 h-3.5" /> Compare ({compareSelected.length})
+                  </button>
+                )}
+                <button onClick={refreshMatches} disabled={refreshing}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-semibold text-gray-500 bg-white border border-gray-200 hover:border-gray-300 transition-all"
+                  data-testid="refresh-matches-btn">
+                  {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  Refresh
+                </button>
+                {smartGated && (
+                  <button onClick={() => setShowUpgrade(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 hover:bg-teal-100 transition-all"
+                    data-testid="smart-match-unlock-btn">
+                    <Lock className="w-3.5 h-3.5" /> Unlock {smartGatedTotal}+ matches
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {smartMatches.slice(0, 6).map(m => (
+                <FeaturedCard
+                  key={m.university_name}
+                  school={m}
+                  adding={adding}
+                  addToBoard={addToBoard}
+                  boardSchools={boardSchools}
+                  navigate={navigate}
+                  onDetail={setDrawerSchool}
+                />
+              ))}
+            </div>
+            {smartMatches.length > 6 && (
+              <div className="text-center mt-5">
+                <button onClick={() => { setFilterDivision(""); setActiveBucket("all"); document.querySelector('[data-testid="search-filter-bar"]')?.scrollIntoView({ behavior: "smooth" }); }}
+                  className="text-[13px] font-semibold text-teal-600 hover:text-teal-700 transition-colors inline-flex items-center gap-1.5">
+                  View all {smartMatches.length} recommendations <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ STICKY SEARCH + FILTER BAR ═══ */}
+        <div className="sticky top-14 z-20 -mx-2 sm:-mx-6 px-2 sm:px-6 py-3 bg-[#F7FAFC]/95 backdrop-blur-md" style={{ borderBottom: "1px solid rgba(0,0,0,0.04)" }} data-testid="search-filter-bar">
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div className="flex gap-3 items-center" data-testid="search-row">
+              <div className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-white border border-gray-200 shadow-sm transition-all focus-within:border-teal-300 focus-within:shadow-md">
+                <Search className="w-[18px] h-[18px] flex-shrink-0 text-gray-300" />
+                <input
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setActiveBucket("all"); }}
+                  placeholder={`Search ${totalUniversities.toLocaleString()} colleges...`}
+                  className="flex-1 bg-transparent border-none outline-none text-[14px] text-gray-900 placeholder:text-gray-300"
+                  data-testid="kb-search"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Inline division quick-filters */}
+              <div className="hidden md:flex items-center gap-1.5">
+                {DIVISIONS.map(d => (
+                  <button key={d} onClick={() => toggleDiv(d)}
+                    className={`px-3.5 py-2.5 rounded-xl text-[12px] font-semibold transition-all border ${filterDivision === d ? "text-teal-700 bg-teal-50 border-teal-200" : "text-gray-400 bg-white border-gray-200 hover:border-gray-300"}`}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+
+              <button onClick={() => setFiltersOpen(true)} data-testid="filter-toggle-btn"
+                className="flex items-center gap-1.5 px-4 py-3 rounded-2xl text-[13px] font-semibold transition-all bg-white border border-gray-200 hover:border-gray-300 text-gray-500 shadow-sm">
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="bg-teal-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{activeFilterCount}</span>
+                )}
+              </button>
+            </div>
+
+            {/* Smart bucket chips */}
+            <div className="flex gap-2 flex-wrap mt-3" data-testid="smart-chips">
+              {SMART_BUCKETS.map(b => {
+                const isActive = activeBucket === b.id;
+                const count = bucketCounts[b.id];
+                const BIcon = b.icon;
+                return (
+                  <button key={b.id} onClick={() => handleBucketClick(b)} data-testid={`chip-${b.id}`}
+                    className={`px-4 py-2 rounded-xl text-[12px] font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${isActive ? "text-teal-700 bg-teal-50 border border-teal-200" : "text-gray-400 bg-white border border-gray-200 hover:border-gray-300"}`}>
+                    <BIcon className="w-3.5 h-3.5" />
+                    {b.label}
+                    {count > 0 && <span className="opacity-50">{count}</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Search + Filter Toggle */}
-      <div className="flex gap-2.5 items-center mb-5" data-testid="search-row">
-        <div className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-[14px] bg-[var(--cm-surface)] border border-[var(--cm-border)]">
-          <Search className="w-[18px] h-[18px] flex-shrink-0 text-[var(--cm-text)]/30" />
-          <input
-            value={search}
-            onChange={e => { setSearch(e.target.value); setActiveBucket("all"); }}
-            placeholder={`Search ${totalUniversities.toLocaleString()} colleges by name...`}
-            className="flex-1 bg-transparent border-none outline-none text-[14px] text-[var(--cm-text)] placeholder:text-[var(--cm-text)]/25"
-            data-testid="kb-search"
-          />
-          <span className="text-[11px] whitespace-nowrap text-[var(--cm-text)]/30">{enriched.length.toLocaleString()}</span>
-        </div>
-        <button onClick={() => setFiltersOpen(true)} data-testid="filter-toggle-btn"
-          className="flex items-center gap-1.5 px-4 py-3 rounded-[14px] text-[13px] font-semibold transition-all hover:border-[#1a8a80]/30 hover:text-[#1a8a80] text-[var(--cm-text)]/50 bg-[var(--cm-surface)] border border-[var(--cm-border)]">
-          <Filter className="w-4 h-4" />
-          Filters
-          {activeFilterCount > 0 && (
-            <span className="bg-[#1a8a80] text-[var(--cm-text)] text-[10px] px-1.5 py-0.5 rounded-[10px] font-bold">{activeFilterCount}</span>
+        {/* ═══ ALL SCHOOLS SECTION ═══ */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-[16px] font-bold text-gray-900">All Schools</h2>
+              <p className="text-[12px] text-gray-400 mt-0.5">
+                {enriched.length.toLocaleString()} of {totalUniversities.toLocaleString()} programs
+              </p>
+            </div>
+            <div className="flex items-center gap-2" data-testid="view-toggle">
+              {[{ mode: "grid", Icon: LayoutGrid }, { mode: "list", Icon: List }].map(({ mode, Icon }) => (
+                <button key={mode} onClick={() => setViewMode(mode)} data-testid={`view-${mode}-btn`}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all border ${viewMode === mode ? "bg-white border-gray-200 shadow-sm text-gray-700" : "border-transparent text-gray-300 hover:text-gray-500"}`}>
+                  <Icon className="w-4 h-4" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {enriched.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-3xl border border-gray-100" data-testid="no-results">
+              <Search className="w-12 h-12 mx-auto mb-4 text-gray-200" />
+              <p className="text-[15px] font-medium text-gray-400">No universities match your current filters</p>
+              <button onClick={resetFilters} className="mt-4 text-[13px] font-semibold flex items-center gap-1.5 mx-auto text-teal-600 hover:text-teal-700 transition-colors">
+                <RotateCcw className="w-4 h-4" /> Reset all filters
+              </button>
+            </div>
+          ) : (
+            <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" : "flex flex-col gap-3"} data-testid="kb-grid">
+              {enriched.map(uni => (
+                <SchoolCard key={uni.domain || uni.university_name} uni={uni} adding={adding} addToBoard={addToBoard} boardSchools={boardSchools} navigate={navigate} />
+              ))}
+            </div>
           )}
-        </button>
-      </div>
-
-      {/* Smart Chips */}
-      <div className="flex gap-2 flex-wrap mb-6" data-testid="smart-chips">
-        {SMART_BUCKETS.map(b => {
-          const isActive = activeBucket === b.id;
-          const count = bucketCounts[b.id];
-          return (
-            <button key={b.id} onClick={() => handleBucketClick(b)} data-testid={`chip-${b.id}`}
-              className="px-4 py-[7px] rounded-[20px] text-[12px] font-semibold whitespace-nowrap transition-all"
-              style={isActive
-                ? { color: "#1a8a80", backgroundColor: "rgba(26,138,128,0.1)", border: "1px solid rgba(26,138,128,0.3)" }
-                : { color: "var(--cm-text-3)", backgroundColor: "var(--cm-surface)", border: "1px solid var(--cm-border)" }}>
-              {b.label}
-              {count > 0 && <span className="ml-1 opacity-50 font-medium">{count}</span>}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Top Match Banner */}
-      {!suggestionsLoading && topMatch && (
-        <TopMatchBanner school={topMatch} adding={adding} addToBoard={addToBoard} boardSchools={boardSchools} navigate={navigate} />
-      )}
-
-      {/* Results Header */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[12px] text-[var(--cm-text)]/30" data-testid="results-count">
-          Showing {enriched.length} of {totalUniversities.toLocaleString()} schools
-        </span>
-        <div className="flex gap-1" data-testid="view-toggle">
-          {[{ mode: "grid", Icon: LayoutGrid }, { mode: "list", Icon: List }].map(({ mode, Icon }) => (
-            <button key={mode} onClick={() => setViewMode(mode)} data-testid={`view-${mode}-btn`}
-              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-              style={{ backgroundColor: viewMode === mode ? "var(--cm-surface-2)" : "transparent", border: `1px solid ${viewMode === mode ? "var(--cm-border)" : "var(--cm-border)"}` }}>
-              <Icon className="w-[15px] h-[15px]" style={{ color: viewMode === mode ? "var(--cm-text-2)" : "var(--cm-text-3)" }} />
-            </button>
-          ))}
         </div>
-      </div>
 
-      {/* School Grid / List */}
-      {enriched.length === 0 ? (
-        <div className="text-center py-16" data-testid="no-results">
-          <Search className="w-10 h-10 mx-auto mb-3 text-[var(--cm-text)]/15" />
-          <p className="text-sm font-medium text-[var(--cm-text)]/40">No universities found matching your filters</p>
-          <button onClick={resetFilters} className="mt-3 text-sm font-medium flex items-center gap-1.5 mx-auto text-[#1a8a80] transition-colors hover:opacity-80">
-            <RotateCcw className="w-3.5 h-3.5" /> Reset filters
-          </button>
-        </div>
-      ) : (
-        <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" : "flex flex-col gap-2.5"} data-testid="kb-grid">
-          {enriched.map(uni => (
-            <SchoolCard key={uni.domain || uni.university_name} uni={uni} adding={adding} addToBoard={addToBoard} boardSchools={boardSchools} navigate={navigate} />
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-6 pb-2" data-testid="kb-pagination">
-          <span className="text-[12px] text-[var(--cm-text)]/30">
-            {(page - 1) * 50 + 1}-{Math.min(page * 50, totalUniversities)} of {totalUniversities}
-          </span>
-          <div className="flex items-center gap-2">
-            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} data-testid="kb-prev-page"
-              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold disabled:opacity-30 text-[var(--cm-text)]/50 bg-[var(--cm-surface)] border border-[var(--cm-border)]">Prev</button>
-            <span className="text-[12px] px-2 text-[var(--cm-text)]/40">{page} / {totalPages}</span>
-            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} data-testid="kb-next-page"
-              className="px-3 py-1.5 rounded-lg text-[12px] font-semibold disabled:opacity-30 text-[var(--cm-text)]/50 bg-[var(--cm-surface)] border border-[var(--cm-border)]">Next</button>
+        {/* ═══ PAGINATION ═══ */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-8 pb-4" data-testid="kb-pagination">
+            <span className="text-[12px] text-gray-400">
+              {(page - 1) * 50 + 1}-{Math.min(page * 50, totalUniversities)} of {totalUniversities.toLocaleString()}
+            </span>
+            <div className="flex items-center gap-2">
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} data-testid="kb-prev-page"
+                className="px-4 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-30 text-gray-500 bg-white border border-gray-200 hover:border-gray-300 transition-all">
+                Previous
+              </button>
+              <span className="text-[13px] px-3 text-gray-400 font-medium">{page} / {totalPages}</span>
+              <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} data-testid="kb-next-page"
+                className="px-4 py-2 rounded-xl text-[13px] font-semibold disabled:opacity-30 text-gray-500 bg-white border border-gray-200 hover:border-gray-300 transition-all">
+                Next
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* ═══ PANELS & MODALS ═══ */}
       <FilterPanel
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
@@ -704,29 +725,16 @@ export default function SchoolsPage() {
         onApply={() => setFiltersOpen(false)}
         onClear={() => { resetFilters(); setFiltersOpen(false); }}
       />
-
-      <UpgradeModal
-        isOpen={showUpgrade}
-        onClose={() => setShowUpgrade(false)}
-        message={upgradeMessage}
-        currentTier={subscription?.tier || "basic"}
-      />
-
+      <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} message={upgradeMessage} currentTier={subscription?.tier || "basic"} />
       <MatchDetailDrawer
-        school={drawerSchool}
-        open={!!drawerSchool}
-        onClose={() => setDrawerSchool(null)}
+        school={drawerSchool} open={!!drawerSchool} onClose={() => setDrawerSchool(null)}
         onAddToPipeline={(name) => { setDrawerSchool(null); addToBoard({ university_name: name }); }}
         adding={drawerSchool ? adding[drawerSchool.university_name] : false}
         onNavigate={(s) => s.domain ? navigate(`/schools/${s.domain}`) : navigate(`/schools/${encodeURIComponent(s.university_name)}`)}
       />
-
       <CompareDrawer
-        schools={compareSelected}
-        open={compareOpen}
-        onClose={() => setCompareOpen(false)}
-        onAddToPipeline={(name) => addToBoard({ university_name: name })}
-        adding={adding}
+        schools={compareSelected} open={compareOpen} onClose={() => setCompareOpen(false)}
+        onAddToPipeline={(name) => addToBoard({ university_name: name })} adding={adding}
         onNavigate={(s) => s.domain ? navigate(`/schools/${s.domain}`) : navigate(`/schools/${encodeURIComponent(s.university_name)}`)}
       />
     </div>

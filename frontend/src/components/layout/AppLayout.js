@@ -72,7 +72,7 @@ export default function AppLayout({ children, title, icon }) {
           icon={icon || routeMeta.icon}
           onMenuToggle={() => setSidebarOpen((p) => !p)}
         />
-        <main className="flex-1 px-2 py-4 sm:px-6 sm:py-6 max-w-[1200px] overflow-x-hidden">
+        <main className="flex-1 px-2 py-4 sm:px-6 sm:py-6 max-w-[1200px]" style={{ overflowX: "clip" }}>
           {children}
         </main>
       </div>
