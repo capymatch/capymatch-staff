@@ -1,45 +1,49 @@
 <analysis>**original_problem_statement**: 
-The user is rapidly polishing the application for production readiness. Priorities included completing the Coaching Stability feature, adjusting specific UI elements (Where You Are rail, Messaging badge), setting up and migrating data to production environments (MongoDB, Resend, Gmail OAuth), and finally deploying the application to Vercel (frontend) and Railway (backend). 
+The user is rapidly polishing the application for production readiness and aligning the visual design with the new premium CapyMatch website. Priorities include resolving the production deployment blocker on Railway, redesigning the Login page to be pixel-perfect with an HTML mockup, overhauling the Pipeline/Priority page layout and visual hierarchy (urgency gradient, warm tones, softened cards), and refactoring the Journey page to match this new premium visual language without altering underlying logic or data.
 
 **User's preferred language**: English
 *(INSTRUCT: Next agent must respond in English)*
 
 **what currently exists?** 
-CapyMatch is a production-ready full-stack (React, FastAPI, MongoDB) athlete management platform. It now features fully functional third-party integrations manageable via an Admin UI (Resend, Gmail OAuth, Stripe, Production DB). The application is configured for deployment with Vercel for the frontend () and Railway for the backend (). All development data has been migrated to the production MongoDB cluster.
+CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB). The backend is successfully deployed on Railway using a generated default domain (bypassing custom domain SSL limits). The frontend has a brand-new, premium Login page and a completely refactored Pipeline/Priority page featuring a single Hero focus, urgency-grouped lists, and a warm, sophisticated color palette (bone, ochre, thistle, deep navy) matching the primary website.
 
 **Last working item**:
-    - Last item agent was working: Troubleshooting Production SSL/DNS configuration for Railway. The frontend is deployed to Vercel but API calls are failing with an  error because the Railway backend () is stuck on Validating domain ownership for its custom domain. 
-    - Status: BLOCKED
-    - Agent Testing Done: Y (Locally passed all smoke tests, but prod deployment is blocked by external SSL/DNS issue).
-    - Which testing method agent to use? manual testing by curl / screenshot tool.
+    - Last item agent was working: Refactoring the visual hierarchy of the Journey Page (). The agent was reading the file to understand its structure before applying the new premium visual language (elevating the Hero action block, consolidating insight cards, simplifying timelines, and grouping the sidebar).
+    - Status: IN PROGRESS
+    - Agent Testing Done: N (Just started reading files)
+    - Which testing method agent to use? screenshot tool (for UI/UX visual validation)
     - User Testing Done: N
-    - Reasoning: The agent successfully deployed the code to Vercel and Railway, but the user's custom domain DNS settings (CNAME for ) haven't propagated yet. The Railway SSL certificate cannot provision until this completes.
+    - Reasoning: The user requested a strict UI-only refactor of the Journey page to match the Pipeline page's new premium design system. The agent had just run  and viewed the  file contents but hadn't made any edits yet.
 
 **All Pending/In progress Issue list**:
-  Issue 1: Production SSL/DNS Validation on Railway (P0)
-     - Attempted fixes: Instructed the user to add a CNAME record in their DNS provider pointing  to Railway's provided domain. Wait for propagation.
-     - Next debug checklist: Check if Railway domain settings show Active instead of Validating domain ownership. Verify  works via curl.
-     - Why fix this issue and what will be achieved with the fix? It is required for the production frontend to securely communicate with the production backend.
-     - Status: BLOCKED (Waiting on external DNS propagation)
+  Issue 1: Production Frontend Environment Configuration (P0)
+     - Attempted fixes: The backend was successfully deployed to Railway via , but the Vercel frontend has not yet been updated to point to this new URL.
+     - Next debug checklist: Update  in the Vercel project settings to  and trigger a redeploy so the production frontend can talk to the production backend.
+     - Why fix this issue and what will be achieved with the fix? Completes the full production deployment pipeline.
+     - Status: NOT STARTED
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? Both
-     - Blocked on other issue: DNS Propagation
+     - Blocked on other issue: None
 
   Issue 2: Stale Service Worker Cache on Frontend (P1)
-     - Attempted fixes: The agent removed the  script and Made with Emergent badge from  and asked the user to unregister service workers in their browser dev tools.
-     - Next debug checklist: If the user still cannot log in after SSL is fixed, ensure the service worker from the preview environment isn't intercepting requests on the production domain.
-     - Why fix this issue and what will be achieved with the fix? Prevents fake network errors (401s) caused by stale cache.
+     - Attempted fixes: Previously removed the  script. 
+     - Next debug checklist: If user gets 401s on production, instruct them to hard-refresh / clear browser service workers.
+     - Why fix this issue and what will be achieved with the fix? Prevents fake network errors in production.
      - Status: USER VERIFICATION PENDING
-     - Is recurring issue? N
+     - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? Frontend
 
 **In progress Task List**:
-  None. All deployment tasks are complete on the codebase side.
+  Task 1: Journey Page UI Refactor (P0)
+     - Where to resume:  and associated components in .
+     - What will be achieved with this? The Journey page will feel like a premium extension of the Pipeline page. Needs: Elevate the Follow up hero card, merge Progress has stalled and AI Insight into Why this matters, simplify the timeline into a feed style, group sidebar items (Stability, Contacts, Activity, School intelligence) with consistent spacing/shadows, and improve message preview readability. **Constraint:** ZERO logic/data changes.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? Frontend
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - (P1) CSV Import Tool: For bulk import of school/coach data.
-    - (P1) Bulk Approve Mode: Allow selecting/approving multiple items at once in the Director Inbox.
+    - (P1) CSV Import Tool: Bulk import for school/coach data.
+    - (P1) Bulk Approve Mode: Director Inbox multi-select and bulk approve.
     
     Future Tasks:
     - (P2) Parent/Family Experience.
@@ -47,87 +51,80 @@ CapyMatch is a production-ready full-stack (React, FastAPI, MongoDB) athlete man
     - (P2) Multi-Agent Intelligence Pipeline.
 
 **Completed work in this session**
-- **Coaching Stability Feature (DONE)**: Built backend API and frontend card. Card is collapsed by default showing a badge and Learn more toggle.
-- **Where You Are Rail Revert (DONE)**: Reverted the milestone-style rail back to a simple dot-and-line design in .
-- **Unread Messages Badge Sync (DONE)**: Fixed a bug where the sidebar message badge didn't update instantly upon clicking an email. Implemented custom  event dispatching.
-- **Admin Integrations UI (DONE)**: Added a comprehensive Integrations management page () for Platform Admins to set up Resend, Gmail OAuth, and MongoDB Production URIs directly into the DB.
-- **Production Data Migration (DONE)**: Built a migration tool and copied 69 collections (users, athletes, knowledge base, etc.) from the dev DB to the Production MongoDB cluster.
-- **Vercel Build Fixes (DONE)**: Fixed 15  warnings causing  build failures on Vercel. 
-- **Railway Deployment Config (DONE)**: Added  and  to the backend. Configured  custom pip index. URL-encoded the MongoDB password to bypass URI parser errors.
-- **Emergent Branding Removed (DONE)**: Removed the Made with Emergent badge and  from .
+- **Railway Production Deployment Fix (DONE)**: Resolved build failures by injecting  in Dockerfile and configuring nixpacks correctly. Set up backend on default  domain to bypass SSL custom domain limit.
+- **Login Page Redesign (DONE)**: Fully implemented a pixel-perfect redesign of  based on a user-provided HTML mockup (grid background, glass-morphism, distinct layout).
+- **Priority/Pipeline Page Layout Refactor (DONE)**: Modified  to show a single static top priority card. Grouped the remaining items in  into urgency tiers (Needs attention now, Follow up soon, On track) while preserving AI recap logic.
+- **Priority/Pipeline Visual System Redesign (DONE)**: Applied the premium CapyMatch brand language to the Pipeline page (warm bone background, ochre urgency tints, deep navy hero gradients, thistle/green on-track indicators, softened borders, improved typography hierarchy).
 
 **Earlier issues found/mentioned but not fixed**
    - None
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: None. The  issue from the previous fork remains resolved.
+  - Issue recurrence in previous fork: Custom domain SSL blocked on Railway.
+  - Recurrence count: 1
+  - Status: RESOLVED (By pivoting to Railway's auto-generated default domain).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Database-Stored Configs**: Production keys (Gmail OAuth, Resend, DB connection string) are stored in the  collection via the Admin UI, allowing dynamic configuration without  restarts for certain features.
-- **Deployment Build Environments**: Vercel strict CI mode requires all React Hook dependency warnings to be properly addressed. Railway relies on  and  targeting the nested backend folder.
+- **UI-Only Refactoring Constraint**: All design updates must strictly preserve existing React Hooks, selectors, API connections, grouping logic, and AI Recap data structures.
+- **Premium Design System (Tokens)**: The app uses inline styles and Tailwind to achieve a specific palette: Deep Navy/Eerie Black (), Warm Bone (), Ochre/Orange (, ), Thistle Green (). Cards use large border-radiuses (18-20px) and soft drop shadows instead of harsh borders.
 
 **key DB schema**
-  - : Holds JSON documents for , , and .
+  - None altered in this session.
 
 **changes in tech stack**
-  - Addition of Railway () and Vercel () as explicit production targets.
-  - Usage of custom  with  for the  pip package.
+  - Vercel  needs to be permanently shifted away from custom domain to .
 
 **All files of reference**
--  (New admin logic)
--  (New admin UI)
--  (Fixed unread message events)
--  (UI layout fixes)
--  (Railway configuration)
+-  (Overhauled completely)
+-  (Overhauled for premium UI)
+-  (Overhauled for urgency tiers and premium UI)
+-  (Spacing and wrapper updates)
+-  (Target for current UI refactor task)
+-  (Fixed Railway build deps)
 
 **Areas that need refactoring**:
-- None identified at this time.
+-  - Requires layout consolidation, timeline simplification, and UI unification to match the Pipeline page.
 
 **key api endpoints**
-- 
-- 
--  (Copies all 69 dev collections to prod)
+-  (Provides data structure driving Priority cards)
 
 **Critical Info for New Agent**
-- **MongoDB Password Encoding:** If you ever need to change the Railway , ensure special characters in the password (like  and ) are URL encoded (e.g. , ). Failing to do so throws a port parser error in motor/pymongo.
-- **Emergent PIP Index:** The backend  relies on  to install . Do not remove this.
-- **Production URLs:** The live frontend is  and backend is . 
-- **Stale Service Worker:** If the user experiences random 401s or CORS errors on production login, remind them to hard-clear their browser cache. The old  service worker was intercepting and blocking auth requests.
+- **UI Strictness:** The user is extremely specific about typography (weights, opacity, spacing) and color hierarchy. Adhere exactly to the design tokens already implemented in  and apply them to . Do not accidentally delete AI generated context (e.g. ) while restructuring elements. 
+- **Railway Domain:**  is abandoned due to SSL limits. The definitive production backend is now .
 
 **documents and test reports created in this job**
-- 
-- 
--  (Coaching Stability tests)
--  (Full Production Smoke Test)
+  - /app/memory/PRD.md
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. (User) Asked how to hide the Made with Emergent badge.
-2. (User) Provided a screenshot indicating they were unable to login in prod.
-3. (User) Replied that none of the accounts work, asking if they need to create a new one.
-4. (User) Shared a screenshot showing a network error.
-5. (User) Shared a screenshot showing an SSL Error  alongside the Made with Emergent badge still being visible.
-6. (User) Shared a screenshot showing they do not see the Networking settings in Railway.
-7. (User) Shared a screenshot showing the domain is still Validating in Railway.
+1. (User) Asked if a custom domain limit error was the production blocker.
+2. (User) Confirmed the default domain generated: .
+3. (User) Requested login page redesign matching a provided image.
+4. (User) Provided the exact HTML mockup for the login page to be cloned.
+5. (User) Requested Pipeline layout refactor: Single top priority hero, remove carousel, group remaining list by urgency tiers below.
+6. (User) Corrected agent for removing original AI recap card data during the refactor. Demanded exact preservation of old card info.
+7. (User) Requested UI urgency gradient on Pipeline: Strong emphasis on Needs attention now, calm green on On Track.
+8. (User) Requested a full Premium UI pass on Pipeline to match the CapyMatch website (Warm neutral surfaces, no harsh borders).
+9. (User) Requested further UI polish: Remove background tints, soften left accent borders, increase card spacing, align toggle.
+10. (User) **Pending Task**: Refactor the Journey page to match the visual clarity and hierarchy of the Pipeline page (elevate hero, merge insights, simplify timeline, unify cards).
 
 **Project Health Check:**
-- Broken: Production environment temporarily blocked by external Railway SSL/DNS propagation.
-- Mocked: None
+- Broken: None. Backend is live.
+- Mocked: None.
 
-**3rd Party Integrations** 
-- **OpenAI GPT-4o / Claude** — uses Emergent LLM Key (Universal Key) via .
-- **Stripe (Payments)** — requires User API Key. User currently setting up production webhooks.
-- **Resend (Email)** — requires User API Key. Configured in Admin.
-- **Gmail OAuth** — requires User Client ID/Secret. Configured in Admin.
-- **College Scorecard API** — Optional key for scraping data.
+**3rd Party Integrations**
+- OpenAI GPT-4o / Claude — uses Emergent LLM Key
+- Stripe (Payments) — requires User API Key
+- Resend (Email) — requires User API Key
+- Gmail OAuth — requires User Client ID/Secret
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Full Production Smoke Test passed locally).
+  - Testing agent used after significant changes: NO (Screenshot UI validation heavily utilized instead).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
   - Known regressions: None
 
 **What agent forgot to execute**
-- The agent properly identified all issues, but execution on the final problem is blocked by the external DNS propagation time needed for the user's custom domain on Railway.</analysis>
+- The agent hasn't instructed the user/system to update the Vercel Production Environment Variables with the new backend URL (). The Vercel deployment step is pending.</analysis>
