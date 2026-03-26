@@ -207,16 +207,16 @@ export default function PipelinePage() {
 
       {/* ═══ PAGE HEADER ═══ */}
       <div className="mb-5 sm:mb-8 px-2 sm:px-0 flex justify-end" data-testid="pipeline-header">
-        <div className="pm-toggle-track inline-flex" style={{ background: "transparent", border: "1px solid rgba(20,37,68,0.10)", borderRadius: 14 }} data-testid="view-toggle">
+        <div className="pm-toggle-track inline-flex" style={{ background: "rgba(247,243,236,0.8)", border: "1px solid #e7dfd4", borderRadius: 14, backdropFilter: "blur(8px)" }} data-testid="view-toggle">
           <div className="pm-toggle-slider" style={{
             left: viewMode === 'priority' ? 2 : (togglePriorityRef.current?.offsetWidth || 60) + 2,
             width: viewMode === 'priority' ? (togglePriorityRef.current?.offsetWidth || 60) : (togglePipelineRef.current?.offsetWidth || 60),
             borderRadius: 12,
           }} />
           <button ref={togglePriorityRef} onClick={() => toggleView('priority')} data-testid="toggle-priority" className="pm-toggle-btn"
-            style={{ color: viewMode === 'priority' ? '#13213a' : '#9aa5b8', padding: "8px 18px", fontSize: 13 }}>Priority</button>
+            style={{ color: viewMode === 'priority' ? '#1a1a1a' : '#8a847a', padding: "8px 18px", fontSize: 13 }}>Priority</button>
           <button ref={togglePipelineRef} onClick={() => toggleView('pipeline')} data-testid="toggle-pipeline" className="pm-toggle-btn"
-            style={{ color: viewMode === 'pipeline' ? '#13213a' : '#9aa5b8', padding: "8px 18px", fontSize: 13 }}>Pipeline</button>
+            style={{ color: viewMode === 'pipeline' ? '#1a1a1a' : '#8a847a', padding: "8px 18px", fontSize: 13 }}>Pipeline</button>
         </div>
       </div>
 
