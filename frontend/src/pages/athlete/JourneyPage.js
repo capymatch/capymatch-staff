@@ -516,47 +516,35 @@ export default function JourneyPage() {
       backgroundColor: 'var(--cm-bg)',
     }} data-testid="journey-page">
       {/* ─── HEADER BAR ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 pt-4 pb-2">
-        {/* Back link */}
-        <button onClick={() => navigate("/pipeline")}
-          className="flex items-center gap-1.5 text-[13px] font-medium transition-colors hover:opacity-70 mb-4"
-          style={{ color: "#9c917f" }}
-          data-testid="back-to-pipeline">
-          <ArrowLeft className="w-3.5 h-3.5" />Pipeline
-        </button>
-
-        {/* Header row */}
+      <div style={{ maxWidth: 1120, margin: "0 auto", borderBottom: "1px solid #ebebeb" }} className="px-1 sm:px-6 py-4">
         <div className="flex items-center justify-between" data-testid="journey-header-bar">
-          {/* Left: Logo + School info */}
+          {/* Left: Back + Avatar + Info — all inline */}
           <div className="flex items-center gap-4">
-            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={48} className="rounded-full" style={{ border: "2px solid #e7dfd4" }} />
+            <button onClick={() => navigate("/pipeline")}
+              className="flex items-center gap-1.5 text-[14px] font-medium transition-colors hover:opacity-70 flex-shrink-0"
+              style={{ color: "#757575" }}
+              data-testid="back-to-pipeline">
+              <ArrowLeft className="w-4 h-4" />Pipeline
+            </button>
+            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={44} className="rounded-full flex-shrink-0" style={{ border: "3px solid rgba(13,148,136,0.12)" }} />
             <div className="min-w-0">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: "#1a1a1a" }} data-testid="journey-school-name">
-                  {program.university_name}
-                </h1>
-                <PulseIndicator coachWatchState={coachWatch?.state} />
-              </div>
-              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap" style={{ color: "#9c917f", fontSize: 12 }}>
+              <h1 className="text-[18px] font-bold tracking-tight" style={{ color: "#263238" }} data-testid="journey-school-name">
+                {program.university_name}
+              </h1>
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap" style={{ color: "#757575", fontSize: 14 }}>
                 {program.division && (
-                  <><span className="font-semibold">{program.division}</span><span style={{ opacity: 0.5 }}>&middot;</span></>
+                  <><span>{program.division}</span><span>&middot;</span></>
                 )}
                 {program.conference && (
-                  <><span>{program.conference}</span><span style={{ opacity: 0.5 }}>&middot;</span></>
+                  <><span>{program.conference}</span><span>&middot;</span></>
                 )}
                 <span>{timeline.length} interactions</span>
-                {program.location && (
-                  <><span style={{ opacity: 0.5 }}>&middot;</span><span>{program.location}</span></>
-                )}
-                {program.social_links && typeof program.social_links === "object" && Object.keys(program.social_links).length > 0 && (
-                  <SchoolSocialLinks links={program.social_links} />
-                )}
               </div>
             </div>
           </div>
 
-          {/* Right: Lightweight controls */}
-          <div className="flex items-center gap-1.5">
+          {/* Right: Lightweight icon controls */}
+          <div className="flex items-center gap-2">
             {matchScore && (
               <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
                 style={{ color: "#6b6358", background: "#f8fafc", border: "1px solid #e7dfd4" }}
@@ -566,7 +554,7 @@ export default function JourneyPage() {
             )}
             <button onClick={() => navigate(`/compare?selected=${programId}`)}
               className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-black/[0.04]"
-              style={{ color: "#9c917f" }}
+              style={{ color: "#9E9E9E" }}
               data-testid="compare-btn"
               title="Compare">
               <GitCompare className="w-4 h-4" />
@@ -574,7 +562,7 @@ export default function JourneyPage() {
             {program.questionnaire_url && (
               <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-black/[0.04]"
-                style={{ color: "#0d9488" }}
+                style={{ color: "#0d9488", background: "rgba(13,148,136,0.08)" }}
                 data-testid="questionnaire-link"
                 title="Questionnaire">
                 <ExternalLink className="w-4 h-4" />
@@ -591,7 +579,7 @@ export default function JourneyPage() {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <button className="flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-black/[0.04]"
-                    style={{ color: "#9c917f" }}
+                    style={{ color: "#9E9E9E" }}
                     data-testid="archive-btn"
                     title="Archive">
                     <Archive className="w-4 h-4" />
@@ -622,13 +610,6 @@ export default function JourneyPage() {
               </AlertDialog>
             )}
           </div>
-        </div>
-
-        {/* Risk badges — subtle inline */}
-        <div className="mt-3 ml-16" data-testid="journey-risk-badges">
-          {riskBadges.length > 0 ? (
-            <RiskBadgeRow badges={riskBadges} onBadgeClick={(b) => setRiskDrawer(b)} />
-          ) : null}
         </div>
       </div>
 
