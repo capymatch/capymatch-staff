@@ -1,5 +1,6 @@
-"""Auth — registration, login, current user, password reset."""
+"""Auth — registration, login, current user, password reset, Google OAuth."""
 
+import os
 import uuid
 import hashlib
 import secrets
@@ -228,6 +229,122 @@ async def login(body: UserLogin, background_tasks: BackgroundTasks):
             from services.notifications import check_and_send_measurables_nudge
             background_tasks.add_task(check_and_send_measurables_nudge, safe["id"], athlete["tenant_id"])
 
+    return {"token": token, "refresh_token": refresh_token, "user": safe}
+
+
+# ── Google OAuth ──
+class GoogleAuthRequest(BaseModel):
+    credential: str  # Google ID token from frontend
+
+
+@router.post("/auth/google", response_model=TokenResponse)
+async def google_auth(body: GoogleAuthRequest, background_tasks: BackgroundTasks):
+    """Authenticate with Google OAuth. Creates account if first login."""
+    # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    from google.oauth2 import id_token
+    from google.auth.transport import requests as google_requests
+
+    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    if not client_id:
+        raise HTTPException(status_code=503, detail="Google OAuth not configured")
+
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            body.credential, google_requests.Request(), client_id
+        )
+    except Exception as e:
+        log_auth.error(f"Google token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+
+    email = idinfo.get("email", "").strip().lower()
+    name = idinfo.get("name", email.split("@")[0])
+    photo_url = idinfo.get("picture", "")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="No email in Google token")
+
+    # Check if user exists
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+
+    if user:
+        # Existing user — update photo if available
+        if photo_url and not user.get("photo_url"):
+            await db.users.update_one({"id": user["id"]}, {"$set": {"photo_url": photo_url}})
+            user["photo_url"] = photo_url
+    else:
+        # New user — create account as athlete
+        user = {
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "password_hash": bcrypt.hash(secrets.token_urlsafe(32)),  # random password for OAuth users
+            "name": name,
+            "role": "athlete",
+            "org_id": None,
+            "photo_url": photo_url,
+            "google_sub": idinfo.get("sub"),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.users.insert_one(user)
+        user.pop("_id", None)
+
+        # Create athlete record
+        claimed_athlete = await _try_claim_athlete(user)
+        if not claimed_athlete:
+            tenant_id = f"tenant-{user['id']}"
+            now_str = datetime.now(timezone.utc).isoformat()
+            parts = name.strip().split(" ", 1)
+            new_athlete = {
+                "id": str(uuid.uuid4()),
+                "user_id": user["id"],
+                "tenant_id": tenant_id,
+                "org_id": None,
+                "email": email,
+                "full_name": name,
+                "first_name": parts[0],
+                "last_name": parts[1] if len(parts) > 1 else "",
+                "position": "", "grad_year": "", "team": "", "height": "",
+                "city": "", "state": "", "high_school": "", "gpa": "",
+                "recruiting_stage": "prospect",
+                "recruiting_profile": None,
+                "onboarding_completed": False,
+                "created_at": now_str, "updated_at": now_str, "claimed_at": now_str,
+            }
+            await db.athletes.insert_one(new_athlete)
+            new_athlete.pop("_id", None)
+            claimed_athlete = new_athlete
+            log_auth.info(f"Google OAuth: created fresh athlete for {email}")
+
+        # Link athlete_id to user
+        if claimed_athlete:
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": {"athlete_id": claimed_athlete["id"], "org_id": claimed_athlete.get("org_id")}},
+            )
+            user["athlete_id"] = claimed_athlete["id"]
+            user["org_id"] = claimed_athlete.get("org_id")
+
+    safe = _safe_user(user)
+    if photo_url:
+        safe["photo_url"] = photo_url
+
+    token = create_token(safe)
+    refresh_token, refresh_id = create_refresh_token(safe["id"])
+
+    await db.refresh_tokens.insert_one({
+        "token_id": refresh_id,
+        "user_id": safe["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "revoked": False,
+    })
+
+    # Background tasks for athletes
+    if safe.get("role") in ("athlete", "parent"):
+        athlete = await db.athletes.find_one({"user_id": safe["id"]}, {"_id": 0, "tenant_id": 1})
+        if athlete and athlete.get("tenant_id"):
+            from services.notifications import check_and_send_measurables_nudge
+            background_tasks.add_task(check_and_send_measurables_nudge, safe["id"], athlete["tenant_id"])
+
+    log_auth.info(f"Google OAuth login successful for {email}")
     return {"token": token, "refresh_token": refresh_token, "user": safe}
 
 

@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import AppLayout from "./components/layout/AppLayout";
 import { PlanProvider } from "./PlanContext";
 import { lazy, Suspense } from "react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // ── Eagerly loaded (auth flow — needed immediately) ──
 import LoginPage from "./pages/LoginPage";
@@ -179,8 +180,10 @@ function AppRoutes() {
   );
 }
 
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+
 function App() {
-  return (
+  const content = (
     <div className="App">
       <Toaster position="bottom-right" richColors />
       <ErrorBoundary>
@@ -198,6 +201,11 @@ function App() {
       </ErrorBoundary>
     </div>
   );
+
+  if (GOOGLE_CLIENT_ID) {
+    return <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{content}</GoogleOAuthProvider>;
+  }
+  return content;
 }
 
 export default App;

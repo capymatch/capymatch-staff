@@ -1,55 +1,44 @@
-<analysis>**original_problem_statement**: 
-The user is rapidly polishing the CapyMatch application for production readiness. The current absolute focus is a strict UI/UX refactor of the Journey Page () to align its visual hierarchy, layout, and styling with the new premium CapyMatch website and Pipeline page. 
-**CRITICAL PRODUCT REQUIREMENT:** Do NOT change any underlying logic, data, API calls, grouping, or order. This is strictly a layout and visual polish task.
+<analysis>Here is the handover summary for the next agent:
+
+**original_problem_statement**: 
+The user is focused on rapidly polishing the UI/UX across CapyMatch (Journey, Pipeline, Schools, and Login pages) to create a premium, calm, Apple/Notion-like aesthetic. The brand palette has been explicitly shifted away from generic SaaS green to a warm ochre (). Most recently, the user requested the implementation of a standard Google OAuth login for production use (without Emergent branding).
 
 **User's preferred language**: English
 *(INSTRUCT: Next agent must respond in English)*
 
 **what currently exists?** 
-CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB). In the current session, the Journey Page has undergone massive UI refactoring. It now shares the exact background color () as the Pipeline page. The timeline has been converted to a clean, neutral, white inbox-like feed (removing previous heavy green tints). The top dark hero card was replaced with a light, flush, inline header bar that exactly mimics the  header. The dark Action Hero card now sits below this header, alongside metadata chips.
+A full-stack athlete management platform (React + FastAPI + MongoDB). The UI for Journey, Pipeline, and Schools pages has been heavily refined into a premium aesthetic (minimalist, full-bleed headers, subtle shadows, ochre accents). The login page role selector has been removed to streamline access. The backend and frontend dependencies for Google OAuth have been installed and the code has been written, but testing is pending.
 
 **Last working item**:
-    - Last item agent was working: Refining the internal hierarchy of the Hero Action Card (), styling the metadata chips, adding subtle anchoring to the header/footer, and fixing column alignments in . The agent was just reading the files to begin implementing the user's highly detailed 8-point refinement list.
-    - Status: IN PROGRESS
+    - Last item agent was working: Implementing Google OAuth Integration. The agent added the backend  endpoint in , wrapped  with , and added the Google Login button to .
+    - Status: IN PROGRESS / TESTING PENDING
     - Agent Testing Done: N
-    - Which testing method agent to use? screenshot tool (for rapid UI visual validation), followed by testing_agent_v3_fork once the full batch of UI changes is done.
+    - Which testing method agent to use? Both (Use  to verify the frontend Login page still renders without crashing and the button is visible. Use  or  to verify the backend  endpoint compiles/exists).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
-  Issue 1: Production Frontend Environment Configuration (P0 - Carried over from previous fork)
-     - Attempted fixes: The backend is live on Railway, but the Vercel frontend has not been instructed to point to it yet.
-     - Next debug checklist: Instruct user to update  in their Vercel project settings to  and trigger a redeploy.
-     - Why fix this issue and what will be achieved with the fix? Completes the production deployment pipeline so the live frontend talks to the live backend.
-     - Status: NOT STARTED
+  Issue 1: Validate Google Auth Graceful Fallback (P0)
+     - Attempted fixes: Code was just injected into  and .
+     - Next debug checklist: Check  and  to ensure the app does not crash if  is  (since the user will only provide this in their production Vercel environment). Verify backend  imports are correct.
+     - Why fix this issue and what will be achieved with the fix? Ensures the preview environment remains stable without the production keys while satisfying the feature request.
+     - Status: TESTING PENDING
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? NA (User action required)
-     - Blocked on other issue: No
-
-  Issue 2: Stale Service Worker Cache on Frontend (P1 - Carried over)
-     - Attempted fixes:  was previously removed.
-     - Next debug checklist: If user gets 401s on production, instruct them to hard-refresh / clear browser cache.
-     - Why fix this issue and what will be achieved with the fix? Prevents fake network errors.
-     - Status: USER VERIFICATION PENDING
-     - Is recurring issue? Y
-     - Should Test frontend/backend/both after fix? Frontend
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**:
-  Task 1: Journey Page Final UI Polish: Hero Card & Alignments (P0)
-     - Where to resume: , , 
-     - What will be achieved with this? A cohesive, premium command center feel. **Action Items required by user:**
-        1. **Header:** Add subtle separation (light bottom border or soft shadow). Perfect vertical alignment of logo/name/back link.
-        2. **Chips (Last activity, Match score, Stage):** Reduce visual weight, tighten spacing to hero card, align left edge exactly with hero content.
-        3. **Hero Action Card ():** Increase Title prominence. Increase Reason line readability. Soften Message preview contrast/increase padding. Increase CTA button prominence. Reduce Metadata chips visual dominance. Add subtle depth/glow to the card.
-        4. **Layout:** Ensure consistent timeline vertical spacing. Align Sidebar top with timeline header and reduce horizontal gap.
-        5. **Bottom Action Bar:** Add subtle anchoring (light top divider or shadow).
-     - Status: IN PROGRESS (Files read, edits pending)
-     - Should Test frontend/backend/both after fix? Frontend (Screenshot first, then Testing Agent)
-     - Blocked on something: No
+  Task 1: Google OAuth Implementation (P0)
+     - Where to resume: Take a smoke-test screenshot of the  route to verify the new Google Login button renders correctly. Check the browser/supervisor logs for any crash reports caused by the newly added  and  libraries. 
+     - What will be achieved with this? Completion of the user's request for custom Google authentication.
+     - Status: TESTING PENDING
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on something: None
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
     - (P1) CSV Import Tool: Bulk import for school/coach data.
     - (P1) Bulk Approve Mode: Director Inbox multi-select and bulk approve.
+    - (P1) School Detail Page Redesign: Apply the new premium/ochre aesthetic to .
     
     Future Tasks:
     - (P2) Parent/Family Experience.
@@ -57,62 +46,68 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
     - (P2) Multi-Agent Intelligence Pipeline.
 
 **Completed work in this session**
-- Journey Page structural & visual alignment with Pipeline (DONE)
-- Neutralized Timeline backgrounds (removed heavy green tints for white inbox feel) (DONE)
-- Implemented SupportPod-style flush, inline header bar on Journey Page (DONE)
-- Fixed chip variables ( instead of ,  instead of ) (DONE)
+- Journey Page Final UI Polish (metadata chips, text sizing, CTA padding, progress rail in header) (DONE)
+- Pipeline Page Topbar styling updated to match Journey Page (full-bleed white background, bottom divider, ← Dashboard link) (DONE)
+- Schools Page () completely redesigned (premium layout, sticky search, featured cards) (DONE)
+- Brand color palette shifted from green to warm Ochre () globally on Schools Page (DONE)
+- Removed role selector from Login Page () to default to athlete (DONE)
 
 **Earlier issues found/mentioned but not fixed**
    - None
 
 **Known issue recurrence from previous fork**
-  - None occurring in this specific session.
+  - None
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Strict UI-Only Constraint:** The current task explicitly forbids altering logic, React hooks, data structures, or API routing. Do not rename props or alter conditional rendering logic unless it is purely for DOM layout alignment.
-- **Premium Design System:** Uses Tailwind CSS and inline styles. Relies on specific CSS variables (, ). Cards use 18-20px border radius and soft drop shadows instead of harsh borders.
+- **Premium Design System:** Uses Tailwind CSS. Relies heavily on Apple/Notion aesthetics: generous whitespace, clean white backgrounds, very subtle borders, soft shadows, and warm ochre accents (). Avoid harsh or saturated colors.
+- **Strict UI-Only Constraints:** When doing UI polish, logic, React hooks, and data structures must remain untouched.
 
 **key DB schema**
-  - No changes required or made.
+  - : Core identity table (auth).
+  - : Athlete profile table linked to user.
 
 **changes in tech stack**
-  - No changes.
+  - Added  to frontend.
+  - Added , ,  to backend.
 
 **All files of reference**
--  (Main page wrapper, Header, Layout grid)
--  (Requires internal hierarchy polish)
--  (Requires anchoring/border shadow)
+-  (OAuth provider injection)
+-  (Login UI)
+-  (Auth backend logic)
+-  (Redesign reference)
 
 **Areas that need refactoring**:
-- The Hero card inside  needs structural CSS/Tailwind adjustments to meet the user's specific visual hierarchy requirements.
+- None. UI refactoring was successful. Focus is purely on verifying the Google Auth logic.
 
 **key api endpoints**
-- N/A for current UI task.
+-  (Newly added)
+- 
 
 **Critical Info for New Agent**
-- **Zero Logic Changes:** The user has repeatedly emphasized: DO NOT MODIFY LOGIC. This is strictly a UI refinement. If a visual change seems to require a data structure change, you are doing it wrong. Rely on CSS, Tailwind, flexbox, opacity, and padding.
-- **Current State context:** The agent just finished making the header bar flush with negative margins to counteract  padding. The next task is adjusting the visual weights (fonts, opacities, padding) of the dark  right below that header.
+- **Missing Env Vars Strategy:** The user explicitly stated they will *only* use Google Auth in production (Vercel). The preview environment will *not* have  or backend Google Client secrets. You MUST ensure the code in  and  degrades gracefully (e.g., disabling the button or wrapping it safely) if the Client ID is missing, otherwise the preview app will crash with a missing provider error.
+- **Brand Identity Shift:** The app's primary accent color is now Ochre (, ). Do not use the old emerald or teal SaaS greens unless strictly for positive data signals (like a match score).
 
 **documents and test reports created in this job**
-  -  (Updated regularly with finished UI phases)
-  -  through  (Heavy and successful use of testing agent for UI verification).
+  - 
+  -  through 
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. (User) Approved starting plan.
-2. (User) Requested refactoring Journey page visual clarity to match Pipeline (warm bone background, unify cards).
-3. (User) Requested exact structural alignment with Pipeline (change background to #F7FAFC, stack hero cards, remove floating blocks, unify timeline).
-4. (User) Requested visual cleanup (make timeline neutral/white, remove all green backgrounds, keep green only for small dots/icons).
-5. (User) Requested replacing top dark school card with a light header bar matching the Coach view.
-6. (User) Requested making the new header inline (back link, logo, name on one row).
-7. (User) Requested matching the header look *exactly* to  top bar.
-8. (User) Requested removing left and top space from the header to make it flush.
-9. (User) **[PENDING]** Requested 8 highly specific UI refinements to the Header, Chips, Hero Action Card, Layout Alignment, and Bottom Action bar. *Agent was analyzing files when the fork occurred.*
+1. (User) Confirmed understanding via Ok.
+2. (User) Asked if they need to share Google credentials with the agent. (Agent replied no, just set in Vercel).
+3. (User) Shared a screenshot of Vercel Environment Variables.
+4. (User) Asked I am gonna use only in production, so I do not need to share that with you, right?
+5. (User) Asked The emergent name will not appear in the authentication page, right?
+6. (User) Asked I want to be able to login using Gmail, but I do not want to use the emergent one, is it possible?
+7. (User) Requested removing the role selector from the login page and making athlete the default.
+8. (User) Requested replacing all green accents with CapyMatch warm ochre brand color ().
+9. (User) Requested removing all green background fills from Find Schools page.
+10. (User) Requested neutralizing excessive green usage on Find Schools page.
 
 **Project Health Check:**
-- Broken: None. UI is rendering perfectly.
+- Broken: None currently known, but Google Auth frontend needs smoke testing to ensure the app hasn't crashed due to missing env vars.
 - Mocked: None.
 
 **3rd Party Integrations**
@@ -120,12 +115,13 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 - Stripe (Payments) — requires User API Key
 - Resend (Email) — requires User API Key
 - Gmail OAuth — requires User Client ID/Secret
+- Google OAuth (Authentication) — requires User Client ID/Secret (Vercel Production Only)
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Extensively used after every UI batch, all tests passing 100%).
+  - Testing agent used after significant changes: YES (Successfully used for Journey and Schools page redesigns).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: JSON test reports via subagent.
-  - Known regressions: None.
+  - Known regressions: None, but the last action (Google OAuth code injection) is completely untested. 
 
 **What agent forgot to execute**
-- The agent hasn't instructed the user to update the Vercel Production Environment Variables with the new backend URL ().</analysis>
+- The agent injected the Google OAuth frontend and backend code but the fork triggered before the agent could verify the deployment using the screenshot tool. The agent needs to verify that the frontend does not crash when  is .</analysis>
