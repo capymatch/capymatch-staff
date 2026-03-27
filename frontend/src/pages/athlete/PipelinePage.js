@@ -21,7 +21,7 @@ import "../../components/pipeline/pipeline-responsive.css";
 import MomentumInsight from "../../components/pipeline/MomentumInsight";
 import BreakdownDrawer from "../../components/pipeline/BreakdownDrawer";
 import { KANBAN_COLS, COL_TO_STAGE } from "../../components/pipeline/pipeline-constants";
-import { computeAllAttention } from "../../lib/computeAttention";
+// computeAttention.js no longer used — attention is now computed by backend (SSOT)
 import "../../components/pipeline/pipeline-motion.css";
 import "../../components/pipeline/pipeline-premium.css";
 
@@ -185,13 +185,11 @@ export default function PipelinePage() {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchAll} /></div>;
   }
 
-  // Build recap context for attention engine
-  const recapCtx = recapData?.priorities?.length ? {
-    priorities: recapData.priorities,
-    createdAt: recapData.period_start,
-  } : null;
-
-  const allAttention = computeAllAttention(allPrograms, topActionsMap, recapCtx);
+  // ── Attention data comes from backend (SSOT) — no client-side recomputation ──
+  const allAttention = allPrograms
+    .filter(p => p.attention && p.is_active !== false)
+    .map(p => ({ ...p.attention, programId: p.program_id, universityName: p.university_name }))
+    .sort((a, b) => (b.attentionScore || 0) - (a.attentionScore || 0));
   const attentionMap = {};
   allAttention.forEach(a => { attentionMap[a.programId] = a; });
   // Single hero = highest priority item (first in sorted attention list)

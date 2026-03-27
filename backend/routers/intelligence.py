@@ -22,10 +22,6 @@ from services.athlete_store import (
     get_needing_attention,
     get_snapshot,
 )
-from mock_data import (
-    UPCOMING_EVENTS,
-    get_program_snapshot,
-)
 from services.ownership import filter_by_athlete_id, filter_events_by_ownership
 from program_engine import compute_all as compute_program_intelligence
 from event_engine import get_event, get_event_summary
@@ -43,6 +39,61 @@ from intelligence.agents import school_insight as school_insight_agent, timeline
 
 log = logging.getLogger(__name__)
 router = APIRouter()
+
+
+async def _fetch_real_events_for_intel():
+    """Fetch real events from DB for intelligence endpoints."""
+    try:
+        events = await db.events.find({}, {"_id": 0}).to_list(200)
+        now = datetime.now(timezone.utc)
+        for e in events:
+            event_date = e.get("date") or e.get("start_date")
+            if event_date:
+                try:
+                    if isinstance(event_date, str):
+                        edt = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+                    elif isinstance(event_date, datetime):
+                        edt = event_date
+                    else:
+                        e["daysAway"] = 99
+                        continue
+                    if edt.tzinfo is None:
+                        edt = edt.replace(tzinfo=timezone.utc)
+                    e["daysAway"] = (edt - now).days
+                except (ValueError, TypeError):
+                    e["daysAway"] = 99
+            else:
+                e["daysAway"] = 99
+        return events
+    except Exception:
+        return []
+
+
+async def _build_real_snapshot_for_intel(athletes: list) -> dict:
+    """Compute real program snapshot from athlete data for intelligence."""
+    total = len(athletes)
+    by_stage = {}
+    by_grad_year = {}
+    for a in athletes:
+        yr = str(a.get("grad_year", "Unknown"))
+        by_grad_year[yr] = by_grad_year.get(yr, 0) + 1
+        stage = a.get("pipeline_best_stage", "unknown")
+        by_stage[stage] = by_stage.get(stage, 0) + 1
+    needing_attention = sum(
+        1 for a in athletes
+        if a.get("days_since_activity", 0) > 7 or a.get("pipeline_momentum", 1.0) < 0.3
+    )
+    positive_momentum = sum(
+        1 for a in athletes
+        if a.get("pipeline_momentum", 0) >= 0.6 and a.get("days_since_activity", 99) <= 7
+    )
+    return {
+        "totalAthletes": total,
+        "byStage": by_stage,
+        "byGradYear": by_grad_year,
+        "needingAttention": needing_attention,
+        "positiveMomentum": positive_momentum,
+    }
 
 
 @router.post("/ai/program-narrative")
@@ -166,7 +217,7 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
     the AI brief is consistent with what the user sees on screen.
     """
     attention = filter_by_athlete_id(await get_needing_attention(), current_user)
-    events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
+    events = filter_events_by_ownership(await _fetch_real_events_for_intel(), current_user)
 
     # Filter to future events only — same as dashboard
     upcoming_events = sorted(
@@ -179,7 +230,7 @@ async def daily_briefing(current_user: dict = get_current_user_dep()):
     else:
         visible = get_visible_athlete_ids(current_user)
         my_athletes = [a for a in await get_athletes() if a["id"] in visible]
-        snapshot = get_program_snapshot(my_athletes)
+        snapshot = await _build_real_snapshot_for_intel(my_athletes)
 
     # Enrich attention items with athlete names
     athlete_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in await get_athletes()}
@@ -315,12 +366,12 @@ async def suggested_actions(current_user: dict = get_current_user_dep()):
     for a in alerts:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
-    events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
+    events = filter_events_by_ownership(await _fetch_real_events_for_intel(), current_user)
     attention = [a for a in await get_needing_attention() if a.get("athlete_id") in visible]
     for a in attention:
         a["athlete_name"] = athlete_map.get(a.get("athlete_id"), "Unknown")
 
-    snapshot = (await get_snapshot()) if current_user["role"] == "director" else get_program_snapshot([a for a in await get_athletes() if a["id"] in visible])
+    snapshot = (await get_snapshot()) if current_user["role"] == "director" else await _build_real_snapshot_for_intel([a for a in await get_athletes() if a["id"] in visible])
 
     # Aging recommendations
     aging_recs = await db.recommendations.find(
@@ -487,7 +538,7 @@ async def program_insights_ai(current_user: dict = get_current_user_dep()):
 
     # Confidence indicator
     n_athletes = len(await get_athletes())
-    n_events = len(UPCOMING_EVENTS)
+    n_events = await db.events.count_documents({})
     n_recs = await db.recommendations.count_documents({})
     n_notes = await db.event_notes.count_documents({})
     parts = []

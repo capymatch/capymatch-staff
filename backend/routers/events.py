@@ -8,8 +8,6 @@ import uuid
 from db_client import db
 from auth_middleware import get_current_user_dep
 from services.ownership import filter_events_by_ownership, get_visible_athlete_ids
-from mock_data import UPCOMING_EVENTS, SCHOOLS
-from models import EventNoteCreate, EventNoteUpdate, EventCreate, EventAthleteAdd, EventSignalCreate, EventAddSchool
 from event_engine import (
     get_event,
     get_all_events,
@@ -20,7 +18,12 @@ from event_engine import (
     get_event_summary,
     route_note_to_pod,
     bulk_route_to_pods,
+    get_schools_list,
+    get_events_list,
+    add_event_to_cache,
+    add_school_to_cache,
 )
+from models import EventNoteCreate, EventNoteUpdate, EventCreate, EventAthleteAdd, EventSignalCreate, EventAddSchool
 
 router = APIRouter()
 
@@ -66,7 +69,7 @@ async def list_events(team: str = None, type: str = None, current_user: dict = g
 @router.get("/events/schools/available")
 async def list_available_schools(current_user: dict = get_current_user_dep()):
     """List all available schools that can be added to events"""
-    return [{"id": s["id"], "name": s["name"], "division": s.get("division", "")} for s in SCHOOLS]
+    return [{"id": s["id"], "name": s["name"], "division": s.get("division", "")} for s in get_schools_list()]
 
 
 @router.get("/events/{event_id}")
@@ -113,7 +116,7 @@ async def create_event(body: EventCreate, current_user: dict = get_current_user_
         "summaryStatus": None,
         "athleteCount": 0,
     }
-    UPCOMING_EVENTS.append(new_event)
+    add_event_to_cache(new_event)
 
     # Persist to MongoDB (without capturedNotes)
     await db.events.insert_one(
@@ -220,16 +223,16 @@ async def add_event_school(event_id: str, body: dict, current_user: dict = get_c
     school_name = body.get("school_name", "").strip()
 
     if school_id:
-        # Known school from SCHOOLS list
-        existing = next((s for s in SCHOOLS if s["id"] == school_id), None)
+        # Known school from get_schools_list() list
+        existing = next((s for s in get_schools_list() if s["id"] == school_id), None)
         if existing and school_id not in event.get("school_ids", []):
             event.setdefault("school_ids", []).append(school_id)
     elif school_name:
-        # Custom school — generate an ID and add to SCHOOLS if not already there
+        # Custom school — generate an ID and add to get_schools_list() if not already there
         slug = school_name.lower().replace(" ", "-")
-        existing = next((s for s in SCHOOLS if s["id"] == slug), None)
+        existing = next((s for s in get_schools_list() if s["id"] == slug), None)
         if not existing:
-            SCHOOLS.append({"id": slug, "name": school_name, "division": body.get("division", "")})
+            get_schools_list().append({"id": slug, "name": school_name, "division": body.get("division", "")})
         if slug not in event.get("school_ids", []):
             event.setdefault("school_ids", []).append(slug)
     else:
@@ -610,19 +613,19 @@ async def add_school_to_event(event_id: str, body: EventAddSchool, current_user:
     school_name = body.school_name.strip()
     slug = school_name.lower().replace(" ", "-").replace("'", "")[:50]
 
-    # Add to SCHOOLS list if not already there
-    existing_school = next((s for s in SCHOOLS if s["id"] == slug or s["name"].lower() == school_name.lower()), None)
+    # Add to get_schools_list() list if not already there
+    existing_school = next((s for s in get_schools_list() if s["id"] == slug or s["name"].lower() == school_name.lower()), None)
     if not existing_school:
         # Look up KB for division
         kb = await db.university_knowledge_base.find_one(
             {"university_name": school_name}, {"_id": 0}
         )
-        SCHOOLS.append({
+        get_schools_list().append({
             "id": slug,
             "name": school_name,
             "division": kb.get("division", "") if kb else "",
         })
-        existing_school = SCHOOLS[-1]
+        existing_school = get_schools_list()[-1]
 
     school_id = existing_school["id"]
 
@@ -958,7 +961,7 @@ async def mark_debrief_complete(event_id: str, current_user: dict = get_current_
 
 @router.get("/schools")
 async def list_schools(current_user: dict = get_current_user_dep()):
-    return SCHOOLS
+    return get_schools_list()
 
 
 @router.get("/schools/search")

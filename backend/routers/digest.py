@@ -16,7 +16,6 @@ from services.ownership import (
     get_unassigned_athlete_ids,
 )
 from services.athlete_store import get_all as get_athletes, get_needing_attention
-from mock_data import UPCOMING_EVENTS
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -114,9 +113,10 @@ async def _gather_digest_data(period_days: int = 7) -> dict:
         if a["id"] in unassigned_ids:
             unassigned_athletes.append({"name": a["full_name"], "team": a["team"]})
 
-    # 5. Upcoming events (next 7 days)
+    # 5. Upcoming events (next 7 days) — from real DB
     upcoming = []
-    for e in UPCOMING_EVENTS:
+    real_events = await db.events.find({}, {"_id": 0}).to_list(200)
+    for e in real_events:
         if e.get("status") == "upcoming":
             upcoming.append({
                 "name": e.get("name", ""),

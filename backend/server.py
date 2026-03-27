@@ -194,6 +194,11 @@ async def startup():
     await cache_service.connect()
 
     await run_startup(db)
+
+    # Initialize event engine with DB data (replaces mock_data)
+    from event_engine import init_event_engine
+    await init_event_engine()
+
     coach_watch_task = asyncio.create_task(coach_watch_weekly_scan())
     logger.info("Coach Watch background task started (7-day interval)")
     try:

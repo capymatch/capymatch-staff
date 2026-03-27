@@ -3,16 +3,114 @@ Event Engine — Event Mode data aggregation, prep logic, and routing
 
 Handles event listing, prep data, live note management, summary generation,
 and routing of event signals to Support Pod and Mission Control.
+
+Data is loaded from db.events at startup via init_event_engine().
 """
 
 from datetime import datetime, timezone, timedelta
 import uuid
 from services.athlete_store import get_all as get_athletes, get_interventions
-from mock_data import UPCOMING_EVENTS, SCHOOLS
+from db_client import db
+
+import logging
+log = logging.getLogger(__name__)
+
+# ── Module-level caches, populated by init_event_engine() at startup ─────
+
+_events: list = []
+_schools: list = []
+
+
+async def init_event_engine():
+    """Load events and schools from DB into memory cache. Called at server startup."""
+    global _events, _schools
+    _events = await _load_events_from_db()
+    _schools = await _load_schools_from_db()
+    log.info("event_engine: loaded %d events, %d schools from DB", len(_events), len(_schools))
+
+
+async def reload_events():
+    """Reload events from DB (call after DB writes to stay in sync)."""
+    global _events
+    _events = await _load_events_from_db()
+
+
+async def _load_events_from_db() -> list:
+    """Load all events from db.events, compute daysAway."""
+    events = await db.events.find({}, {"_id": 0}).to_list(500)
+    now = datetime.now(timezone.utc)
+    for e in events:
+        event_date = e.get("date") or e.get("start_date")
+        if event_date:
+            try:
+                if isinstance(event_date, str):
+                    edt = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+                elif isinstance(event_date, datetime):
+                    edt = event_date
+                else:
+                    e["daysAway"] = 99
+                    continue
+                if edt.tzinfo is None:
+                    edt = edt.replace(tzinfo=timezone.utc)
+                e["daysAway"] = (edt - now).days
+            except (ValueError, TypeError):
+                e["daysAway"] = 99
+        else:
+            e.setdefault("daysAway", 99)
+        e.setdefault("prepStatus", "not_started")
+        e.setdefault("athlete_ids", [])
+        e.setdefault("school_ids", [])
+        e.setdefault("capturedNotes", [])
+        e.setdefault("checklist", [])
+    return events
+
+
+async def _load_schools_from_db() -> list:
+    """Load schools from db.schools collection, fallback to university_knowledge_base."""
+    schools = await db.schools.find({}, {"_id": 0}).to_list(1000)
+    if not schools:
+        # Fallback: load from university_knowledge_base (different schema)
+        raw = await db.university_knowledge_base.find(
+            {}, {"_id": 0, "university_name": 1, "division": 1, "domain": 1}
+        ).to_list(1500)
+        schools = []
+        for r in raw:
+            name = r.get("university_name", "")
+            if not name:
+                continue
+            slug = name.lower().replace(" ", "_").replace("'", "")
+            schools.append({
+                "id": slug,
+                "name": name,
+                "division": r.get("division", ""),
+            })
+    return schools
+
+
+# ── Public accessors ─────────────────────────────────────────────────────
+
+def get_events_list():
+    """Return the in-memory events list."""
+    return _events
+
+
+def get_schools_list():
+    """Return the in-memory schools list."""
+    return _schools
+
+
+def add_event_to_cache(event: dict):
+    """Add a new event to the in-memory cache (after DB write)."""
+    _events.append(event)
+
+
+def add_school_to_cache(school: dict):
+    """Add a new school to the in-memory cache (after DB write)."""
+    _schools.append(school)
 
 
 def get_event(event_id):
-    return next((e for e in UPCOMING_EVENTS if e["id"] == event_id), None)
+    return next((e for e in _events if e["id"] == event_id), None)
 
 
 async def get_all_events(team_filter=None, type_filter=None):
@@ -23,7 +121,7 @@ async def get_all_events(team_filter=None, type_filter=None):
     all_athletes_list = await get_athletes()
     all_interventions_list = await get_interventions()
 
-    for event in UPCOMING_EVENTS:
+    for event in _events:
         e = {**event}
 
         # Compute urgency color
@@ -151,7 +249,7 @@ async def get_event_prep(event_id):
         # Cross-reference athlete's target schools with event schools
         athlete_school_targets = []
         for sid in school_ids:
-            school = next((s for s in SCHOOLS if s["id"] == sid), None)
+            school = next((s for s in _schools if s["id"] == sid), None)
             if school:
                 athlete_school_targets.append(school["name"])
         # Limit to a realistic subset based on athlete's target count
@@ -173,13 +271,13 @@ async def get_event_prep(event_id):
     # Target schools with athlete overlap count
     target_schools = []
     for sid in school_ids:
-        school = next((s for s in SCHOOLS if s["id"] == sid), None)
+        school = next((s for s in _schools if s["id"] == sid), None)
         if school:
             overlap = sum(1 for a in athletes_attending if school["name"] in a["targetSchoolsAtEvent"])
             target_schools.append({
                 "id": school["id"],
                 "name": school["name"],
-                "division": school["division"],
+                "division": school.get("division", ""),
                 "athleteOverlap": overlap,
             })
     target_schools.sort(key=lambda x: x["athleteOverlap"], reverse=True)

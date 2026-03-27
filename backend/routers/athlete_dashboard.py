@@ -670,6 +670,36 @@ async def list_programs(
         if not p.get("social_links") and kb.get("social_links"):
             p["social_links"] = kb["social_links"]
 
+    # ── Compute canonical attention per program (SSOT) ────────────────
+    from services.attention import compute_program_attention
+    from services.top_action_engine import compute_top_action
+    from services.program_metrics import get_metrics
+
+    # Batch-fetch top actions and metrics for all programs
+    ta_map = {}
+    mx_map = {}
+    for pid in program_ids:
+        try:
+            ta = await compute_top_action(pid, tenant_id)
+            if ta:
+                ta_map[pid] = ta
+        except Exception:
+            pass
+        try:
+            mx = await get_metrics(pid, tenant_id)
+            if mx:
+                mx_map[pid] = mx
+        except Exception:
+            pass
+
+    for p in programs:
+        pid = p["program_id"]
+        p["attention"] = compute_program_attention(
+            program=p,
+            top_action=ta_map.get(pid),
+            metrics=mx_map.get(pid),
+        )
+
     if grouped:
         groups = {
             "overdue": [],
