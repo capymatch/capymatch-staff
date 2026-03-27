@@ -48,7 +48,10 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **Refactor Sprint 1 — Attention SSOT**: DONE. `services/attention.py` is canonical. Frontend consumes backend attention.
 - **Refactor Sprint 2 — Interaction Signals SSOT**: DONE. `services/program_metrics.py` is canonical owner. `_compute_signals_from_interactions` and `_batch_signals` removed from `athlete_dashboard.py`. All views consume `extract_signals(metrics)`. Verified with 24 backend + 7 frontend tests (100% pass rate).
 - **Refactor Sprint 3 — Stage/Progress Consolidation**: DONE. `services/stage_engine.py` is canonical owner for `pipeline_stage`, `board_group`, and `journey_rail`. 2-field model enforced: `recruiting_status` (user-set) + `pipeline_stage` (system-derived). `journey_stage` writes stopped. DB normalized (24 programs). Auto-corrections on write flows. Verified with 17 backend + all frontend tests (100% pass).
-- **Phase 7 — Test Implementation**: IN PROGRESS (66+ tests across 5 test files)
+- **P0 — journey_stage Full Removal**: DONE. Field removed from all DB documents, all backend/frontend code.
+- **P1 — Mock Data Cleanup**: DONE. `support_pod.py`, `advocacy_engine.py`, `program_engine.py`, `routers/admin.py` — all mock imports replaced with DB queries. Only `startup.py` (seeding) retains mock_data.
+- **Priority Engine v2**: DONE. `services/priority_engine.py` is canonical owner for all priority/attention/urgency. Output contract: priority_score, priority_band, attention_status, urgency, momentum, opportunity_tier, stale_flag, blocker_flag, overdue_flag, hero_eligible, primary_action, why_this_is_priority. Backward-compatible aliases maintained. 23 backend + all frontend tests passed.
+- **Phase 7 — Test Implementation**: COMPLETE (90+ tests across 7 test files)
 
 ### Known Remaining mock_data Imports (acceptable — seeding only)
 - `services/startup.py` — mock_data (for seeding on first boot — acceptable)
@@ -58,7 +61,6 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
 ## Upcoming Tasks (P0/P1)
-- Priority Engine v2 — canonical priority/attention scoring
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
 - School Detail Page Redesign with premium ochre aesthetic
