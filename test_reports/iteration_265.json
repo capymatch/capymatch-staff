@@ -1,0 +1,114 @@
+{
+  "summary": "Sprint 2 Interaction Signals SSOT migration PASSED. All 24 backend tests pass. Frontend Pipeline, Journey, and Dashboard pages verified working with canonical signals from program_metrics.py.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint2_signals_ssot.py",
+    "/app/test_reports/pytest/pytest_sprint2_signals_ssot.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/program_metrics.py: VERIFIED - _compute_interaction_metrics() returns canonical signal fields (outreach_count, reply_count, has_coach_reply, days_since_activity, total_interactions)",
+    "services/program_metrics.py: VERIFIED - extract_signals() projects metrics into frontend-consumable shape with enriched fields (reply_rate, meaningful_interaction_count, engagement_trend, engagement_freshness_label, pipeline_health_state, data_confidence)",
+    "services/program_metrics.py: VERIFIED - batch_get_metrics() efficiently fetches cached metrics for multiple programs",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 568-599: list_programs uses batch_get_metrics + extract_signals for canonical signals",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 671-676: get_program uses get_metrics + extract_signals for single program",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 1127-1131: create_interaction calls recompute_metrics to invalidate cache",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 1185-1189: mark_as_replied calls recompute_metrics to invalidate cache",
+    "routers/athlete_dashboard.py: VERIFIED - _compute_signals_from_interactions and _batch_signals REMOVED (comment at lines 38-42)",
+    "frontend/PipelinePage.js: VERIFIED - Line 24: Comment confirms computeAttention.js no longer used",
+    "frontend/PipelinePage.js: VERIFIED - Lines 189-194: Uses p.attention from backend directly",
+    "frontend/JourneyPage.js: VERIFIED - Lines 459, 993-1001: Reads signals.outreach_count, signals.reply_count, signals.has_coach_reply, signals.days_since_activity from backend"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sprint2_signals_ssot.py"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24 tests passed)",
+    "frontend": "100% (Pipeline page, Journey page, Dashboard all working with canonical signals)"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123",
+    "coach": "coach.williams@capymatch.com / coach123",
+    "director": "director@capymatch.com / director123"
+  },
+  "seed_data_creation": "Created 1 test interaction (TEST_Sprint2_interaction_cache_test) for cache invalidation test",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Sprint 2 Interaction Signals SSOT migration complete. All signal data now comes from services/program_metrics.py via extract_signals() and batch_get_metrics(). The _compute_signals_from_interactions() and _batch_signals() functions have been REMOVED from athlete_dashboard.py. Backend tests verify: (1) signals have core fields (outreach_count, reply_count, has_coach_reply, days_since_activity, total_interactions), (2) signals have enriched fields (reply_rate, meaningful_interaction_count, engagement_trend, engagement_freshness_label, pipeline_health_state, data_confidence), (3) attention computation works, (4) board_group uses canonical signals, (5) journey_rail works, (6) cache invalidation on interaction creation, (7) determinism across consecutive calls. Frontend verified: Pipeline page shows hero card with attention data, Priority/Kanban views work, Journey page shows Communication & Activity stats (Outreach, Replies, Interactions, Last Active) from canonical signals.",
+  "tests_executed": {
+    "backend_tests": [
+      "TestProgramsEndpointSignals::test_programs_endpoint_returns_200 - PASS",
+      "TestProgramsEndpointSignals::test_programs_have_signals_field - PASS",
+      "TestProgramsEndpointSignals::test_signals_have_core_fields - PASS",
+      "TestProgramsEndpointSignals::test_signals_have_enriched_fields - PASS",
+      "TestProgramsEndpointSignals::test_signals_values_not_all_zero_for_active_programs - PASS",
+      "TestSingleProgramSignals::test_single_program_has_signals - PASS",
+      "TestSingleProgramSignals::test_single_program_signals_match_list - PASS",
+      "TestDashboardSignals::test_dashboard_returns_200 - PASS",
+      "TestDashboardSignals::test_dashboard_spotlight_has_signals - PASS",
+      "TestDashboardSignals::test_dashboard_follow_ups_have_signals - PASS",
+      "TestGroupedProgramsSignals::test_grouped_endpoint_returns_200 - PASS",
+      "TestGroupedProgramsSignals::test_grouped_programs_have_signals - PASS",
+      "TestAttentionComputation::test_programs_have_attention_field - PASS",
+      "TestAttentionComputation::test_attention_has_required_fields - PASS",
+      "TestBoardGrouping::test_programs_have_board_group - PASS",
+      "TestBoardGrouping::test_board_group_values_valid - PASS",
+      "TestBoardGrouping::test_in_conversation_uses_has_coach_reply - PASS",
+      "TestJourneyRail::test_programs_have_journey_rail - PASS",
+      "TestJourneyRail::test_journey_rail_has_required_fields - PASS",
+      "TestJourneyRail::test_journey_rail_active_values_valid - PASS",
+      "TestCacheInvalidation::test_create_interaction_updates_signals - PASS",
+      "TestDeterminism::test_consecutive_calls_return_identical_signals - PASS",
+      "TestCoachMissionControl::test_coach_mission_control_returns_200 - PASS",
+      "TestCoachMissionControl::test_coach_mission_control_has_roster - PASS"
+    ],
+    "frontend_tests": [
+      "Pipeline page loads - PASS: recruiting-board, pipeline-header, view-toggle found",
+      "Priority view - PASS: Hero card shows 'UCLA needs immediate attention — 5 others need follow-up'",
+      "Kanban view - PASS: Shows columns (Added, Outreach, Talking, Visit, Offered) with school cards",
+      "Journey page (Creighton) - PASS: Shows Communication & Activity card with Outreach=0, Replies=0, Interactions=0, Last Active=—",
+      "Journey page (UCLA) - PASS: Shows Communication & Activity card with Outreach=3, Replies=1, Interactions=4, Last Active=10d",
+      "Journey page signals - PASS: Coach Watch shows 'Active' with 'High confidence', timeline shows 4 interactions",
+      "Dashboard page - PASS: Shows stats (6 schools, 75% response rate, 2 replies, 1 awaiting reply)"
+    ]
+  },
+  "verified_features": {
+    "signals_ssot": {
+      "backend_service": "services/program_metrics.py is canonical source for all interaction-derived signals",
+      "core_fields": "outreach_count, reply_count, has_coach_reply, days_since_activity, total_interactions",
+      "enriched_fields": "reply_rate, meaningful_interaction_count, engagement_trend, engagement_freshness_label, pipeline_health_state, data_confidence",
+      "list_programs": "GET /api/athlete/programs uses batch_get_metrics + extract_signals",
+      "single_program": "GET /api/athlete/programs/{id} uses get_metrics + extract_signals",
+      "dashboard": "GET /api/athlete/dashboard uses batch_get_metrics + extract_signals for spotlight programs",
+      "grouped": "GET /api/athlete/programs?grouped=true returns groups with canonical signals"
+    },
+    "cache_invalidation": {
+      "create_interaction": "POST /api/athlete/interactions calls recompute_metrics",
+      "mark_replied": "POST /api/athlete/programs/{id}/mark-replied calls recompute_metrics"
+    },
+    "attention_computation": {
+      "status": "Working - programs have attention field with tier, attentionScore, attentionLevel"
+    },
+    "board_grouping": {
+      "status": "Working - uses signals.has_coach_reply for in_conversation classification"
+    },
+    "journey_rail": {
+      "status": "Working - has active and pulse fields, uses signals.outreach_count and signals.has_coach_reply"
+    },
+    "determinism": {
+      "status": "Verified - consecutive calls return identical signal values"
+    },
+    "frontend_consumption": {
+      "PipelinePage": "Uses p.attention from backend directly, no client-side recomputation",
+      "JourneyPage": "Reads signals.outreach_count, signals.reply_count, signals.has_coach_reply, signals.days_since_activity"
+    }
+  }
+}

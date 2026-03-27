@@ -35,78 +35,11 @@ async def get_athlete_tenant(current_user: dict) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# Interaction signal computation (ported from athlete app programs.py)
+# Interaction signals — delegated to canonical program_metrics service
 # ─────────────────────────────────────────────────────────────────────────
-
-def _compute_signals_from_interactions(interactions: list) -> dict:
-    """Pure computation of signals from a list of interactions."""
-    now = datetime.now(timezone.utc)
-    outreach_count = 0
-    reply_count = 0
-    has_coach_reply = False
-    last_outreach_date = None
-    last_reply_date = None
-    last_activity_date = None
-    total_interactions = len(interactions)
-
-    for ix in interactions:
-        ix_type = (ix.get("type") or "").lower()
-        dt_str = ix.get("date_time") or ix.get("created_at", "")
-        try:
-            dt = datetime.fromisoformat(str(dt_str).replace("Z", "+00:00"))
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-        except Exception as e:  # noqa: E722
-            log.warning("Handled exception (handled): %s", e)
-            dt = None
-
-        if dt and (last_activity_date is None or dt > last_activity_date):
-            last_activity_date = dt
-
-        if ix_type not in ("coach_reply", "email_received"):
-            outreach_count += 1
-            if dt and (last_outreach_date is None or dt > last_outreach_date):
-                last_outreach_date = dt
-
-        if ix_type in ("coach_reply", "email_received"):
-            has_coach_reply = True
-            reply_count += 1
-            if dt and (last_reply_date is None or dt > last_reply_date):
-                last_reply_date = dt
-
-    days_since_outreach = (now - last_outreach_date).days if last_outreach_date else None
-    days_since_reply = (now - last_reply_date).days if last_reply_date else None
-    days_since_activity = (now - last_activity_date).days if last_activity_date else None
-
-    return {
-        "outreach_count": outreach_count,
-        "reply_count": reply_count,
-        "has_coach_reply": has_coach_reply,
-        "last_outreach_date": last_outreach_date.isoformat() if last_outreach_date else None,
-        "last_reply_date": last_reply_date.isoformat() if last_reply_date else None,
-        "days_since_outreach": days_since_outreach,
-        "days_since_reply": days_since_reply,
-        "days_since_activity": days_since_activity,
-        "total_interactions": total_interactions,
-    }
-
-
-async def _batch_signals(tenant_id: str, program_ids: list) -> dict:
-    """Batch compute interaction signals for multiple programs in ONE query."""
-    all_interactions = await db.interactions.find(
-        {"tenant_id": tenant_id, "program_id": {"$in": program_ids}},
-        {"_id": 0},
-    ).to_list(5000)
-
-    by_program = {}
-    for ix in all_interactions:
-        pid = ix.get("program_id")
-        by_program.setdefault(pid, []).append(ix)
-
-    return {
-        pid: _compute_signals_from_interactions(by_program.get(pid, []))
-        for pid in program_ids
-    }
+# _compute_signals_from_interactions and _batch_signals have been removed.
+# All interaction-derived metrics now come from services/program_metrics.py
+# (Sprint 2: Interaction Signals SSOT migration).
 
 
 
@@ -628,20 +561,25 @@ async def list_programs(
 
     programs = await db.programs.find(query, {"_id": 0}).to_list(200)
 
-    # Batch-fetch signals, college coaches, and KB logos
+    # Batch-fetch college coaches, KB logos, and canonical metrics
     program_ids = [p["program_id"] for p in programs]
     uni_names = list({p["university_name"] for p in programs if p.get("university_name")})
-    signals_map, all_coaches, kb_entries = await asyncio.gather(
-        _batch_signals(tenant_id, program_ids),
-        db.college_coaches.find(
-            {"tenant_id": tenant_id, "program_id": {"$in": program_ids}},
-            {"_id": 0},
-        ).to_list(2000),
-        db.university_knowledge_base.find(
-            {"university_name": {"$in": uni_names}},
-            {"_id": 0, "university_name": 1, "logo_url": 1, "domain": 1, "social_links": 1},
-        ).to_list(500),
-    )
+
+    from services.program_metrics import batch_get_metrics, extract_signals
+    from services.attention import compute_program_attention
+    from services.top_action_engine import compute_top_action
+
+    all_coaches_f = db.college_coaches.find(
+        {"tenant_id": tenant_id, "program_id": {"$in": program_ids}},
+        {"_id": 0},
+    ).to_list(2000)
+    kb_f = db.university_knowledge_base.find(
+        {"university_name": {"$in": uni_names}},
+        {"_id": 0, "university_name": 1, "logo_url": 1, "domain": 1, "social_links": 1},
+    ).to_list(500)
+    mx_f = batch_get_metrics(tenant_id, program_ids)
+
+    all_coaches, kb_entries, mx_map = await asyncio.gather(all_coaches_f, kb_f, mx_f)
 
     kb_by_name = {e["university_name"]: e for e in kb_entries}
 
@@ -658,7 +596,7 @@ async def list_programs(
         )
         p["primary_college_coach"] = primary.get("coach_name", "") if primary else ""
         p["college_coach_email"] = primary.get("email", "") if primary else ""
-        p["signals"] = signals_map.get(pid, {})
+        p["signals"] = extract_signals(mx_map.get(pid, {}))
         p["board_group"] = categorize_program(p)
         p["journey_rail"] = compute_journey_rail(p)
         # Enrich with KB logo and domain
@@ -671,24 +609,13 @@ async def list_programs(
             p["social_links"] = kb["social_links"]
 
     # ── Compute canonical attention per program (SSOT) ────────────────
-    from services.attention import compute_program_attention
-    from services.top_action_engine import compute_top_action
-    from services.program_metrics import get_metrics
-
-    # Batch-fetch top actions and metrics for all programs
+    # mx_map already fetched above via batch_get_metrics
     ta_map = {}
-    mx_map = {}
     for pid in program_ids:
         try:
             ta = await compute_top_action(pid, tenant_id)
             if ta:
                 ta_map[pid] = ta
-        except Exception:
-            pass
-        try:
-            mx = await get_metrics(pid, tenant_id)
-            if mx:
-                mx_map[pid] = mx
         except Exception:
             pass
 
@@ -740,7 +667,11 @@ async def get_program(program_id: str, current_user: dict = get_current_user_dep
     coaches, interactions = await asyncio.gather(coaches_f, interactions_f)
     prog["college_coaches"] = coaches
     prog["interactions"] = interactions
-    prog["signals"] = _compute_signals_from_interactions(interactions)
+
+    # Canonical signals from program_metrics (Sprint 2 SSOT)
+    from services.program_metrics import get_metrics, extract_signals
+    mx = await get_metrics(program_id, tenant_id)
+    prog["signals"] = extract_signals(mx)
     prog["board_group"] = categorize_program(prog)
     prog["journey_rail"] = compute_journey_rail(prog)
 
@@ -1192,6 +1123,12 @@ async def create_interaction(body: dict, current_user: dict = get_current_user_d
         )
 
     await recompute_derived_data()
+    # Invalidate program_metrics cache so signals are fresh (Sprint 2 SSOT)
+    from services.program_metrics import recompute_metrics
+    try:
+        await recompute_metrics(program_id, tenant_id)
+    except Exception:
+        pass
     return doc
 
 
@@ -1244,6 +1181,12 @@ async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_
     )
 
     await recompute_derived_data()
+    # Invalidate program_metrics cache so signals are fresh (Sprint 2 SSOT)
+    from services.program_metrics import recompute_metrics
+    try:
+        await recompute_metrics(program_id, tenant_id)
+    except Exception:
+        pass
     return doc
 
 
@@ -1358,6 +1301,12 @@ async def mark_follow_up_sent(program_id: str, body: dict, current_user: dict = 
         {"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0}
     )
     await recompute_derived_data()
+    # Invalidate program_metrics cache so signals are fresh (Sprint 2 SSOT)
+    from services.program_metrics import recompute_metrics as _recompute_mx
+    try:
+        await _recompute_mx(program_id, tenant_id)
+    except Exception:
+        pass
     return updated
 
 
@@ -1448,12 +1397,16 @@ async def get_athlete_dashboard(current_user: dict = get_current_user_dep()):
         programs_f, events_f, interactions_f, athlete_f
     )
 
-    # Compute signals for each program
+    # Canonical signals from program_metrics (Sprint 2 SSOT)
     program_ids = [p["program_id"] for p in programs]
-    signals_map = await _batch_signals(tenant_id, program_ids) if program_ids else {}
+    if program_ids:
+        from services.program_metrics import batch_get_metrics, extract_signals
+        mx_map = await batch_get_metrics(tenant_id, program_ids)
+    else:
+        mx_map = {}
 
     for p in programs:
-        p["signals"] = signals_map.get(p["program_id"], {})
+        p["signals"] = extract_signals(mx_map.get(p["program_id"], {}))
         p["board_group"] = categorize_program(p)
 
     # Stats

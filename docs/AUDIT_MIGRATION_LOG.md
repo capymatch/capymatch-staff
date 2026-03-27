@@ -80,6 +80,48 @@
 
 ---
 
+## Sprint 2: Interaction Signals SSOT Unification (Completed)
+
+### Canonical Interaction Signals
+| Field | Value |
+|---|---|
+| **Metric Domain** | outreach_count, reply_count, has_coach_reply, days_since_activity, total_interactions, reply_rate, meaningful_interaction_count, engagement_freshness_label, engagement_trend, pipeline_health_state |
+| **Old Owner(s)** | `athlete_dashboard._compute_signals_from_interactions()` (local computation per request, no caching), `athlete_dashboard._batch_signals()` (batch wrapper) |
+| **New Canonical Owner** | `services/program_metrics.py → _compute_interaction_metrics()` (cached in `program_metrics` collection, recomputed on stale/missing) |
+| **Files Updated** | `services/program_metrics.py` (added fields + `extract_signals()` + `batch_get_metrics()`), `routers/athlete_dashboard.py` (removed duplicate logic, delegated to `program_metrics`) |
+| **Routes Impacted** | `GET /api/athlete/programs`, `GET /api/athlete/programs/{id}`, `GET /api/athlete/dashboard` |
+| **UI Surfaces** | Pipeline (Hero, Kanban, Priority Board), Journey Page, Athlete Dashboard, School Intelligence Panel, Breakdown Drawer |
+| **Frontend Change** | None — `program.signals` shape preserved. Frontend still reads `signals.outreach_count`, `signals.has_coach_reply`, etc. Same field names, now populated from canonical source. |
+| **Backward Compat** | `extract_signals()` projects `program_metrics` into the old `signals` dict shape. No frontend changes needed. |
+| **Invalidation** | `recompute_metrics()` called on `create_interaction`, `mark_as_replied`, `mark_follow_up_sent` to keep cache fresh. |
+
+### Old → New Field Mapping
+| Old Field (from `_compute_signals_from_interactions`) | New Canonical Field (from `program_metrics`) | Notes |
+|---|---|---|
+| `outreach_count` | `outreach_count` | Now cached, not recomputed per request |
+| `reply_count` | `reply_count` | Same |
+| `has_coach_reply` | `has_coach_reply` | Same |
+| `last_outreach_date` | `last_outreach_date` | Same |
+| `last_reply_date` | `last_reply_date` | Same |
+| `days_since_outreach` | `days_since_outreach` | Same |
+| `days_since_reply` | `days_since_reply` | Same |
+| `days_since_activity` | `days_since_activity` (alias for `days_since_last_engagement`) | Same semantic, canonical field |
+| `total_interactions` | `total_interactions` | Same |
+| *(not available)* | `reply_rate` | NEW in signals via `extract_signals()` |
+| *(not available)* | `meaningful_interaction_count` | NEW in signals |
+| *(not available)* | `engagement_freshness_label` | NEW in signals |
+| *(not available)* | `engagement_trend` | NEW in signals |
+| *(not available)* | `pipeline_health_state` | NEW in signals |
+| *(not available)* | `data_confidence` | NEW in signals |
+
+### Functions Removed
+| Function | File | Reason |
+|---|---|---|
+| `_compute_signals_from_interactions()` | `routers/athlete_dashboard.py` | Duplicate of `program_metrics._compute_interaction_metrics()` |
+| `_batch_signals()` | `routers/athlete_dashboard.py` | Replaced by `program_metrics.batch_get_metrics()` + `extract_signals()` |
+
+---
+
 ## Remaining Work
 
 ### P2 Mock Data (Backlog)
@@ -89,10 +131,6 @@
 
 ### P3 Mock Data (Low)
 - `routers/admin.py` — SCHOOLS
-
-### Refactor Sprint 2 — Interaction Signals (Next)
-- `athlete_dashboard._compute_signals_from_interactions()` → delegate to `program_metrics`
-- Unify engagement/reply/freshness views
 
 ### Refactor Sprint 3 — Stage/Progress Consolidation (Future)
 - Consolidate 5 parallel stage systems to 2 canonical fields

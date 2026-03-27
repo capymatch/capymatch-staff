@@ -267,7 +267,12 @@ def _freshness_label(days: int) -> str:
 
 
 def _compute_interaction_metrics(interactions: list, now: datetime) -> dict:
-    """Derive reply rate, response times, engagement freshness from interactions."""
+    """Derive reply rate, response times, engagement freshness from interactions.
+
+    This is the CANONICAL interaction-signal computation. All consumers
+    (dashboard, journey rail, board grouping, attention engine) must read
+    these fields rather than computing their own.
+    """
     total = len(interactions)
     if total == 0:
         return {
@@ -276,17 +281,53 @@ def _compute_interaction_metrics(interactions: list, now: datetime) -> dict:
             "meaningful_interaction_count": 0,
             "days_since_last_engagement": None,
             "unanswered_coach_questions": 0,
+            # Canonical signal fields (previously in _compute_signals_from_interactions)
+            "outreach_count": 0,
+            "reply_count": 0,
+            "has_coach_reply": False,
+            "last_outreach_date": None,
+            "last_reply_date": None,
+            "days_since_outreach": None,
+            "days_since_reply": None,
+            "days_since_activity": None,
+            "total_interactions": 0,
         }
 
-    # Outbound interactions (athlete-initiated)
-    outbound_types = {"email_sent", "email sent", "text_message", "text message", "video_call", "video call", "phone_call", "phone call"}
     inbound_types = {"coach_reply", "coach reply", "email_received", "email received"}
 
-    outbound_count = sum(1 for ix in interactions if ix.get("type", "").lower().replace(" ", "_") in outbound_types or ix.get("initiated_by") == "athlete")
-    inbound_count = sum(1 for ix in interactions if ix.get("type", "").lower().replace(" ", "_") in inbound_types or ix.get("initiated_by") == "coach")
+    # Walk interactions once (sorted newest-first by caller) to collect all signals
+    inbound_count = 0
+    last_outreach_dt = None
+    last_reply_dt = None
+    last_activity_dt = None
 
-    # Reply rate: inbound / outbound
-    reply_rate = round(inbound_count / outbound_count, 2) if outbound_count > 0 else None
+    for ix in interactions:
+        ix_type = (ix.get("type") or "").lower().replace(" ", "_")
+        dt = _parse_dt(ix.get("date_time") or ix.get("created_at"))
+
+        if dt and (last_activity_dt is None or dt > last_activity_dt):
+            last_activity_dt = dt
+
+        if ix_type in inbound_types or ix.get("initiated_by") == "coach":
+            inbound_count += 1
+            if dt and (last_reply_dt is None or dt > last_reply_dt):
+                last_reply_dt = dt
+        else:
+            if dt and (last_outreach_dt is None or dt > last_outreach_dt):
+                last_outreach_dt = dt
+
+    outreach_count = total - inbound_count
+    has_coach_reply = inbound_count > 0
+
+    # Outbound-only count for reply_rate (strict type matching for accuracy)
+    outbound_types = {"email_sent", "email sent", "text_message", "text message",
+                      "video_call", "video call", "phone_call", "phone call"}
+    strict_outbound = sum(
+        1 for ix in interactions
+        if ix.get("type", "").lower().replace(" ", "_") in outbound_types
+        or ix.get("initiated_by") == "athlete"
+    )
+    reply_rate = round(inbound_count / strict_outbound, 2) if strict_outbound > 0 else None
 
     # Response times
     response_times = [ix["response_time_hours"] for ix in interactions if ix.get("response_time_hours") is not None]
@@ -298,15 +339,15 @@ def _compute_interaction_metrics(interactions: list, now: datetime) -> dict:
         if _is_meaningful_engagement(ix, interactions)
     )
 
-    # Days since last engagement
-    last_dt = _parse_dt(interactions[0].get("date_time") or interactions[0].get("created_at"))
-    days_since = (now - last_dt).days if last_dt else None
+    # Days-since calculations
+    days_since_engagement = (now - last_activity_dt).days if last_activity_dt else None
+    days_since_outreach = (now - last_outreach_dt).days if last_outreach_dt else None
+    days_since_reply = (now - last_reply_dt).days if last_reply_dt else None
 
     # Unanswered coach questions
     unanswered = 0
     for ix in interactions:
         if ix.get("coach_question_detected"):
-            # Check if there's a later athlete-initiated interaction
             ix_dt = _parse_dt(ix.get("date_time") or ix.get("created_at"))
             if ix_dt:
                 has_followup = any(
@@ -322,8 +363,18 @@ def _compute_interaction_metrics(interactions: list, now: datetime) -> dict:
         "reply_rate": reply_rate,
         "median_response_time_hours": median_rt,
         "meaningful_interaction_count": meaningful_count,
-        "days_since_last_engagement": days_since,
+        "days_since_last_engagement": days_since_engagement,
         "unanswered_coach_questions": unanswered,
+        # Canonical signal fields
+        "outreach_count": outreach_count,
+        "reply_count": inbound_count,
+        "has_coach_reply": has_coach_reply,
+        "last_outreach_date": last_outreach_dt.isoformat() if last_outreach_dt else None,
+        "last_reply_date": last_reply_dt.isoformat() if last_reply_dt else None,
+        "days_since_outreach": days_since_outreach,
+        "days_since_reply": days_since_reply,
+        "days_since_activity": days_since_engagement,
+        "total_interactions": total,
     }
 
 
@@ -544,6 +595,17 @@ def _empty_metrics(program_id: str, tenant_id: str, reason: str) -> dict:
         "meaningful_interaction_count": 0,
         "days_since_last_engagement": None,
         "unanswered_coach_questions": 0,
+        # Canonical signal fields
+        "outreach_count": 0,
+        "reply_count": 0,
+        "has_coach_reply": False,
+        "last_outreach_date": None,
+        "last_reply_date": None,
+        "days_since_outreach": None,
+        "days_since_reply": None,
+        "days_since_activity": None,
+        "total_interactions": 0,
+        # Meaningful engagement
         "last_meaningful_engagement_at": None,
         "last_meaningful_engagement_type": None,
         "days_since_last_meaningful_engagement": None,
@@ -562,3 +624,63 @@ def _empty_metrics(program_id: str, tenant_id: str, reason: str) -> dict:
         "computed_at": datetime.now(timezone.utc).isoformat(),
         "_error": reason,
     }
+
+
+# ── Public extraction helpers ────────────────────────────────────────────
+
+def extract_signals(metrics: dict) -> dict:
+    """Project program_metrics into the 'signals' shape consumed by frontend/backend.
+
+    This is the ONLY way to produce the signals dict. No other code should
+    independently compute interaction signals from raw interactions.
+    """
+    return {
+        "outreach_count": metrics.get("outreach_count", 0),
+        "reply_count": metrics.get("reply_count", 0),
+        "has_coach_reply": metrics.get("has_coach_reply", False),
+        "last_outreach_date": metrics.get("last_outreach_date"),
+        "last_reply_date": metrics.get("last_reply_date"),
+        "days_since_outreach": metrics.get("days_since_outreach"),
+        "days_since_reply": metrics.get("days_since_reply"),
+        "days_since_activity": metrics.get("days_since_activity", metrics.get("days_since_last_engagement")),
+        "total_interactions": metrics.get("total_interactions", 0),
+        # Enriched fields from canonical metrics
+        "reply_rate": metrics.get("reply_rate"),
+        "meaningful_interaction_count": metrics.get("meaningful_interaction_count", 0),
+        "days_since_last_meaningful_engagement": metrics.get("days_since_last_meaningful_engagement"),
+        "engagement_freshness_label": metrics.get("engagement_freshness_label", "no_recent_engagement"),
+        "engagement_trend": metrics.get("engagement_trend", "insufficient_data"),
+        "pipeline_health_state": metrics.get("pipeline_health_state", "at_risk"),
+        "data_confidence": metrics.get("data_confidence", "LOW"),
+    }
+
+
+async def batch_get_metrics(tenant_id: str, program_ids: list, *, max_age_hours: int = 6) -> dict:
+    """Batch-fetch cached metrics for multiple programs in one query.
+
+    Returns {program_id: metrics_dict}. Missing/stale entries are
+    individually recomputed.
+    """
+    if not program_ids:
+        return {}
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=max_age_hours)).isoformat()
+
+    cached = await db.program_metrics.find(
+        {"tenant_id": tenant_id, "program_id": {"$in": program_ids}, "computed_at": {"$gte": cutoff}},
+        {"_id": 0},
+    ).to_list(len(program_ids))
+
+    result = {d["program_id"]: d for d in cached}
+
+    # Recompute any missing
+    missing = [pid for pid in program_ids if pid not in result]
+    for pid in missing:
+        try:
+            m = await recompute_metrics(pid, tenant_id)
+            result[pid] = m
+        except Exception as e:
+            log.warning(f"batch_get_metrics: failed for {pid}: {e}")
+            result[pid] = _empty_metrics(pid, tenant_id, str(e))
+
+    return result
