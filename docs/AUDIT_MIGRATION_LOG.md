@@ -122,6 +122,80 @@
 
 ---
 
+## Sprint 3: Stage/Progress Consolidation (Completed)
+
+### Canonical Stage Model
+| Field | Level | Owner | Semantics | Values |
+|---|---|---|---|---|
+| `recruiting_status` | Per-program | **User-set** (+ auto-corrections) | User's declared intent/state | `Not Contacted`, `Contacted`, `In Conversation`, `Campus Visit`, `Offer`, `Committed`, `Archived` |
+| `pipeline_stage` | Per-program | **System-derived** (`stage_engine.py`) | Factual stage from recruiting_status + signals | `added`, `outreach`, `in_conversation`, `campus_visit`, `offer`, `committed`, `archived` |
+| `board_group` | Per-program | **Derived** (never stored) | UI funnel bucket | `archived`, `overdue`, `in_conversation`, `waiting_on_reply`, `needs_outreach` |
+
+### Stage Rank System
+| Stage | Rank |
+|---|---|
+| `archived` | -1 |
+| `added` | 0 |
+| `outreach` | 1 |
+| `in_conversation` | 2 |
+| `campus_visit` | 3 |
+| `offer` | 4 |
+| `committed` | 5 |
+
+### Rules Enforced
+1. **No-downward-contradiction**: `pipeline_stage_rank >= base_stage_rank(recruiting_status)`. Always.
+2. **Signal upgrades** (upgrade-only): `added + outreach_count > 0 → outreach`, `outreach + has_coach_reply → in_conversation`
+3. **Stage locking**: `recruiting_status ∈ {In Conversation, Campus Visit, Offer, Committed} → pipeline_stage LOCKED to base`
+4. **Auto-normalization** (write-time): `outreach_count > 0 AND "Not Contacted" → "Contacted"`, `has_coach_reply AND "Contacted" → "In Conversation"`
+5. **Archived override**: `recruiting_status == "Archived" → pipeline_stage = "archived", board_group = "archived"`
+6. **journey_stage writes blocked**: Stripped from PUT body, never written to DB
+
+### Normalization Applied
+| Legacy Value | Canonical Value | Programs Migrated |
+|---|---|---|
+| `Prospect` | `Not Contacted` | 8 |
+| `Initial Contact` | `Contacted` | 9 |
+| `Interested` | `In Conversation` | 4 |
+| `Engaged` | `In Conversation` | 3 |
+| Auto-correction (signals contradicted status) | Various | 9 |
+
+### Files Created
+| File | Purpose |
+|---|---|
+| `services/stage_engine.py` | Canonical stage computation (compute_pipeline_stage, compute_board_group, compute_journey_rail, compute_auto_corrections, normalize_recruiting_status) |
+
+### Files Updated
+| File | Change |
+|---|---|
+| `routers/athlete_dashboard.py` | Removed `categorize_program()`, `compute_journey_rail()`, imported from `stage_engine`. Added `normalize_recruiting_status` to `update_program`, stripped `journey_stage` from writes. Added `compute_auto_corrections` to interaction CRUD. |
+| `routers/connected.py` | Imports from `stage_engine` instead of `athlete_dashboard` |
+| `services/attention.py` | Uses `pipeline_stage` for stage weight instead of `journey_stage \|\| recruiting_status` |
+| `services/top_action_engine.py` | Uses `pipeline_stage` for uncontacted check |
+| `services/program_metrics.py` | Uses `_pipeline_stage` for health computation instead of `_journey_stage` |
+| `services/athlete_store.py` | Canonical `STAGE_WEIGHTS` with normalized values |
+| `routers/momentum_recap.py` | Delegates to `stage_engine.compute_pipeline_stage` |
+| `routers/ai_features.py` | Delegates to `stage_engine.compute_pipeline_stage` |
+| `routers/athlete_gmail.py` | New programs use canonical `recruiting_status` (no `journey_stage`) |
+| `routers/athlete_gmail_intelligence.py` | Stage updates write to `recruiting_status` (upgrade-only) |
+| `services/gmail_intelligence.py` | Reads `recruiting_status` instead of `journey_stage` |
+| `intelligence/payload_builder.py` | Removed `journey_stage` from engagement payload |
+| `intelligence/agents/timeline.py` | Removed `journey_stage` read |
+| `intelligence/agents/school_insight.py` | Removed `journey_stage` from prompt |
+| Frontend `pipeline-constants.js` | `programToKanbanCol()` uses `pipeline_stage` exclusively |
+| Frontend `PipelinePage.js` | DnD handler writes `recruiting_status`, reads `pipeline_stage` |
+| Frontend `JourneyPage.js` | Stage advance writes `recruiting_status` via `STAGE_TO_STATUS` map |
+| Frontend `PipelineHero.js` | `buildRail()` uses `pipeline_stage` |
+| Frontend `HeroCard.js` | Stage display uses `pipeline_stage` |
+| Frontend `PipelineList.js` | Sorting/display uses `pipeline_stage` |
+
+### Functions Removed
+| Function | File | Reason |
+|---|---|---|
+| `categorize_program()` | `routers/athlete_dashboard.py` | Replaced by `stage_engine.compute_board_group()` |
+| `compute_journey_rail()` | `routers/athlete_dashboard.py` | Replaced by `stage_engine.compute_journey_rail()` |
+
+---
+
 ## Remaining Work
 
 ### P2 Mock Data (Backlog)
@@ -132,5 +206,7 @@
 ### P3 Mock Data (Low)
 - `routers/admin.py` — SCHOOLS
 
-### Refactor Sprint 3 — Stage/Progress Consolidation (Future)
-- Consolidate 5 parallel stage systems to 2 canonical fields
+### journey_stage Full Removal (Deferred)
+- Field still exists in DB documents but is never written to or read from production paths
+- Full removal requires data migration (drop field from all program docs)
+- Scheduled for post-Sprint 3 cleanup

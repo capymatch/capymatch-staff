@@ -47,8 +47,8 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **P1 Mock Data Fixes**: DONE. event_engine.py, events.py, intelligence.py, digest.py all fixed.
 - **Refactor Sprint 1 — Attention SSOT**: DONE. `services/attention.py` is canonical. Frontend consumes backend attention.
 - **Refactor Sprint 2 — Interaction Signals SSOT**: DONE. `services/program_metrics.py` is canonical owner. `_compute_signals_from_interactions` and `_batch_signals` removed from `athlete_dashboard.py`. All views consume `extract_signals(metrics)`. Verified with 24 backend + 7 frontend tests (100% pass rate).
-- **Refactor Sprint 3 — Stage/Progress Consolidation**: NOT STARTED
-- **Phase 7 — Test Implementation**: IN PROGRESS (49+ tests across 4 test files)
+- **Refactor Sprint 3 — Stage/Progress Consolidation**: DONE. `services/stage_engine.py` is canonical owner for `pipeline_stage`, `board_group`, and `journey_rail`. 2-field model enforced: `recruiting_status` (user-set) + `pipeline_stage` (system-derived). `journey_stage` writes stopped. DB normalized (24 programs). Auto-corrections on write flows. Verified with 17 backend + all frontend tests (100% pass).
+- **Phase 7 — Test Implementation**: IN PROGRESS (66+ tests across 5 test files)
 
 ### Known Remaining mock_data Imports (P2/P3 — backlog)
 - `support_pod.py` — UPCOMING_EVENTS
@@ -61,11 +61,11 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
 ## Upcoming Tasks (P0/P1)
-- Refactor Sprint 3 — Stage/Progress Consolidation
+- Remaining P2/P3 mock_data leaks (support_pod, advocacy_engine, program_engine, admin)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
 - School Detail Page Redesign with premium ochre aesthetic
-- Remaining P2/P3 mock_data leaks (support_pod, advocacy_engine, program_engine, admin)
+- journey_stage full field removal from DB (cleanup)
 
 ## Future Tasks (P2)
 - Parent/Family Experience
@@ -100,3 +100,4 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - `/app/backend/tests/test_determinism_no_mock.py` — 13 tests covering determinism + no-mock-data verification
 - `/app/backend/tests/test_attention_regression.py` — 20 tests for Sprint 1 Attention SSOT regression
 - `/app/backend/tests/test_sprint2_signals_ssot.py` — 24 tests for Sprint 2 Interaction Signals SSOT
+- `/app/backend/tests/test_sprint3_stage_consolidation.py` — 17 tests for Sprint 3 Stage/Progress SSOT
