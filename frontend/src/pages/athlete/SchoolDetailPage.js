@@ -28,7 +28,7 @@ function sizeLabel(size) {
 const fmtPct = (v) => v != null ? `${(v * 100).toFixed(0)}%` : null;
 const fmtMoney = (v) => v != null ? `$${Number(v).toLocaleString()}` : null;
 
-/* ── Match Score (Clean Ring — Ochre) ── */
+/* ── Match Score (Clean Ring — Teal) ── */
 function MatchRing({ score }) {
   const pct = score || 0;
   const r = 52, c = 2 * Math.PI * r;
@@ -37,12 +37,12 @@ function MatchRing({ score }) {
     <div className="relative flex-shrink-0 w-[130px] h-[130px]" data-testid="match-score-ring">
       <svg width="130" height="130" viewBox="0 0 120 120" className="absolute inset-0">
         <circle cx="60" cy="60" r={r} fill="none" stroke="var(--cm-border)" strokeWidth="5" opacity="0.5" />
-        <circle cx="60" cy="60" r={r} fill="none" stroke="#8B3F1F" strokeWidth="5"
+        <circle cx="60" cy="60" r={r} fill="none" stroke="#1a8a80" strokeWidth="5"
           strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
           transform="rotate(-90 60 60)" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[28px] font-semibold text-[#8B3F1F] leading-none tracking-tight">{pct}</span>
+        <span className="text-[28px] font-semibold text-[#1a8a80] leading-none tracking-tight">{pct}</span>
         <span className="text-[10px] font-medium text-[var(--cm-text-3)] uppercase tracking-[1.5px] mt-1">match</span>
       </div>
     </div>
@@ -178,7 +178,7 @@ function buildOpportunity(school, matchData) {
 }
 
 const LEVEL_DOT = {
-  high: "#8B3F1F",
+  high: "#1a8a80",
   moderate: "var(--cm-text-3)",
   low: "var(--cm-text-3)",
   neutral: "var(--cm-text-3)",
@@ -239,7 +239,7 @@ export default function SchoolDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-5 h-5 text-[#8B3F1F] animate-spin" />
+        <Loader2 className="w-5 h-5 text-[#1a8a80] animate-spin" />
       </div>
     );
   }
@@ -309,7 +309,7 @@ export default function SchoolDetailPage() {
               className={`px-5 py-2.5 rounded-full text-[13px] font-medium inline-flex items-center gap-2 transition-all ${
                 school.on_board
                   ? "border border-[var(--cm-border)] text-[var(--cm-text-3)] cursor-default"
-                  : "border-2 border-[#8B3F1F] text-[#8B3F1F] hover:bg-[#8B3F1F] hover:text-white"
+                  : "border-2 border-[var(--cm-accent)] text-[var(--cm-accent)] hover:bg-[var(--cm-accent)] hover:text-white"
               }`}>
               {school.on_board ? <><Check className="w-4 h-4" /> On Your Board</> : <><Plus className="w-4 h-4" /> {adding ? "Adding..." : "Add to Pipeline"}</>}
             </button>
@@ -334,17 +334,17 @@ export default function SchoolDetailPage() {
       {fitReasons.length > 0 && (
         <>
           <Divider />
-          <div className="rounded-2xl md:rounded-3xl p-6 md:p-8" style={{ backgroundColor: "rgba(139, 63, 31, 0.04)" }} data-testid="why-this-school-section">
+          <div className="rounded-2xl md:rounded-3xl p-6 md:p-8" style={{ backgroundColor: "rgba(26, 138, 128, 0.04)" }} data-testid="why-this-school-section">
             <div className="flex items-center gap-2 mb-5">
-              <Sparkles className="w-4 h-4 text-[#8B3F1F]" />
+              <Sparkles className="w-4 h-4 text-[#1a8a80]" />
               <h2 className="text-base sm:text-lg font-medium text-[var(--cm-text)] tracking-tight" data-testid="why-this-school-title">Why This School</h2>
             </div>
             <ul className="space-y-4" data-testid="fit-reasons-list">
               {fitReasons.map((r, i) => (
                 <li key={i} className="flex items-start gap-3" data-testid={`fit-reason-${i}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#8B3F1F] mt-[7px] flex-shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1a8a80] mt-[7px] flex-shrink-0" />
                   <div>
-                    <span className="text-[13px] font-semibold text-[#8B3F1F] mr-2">{r.label}</span>
+                    <span className="text-[13px] font-semibold text-[#1a8a80] mr-2">{r.label}</span>
                     <span className="text-[14px] sm:text-[15px] text-[var(--cm-text-2)] leading-relaxed">{r.text}</span>
                   </div>
                 </li>
@@ -410,7 +410,7 @@ export default function SchoolDetailPage() {
                     <span className="text-[13px] font-semibold text-[var(--cm-text)]">{ss.score}/{ss.max}</span>
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden bg-[var(--cm-surface-2)]">
-                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: "#8B3F1F" }} />
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: "#1a8a80" }} />
                   </div>
                 </div>
               );
@@ -427,8 +427,8 @@ export default function SchoolDetailPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-[var(--cm-text)]">{d.value}</span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{
-                          background: d.status === "match" ? "rgba(139,63,31,0.1)" : d.status === "close" ? "rgba(139,63,31,0.06)" : "var(--cm-surface-2)",
-                          color: d.status === "match" ? "#8B3F1F" : d.status === "close" ? "#8B3F1F" : "var(--cm-text-3)",
+                          background: d.status === "match" ? "rgba(26,138,128,0.15)" : d.status === "close" ? "rgba(26,138,128,0.08)" : "var(--cm-surface-2)",
+                          color: d.status === "match" ? "#1a8a80" : d.status === "close" ? "#1a8a80" : "var(--cm-text-3)",
                         }}>
                           {d.status === "match" ? "In Range" : d.status === "close" ? "Close" : "Below"}
                         </span>
@@ -582,7 +582,7 @@ export default function SchoolDetailPage() {
                         <span className="text-[12px] font-semibold text-[var(--cm-text)]">{data.students}%</span>
                       </div>
                       <div className="h-1.5 rounded-full overflow-hidden bg-[var(--cm-surface-2)]">
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.students, 100)}%`, backgroundColor: "#8B3F1F" }} />
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.students, 100)}%`, backgroundColor: "#1a8a80" }} />
                       </div>
                     </div>
                     <div>
