@@ -25,12 +25,14 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 - Schools Page Full Redesign (premium layout, ochre accents)
 - Schools Page Green Reduction (Mar 2026): Neutralized all non-CTA green usage
 - Login page role selector removed, defaulting to "athlete"
-- **Google OAuth Integration (Mar 2026)**: Backend `/api/auth/google` endpoint, frontend `GoogleLogin` button (conditionally rendered when `REACT_APP_GOOGLE_CLIENT_ID` is set). Graceful fallback — preview env works without Google keys. Production keys configured in Vercel.
+- **Google OAuth Integration (Mar 2026)**: Redirect-based flow. Custom "Continue with Google" button always visible. Backend handles OAuth URL generation + code exchange. No dependency on frontend env vars.
 
 ## Google OAuth Setup (Production)
-- Frontend env: `REACT_APP_GOOGLE_CLIENT_ID` (set in Vercel)
-- Backend env: `GOOGLE_CLIENT_ID` (set in Railway)
-- No Emergent branding — standard Google OAuth button
+The Google button is always visible. The OAuth flow is backend-driven:
+- **Railway (backend)**: Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+- **Vercel (frontend)**: No Google env vars needed (removed dependency on `REACT_APP_GOOGLE_CLIENT_ID`)
+- **Google Console**: Add production frontend URL as authorized redirect URI (e.g., `https://your-app.vercel.app/login`)
+- Flow: Button click -> GET /api/auth/google/url -> redirect to Google -> callback to /login?code=xxx -> POST /api/auth/google with code -> backend exchanges code for tokens
 
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
@@ -53,14 +55,14 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 ## Key API Endpoints
 - `POST /api/auth/login` — Email/password login
 - `POST /api/auth/register` — Registration (athlete/parent/coach)
-- `POST /api/auth/google` — Google OAuth (returns 503 if not configured)
+- `GET /api/auth/google/config` — Check if Google OAuth is configured
+- `GET /api/auth/google/url` — Get Google OAuth redirect URL
+- `POST /api/auth/google` — Google OAuth (accepts credential OR code)
 - `POST /api/auth/refresh` — Token refresh
 - `GET /api/auth/me` — Current user
-- `POST /api/auth/forgot-password` — Password reset request
-- `POST /api/auth/reset-password` — Password reset
 
 ## 3rd Party Integrations
 - OpenAI GPT-4o / Claude — Emergent LLM Key
 - Stripe (Payments) — User API Key
 - Resend (Email) — Configured
-- Google OAuth — User Client ID/Secret (Vercel/Railway production only)
+- Google OAuth — User Client ID/Secret (Railway backend only)

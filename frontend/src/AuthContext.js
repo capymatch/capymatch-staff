@@ -186,6 +186,17 @@ export function AuthProvider({ children }) {
     return userData;
   };
 
+  const loginWithTokens = async (tokenData) => {
+    setToken(tokenData.token);
+    if (tokenData.refresh_token) {
+      localStorage.setItem("capymatch_refresh_token", tokenData.refresh_token);
+    }
+    const userData = tokenData.user;
+    setUser(userData);
+    await checkOnboarding(userData);
+    return userData;
+  };
+
   const completeOnboarding = () => setOnboardingDone(true);
 
   const logout = async () => {
@@ -198,7 +209,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token, loading, login, register, googleLogin, logout, onboardingDone, completeOnboarding }}>
+    <AuthContext.Provider value={{ user, setUser, token, loading, login, register, googleLogin, loginWithTokens, logout, onboardingDone, completeOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

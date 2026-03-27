@@ -233,61 +233,131 @@ async def login(body: UserLogin, background_tasks: BackgroundTasks):
 
 
 # ── Google OAuth ──
-class GoogleAuthRequest(BaseModel):
-    credential: str  # Google ID token from frontend
+
+def _google_client_id():
+    return os.environ.get("GOOGLE_CLIENT_ID")
+
+def _google_client_secret():
+    return os.environ.get("GOOGLE_CLIENT_SECRET")
 
 
-@router.post("/auth/google", response_model=TokenResponse)
-async def google_auth(body: GoogleAuthRequest, background_tasks: BackgroundTasks):
-    """Authenticate with Google OAuth. Creates account if first login."""
-    # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+@router.get("/auth/google/config")
+async def google_config():
+    """Check if Google OAuth is configured (frontend calls this on load)."""
+    return {"enabled": bool(_google_client_id())}
+
+
+@router.get("/auth/google/url")
+async def google_auth_url():
+    """Return the Google OAuth URL for redirect-based flow."""
+    client_id = _google_client_id()
+    if not client_id:
+        raise HTTPException(status_code=503, detail="Google OAuth not configured")
+
+    frontend_url = os.environ.get("FRONTEND_URL", "")
+    redirect_uri = f"{frontend_url}/login"
+
+    from urllib.parse import urlencode
+    params = urlencode({
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+    })
+    return {"url": f"https://accounts.google.com/o/oauth2/v2/auth?{params}"}
+
+
+async def _google_user_from_code(code: str) -> dict:
+    """Exchange Google auth code for tokens, return user info dict."""
+    import requests as http_requests
+
+    client_id = _google_client_id()
+    client_secret = _google_client_secret()
+    frontend_url = os.environ.get("FRONTEND_URL", "")
+    redirect_uri = f"{frontend_url}/login"
+
+    token_resp = http_requests.post("https://oauth2.googleapis.com/token", data={
+        "code": code,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    })
+
+    if token_resp.status_code != 200:
+        log_auth.error(f"Google token exchange failed: {token_resp.text}")
+        raise HTTPException(status_code=401, detail="Failed to exchange Google code")
+
+    tokens = token_resp.json()
+    id_token_str = tokens.get("id_token")
+
     from google.oauth2 import id_token
     from google.auth.transport import requests as google_requests
 
-    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    idinfo = id_token.verify_oauth2_token(id_token_str, google_requests.Request(), client_id)
+    return {
+        "email": idinfo.get("email", "").strip().lower(),
+        "name": idinfo.get("name", ""),
+        "picture": idinfo.get("picture", ""),
+        "sub": idinfo.get("sub"),
+    }
+
+
+async def _google_user_from_credential(credential: str) -> dict:
+    """Verify a Google ID token (from GoogleLogin component), return user info."""
+    from google.oauth2 import id_token
+    from google.auth.transport import requests as google_requests
+
+    client_id = _google_client_id()
     if not client_id:
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
 
     try:
-        idinfo = id_token.verify_oauth2_token(
-            body.credential, google_requests.Request(), client_id
-        )
+        idinfo = id_token.verify_oauth2_token(credential, google_requests.Request(), client_id)
     except Exception as e:
         log_auth.error(f"Google token verification failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid Google token")
 
-    email = idinfo.get("email", "").strip().lower()
-    name = idinfo.get("name", email.split("@")[0])
-    photo_url = idinfo.get("picture", "")
+    return {
+        "email": idinfo.get("email", "").strip().lower(),
+        "name": idinfo.get("name", ""),
+        "picture": idinfo.get("picture", ""),
+        "sub": idinfo.get("sub"),
+    }
+
+
+async def _finish_google_login(google_user: dict, background_tasks: BackgroundTasks) -> dict:
+    """Shared logic: create/login user from Google info, return token response."""
+    email = google_user["email"]
+    name = google_user.get("name") or email.split("@")[0]
+    photo_url = google_user.get("picture", "")
 
     if not email:
         raise HTTPException(status_code=400, detail="No email in Google token")
 
-    # Check if user exists
     user = await db.users.find_one({"email": email}, {"_id": 0})
 
     if user:
-        # Existing user — update photo if available
         if photo_url and not user.get("photo_url"):
             await db.users.update_one({"id": user["id"]}, {"$set": {"photo_url": photo_url}})
             user["photo_url"] = photo_url
     else:
-        # New user — create account as athlete
         user = {
             "id": str(uuid.uuid4()),
             "email": email,
-            "password_hash": bcrypt.hash(secrets.token_urlsafe(32)),  # random password for OAuth users
+            "password_hash": bcrypt.hash(secrets.token_urlsafe(32)),
             "name": name,
             "role": "athlete",
             "org_id": None,
             "photo_url": photo_url,
-            "google_sub": idinfo.get("sub"),
+            "google_sub": google_user.get("sub"),
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         await db.users.insert_one(user)
         user.pop("_id", None)
 
-        # Create athlete record
         claimed_athlete = await _try_claim_athlete(user)
         if not claimed_athlete:
             tenant_id = f"tenant-{user['id']}"
@@ -314,7 +384,6 @@ async def google_auth(body: GoogleAuthRequest, background_tasks: BackgroundTasks
             claimed_athlete = new_athlete
             log_auth.info(f"Google OAuth: created fresh athlete for {email}")
 
-        # Link athlete_id to user
         if claimed_athlete:
             await db.users.update_one(
                 {"id": user["id"]},
@@ -337,7 +406,6 @@ async def google_auth(body: GoogleAuthRequest, background_tasks: BackgroundTasks
         "revoked": False,
     })
 
-    # Background tasks for athletes
     if safe.get("role") in ("athlete", "parent"):
         athlete = await db.athletes.find_one({"user_id": safe["id"]}, {"_id": 0, "tenant_id": 1})
         if athlete and athlete.get("tenant_id"):
@@ -346,6 +414,24 @@ async def google_auth(body: GoogleAuthRequest, background_tasks: BackgroundTasks
 
     log_auth.info(f"Google OAuth login successful for {email}")
     return {"token": token, "refresh_token": refresh_token, "user": safe}
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str | None = None
+    code: str | None = None
+
+
+@router.post("/auth/google", response_model=TokenResponse)
+async def google_auth(body: GoogleAuthRequest, background_tasks: BackgroundTasks):
+    """Authenticate with Google OAuth — accepts either credential (ID token) or code."""
+    if body.code:
+        google_user = await _google_user_from_code(body.code)
+    elif body.credential:
+        google_user = await _google_user_from_credential(body.credential)
+    else:
+        raise HTTPException(status_code=400, detail="Provide either credential or code")
+
+    return await _finish_google_login(google_user, background_tasks)
 
 
 
