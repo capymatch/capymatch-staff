@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ChevronLeft, Plus, Mail, ExternalLink, Users, User,
-  Check, Loader2, Sparkles, Globe, FileText, ArrowUpRight
+  Check, Loader2, Sparkles, Globe, FileText, ArrowUpRight, ArrowRight
 } from "lucide-react";
 import UpgradeModal from "../../components/UpgradeModal";
 
@@ -14,8 +14,8 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 function selectivityLabel(rate) {
   if (rate == null) return null;
   if (rate < 0.15) return "Highly selective";
-  if (rate < 0.30) return "Selective";
-  if (rate < 0.60) return "Moderate";
+  if (rate < 0.30) return "Competitive";
+  if (rate < 0.60) return "Accessible";
   return "Open admission";
 }
 function sizeLabel(size) {
@@ -24,11 +24,29 @@ function sizeLabel(size) {
   if (size < 10000) return "Mid-size";
   return "Large";
 }
+function gradQuality(rate) {
+  if (rate == null) return null;
+  if (rate > 0.75) return "Strong";
+  if (rate > 0.50) return "Good";
+  return "Fair";
+}
+function retentionQuality(rate) {
+  if (rate == null) return null;
+  if (rate > 0.80) return "Excellent";
+  if (rate > 0.65) return "Good";
+  return "Fair";
+}
+function ratioQuality(ratio) {
+  if (ratio == null) return null;
+  if (ratio <= 12) return "Strong support";
+  if (ratio <= 18) return "Average";
+  return "Large classes";
+}
 
 const fmtPct = (v) => v != null ? `${(v * 100).toFixed(0)}%` : null;
 const fmtMoney = (v) => v != null ? `$${Number(v).toLocaleString()}` : null;
 
-/* ── Match Score (Clean Ring — Teal) ── */
+/* ── Match Score Ring ── */
 function MatchRing({ score }) {
   const pct = score || 0;
   const r = 52, c = 2 * Math.PI * r;
@@ -49,8 +67,8 @@ function MatchRing({ score }) {
   );
 }
 
-/* ── Snapshot Item (borderless) ── */
-function SnapshotItem({ label, value, note }) {
+/* ── Snapshot Item with micro interpretation ── */
+function SnapshotItem({ label, value, note, quality }) {
   const isEmpty = !value && value !== 0;
   return (
     <div className="flex flex-col gap-0.5" data-testid={`snapshot-${label?.replace(/\s+/g, '-').toLowerCase()}`}>
@@ -58,42 +76,46 @@ function SnapshotItem({ label, value, note }) {
       <span className={`text-[22px] font-medium tracking-tight leading-tight ${isEmpty ? "text-[var(--cm-text-3)]" : "text-[var(--cm-text)]"}`}>
         {isEmpty ? "—" : value}
       </span>
-      {note && <span className="text-[11px] text-[var(--cm-text-3)]">{note}</span>}
+      <div className="flex items-center gap-1.5">
+        {quality && (
+          <span className="text-[10px] font-semibold text-[#8B3F1F]">{quality}</span>
+        )}
+        {quality && note && <span className="text-[var(--cm-text-3)] text-[8px]">·</span>}
+        {note && <span className="text-[11px] text-[var(--cm-text-3)]">{note}</span>}
+      </div>
     </div>
   );
 }
 
-/* ── Section Divider ── */
+/* ── Section Divider (increased spacing) ── */
 function Divider() {
-  return <div className="h-px w-full bg-[var(--cm-border)] opacity-50 my-10 md:my-14" />;
+  return <div className="h-px w-full bg-[var(--cm-border)] opacity-40 my-12 md:my-16" />;
 }
 
-/* ── Section Title ── */
+/* ── Section Title (increased size) ── */
 function SectionTitle({ children, testId }) {
   return (
-    <h2 className="text-base sm:text-lg font-medium text-[var(--cm-text)] tracking-tight mb-6" data-testid={testId}>
+    <h2 className="text-lg sm:text-xl font-medium text-[var(--cm-text)] tracking-tight mb-8" data-testid={testId}>
       {children}
     </h2>
   );
 }
 
-/* ── Build "Why This School" bullets from available data ── */
+/* ── Build "Why This School" bullets ── */
 function buildFitReasons(school, matchData) {
   const reasons = [];
   const sc = school.scorecard || {};
   const sub = matchData?.sub_scores || {};
 
-  // Division fit
   if (school.division) {
     const divScore = sub.division;
     if (divScore && divScore.score >= divScore.max * 0.7) {
       reasons.push({ label: "Division Fit", text: `${school.division} aligns with your recruiting preferences.` });
-    } else if (school.division) {
+    } else {
       reasons.push({ label: "Division Fit", text: `Competes at the ${school.division} level.` });
     }
   }
 
-  // Academic fit
   if (sc.admission_rate != null || sc.graduation_rate != null) {
     const acadScore = sub.academics;
     if (acadScore && acadScore.score >= acadScore.max * 0.6) {
@@ -106,7 +128,6 @@ function buildFitReasons(school, matchData) {
     }
   }
 
-  // Location
   if (school.region) {
     const regScore = sub.region;
     if (regScore && regScore.score >= regScore.max * 0.7) {
@@ -116,7 +137,6 @@ function buildFitReasons(school, matchData) {
     }
   }
 
-  // Roster / Scholarship opportunity
   if (school.scholarship_type) {
     reasons.push({ label: "Scholarship", text: `Offers ${school.scholarship_type.toLowerCase()} scholarships.` });
   }
@@ -124,7 +144,6 @@ function buildFitReasons(school, matchData) {
     reasons.push({ label: "Roster Opportunity", text: school.roster_needs });
   }
 
-  // Measurables fit from match data
   if (matchData?.measurables_fit?.label && matchData.measurables_fit.label !== "Not Enough Data") {
     reasons.push({ label: "Athletic Fit", text: `${matchData.measurables_fit.label} based on your measurables.` });
   }
@@ -132,11 +151,88 @@ function buildFitReasons(school, matchData) {
   return reasons;
 }
 
-/* ── Build Opportunity & Risk from match data ── */
+/* ── Build decision summary for hero ── */
+function buildDecisionSummary(school, matchData) {
+  const parts = [];
+  const sub = matchData?.sub_scores || {};
+  const sc = school.scorecard || {};
+
+  // Academic assessment
+  const acad = sub.academics;
+  if (acad && acad.score >= acad.max * 0.7) parts.push("strong academic fit");
+  else if (acad && acad.score >= acad.max * 0.4) parts.push("moderate academic fit");
+
+  // Division assessment
+  const div = sub.division;
+  if (div && div.score >= div.max * 0.8) parts.push("division fit");
+
+  // Measurables
+  if (matchData?.measurables_fit?.label === "Strong Fit") parts.push("athletic fit");
+
+  // Opportunity
+  const score = matchData?.match_score ?? school.match_score ?? 0;
+  if (score >= 75) parts.push("realistic opportunity");
+  else if (score >= 50) parts.push("moderate opportunity");
+
+  // Selectivity
+  if (sc.admission_rate != null) {
+    if (sc.admission_rate < 0.15) parts.push("highly selective");
+    else if (sc.admission_rate >= 0.60) parts.push("accessible admissions");
+  }
+
+  if (parts.length === 0) {
+    if (school.division) return `${school.division} program in the ${school.conference || school.region || "region"}.`;
+    return null;
+  }
+
+  const joined = parts.slice(0, 3).join(" + ");
+  return joined.charAt(0).toUpperCase() + joined.slice(1) + ".";
+}
+
+/* ── Build recommended next step ── */
+function buildNextStep(school, coaches) {
+  if (!school.on_board) {
+    return { text: "Add this school to your pipeline to start tracking it.", action: "pipeline" };
+  }
+  const headCoach = coaches.find(c => (c.title || c.role || "").toLowerCase().includes("head"));
+  const anyCoach = coaches[0];
+  const target = headCoach || anyCoach;
+  if (target?.email) {
+    return { text: `Send an intro email to ${target.name} this week.`, action: "email", email: target.email };
+  }
+  if (school.questionnaire_url) {
+    return { text: "Fill out the recruiting questionnaire to get on their radar.", action: "questionnaire", url: school.questionnaire_url };
+  }
+  return { text: "Research the program and prepare your outreach.", action: "info" };
+}
+
+/* ── Build "Why This School" summary sentence ── */
+function buildFitSummary(school, matchData) {
+  const score = matchData?.match_score ?? school.match_score ?? 0;
+  const sub = matchData?.sub_scores || {};
+  const strengths = [];
+
+  if (sub.division?.score >= sub.division?.max * 0.7) strengths.push("division level");
+  if (sub.academics?.score >= sub.academics?.max * 0.6) strengths.push("academics");
+  if (sub.region?.score >= sub.region?.max * 0.7) strengths.push("location");
+  if (matchData?.measurables_fit?.label === "Strong Fit") strengths.push("athletic measurables");
+
+  if (score >= 70 && strengths.length >= 2) {
+    return `This school is a strong fit across ${strengths.slice(0, 3).join(", ")} — worth pursuing actively.`;
+  }
+  if (score >= 50) {
+    return `This school shows potential${strengths.length ? `, especially in ${strengths[0]}` : ""}. Worth exploring further.`;
+  }
+  if (strengths.length > 0) {
+    return `There's alignment in ${strengths.join(" and ")}. Review the details below to decide.`;
+  }
+  return "Here's what we know about how this school fits your profile.";
+}
+
+/* ── Build Opportunity & Risk ── */
 function buildOpportunity(school, matchData) {
   const items = [];
 
-  // Overall opportunity level from match score
   if (matchData?.match_score != null) {
     const score = matchData.match_score;
     let level, desc;
@@ -146,13 +242,11 @@ function buildOpportunity(school, matchData) {
     items.push({ label: "Opportunity Level", level, text: desc });
   }
 
-  // Confidence
   if (matchData?.confidence) {
     const confMap = { high: "High confidence", medium: "Medium confidence", low: "Low confidence", estimated: "Estimated" };
     items.push({ label: "Data Confidence", level: matchData.confidence === "high" ? "high" : matchData.confidence === "medium" ? "moderate" : "low", text: `${confMap[matchData.confidence] || matchData.confidence} — ${matchData.confidence_guidance || "based on available data."}` });
   }
 
-  // Risk badges
   if (matchData?.risk_badges?.length) {
     const riskDescriptions = {
       roster_tight: "Roster spots may be limited — competition for positions is higher.",
@@ -164,12 +258,11 @@ function buildOpportunity(school, matchData) {
       items.push({
         label: b.label,
         level: b.severity === "warning" ? "low" : b.severity === "time" ? "moderate" : "neutral",
-        text: riskDescriptions[b.key] || `Factor to consider for this program.`,
+        text: riskDescriptions[b.key] || "Factor to consider for this program.",
       });
     });
   }
 
-  // Roster competition from school data
   if (school.roster_needs) {
     items.push({ label: "Roster Status", level: "moderate", text: school.roster_needs });
   }
@@ -258,22 +351,22 @@ export default function SchoolDetailPage() {
   const hasMatch = (school.match_score != null && school.match_score > 0) || matchData;
   const displayScore = matchData?.match_score ?? school.match_score ?? 0;
   const aiSummary = matchData?.explanation || matchData?.full_explanation || null;
-
-  // Social links
+  const decisionSummary = buildDecisionSummary(school, matchData);
+  const fitSummary = buildFitSummary(school, matchData);
+  const nextStep = buildNextStep(school, coaches);
   const socialLinks = school.social_links || {};
 
   return (
-    <div className="max-w-[860px] mx-auto px-6 md:px-12 pb-20 pt-2" data-testid="school-info-page">
+    <div className="max-w-[860px] mx-auto px-6 md:px-12 pb-24 pt-2" data-testid="school-info-page">
       {/* ─── Back ─── */}
       <button onClick={() => navigate(-1)} data-testid="back-button"
-        className="inline-flex items-center gap-1 text-[13px] text-[var(--cm-text-3)] font-medium mb-8 hover:text-[var(--cm-text)] transition-colors">
+        className="inline-flex items-center gap-1 text-[13px] text-[var(--cm-text-3)] font-medium mb-10 hover:text-[var(--cm-text)] transition-colors">
         <ChevronLeft className="w-4 h-4" /> Back
       </button>
 
       {/* ═══════════════ HERO ═══════════════ */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-4" data-testid="school-hero">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-6" data-testid="school-hero">
         <div className="flex-1 min-w-0">
-          {/* School logo + name */}
           {school.logo_url && (
             <img src={school.logo_url} alt="" className="w-14 h-14 rounded-xl object-contain mb-4" onError={e => e.target.style.display = 'none'} data-testid="school-logo" />
           )}
@@ -282,7 +375,7 @@ export default function SchoolDetailPage() {
           </h1>
 
           {/* Subtle metadata */}
-          <div className="flex flex-wrap items-center gap-1 text-[13px] text-[var(--cm-text-3)] font-medium mb-5" data-testid="school-metadata">
+          <div className="flex flex-wrap items-center gap-1 text-[13px] text-[var(--cm-text-3)] font-medium mb-4" data-testid="school-metadata">
             {school.division && <span data-testid="school-division">{school.division}</span>}
             {school.division && school.conference && <span className="mx-1 opacity-40">·</span>}
             {school.conference && <span>{school.conference}</span>}
@@ -296,26 +389,33 @@ export default function SchoolDetailPage() {
             )}
           </div>
 
+          {/* Decision summary — one line */}
+          {decisionSummary && (
+            <p className="text-[15px] sm:text-base font-medium text-[#8B3F1F] mb-2 leading-snug" data-testid="decision-summary">
+              {decisionSummary}
+            </p>
+          )}
+
           {/* AI Summary */}
           {aiSummary && (
-            <p className="text-[15px] sm:text-base text-[var(--cm-text-2)] leading-relaxed max-w-2xl mb-6 line-clamp-2" data-testid="ai-summary">
+            <p className="text-[14px] sm:text-[15px] text-[var(--cm-text-2)] leading-relaxed max-w-2xl mb-6 line-clamp-2" data-testid="ai-summary">
               {aiSummary}
             </p>
           )}
 
-          {/* CTAs */}
-          <div className="flex flex-wrap items-center gap-3" data-testid="hero-ctas">
+          {/* CTAs — improved prominence */}
+          <div className="flex flex-wrap items-center gap-3 mt-2" data-testid="hero-ctas">
             <button onClick={addToBoard} disabled={adding || school.on_board} data-testid="add-to-board-btn"
-              className={`px-5 py-2.5 rounded-full text-[13px] font-medium inline-flex items-center gap-2 transition-all ${
+              className={`px-6 py-2.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-2 transition-all duration-200 ${
                 school.on_board
                   ? "border border-[var(--cm-border)] text-[var(--cm-text-3)] cursor-default"
-                  : "border-2 border-[var(--cm-accent)] text-[var(--cm-accent)] hover:bg-[var(--cm-accent)] hover:text-white"
+                  : "border-[2.5px] border-[var(--cm-accent)] text-[var(--cm-accent)] hover:bg-[var(--cm-accent)] hover:text-white hover:shadow-md active:scale-[0.97]"
               }`}>
               {school.on_board ? <><Check className="w-4 h-4" /> On Your Board</> : <><Plus className="w-4 h-4" /> {adding ? "Adding..." : "Add to Pipeline"}</>}
             </button>
             {school.website && (
               <a href={school.website} target="_blank" rel="noreferrer" data-testid="visit-website-btn"
-                className="px-5 py-2.5 rounded-full text-[13px] font-medium inline-flex items-center gap-2 text-[var(--cm-text-2)] hover:bg-[var(--cm-surface-2)] transition-colors">
+                className="px-6 py-2.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-2 text-[var(--cm-text-2)] border border-[var(--cm-border)] hover:border-[var(--cm-text-3)] hover:bg-[var(--cm-surface-2)] transition-all duration-200">
                 <Globe className="w-4 h-4" /> Visit Website
               </a>
             )}
@@ -330,22 +430,28 @@ export default function SchoolDetailPage() {
         )}
       </div>
 
-      {/* ═══════════════ WHY THIS SCHOOL ═══════════════ */}
+      {/* ═══════════════ WHY THIS SCHOOL (most important) ═══════════════ */}
       {fitReasons.length > 0 && (
         <>
           <Divider />
-          <div className="rounded-2xl md:rounded-3xl p-6 md:p-8" style={{ backgroundColor: "rgba(26, 138, 128, 0.04)" }} data-testid="why-this-school-section">
-            <div className="flex items-center gap-2 mb-5">
-              <Sparkles className="w-4 h-4 text-[#1a8a80]" />
-              <h2 className="text-base sm:text-lg font-medium text-[var(--cm-text)] tracking-tight" data-testid="why-this-school-title">Why This School</h2>
+          <div className="rounded-2xl md:rounded-3xl p-7 md:p-10" style={{ backgroundColor: "rgba(139, 63, 31, 0.04)", border: "1px solid rgba(139, 63, 31, 0.08)" }} data-testid="why-this-school-section">
+            <div className="flex items-center gap-2.5 mb-3">
+              <Sparkles className="w-[18px] h-[18px] text-[#8B3F1F]" />
+              <h2 className="text-lg sm:text-xl font-semibold text-[var(--cm-text)] tracking-tight" data-testid="why-this-school-title">Why This School</h2>
             </div>
+
+            {/* Summary sentence */}
+            <p className="text-[14px] sm:text-[15px] text-[var(--cm-text-2)] leading-relaxed mb-6 max-w-2xl" data-testid="fit-summary">
+              {fitSummary}
+            </p>
+
             <ul className="space-y-4" data-testid="fit-reasons-list">
               {fitReasons.map((r, i) => (
                 <li key={i} className="flex items-start gap-3" data-testid={`fit-reason-${i}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#1a8a80] mt-[7px] flex-shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8B3F1F] mt-[8px] flex-shrink-0" />
                   <div>
-                    <span className="text-[13px] font-semibold text-[#1a8a80] mr-2">{r.label}</span>
-                    <span className="text-[14px] sm:text-[15px] text-[var(--cm-text-2)] leading-relaxed">{r.text}</span>
+                    <span className="text-[13px] font-bold text-[#8B3F1F] mr-2">{r.label}</span>
+                    <span className="text-[15px] text-[var(--cm-text)] leading-relaxed">{r.text}</span>
                   </div>
                 </li>
               ))}
@@ -354,16 +460,37 @@ export default function SchoolDetailPage() {
         </>
       )}
 
+      {/* ═══════════════ RECOMMENDED NEXT STEP ═══════════════ */}
+      <div className="mt-8 flex items-start gap-3 rounded-xl px-5 py-4" style={{ backgroundColor: "var(--cm-surface-2)" }} data-testid="next-step-section">
+        <ArrowRight className="w-4 h-4 text-[#8B3F1F] mt-0.5 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#8B3F1F] block mb-1">Recommended Next Step</span>
+          <span className="text-[14px] text-[var(--cm-text)] leading-relaxed">{nextStep.text}</span>
+        </div>
+        {nextStep.action === "email" && nextStep.email && (
+          <a href={`mailto:${nextStep.email}`} data-testid="next-step-email-cta"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-semibold text-[#8B3F1F] border border-[#8B3F1F]/20 hover:bg-[#8B3F1F]/5 transition-colors">
+            Draft Email
+          </a>
+        )}
+        {nextStep.action === "pipeline" && (
+          <button onClick={addToBoard} disabled={adding} data-testid="next-step-pipeline-cta"
+            className="flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-semibold text-[var(--cm-accent)] border border-[var(--cm-accent)]/20 hover:bg-[var(--cm-accent)]/5 transition-colors">
+            Add Now
+          </button>
+        )}
+      </div>
+
       {/* ═══════════════ QUICK SNAPSHOT ═══════════════ */}
       <Divider />
       <SectionTitle testId="quick-snapshot-title">Quick Snapshot</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-6" data-testid="quick-snapshot-grid">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-7" data-testid="quick-snapshot-grid">
         <SnapshotItem label="Tuition" value={fmtMoney(sc.tuition_out_of_state || sc.tuition_in_state)} note="Out-of-state" />
-        <SnapshotItem label="Acceptance" value={fmtPct(sc.admission_rate)} note={selectivityLabel(sc.admission_rate)} />
-        <SnapshotItem label="Students" value={sc.student_size ? Number(sc.student_size).toLocaleString() : null} note={sizeLabel(sc.student_size)} />
-        <SnapshotItem label="Graduation" value={fmtPct(sc.graduation_rate)} />
-        <SnapshotItem label="Retention" value={fmtPct(sc.retention_rate)} />
-        <SnapshotItem label="Student-Faculty" value={sc.student_faculty_ratio ? `${sc.student_faculty_ratio}:1` : null} />
+        <SnapshotItem label="Acceptance" value={fmtPct(sc.admission_rate)} quality={selectivityLabel(sc.admission_rate)} />
+        <SnapshotItem label="Students" value={sc.student_size ? Number(sc.student_size).toLocaleString() : null} quality={sizeLabel(sc.student_size)} />
+        <SnapshotItem label="Graduation" value={fmtPct(sc.graduation_rate)} quality={gradQuality(sc.graduation_rate)} />
+        <SnapshotItem label="Retention" value={fmtPct(sc.retention_rate)} quality={retentionQuality(sc.retention_rate)} />
+        <SnapshotItem label="Student-Faculty" value={sc.student_faculty_ratio ? `${sc.student_faculty_ratio}:1` : null} quality={ratioQuality(sc.student_faculty_ratio)} />
         <SnapshotItem label="SAT Avg" value={sc.sat_avg ? String(sc.sat_avg) : null} />
         <SnapshotItem label="ACT Mid" value={sc.act_midpoint ? String(sc.act_midpoint) : null} />
         {sc.avg_gpa && <SnapshotItem label="Avg GPA" value={sc.avg_gpa} />}
@@ -380,7 +507,7 @@ export default function SchoolDetailPage() {
         <>
           <Divider />
           <SectionTitle testId="opportunity-risk-title">Opportunity & Risk</SectionTitle>
-          <div className="space-y-4" data-testid="opportunity-risk-section">
+          <div className="space-y-5" data-testid="opportunity-risk-section">
             {opportunityItems.map((item, i) => (
               <div key={i} className="flex items-start gap-3" data-testid={`opportunity-item-${i}`}>
                 <span className="w-2 h-2 rounded-full mt-[6px] flex-shrink-0" style={{ backgroundColor: LEVEL_DOT[item.level] || "var(--cm-text-3)" }} />
@@ -394,13 +521,12 @@ export default function SchoolDetailPage() {
         </>
       )}
 
-      {/* ═══════════════ MATCH BREAKDOWN (if on board) ═══════════════ */}
+      {/* ═══════════════ MATCH BREAKDOWN ═══════════════ */}
       {matchData?.sub_scores && (
         <>
           <Divider />
           <SectionTitle testId="match-breakdown-title">Match Breakdown</SectionTitle>
-          <div className="space-y-3" data-testid="match-breakdown-section">
-            {/* Sub-score bars */}
+          <div className="space-y-4" data-testid="match-breakdown-section">
             {Object.entries(matchData.sub_scores).map(([key, ss]) => {
               const pct = ss.max > 0 ? Math.round((ss.score / ss.max) * 100) : 0;
               return (
@@ -416,7 +542,6 @@ export default function SchoolDetailPage() {
               );
             })}
 
-            {/* Measurables detail */}
             {matchData.measurables_fit?.details && Object.keys(matchData.measurables_fit.details).length > 0 && (
               <div className="mt-6 rounded-2xl p-5 bg-[var(--cm-surface-2)]" data-testid="measurables-detail">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-3">Athletic Measurables</div>
@@ -440,7 +565,6 @@ export default function SchoolDetailPage() {
               </div>
             )}
 
-            {/* Full explanation */}
             {matchData.full_explanation && (
               <p className="text-[14px] text-[var(--cm-text-2)] leading-relaxed mt-4" data-testid="breakdown-explanation">
                 {matchData.full_explanation}
@@ -450,7 +574,7 @@ export default function SchoolDetailPage() {
         </>
       )}
 
-      {/* ═══════════════ COACHING STAFF ═══════════════ */}
+      {/* ═══════════════ COACHING STAFF (improved) ═══════════════ */}
       {coaches.length > 0 && (
         <>
           <Divider />
@@ -458,20 +582,20 @@ export default function SchoolDetailPage() {
           <div data-testid="coaching-staff-section">
             {coaches.map((c, i) => (
               <div key={i}
-                className={`flex items-center justify-between py-4 ${i < coaches.length - 1 ? "border-b border-[var(--cm-border)]" : ""}`}
+                className={`flex items-center justify-between py-5 group transition-colors hover:bg-[var(--cm-surface-2)]/50 -mx-3 px-3 rounded-lg ${i < coaches.length - 1 ? "border-b border-[var(--cm-border)]/50" : ""}`}
                 data-testid={`coach-row-${i}`}>
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-[var(--cm-surface-2)] text-[var(--cm-text-3)]">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-[var(--cm-surface-2)] text-[var(--cm-text-3)] group-hover:bg-[var(--cm-border)] transition-colors">
                     <User className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-[14px] font-medium text-[var(--cm-text)] truncate">{c.name}</div>
-                    <div className="text-[12px] text-[var(--cm-text-3)]">{c.title || c.role || "Coach"}</div>
+                    <div className="text-[12px] text-[var(--cm-text-3)] mt-0.5">{c.title || c.role || "Coach"}</div>
                   </div>
                 </div>
                 {c.email && (
                   <a href={`mailto:${c.email}`} data-testid={`coach-email-${i}`}
-                    className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors flex items-center gap-1.5 flex-shrink-0 ml-4">
+                    className="text-[13px] text-[var(--cm-text-3)] hover:text-[#8B3F1F] transition-colors flex items-center gap-2 flex-shrink-0 ml-4 px-3 py-1.5 rounded-full hover:bg-[#8B3F1F]/5">
                     <Mail className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">{c.email}</span>
                   </a>
@@ -482,50 +606,50 @@ export default function SchoolDetailPage() {
         </>
       )}
 
-      {/* ═══════════════ PROGRAM OVERVIEW ═══════════════ */}
+      {/* ═══════════════ PROGRAM DETAILS ═══════════════ */}
       <Divider />
       <SectionTitle testId="program-overview-title">Program Details</SectionTitle>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-4 text-[14px]" data-testid="program-overview-section">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-5 text-[14px]" data-testid="program-overview-section">
         {school.division && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Division</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1.5">Division</div>
             <div className="font-medium text-[var(--cm-text)]">{school.division}</div>
           </div>
         )}
         {school.conference && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Conference</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1.5">Conference</div>
             <div className="font-medium text-[var(--cm-text)]">{school.conference}</div>
           </div>
         )}
         {school.mascot && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Mascot</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1.5">Mascot</div>
             <div className="font-medium text-[var(--cm-text)]">{school.mascot}</div>
           </div>
         )}
         {sc.school_type && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">School Type</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1.5">School Type</div>
             <div className="font-medium text-[var(--cm-text)]">{sc.school_type}</div>
           </div>
         )}
         {school.scholarship_type && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Scholarship</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1.5">Scholarship</div>
             <div className="font-medium text-[var(--cm-text)]">{school.scholarship_type}</div>
           </div>
         )}
         {school.region && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Region</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1.5">Region</div>
             <div className="font-medium text-[var(--cm-text)]">{school.region}{sc.city ? ` — ${sc.city}, ${sc.state}` : ""}</div>
           </div>
         )}
       </div>
 
       {/* Links row */}
-      <div className="flex flex-wrap gap-4 mt-6" data-testid="program-links">
+      <div className="flex flex-wrap gap-4 mt-8" data-testid="program-links">
         {school.website && (
           <a href={school.website} target="_blank" rel="noreferrer" data-testid="program-website-link"
             className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
