@@ -381,7 +381,7 @@ export default function SchoolDetailPage() {
                       <span className="text-[12px] font-semibold text-gray-700">{ss.score}/{ss.max}</span>
                     </div>
                     <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: ACCENT, opacity: 0.75 }} />
+                      <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: "#E8712A" }} />
                     </div>
                   </div>
                 );
