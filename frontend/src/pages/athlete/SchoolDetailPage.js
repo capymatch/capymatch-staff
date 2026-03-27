@@ -215,7 +215,6 @@ export default function SchoolDetailPage() {
   const socialLinks = school.social_links || {};
 
   return (
-    <div className="-mx-2 sm:-mx-6 -my-4 sm:-my-6 px-2 sm:px-6 py-4 sm:py-6" style={{ backgroundColor: "#F7F4F2", minHeight: "calc(100vh - 64px)" }}>
     <div className="max-w-[880px] mx-auto px-4 md:px-8 pb-24 pt-4" data-testid="school-info-page">
 
       {/* Back */}
@@ -497,7 +496,6 @@ export default function SchoolDetailPage() {
       )}
 
       {showUpgrade && <UpgradeModal feature="schools" currentTier="basic" onClose={() => setShowUpgrade(false)} />}
-    </div>
     </div>
   );
 }
