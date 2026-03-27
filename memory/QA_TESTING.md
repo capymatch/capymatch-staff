@@ -2,7 +2,7 @@
 
 **Version**: 1.0
 **Date**: March 23, 2026
-**App URL**: https://athlete-integrity.preview.emergentagent.com
+**App URL**: https://auth-debug-98.preview.emergentagent.com
 
 ---
 

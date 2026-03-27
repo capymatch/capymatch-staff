@@ -1,171 +1,34 @@
 <analysis>**original_problem_statement**: 
-The user previously requested Google OAuth, which was completed. The user has now completely pivoted the task, declaring CapyMatch is in production and demanding a massive, 7-phase full production integrity audit. The goal is to enforce a single source of truth across the app because contradictory data is appearing in production. The audit requires producing specific deliverables: System Map, API Inventory, Source-of-Truth Matrix, Duplicate Logic Report, Cross-Page Consistency Report, State Propagation Report, and Test Implementation (API/Integration/UI/SSOT tests).
+CapyMatch is a production full-stack athlete management platform. The user requested a 7-phase full production integrity audit to enforce a Single Source of Truth (SSOT) across the application. The agent has successfully completed Refactor Sprints 1, 2, 3, mock data removal, and Priority Engine v2. However, the user just reported a critical bug where they cannot log in to the application.
 
 **User's preferred language**: English
-*(INSTRUCT: Next agent must respond in English)*
+*(INSTRUCT: Next agent must respond in English only)*
 
-**what currently exists?** (give crisp summary)
-A full-stack athlete management platform (React + FastAPI + MongoDB). Google OAuth has just been successfully integrated using a custom backend-driven redirect flow. The application contains complex, potentially overlapping business logic spread across the frontend () and backend (, , , ).  is currently imported by the backend data store, which is a major risk for a production app.
+**what currently exists?** 
+A React + FastAPI + MongoDB application. The app has undergone massive P0 structural refactoring to enforce a strict SSOT architecture. All interaction signals, stage/progress progression, and priority rankings are now centralized in backend services (, , ). Legacy fields like  and  have been completely eradicated from production paths. Currently, the login API is throwing a 500 internal server error.
 
-**Last working item**:
-    - Last item agent was working: Phase 1 of the Production Integrity Audit (System Mapping). The agent was deep-diving into the core backend services and frontend metric computations to map the entire system before generating the required audit deliverables.
+**Last working item**: 
+    - Last item agent was working: Debugging a login failure reported by the user (I can not log in). The agent found the root cause in the backend logs: .
     - Status: IN PROGRESS
-    - Agent Testing Done: N/A (Exploratory phase)
-    - Which testing method agent to use? Both (Phase 7 explicitly requires writing API contract tests, integration tests, and source-of-truth tests via ============================= test session starts ==============================
-platform linux -- Python 3.11.15, pytest-9.0.2, pluggy-1.6.0
-rootdir: /app
-plugins: anyio-4.12.1
-collected 2364 items / 17 errors
-
-==================================== ERRORS ====================================
-_____________ ERROR collecting backend/tests/test_admin_status.py ______________
-backend/tests/test_admin_status.py:9: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-___________ ERROR collecting backend/tests/test_athlete_dashboard.py ___________
-backend/tests/test_athlete_dashboard.py:9: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-________ ERROR collecting backend/tests/test_athlete_knowledge_base.py _________
-backend/tests/test_athlete_knowledge_base.py:16: in <module>
-    BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-____________ ERROR collecting backend/tests/test_athlete_phase_a.py ____________
-backend/tests/test_athlete_phase_a.py:12: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-___________ ERROR collecting backend/tests/test_coach_activation.py ____________
-backend/tests/test_coach_activation.py:19: in <module>
-    BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-________ ERROR collecting backend/tests/test_coach_watch_copy_layer.py _________
-backend/tests/test_coach_watch_copy_layer.py:16: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-_________ ERROR collecting backend/tests/test_connected_experiences.py _________
-backend/tests/test_connected_experiences.py:12: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-__________ ERROR collecting backend/tests/test_journey_j1_features.py __________
-backend/tests/test_journey_j1_features.py:20: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-_____________ ERROR collecting backend/tests/test_journey_page.py ______________
-backend/tests/test_journey_page.py:16: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-_______________ ERROR collecting backend/tests/test_kb_routes.py _______________
-backend/tests/test_kb_routes.py:19: in <module>
-    BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-______________ ERROR collecting backend/tests/test_onboarding.py _______________
-backend/tests/test_onboarding.py:10: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-__________ ERROR collecting backend/tests/test_persistence_phase2.py ___________
-backend/tests/test_persistence_phase2.py:18: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-___ ERROR collecting backend/tests/test_playbook_persistence_and_reminder.py ___
-backend/tests/test_playbook_persistence_and_reminder.py:16: in <module>
-    assert BASE_URL, "REACT_APP_BACKEND_URL must be set"
-E   AssertionError: REACT_APP_BACKEND_URL must be set
-E   assert ''
-______________ ERROR collecting backend/tests/test_pod_health.py _______________
-backend/tests/test_pod_health.py:10: in <module>
-    BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-___________ ERROR collecting backend/tests/test_roster_ownership.py ____________
-backend/tests/test_roster_ownership.py:24: in <module>
-    BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-______________ ERROR collecting backend/tests/test_smart_match.py ______________
-backend/tests/test_smart_match.py:17: in <module>
-    BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-________ ERROR collecting backend/tests/test_smart_match_refinements.py ________
-backend/tests/test_smart_match_refinements.py:17: in <module>
-    BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   AttributeError: 'NoneType' object has no attribute 'rstrip'
-=========================== short test summary info ============================
-ERROR backend/tests/test_admin_status.py - AttributeError: 'NoneType' object ...
-ERROR backend/tests/test_athlete_dashboard.py - AttributeError: 'NoneType' ob...
-ERROR backend/tests/test_athlete_knowledge_base.py - AttributeError: 'NoneTyp...
-ERROR backend/tests/test_athlete_phase_a.py - AttributeError: 'NoneType' obje...
-ERROR backend/tests/test_coach_activation.py - AttributeError: 'NoneType' obj...
-ERROR backend/tests/test_coach_watch_copy_layer.py - AttributeError: 'NoneTyp...
-ERROR backend/tests/test_connected_experiences.py - AttributeError: 'NoneType...
-ERROR backend/tests/test_journey_j1_features.py - AttributeError: 'NoneType' ...
-ERROR backend/tests/test_journey_page.py - AttributeError: 'NoneType' object ...
-ERROR backend/tests/test_kb_routes.py - AttributeError: 'NoneType' object has...
-ERROR backend/tests/test_onboarding.py - AttributeError: 'NoneType' object ha...
-ERROR backend/tests/test_persistence_phase2.py - AttributeError: 'NoneType' o...
-ERROR backend/tests/test_playbook_persistence_and_reminder.py - AssertionErro...
-ERROR backend/tests/test_pod_health.py - AttributeError: 'NoneType' object ha...
-ERROR backend/tests/test_roster_ownership.py - AttributeError: 'NoneType' obj...
-ERROR backend/tests/test_smart_match.py - AttributeError: 'NoneType' object h...
-ERROR backend/tests/test_smart_match_refinements.py - AttributeError: 'NoneTy...
-!!!!!!!!!!!!!!!!!!! Interrupted: 17 errors during collection !!!!!!!!!!!!!!!!!!!
-============================== 17 errors in 5.16s ============================== in the backend, and UI consistency tests in the frontend).
+    - Agent Testing Done: N
+    - Which testing method agent to use? manual testing by curl/logs (for the backend fix) followed by screenshot tool (to verify frontend login succeeds).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
-  Issue 1: Potential Duplicate Business Logic (P0)
-     - Attempted fixes: None yet, currently auditing.
-     - Next debug checklist: Compare  against backend engines (, , ). Map out exact overlaps.
-     - Why fix this issue and what will be achieved with the fix? Fixes the core user complaint: contradictory data in production dashboards. Enforces a Single Source of Truth (SSOT).
-     - Status: NOT STARTED
-     - Is recurring issue? Y (User cited this as a recurring production issue)
-     - Should Test frontend/backend/both after fix? Both
-     - Blocked on other issue: Needs System Map and Source of Truth Audit first.
-
-  Issue 2: Production Data Contaminated by Mock Data (P0)
-     - Attempted fixes: None yet.
-     - Next debug checklist: Check why  is imported by . Remove mock logic from production API paths.
-     - Why fix this issue and what will be achieved with the fix? Ensures production users do not see randomized or fake data.
-     - Status: NOT STARTED
+  Issue 1: Login API failing due to bcrypt/passlib incompatibility (P0)
+     - Attempted fixes: The agent checked the backend logs and identified the error traceback pointing to . The context ran out before a fix could be applied.
+     - Next debug checklist: Check  for  and  versions. This is a known incompatibility where  attempts to read  which was removed in . You need to either downgrade  to  (or ) OR patch/replace the password hashing utility to not use passlib with bcrypt>=4. Restart supervisor after dependency updates.
+     - Why fix this issue and what will be achieved with the fix? Users are entirely blocked from logging into the platform.
+     - Status: IN PROGRESS
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Backend
+     - Should Test frontend/backend/both after fix? both
      - Blocked on other issue: None
 
-**In progress Task List**:
-  Task 1: Complete Phase 1 - System Mapping (P0)
-     - Where to resume: Review the read files (, core services, metric sources, routers) and formulate the required SYSTEM MAP deliverable for the user.
-     - What will be achieved with this? Baseline understanding to conduct the deep audit.
-     - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix? N/A
-     - Blocked on something: None
-
-  Task 2: Phase 2 - API Inventory (P0)
-     - Where to resume: Document every production endpoint (Route, Auth, Schemas, Source, Consumer) into the API INVENTORY TABLE.
-     - What will be achieved with this? Fulfills Deliverable A.
-     - Status: NOT STARTED
-     - Should Test frontend/backend/both after fix? N/A
-     - Blocked on something: Task 1
+**In progress Task List**: 
+None.
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - (P0) Phase 3 - Source of Truth Audit (Trace every key metric end-to-end). Deliverable: SOURCE-OF-TRUTH MATRIX.
-    - (P0) Phase 4 - Duplicate Logic Detection (Identify frontend vs backend recomputations). Deliverable: DUPLICATE LOGIC REPORT.
-    - (P0) Phase 5 - Cross-Page Consistency Testing. Deliverable: CONSISTENCY REPORT.
-    - (P0) Phase 6 - State Propagation Testing. Deliverable: STATE PROPAGATION REPORT.
-    - (P0) Phase 7 - Test Implementation (Add Pytest API/Integration/SSOT tests).
     - (P1) CSV Import Tool: Bulk import for school/coach data.
     - (P1) Bulk Approve Mode: Director Inbox multi-select and bulk approve.
     - (P1) School Detail Page Redesign: Apply the new premium/ochre aesthetic.
@@ -176,86 +39,88 @@ ERROR backend/tests/test_smart_match_refinements.py - AttributeError: 'NoneTy...
     - (P2) Multi-Agent Intelligence Pipeline.
 
 **Completed work in this session**
-- Google OAuth conditionally rendered implementation (DONE)
-- Google OAuth Refactoring to backend-driven redirect flow () (DONE)
-- Removed  dependency from frontend (DONE)
-- Always display Continue with Google button on Login page regardless of preview env limits (DONE)
+- Sprint 2: Interaction Signals SSOT via  (DONE)
+- Sprint 3: Stage/Progress Consolidation via  and canonical  (DONE)
+- P0: Full removal of  from DB, backend, and frontend (DONE)
+- P1: Complete mock data cleanup from production paths ( &  now used) (DONE)
+- Priority Engine v2: Created canonical  (DONE)
+- Fixed benign  error overlay on the frontend (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   - Issue 1: Stats on dashboards come from one file, but related tables use different logic, causing contradictions.
-   - Debug checklist: Trace metrics (Journey state, Attention status, Needs outreach, Visits, Offers, Pipeline stage counts) through UI Component → Hook → API → Service → Database.
-   - Why to solve this issue and what will be achieved with this? Eliminates data contradictions and establishes a single source of truth.
-   - Should Test frontend/backend/both after fix: Both
-   - Is recurring issue? Y
+   - None.
 
 **Known issue recurrence from previous fork**
-  - None
+  - Recurrence count: 0
+  - Status: RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Single Source of Truth (SSOT):** The core theme of the current task. Backend must compute metrics; frontend must strictly consume them.
-- **Backend-driven OAuth:** Frontend calls , redirects user to Google, Google redirects to , backend sets cookies or redirects back to frontend with short-lived tokens.
+- **Strict SSOT Architecture**: The backend services (, , ) are the STRICT sole arbiters of application state. Frontend components must NEVER derive or calculate priority, stage, or interaction counts on their own.
 
 **key DB schema**
-  - Unknown table names specifically, but domains span: , , , , , .
+  - : Core user profiles.
+  - : Relationships. Uses canonical  and derived .  has been dropped.
+  - : Cached interaction metrics.
 
 **changes in tech stack**
-  - Removed  from frontend. Relies purely on backend redirect flow for Google Login now.
+  - None structurally.
 
 **All files of reference**
-- 
-- 
-- 
-- 
-- 
-- 
-- 
-- 
+-  (New SSOT for priority)
+-  (New SSOT for stages)
+-  (New SSOT for interaction signals)
+-  (Maintained log of architectural shifts)
 
 **Areas that need refactoring**:
--  must be completely removed from the production path (currently used in ).
--  likely needs to be deleted or heavily refactored so that the frontend does not recompute metrics generated by the backend engines.
+- Auth password hashing (currently using incompatible passlib + bcrypt >= 4.0.0 causing login failures).
 
 **key api endpoints**
-- 
-- 
+-  (Currently failing with 500 error)
 
 **Critical Info for New Agent**
-- **MASSIVE PIVOT:** The user has provided an extensive, 7-phase list of requirements for a Production Integrity Audit. **DO NOT perform surface-level QA or write generic summaries.** 
-- You MUST generate explicit text deliverables (System Map, API Inventory, Source-of-Truth Matrix, etc.) as requested.
-- **Hard Rule:** No metric may have multiple business logic owners. The frontend must not recompute backend-derived metrics.
-- The agent was interrupted while reading the core logic files. You need to review the read files and synthesize the Phase 1 mapping, then propose the plan to the user using .
+- **Priority**: You must immediately fix the login bug ( error) so the application is usable.
+- **Architectural Constraints**: If you create new features later, you must respect the new SSOT engines. Do not calculate stages or priorities in the frontend or routers.
 
 **documents and test reports created in this job**
-  - 
+  -  (Updated)
+  -  (Updated)
+  -  (Sprint 2 tests)
+  -  (Sprint 3 tests)
+  -  (P0/P1 Integrity tests)
+  -  (Priority Engine tests)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. (User) Asked to confirm plan using ask_human.
-2. (User) Confirmed P0.
-3. (User) Noted they don't see the gmail option on the login page.
-4. (User) Clarified they don't see it in prod either.
-5. (User) PIVOT: Declared CapyMatch is in production. Demanded a 7-phase full production integrity audit focused on data consistency, API correctness, and single source of truth. Required specific deliverables (A to F).
+1. (Agent) Requested approval for Stage/Progress Consolidation spec.
+2. (User) Approved with required rules.
+3. (Agent) Implemented Sprint 3, tested, asked for next steps.
+4. (User) Approved. Instructed to do P0 (journey_stage removal) and P1 (mock data removal) before Priority Engine v2.
+5. (Agent) Completed P0 and P1. Asked to proceed.
+6. (User) Approved Priority Engine v2 creation.
+7. (Agent) Implemented Priority Engine v2. Finished task.
+8. (User) Uploaded screenshot: ResizeObserver loop completed with undelivered notifications error overlay.
+9. (Agent) Patched  to catch errors in the capture phase.
+10. (User) Uploaded screenshot: I can not log in. (Pending completion).
 
 **Project Health Check:**
-- Broken: High risk of contradictory metrics due to duplicate logic (frontend vs backend).
-- Mocked:  is leaking into the production service ().
+- Broken: Login API () is failing due to passlib/bcrypt incompatibility.
+- Mocked: None (mock data completely removed from production paths).
 
-**3rd Party Integrations**
-- OpenAI GPT-4o / Claude — uses Emergent LLM Key
-- Stripe (Payments) — requires User API Key
-- Resend (Email) — requires User API Key
-- Google OAuth (Authentication) — Requires User Client ID/Secret. Fully implemented.
+**3rd Party Integrations** 
+  - OpenAI GPT-4o / Claude — uses Emergent LLM Key
+  - Stripe (Payments) — requires User API Key
+  - Resend (Email) — requires User API Key
+  - Google OAuth — requires User Client ID/Secret
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Google OAuth was tested purely via smoke screen tools).
+  - Testing agent used after significant changes: YES
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None yet, but Phase 7 demands extensive test creation.
-  - Known regressions: None explicitly broken, but fundamental architectural flaws (duplicate logic) have been reported by the user.
+  - Test files created: Updated existing tests for Sprint migrations.
+  - Known regressions: Backend Login API is 500'ing due to library mismatch ( vs ).
 
 **Credentials to test flow:**
 - Athlete:  / 
 
 **What agent forgot to execute**
-- The agent read several crucial backend engine files and frontend metric files to begin the Phase 1 system mapping, but ran out of context before it could actually synthesize the SYSTEM MAP and share it with the user. The next agent must synthesize the findings and begin producing the requested deliverables.</analysis>
+- The agent successfully diagnosed the cause of the login failure () but the context window ended before a fix (e.g., modifying  to pin ) could be implemented and deployed.</analysis>

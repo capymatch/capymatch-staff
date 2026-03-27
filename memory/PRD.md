@@ -60,6 +60,9 @@ The Google button is always visible. The OAuth flow is backend-driven:
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
+## Bug Fixes
+- **P0 — Login bcrypt/passlib Fix (Mar 2026)**: Replaced `passlib.hash.bcrypt` with direct `bcrypt` library calls across `auth.py`, `invites.py`, `startup.py`, `org_foundation.py`. Root cause: `passlib==1.7.4` incompatible with `bcrypt>=4.0.0` (removed `__about__` attribute). Login verified working end-to-end.
+
 ## Upcoming Tasks (P0/P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox

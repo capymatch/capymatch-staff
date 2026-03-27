@@ -5,7 +5,13 @@ import uuid
 import hashlib
 import secrets
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from passlib.hash import bcrypt
+import bcrypt as _bcrypt
+
+def _hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode("utf-8"), _bcrypt.gensalt()).decode("utf-8")
+
+def _verify_password(password: str, hashed: str) -> bool:
+    return _bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
 from datetime import datetime, timezone, timedelta
 
 from db_client import db
@@ -118,7 +124,7 @@ async def register(body: UserCreate):
     user_doc = {
         "id": str(uuid.uuid4()),
         "email": body.email,
-        "password_hash": bcrypt.hash(body.password),
+        "password_hash": _hash_password(body.password),
         "name": body.name,
         "role": body.role,
         "org_id": None,
@@ -197,7 +203,7 @@ async def register(body: UserCreate):
 @router.post("/auth/login", response_model=TokenResponse)
 async def login(body: UserLogin, background_tasks: BackgroundTasks):
     user = await db.users.find_one({"email": body.email}, {"_id": 0})
-    if not bcrypt.verify(body.password, user["password_hash"]) if user else True:
+    if not _verify_password(body.password, user["password_hash"]) if user else True:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     safe = _safe_user(user)
@@ -347,7 +353,7 @@ async def _finish_google_login(google_user: dict, background_tasks: BackgroundTa
         user = {
             "id": str(uuid.uuid4()),
             "email": email,
-            "password_hash": bcrypt.hash(secrets.token_urlsafe(32)),
+            "password_hash": _hash_password(secrets.token_urlsafe(32)),
             "name": name,
             "role": "athlete",
             "org_id": None,
@@ -638,7 +644,7 @@ async def reset_password(body: dict):
 
     # Update password
     email = reset_doc["email"]
-    new_hash = bcrypt.hash(new_password)
+    new_hash = _hash_password(new_password)
     result = await db.users.update_one(
         {"email": email},
         {"$set": {"password_hash": new_hash}},

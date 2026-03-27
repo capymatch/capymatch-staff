@@ -10,7 +10,10 @@ Explicit ordering (dependency chain):
 """
 
 import logging
-from passlib.hash import bcrypt
+import bcrypt as _bcrypt
+
+def _hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode("utf-8"), _bcrypt.gensalt()).decode("utf-8")
 from database import (
     seed_athletes,
     seed_events,
@@ -45,7 +48,7 @@ async def seed_users(db):
             "email": u["email"],
             "name": u["name"],
             "role": u["role"],
-            "password_hash": bcrypt.hash(u["password"]),
+            "password_hash": _hash_password(u["password"]),
             "created_at": "2025-01-01T00:00:00+00:00",
             "org_id": DEFAULT_ORG_ID,
         }

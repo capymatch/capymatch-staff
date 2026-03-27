@@ -7,7 +7,10 @@ Idempotent: safe to run on every startup.
 
 import logging
 from datetime import datetime, timezone
-from passlib.hash import bcrypt
+import bcrypt as _bcrypt
+
+def _hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode("utf-8"), _bcrypt.gensalt()).decode("utf-8")
 
 log = logging.getLogger(__name__)
 
@@ -70,7 +73,7 @@ async def ensure_org_foundation(db):
             "name": PLATFORM_ADMIN["name"],
             "role": PLATFORM_ADMIN["role"],
             "org_id": PLATFORM_ADMIN["org_id"],
-            "password_hash": bcrypt.hash(PLATFORM_ADMIN["password"]),
+            "password_hash": _hash_password(PLATFORM_ADMIN["password"]),
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
         log.info(f"Created platform_admin: {PLATFORM_ADMIN['email']}")

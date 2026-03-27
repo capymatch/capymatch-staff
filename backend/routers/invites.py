@@ -1,7 +1,10 @@
 """Invites — director-only coach invitation system with email delivery."""
 
 from fastapi import APIRouter, HTTPException, Request
-from passlib.hash import bcrypt
+import bcrypt as _bcrypt
+
+def _hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode("utf-8"), _bcrypt.gensalt()).decode("utf-8")
 from datetime import datetime, timezone, timedelta
 import uuid
 import secrets
@@ -249,7 +252,7 @@ async def accept_invite(token: str, body: InviteAccept):
     user_doc = {
         "id": str(uuid.uuid4()),
         "email": invite["email"],
-        "password_hash": bcrypt.hash(body.password),
+        "password_hash": _hash_password(body.password),
         "name": final_name,
         "role": "club_coach",
         "team": invite.get("team"),
