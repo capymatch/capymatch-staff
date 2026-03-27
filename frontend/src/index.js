@@ -10,14 +10,15 @@ window.addEventListener("error", (e) => {
     e.stopImmediatePropagation();
     e.stopPropagation();
     e.preventDefault();
+    return false;
   }
-});
+}, true);  // capture phase — runs BEFORE React's error overlay
 window.addEventListener("unhandledrejection", (e) => {
   if (e.reason && SUPPRESSED.test(String(e.reason))) {
     e.stopImmediatePropagation();
     e.preventDefault();
   }
-});
+}, true);
 
 // Patch ResizeObserver to avoid the loop error entirely
 const RO = window.ResizeObserver;
