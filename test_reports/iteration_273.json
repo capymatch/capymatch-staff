@@ -1,0 +1,120 @@
+{
+  "summary": "School Detail Page Visual Refinement Testing Complete. All 16 visual requirements verified for 3-level card hierarchy with softer coral accent #C75B2A. Tested marshall.edu (on board, match 79) and alfred.edu (on board, match 46).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/frontend/src/pages/athlete/SchoolDetailPage.js"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ACCENT=#C75B2A (softer coral) correctly defined and used throughout",
+    "ACCENT_SOFT=rgba(199,91,42,0.06) for Why This School tinted background - VERIFIED",
+    "ACCENT_BORDER=rgba(199,91,42,0.12) for subtle borders - VERIFIED",
+    "Hero card has shadow-[0_1px_3px_rgba(0,0,0,0.04)] and p-7 md:p-9 padding - VERIFIED",
+    "Hero has decision summary and AI summary text - VERIFIED",
+    "Why This School has very light tinted background and subtle border - VERIFIED",
+    "Why This School has summary sentence above bullets - VERIFIED",
+    "Bullets have reduced visual weight (bg-gray-300 dots, text-gray-700 font-semibold labels) - VERIFIED",
+    "Next Step inline card with Draft Email CTA - VERIFIED",
+    "Snapshot grid: first 4 metrics (Tuition, Acceptance, Students, Graduation) are primary (white bg, border) - VERIFIED",
+    "Snapshot grid: remaining metrics are secondary (bg-gray-50/70, no border) - VERIFIED",
+    "All 15 metric types preserved - VERIFIED",
+    "Opportunity & Risk items in subtle rounded rows (bg-gray-50/60 rounded-xl) - VERIFIED",
+    "Match Breakdown progress bars using #C75B2A at 0.75 opacity - VERIFIED",
+    "Coaching Staff rows have hover:bg-gray-50 state - VERIFIED",
+    "Coaching Staff email links have hover:bg-gray-100 - VERIFIED",
+    "Coaching Staff section has space-y-1 gap between rows - VERIFIED",
+    "Program Details in gray-50/60 container (Level 3) - VERIFIED",
+    "NO green UI (#1a8a80) found - VERIFIED",
+    "NO brown tones (#8B3F1F) found - VERIFIED",
+    "Add to Pipeline button works (shows 'On Your Board' when already added) - VERIFIED",
+    "Back button works (navigates back) - VERIFIED"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100% - All 16 visual requirements verified"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123"
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "School Detail Page visual refinement complete with 3-level card hierarchy. Level 1 Hero (shadow, more padding), Level 2 Insight cards (Why This School with tinted bg, Next Step), Level 3 Data cards (Snapshot grid with primary/secondary differentiation, Program Details in gray). Accent color #C75B2A used throughout. All 15 metrics preserved. No green or brown colors.",
+  "features_tested": {
+    "hero_card": {
+      "shadow": "PASS - shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+      "padding": "PASS - p-7 md:p-9",
+      "decision_summary": "PASS - Shows 'Strong academic fit + division fit + athletic fit.'",
+      "ai_summary": "PASS - Shows height comparison and division alignment"
+    },
+    "why_this_school": {
+      "tinted_background": "PASS - rgba(199, 91, 42, 0.06)",
+      "subtle_border": "PASS - rgba(199, 91, 42, 0.12)",
+      "summary_sentence": "PASS - Shows above bullets",
+      "bullet_dots": "PASS - bg-gray-300 (reduced visual weight)",
+      "bullet_labels": "PASS - text-gray-700 font-semibold (not accent-colored)"
+    },
+    "next_step": {
+      "inline_card": "PASS - bg-white border rounded-xl",
+      "draft_email_cta": "PASS - backgroundColor: #C75B2A",
+      "add_now_cta": "N/A - Both test schools already on board"
+    },
+    "snapshot_grid": {
+      "primary_cards": "PASS - Tuition, Acceptance, Students, Graduation have white bg + border",
+      "secondary_cards": "PASS - Retention and others have bg-gray-50/70, no border",
+      "all_15_metrics": "PASS - All 15 metric types preserved"
+    },
+    "opportunity_risk": {
+      "subtle_rounded_rows": "PASS - bg-gray-50/60 rounded-xl px-4 py-3"
+    },
+    "match_breakdown": {
+      "progress_bars": "PASS - backgroundColor: rgb(199, 91, 42), opacity: 0.75"
+    },
+    "coaching_staff": {
+      "section_gap": "PASS - space-y-1",
+      "row_hover": "PASS - hover:bg-gray-50",
+      "email_hover": "PASS - hover:bg-gray-100"
+    },
+    "program_details": {
+      "gray_container": "PASS - bg-gray-50/60 rounded-2xl p-5 md:p-6"
+    },
+    "color_system": {
+      "accent_C75B2A": "PASS - Used in match ring, progress bars, CTAs",
+      "no_green": "PASS - No #1a8a80 or green colors found",
+      "no_brown": "PASS - No #8B3F1F found"
+    },
+    "functionality": {
+      "add_to_pipeline": "PASS - Button works, shows 'On Your Board' when added",
+      "back_button": "PASS - Navigates back correctly"
+    }
+  },
+  "playwright_test_results": {
+    "marshall_university": {
+      "page_loaded": true,
+      "hero_classes": "bg-white border border-gray-200 rounded-2xl p-7 md:p-9 mb-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+      "match_ring_stroke": "#C75B2A",
+      "why_this_school_style": "background-color: rgba(199, 91, 42, 0.06); border: 1px solid rgba(199, 91, 42, 0.12)",
+      "progress_bar_opacity": "0.75",
+      "metrics_count": 15,
+      "coaching_section_classes": "space-y-1",
+      "program_section_classes": "bg-gray-50/60 rounded-2xl p-5 md:p-6"
+    },
+    "alfred_state_college": {
+      "page_loaded": true,
+      "hero_classes": "bg-white border border-gray-200 rounded-2xl p-7 md:p-9 mb-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+      "why_this_school_style": "background-color: rgba(199, 91, 42, 0.06); border: 1px solid rgba(199, 91, 42, 0.12)",
+      "primary_metrics_verified": true,
+      "secondary_metrics_verified": true,
+      "back_button_works": true
+    }
+  }
+}
