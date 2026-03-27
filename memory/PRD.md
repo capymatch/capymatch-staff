@@ -63,6 +63,12 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - `services/startup.py` — mock_data (for seeding on first boot — acceptable)
 - All production routers/services are clean
 
+## Pipeline Hero Card Mobile Readability Fix (Mar 2026)
+- **PipelineHero.js**: School identity (logo + name) now in separate row from action title with border separator. Em-dash reason text converted to bullet points for instant scannability on mobile.
+- **PriorityBoard.js**: Attention card reason text also converted from em-dash joined strings to bullet points.
+- **HeroCard.js**: Updated with same formatting (not currently imported/used by any page).
+- All navigation, toggles, and CTAs remain fully functional. 100% test pass.
+
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
