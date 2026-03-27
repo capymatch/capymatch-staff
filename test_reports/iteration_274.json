@@ -1,0 +1,107 @@
+{
+  "summary": "Pipeline Hero Card UI Clarity Improvements - All visual/formatting changes verified. School name and logo now prominently grouped and separated from action title with border separator. Em-dash-separated reason text correctly rendered as bullet points in both PipelineHero and PriorityBoard attention cards.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/frontend/src/components/pipeline/PipelineHero.js",
+    "/app/frontend/src/components/pipeline/PriorityBoard.js"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PipelineHero.js: School identity row (logo + name) correctly separated from action title with data-testid='hero-school-row' - VERIFIED",
+    "PipelineHero.js: Action title has border-top separator (1px solid rgba(255,255,255,0.06)) and paddingTop: 6px - VERIFIED",
+    "PipelineHero.js: Reason text split using split(/\\s*[—]\\s*/) and rendered as <ul>/<li> with bullet points (•) - VERIFIED",
+    "PriorityBoard.js: RecapMoveCard reason text split into bullet points for em-dash separated text - VERIFIED",
+    "Mobile viewport (390x844): Hero card renders properly with all 4 bullet points visible - VERIFIED",
+    "Progress rail correctly hidden on mobile (sm:flex class) - VERIFIED",
+    "CTA button 'Review Action' navigates correctly to school detail page - VERIFIED",
+    "Attention cards clickable and navigate to school detail - VERIFIED",
+    "Priority/Pipeline view toggle works correctly - VERIFIED",
+    "HeroCard.js updated but not currently imported/used by any page component - NOTED (as per agent context)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100% - All 8 features verified"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123"
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pipeline Hero Card UI clarity improvements complete. School name/logo now in separate row from action title with border separator. Em-dash text converted to bullet points in both PipelineHero and PriorityBoard components. All navigation and toggle functionality working. HeroCard.js was updated but is not currently imported anywhere.",
+  "features_tested": {
+    "pipeline_page_loads": {
+      "status": "PASS",
+      "details": "Pipeline page loads successfully after login, Priority view is default"
+    },
+    "hero_school_identity_separation": {
+      "status": "PASS",
+      "details": "School name (UCLA) displayed in separate row with logo, separated from action title by border-top (1px solid rgba(255,255,255,0.06))"
+    },
+    "hero_bullet_points": {
+      "status": "PASS",
+      "details": "4 bullet points rendered: 'Overdue follow-up needs action; Coach responded', 'momentum is building', 'action overdue', 'follow up needed'"
+    },
+    "priority_board_bullet_points": {
+      "status": "PASS",
+      "details": "Attention cards with em-dash text show bullet points (e.g., 'Re-engage Emory University' shows '• No activity for 13 days' and '• re-engage within 24-48 hours')"
+    },
+    "hero_cta_navigation": {
+      "status": "PASS",
+      "details": "'Review Action' button navigates to /pipeline/{program_id}"
+    },
+    "attention_card_navigation": {
+      "status": "PASS",
+      "details": "Clicking attention cards navigates to school detail page"
+    },
+    "view_toggle": {
+      "status": "PASS",
+      "details": "Priority/Pipeline toggle switches views correctly"
+    },
+    "mobile_viewport": {
+      "status": "PASS",
+      "details": "Hero card renders properly at 390x844, all bullet points visible, progress rail hidden (sm:flex)"
+    }
+  },
+  "playwright_test_results": {
+    "desktop_1920x1080": {
+      "hero_visible": true,
+      "school_row_visible": true,
+      "school_name": "UCLA",
+      "action_title": "Review this school",
+      "action_title_border": "1px solid rgba(255, 255, 255, 0.06)",
+      "bullet_points": {
+        "hasUl": true,
+        "liCount": 4,
+        "bulletChars": 4
+      },
+      "cta_visible": true,
+      "cta_text": "Review Action",
+      "progress_rail_visible": true,
+      "priority_board_visible": true,
+      "move_cards_with_bullets": 1
+    },
+    "mobile_390x844": {
+      "hero_visible": true,
+      "school_row_visible": true,
+      "school_name_visible": true,
+      "action_title_visible": true,
+      "bullet_points": {
+        "hasUl": true,
+        "liCount": 4
+      },
+      "cta_visible": true,
+      "progress_rail_hidden": true,
+      "cta_navigation_works": true
+    }
+  }
+}

@@ -62,13 +62,20 @@ export default function HeroCard({ action, variant = "urgent", onClick }) {
       }}
     >
       {/* Identity: Logo + Name + Match % */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        paddingBottom: isUrgent ? 10 : 8,
+        marginBottom: isUrgent ? 10 : 8,
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+      }}>
         {p && (
           <UniversityLogo
             domain={p.domain}
             name={p.university_name}
             logoUrl={action.matchScore?.logo_url || p.logo_url}
-            size={isUrgent ? 34 : 28}
+            size={isUrgent ? 38 : 30}
             className="rounded-lg flex-shrink-0"
           />
         )}
@@ -89,7 +96,7 @@ export default function HeroCard({ action, variant = "urgent", onClick }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
             {p?.division && (
-              <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>
                 {p.division}
               </span>
             )}
@@ -118,23 +125,44 @@ export default function HeroCard({ action, variant = "urgent", onClick }) {
         )}
       </div>
 
-      {/* Explanation */}
-      <p
+      {/* Explanation — split em-dashes into bullet points */}
+      <div
         style={{
           fontSize: isUrgent ? 13 : 12,
           fontWeight: 500,
           color: "rgba(255,255,255,0.65)",
-          lineHeight: 1.5,
-          margin: `${isUrgent ? 10 : 8}px 0 ${isUrgent ? 14 : 10}px`,
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
+          lineHeight: 1.55,
+          margin: `0 0 ${isUrgent ? 12 : 8}px`,
         }}
         data-testid={`hero-card-explanation-${action.id}`}
       >
-        {action.context || "Review this program"}
-      </p>
+        {(() => {
+          const raw = action.context || "Review this program";
+          const parts = raw.split(/\s*[—]\s*/).map(s => s.trim()).filter(Boolean);
+          if (parts.length <= 1) {
+            return <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{raw}</span>;
+          }
+          return (
+            <ul style={{ margin: 0, padding: "0 0 0 6px", listStyle: "none" }}>
+              {parts.slice(0, 3).map((pt, i) => (
+                <li key={i} style={{
+                  display: "flex",
+                  gap: 6,
+                  alignItems: "baseline",
+                  marginBottom: i < parts.length - 1 ? 2 : 0,
+                }}>
+                  <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0, fontSize: 10 }}>•</span>
+                  <span style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}>{pt}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
+      </div>
 
       {/* Footer: Owner + CTA */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

@@ -1,37 +1,36 @@
 <analysis>**original_problem_statement**: 
-CapyMatch is a production full-stack athlete management platform. The user requested a 7-phase full production integrity audit to enforce a Single Source of Truth (SSOT) across the application. The agent has successfully completed Refactor Sprints 1, 2, 3, mock data removal, and Priority Engine v2. However, the user just reported a critical bug where they cannot log in to the application.
+CapyMatch is a production full-stack athlete management platform. The user requested fixes to a P0 login bug, a Coach Scraper filtering issue, and several UI/UX design overhauls. Currently, the primary focus is improving the mobile readability and UI clarity of the Pipeline Dashboard Hero Card without altering any underlying logic.
 
 **User's preferred language**: English
 *(INSTRUCT: Next agent must respond in English only)*
 
 **what currently exists?** 
-A React + FastAPI + MongoDB application. The app has undergone massive P0 structural refactoring to enforce a strict SSOT architecture. All interaction signals, stage/progress progression, and priority rankings are now centralized in backend services (, , ). Legacy fields like  and  have been completely eradicated from production paths. Currently, the login API is throwing a 500 internal server error.
+A React + FastAPI + MongoDB application with a strict Single Source of Truth (SSOT) architecture for stage and priority logic. The School Details page has been successfully redesigned into a premium 3-level card hierarchy with coral/orange ( / ) accents. The Coach Scraper has been fortified to exclusively scrape women's volleyball coaches. The system is functioning normally, but the  UI component on the Pipeline dashboard needs immediate formatting updates for mobile clarity.
 
 **Last working item**: 
-    - Last item agent was working: Debugging a login failure reported by the user (I can not log in). The agent found the root cause in the backend logs: .
+    - Last item agent was working: Refactoring  to improve readability and clarity on mobile devices based on user instructions. The agent viewed the file but has not yet implemented the changes.
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? manual testing by curl/logs (for the backend fix) followed by screenshot tool (to verify frontend login succeeds).
+    - Which testing method agent to use? screenshot tool
     - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
-  Issue 1: Login API failing due to bcrypt/passlib incompatibility (P0)
-     - Attempted fixes: The agent checked the backend logs and identified the error traceback pointing to . The context ran out before a fix could be applied.
-     - Next debug checklist: Check  for  and  versions. This is a known incompatibility where  attempts to read  which was removed in . You need to either downgrade  to  (or ) OR patch/replace the password hashing utility to not use passlib with bcrypt>=4. Restart supervisor after dependency updates.
-     - Why fix this issue and what will be achieved with the fix? Users are entirely blocked from logging into the platform.
+  Issue 1: Pipeline Hero Card Readability on Mobile (P0)
+     - Attempted fixes: Agent located and viewed  but the context window ended before applying any code edits.
+     - Next debug checklist: Edit . Ensure the school name and logo are prominently grouped and strictly separated from the action title. Split any long explanation/reason text that uses multiple dashes () and replace the dashes with either stacked lines or bullet points (). **Do not change any logic, data bindings, or behavior.**
+     - Why fix this issue and what will be achieved with the fix? To make the dashboard hero card instantly scannable (under 2 seconds) on mobile devices.
      - Status: IN PROGRESS
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? both
+     - Should Test frontend/backend/both after fix? frontend
      - Blocked on other issue: None
 
 **In progress Task List**: 
-None.
+None
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
     - (P1) CSV Import Tool: Bulk import for school/coach data.
     - (P1) Bulk Approve Mode: Director Inbox multi-select and bulk approve.
-    - (P1) School Detail Page Redesign: Apply the new premium/ochre aesthetic.
     
     Future Tasks:
     - (P2) Parent/Family Experience.
@@ -39,17 +38,15 @@ None.
     - (P2) Multi-Agent Intelligence Pipeline.
 
 **Completed work in this session**
-- Sprint 2: Interaction Signals SSOT via  (DONE)
-- Sprint 3: Stage/Progress Consolidation via  and canonical  (DONE)
-- P0: Full removal of  from DB, backend, and frontend (DONE)
-- P1: Complete mock data cleanup from production paths ( &  now used) (DONE)
-- Priority Engine v2: Created canonical  (DONE)
-- Fixed benign  error overlay on the frontend (DONE)
+- P0: Fixed login API 500 error by stripping  and implementing direct  library calls across , , , and  (DONE)
+- School Details Redesign: Rebuilt  into a structured, premium 3-level card UI with coral accents, preserving all metric data and implementing system-default backgrounds (DONE)
+- Coach Scraper Filter: Upgraded  with 4 layers of validation to strictly isolate women's volleyball coaches and ignore men's URLs/content (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   - None.
+   - None
 
 **Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: None
   - Recurrence count: 0
   - Status: RESOLVED
 
@@ -57,55 +54,53 @@ None.
 
 
 **Key Technical Concepts**
-- **Strict SSOT Architecture**: The backend services (, , ) are the STRICT sole arbiters of application state. Frontend components must NEVER derive or calculate priority, stage, or interaction counts on their own.
+- **Strict SSOT Architecture**: Backend services are the sole arbiters of application state.
+- **Card-Based UI**: The frontend utilizes a mixture of Shadcn components and custom Tailwind CSS flex/grid layouts.
 
 **key DB schema**
   - : Core user profiles.
-  - : Relationships. Uses canonical  and derived .  has been dropped.
-  - : Cached interaction metrics.
+  - : Relationships. Uses canonical  and derived .
 
 **changes in tech stack**
-  - None structurally.
+  -  has been completely removed from the backend due to  >= 4.0.0 incompatibility. Direct  calls are now used.
 
 **All files of reference**
--  (New SSOT for priority)
--  (New SSOT for stages)
--  (New SSOT for interaction signals)
--  (Maintained log of architectural shifts)
+-  (Needs mobile UI updates right now)
+-  (Updated in this session)
+-  (Updated in this session)
+-  (Created in this session)
 
 **Areas that need refactoring**:
-- Auth password hashing (currently using incompatible passlib + bcrypt >= 4.0.0 causing login failures).
+- None
 
 **key api endpoints**
--  (Currently failing with 500 error)
+-  (Fixed)
+-  (Updated)
 
 **Critical Info for New Agent**
-- **Priority**: You must immediately fix the login bug ( error) so the application is usable.
-- **Architectural Constraints**: If you create new features later, you must respect the new SSOT engines. Do not calculate stages or priorities in the frontend or routers.
+- **Immediate Task Constraint**: The user was very specific that the  refactor is a **UI/visual change only**. Do NOT alter any state logic, event handlers, or data payload structures. Focus purely on formatting strings (replacing dashes with bullets/newlines) and tweaking Flexbox/grid structures for the school name & logo.
+-  is no longer used in this project. Do not reintroduce it. 
 
 **documents and test reports created in this job**
-  -  (Updated)
-  -  (Updated)
-  -  (Sprint 2 tests)
-  -  (Sprint 3 tests)
-  -  (P0/P1 Integrity tests)
-  -  (Priority Engine tests)
+  - 
+  - 
+  -  through 
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. (Agent) Requested approval for Stage/Progress Consolidation spec.
-2. (User) Approved with required rules.
-3. (Agent) Implemented Sprint 3, tested, asked for next steps.
-4. (User) Approved. Instructed to do P0 (journey_stage removal) and P1 (mock data removal) before Priority Engine v2.
-5. (Agent) Completed P0 and P1. Asked to proceed.
-6. (User) Approved Priority Engine v2 creation.
-7. (Agent) Implemented Priority Engine v2. Finished task.
-8. (User) Uploaded screenshot: ResizeObserver loop completed with undelivered notifications error overlay.
-9. (Agent) Patched  to catch errors in the capture phase.
-10. (User) Uploaded screenshot: I can not log in. (Pending completion).
+1. (User) Requested adding the missing stats back to the School Detail page.
+2. (Agent) Restored data.
+3. (User) Requested matching the website's orange/teal colors.
+4. (Agent) Implemented color changes.
+5. (User) Requested stronger visual hierarchy and decision guidance.
+6. (Agent) Implemented hierarchy fixes.
+7. (User) Requested a complete refactor to a flowing editorial minimalist style without cards.
+8. (Agent) Implemented editorial style.
+9. (User) Reverted opinion: Requested bringing back structured cards but maintaining a premium Apple/Stripe feel with a coral #E65C2A accent. Also requested background color tweaks, then reverted the background color to default, then asked for progress bars to be vivid orange.
+10. (User) **PENDING**: Uploaded an image of the Pipeline Board and requested UI clarity improvements for the  on mobile (separating school identity, replacing dashed sentences with bullets).
 
 **Project Health Check:**
-- Broken: Login API () is failing due to passlib/bcrypt incompatibility.
-- Mocked: None (mock data completely removed from production paths).
+- Broken: None
+- Mocked: None
 
 **3rd Party Integrations** 
   - OpenAI GPT-4o / Claude — uses Emergent LLM Key
@@ -116,11 +111,13 @@ None.
 **Testing status**
   - Testing agent used after significant changes: YES
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: Updated existing tests for Sprint migrations.
-  - Known regressions: Backend Login API is 500'ing due to library mismatch ( vs ).
+  - Test files created: None
+  - Known regressions: None
 
 **Credentials to test flow:**
+*(Refer to  for full list)*
 - Athlete:  / 
+- Director:  / 
 
 **What agent forgot to execute**
-- The agent successfully diagnosed the cause of the login failure () but the context window ended before a fix (e.g., modifying  to pin ) could be implemented and deployed.</analysis>
+- The agent viewed the  component to begin the mobile UI readability fix, but the context window expired before any modifications were applied.</analysis>

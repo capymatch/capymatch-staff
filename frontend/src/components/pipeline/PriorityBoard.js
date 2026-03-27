@@ -148,7 +148,24 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
             fontSize: 14, fontWeight: 450, color: P.textSub,
             lineHeight: 1.5,
           }}>
-            {priority.reason?.startsWith("\u2192") ? priority.reason : `\u2192 ${priority.reason}`}
+            {(() => {
+              const raw = priority.reason || "Keep your pipeline moving";
+              const clean = raw.startsWith("\u2192") ? raw.slice(1).trim() : raw;
+              const parts = clean.split(/\s*[—]\s*/).map(s => s.trim()).filter(Boolean);
+              if (parts.length <= 1) {
+                return <span>{"\u2192"} {clean}</span>;
+              }
+              return (
+                <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                  {parts.map((pt, i) => (
+                    <li key={i} style={{ display: "flex", gap: 6, alignItems: "baseline", marginBottom: i < parts.length - 1 ? 2 : 0 }}>
+                      <span style={{ color: P.textSub, opacity: 0.5, flexShrink: 0, fontSize: 11 }}>{"\u2022"}</span>
+                      <span>{pt}</span>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
           </div>
 
           {priority.urgency_note && (

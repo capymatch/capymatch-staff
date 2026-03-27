@@ -89,40 +89,71 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
               </span>
             </div>
 
-            {/* HEADLINE */}
-            <div className="flex items-center gap-3 mb-2.5" data-testid="hero-school-row">
+            {/* SCHOOL IDENTITY */}
+            <div className="flex items-center gap-3 mb-2" data-testid="hero-school-row">
               {p && (
                 <UniversityLogo
                   name={p.university_name}
                   logoUrl={ms?.logo_url || p.logo_url}
                   domain={ms?.domain || p.domain}
-                  size={28}
+                  size={32}
                   className="rounded-lg flex-shrink-0"
                 />
               )}
-              <h3 style={{
-                fontSize: 19, fontWeight: 600,
-                color: "#fff", letterSpacing: "-0.025em",
-                margin: 0, lineHeight: 1.15,
+              <span style={{
+                fontSize: 16, fontWeight: 700,
+                color: "#fff", letterSpacing: "-0.01em",
+                lineHeight: 1.2,
               }} data-testid="hero-school-name">
-                {current.primaryAction || `Follow up with ${p?.university_name || "School"}`}
-              </h3>
+                {p?.university_name || "School"}
+              </span>
             </div>
 
-            {/* SINGLE COMBINED REASON */}
+            {/* ACTION TITLE */}
+            <h3 style={{
+              fontSize: 19, fontWeight: 600,
+              color: "rgba(255,255,255,0.92)", letterSpacing: "-0.025em",
+              margin: "0 0 6px", lineHeight: 1.2,
+              paddingTop: 6,
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+            }} data-testid="hero-action-title">
+              {current.primaryAction || `Follow up with ${p?.university_name || "School"}`}
+            </h3>
+
+            {/* REASON — bullet points instead of em-dashes */}
             <div data-testid="hero-advice-box" style={{ marginBottom: 4 }}>
-              <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 15, fontWeight: 450, lineHeight: 1.5 }} data-testid="hero-descriptive-reason">
+              <div data-testid="hero-descriptive-reason">
                 {(() => {
                   const hr = (current.heroReason || "").trim();
                   const risk = (current.riskContext || "").trim();
-                  if (hr && risk) return `${hr} — ${risk.charAt(0).toLowerCase() + risk.slice(1)}`;
-                  if (hr) return hr;
-                  if (risk) return risk;
-                  if (current.tier === "high") {
+                  let raw;
+                  if (hr && risk) raw = `${hr} — ${risk.charAt(0).toLowerCase() + risk.slice(1)}`;
+                  else if (hr) raw = hr;
+                  else if (risk) raw = risk;
+                  else if (current.tier === "high") {
                     const days = p?.signals?.days_since_activity || p?.signals?.days_since_last_activity;
-                    return days ? `No response in ${days} day${days !== 1 ? 's' : ''} — coach is expecting a reply` : "Needs your attention now";
+                    raw = days ? `No response in ${days} day${days !== 1 ? 's' : ''} — coach is expecting a reply` : "Needs your attention now";
+                  } else {
+                    raw = "On track \u2014 keep momentum";
                   }
-                  return "On track \u2014 keep momentum";
+                  const parts = raw.split(/\s*[—]\s*/).map(s => s.trim()).filter(Boolean);
+                  if (parts.length <= 1) {
+                    return <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 450, lineHeight: 1.5 }}>{raw}</span>;
+                  }
+                  return (
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                      {parts.map((pt, i) => (
+                        <li key={i} style={{
+                          display: "flex", gap: 8, alignItems: "baseline",
+                          marginBottom: i < parts.length - 1 ? 3 : 0,
+                          color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 450, lineHeight: 1.5,
+                        }}>
+                          <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0, fontSize: 11 }}>{"\u2022"}</span>
+                          <span>{pt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  );
                 })()}
               </div>
             </div>
