@@ -188,7 +188,7 @@ export default function PipelinePage() {
   // ── Attention data comes from backend (SSOT) — no client-side recomputation ──
   const allAttention = allPrograms
     .filter(p => p.attention && p.is_active !== false)
-    .map(p => ({ ...p.attention, programId: p.program_id, universityName: p.university_name }))
+    .map(p => ({ ...p.attention, programId: p.program_id, universityName: p.university_name, program: p }))
     .sort((a, b) => (b.attentionScore || 0) - (a.attentionScore || 0));
   const attentionMap = {};
   allAttention.forEach(a => { attentionMap[a.programId] = a; });

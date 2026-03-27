@@ -194,6 +194,7 @@ def compute_program_attention(
         "universityName": program.get("university_name", ""),
         "attentionScore": score,
         "tier": tier,
+        "attentionLevel": tier,  # Alias for frontend KanbanBoard/PipelineHero compatibility
         "heroEligible": hero_eligible,
         "urgency": urgency,
         "momentum": momentum,
@@ -204,6 +205,9 @@ def compute_program_attention(
         "ctaLabel": cta_label,
         "riskContext": risk_context,
         "flags": flags,
+        "prioritySource": "live",
+        "recapRank": None,
+        "owner": (top_action.get("owner", "athlete") if top_action else "athlete"),
     }
 
 

@@ -1,0 +1,103 @@
+{
+  "summary": "Regression test for Attention/Urgency/Priority unification (Sprint 1) PASSED. Backend attention computation verified with all 20 tests passing. Frontend Pipeline page and Coach Mission Control verified working. computeAttention.js confirmed NOT imported at runtime.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/athlete/programs", "issue": "owner field can be 'shared' in addition to athlete/coach/director - this is valid behavior, test updated"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_attention_regression.py",
+    "/app/test_reports/pytest/pytest_attention_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/attention.py: VERIFIED - Returns all required fields: attentionScore, tier, attentionLevel, heroEligible, urgency, momentum, primaryAction, reason, ctaLabel, riskContext, flags, prioritySource, recapRank, owner",
+    "routers/athlete_dashboard.py: VERIFIED - Line ~674-700: enriches programs with attention field from services/attention.py",
+    "frontend/PipelinePage.js: VERIFIED - Line ~189-191: uses backend attention field directly (allAttention = allPrograms.filter(p => p.attention)...). No computeAllAttention() call",
+    "computeAttention.js: VERIFIED - NOT imported anywhere at runtime (grep confirms no imports)",
+    "PipelineHero.js: VERIFIED - Uses heroItem.program?.university_name, heroItem.attentionLevel, heroItem.primaryAction from backend",
+    "KanbanBoard.js: VERIFIED - Uses attn.attentionLevel for STATUS color, attn.owner for label",
+    "PriorityBoard.js: VERIFIED - Uses tier for rank, primaryAction for action text, riskContext for urgency_note",
+    "MomentumInsight.js: VERIFIED - Counts high-tier items correctly"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_attention_regression.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (Pipeline page loads, hero card shows TOP PRIORITY badge, priority/kanban views work, coach mission control verified)"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123",
+    "coach": "coach.williams@capymatch.com / coach123",
+    "director": "director@capymatch.com / director123"
+  },
+  "seed_data_creation": "None - used existing seeded data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Attention SSOT refactor verified. Backend services/attention.py is canonical source. GET /api/athlete/programs returns attention field with ALL required fields. Frontend PipelinePage.js consumes backend attention directly without recomputation. computeAttention.js exists but is NOT imported anywhere. Coach mission control shows journey_state and attention_status correctly. Athlete has 6 programs. Hero card shows highest-scored school (UCLA). Kanban shows colored badges based on attentionLevel.",
+  "tests_executed": {
+    "backend_tests": [
+      "test_programs_endpoint_returns_200 - PASS",
+      "test_programs_have_attention_field - PASS",
+      "test_attention_has_all_required_fields - PASS (14 fields verified)",
+      "test_attention_tier_values_valid - PASS (high/medium/low)",
+      "test_attention_level_matches_tier - PASS (attentionLevel === tier)",
+      "test_attention_urgency_values_valid - PASS (critical/soon/monitor)",
+      "test_attention_momentum_values_valid - PASS (cooling/steady/building)",
+      "test_attention_owner_values_valid - PASS (athlete/coach/director/shared)",
+      "test_attention_priority_source_valid - PASS (live/recap/merged)",
+      "test_attention_flags_is_list - PASS",
+      "test_attention_hero_eligible_is_bool - PASS",
+      "test_attention_score_is_numeric - PASS",
+      "test_consecutive_calls_return_identical_attention - PASS (determinism verified)",
+      "test_mission_control_returns_200 - PASS (coach)",
+      "test_mission_control_has_roster - PASS (myRoster field)",
+      "test_mission_control_athletes_have_journey_state - PASS",
+      "test_mission_control_athletes_have_attention_status - PASS",
+      "test_director_mission_control_returns_200 - PASS",
+      "test_director_has_program_snapshot - PASS",
+      "test_coach_mission_control_determinism - PASS"
+    ],
+    "frontend_tests": [
+      "Pipeline page loads - PASS: recruiting-board, pipeline-header, view-toggle found",
+      "Hero card - PASS: TOP PRIORITY badge, school name (UCLA), CTA button, descriptive reason",
+      "Priority Board - PASS: 2 urgency groups (Needs attention now, On track), 5 priority cards",
+      "Momentum Insight - PASS: Shows 'UCLA needs immediate attention — 5 others need follow-up'",
+      "Kanban view - PASS: 5 columns (Added, Outreach, Talking, Visit, Offered), 6 cards with attention badges",
+      "Page reload determinism - PASS: Board loads correctly after reload",
+      "Coach Mission Control - PASS: Shows athletes with journey_state and attention_status (CRITICAL, Worsening, Improving)"
+    ]
+  },
+  "verified_features": {
+    "attention_SSOT": {
+      "backend_service": "services/attention.py compute_program_attention() is canonical source",
+      "required_fields": "attentionScore, tier, attentionLevel, heroEligible, urgency, momentum, primaryAction, reason, ctaLabel, riskContext, flags, prioritySource, recapRank, owner",
+      "athlete_dashboard": "GET /api/athlete/programs enriches programs with attention field",
+      "frontend_consumption": "PipelinePage.js reads p.attention directly, no recomputation"
+    },
+    "no_stale_imports": {
+      "computeAttention.js": "File exists but NOT imported anywhere at runtime (grep verified)"
+    },
+    "determinism": {
+      "attention_data": "Identical across consecutive calls",
+      "mission_control": "Identical across consecutive calls"
+    },
+    "frontend_components": {
+      "PipelineHero": "Shows TOP PRIORITY badge, school name, primaryAction, heroReason/riskContext",
+      "PriorityBoard": "Shows sorted list with rank labels (Needs attention now / On track), action text, urgency_note",
+      "KanbanBoard": "Shows cards with attention badges/colors matching tier (red for high)",
+      "MomentumInsight": "Shows correct count of high-priority schools"
+    },
+    "coach_mission_control": {
+      "roster": "Shows athletes with journey_state and attention_status",
+      "attention_status": "Shows CRITICAL, Worsening, Improving indicators"
+    }
+  }
+}
