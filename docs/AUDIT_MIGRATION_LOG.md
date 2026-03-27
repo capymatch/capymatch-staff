@@ -228,3 +228,54 @@
 |---|---|---|
 | `services/startup.py` | Imports mock_data for DB seeding | Only runs on first boot, seeds real DB |
 | `mock_data.py` | Source definition | Not imported by any production router/service |
+
+---
+
+## Priority Engine v2 (Completed)
+
+### Canonical Priority Model
+| Dimension | Points | Source |
+|---|---|---|
+| Actionability | 0-100 | `top_action_engine.py` priority (P1=98 ... P8=0) |
+| Time Urgency | 0-80 | Due dates (overdue=80, due_soon=60, due_3d=40, due_7d=20) |
+| Activity Recency | 0-40 | `days_since_activity` (>14d=40, >7d=25, >3d=10) |
+| Stage Urgency | 0-15 | `pipeline_stage` (offer=15, campus_visit=12, in_conversation=8, outreach=4) |
+| Coach Engagement | 0-60 | `has_coach_reply` (+30), `has_campus_visit` (+30) |
+| Health Signal | 0-30 | `pipeline_health_state` (at_risk=30, cooling_off=20, etc.) |
+
+### Output Contract
+| Field | Type | Description |
+|---|---|---|
+| `priority_score` | int | Composite score (0-325) |
+| `priority_band` | str | `critical` / `high` / `medium` / `low` |
+| `attention_status` | str | `blocker` / `at_risk` / `needs_action` / `on_track` |
+| `urgency` | str | `critical` / `soon` / `monitor` |
+| `momentum` | str | `cooling` / `steady` / `building` |
+| `opportunity_tier` | str | `high_value` / `growing` / `early` / `inactive` |
+| `stale_flag` | bool | No activity > 14 days |
+| `blocker_flag` | bool | Coach flag or escalation |
+| `overdue_flag` | bool | Past due date |
+| `hero_eligible` | bool | Eligible for hero card |
+| `primary_action` | str | Recommended next action |
+| `why_this_is_priority` | str | Human-readable explanation |
+| `cta_label` | str | Button text for primary action |
+| `owner` | str | Who should act (athlete/coach/director) |
+
+### File Created
+| File | Purpose |
+|---|---|
+| `services/priority_engine.py` | Canonical priority scoring: `compute_program_priority()`, `compute_all_program_priorities()`, `pick_top_priority()`, `rank_athletes_for_mission_control()`, `classify_program_health()` |
+
+### Files Updated
+| File | Change |
+|---|---|
+| `routers/athlete_dashboard.py` | `compute_program_attention` → `compute_program_priority` from priority_engine |
+
+### Functions Superseded
+| Old Function | Old File | Replaced By |
+|---|---|---|
+| `compute_program_attention()` | `services/attention.py` | `priority_engine.compute_program_priority()` |
+| `compute_all_program_attention()` | `services/attention.py` | `priority_engine.compute_all_program_priorities()` |
+
+### Backward Compatibility
+Legacy aliases maintained in output: `attentionScore`, `tier`, `attentionLevel`, `heroEligible`, `primaryAction`, `ctaLabel`, `riskContext`, `prioritySource`, `recapRank`. Frontend components consume these unchanged.

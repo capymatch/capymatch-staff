@@ -486,7 +486,7 @@ async def list_programs(
     uni_names = list({p["university_name"] for p in programs if p.get("university_name")})
 
     from services.program_metrics import batch_get_metrics, extract_signals
-    from services.attention import compute_program_attention
+    from services.priority_engine import compute_program_priority
     from services.top_action_engine import compute_top_action
 
     all_coaches_f = db.college_coaches.find(
@@ -531,7 +531,7 @@ async def list_programs(
         if not p.get("social_links") and kb.get("social_links"):
             p["social_links"] = kb["social_links"]
 
-    # ── Compute canonical attention per program (SSOT) ────────────────
+    # ── Compute canonical priority per program (Priority Engine v2 SSOT) ──
     # mx_map already fetched above via batch_get_metrics
     ta_map = {}
     for pid in program_ids:
@@ -544,7 +544,7 @@ async def list_programs(
 
     for p in programs:
         pid = p["program_id"]
-        p["attention"] = compute_program_attention(
+        p["attention"] = compute_program_priority(
             program=p,
             top_action=ta_map.get(pid),
             metrics=mx_map.get(pid),
