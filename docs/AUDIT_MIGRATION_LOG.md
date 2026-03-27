@@ -206,7 +206,25 @@
 ### P3 Mock Data (Low)
 - `routers/admin.py` — SCHOOLS
 
-### journey_stage Full Removal (Deferred)
-- Field still exists in DB documents but is never written to or read from production paths
-- Full removal requires data migration (drop field from all program docs)
-- Scheduled for post-Sprint 3 cleanup
+### journey_stage Full Removal (COMPLETED)
+- Field removed from all 5 DB documents
+- All backend writes stopped
+- All frontend references removed
+- Only safety guard `body.pop("journey_stage")` remains in `update_program`
+
+
+## P1 Mock Data Cleanup (Completed)
+
+### Files Cleaned
+| File | Mock Import Removed | Replaced With |
+|---|---|---|
+| `support_pod.py` | `UPCOMING_EVENTS` | `db.events.find()` — async query |
+| `advocacy_engine.py` | `UPCOMING_EVENTS`, `SCHOOLS` | `db.events.find()`, `db.university_knowledge_base.find_one()` |
+| `program_engine.py` | `UPCOMING_EVENTS` | `db.events.find()` |
+| `routers/admin.py` | `SCHOOLS` | `db.university_knowledge_base.count_documents()` |
+
+### Remaining Acceptable mock_data Usage
+| File | Usage | Why Acceptable |
+|---|---|---|
+| `services/startup.py` | Imports mock_data for DB seeding | Only runs on first boot, seeds real DB |
+| `mock_data.py` | Source definition | Not imported by any production router/service |

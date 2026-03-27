@@ -50,22 +50,18 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **Refactor Sprint 3 — Stage/Progress Consolidation**: DONE. `services/stage_engine.py` is canonical owner for `pipeline_stage`, `board_group`, and `journey_rail`. 2-field model enforced: `recruiting_status` (user-set) + `pipeline_stage` (system-derived). `journey_stage` writes stopped. DB normalized (24 programs). Auto-corrections on write flows. Verified with 17 backend + all frontend tests (100% pass).
 - **Phase 7 — Test Implementation**: IN PROGRESS (66+ tests across 5 test files)
 
-### Known Remaining mock_data Imports (P2/P3 — backlog)
-- `support_pod.py` — UPCOMING_EVENTS
-- `advocacy_engine.py` — UPCOMING_EVENTS, SCHOOLS
-- `program_engine.py` — UPCOMING_EVENTS
-- `routers/admin.py` — SCHOOLS
-- `services/startup.py` — mock_data (for seeding — acceptable)
+### Known Remaining mock_data Imports (acceptable — seeding only)
+- `services/startup.py` — mock_data (for seeding on first boot — acceptable)
+- All production routers/services are clean
 
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
 ## Upcoming Tasks (P0/P1)
-- Remaining P2/P3 mock_data leaks (support_pod, advocacy_engine, program_engine, admin)
+- Priority Engine v2 — canonical priority/attention scoring
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
 - School Detail Page Redesign with premium ochre aesthetic
-- journey_stage full field removal from DB (cleanup)
 
 ## Future Tasks (P2)
 - Parent/Family Experience

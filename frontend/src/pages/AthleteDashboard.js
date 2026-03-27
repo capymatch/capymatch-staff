@@ -695,6 +695,7 @@ export default function AthleteDashboard() {
 
   const getDaysAgo = (dateStr) => {
     if (!dateStr) return "";
+    if (!dateStr || isNaN(new Date(dateStr + "T00:00:00").getTime())) return "overdue";
     const d = new Date(dateStr + "T00:00:00");
     const diff = Math.ceil((now - d) / 86400000);
     if (diff === 0) return "today";
