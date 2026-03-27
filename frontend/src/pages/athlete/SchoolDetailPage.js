@@ -273,7 +273,10 @@ export default function SchoolDetailPage() {
       {/* ═══════════════ HERO ═══════════════ */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-4" data-testid="school-hero">
         <div className="flex-1 min-w-0">
-          {/* School name */}
+          {/* School logo + name */}
+          {school.logo_url && (
+            <img src={school.logo_url} alt="" className="w-14 h-14 rounded-xl object-contain mb-4" onError={e => e.target.style.display = 'none'} data-testid="school-logo" />
+          )}
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium text-[var(--cm-text)] tracking-tight leading-[1.1] mb-3" data-testid="school-name">
             {school.university_name}
           </h1>
@@ -363,9 +366,12 @@ export default function SchoolDetailPage() {
         <SnapshotItem label="Student-Faculty" value={sc.student_faculty_ratio ? `${sc.student_faculty_ratio}:1` : null} />
         <SnapshotItem label="SAT Avg" value={sc.sat_avg ? String(sc.sat_avg) : null} />
         <SnapshotItem label="ACT Mid" value={sc.act_midpoint ? String(sc.act_midpoint) : null} />
-        {sc.avg_annual_cost && <SnapshotItem label="Avg Annual Cost" value={fmtMoney(sc.avg_annual_cost)} />}
-        {sc.median_earnings && <SnapshotItem label="Median Earnings" value={fmtMoney(sc.median_earnings)} note="Post-graduation" />}
         {sc.avg_gpa && <SnapshotItem label="Avg GPA" value={sc.avg_gpa} />}
+        {sc.avg_annual_cost && <SnapshotItem label="Avg Annual Cost" value={fmtMoney(sc.avg_annual_cost)} />}
+        {sc.tuition_in_state && <SnapshotItem label="Tuition (In-State)" value={fmtMoney(sc.tuition_in_state)} />}
+        <SnapshotItem label="Median Debt" value={sc.median_debt ? fmtMoney(sc.median_debt) : "N/A"} note="At graduation" />
+        {sc.median_earnings && <SnapshotItem label="Median Earnings" value={fmtMoney(sc.median_earnings)} note="Post-graduation" />}
+        {sc.school_type && <SnapshotItem label="School Type" value={sc.school_type} />}
         {school.scholarship_type && <SnapshotItem label="Scholarship" value={school.scholarship_type} />}
       </div>
 
@@ -526,6 +532,12 @@ export default function SchoolDetailPage() {
             <ArrowUpRight className="w-3.5 h-3.5" /> Program Website
           </a>
         )}
+        {school.domain && (
+          <a href={`https://${school.domain}`} target="_blank" rel="noreferrer" data-testid="academic-website-link"
+            className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
+            <ArrowUpRight className="w-3.5 h-3.5" /> Academic Website
+          </a>
+        )}
         {school.questionnaire_url && (
           <a href={school.questionnaire_url.startsWith("http") ? school.questionnaire_url : `https://${school.questionnaire_url}`} target="_blank" rel="noreferrer" data-testid="questionnaire-link"
             className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
@@ -551,6 +563,43 @@ export default function SchoolDetailPage() {
           </a>
         )}
       </div>
+
+      {/* ═══════════════ CAMPUS DIVERSITY ═══════════════ */}
+      {school.campus_diversity && Object.keys(school.campus_diversity).length > 0 && (
+        <>
+          <Divider />
+          <SectionTitle testId="campus-diversity-title">Campus Diversity</SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="campus-diversity-section">
+            {Object.entries(school.campus_diversity)
+              .sort((a, b) => b[1].students - a[1].students)
+              .map(([category, data]) => (
+                <div key={category} data-testid={`diversity-${category.replace(/[\s/]+/g, '-').toLowerCase()}`}>
+                  <div className="text-[13px] font-medium mb-3 text-[var(--cm-text)]">{category}</div>
+                  <div className="space-y-2.5">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)]">Students</span>
+                        <span className="text-[12px] font-semibold text-[var(--cm-text)]">{data.students}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden bg-[var(--cm-surface-2)]">
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.students, 100)}%`, backgroundColor: "#8B3F1F" }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)]">Faculty</span>
+                        <span className="text-[12px] font-semibold text-[var(--cm-text)]">{data.faculty}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden bg-[var(--cm-surface-2)]">
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.faculty, 100)}%`, backgroundColor: "var(--cm-text-3)" }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </>
+      )}
 
       {showUpgrade && <UpgradeModal feature="schools" currentTier="basic" onClose={() => setShowUpgrade(false)} />}
     </div>
