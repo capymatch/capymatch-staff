@@ -32,17 +32,22 @@ scrape_status = {"running": False, "scraped": 0, "failed": 0, "total": 0, "done"
 PLACEHOLDER_NAMES = {"name", "title", "first last", "staff", "coaching staff", "coaches", "coach", ""}
 
 SPORT_PATHS = [
+    # Women's-specific paths (highest priority)
     "/sports/womens-volleyball/coaches",
     "/sports/womens-volleyball/coaching-staff",
     "/sports/womens-volleyball/staff",
-    "/sports/volleyball/coaches",
-    "/sports/volleyball/coaching-staff",
     "/sports/wvball/coaches",
     "/sports/w-volley/coaches",
     "/sports/wvb/coaches",
     "/sports/womens-volleyball",
+    # Generic paths (fallback — validated for women's content later)
+    "/sports/volleyball/coaches",
+    "/sports/volleyball/coaching-staff",
     "/sports/volleyball",
 ]
+
+# Paths that indicate men's volleyball — always skip
+MENS_PATHS_KEYWORDS = ["mens-volleyball", "mvball", "m-volley", "mvb", "mens-vball", "men-volleyball"]
 
 
 def get_url_candidates(domain, website=""):
@@ -51,10 +56,14 @@ def get_url_candidates(domain, website=""):
         w = website.rstrip("/")
         if not w.startswith("http"):
             w = f"https://{w}"
-        if "/sports/" in w or "/volleyball" in w:
-            base_sport = re.sub(r'/roster.*|/schedule.*', '', w)
-            candidates.append(f"{base_sport}/coaches")
-            candidates.append(base_sport)
+        # Skip if the stored website URL is a men's volleyball page
+        w_lower = w.lower()
+        is_mens_url = any(mk in w_lower for mk in MENS_PATHS_KEYWORDS)
+        if not is_mens_url:
+            if "/sports/" in w or "/volleyball" in w:
+                base_sport = re.sub(r'/roster.*|/schedule.*', '', w)
+                candidates.append(f"{base_sport}/coaches")
+                candidates.append(base_sport)
         parsed = urlparse(w)
         ath_base = f"{parsed.scheme}://{parsed.netloc}"
         for sp in SPORT_PATHS:
@@ -253,12 +262,36 @@ async def scrape_coaching_page(http_client, domain, website=""):
 
 async def _try_candidates(http_client, urls):
     for url in urls:
+        # Skip URLs that are clearly men's volleyball
+        url_lower = url.lower()
+        if any(mk in url_lower for mk in MENS_PATHS_KEYWORDS):
+            continue
         try:
             resp = await http_client.get(url, headers=HEADERS, follow_redirects=True, timeout=12)
             if resp.status_code != 200:
                 continue
             html = resp.text
-            if "volleyball" not in html.lower() and "volley" not in html.lower():
+            html_lower = html.lower()
+            # Must contain volleyball content
+            if "volleyball" not in html_lower and "volley" not in html_lower:
+                continue
+            # Check the final URL after redirects for men's paths
+            final_url = str(resp.url).lower()
+            if any(mk in final_url for mk in MENS_PATHS_KEYWORDS):
+                continue
+            # If page mentions "men's volleyball" but NOT "women's volleyball",
+            # it's likely a men's page — skip it
+            has_womens = any(w in html_lower for w in [
+                "women's volleyball", "womens volleyball", "women\u2019s volleyball",
+                "w. volleyball", "wvb", "wvball", "w-volley",
+            ])
+            has_mens = any(m in html_lower for m in [
+                "men's volleyball", "mens volleyball", "men\u2019s volleyball",
+                "m. volleyball", "mvb",
+            ])
+            # Generic /sports/volleyball pages: require women's indicator
+            is_generic_path = not any(w in url_lower for w in ["womens", "wvball", "w-volley", "wvb"])
+            if is_generic_path and has_mens and not has_womens:
                 continue
             soup = BeautifulSoup(html, "lxml")
             coaches = extract_coaches_structured(soup)
@@ -393,7 +426,7 @@ async def scrape_one(request: Request):
 
 # ── Volleyball URL Discovery ──
 
-VOLLEYBALL_PATHS = ["/sports/womens-volleyball", "/sports/volleyball", "/sports/wvball", "/sports/w-volley", "/sports/wvb"]
+VOLLEYBALL_PATHS = ["/sports/womens-volleyball", "/sports/wvball", "/sports/w-volley", "/sports/wvb", "/sports/volleyball"]
 discover_status = {"running": False, "found": 0, "failed": 0, "total": 0, "done": True}
 
 
@@ -404,8 +437,21 @@ async def _discover_volleyball_url(http_client, domain, university_name=""):
             url = f"{base}{path}"
             try:
                 resp = await http_client.get(url, headers=HEADERS, follow_redirects=True, timeout=8)
-                if resp.status_code == 200 and "volleyball" in resp.text.lower():
-                    return str(resp.url).rstrip("/")
+                if resp.status_code != 200:
+                    continue
+                html_lower = resp.text.lower()
+                if "volleyball" not in html_lower:
+                    continue
+                # Check final URL and content aren't men's-only
+                final_url = str(resp.url).lower()
+                if any(mk in final_url for mk in MENS_PATHS_KEYWORDS):
+                    continue
+                is_generic = not any(w in url.lower() for w in ["womens", "wvball", "w-volley", "wvb"])
+                has_mens = any(m in html_lower for m in ["men's volleyball", "mens volleyball"])
+                has_womens = any(w in html_lower for w in ["women's volleyball", "womens volleyball", "wvb", "wvball"])
+                if is_generic and has_mens and not has_womens:
+                    continue
+                return str(resp.url).rstrip("/")
             except Exception as e:  # noqa: E722
                 log.warning("Handled exception (skipped): %s", e)
                 continue
@@ -415,8 +461,20 @@ async def _discover_volleyball_url(http_client, domain, university_name=""):
             url = f"{ath_base}{path}"
             try:
                 resp = await http_client.get(url, headers=HEADERS, follow_redirects=True, timeout=8)
-                if resp.status_code == 200 and "volleyball" in resp.text.lower():
-                    return str(resp.url).rstrip("/")
+                if resp.status_code != 200:
+                    continue
+                html_lower = resp.text.lower()
+                if "volleyball" not in html_lower:
+                    continue
+                final_url = str(resp.url).lower()
+                if any(mk in final_url for mk in MENS_PATHS_KEYWORDS):
+                    continue
+                is_generic = not any(w in url.lower() for w in ["womens", "wvball", "w-volley", "wvb"])
+                has_mens = any(m in html_lower for m in ["men's volleyball", "mens volleyball"])
+                has_womens = any(w in html_lower for w in ["women's volleyball", "womens volleyball", "wvb", "wvball"])
+                if is_generic and has_mens and not has_womens:
+                    continue
+                return str(resp.url).rstrip("/")
             except Exception as e:  # noqa: E722
                 log.warning("Handled exception (skipped): %s", e)
                 continue
