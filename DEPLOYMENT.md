@@ -123,7 +123,7 @@ Add these records to your `capymatch.com` DNS:
 APP_ENV=development
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=test_database
-FRONTEND_URL=https://data-consistency-13.preview.emergentagent.com
+FRONTEND_URL=https://athlete-integrity.preview.emergentagent.com
 STRIPE_API_KEY=sk_test_...
 ENABLE_HTTPS_REDIRECT=false
 ```

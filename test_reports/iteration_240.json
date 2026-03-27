@@ -58,7 +58,7 @@
       "Header values correct": "PASS - X-Frame-Options=DENY, X-Content-Type-Options=nosniff, HSTS has max-age, Referrer-Policy=strict-origin, CSP has default-src"
     },
     "cors_configuration": {
-      "Allows FRONTEND_URL": "PASS - https://data-consistency-13.preview.emergentagent.com allowed",
+      "Allows FRONTEND_URL": "PASS - https://athlete-integrity.preview.emergentagent.com allowed",
       "Rejects unauthorized origins": "PASS - https://evil.com not allowed",
       "Allows localhost in dev": "PASS - http://localhost:3000 allowed"
     },
