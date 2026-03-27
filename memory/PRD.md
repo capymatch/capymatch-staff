@@ -51,6 +51,8 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **P0 — journey_stage Full Removal**: DONE. Field removed from all DB documents, all backend/frontend code.
 - **P1 — Mock Data Cleanup**: DONE. `support_pod.py`, `advocacy_engine.py`, `program_engine.py`, `routers/admin.py` — all mock imports replaced with DB queries. Only `startup.py` (seeding) retains mock_data.
 - **Priority Engine v2**: DONE. `services/priority_engine.py` is canonical owner for all priority/attention/urgency. Output contract: priority_score, priority_band, attention_status, urgency, momentum, opportunity_tier, stale_flag, blocker_flag, overdue_flag, hero_eligible, primary_action, why_this_is_priority. Backward-compatible aliases maintained. 23 backend + all frontend tests passed.
+- **P0 — Login bcrypt/passlib Fix (Mar 2026)**: Replaced `passlib.hash.bcrypt` with direct `bcrypt` library calls across `auth.py`, `invites.py`, `startup.py`, `org_foundation.py`. Root cause: `passlib==1.7.4` incompatible with `bcrypt>=4.0.0`.
+- **School Detail Page Redesign (Mar 2026)**: Transformed from data-heavy dashboard to premium Apple/Notion-style decision-focused experience. New sections: Hero (large name, subtle metadata, AI summary, ochre match ring, "Add to Pipeline" CTA), "Why This School" (fit analysis callout), "Quick Snapshot" (merged stats grid), "Opportunity & Risk" (insight-focused), simplified Coaching Staff (list layout), compact Program Details. Ochre accent (#8B3F1F) throughout, no green UI, increased whitespace, subtle dividers. All tests passed.
 - **Phase 7 — Test Implementation**: COMPLETE (90+ tests across 7 test files)
 
 ### Known Remaining mock_data Imports (acceptable — seeding only)
@@ -66,7 +68,6 @@ The Google button is always visible. The OAuth flow is backend-driven:
 ## Upcoming Tasks (P0/P1)
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
-- School Detail Page Redesign with premium ochre aesthetic
 
 ## Future Tasks (P2)
 - Parent/Family Experience
