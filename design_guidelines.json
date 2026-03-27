@@ -1,81 +1,107 @@
 {
-  "theme": "dark",
-  "archetype": "The Performance Pro",
+  "theme": "Light & Dark Mode Supported",
+  "archetype": "Archetype 4 (Swiss & High-Contrast) - Modified for Apple/Notion Minimalism",
   "typography": {
-    "headings": "Barlow Condensed (Google Fonts), fallback to Manrope",
-    "body": "Inter (Existing), fallback to sans-serif",
-    "rules": "Headings MUST use Strong Condensed Sans (900/800 weight) for a 'heavy-weight' athletic feel. Body text must be Geometric Sans with increased tracking for legibility. DO NOT use Inter for main/sub-headings.",
-    "import_instruction": "Add '@import url(\"https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&display=swap\");' to index.css if not present."
-  },
-  "colors": {
-    "background": "Deep Obsidian (bg-gray-950) with panels in bg-gray-900",
-    "surface": "Tactical Minimalism. Replace soft shadows with 1px solid strokes (border-gray-800) or 2px 'Inner Glow' highlights.",
-    "primary": "Pure White for data clarity, Emerald (bg-emerald-500) for success states.",
-    "accents": "High-saturation accent blocks: Electric Blaze (Red for Hot), Amber (Warm), Volt Blue (Sky for Cool).",
-    "forbidden": ["#7351B7", "teal green (#1B93A4) as global primary", "generic gray-on-gray (too low contrast)"],
-    "text": "High contrast Pure White for primary, gray-400 for secondary. Tint greys slightly."
-  },
-  "spacing_and_layout": {
-    "general": "High Density Grid (Mode B). Speed is critical. Optimize for < 5 seconds usage.",
-    "alignment": "Mobile-First. Elements should fill their containers (align-self: stretch). Large tap targets (min-h-[44px]) for fast-paced event logging.",
-    "live_impact_panel": "Use 'The Tracing Beam' or 'Tactile Neumorphism' styles. It must feel active and responsive.",
-    "bento_grid": "Group signals into tight grid structures (gap-2 or gap-3) within their categories."
-  },
-  "motion_and_interaction": {
-    "hover_states": "Interactive elements must have hover states (e.g., hover:bg-gray-800 hover:text-white).",
-    "active_states": "Use active:scale-95 for an immediate 'tactile' feedback feeling on buttons.",
-    "transitions": "Use specific transition properties (e.g., transition-colors duration-200), NOT 'transition-all'."
-  },
-  "components": {
-    "athlete_selection": {
-      "style": "Upgraded chips with clear photo, name, and a status indicator dot (e.g., green if already covered).",
-      "layout": "Dense wrapping flexbox or horizontal scroll if many athletes."
-    },
-    "school_selection": {
-      "style": "Search/Recent list. High-visibility 'Add' button.",
-      "layout": "Keep chips compact but tappable. Inline search input to avoid heavy modals."
-    },
-    "grouped_signals": {
-      "categories": ["Coach Signals", "Performance", "Needs/Risks", "Milestones"],
-      "style": "Grid borders. Each signal button shows icon, name, and 'Intelligence Trigger' (inline consequence) in smaller text (e.g., 'Action: Send film')."
-    },
-    "interest_selector": {
-      "style": "4-part Toggle Group.",
-      "micro_guidance": "Dynamic 1-line helper text immediately below the selector explaining the meaning of the selected interest level."
-    },
-    "live_impact_panel": {
-      "style": "Dark panel with 1px border (border-emerald-500/30) and a subtle glow when active.",
-      "content": "A dynamic read-out showing exactly what the system will do upon saving (e.g., 'Will route to pod and update pipeline')."
-    },
-    "single_cta": {
-      "style": "Sticky bottom bar on mobile to ensure immediate access. Massive tap target.",
-      "actions": "Consolidate to a single 'Save & Trigger Actions' button. Place the 'Notify athlete' as a highly visible styled checkbox or toggle directly above or beside it."
+    "heading_font": "Outfit",
+    "body_font": "Manrope",
+    "scale": {
+      "h1": "text-4xl sm:text-5xl md:text-6xl tracking-tight font-medium",
+      "h2": "text-2xl sm:text-3xl tracking-tight font-medium",
+      "h3": "text-lg sm:text-xl font-medium",
+      "body": "text-base leading-relaxed text-[var(--cm-text)]",
+      "label": "text-xs sm:text-sm uppercase tracking-[0.15em] font-semibold text-[var(--cm-text-2)]"
     }
   },
-  "accessibility": {
-    "contrast": "Ensure all text meets at least 4.5:1 contrast. Dark mode borders must be visible (border-white/10).",
-    "data_testids": "MANDATORY: All interactive elements MUST include a kebab-case data-testid attribute (e.g., data-testid='athlete-chip-123')."
+  "colors": {
+    "background": "var(--cm-bg)",
+    "surface": "var(--cm-surface)",
+    "surface_secondary": "var(--cm-surface-2)",
+    "text_primary": "var(--cm-text)",
+    "text_secondary": "var(--cm-text-2)",
+    "border": "var(--cm-border)",
+    "accent": "#8B3F1F",
+    "accent_hover": "#6e3218",
+    "accent_subtle": "rgba(139, 63, 31, 0.05)",
+    "rules": [
+      "NO GREEN UI. Use Ochre (#8B3F1F) for all positive/highlight indicators.",
+      "Use Ochre ONLY for accents (buttons, key highlights, match score fill).",
+      "Use grayscale/neutral colors for standard UI elements."
+    ]
   },
-  "icons_and_assets": {
-    "library": "lucide-react (No emojis allowed in the UI).",
-    "usage": "Use icons for categories, signals, and impact indicators. Ensure icons are sized proportionately (w-4 h-4 or w-5 h-5)."
+  "spacing_and_layout": {
+    "section_spacing": "py-12 md:py-16",
+    "container_padding": "px-6 md:px-12 lg:px-24",
+    "gap_large": "gap-12",
+    "gap_medium": "gap-8",
+    "gap_small": "gap-4",
+    "border_radius": "rounded-2xl md:rounded-3xl",
+    "strategy": "Avoid nested containers and excessive borders. Use whitespace (padding/margin) and subtle dividers (1px border-b) to separate sections. Emulate a clean Notion document."
   },
-  "universal_guidelines_for_main_agent": [
-    "No generic centered layouts. Use optical alignment and clear hierarchy.",
-    "NO EMOJIS anywhere in the UI. Use lucide-react instead.",
-    "DO NOT use generic full-screen gradients. Keep backgrounds solid with 1px borders.",
-    "DO NOT break existing API calls. The form must capture and send: athlete_id, school_id, interest_level, signal_type, note_text, send_to_athlete.",
-    "DO NOT use completely transparent backgrounds for sticky headers.",
-    "Create depth using layered design elements with z-index hierarchy and subtle dark mode shadows.",
-    "Use pill-shaped or sharp rectangular buttons with interaction animations.",
-    "All interactive and key informational elements MUST include a `data-testid` attribute."
-  ],
-  "instructions_to_main_agent": {
-    "phase_1": "Update CSS/Fonts: Add Barlow Condensed to index.css and apply it to Headings. Set background to bg-gray-950.",
-    "phase_2": "Implement Athlete & School Selection: Redesign athlete chips to include photos/status dots. Redesign school chips to prioritize targets and include a prominent search/add feature.",
-    "phase_3": "Build Interest & Signals: Add 1-line Interest Micro-Guidance below the interest toggles. Group the SIGNAL_TYPES array into categories (Coach Signals, Performance, etc.) and display them in a dense grid with inline Intelligence Triggers (consequences).",
-    "phase_4": "Create Live Impact Panel: Build a dynamic section right above the form actions that reads the current state (athlete, school, interest, signal) and visually outputs the real-time consequence (e.g., 'Routing to [School] pipeline').",
-    "phase_5": "Refactor CTA: Remove the separate 'Log' and 'Send' buttons. Build a unified 'Save & Trigger Actions' button with a dedicated 'Notify Athlete' checkbox. Make this sticky on mobile for <5s fast access.",
-    "phase_6": "Verify Constraints: Ensure data-testids are present, no emojis are used, and the API payload matches the original requirements."
-  }
+  "components": {
+    "buttons": {
+      "primary": "Border-only (outline) style using the Ochre accent. Classes: border-2 border-[#8B3F1F] text-[#8B3F1F] hover:bg-[#8B3F1F] hover:text-white rounded-full px-6 py-2.5 transition-colors font-medium",
+      "secondary": "Ghost or subtle style. Classes: bg-transparent hover:bg-[var(--cm-surface-2)] text-[var(--cm-text)] px-6 py-2.5 rounded-full transition-colors font-medium"
+    },
+    "cards": {
+      "style": "Cardless design or ultra-minimal. Remove heavy shadows and thick borders. If a background is needed, use a very subtle fill (var(--cm-surface-2)) with no border."
+    },
+    "dividers": {
+      "style": "Use subtle horizontal rules between major sections instead of boxing them. Classes: h-px w-full bg-[var(--cm-border)] opacity-50 my-12"
+    }
+  },
+  "page_sections": {
+    "Hero": {
+      "layout": "Flex column on mobile, Flex row (justify-between items-start) on desktop. Left side: Text content. Right side: MatchScore Ring.",
+      "school_name": "Use h1 scale. Very clean.",
+      "metadata": "Division and Conference should be inline, separated by a bullet (•), using text_secondary.",
+      "ai_summary": "1-2 lines explaining fit. Use text-xl text-[var(--cm-text-2)] leading-relaxed max-w-2xl mt-4.",
+      "ctas": "Flex row, gap-4, mt-8. Primary: Add to Pipeline (Ochre outline). Secondary: Visit Website.",
+      "match_score": "Right-aligned. Keep it clean. The ring fill should use the Ochre accent instead of green/multicolor."
+    },
+    "Why_This_School": {
+      "importance": "MOST IMPORTANT SECTION",
+      "layout": "Notion-style callout block. Background: accent_subtle (Ochre at 5% opacity). Padding: p-8 md:p-10. Radius: rounded-3xl. Margin: mt-12 mb-16.",
+      "content": "A simple list of 4 bullet points (Academic Fit, Division Fit, Location Preference, Roster Opportunity).",
+      "typography": "Bullet text should be large and legible (text-lg md:text-xl text-[var(--cm-text)]). Use a simple, elegant Ochre icon (like a check or spark) for bullets."
+    },
+    "Quick_Snapshot": {
+      "layout": "CSS Grid (grid-cols-2 md:grid-cols-4 gap-8). No borders between items.",
+      "content": "Merge Key Stats, School Profile, Admissions, Financial.",
+      "item_style": "Flex column, gap-1. Top: Label (text-xs uppercase text-[var(--cm-text-2)] tracking-wider). Bottom: Value (text-2xl font-medium text-[var(--cm-text)])."
+    },
+    "Opportunity_and_Risk": {
+      "layout": "Horizontal layout or 3-column bento without borders.",
+      "indicators": "Replace red/green signals with textual clarity or Ochre/Gray dots. (e.g., 'Good Opportunity' -> Ochre dot; 'Moderate/Low' -> Gray dot).",
+      "content": "Focus on roster competition and engagement signals in simple readable text."
+    },
+    "Coaching_Staff": {
+      "layout": "Notion database list style. A vertical stack of rows.",
+      "row_style": "Flex row, items-center, justify-between, py-4, border-b border-[var(--cm-border)] last:border-0.",
+      "content": "Left: Avatar/Initials (soft background) + Name & Role (Flex col). Right: Email link (text-sm text-[var(--cm-text-2)] hover:text-[var(--cm-text)] transition-colors)."
+    },
+    "Program_Overview": {
+      "layout": "Compact inline reading layout.",
+      "typography": "max-w-3xl, body scale. Read like a clean Notion page."
+    }
+  },
+  "media": {
+    "image_urls": {
+      "hero_background": {
+        "url": "https://images.unsplash.com/photo-1576554706061-be5aedf69519?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwdW5pdmVyc2l0eSUyMGNhbXB1cyUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3NzQ2MjA2Mjd8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Minimalist grey and white concrete architecture. Use as a subtle, low-opacity background or hero image if needed, though strictly optional for this Apple-style layout."
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "REWRITE the School Details page to implement this Apple/Notion style redesign in React (.js files).",
+    "Do not change the underlying functionality, APIs, or data models. Only update the structure, hierarchy, and Tailwind classes.",
+    "Apply the Warm Ochre (#8B3F1F) to the Match Ring SVG and buttons as specified.",
+    "Completely remove the old StatCard component style and replace it with borderless typography-led grid items.",
+    "Build the 'Why This School' section as a premium, tinted callout block (bg-[#8B3F1F]/[0.05]).",
+    "Merge the Key Stats, School Profile, Admissions, and Financial sections into a single 'Quick Snapshot' grid.",
+    "Convert the Coaching Staff layout from cards to a clean, border-bottom list view.",
+    "Implement `data-testid` attributes on all buttons, interactive elements, and key data points.",
+    "Use standard HTML/Tailwind classes for layout. Remove all explicit Shadcn Card wrappers to achieve the borderless Apple look.",
+    "No Green UI. Strip out any text-green-500 or bg-green-100 classes."
+  ]
 }
