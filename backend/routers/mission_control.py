@@ -20,16 +20,71 @@ from services.athlete_store import (
     get_snapshot,
     get_interventions,
 )
-from mock_data import (
-    UPCOMING_EVENTS,
-    get_program_snapshot,
-)
 from support_pod import (
     get_athlete as sp_get_athlete,
     get_athlete_interventions,
     explain_pod_health,
 )
 from db_client import db
+
+
+async def _fetch_real_events_for_mc():
+    """Fetch real events from DB for mission control display."""
+    try:
+        cursor = db.events.find({}, {"_id": 0})
+        events = await cursor.to_list(200)
+        now = datetime.now(timezone.utc)
+        for e in events:
+            event_date = e.get("date") or e.get("start_date")
+            if event_date:
+                try:
+                    if isinstance(event_date, str):
+                        edt = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+                    elif isinstance(event_date, datetime):
+                        edt = event_date
+                    else:
+                        e["daysAway"] = 99
+                        continue
+                    if edt.tzinfo is None:
+                        edt = edt.replace(tzinfo=timezone.utc)
+                    e["daysAway"] = (edt - now).days
+                except (ValueError, TypeError):
+                    e["daysAway"] = 99
+            else:
+                e["daysAway"] = 99
+            e.setdefault("prepStatus", "not_started")
+            e.setdefault("athlete_ids", [])
+        return events
+    except Exception:
+        return []
+
+
+async def _build_real_snapshot_for_athletes(athletes: list) -> dict:
+    """Compute real program snapshot from athlete data."""
+    total = len(athletes)
+    by_grad_year = {}
+    by_stage = {}
+    for a in athletes:
+        yr = str(a.get("grad_year", "Unknown"))
+        by_grad_year[yr] = by_grad_year.get(yr, 0) + 1
+        stage = a.get("pipeline_best_stage", "unknown")
+        by_stage[stage] = by_stage.get(stage, 0) + 1
+
+    needing_attention = sum(
+        1 for a in athletes
+        if a.get("days_since_activity", 0) > 7 or a.get("pipeline_momentum", 1.0) < 0.3
+    )
+    positive_momentum = sum(
+        1 for a in athletes
+        if a.get("pipeline_momentum", 0) >= 0.6 and a.get("days_since_activity", 99) <= 7
+    )
+    return {
+        "totalAthletes": total,
+        "byStage": by_stage,
+        "byGradYear": by_grad_year,
+        "needingAttention": needing_attention,
+        "positiveMomentum": positive_momentum,
+    }
 
 
 # Health states that count as "alerts" on the dashboard
@@ -116,7 +171,7 @@ async def get_mission_control_data(current_user: dict = get_current_user_dep()):
     role = current_user["role"]
     alerts = filter_by_athlete_id(await get_alerts(), current_user)
     signals = filter_by_athlete_id(await get_signals(), current_user, athlete_id_key="athleteId")
-    events = filter_events_by_ownership(UPCOMING_EVENTS, current_user)
+    events = filter_events_by_ownership(await _fetch_real_events_for_mc(), current_user)
     attention = filter_by_athlete_id(await get_needing_attention(), current_user)
 
     if role == "director":
@@ -732,7 +787,7 @@ async def get_athletes_attention(current_user: dict = get_current_user_dep()):
 
 @router.get("/mission-control/events")
 async def get_upcoming_events(current_user: dict = get_current_user_dep()):
-    return filter_events_by_ownership(UPCOMING_EVENTS, current_user)
+    return filter_events_by_ownership(await _fetch_real_events_for_mc(), current_user)
 
 
 @router.get("/mission-control/snapshot")
@@ -741,4 +796,4 @@ async def get_program_snapshot_endpoint(current_user: dict = get_current_user_de
         return await get_snapshot()
     visible = get_visible_athlete_ids(current_user)
     my_athletes = [a for a in await get_athletes() if a["id"] in visible]
-    return get_program_snapshot(my_athletes)
+    return await _build_real_snapshot_for_athletes(my_athletes)

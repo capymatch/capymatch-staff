@@ -9,7 +9,6 @@ Scoring formula: (urgency * 40) + (impact * 30) + (actionability * 20) + (owners
 
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict
-import random
 
 
 # ============================================================================
@@ -57,7 +56,7 @@ def detect_momentum_drop(athlete: Dict) -> Dict or None:
             'ownership': ownership,
 
             'why_this_surfaced': f"Pipeline momentum is low ({pipeline_momentum}/100) with no activity in {days_since} days",
-            'what_changed': f"No meaningful pipeline progress — best stage reached is early in the recruiting process",
+            'what_changed': "No meaningful pipeline progress — best stage reached is early in the recruiting process",
             'recommended_action': "Review target school list and help advance at least one relationship",
             'owner': "Coach Martinez",
 
@@ -154,8 +153,11 @@ def detect_blocker(athlete: Dict) -> Dict or None:
                 }
             }
 
-    # Support pod gap — athletes whose families aren't in the system (use archetype)
-    if athlete.get('archetype') == 'disengaging' and random.random() < 0.4:
+    # Support pod gap — athletes showing disengagement with declining momentum
+    # Deterministic: fires when athlete has declining momentum AND high inactivity
+    days_since = athlete.get('days_since_activity', 0)
+    momentum_trend = athlete.get('momentum_trend', 'stable')
+    if days_since > 10 and momentum_trend == 'declining':
         urgency = 5
         impact = 6
         actionability = 9
@@ -174,9 +176,9 @@ def detect_blocker(athlete: Dict) -> Dict or None:
             'ownership': ownership,
 
             'why_this_surfaced': "Parent not yet added to Support Pod — coordination gap",
-            'what_changed': "Family engagement declining, pod access could help",
+            'what_changed': f"Family engagement declining ({days_since} days inactive), pod access could help",
             'recommended_action': "Invite parent to join the athlete's Support Pod",
-            'owner': "Coach Rivera",
+            'owner': "Coach",
 
             'details': {
                 'blocker_type': 'pod_gap',
@@ -205,8 +207,9 @@ def detect_deadline_proximity(athlete: Dict, upcoming_events: List[Dict]) -> Dic
         if event.get('daysAway', 99) < 0:
             continue  # Skip past events
         if event['daysAway'] <= 2 and event['prepStatus'] == 'not_started':
-            # Only fire for ~25% of eligible athletes (simulates not all athletes attend every event)
-            if random.random() < 0.25:
+            # Deterministic: only fire for athletes registered in this event
+            event_athlete_ids = event.get('athlete_ids', [])
+            if athlete['id'] in event_athlete_ids:
                 urgency = 10
                 impact = 8
                 actionability = 9
@@ -255,42 +258,40 @@ def detect_engagement_drop(athlete: Dict) -> Dict or None:
 
     # 7-20 day window — between "busy week" and "gone dark"
     if 7 <= days <= 20:
-        # Higher probability for disengaging archetypes, lower for others
-        threshold = 0.6 if athlete.get('archetype') == 'disengaging' else 0.15
-        if random.random() < threshold:
-            urgency = 5 + min(3, (days - 7) // 3)
-            impact = 7
-            actionability = 8
-            ownership = 9
+        # Deterministic: always fire for athletes in the engagement drop window
+        urgency = 5 + min(3, (days - 7) // 3)
+        impact = 7
+        actionability = 8
+        ownership = 9
 
-            score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-            score = score // 10
+        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+        score = score // 10
 
-            return {
-                'category': 'engagement_drop',
-                'trigger': f'family_inactive_{days}_days',
-                'score': int(score),
-                'urgency': urgency,
-                'impact': impact,
-                'actionability': actionability,
-                'ownership': ownership,
+        return {
+            'category': 'engagement_drop',
+            'trigger': f'family_inactive_{days}_days',
+            'score': int(score),
+            'urgency': urgency,
+            'impact': impact,
+            'actionability': actionability,
+            'ownership': ownership,
 
-                'why_this_surfaced': f"Family hasn't engaged in {days} days — early warning",
-                'what_changed': f"No logins or responses since {athlete['last_activity'][:10]}",
-                'recommended_action': "Personal phone call to check in before momentum drops further",
-                'owner': "Coach Rivera",
+            'why_this_surfaced': f"Family hasn't engaged in {days} days — early warning",
+            'what_changed': f"No logins or responses since {athlete['last_activity'][:10]}",
+            'recommended_action': "Personal phone call to check in before momentum drops further",
+            'owner': "Coach",
 
-                'details': {
-                    'last_login': athlete['last_activity'],
-                    'days_inactive': days,
-                    'engagement_pattern': 'declining',
-                    'suggested_steps': [
-                        'Personal phone call (not text/email)',
-                        'Ask about family situation — any changes?',
-                        'Re-engage with updated recruiting timeline'
-                    ]
-                }
+            'details': {
+                'last_login': athlete['last_activity'],
+                'days_inactive': days,
+                'engagement_pattern': 'declining',
+                'suggested_steps': [
+                    'Personal phone call (not text/email)',
+                    'Ask about family situation — any changes?',
+                    'Re-engage with updated recruiting timeline'
+                ]
             }
+        }
 
     return None
 
@@ -300,49 +301,45 @@ def detect_ownership_gap(athlete: Dict) -> Dict or None:
     Category 5: Ownership Gap
     Triggers: College responded but no follow-up owner assigned.
     Fires for athletes with active college interest (>= 3 schools showing interest).
+    Deterministic: always fires when condition is met.
     """
     if athlete['active_interest'] >= 3:
-        # Higher probability for hot prospects who have lots of inbound
-        threshold = 0.5 if athlete.get('archetype') == 'hot_prospect' else 0.15
-        if random.random() < threshold:
-            school_options = ['Boston College', 'Georgetown', 'Virginia', 'Michigan', 'UNC', 'USC']
-            school = random.choice(school_options)
-            days_ago = random.choice([2, 3, 4, 5])
+        # Derive context from actual athlete data
+        interest_count = athlete['active_interest']
 
-            urgency = 8
-            impact = 9
-            actionability = 10
-            ownership = 3  # Low — that's the problem
+        urgency = 8
+        impact = 9
+        actionability = 10
+        ownership = 3  # Low — that's the problem
 
-            score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
-            score = score // 10
+        score = (urgency * 40) + (impact * 30) + (actionability * 20) + (ownership * 10)
+        score = score // 10
 
-            return {
-                'category': 'ownership_gap',
-                'trigger': 'college_response_unassigned',
-                'score': int(score),
-                'urgency': urgency,
-                'impact': impact,
-                'actionability': actionability,
-                'ownership': ownership,
+        return {
+            'category': 'ownership_gap',
+            'trigger': 'college_response_unassigned',
+            'score': int(score),
+            'urgency': urgency,
+            'impact': impact,
+            'actionability': actionability,
+            'ownership': ownership,
 
-                'why_this_surfaced': f"{school} coach responded {days_ago} days ago — no one owns the follow-up",
-                'what_changed': "Response aging without assignment",
-                'recommended_action': "Assign follow-up owner and draft response strategy",
-                'owner': "Needs assignment",
+            'why_this_surfaced': f"{interest_count} schools showing interest — follow-ups need an owner",
+            'what_changed': "Active interest responses aging without assignment",
+            'recommended_action': "Assign follow-up owner and draft response strategy",
+            'owner': "Needs assignment",
 
-                'details': {
-                    'school_name': school,
-                    'response_date': f'{days_ago} days ago',
-                    'response_type': random.choice(['camp_invite', 'info_request', 'evaluation_feedback']),
-                    'athlete_interest_level': 'high',
-                    'suggested_steps': [
-                        'Assign to parent or athlete as owner',
-                        'Review response details with family',
-                        'Draft and send reply within 24 hours'
-                    ]
-                }
+            'details': {
+                'active_interest_count': interest_count,
+                'response_type': 'multiple_schools',
+                'athlete_interest_level': 'high',
+                'suggested_steps': [
+                    'Assign to parent or athlete as owner',
+                    'Review response details with family',
+                    'Draft and send reply within 24 hours'
+                ]
             }
+        }
 
     return None
 

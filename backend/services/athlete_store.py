@@ -103,6 +103,156 @@ _local_derived_ts: float = 0.0   # last recompute timestamp
 _LOCAL_TTL = 120                  # 2-minute local cache to prevent flicker
 
 
+async def _fetch_real_events() -> list:
+    """Fetch real events from DB. Returns empty list if no events exist."""
+    try:
+        cursor = db.events.find({}, {"_id": 0})
+        events = await cursor.to_list(200)
+        now = datetime.now(timezone.utc)
+        for e in events:
+            # Compute daysAway from event date
+            event_date = e.get("date") or e.get("start_date")
+            if event_date:
+                try:
+                    if isinstance(event_date, str):
+                        edt = datetime.fromisoformat(event_date.replace("Z", "+00:00"))
+                    elif isinstance(event_date, datetime):
+                        edt = event_date
+                    else:
+                        continue
+                    if edt.tzinfo is None:
+                        edt = edt.replace(tzinfo=timezone.utc)
+                    e["daysAway"] = (edt - now).days
+                except (ValueError, TypeError):
+                    e["daysAway"] = 99
+            else:
+                e["daysAway"] = 99
+            e.setdefault("prepStatus", "not_started")
+            e.setdefault("athlete_ids", [])
+            e.setdefault("capturedNotes", [])
+        return events
+    except Exception as exc:
+        log.warning("Failed to fetch events from DB: %s — using empty list", exc)
+        return []
+
+
+async def _build_real_momentum_signals(athletes: list) -> list:
+    """Build momentum signals from real recent activity in the DB.
+
+    Queries recent interactions and stage changes from the last 48 hours.
+    Returns a list of signal dicts matching the shape the frontend expects.
+    """
+    from datetime import timedelta
+    signals = []
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
+    athlete_map = {a["id"]: a for a in athletes}
+
+    try:
+        # Recent interactions
+        recent_interactions = await db.interactions.find(
+            {"created_at": {"$gte": cutoff.isoformat()}},
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(20)
+
+        for ix in recent_interactions:
+            ath = athlete_map.get(ix.get("athlete_id"))
+            name = ath["full_name"] if ath else "An athlete"
+            ix_type = ix.get("type", "interaction")
+            school = ix.get("university_name", ix.get("school_name", "a school"))
+            signals.append({
+                "id": ix.get("interaction_id", ix.get("id", "")),
+                "type": "interaction",
+                "athlete_id": ix.get("athlete_id", ""),
+                "athlete_name": name,
+                "text": f"{name}: New {ix_type} with {school}",
+                "timestamp": ix.get("created_at", cutoff.isoformat()),
+                "direction": "positive",
+            })
+
+        # Recent stage changes
+        recent_stages = await db.program_stage_history.find(
+            {"changed_at": {"$gte": cutoff.isoformat()}},
+            {"_id": 0}
+        ).sort("changed_at", -1).to_list(20)
+
+        for sc in recent_stages:
+            ath = athlete_map.get(sc.get("athlete_id"))
+            name = ath["full_name"] if ath else "An athlete"
+            new_stage = sc.get("new_stage", "next stage")
+            school = sc.get("university_name", "a school")
+            signals.append({
+                "id": sc.get("id", ""),
+                "type": "stage_change",
+                "athlete_id": sc.get("athlete_id", ""),
+                "athlete_name": name,
+                "text": f"{name}: Moved to {new_stage} with {school}",
+                "timestamp": sc.get("changed_at", cutoff.isoformat()),
+                "direction": "positive",
+            })
+
+    except Exception as exc:
+        log.warning("Failed to build real momentum signals: %s", exc)
+
+    # Sort by timestamp descending, limit to 10
+    signals.sort(key=lambda s: s.get("timestamp", ""), reverse=True)
+    return signals[:10]
+
+
+async def _build_real_program_snapshot(athletes: list) -> dict:
+    """Build program snapshot from real athlete + program data.
+
+    Computes aggregate counts matching the shape mission_control expects:
+    totalAthletes, byStage, byGradYear, needingAttention, positiveMomentum.
+    """
+    total = len(athletes)
+
+    # Count by grad year
+    by_grad_year = {}
+    for a in athletes:
+        yr = str(a.get("grad_year", "Unknown"))
+        by_grad_year[yr] = by_grad_year.get(yr, 0) + 1
+
+    # Count by pipeline stage from athletes' pipeline_best_stage
+    by_stage = {}
+    for a in athletes:
+        stage = a.get("pipeline_best_stage", "unknown")
+        by_stage[stage] = by_stage.get(stage, 0) + 1
+
+    # Needing attention: athletes with low momentum or high inactivity
+    needing_attention = sum(
+        1 for a in athletes
+        if a.get("days_since_activity", 0) > 7 or a.get("pipeline_momentum", 1.0) < 0.3
+    )
+
+    # Positive momentum: athletes actively progressing
+    positive_momentum = sum(
+        1 for a in athletes
+        if a.get("pipeline_momentum", 0) >= 0.6 and a.get("days_since_activity", 99) <= 7
+    )
+
+    # Upcoming events count from real DB
+    try:
+        now = datetime.now(timezone.utc)
+        upcoming_count = await db.events.count_documents({
+            "$or": [
+                {"date": {"$gte": now.isoformat()}},
+                {"start_date": {"$gte": now.isoformat()}}
+            ]
+        })
+    except Exception:
+        upcoming_count = 0
+
+    return {
+        "totalAthletes": total,
+        "byStage": by_stage,
+        "byGradYear": by_grad_year,
+        "needingAttention": needing_attention,
+        "positiveMomentum": positive_momentum,
+        "upcomingEvents": upcoming_count,
+    }
+
+
+
 async def _recompute_derived():
     """Reload athletes from DB and recompute ALL derived data.
 
@@ -115,21 +265,23 @@ async def _recompute_derived():
         get_priority_alerts as compute_alerts,
         get_athletes_needing_attention as compute_needing_attention,
     )
-    from mock_data import UPCOMING_EVENTS, generate_momentum_signals, get_program_snapshot
 
     athletes = await get_all()
 
+    # Fetch real events from DB (no mock data)
+    real_events = await _fetch_real_events()
+
     interventions = []
     for athlete in athletes:
-        interventions.extend(detect_all_interventions(athlete, UPCOMING_EVENTS))
+        interventions.extend(detect_all_interventions(athlete, real_events))
     ranked = rank_interventions(interventions)
 
     derived = {
         "interventions": ranked,
         "priority_alerts": compute_alerts(ranked),
         "needing_attention": compute_needing_attention(ranked),
-        "momentum_signals": generate_momentum_signals(athletes),
-        "program_snapshot": get_program_snapshot(athletes),
+        "momentum_signals": await _build_real_momentum_signals(athletes),
+        "program_snapshot": await _build_real_program_snapshot(athletes),
     }
 
     # Store each piece in Redis with TTL
