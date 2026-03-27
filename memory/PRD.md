@@ -40,8 +40,8 @@ The Google button is always visible. The OAuth flow is backend-driven:
 ## Production Integrity Audit Status
 - **Phase 1 — System Map**: DONE. Deliverable: `/app/docs/AUDIT_PHASE1_SYSTEM_MAP.md`
 - **Phase 1 P0 Fixes**: DONE. Mock data removed from athlete_store + mission_control. Decision engine made deterministic.
-- **Phase 2 — API Inventory**: NOT STARTED
-- **Phase 3 — Source of Truth Audit**: NOT STARTED
+- **Phase 2 — API Inventory**: DONE. Deliverable: `/app/docs/AUDIT_PHASE2_API_INVENTORY.md`
+- **Phase 3 — Source of Truth Audit**: DONE. Deliverable: `/app/docs/AUDIT_PHASE3_SOURCE_OF_TRUTH.md`
 - **Phase 4 — Duplicate Logic Detection**: NOT STARTED
 - **Phase 5 — Cross-Page Consistency Testing**: NOT STARTED
 - **Phase 6 — State Propagation Testing**: NOT STARTED
