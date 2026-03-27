@@ -29,6 +29,8 @@ CapyMatch is a full-stack athlete management platform (React + FastAPI + MongoDB
 - **Production Integrity Audit Phase 1 (Mar 2026)**: System Map complete. Deliverable at `/app/docs/AUDIT_PHASE1_SYSTEM_MAP.md`
 - **P0 Fix: Mock Data Removal (Mar 2026)**: Removed all `mock_data` imports from `athlete_store.py` and `mission_control.py`. Replaced with real DB queries (`_fetch_real_events`, `_build_real_momentum_signals`, `_build_real_program_snapshot`). Signals now come from real `interactions` and `program_stage_history` collections.
 - **P0 Fix: Decision Engine Determinism (Mar 2026)**: Removed all `random.random()` from `decision_engine.py`. All 7 intervention detectors now use deterministic, data-driven conditions. Same input always produces same output. Verified with 13 automated tests (100% pass rate).
+- **P1 Fix: Mock Data Removal from Events/Intelligence/Digest (Mar 2026)**: Rewrote `event_engine.py` to load from `db.events` + `db.university_knowledge_base` at startup. Removed mock_data from `intelligence.py`, `events.py`, `digest.py`. 1057 schools now from real DB.
+- **Refactor Sprint 1: Attention SSOT (Mar 2026)**: Created `services/attention.py` as canonical per-program attention service. `athlete_dashboard.py` enriches programs with backend-computed attention. `PipelinePage.js` no longer calls `computeAttention.js` — consumes backend attention field directly. Verified with 12 backend + 4 frontend tests (100% pass rate).
 
 ## Google OAuth Setup (Production)
 The Google button is always visible. The OAuth flow is backend-driven:
@@ -42,10 +44,11 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **Phase 1 P0 Fixes**: DONE. Mock data removed from athlete_store + mission_control. Decision engine made deterministic.
 - **Phase 2 — API Inventory**: DONE. Deliverable: `/app/docs/AUDIT_PHASE2_API_INVENTORY.md`
 - **Phase 3 — Source of Truth Audit**: DONE. Deliverable: `/app/docs/AUDIT_PHASE3_SOURCE_OF_TRUTH.md`
-- **Phase 4 — Duplicate Logic Detection**: NOT STARTED
-- **Phase 5 — Cross-Page Consistency Testing**: NOT STARTED
-- **Phase 6 — State Propagation Testing**: NOT STARTED
-- **Phase 7 — Test Implementation**: PARTIALLY DONE (determinism tests at `/app/backend/tests/test_determinism_no_mock.py`)
+- **P1 Mock Data Fixes**: DONE. event_engine.py, events.py, intelligence.py, digest.py all fixed.
+- **Refactor Sprint 1 — Attention SSOT**: DONE. `services/attention.py` is canonical. Frontend consumes backend attention.
+- **Refactor Sprint 2 — Interaction Signals**: NOT STARTED
+- **Refactor Sprint 3 — Stage/Progress Consolidation**: NOT STARTED
+- **Phase 7 — Test Implementation**: IN PROGRESS (25+ tests across 2 test files)
 
 ### Known Remaining mock_data Imports (other files, lower priority)
 - `routers/events.py` — UPCOMING_EVENTS, SCHOOLS
