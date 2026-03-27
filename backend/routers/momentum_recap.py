@@ -40,21 +40,15 @@ def _classify_momentum(program, interactions_in_period, interactions_before, now
     name = program.get("university_name", "Unknown")
     prog_id = program.get("program_id", "")
     reply_status = program.get("reply_status", "No Reply")
-    recruiting_status = program.get("recruiting_status", "Not Contacted")
 
     ix_count = len(interactions_in_period)
     ix_before = len(interactions_before)
     has_coach_reply = any(ix.get("type") == "coach_reply" for ix in interactions_in_period)
     has_visit = any(ix.get("type") == "Campus Visit" for ix in interactions_in_period)
 
-    # Determine current stage from recruiting_status mapping
-    status_to_stage = {
-        "Not Contacted": "added", "Initial Contact": "outreach",
-        "Contacted": "outreach", "Interested": "in_conversation",
-        "Applied": "in_conversation", "Camp Attended": "campus_visit",
-        "Campus Visit": "campus_visit", "Offer Received": "offer", "Committed": "committed",
-    }
-    current_stage = status_to_stage.get(recruiting_status, "added")
+    # Determine current stage from canonical stage_engine (Sprint 3 SSOT)
+    from services.stage_engine import compute_pipeline_stage
+    current_stage = compute_pipeline_stage(program)
 
     # Days since last interaction (check in-period first, then before-period)
     days_since = None

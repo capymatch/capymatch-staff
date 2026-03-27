@@ -124,7 +124,6 @@ Preferred Regions: {val(athlete, "preferred_regions")}
 
 ENGAGEMENT:
 Recruiting Status: {engagement.get("recruiting_status", "not set")}
-Journey Stage: {engagement.get("journey_stage", "not set")}
 Priority: {engagement.get("priority", "not set")}
 Interactions: {engagement.get("interaction_count", 0)}
 Days Since Last Interaction: {engagement.get("days_since_last_interaction", "unknown")}

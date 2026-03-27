@@ -17,21 +17,16 @@ from services.cache import Keys
 log = logging.getLogger(__name__)
 
 
-# Stage weights for pipeline momentum (recruiting progress, NOT activity)
+# Stage weights for pipeline momentum — canonical values from stage_engine
+# Sprint 3 SSOT: uses RECRUITING_STATUS_RANK as the basis, scaled to 0-100
 STAGE_WEIGHTS = {
     "Not Contacted": 5,
-    "Added": 5,
-    "Prospect": 10,
     "Contacted": 20,
-    "Initial Contact": 20,
-    "In Conversation": 35,
-    "Engaged": 35,
-    "Interested": 50,
+    "In Conversation": 40,
     "Campus Visit": 70,
-    "Visit Scheduled": 70,
-    "Visit": 70,
     "Offer": 90,
     "Committed": 100,
+    "Archived": 0,
 }
 
 
@@ -383,16 +378,17 @@ async def _compute_pipeline_momentum(athletes):
 
         if not progs:
             athlete["pipeline_momentum"] = 0
-            athlete["pipeline_best_stage"] = "No Schools"
+            athlete["pipeline_best_stage"] = "Not Contacted"
             athlete["momentum_score"] = 0
             continue
 
+        from services.stage_engine import normalize_recruiting_status
         stage_scores = []
-        best_stage = "Prospect"
+        best_stage = "Not Contacted"
         best_weight = 0
         for p in progs:
-            status = (p.get("recruiting_status") or "Prospect").strip()
-            weight = STAGE_WEIGHTS.get(status, 10)
+            status = normalize_recruiting_status(p.get("recruiting_status"))
+            weight = STAGE_WEIGHTS.get(status, 5)
             stage_scores.append(weight)
             if weight > best_weight:
                 best_weight = weight

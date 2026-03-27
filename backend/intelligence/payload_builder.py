@@ -173,10 +173,9 @@ async def build_payload(program_id: str, tenant_id: str, *, force: bool = False)
     if academic_interests:
         athlete_sec["academic_interests"] = _source("athletes.recruiting_profile", "academic_interests", academic_interests)
 
-    # Engagement section
+    # Engagement section (Sprint 3 SSOT: canonical recruiting_status only)
     engagement = {
         "recruiting_status": program.get("recruiting_status"),
-        "journey_stage": program.get("journey_stage"),
         "priority": program.get("priority"),
     }
 

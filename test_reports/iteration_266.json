@@ -1,0 +1,120 @@
+{
+  "summary": "Sprint 3 Stage/Progress Consolidation PASSED. All 17 backend tests pass (1 skipped). Frontend Pipeline and Journey pages verified working with canonical stage_engine.py as SSOT for pipeline_stage, board_group, and journey_rail.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint3_stage_consolidation.py",
+    "/app/test_reports/pytest/pytest_sprint3_stage_consolidation.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/stage_engine.py: VERIFIED - compute_pipeline_stage() is canonical source with signal upgrades (added→outreach, outreach→in_conversation)",
+    "services/stage_engine.py: VERIFIED - compute_board_group() derives board_group from pipeline_stage (never stored)",
+    "services/stage_engine.py: VERIFIED - compute_journey_rail() computes rail visualization from pipeline_stage",
+    "services/stage_engine.py: VERIFIED - normalize_recruiting_status() maps legacy values to canonical 7-value enum",
+    "services/stage_engine.py: VERIFIED - compute_auto_corrections() triggers recruiting_status updates based on signals",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 449-455: imports from stage_engine replacing old categorize_program/compute_journey_rail",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 522-524: list_programs uses compute_pipeline_stage/compute_board_group/compute_journey_rail",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 599-602: get_program uses stage_engine",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 810-813: update_program strips journey_stage, normalizes recruiting_status",
+    "routers/athlete_dashboard.py: VERIFIED - Lines 1063-1071: create_interaction with auto-correction via compute_auto_corrections()",
+    "routers/connected.py: VERIFIED - Line 15: imports from stage_engine",
+    "routers/connected.py: VERIFIED - Lines 116-119: uses compute_pipeline_stage/compute_board_group/compute_journey_rail",
+    "services/attention.py: VERIFIED - Lines 82-91: uses pipeline_stage for stage weight calculation",
+    "services/top_action_engine.py: VERIFIED - Lines 310-314: uses pipeline_stage for uncontacted check",
+    "frontend/pipeline-constants.js: VERIFIED - programToKanbanCol() uses pipeline_stage exclusively (no fallback to journey_stage)",
+    "frontend/PipelinePage.js: VERIFIED - DnD handler writes recruiting_status via COL_TO_STAGE mapping",
+    "frontend/JourneyPage.js: VERIFIED - Lines 376-383: Stage advance writes recruiting_status (STAGE_TO_STATUS mapping)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sprint3_stage_consolidation.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17 tests passed, 1 skipped)",
+    "frontend": "100% (Pipeline page, Journey page, Dashboard all working with canonical stage data)"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123",
+    "coach": "coach.williams@capymatch.com / coach123",
+    "director": "director@capymatch.com / director123"
+  },
+  "seed_data_creation": "Created test interactions for auto-correction verification",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Sprint 3 Stage/Progress Consolidation complete. The canonical stage_engine.py is now the SINGLE source of truth for: (1) pipeline_stage computation with signal upgrades, (2) board_group derivation (never stored), (3) journey_rail visualization, (4) recruiting_status normalization, (5) auto-corrections based on signals. Key rules verified: no-downward-contradiction, stage locking for >= in_conversation, signal upgrades only for added→outreach and outreach→in_conversation, journey_stage writes blocked. Frontend uses pipeline_stage exclusively via programToKanbanCol() and writes recruiting_status on DnD/stage advance.",
+  "tests_executed": {
+    "backend_tests": [
+      "TestPipelineStageFieldPresence::test_list_programs_returns_pipeline_stage - PASS",
+      "TestPipelineStageFieldPresence::test_single_program_returns_pipeline_stage - PASS",
+      "TestPipelineStageFieldPresence::test_dashboard_programs_have_pipeline_stage - PASS",
+      "TestBoardGroupDerivation::test_programs_have_board_group - PASS",
+      "TestBoardGroupDerivation::test_board_group_derivation_order - PASS",
+      "TestJourneyRailConsistency::test_journey_rail_active_matches_pipeline_stage - PASS",
+      "TestJourneyRailConsistency::test_journey_rail_has_required_fields - PASS",
+      "TestNoDownwardContradiction::test_no_downward_contradiction_for_all_programs - PASS",
+      "TestStageLocking::test_locked_stages_equal_base_stage - PASS",
+      "TestSignalUpgrades::test_outreach_signal_upgrade - PASS",
+      "TestSignalUpgrades::test_coach_reply_signal_upgrade - PASS",
+      "TestRecruitingStatusNormalization::test_update_program_normalizes_recruiting_status - PASS",
+      "TestJourneyStageWritesBlocked::test_update_program_strips_journey_stage - PASS",
+      "TestInteractionAutoCorrection::test_create_interaction_triggers_auto_correction - PASS",
+      "TestDeterminism::test_consecutive_calls_return_identical_results - PASS",
+      "TestConnectedExperience::test_connected_pipeline_returns_stage_data - SKIPPED (roster access)",
+      "TestAttentionEngineUsesPipelineStage::test_programs_have_attention_with_stage_weight - PASS",
+      "TestGroupedProgramsEndpoint::test_grouped_endpoint_returns_correct_groups - PASS"
+    ],
+    "frontend_tests": [
+      "Pipeline page loads - PASS: recruiting-board, pipeline-header, view-toggle found",
+      "Priority view - PASS: Hero card shows 'UCLA needs immediate attention — 5 others need follow-up'",
+      "Kanban view - PASS: Shows 5 columns (Added, Outreach, Talking, Visit, Offered) with school cards",
+      "Journey page - PASS: Header progress rail found (uses pipeline_stage)",
+      "Journey page - PASS: Communication & Activity card with stats (Outreach, Replies, Interactions, Last Active)",
+      "Journey page - PASS: 6 rail stage buttons found",
+      "DnD handler - PASS: Verified in code - writes recruiting_status not journey_stage",
+      "Stage advance - PASS: Verified in code - writes recruiting_status via STAGE_TO_STATUS mapping"
+    ]
+  },
+  "verified_features": {
+    "stage_engine_ssot": {
+      "compute_pipeline_stage": "Canonical stage computation with signal upgrades (added→outreach, outreach→in_conversation)",
+      "compute_board_group": "Derived from pipeline_stage (never stored) with order: archived > overdue > in_conversation > waiting_on_reply > needs_outreach",
+      "compute_journey_rail": "6-stage rail visualization from pipeline_stage with cascade fill",
+      "normalize_recruiting_status": "Maps legacy values (Prospect, Added, etc.) to canonical 7-value enum",
+      "compute_auto_corrections": "Triggers recruiting_status updates based on signals on write flows"
+    },
+    "no_downward_contradiction": {
+      "status": "Verified - pipeline_stage_rank >= base_stage_rank for ALL programs"
+    },
+    "stage_locking": {
+      "status": "Verified - stages >= in_conversation are LOCKED to recruiting_status"
+    },
+    "signal_upgrades": {
+      "added_to_outreach": "Verified - outreach_count > 0 upgrades added → outreach",
+      "outreach_to_in_conversation": "Verified - has_coach_reply upgrades outreach → in_conversation"
+    },
+    "journey_stage_writes_blocked": {
+      "status": "Verified - journey_stage stripped from PUT body"
+    },
+    "recruiting_status_normalization": {
+      "status": "Verified - legacy values normalized on write (e.g., 'Prospect' → 'Not Contacted')"
+    },
+    "auto_correction": {
+      "status": "Verified - POST /api/athlete/interactions triggers auto-correction based on signals"
+    },
+    "determinism": {
+      "status": "Verified - consecutive calls return identical pipeline_stage and board_group"
+    },
+    "frontend_integration": {
+      "pipeline_page": "Uses pipeline_stage exclusively via programToKanbanCol()",
+      "journey_page": "Stage advance writes recruiting_status via STAGE_TO_STATUS mapping",
+      "dnd_handler": "Writes recruiting_status via COL_TO_STAGE mapping"
+    }
+  }
+}

@@ -434,8 +434,12 @@ async def ai_next_step(data: NextStepRequest, request: Request):
     cw, cw_signals = await _build_coach_watch_context(tenant_id, data.program_id)
     cw_block = _coach_watch_prompt_block(cw, cw_signals) if cw else ""
 
-    status_to_stage = {"Not Contacted": "Targeting", "Contacted": "Contacted", "Applied": "Engaged", "Camp Attended": "Evaluating", "Offer Received": "Offer", "Committed": "Closed"}
-    stage = status_to_stage.get(program.get("recruiting_status", "Not Contacted"), "Targeting")
+    # Sprint 3 SSOT: use canonical pipeline_stage for prompt context
+    from services.stage_engine import compute_pipeline_stage
+    _pipeline_stage = compute_pipeline_stage(program)
+    _stage_labels = {"added": "Targeting", "outreach": "Contacted", "in_conversation": "Engaged",
+                     "campus_visit": "Evaluating", "offer": "Offer", "committed": "Closed", "archived": "Archived"}
+    stage = _stage_labels.get(_pipeline_stage, "Targeting")
     reply_to_response = {"No Reply": "no response", "Awaiting Reply": "no response", "Reply Received": "responded", "In Conversation": "asked for info"}
     coach_response = reply_to_response.get(program.get("reply_status", "No Reply"), "no response")
 

@@ -163,14 +163,32 @@ async def confirm_insight(
     program_id = insight.get("program_id")
 
     # Apply stage change if requested and program exists
+    # Sprint 3 SSOT: write to recruiting_status (canonical), not journey_stage
     if apply_stage and program_id and insight.get("suggested_stage"):
-        await db.programs.update_one(
-            {"tenant_id": tenant_id, "program_id": program_id},
-            {"$set": {
-                "journey_stage": insight["suggested_stage"],
-                "updated_at": now_iso,
-            }},
-        )
+        from services.stage_engine import _BASE_STAGE_MAP, normalize_recruiting_status
+        suggested = insight["suggested_stage"]
+        # Reverse map: pipeline_stage → recruiting_status
+        _STAGE_TO_STATUS = {v: k for k, v in _BASE_STAGE_MAP.items()}
+        new_status = _STAGE_TO_STATUS.get(suggested)
+        if new_status:
+            current_prog = await db.programs.find_one(
+                {"tenant_id": tenant_id, "program_id": program_id},
+                {"_id": 0, "recruiting_status": 1},
+            )
+            from services.stage_engine import RECRUITING_STATUS_RANK
+            current_rank = RECRUITING_STATUS_RANK.get(
+                normalize_recruiting_status(current_prog.get("recruiting_status") if current_prog else None), 0
+            )
+            new_rank = RECRUITING_STATUS_RANK.get(new_status, 0)
+            # Only upgrade, never downgrade
+            if new_rank > current_rank:
+                await db.programs.update_one(
+                    {"tenant_id": tenant_id, "program_id": program_id},
+                    {"$set": {
+                        "recruiting_status": new_status,
+                        "updated_at": now_iso,
+                    }},
+                )
 
     # Log as interaction on the journey timeline
     if apply_interaction and program_id:

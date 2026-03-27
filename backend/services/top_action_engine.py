@@ -308,18 +308,15 @@ async def compute_top_action(program_id: str, tenant_id: str, *, metrics: dict =
             )
 
     # ── Priority 6: First outreach needed ──
-    journey_stage = (program.get("journey_stage") or "").lower()
-    recruiting_status = (program.get("recruiting_status") or "").lower()
-    board_group = (program.get("board_group") or "").lower()
-
-    is_uncontacted = (
-        board_group == "needs_outreach"
-        or (journey_stage in ("", "added") and recruiting_status in ("", "not contacted", "added"))
-    )
+    # Sprint 3 SSOT: use canonical pipeline_stage
+    from services.stage_engine import compute_pipeline_stage
+    from services.program_metrics import extract_signals
+    pipeline_stage = program.get("pipeline_stage") or compute_pipeline_stage(program, extract_signals(metrics))
+    is_uncontacted = pipeline_stage == "added"
     if is_uncontacted:
         return _make_action(
             "send_intro_email",
-            f"first_outreach:stage={journey_stage}:status={recruiting_status}",
+            f"first_outreach:stage={pipeline_stage}",
             program_id=program_id,
             university_name=program.get("university_name", ""),
         )
@@ -361,14 +358,14 @@ async def compute_all_top_actions(tenant_id: str) -> list:
     Returns list of action dicts sorted by priority (highest first)."""
     programs = await db.programs.find(
         {"tenant_id": tenant_id, "is_active": {"$ne": False}},
-        {"_id": 0, "program_id": 1, "recruiting_status": 1, "journey_stage": 1},
+        {"_id": 0, "program_id": 1, "recruiting_status": 1},
     ).to_list(200)
 
-    # Exclude committed
+    # Exclude committed (Sprint 3 SSOT: canonical recruiting_status only)
+    from services.stage_engine import normalize_recruiting_status
     active = [
         p for p in programs
-        if p.get("recruiting_status", "").lower() != "committed"
-        and p.get("journey_stage", "").lower() != "committed"
+        if normalize_recruiting_status(p.get("recruiting_status")) != "Committed"
     ]
 
     # Batch-fetch metrics

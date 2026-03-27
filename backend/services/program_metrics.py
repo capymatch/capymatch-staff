@@ -87,7 +87,10 @@ async def recompute_metrics(program_id: str, tenant_id: str) -> dict:
     program_age_days = (now - created_at).days if created_at else None
     m["program_age_days"] = program_age_days
     m["_recruiting_status"] = program.get("recruiting_status", "")
-    m["_journey_stage"] = program.get("journey_stage", "")
+    # Sprint 3 SSOT: use canonical recruiting_status, not journey_stage
+    from services.stage_engine import normalize_recruiting_status, compute_pipeline_stage
+    m["_canonical_status"] = normalize_recruiting_status(program.get("recruiting_status"))
+    m["_pipeline_stage"] = compute_pipeline_stage(program, m)
     m["pipeline_health_state"] = _compute_pipeline_health(m)
 
     # Data confidence
@@ -539,10 +542,9 @@ def _compute_pipeline_health(m: dict) -> str:
     # Override for new programs and outreach-stage programs
     age = m.get("program_age_days")
     meaningful_count = m.get("meaningful_interaction_count", 0)
-    recruiting_status = m.get("_recruiting_status", "").lower()
-    journey_stage = m.get("_journey_stage", "").lower()
-
-    has_sent_outreach = recruiting_status in ("contacted", "in conversation") or journey_stage not in ("", "added")
+    # Sprint 3 SSOT: use canonical pipeline_stage
+    pipeline_stage = m.get("_pipeline_stage", "added")
+    has_sent_outreach = pipeline_stage not in ("added", "archived")
 
     if meaningful_count == 0 and raw_state in ("cooling_off", "at_risk", "needs_follow_up"):
         if has_sent_outreach:

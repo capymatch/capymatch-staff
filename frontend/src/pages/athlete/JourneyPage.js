@@ -373,7 +373,14 @@ export default function JourneyPage() {
 
   const confirmStageAdvance = async (note) => {
     try {
-      await axios.put(`${API}/athlete/programs/${programId}`, { journey_stage: showStageLog });
+      // Sprint 3 SSOT: write to recruiting_status (canonical), not journey_stage
+      const STAGE_TO_STATUS = {
+        added: "Not Contacted", outreach: "Contacted", in_conversation: "In Conversation",
+        campus_visit: "Campus Visit", offer: "Offer", committed: "Committed",
+      };
+      await axios.put(`${API}/athlete/programs/${programId}`, {
+        recruiting_status: STAGE_TO_STATUS[showStageLog] || showStageLog,
+      });
       if (note) {
         await axios.post(`${API}/athlete/interactions`, {
           program_id: programId,

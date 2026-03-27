@@ -105,7 +105,7 @@ export default function PipelinePage() {
 
     setAllPrograms(prev => prev.map(p =>
       p.program_id === draggableId
-        ? { ...p, journey_stage: stageUpdate.journey_stage, recruiting_status: stageUpdate.recruiting_status }
+        ? { ...p, pipeline_stage: newCol, recruiting_status: stageUpdate.recruiting_status }
         : p
     ));
 
@@ -114,8 +114,8 @@ export default function PipelinePage() {
 
       // Trigger reinforcement on stage change
       const movedProg = allPrograms.find(p => p.program_id === draggableId);
-      const oldStage = movedProg?.journey_rail?.active || movedProg?.journey_stage || "added";
-      const newStage = stageUpdate.journey_stage || newCol;
+      const oldStage = movedProg?.pipeline_stage || movedProg?.journey_rail?.active || "added";
+      const newStage = newCol;
       const isOffer = newStage === "offer" || newStage === "committed";
       const attn = attentionMap[draggableId];
       const isHero = isOffer || (attn?.recapRank === "top");
@@ -179,7 +179,7 @@ export default function PipelinePage() {
   /* ── Derived data ── */
   const archivedPrograms = allPrograms.filter(p => p.board_group === "archived");
   const activePrograms = allPrograms.filter(p => p.board_group !== "archived");
-  const committedPrograms = allPrograms.filter(p => p.recruiting_status === "Committed" || p.journey_stage === "committed");
+  const committedPrograms = allPrograms.filter(p => p.recruiting_status === "Committed" || p.pipeline_stage === "committed");
 
   if (activePrograms.length === 0 && archivedPrograms.length === 0) {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchAll} /></div>;

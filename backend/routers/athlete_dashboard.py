@@ -440,99 +440,19 @@ async def get_coach_watch(program_id: str, current_user: dict = get_current_user
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# Board grouping (ported from athlete app programs.py)
+# Board grouping — delegated to canonical stage_engine (Sprint 3 SSOT)
 # ─────────────────────────────────────────────────────────────────────────
+# compute_journey_rail() and categorize_program() have been replaced by
+# stage_engine.compute_pipeline_stage(), stage_engine.compute_board_group(),
+# and stage_engine.compute_journey_rail().
 
-def compute_journey_rail(program: dict) -> dict:
-    """
-    Compute the 6-stage journey rail for a program.
-    Stages: added, outreach, in_conversation, campus_visit, offer, committed
-    Auto-detects stages from signals/interactions. Manual override cascades.
-    """
-    signals = program.get("signals", {})
-    manual_stage = program.get("journey_stage", "")
-
-    LEGACY_MAP = {"outreach_sent": "outreach", "coach_replied": "in_conversation"}
-    if manual_stage in LEGACY_MAP:
-        manual_stage = LEGACY_MAP[manual_stage]
-
-    RAIL_ORDER = ["added", "outreach", "in_conversation", "campus_visit", "offer", "committed"]
-
-    # Auto-detect stages from data
-    stages = {
-        "added": True,
-        "outreach": signals.get("outreach_count", 0) > 0,
-        "in_conversation": signals.get("has_coach_reply", False),
-        "campus_visit": False,
-        "offer": False,
-        "committed": False,
-    }
-
-    # Manual override: cascade fill all stages up to and including the manual stage
-    if manual_stage and manual_stage in RAIL_ORDER:
-        manual_idx = RAIL_ORDER.index(manual_stage)
-        for i in range(manual_idx + 1):
-            stages[RAIL_ORDER[i]] = True
-
-    # Active = last consecutively completed stage
-    active = "added"
-    for s in RAIL_ORDER:
-        if stages[s]:
-            active = s
-        else:
-            break
-
-    line_fill = active
-
-    # Compute pulse — relationship health
-    days = signals.get("days_since_activity")
-    if days is None:
-        pulse = "neutral"
-    elif days <= 7:
-        pulse = "hot"
-    elif days <= 14:
-        pulse = "warm"
-    else:
-        pulse = "cold"
-
-    return {
-        "stages": stages,
-        "active": active,
-        "line_fill": line_fill,
-        "pulse": pulse,
-    }
-
-
-def categorize_program(program: dict) -> str:
-    """
-    5-stage recruiting funnel:
-    1. archived — is_active = false
-    2. overdue  — follow-up date has passed
-    3. in_conversation — college coach has replied
-    4. waiting_on_reply — outreach sent, no reply
-    5. needs_outreach — no interactions yet
-    """
-    if not program.get("is_active", True):
-        return "archived"
-
-    next_action_due = program.get("next_action_due", "")
-    if next_action_due:
-        try:
-            due_date = datetime.strptime(next_action_due, "%Y-%m-%d").date()
-            if due_date < datetime.now(timezone.utc).date():
-                return "overdue"
-        except ValueError:
-            pass
-
-    signals = program.get("signals", {})
-
-    if signals.get("has_coach_reply", False):
-        return "in_conversation"
-
-    if signals.get("outreach_count", 0) > 0:
-        return "waiting_on_reply"
-
-    return "needs_outreach"
+from services.stage_engine import (
+    compute_pipeline_stage,
+    compute_board_group,
+    compute_journey_rail,
+    compute_auto_corrections,
+    normalize_recruiting_status,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────
@@ -596,9 +516,12 @@ async def list_programs(
         )
         p["primary_college_coach"] = primary.get("coach_name", "") if primary else ""
         p["college_coach_email"] = primary.get("email", "") if primary else ""
-        p["signals"] = extract_signals(mx_map.get(pid, {}))
-        p["board_group"] = categorize_program(p)
-        p["journey_rail"] = compute_journey_rail(p)
+        sigs = extract_signals(mx_map.get(pid, {}))
+        p["signals"] = sigs
+        # Canonical stage computation (Sprint 3 SSOT)
+        p["pipeline_stage"] = compute_pipeline_stage(p, sigs)
+        p["board_group"] = compute_board_group(p, p["pipeline_stage"])
+        p["journey_rail"] = compute_journey_rail(p, p["pipeline_stage"], sigs)
         # Enrich with KB logo and domain
         kb = kb_by_name.get(p.get("university_name"), {})
         if not p.get("logo_url"):
@@ -671,9 +594,12 @@ async def get_program(program_id: str, current_user: dict = get_current_user_dep
     # Canonical signals from program_metrics (Sprint 2 SSOT)
     from services.program_metrics import get_metrics, extract_signals
     mx = await get_metrics(program_id, tenant_id)
-    prog["signals"] = extract_signals(mx)
-    prog["board_group"] = categorize_program(prog)
-    prog["journey_rail"] = compute_journey_rail(prog)
+    sigs = extract_signals(mx)
+    prog["signals"] = sigs
+    # Canonical stage computation (Sprint 3 SSOT)
+    prog["pipeline_stage"] = compute_pipeline_stage(prog, sigs)
+    prog["board_group"] = compute_board_group(prog, prog["pipeline_stage"])
+    prog["journey_rail"] = compute_journey_rail(prog, prog["pipeline_stage"], sigs)
 
     # Enrich with KB data (social_links, logo, domain)
     uni_name = prog.get("university_name", "")
@@ -880,6 +806,12 @@ async def update_program(program_id: str, body: dict, current_user: dict = get_c
 
     for key in ("_id", "program_id", "tenant_id"):
         body.pop(key, None)
+
+    # Sprint 3 SSOT: block writes to journey_stage, normalize recruiting_status
+    body.pop("journey_stage", None)
+    if "recruiting_status" in body:
+        body["recruiting_status"] = normalize_recruiting_status(body["recruiting_status"])
+
     now = datetime.now(timezone.utc).isoformat()
     body["updated_at"] = now
 
@@ -1124,9 +1056,19 @@ async def create_interaction(body: dict, current_user: dict = get_current_user_d
 
     await recompute_derived_data()
     # Invalidate program_metrics cache so signals are fresh (Sprint 2 SSOT)
-    from services.program_metrics import recompute_metrics
+    from services.program_metrics import recompute_metrics, extract_signals
     try:
-        await recompute_metrics(program_id, tenant_id)
+        mx = await recompute_metrics(program_id, tenant_id)
+        # Sprint 3 SSOT: auto-correct recruiting_status based on signals
+        corrections = compute_auto_corrections(
+            await db.programs.find_one({"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0}) or {},
+            extract_signals(mx),
+        )
+        if corrections:
+            await db.programs.update_one(
+                {"program_id": program_id, "tenant_id": tenant_id},
+                {"$set": corrections},
+            )
     except Exception:
         pass
     return doc
@@ -1182,9 +1124,19 @@ async def mark_as_replied(program_id: str, body: dict, current_user: dict = get_
 
     await recompute_derived_data()
     # Invalidate program_metrics cache so signals are fresh (Sprint 2 SSOT)
-    from services.program_metrics import recompute_metrics
+    from services.program_metrics import recompute_metrics, extract_signals
     try:
-        await recompute_metrics(program_id, tenant_id)
+        mx = await recompute_metrics(program_id, tenant_id)
+        # Sprint 3 SSOT: auto-correct recruiting_status based on signals
+        corrections = compute_auto_corrections(
+            await db.programs.find_one({"program_id": program_id, "tenant_id": tenant_id}, {"_id": 0}) or {},
+            extract_signals(mx),
+        )
+        if corrections:
+            await db.programs.update_one(
+                {"program_id": program_id, "tenant_id": tenant_id},
+                {"$set": corrections},
+            )
     except Exception:
         pass
     return doc
@@ -1406,8 +1358,11 @@ async def get_athlete_dashboard(current_user: dict = get_current_user_dep()):
         mx_map = {}
 
     for p in programs:
-        p["signals"] = extract_signals(mx_map.get(p["program_id"], {}))
-        p["board_group"] = categorize_program(p)
+        sigs = extract_signals(mx_map.get(p["program_id"], {}))
+        p["signals"] = sigs
+        # Canonical stage computation (Sprint 3 SSOT)
+        p["pipeline_stage"] = compute_pipeline_stage(p, sigs)
+        p["board_group"] = compute_board_group(p, p["pipeline_stage"])
 
     # Stats
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")

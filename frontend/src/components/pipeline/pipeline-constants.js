@@ -1,6 +1,9 @@
 /**
  * Pipeline shared constants and helpers.
  * Used by KanbanBoard, PriorityBoard, and PipelinePage.
+ *
+ * Sprint 3 SSOT: programToKanbanCol() uses pipeline_stage exclusively.
+ * No fallback to journey_stage or board_group.
  */
 
 export const KANBAN_COLS = [
@@ -12,11 +15,11 @@ export const KANBAN_COLS = [
 ];
 
 export const COL_TO_STAGE = {
-  added: { journey_stage: "added", recruiting_status: "Not Contacted" },
-  outreach: { journey_stage: "outreach", recruiting_status: "Contacted" },
-  in_conversation: { journey_stage: "in_conversation", recruiting_status: "In Conversation" },
-  campus_visit: { journey_stage: "campus_visit", recruiting_status: "Campus Visit" },
-  offer: { journey_stage: "offer", recruiting_status: "Offer" },
+  added: { recruiting_status: "Not Contacted" },
+  outreach: { recruiting_status: "Contacted" },
+  in_conversation: { recruiting_status: "In Conversation" },
+  campus_visit: { recruiting_status: "Campus Visit" },
+  offer: { recruiting_status: "Offer" },
 };
 
 export const ATTENTION_META = {
@@ -28,11 +31,13 @@ export const ATTENTION_META = {
 export const ATTENTION_LABEL = { high: 'Needs attention', medium: 'Needs action', low: 'On track' };
 
 export function programToKanbanCol(p) {
-  if (p.recruiting_status === "Committed" || p.journey_stage === "committed") return null;
-  if (p.journey_stage === "campus_visit") return "campus_visit";
-  if (p.journey_stage === "offer") return "offer";
-  if (p.journey_stage === "in_conversation" || p.board_group === "in_conversation") return "in_conversation";
-  if (p.journey_stage === "outreach" || p.board_group === "waiting_on_reply" || p.board_group === "overdue") return "outreach";
+  // Sprint 3 SSOT: use pipeline_stage exclusively
+  const stage = p.pipeline_stage;
+  if (stage === "committed" || stage === "archived") return null;
+  if (stage === "offer") return "offer";
+  if (stage === "campus_visit") return "campus_visit";
+  if (stage === "in_conversation") return "in_conversation";
+  if (stage === "outreach") return "outreach";
   return "added";
 }
 

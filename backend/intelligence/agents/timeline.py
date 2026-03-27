@@ -75,7 +75,6 @@ def _deterministic_card(payload: dict) -> dict:
     uni = school.get("university_name", "Unknown")
 
     status = engagement.get("recruiting_status", "")
-    stage = engagement.get("journey_stage", "")
     ix_count = engagement.get("interaction_count", 0)
     days_since = engagement.get("days_since_last_interaction")
 

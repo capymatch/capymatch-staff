@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException
 from db_client import db
 from auth_middleware import get_current_user_dep
 from services.athlete_store import get_by_id as get_athlete_by_id
-from routers.athlete_dashboard import compute_journey_rail, categorize_program
+from services.stage_engine import compute_pipeline_stage, compute_board_group, compute_journey_rail
 from models import PipelineResponse
 
 router = APIRouter()
@@ -112,8 +112,11 @@ async def get_athlete_pipeline_summary(
     kb_map = {e["university_name"]: e for e in kb_entries}
 
     for p in programs:
-        p["journey_rail"] = compute_journey_rail(p)
-        p["board_group"] = categorize_program(p)
+        # Sprint 3 SSOT: canonical stage computation
+        pipeline_stage = compute_pipeline_stage(p)
+        p["pipeline_stage"] = pipeline_stage
+        p["board_group"] = compute_board_group(p, pipeline_stage)
+        p["journey_rail"] = compute_journey_rail(p, pipeline_stage)
         kb = kb_map.get(p.get("university_name"), {})
         if not p.get("logo_url"):
             p["logo_url"] = kb.get("logo_url", "")

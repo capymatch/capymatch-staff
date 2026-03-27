@@ -422,12 +422,18 @@ async def confirm_import(run_id: str, request: Request, current_user: dict = get
 
         program_id = f"prog_{uuid.uuid4().hex[:12]}"
         stage = suggestion.get("proposed_stage", "added")
+        # Sprint 3 SSOT: map stage to canonical recruiting_status, no journey_stage
+        from services.stage_engine import normalize_recruiting_status
+        _STAGE_TO_STATUS = {"added": "Not Contacted", "outreach": "Contacted",
+                            "in_conversation": "In Conversation", "campus_visit": "Campus Visit",
+                            "offer": "Offer", "committed": "Committed"}
+        canonical_status = _STAGE_TO_STATUS.get(stage, "Not Contacted")
         doc = {
             "program_id": program_id, "tenant_id": tenant_id,
             "university_name": school_id, "domain": kb.get("domain", ""),
             "division": kb.get("division", ""), "conference": kb.get("conference", ""),
-            "website": kb.get("website", ""), "journey_stage": stage,
-            "recruiting_status": "active", "priority": "Medium", "is_active": True,
+            "website": kb.get("website", ""),
+            "recruiting_status": canonical_status, "priority": "Medium", "is_active": True,
             "next_action_due": suggestion.get("followup_due_at", ""),
             "created_at": datetime.now(timezone.utc).isoformat(),
             "imported_at": datetime.now(timezone.utc).isoformat(),

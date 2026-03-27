@@ -36,7 +36,7 @@ export default function HeroCard({ action, variant = "urgent", onClick }) {
   const owner = OWNER[action.owner] || OWNER.athlete;
   const p = action.program;
   const matchPct = action.matchScore?.match_score ?? action.match_score;
-  const stage = STAGES[p?.journey_stage] || STAGES[p?.board_group];
+  const stage = STAGES[p?.pipeline_stage] || STAGES["added"];
   const isUrgent = variant === "urgent";
 
   return (

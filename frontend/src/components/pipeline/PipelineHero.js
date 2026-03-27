@@ -24,9 +24,8 @@ const LEVEL_STYLE = {
 
 function buildRail(program) {
   if (!program) return null;
-  const stage = program.journey_stage || program.board_group;
-  const map = { needs_outreach: "added", waiting_on_reply: "outreach", overdue: "outreach" };
-  const active = map[stage] || stage || "added";
+  // Sprint 3 SSOT: use pipeline_stage exclusively
+  const active = program.pipeline_stage || "added";
   const activeIdx = RAIL_STAGES.findIndex(s => s.key === active);
   return { active, activeIdx };
 }

@@ -79,14 +79,17 @@ def compute_program_attention(
         score += 10
 
     # ── 4. Stage Weight (0-15 pts) ────────────────────────────────────
-    stage = program.get("journey_stage") or program.get("recruiting_status", "added")
+    # Sprint 3 SSOT: use canonical pipeline_stage only
+    from services.stage_engine import compute_pipeline_stage, PIPELINE_STAGE_RANK
+    stage = program.get("pipeline_stage") or compute_pipeline_stage(program, signals)
     stage_pts = {
-        "committed": 0, "Committed": 0,
-        "offer": 15, "Offer": 15,
-        "campus_visit": 12, "Campus Visit": 12, "Visit Scheduled": 12,
-        "in_conversation": 8, "In Conversation": 8, "Interested": 8,
-        "outreach": 4, "Contacted": 4,
-        "added": 0, "Not Contacted": 0,
+        "committed": 0,
+        "offer": 15,
+        "campus_visit": 12,
+        "in_conversation": 8,
+        "outreach": 4,
+        "added": 0,
+        "archived": 0,
     }
     score += stage_pts.get(stage, 0)
 

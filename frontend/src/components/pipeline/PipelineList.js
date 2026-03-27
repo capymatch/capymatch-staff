@@ -20,8 +20,8 @@ export default function PipelineList({ programs, attentionMap, matchScores, navi
   if (!programs || programs.length === 0) return null;
 
   const sorted = [...programs].sort((a, b) => {
-    const isCommittedA = a.journey_stage === "committed" || a.recruiting_status === "Committed";
-    const isCommittedB = b.journey_stage === "committed" || b.recruiting_status === "Committed";
+    const isCommittedA = a.pipeline_stage === "committed" || a.recruiting_status === "Committed";
+    const isCommittedB = b.pipeline_stage === "committed" || b.recruiting_status === "Committed";
     if (isCommittedA && !isCommittedB) return -1;
     if (!isCommittedA && isCommittedB) return 1;
     return 0;
@@ -37,9 +37,9 @@ export default function PipelineList({ programs, attentionMap, matchScores, navi
         {sorted.map(prog => {
           const attn = attentionMap[prog.program_id];
           const ms = matchScores[prog.program_id];
-          const isCommitted = prog.journey_stage === "committed" || prog.recruiting_status === "Committed";
+          const isCommitted = prog.pipeline_stage === "committed" || prog.recruiting_status === "Committed";
 
-          const rawStage = prog.journey_stage || prog.board_group || "added";
+          const rawStage = prog.pipeline_stage || "added";
           const stageLabel = STAGE_LABEL[rawStage] || rawStage;
           const stageIdx = RAIL_STAGES.findIndex(s => s.key === (rawStage === "needs_outreach" || rawStage === "waiting_on_reply" || rawStage === "overdue" ? "outreach" : rawStage));
           const progressPct = RAIL_STAGES.length > 1 ? ((stageIdx >= 0 ? stageIdx : 0) / (RAIL_STAGES.length - 1)) * 100 : 0;

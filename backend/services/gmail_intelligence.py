@@ -328,14 +328,14 @@ async def _match_thread_to_school(thread_data, db, tenant_id):
             # Check if on pipeline
             program = await db.programs.find_one(
                 {"tenant_id": tenant_id, "university_name": mapping["school_id"]},
-                {"_id": 0, "program_id": 1, "university_name": 1, "journey_stage": 1},
+                {"_id": 0, "program_id": 1, "university_name": 1, "recruiting_status": 1},
             )
             return {
                 "university_name": mapping["school_id"],
                 "domain": mapping["normalized_domain"],
                 "program_id": program["program_id"] if program else None,
                 "on_board": program is not None,
-                "current_stage": program.get("journey_stage") if program else None,
+                "current_stage": program.get("recruiting_status") if program else None,
                 "coach_email": email,
             }
 
@@ -348,14 +348,14 @@ async def _match_thread_to_school(thread_data, db, tenant_id):
         if coach:
             program = await db.programs.find_one(
                 {"tenant_id": tenant_id, "program_id": coach["program_id"]},
-                {"_id": 0, "program_id": 1, "journey_stage": 1},
+                {"_id": 0, "program_id": 1, "recruiting_status": 1},
             )
             return {
                 "university_name": coach.get("university_name", ""),
                 "domain": None,
                 "program_id": coach["program_id"],
                 "on_board": True,
-                "current_stage": program.get("journey_stage") if program else None,
+                "current_stage": program.get("recruiting_status") if program else None,
                 "coach_email": email,
                 "coach_name": coach.get("coach_name"),
             }
