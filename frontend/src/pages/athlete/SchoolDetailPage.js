@@ -46,7 +46,7 @@ function MatchRing({ score }) {
 function MetricCard({ label, value, quality, note, primary }) {
   const isEmpty = !value && value !== 0;
   return (
-    <div className={`rounded-xl px-4 py-3.5 ${primary ? "bg-white border border-gray-200/80" : "bg-gray-50/70 border border-transparent"}`}
+    <div className={`rounded-xl px-4 py-3.5 ${primary ? "bg-white border border-gray-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" : "bg-white/70 border border-gray-100/80"}`}
       data-testid={`snapshot-${label?.replace(/\s+/g, '-').toLowerCase()}`}>
       <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 block mb-1">{label}</span>
       <span className={`text-lg font-semibold tracking-tight leading-tight block ${isEmpty ? "text-gray-300" : "text-gray-900"}`}>
@@ -215,6 +215,7 @@ export default function SchoolDetailPage() {
   const socialLinks = school.social_links || {};
 
   return (
+    <div className="-mx-4 md:-mx-6 -mt-4 -mb-4 px-4 md:px-6 pt-4 pb-4" style={{ backgroundColor: "#F7F4F2", minHeight: "100vh" }}>
     <div className="max-w-[880px] mx-auto px-4 md:px-8 pb-24 pt-4" data-testid="school-info-page">
 
       {/* Back */}
@@ -224,7 +225,7 @@ export default function SchoolDetailPage() {
       </button>
 
       {/* ════════ LEVEL 1 — HERO CARD ════════ */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-7 md:p-9 mb-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" data-testid="school-hero">
+      <div className="bg-white border border-gray-200 rounded-2xl p-7 md:p-9 mb-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" data-testid="school-hero">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
           <div className="flex-1 min-w-0">
             {school.logo_url && (
@@ -283,7 +284,7 @@ export default function SchoolDetailPage() {
 
       {/* ════════ LEVEL 2 — WHY THIS SCHOOL ════════ */}
       {fitReasons.length > 0 && (
-        <div className="rounded-2xl p-6 md:p-7 mb-5" style={{ backgroundColor: ACCENT_SOFT, border: `1px solid ${ACCENT_BORDER}` }} data-testid="why-this-school-section">
+        <div className="rounded-2xl p-6 md:p-7 mb-6" style={{ backgroundColor: ACCENT_SOFT, border: `1px solid ${ACCENT_BORDER}` }} data-testid="why-this-school-section">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4" style={{ color: ACCENT }} />
             <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight" data-testid="why-this-school-title">Why This School</h2>
@@ -304,7 +305,7 @@ export default function SchoolDetailPage() {
       )}
 
       {/* ════════ LEVEL 2 — NEXT STEP ════════ */}
-      <div className="bg-white border border-gray-200/80 rounded-xl px-5 py-3.5 flex items-center gap-3 mb-10" data-testid="next-step-section">
+      <div className="bg-white border border-gray-200/80 rounded-xl px-5 py-3.5 flex items-center gap-3 mb-12 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" data-testid="next-step-section">
         <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: ACCENT }} />
         <div className="flex-1 min-w-0">
           <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-gray-400 block mb-0.5">Next Step</span>
@@ -327,7 +328,7 @@ export default function SchoolDetailPage() {
       </div>
 
       {/* ════════ LEVEL 3 — QUICK SNAPSHOT ════════ */}
-      <section className="mb-10">
+      <section className="mb-12">
         <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight mb-4" data-testid="quick-snapshot-title">Quick Snapshot</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5" data-testid="quick-snapshot-grid">
           <MetricCard label="Tuition" value={fmtMoney(sc.tuition_out_of_state || sc.tuition_in_state)} note="Out-of-state" primary />
@@ -350,11 +351,11 @@ export default function SchoolDetailPage() {
 
       {/* ════════ OPPORTUNITY & RISK ════════ */}
       {opportunityItems.length > 0 && (
-        <section className="mb-10">
+        <section className="mb-12">
           <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight mb-4" data-testid="opportunity-risk-title">Opportunity & Risk</h2>
           <div className="space-y-2" data-testid="opportunity-risk-section">
             {opportunityItems.map((item, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-xl bg-gray-50/60 px-4 py-3" data-testid={`opportunity-item-${i}`}>
+              <div key={i} className="flex items-start gap-3 rounded-xl bg-white/80 border border-gray-100/60 px-4 py-3" data-testid={`opportunity-item-${i}`}>
                 <span className="w-1.5 h-1.5 rounded-full mt-[6px] flex-shrink-0" style={{ backgroundColor: item.level === "high" ? ACCENT : "#d1d5db" }} />
                 <div className="text-[13px]">
                   <span className="font-semibold text-gray-800 mr-1.5">{item.label}</span>
@@ -368,7 +369,7 @@ export default function SchoolDetailPage() {
 
       {/* ════════ MATCH BREAKDOWN ════════ */}
       {matchData?.sub_scores && (
-        <section className="mb-10">
+        <section className="mb-12">
           <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight mb-4" data-testid="match-breakdown-title">Match Breakdown</h2>
           <div className="bg-white border border-gray-200/80 rounded-2xl p-5 md:p-6" data-testid="match-breakdown-section">
             <div className="space-y-3.5">
@@ -419,7 +420,7 @@ export default function SchoolDetailPage() {
 
       {/* ════════ COACHING STAFF ════════ */}
       {coaches.length > 0 && (
-        <section className="mb-10">
+        <section className="mb-12">
           <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight mb-4" data-testid="coaching-staff-title">Coaching Staff</h2>
           <div className="space-y-1" data-testid="coaching-staff-section">
             {coaches.map((c, i) => (
@@ -447,9 +448,9 @@ export default function SchoolDetailPage() {
       )}
 
       {/* ════════ LEVEL 3 — PROGRAM DETAILS ════════ */}
-      <section className="mb-10">
+      <section className="mb-12">
         <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight mb-4" data-testid="program-overview-title">Program Details</h2>
-        <div className="bg-gray-50/60 rounded-2xl p-5 md:p-6" data-testid="program-overview-section">
+        <div className="bg-white border border-gray-200/80 rounded-2xl p-5 md:p-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" data-testid="program-overview-section">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-4">
             {school.division && <div><span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 block mb-0.5">Division</span><span className="text-[13px] font-medium text-gray-800">{school.division}</span></div>}
             {school.conference && <div><span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 block mb-0.5">Conference</span><span className="text-[13px] font-medium text-gray-800">{school.conference}</span></div>}
@@ -471,9 +472,9 @@ export default function SchoolDetailPage() {
 
       {/* ════════ CAMPUS DIVERSITY ════════ */}
       {school.campus_diversity && Object.keys(school.campus_diversity).length > 0 && (
-        <section className="mb-10">
+        <section className="mb-12">
           <h2 className="text-[15px] font-semibold text-gray-900 tracking-tight mb-4" data-testid="campus-diversity-title">Campus Diversity</h2>
-          <div className="bg-gray-50/60 rounded-2xl p-5 md:p-6" data-testid="campus-diversity-section">
+          <div className="bg-white border border-gray-200/80 rounded-2xl p-5 md:p-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]" data-testid="campus-diversity-section">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {Object.entries(school.campus_diversity).sort((a, b) => b[1].students - a[1].students).map(([category, data]) => (
                 <div key={category} data-testid={`diversity-${category.replace(/[\s/]+/g, '-').toLowerCase()}`}>
@@ -496,6 +497,7 @@ export default function SchoolDetailPage() {
       )}
 
       {showUpgrade && <UpgradeModal feature="schools" currentTier="basic" onClose={() => setShowUpgrade(false)} />}
+    </div>
     </div>
   );
 }
