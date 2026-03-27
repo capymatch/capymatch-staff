@@ -46,29 +46,26 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **Phase 3 — Source of Truth Audit**: DONE. Deliverable: `/app/docs/AUDIT_PHASE3_SOURCE_OF_TRUTH.md`
 - **P1 Mock Data Fixes**: DONE. event_engine.py, events.py, intelligence.py, digest.py all fixed.
 - **Refactor Sprint 1 — Attention SSOT**: DONE. `services/attention.py` is canonical. Frontend consumes backend attention.
-- **Refactor Sprint 2 — Interaction Signals**: NOT STARTED
+- **Refactor Sprint 2 — Interaction Signals SSOT**: DONE. `services/program_metrics.py` is canonical owner. `_compute_signals_from_interactions` and `_batch_signals` removed from `athlete_dashboard.py`. All views consume `extract_signals(metrics)`. Verified with 24 backend + 7 frontend tests (100% pass rate).
 - **Refactor Sprint 3 — Stage/Progress Consolidation**: NOT STARTED
-- **Phase 7 — Test Implementation**: IN PROGRESS (25+ tests across 2 test files)
+- **Phase 7 — Test Implementation**: IN PROGRESS (49+ tests across 4 test files)
 
-### Known Remaining mock_data Imports (other files, lower priority)
-- `routers/events.py` — UPCOMING_EVENTS, SCHOOLS
-- `routers/digest.py` — UPCOMING_EVENTS
-- `routers/intelligence.py` — mock_data
-- `routers/admin.py` — SCHOOLS
-- `program_engine.py` — UPCOMING_EVENTS
-- `event_engine.py` — UPCOMING_EVENTS, SCHOOLS
+### Known Remaining mock_data Imports (P2/P3 — backlog)
 - `support_pod.py` — UPCOMING_EVENTS
 - `advocacy_engine.py` — UPCOMING_EVENTS, SCHOOLS
+- `program_engine.py` — UPCOMING_EVENTS
+- `routers/admin.py` — SCHOOLS
 - `services/startup.py` — mock_data (for seeding — acceptable)
 
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
-## Upcoming Tasks (P1)
-- Phase 2-7 of Production Integrity Audit
+## Upcoming Tasks (P0/P1)
+- Refactor Sprint 3 — Stage/Progress Consolidation
 - CSV Import Tool for bulk school/coach data
 - Bulk Approve Mode in Director Inbox
 - School Detail Page Redesign with premium ochre aesthetic
+- Remaining P2/P3 mock_data leaks (support_pod, advocacy_engine, program_engine, admin)
 
 ## Future Tasks (P2)
 - Parent/Family Experience
@@ -101,3 +98,5 @@ The Google button is always visible. The OAuth flow is backend-driven:
 
 ## Test Files
 - `/app/backend/tests/test_determinism_no_mock.py` — 13 tests covering determinism + no-mock-data verification
+- `/app/backend/tests/test_attention_regression.py` — 20 tests for Sprint 1 Attention SSOT regression
+- `/app/backend/tests/test_sprint2_signals_ssot.py` — 24 tests for Sprint 2 Interaction Signals SSOT
