@@ -163,6 +163,29 @@ export function AuthProvider({ children }) {
     return userData;
   };
 
+  const googleLogin = async (credential) => {
+    const res = await axios.post(`${API}/auth/google`, { credential });
+    setToken(res.data.token);
+    if (res.data.refresh_token) {
+      localStorage.setItem("capymatch_refresh_token", res.data.refresh_token);
+    }
+    const userData = res.data.user;
+    setUser(userData);
+    if (userData?.role === "athlete" || userData?.role === "parent") {
+      try {
+        const obRes = await axios.get(`${API}/athlete/onboarding-status`, {
+          headers: { Authorization: `Bearer ${res.data.token}` },
+        });
+        setOnboardingDone(obRes.data.completed);
+      } catch {
+        setOnboardingDone(true);
+      }
+    } else {
+      setOnboardingDone(true);
+    }
+    return userData;
+  };
+
   const completeOnboarding = () => setOnboardingDone(true);
 
   const logout = async () => {
@@ -175,7 +198,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token, loading, login, register, logout, onboardingDone, completeOnboarding }}>
+    <AuthContext.Provider value={{ user, setUser, token, loading, login, register, googleLogin, logout, onboardingDone, completeOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

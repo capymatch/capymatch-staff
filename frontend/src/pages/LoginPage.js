@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Eye, EyeOff } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+
+const GOOGLE_ENABLED = !!process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 /* ── inline CSS-in-JS for page-level grid background ── */
 const pageStyle = {
@@ -14,7 +17,7 @@ const pageStyle = {
 };
 
 export default function LoginPage() {
-  const { login, register } = useAuth();
+  const { login, register, googleLogin } = useAuth();
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -372,6 +375,40 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
+
+            {/* Google OAuth */}
+            {GOOGLE_ENABLED && (
+              <>
+                <div className="relative text-center my-5">
+                  <div className="absolute top-1/2 left-0 right-0 h-px bg-[#e7dfd4]" />
+                  <span
+                    className="relative z-10 px-3 text-[13px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]"
+                    style={{ background: "rgba(255,255,255,0.88)" }}
+                  >
+                    or
+                  </span>
+                </div>
+                <div className="flex justify-center" data-testid="google-login-btn">
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => {
+                      setError("");
+                      setBusy(true);
+                      googleLogin(credentialResponse.credential)
+                        .catch((err) => {
+                          setError(err.response?.data?.detail || "Google sign-in failed. Please try again.");
+                        })
+                        .finally(() => setBusy(false));
+                    }}
+                    onError={() => setError("Google sign-in failed. Please try again.")}
+                    size="large"
+                    width="100%"
+                    text={mode === "login" ? "signin_with" : "signup_with"}
+                    shape="pill"
+                    theme="outline"
+                  />
+                </div>
+              </>
+            )}
 
             {/* Demo accounts divider */}
             {mode === "login" && (
