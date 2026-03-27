@@ -4,100 +4,11 @@ import axios from "axios";
 import { toast } from "sonner";
 import {
   ChevronLeft, Plus, Mail, ExternalLink, Users, User,
-  Check, Loader2, Activity, GraduationCap, DollarSign, BookOpen, Sparkles, PieChart, Target
+  Check, Loader2, Sparkles, Globe, FileText, ArrowUpRight
 } from "lucide-react";
 import UpgradeModal from "../../components/UpgradeModal";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
-/* ── Fit label colors ── */
-const FIT_COLORS = {
-  "Strong Fit": { bg: "rgba(22,163,74,0.15)", text: "#16a34a", border: "rgba(22,163,74,0.2)" },
-  "Possible Fit": { bg: "rgba(13,148,136,0.15)", text: "#0d9488", border: "rgba(13,148,136,0.2)" },
-  "Stretch": { bg: "rgba(245,158,11,0.12)", text: "#d97706", border: "rgba(245,158,11,0.2)" },
-  "Less Likely Fit": { bg: "rgba(239,68,68,0.1)", text: "#dc2626", border: "rgba(239,68,68,0.15)" },
-  "Not Enough Data": { bg: "var(--cm-surface-2)", text: "var(--cm-text-3)", border: "var(--cm-border)" },
-};
-
-const CONFIDENCE_LABELS = {
-  high: "High Confidence",
-  medium: "Medium Confidence",
-  low: "Low Confidence",
-  estimated: "Estimated",
-};
-
-const SUB_SCORE_COLORS = {
-  division: "#0d9488",
-  region: "#6366f1",
-  priorities: "#8b5cf6",
-  academics: "#2563eb",
-  measurables: "#d97706",
-};
-
-/* ── Match Ring ── */
-function MatchRing({ score }) {
-  const pct = score || 0;
-  const r = 44, c = 2 * Math.PI * r;
-  const offset = c - (pct / 100) * c;
-  return (
-    <div className="relative flex-shrink-0 w-[100px] h-[100px]" data-testid="match-score-ring">
-      <svg width="100" height="100" viewBox="0 0 100 100" className="absolute inset-0">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
-        <circle cx="50" cy="50" r={r} fill="none" stroke="#1a8a80" strokeWidth="6"
-          strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
-          transform="rotate(-90 50 50)" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[22px] font-extrabold text-[#1a8a80] leading-none">{pct}%</span>
-        <span className="text-[9px] font-semibold text-[var(--cm-text)]/35 uppercase tracking-[1px] mt-0.5">Match</span>
-      </div>
-    </div>
-  );
-}
-
-/* ── Stat Card ── */
-function StatCard({ value, label, subtitle, accent }) {
-  const isEmpty = !value && value !== 0;
-  return (
-    <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 flex flex-col items-center text-center" data-testid={`stat-card-${label?.replace(/\s+/g, '-').toLowerCase()}`}>
-      <div className={`text-[26px] sm:text-[30px] font-black tracking-tight leading-none mb-2 ${
-        isEmpty ? "text-[var(--cm-text)]/20" : accent ? "text-[#1a8a80]" : "text-[var(--cm-text)]"
-      }`}>
-        {isEmpty ? "N/A" : value}
-      </div>
-      <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--cm-text)]/30 mb-0.5">{label}</div>
-      {subtitle && <div className="text-[11px] text-[var(--cm-text)]/20">{subtitle}</div>}
-    </div>
-  );
-}
-
-/* ── Section Header ── */
-function SectionHeader({ icon: Icon, title, testId }) {
-  return (
-    <div className="flex items-center gap-2 mb-4" data-testid={testId}>
-      {Icon && <Icon className="w-4 h-4 text-[#1a8a80]" />}
-      <h3 className="text-[13px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/40">{title}</h3>
-    </div>
-  );
-}
-
-/* ── Overview Field ── */
-function OverviewField({ label, value, isLink }) {
-  const linkText = label === "Recruiting Questionnaire" ? "Fill out questionnaire" : "Visit website";
-  return (
-    <div>
-      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--cm-text)]/30 mb-1.5">{label}</div>
-      {isLink && value ? (
-        <a href={value.startsWith("http") ? value : `https://${value}`} target="_blank" rel="noreferrer"
-          className="text-[13px] text-[#1a8a80] font-semibold hover:underline inline-flex items-center gap-1">
-          {linkText} <ExternalLink className="w-3 h-3" />
-        </a>
-      ) : (
-        <div className="text-[13px] font-semibold text-[var(--cm-text)]/70">{value || "\u2014"}</div>
-      )}
-    </div>
-  );
-}
 
 /* ── Helpers ── */
 function selectivityLabel(rate) {
@@ -107,116 +18,171 @@ function selectivityLabel(rate) {
   if (rate < 0.60) return "Moderate";
   return "Open admission";
 }
-
 function sizeLabel(size) {
   if (size == null) return null;
   if (size < 2000) return "Small";
-  if (size < 10000) return "Medium-sized";
+  if (size < 10000) return "Mid-size";
   return "Large";
 }
 
-function gradLabel(rate) {
-  if (rate == null) return null;
-  if (rate > 0.75) return "Excellent";
-  if (rate > 0.50) return "Good";
-  return "Fair";
-}
+const fmtPct = (v) => v != null ? `${(v * 100).toFixed(0)}%` : null;
+const fmtMoney = (v) => v != null ? `$${Number(v).toLocaleString()}` : null;
 
-/* ── Match Breakdown Section ── */
-function MatchBreakdown({ matchData }) {
-  if (!matchData) return null;
-  const { sub_scores, measurables_fit, confidence, explanation, full_explanation, risk_badges } = matchData;
-  const fitLabel = measurables_fit?.label;
-  const fitColor = FIT_COLORS[fitLabel] || FIT_COLORS["Not Enough Data"];
-  const confLabel = CONFIDENCE_LABELS[confidence] || "";
-
+/* ── Match Score (Clean Ring — Ochre) ── */
+function MatchRing({ score }) {
+  const pct = score || 0;
+  const r = 52, c = 2 * Math.PI * r;
+  const offset = c - (pct / 100) * c;
   return (
-    <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 sm:p-6" data-testid="match-breakdown-section">
-      <SectionHeader icon={Target} title="Match Breakdown" testId="match-breakdown-header" />
-
-      {/* Top badges row */}
-      <div className="flex flex-wrap items-center gap-2 mb-5">
-        <span className="text-[22px] font-black text-[#1a8a80]" data-testid="breakdown-match-pct">{matchData.match_score}%</span>
-        <span className="text-[11px] font-semibold text-[var(--cm-text-3)]">Overall Match</span>
-        {fitLabel && (
-          <span data-testid="breakdown-fit-label" className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg" style={{ background: fitColor.bg, color: fitColor.text, border: `1px solid ${fitColor.border}` }}>
-            {fitLabel}
-          </span>
-        )}
-        {confLabel && (
-          <span data-testid="breakdown-confidence" className="text-[10px] font-semibold italic text-[var(--cm-text-3)]">{confLabel}</span>
-        )}
+    <div className="relative flex-shrink-0 w-[130px] h-[130px]" data-testid="match-score-ring">
+      <svg width="130" height="130" viewBox="0 0 120 120" className="absolute inset-0">
+        <circle cx="60" cy="60" r={r} fill="none" stroke="var(--cm-border)" strokeWidth="5" opacity="0.5" />
+        <circle cx="60" cy="60" r={r} fill="none" stroke="#8B3F1F" strokeWidth="5"
+          strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round"
+          transform="rotate(-90 60 60)" style={{ transition: "stroke-dashoffset 0.8s ease" }} />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[28px] font-semibold text-[#8B3F1F] leading-none tracking-tight">{pct}</span>
+        <span className="text-[10px] font-medium text-[var(--cm-text-3)] uppercase tracking-[1.5px] mt-1">match</span>
       </div>
-
-      {/* Sub-score bars */}
-      {sub_scores && (
-        <div className="space-y-3 mb-5" data-testid="sub-scores-bars">
-          {Object.entries(sub_scores).map(([key, ss]) => {
-            const pct = ss.max > 0 ? Math.round((ss.score / ss.max) * 100) : 0;
-            const barColor = SUB_SCORE_COLORS[key] || "#0d9488";
-            return (
-              <div key={key} data-testid={`sub-score-${key}`}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-semibold text-[var(--cm-text-2)]">{ss.label}</span>
-                  <span className="text-[11px] font-bold text-[var(--cm-text)]">{ss.score}/{ss.max}</span>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Measurables detail */}
-      {measurables_fit?.details && Object.keys(measurables_fit.details).length > 0 && (
-        <div className="rounded-lg p-3 mb-4" style={{ background: "var(--cm-surface-2)", border: "1px solid var(--cm-border)" }} data-testid="measurables-detail">
-          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--cm-text-3)] mb-2">Athletic Measurables</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {Object.entries(measurables_fit.details).map(([key, d]) => (
-              <div key={key} className="flex items-center justify-between text-[11px]">
-                <span className="font-semibold text-[var(--cm-text-2)] capitalize">{key.replace(/_/g, ' ')}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-[var(--cm-text)]">{d.value}</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold" style={{
-                    background: d.status === "match" ? "rgba(22,163,74,0.15)" : d.status === "close" ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.1)",
-                    color: d.status === "match" ? "#16a34a" : d.status === "close" ? "#d97706" : "#dc2626",
-                  }}>
-                    {d.status === "match" ? "In Range" : d.status === "close" ? "Close" : "Below"}
-                  </span>
-                  <span className="text-[9px] text-[var(--cm-text-3)]">{d.benchmark}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Risk badges */}
-      {risk_badges?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4" data-testid="risk-badges">
-          {risk_badges.map(b => (
-            <span key={b.key} className="text-[10px] font-bold px-2 py-1 rounded-lg" style={{
-              background: b.severity === "warning" ? "rgba(239,68,68,0.1)" : b.severity === "time" ? "rgba(245,158,11,0.1)" : "var(--cm-surface-2)",
-              color: b.severity === "warning" ? "#dc2626" : b.severity === "time" ? "#d97706" : "var(--cm-text-3)",
-              border: `1px solid ${b.severity === "warning" ? "rgba(239,68,68,0.15)" : b.severity === "time" ? "rgba(245,158,11,0.15)" : "var(--cm-border)"}`,
-            }}>
-              {b.label}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Explanation */}
-      {(full_explanation || explanation) && (
-        <div className="rounded-lg p-3" style={{ background: "var(--cm-surface-2)" }} data-testid="breakdown-explanation">
-          <div className="text-[12px] leading-relaxed text-[var(--cm-text-2)]">{full_explanation || explanation}</div>
-        </div>
-      )}
     </div>
   );
 }
+
+/* ── Snapshot Item (borderless) ── */
+function SnapshotItem({ label, value, note }) {
+  const isEmpty = !value && value !== 0;
+  return (
+    <div className="flex flex-col gap-0.5" data-testid={`snapshot-${label?.replace(/\s+/g, '-').toLowerCase()}`}>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--cm-text-3)]">{label}</span>
+      <span className={`text-[22px] font-medium tracking-tight leading-tight ${isEmpty ? "text-[var(--cm-text-3)]" : "text-[var(--cm-text)]"}`}>
+        {isEmpty ? "—" : value}
+      </span>
+      {note && <span className="text-[11px] text-[var(--cm-text-3)]">{note}</span>}
+    </div>
+  );
+}
+
+/* ── Section Divider ── */
+function Divider() {
+  return <div className="h-px w-full bg-[var(--cm-border)] opacity-50 my-10 md:my-14" />;
+}
+
+/* ── Section Title ── */
+function SectionTitle({ children, testId }) {
+  return (
+    <h2 className="text-base sm:text-lg font-medium text-[var(--cm-text)] tracking-tight mb-6" data-testid={testId}>
+      {children}
+    </h2>
+  );
+}
+
+/* ── Build "Why This School" bullets from available data ── */
+function buildFitReasons(school, matchData) {
+  const reasons = [];
+  const sc = school.scorecard || {};
+  const sub = matchData?.sub_scores || {};
+
+  // Division fit
+  if (school.division) {
+    const divScore = sub.division;
+    if (divScore && divScore.score >= divScore.max * 0.7) {
+      reasons.push({ label: "Division Fit", text: `${school.division} aligns with your recruiting preferences.` });
+    } else if (school.division) {
+      reasons.push({ label: "Division Fit", text: `Competes at the ${school.division} level.` });
+    }
+  }
+
+  // Academic fit
+  if (sc.admission_rate != null || sc.graduation_rate != null) {
+    const acadScore = sub.academics;
+    if (acadScore && acadScore.score >= acadScore.max * 0.6) {
+      reasons.push({ label: "Academic Fit", text: `Strong academic profile with ${fmtPct(sc.graduation_rate) || "solid"} graduation rate${sc.admission_rate ? ` and ${fmtPct(sc.admission_rate)} acceptance rate` : ""}.` });
+    } else {
+      const parts = [];
+      if (sc.graduation_rate) parts.push(`${fmtPct(sc.graduation_rate)} graduation rate`);
+      if (sc.admission_rate) parts.push(`${fmtPct(sc.admission_rate)} acceptance rate`);
+      if (parts.length) reasons.push({ label: "Academics", text: parts.join(", ") + "." });
+    }
+  }
+
+  // Location
+  if (school.region) {
+    const regScore = sub.region;
+    if (regScore && regScore.score >= regScore.max * 0.7) {
+      reasons.push({ label: "Location", text: `Located in the ${school.region}${sc.city ? ` (${sc.city}, ${sc.state})` : ""} — matches your location preference.` });
+    } else {
+      reasons.push({ label: "Location", text: `Located in the ${school.region}${sc.city ? ` — ${sc.city}, ${sc.state}` : ""}.` });
+    }
+  }
+
+  // Roster / Scholarship opportunity
+  if (school.scholarship_type) {
+    reasons.push({ label: "Scholarship", text: `Offers ${school.scholarship_type.toLowerCase()} scholarships.` });
+  }
+  if (school.roster_needs) {
+    reasons.push({ label: "Roster Opportunity", text: school.roster_needs });
+  }
+
+  // Measurables fit from match data
+  if (matchData?.measurables_fit?.label && matchData.measurables_fit.label !== "Not Enough Data") {
+    reasons.push({ label: "Athletic Fit", text: `${matchData.measurables_fit.label} based on your measurables.` });
+  }
+
+  return reasons;
+}
+
+/* ── Build Opportunity & Risk from match data ── */
+function buildOpportunity(school, matchData) {
+  const items = [];
+
+  // Overall opportunity level from match score
+  if (matchData?.match_score != null) {
+    const score = matchData.match_score;
+    let level, desc;
+    if (score >= 75) { level = "high"; desc = "Strong match — this school aligns well with your profile."; }
+    else if (score >= 50) { level = "moderate"; desc = "Moderate match — some areas align, others may need attention."; }
+    else { level = "low"; desc = "Lower match — consider if specific strengths outweigh the overall fit."; }
+    items.push({ label: "Opportunity Level", level, text: desc });
+  }
+
+  // Confidence
+  if (matchData?.confidence) {
+    const confMap = { high: "High confidence", medium: "Medium confidence", low: "Low confidence", estimated: "Estimated" };
+    items.push({ label: "Data Confidence", level: matchData.confidence === "high" ? "high" : matchData.confidence === "medium" ? "moderate" : "low", text: `${confMap[matchData.confidence] || matchData.confidence} — ${matchData.confidence_guidance || "based on available data."}` });
+  }
+
+  // Risk badges
+  if (matchData?.risk_badges?.length) {
+    const riskDescriptions = {
+      roster_tight: "Roster spots may be limited — competition for positions is higher.",
+      timeline_risk: "Be mindful of recruiting timelines and deadlines.",
+      low_academic_fit: "Academic requirements may be a stretch for your profile.",
+      low_measurables: "Your measurables are below the typical range for this program.",
+    };
+    matchData.risk_badges.forEach(b => {
+      items.push({
+        label: b.label,
+        level: b.severity === "warning" ? "low" : b.severity === "time" ? "moderate" : "neutral",
+        text: riskDescriptions[b.key] || `Factor to consider for this program.`,
+      });
+    });
+  }
+
+  // Roster competition from school data
+  if (school.roster_needs) {
+    items.push({ label: "Roster Status", level: "moderate", text: school.roster_needs });
+  }
+
+  return items;
+}
+
+const LEVEL_DOT = {
+  high: "#8B3F1F",
+  moderate: "var(--cm-text-3)",
+  low: "var(--cm-text-3)",
+  neutral: "var(--cm-text-3)",
+};
 
 export default function SchoolDetailPage() {
   const { domain } = useParams();
@@ -238,7 +204,6 @@ export default function SchoolDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain, navigate]);
 
-  // Fetch V2 match data for this school (if on board)
   useEffect(() => {
     if (!school?.university_name) return;
     axios.get(`${API}/match-scores`, { headers })
@@ -274,7 +239,7 @@ export default function SchoolDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 text-[#1a8a80] animate-spin" />
+        <Loader2 className="w-5 h-5 text-[#8B3F1F] animate-spin" />
       </div>
     );
   }
@@ -288,248 +253,305 @@ export default function SchoolDetailPage() {
       ].filter(Boolean);
 
   const sc = school.scorecard || {};
-  const divLabel = { D1: "NCAA D1", D2: "NCAA D2", D3: "NCAA D3", NAIA: "NAIA", JUCO: "JUCO" };
+  const fitReasons = buildFitReasons(school, matchData);
+  const opportunityItems = buildOpportunity(school, matchData);
+  const hasMatch = (school.match_score != null && school.match_score > 0) || matchData;
+  const displayScore = matchData?.match_score ?? school.match_score ?? 0;
+  const aiSummary = matchData?.explanation || matchData?.full_explanation || null;
 
-  const fmtPct = (v) => v != null ? `${(v * 100).toFixed(1)}%` : null;
-  const fmtMoney = (v) => v != null ? `$${Number(v).toLocaleString()}` : null;
-  const fmtRatio = (v) => v != null ? `${v}:1` : null;
-
-  // Extract social links
+  // Social links
   const socialLinks = school.social_links || {};
-  const twitterUrl = socialLinks.twitter || null;
-  const instagramUrl = socialLinks.instagram || null;
-  const facebookUrl = socialLinks.facebook || null;
 
   return (
-    <div className="max-w-[960px] mx-auto px-4 sm:px-6 pb-16" data-testid="school-info-page">
-      {/* Back link */}
+    <div className="max-w-[860px] mx-auto px-6 md:px-12 pb-20 pt-2" data-testid="school-info-page">
+      {/* ─── Back ─── */}
       <button onClick={() => navigate(-1)} data-testid="back-button"
-        className="inline-flex items-center gap-1.5 text-[12px] text-[var(--cm-text)]/30 font-semibold mb-5 hover:text-[#1a8a80] transition-colors">
-        <ChevronLeft className="w-3.5 h-3.5" /> Back to Find Schools
+        className="inline-flex items-center gap-1 text-[13px] text-[var(--cm-text-3)] font-medium mb-8 hover:text-[var(--cm-text)] transition-colors">
+        <ChevronLeft className="w-4 h-4" /> Back
       </button>
 
-      {/* Dark Hero Card */}
-      <div className="rounded-[20px] overflow-hidden mb-6 border border-white/[0.06]"
-        style={{ background: "linear-gradient(135deg, var(--cm-hero-from) 0%, var(--cm-surface) 60%, var(--cm-surface-2) 100%)" }}
-        data-testid="school-hero">
-        <div className="p-5 sm:p-9 flex flex-col sm:flex-row gap-4 sm:gap-7 items-center sm:items-start">
-          {school.match_score != null && school.match_score > 0 && (
-            <div className="flex flex-col items-center order-first sm:order-last mb-2 sm:mb-0">
-              <MatchRing score={school.match_score} />
-              {school.match_reasons?.length > 0 && (
-                <div className="flex flex-wrap gap-1 justify-center mt-2">
-                  {school.match_reasons.map(r => (
-                    <span key={r} className="text-[9px] px-1.5 py-0.5 rounded-[5px] font-medium"
-                      style={{ backgroundColor: "rgba(26,138,128,0.1)", color: "rgba(26,138,128,0.7)", border: "1px solid rgba(26,138,128,0.15)" }}>{r}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          <div className="flex-1 min-w-0 text-center sm:text-left">
-            {school.logo_url && (
-              <img src={school.logo_url} alt="" className="w-12 h-12 rounded-lg object-contain mb-3 mx-auto sm:mx-0" onError={e => e.target.style.display = 'none'} />
+      {/* ═══════════════ HERO ═══════════════ */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-4" data-testid="school-hero">
+        <div className="flex-1 min-w-0">
+          {/* School name */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-medium text-[var(--cm-text)] tracking-tight leading-[1.1] mb-3" data-testid="school-name">
+            {school.university_name}
+          </h1>
+
+          {/* Subtle metadata */}
+          <div className="flex flex-wrap items-center gap-1 text-[13px] text-[var(--cm-text-3)] font-medium mb-5" data-testid="school-metadata">
+            {school.division && <span data-testid="school-division">{school.division}</span>}
+            {school.division && school.conference && <span className="mx-1 opacity-40">·</span>}
+            {school.conference && <span>{school.conference}</span>}
+            {(school.division || school.conference) && school.region && <span className="mx-1 opacity-40">·</span>}
+            {school.region && <span>{school.region}</span>}
+            {sc.city && sc.state && (
+              <>
+                <span className="mx-1 opacity-40">·</span>
+                <span>{sc.city}, {sc.state}</span>
+              </>
             )}
-            <h1 className="text-xl sm:text-[28px] font-extrabold text-[var(--cm-text)] tracking-tight mb-1.5 leading-tight" data-testid="school-name">
-              {school.university_name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-1.5 mb-3 justify-center sm:justify-start">
-              {school.division && (
-                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold" data-testid="school-division"
-                  style={{ backgroundColor: "rgba(26,138,128,0.2)", color: "#1a8a80" }}>{school.division}</span>
-              )}
-              {school.conference && (
-                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{school.conference}</span>
-              )}
-              {school.region && (
-                <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold" style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{school.region}</span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-              <button onClick={addToBoard} disabled={adding || school.on_board} data-testid="add-to-board-btn"
-                className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 text-[var(--cm-text)] transition-all border-none"
-                style={school.on_board
-                  ? { background: "rgba(16,185,129,0.2)", color: "#10b981" }
-                  : { background: "linear-gradient(135deg, #1a8a80, #25a99e)" }}>
-                {school.on_board ? <><Check className="w-4 h-4" /> On Your Board</> : <><Plus className="w-4 h-4" /> {adding ? "Adding..." : "Add to Board"}</>}
-              </button>
-              {school.website && (
-                <a href={school.website} target="_blank" rel="noreferrer" data-testid="visit-website-btn"
-                  className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-[10px] text-[12px] sm:text-[13px] font-bold inline-flex items-center gap-1.5 border"
-                  style={{ backgroundColor: "var(--cm-surface-2)", color: "var(--cm-text-2)", borderColor: "var(--cm-border)" }}>
-                  <ExternalLink className="w-4 h-4" /> Visit Website
-                </a>
-              )}
-            </div>
+          </div>
+
+          {/* AI Summary */}
+          {aiSummary && (
+            <p className="text-[15px] sm:text-base text-[var(--cm-text-2)] leading-relaxed max-w-2xl mb-6 line-clamp-2" data-testid="ai-summary">
+              {aiSummary}
+            </p>
+          )}
+
+          {/* CTAs */}
+          <div className="flex flex-wrap items-center gap-3" data-testid="hero-ctas">
+            <button onClick={addToBoard} disabled={adding || school.on_board} data-testid="add-to-board-btn"
+              className={`px-5 py-2.5 rounded-full text-[13px] font-medium inline-flex items-center gap-2 transition-all ${
+                school.on_board
+                  ? "border border-[var(--cm-border)] text-[var(--cm-text-3)] cursor-default"
+                  : "border-2 border-[#8B3F1F] text-[#8B3F1F] hover:bg-[#8B3F1F] hover:text-white"
+              }`}>
+              {school.on_board ? <><Check className="w-4 h-4" /> On Your Board</> : <><Plus className="w-4 h-4" /> {adding ? "Adding..." : "Add to Pipeline"}</>}
+            </button>
+            {school.website && (
+              <a href={school.website} target="_blank" rel="noreferrer" data-testid="visit-website-btn"
+                className="px-5 py-2.5 rounded-full text-[13px] font-medium inline-flex items-center gap-2 text-[var(--cm-text-2)] hover:bg-[var(--cm-surface-2)] transition-colors">
+                <Globe className="w-4 h-4" /> Visit Website
+              </a>
+            )}
           </div>
         </div>
+
+        {/* Match score ring */}
+        {hasMatch && displayScore > 0 && (
+          <div className="flex-shrink-0 self-center sm:self-start sm:mt-2">
+            <MatchRing score={displayScore} />
+          </div>
+        )}
       </div>
 
-      {/* Match Breakdown (V2) */}
-      {matchData && (
-        <div className="mb-6">
-          <MatchBreakdown matchData={matchData} />
-        </div>
+      {/* ═══════════════ WHY THIS SCHOOL ═══════════════ */}
+      {fitReasons.length > 0 && (
+        <>
+          <Divider />
+          <div className="rounded-2xl md:rounded-3xl p-6 md:p-8" style={{ backgroundColor: "rgba(139, 63, 31, 0.04)" }} data-testid="why-this-school-section">
+            <div className="flex items-center gap-2 mb-5">
+              <Sparkles className="w-4 h-4 text-[#8B3F1F]" />
+              <h2 className="text-base sm:text-lg font-medium text-[var(--cm-text)] tracking-tight" data-testid="why-this-school-title">Why This School</h2>
+            </div>
+            <ul className="space-y-4" data-testid="fit-reasons-list">
+              {fitReasons.map((r, i) => (
+                <li key={i} className="flex items-start gap-3" data-testid={`fit-reason-${i}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#8B3F1F] mt-[7px] flex-shrink-0" />
+                  <div>
+                    <span className="text-[13px] font-semibold text-[#8B3F1F] mr-2">{r.label}</span>
+                    <span className="text-[14px] sm:text-[15px] text-[var(--cm-text-2)] leading-relaxed">{r.text}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
       )}
 
-      {/* Key Statistics */}
-      <div className="mb-6" data-testid="key-statistics-section">
-        <SectionHeader icon={Activity} title="Key Statistics" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard value={fmtMoney(sc.tuition_out_of_state || sc.tuition_in_state)} label="Tuition" subtitle="Out-of-state" />
-          <StatCard value={fmtPct(sc.admission_rate)} label="Acceptance Rate" subtitle={selectivityLabel(sc.admission_rate)} accent={sc.admission_rate != null && sc.admission_rate < 0.30} />
-          <StatCard value={sc.student_size ? Number(sc.student_size).toLocaleString() : null} label="Undergrads" subtitle={sizeLabel(sc.student_size)} />
-          <StatCard value={fmtPct(sc.graduation_rate)} label="Graduation Rate" subtitle={gradLabel(sc.graduation_rate)} accent={sc.graduation_rate != null && sc.graduation_rate > 0.50} />
-        </div>
+      {/* ═══════════════ QUICK SNAPSHOT ═══════════════ */}
+      <Divider />
+      <SectionTitle testId="quick-snapshot-title">Quick Snapshot</SectionTitle>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-6" data-testid="quick-snapshot-grid">
+        <SnapshotItem label="Tuition" value={fmtMoney(sc.tuition_out_of_state || sc.tuition_in_state)} note="Out-of-state" />
+        <SnapshotItem label="Acceptance" value={fmtPct(sc.admission_rate)} note={selectivityLabel(sc.admission_rate)} />
+        <SnapshotItem label="Students" value={sc.student_size ? Number(sc.student_size).toLocaleString() : null} note={sizeLabel(sc.student_size)} />
+        <SnapshotItem label="Graduation" value={fmtPct(sc.graduation_rate)} />
+        <SnapshotItem label="Retention" value={fmtPct(sc.retention_rate)} />
+        <SnapshotItem label="Student-Faculty" value={sc.student_faculty_ratio ? `${sc.student_faculty_ratio}:1` : null} />
+        <SnapshotItem label="SAT Avg" value={sc.sat_avg ? String(sc.sat_avg) : null} />
+        <SnapshotItem label="ACT Mid" value={sc.act_midpoint ? String(sc.act_midpoint) : null} />
+        {sc.avg_annual_cost && <SnapshotItem label="Avg Annual Cost" value={fmtMoney(sc.avg_annual_cost)} />}
+        {sc.median_earnings && <SnapshotItem label="Median Earnings" value={fmtMoney(sc.median_earnings)} note="Post-graduation" />}
+        {sc.avg_gpa && <SnapshotItem label="Avg GPA" value={sc.avg_gpa} />}
+        {school.scholarship_type && <SnapshotItem label="Scholarship" value={school.scholarship_type} />}
       </div>
 
-      <div className="flex flex-col gap-5">
-        {/* Program Overview */}
-        <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5 sm:p-6" data-testid="program-overview-section">
-          <SectionHeader icon={BookOpen} title="Program Overview" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4 pb-4 border-b border-white/[0.06]">
-            <OverviewField label="Division" value={
-              school.division ? <span className="inline-block px-2 py-0.5 rounded text-[12px] font-bold border border-[#1a8a80]/20 text-[#1a8a80] bg-[#1a8a80]/5">{divLabel[school.division] || school.division}</span> : "\u2014"
-            } />
-            <OverviewField label="Conference" value={school.conference || "\u2014"} />
-            <OverviewField label="Program Website" value={school.website} isLink />
-            <OverviewField label="Academic Website" value={school.domain ? `https://${school.domain}` : null} isLink />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <OverviewField label="Recruiting Questionnaire" value={school.questionnaire_url} isLink />
-            <OverviewField label="Twitter/X" value={twitterUrl} isLink />
-            <OverviewField label="Instagram" value={instagramUrl} isLink />
-            <OverviewField label="Facebook" value={facebookUrl} isLink />
-          </div>
-        </div>
-
-        {/* Coaching Staff */}
-        <div data-testid="coaching-staff-section">
-          <SectionHeader icon={Users} title="Coaching Staff" />
-          {coaches.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              {coaches.map((c, i) => (
-                <div key={i} className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-5" data-testid={`coach-card-${i}`}>
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#1a8a80]/10">
-                      <User className="w-5 h-5 text-[#1a8a80]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[15px] font-bold text-[var(--cm-text)]">{c.name}</div>
-                      <div className="text-[12px] text-[var(--cm-text)]/30 mt-0.5">{c.title || c.role || "Coach"}</div>
-                    </div>
-                  </div>
-                  {c.email && (
-                    <div className="flex items-center gap-2.5 mt-4">
-                      <Mail className="w-3.5 h-3.5 text-[var(--cm-text)]/30" />
-                      <a href={`mailto:${c.email}`} className="text-[13px] text-[#1a8a80] font-medium hover:underline">{c.email}</a>
-                    </div>
-                  )}
+      {/* ═══════════════ OPPORTUNITY & RISK ═══════════════ */}
+      {opportunityItems.length > 0 && (
+        <>
+          <Divider />
+          <SectionTitle testId="opportunity-risk-title">Opportunity & Risk</SectionTitle>
+          <div className="space-y-4" data-testid="opportunity-risk-section">
+            {opportunityItems.map((item, i) => (
+              <div key={i} className="flex items-start gap-3" data-testid={`opportunity-item-${i}`}>
+                <span className="w-2 h-2 rounded-full mt-[6px] flex-shrink-0" style={{ backgroundColor: LEVEL_DOT[item.level] || "var(--cm-text-3)" }} />
+                <div>
+                  <span className="text-[13px] font-semibold text-[var(--cm-text)] mr-2">{item.label}</span>
+                  <span className="text-[14px] text-[var(--cm-text-2)] leading-relaxed">{item.text}</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[13px] text-[var(--cm-text)]/30 mb-4">No coaching staff data available.</p>
-          )}
-        </div>
-
-        {/* School Profile */}
-        <div data-testid="school-profile-section">
-          <SectionHeader icon={GraduationCap} title="School Profile" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard value={fmtPct(sc.graduation_rate)} label="Graduation Rate" subtitle={gradLabel(sc.graduation_rate)} accent={sc.graduation_rate > 0.50} />
-            <StatCard value={fmtPct(sc.retention_rate)} label="Retention Rate" />
-            <StatCard value={fmtRatio(sc.student_faculty_ratio)} label="Student-Faculty Ratio" />
-            <StatCard value={sc.student_size ? Number(sc.student_size).toLocaleString() : null} label="Undergrad Students" subtitle={sizeLabel(sc.student_size)} />
+              </div>
+            ))}
           </div>
-        </div>
+        </>
+      )}
 
-        {/* Admissions */}
-        <div data-testid="admissions-section">
-          <SectionHeader icon={BookOpen} title="Admissions" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard value={sc.avg_gpa || null} label="Average GPA" />
-            <StatCard value={sc.act_midpoint ? String(sc.act_midpoint) : null} label="ACT" />
-            <StatCard value={sc.sat_avg ? String(sc.sat_avg) : null} label="SAT" />
-            <StatCard value={fmtPct(sc.admission_rate)} label="Acceptance Rate" subtitle={selectivityLabel(sc.admission_rate)} accent={sc.admission_rate != null && sc.admission_rate < 0.30} />
-          </div>
-        </div>
+      {/* ═══════════════ MATCH BREAKDOWN (if on board) ═══════════════ */}
+      {matchData?.sub_scores && (
+        <>
+          <Divider />
+          <SectionTitle testId="match-breakdown-title">Match Breakdown</SectionTitle>
+          <div className="space-y-3" data-testid="match-breakdown-section">
+            {/* Sub-score bars */}
+            {Object.entries(matchData.sub_scores).map(([key, ss]) => {
+              const pct = ss.max > 0 ? Math.round((ss.score / ss.max) * 100) : 0;
+              return (
+                <div key={key} data-testid={`sub-score-${key}`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[13px] font-medium text-[var(--cm-text-2)]">{ss.label}</span>
+                    <span className="text-[13px] font-semibold text-[var(--cm-text)]">{ss.score}/{ss.max}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden bg-[var(--cm-surface-2)]">
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: "#8B3F1F" }} />
+                  </div>
+                </div>
+              );
+            })}
 
-        {/* Financial */}
-        <div data-testid="financial-section">
-          <SectionHeader icon={DollarSign} title="Financial" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <StatCard value={fmtMoney(sc.avg_annual_cost || sc.tuition_out_of_state)} label="Avg. Annual Cost" />
-            <StatCard value={fmtMoney(sc.tuition_in_state)} label="Tuition (In-State)" />
-            <StatCard value={fmtMoney(sc.median_debt)} label="Median Debt" subtitle="At graduation" />
-            <StatCard value={fmtMoney(sc.median_earnings)} label="Median Earnings" subtitle="After graduation" accent />
-            <StatCard value={sc.school_type || null} label="School Type" />
-          </div>
-        </div>
-
-        {/* Campus Diversity */}
-        {school.campus_diversity && Object.keys(school.campus_diversity).length > 0 && (
-          <div data-testid="campus-diversity-section">
-            <SectionHeader icon={PieChart} title="Campus Diversity" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {Object.entries(school.campus_diversity)
-                .sort((a, b) => b[1].students - a[1].students)
-                .map(([category, data]) => (
-                  <div key={category} className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4" data-testid={`diversity-${category.replace(/[\s/]+/g, '-').toLowerCase()}`}>
-                    <div className="text-[13px] font-semibold mb-3 text-[var(--cm-text)]">{category}</div>
-                    <div className="space-y-2.5">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--cm-text)]/30">Students</span>
-                          <span className="text-[12px] font-bold text-[var(--cm-text)]">{data.students}%</span>
-                        </div>
-                        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.students, 100)}%`, background: "#1a8a80" }} />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--cm-text)]/30">Faculty</span>
-                          <span className="text-[12px] font-bold text-[var(--cm-text)]">{data.faculty}%</span>
-                        </div>
-                        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--cm-surface-2)" }}>
-                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(data.faculty, 100)}%`, background: "#6366f1" }} />
-                        </div>
+            {/* Measurables detail */}
+            {matchData.measurables_fit?.details && Object.keys(matchData.measurables_fit.details).length > 0 && (
+              <div className="mt-6 rounded-2xl p-5 bg-[var(--cm-surface-2)]" data-testid="measurables-detail">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-3">Athletic Measurables</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Object.entries(matchData.measurables_fit.details).map(([key, d]) => (
+                    <div key={key} className="flex items-center justify-between text-[13px]">
+                      <span className="font-medium text-[var(--cm-text-2)] capitalize">{key.replace(/_/g, ' ')}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-[var(--cm-text)]">{d.value}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{
+                          background: d.status === "match" ? "rgba(139,63,31,0.1)" : d.status === "close" ? "rgba(139,63,31,0.06)" : "var(--cm-surface-2)",
+                          color: d.status === "match" ? "#8B3F1F" : d.status === "close" ? "#8B3F1F" : "var(--cm-text-3)",
+                        }}>
+                          {d.status === "match" ? "In Range" : d.status === "close" ? "Close" : "Below"}
+                        </span>
+                        <span className="text-[10px] text-[var(--cm-text-3)]">{d.benchmark}</span>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Full explanation */}
+            {matchData.full_explanation && (
+              <p className="text-[14px] text-[var(--cm-text-2)] leading-relaxed mt-4" data-testid="breakdown-explanation">
+                {matchData.full_explanation}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════ COACHING STAFF ═══════════════ */}
+      {coaches.length > 0 && (
+        <>
+          <Divider />
+          <SectionTitle testId="coaching-staff-title">Coaching Staff</SectionTitle>
+          <div data-testid="coaching-staff-section">
+            {coaches.map((c, i) => (
+              <div key={i}
+                className={`flex items-center justify-between py-4 ${i < coaches.length - 1 ? "border-b border-[var(--cm-border)]" : ""}`}
+                data-testid={`coach-row-${i}`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-[var(--cm-surface-2)] text-[var(--cm-text-3)]">
+                    <User className="w-4 h-4" />
                   </div>
-                ))}
-            </div>
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-medium text-[var(--cm-text)] truncate">{c.name}</div>
+                    <div className="text-[12px] text-[var(--cm-text-3)]">{c.title || c.role || "Coach"}</div>
+                  </div>
+                </div>
+                {c.email && (
+                  <a href={`mailto:${c.email}`} data-testid={`coach-email-${i}`}
+                    className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors flex items-center gap-1.5 flex-shrink-0 ml-4">
+                    <Mail className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{c.email}</span>
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════ PROGRAM OVERVIEW ═══════════════ */}
+      <Divider />
+      <SectionTitle testId="program-overview-title">Program Details</SectionTitle>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-4 text-[14px]" data-testid="program-overview-section">
+        {school.division && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Division</div>
+            <div className="font-medium text-[var(--cm-text)]">{school.division}</div>
           </div>
         )}
-
-        {/* Additional Details */}
-        {(school.mascot || school.scholarship_type || school.region) && (
-          <div data-testid="additional-details-section">
-            <SectionHeader title="Additional Details" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {school.region && (
-                <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/30 mb-1">Location</div>
-                  <div className="text-[15px] font-bold text-[var(--cm-text)]">{school.region}{sc.city ? ` \u00B7 ${sc.city}, ${sc.state}` : ""}</div>
-                </div>
-              )}
-              {school.mascot && (
-                <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/30 mb-1">Mascot</div>
-                  <div className="text-[15px] font-bold text-[var(--cm-text)]">{school.mascot}</div>
-                </div>
-              )}
-              {school.scholarship_type && (
-                <div className="rounded-xl border border-[var(--cm-border)] bg-[var(--cm-surface)] p-4">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--cm-text)]/30 mb-1">Scholarship</div>
-                  <div className="text-[15px] font-bold text-[var(--cm-text)]">{school.scholarship_type}</div>
-                </div>
-              )}
-            </div>
+        {school.conference && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Conference</div>
+            <div className="font-medium text-[var(--cm-text)]">{school.conference}</div>
+          </div>
+        )}
+        {school.mascot && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Mascot</div>
+            <div className="font-medium text-[var(--cm-text)]">{school.mascot}</div>
+          </div>
+        )}
+        {sc.school_type && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">School Type</div>
+            <div className="font-medium text-[var(--cm-text)]">{sc.school_type}</div>
+          </div>
+        )}
+        {school.scholarship_type && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Scholarship</div>
+            <div className="font-medium text-[var(--cm-text)]">{school.scholarship_type}</div>
+          </div>
+        )}
+        {school.region && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--cm-text-3)] mb-1">Region</div>
+            <div className="font-medium text-[var(--cm-text)]">{school.region}{sc.city ? ` — ${sc.city}, ${sc.state}` : ""}</div>
           </div>
         )}
       </div>
+
+      {/* Links row */}
+      <div className="flex flex-wrap gap-4 mt-6" data-testid="program-links">
+        {school.website && (
+          <a href={school.website} target="_blank" rel="noreferrer" data-testid="program-website-link"
+            className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
+            <ArrowUpRight className="w-3.5 h-3.5" /> Program Website
+          </a>
+        )}
+        {school.questionnaire_url && (
+          <a href={school.questionnaire_url.startsWith("http") ? school.questionnaire_url : `https://${school.questionnaire_url}`} target="_blank" rel="noreferrer" data-testid="questionnaire-link"
+            className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5" /> Recruiting Questionnaire
+          </a>
+        )}
+        {socialLinks.twitter && (
+          <a href={socialLinks.twitter} target="_blank" rel="noreferrer" data-testid="twitter-link"
+            className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
+            <ExternalLink className="w-3.5 h-3.5" /> Twitter / X
+          </a>
+        )}
+        {socialLinks.instagram && (
+          <a href={socialLinks.instagram} target="_blank" rel="noreferrer" data-testid="instagram-link"
+            className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
+            <ExternalLink className="w-3.5 h-3.5" /> Instagram
+          </a>
+        )}
+        {socialLinks.facebook && (
+          <a href={socialLinks.facebook} target="_blank" rel="noreferrer" data-testid="facebook-link"
+            className="text-[13px] text-[var(--cm-text-3)] hover:text-[var(--cm-text)] transition-colors inline-flex items-center gap-1">
+            <ExternalLink className="w-3.5 h-3.5" /> Facebook
+          </a>
+        )}
+      </div>
+
       {showUpgrade && <UpgradeModal feature="schools" currentTier="basic" onClose={() => setShowUpgrade(false)} />}
     </div>
   );
