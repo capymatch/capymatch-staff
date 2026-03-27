@@ -64,9 +64,8 @@ export function computeAttention(program, topAction, recapCtx) {
     else if (lastActivity >= 3) score += 20;
   }
 
-  // Stage bonus (use journey_stage, fall back to board_group)
-  const stageMap = { needs_outreach: 'added', waiting_on_reply: 'outreach', overdue: 'outreach' };
-  const effectiveStage = p.journey_stage || stageMap[p.board_group] || p.board_group || 'added';
+  // Stage bonus — Sprint 3 SSOT: use pipeline_stage exclusively
+  const effectiveStage = p.pipeline_stage || 'added';
   if (effectiveStage === 'campus_visit') score += 15;
   else if (effectiveStage === 'in_conversation') score += 10;
   else if (effectiveStage === 'outreach') score += 5;
@@ -380,7 +379,7 @@ export function computeAllAttention(programs, topActionsMap, recapCtx) {
   const active = programs.filter(p =>
     p.board_group !== 'archived' &&
     p.recruiting_status !== 'Committed' &&
-    p.journey_stage !== 'committed'
+    p.pipeline_stage !== 'committed'
   );
   const results = active.map(p => computeAttention(p, topActionsMap[p.program_id], recapCtx));
   results.sort((a, b) => {
@@ -390,9 +389,9 @@ export function computeAllAttention(programs, topActionsMap, recapCtx) {
     const aDue = a.daysUntil ?? 9999;
     const bDue = b.daysUntil ?? 9999;
     if (aDue !== bDue) return aDue - bDue;
-    // Tie-break 2: higher-priority stage first
-    const aStage = STAGE_PRIORITY[a.program?.journey_stage] || 0;
-    const bStage = STAGE_PRIORITY[b.program?.journey_stage] || 0;
+    // Tie-break 2: higher-priority stage first (Sprint 3 SSOT: pipeline_stage)
+    const aStage = STAGE_PRIORITY[a.program?.pipeline_stage] || 0;
+    const bStage = STAGE_PRIORITY[b.program?.pipeline_stage] || 0;
     if (bStage !== aStage) return bStage - aStage;
     // Tie-break 3: alphabetical by name
     const aName = a.program?.university_name || '';

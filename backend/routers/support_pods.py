@@ -225,7 +225,7 @@ async def get_support_pod(athlete_id: str, context: str = None, current_user: di
         active_intervention = interventions[0]
 
     pod_health = calculate_pod_health(athlete, members, all_actions)
-    events = get_relevant_events(athlete)
+    events = await get_relevant_events(athlete)
 
     unassigned = [a for a in all_actions if a.get("owner") in ("Unassigned", None, "") and a.get("status") != "completed"]
 

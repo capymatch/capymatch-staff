@@ -8,7 +8,7 @@ and event context lookups for the Recommendation Builder.
 from datetime import datetime, timezone, timedelta
 import uuid
 from services.athlete_store import get_all as get_athletes
-from mock_data import UPCOMING_EVENTS, SCHOOLS
+from db_client import db
 
 
 # ============================================================================
@@ -243,14 +243,19 @@ async def list_recommendations(status_filter=None, athlete_filter=None, school_f
 async def create_recommendation(data):
     """Create a new recommendation (draft)"""
     athlete = next((a for a in await get_athletes() if a["id"] == data["athlete_id"]), None)
-    school = next((s for s in SCHOOLS if s["id"] == data.get("school_id")), None)
+    # Look up school from DB instead of mock data
+    school_id = data.get("school_id", "")
+    school_doc = await db.university_knowledge_base.find_one(
+        {"$or": [{"id": school_id}, {"university_name": school_id}]},
+        {"_id": 0, "id": 1, "university_name": 1, "division": 1},
+    ) if school_id else None
 
     rec = {
         "id": f"rec_{str(uuid.uuid4())[:8]}",
         "athlete_id": data["athlete_id"],
         "athlete_name": athlete["full_name"] if athlete else "Unknown",
         "school_id": data.get("school_id", ""),
-        "school_name": school["name"] if school else data.get("school_name", ""),
+        "school_name": (school_doc.get("university_name") or school_doc.get("name", "")) if school_doc else data.get("school_name", ""),
         "college_coach_name": data.get("college_coach_name", ""),
         "status": "draft",
         "fit_reasons": data.get("fit_reasons", []),
@@ -397,18 +402,25 @@ def close_recommendation(rec_id, reason="no_response"):
 # RELATIONSHIP MEMORY
 # ============================================================================
 
-def get_school_relationship(school_id):
+async def get_school_relationship(school_id):
     """Aggregate all interactions and recommendations for a school"""
-    school = next((s for s in SCHOOLS if s["id"] == school_id), None)
-    if not school:
+    school_doc = await db.university_knowledge_base.find_one(
+        {"$or": [{"id": school_id}, {"university_name": school_id}]},
+        {"_id": 0},
+    )
+    if not school_doc:
         return None
+
+    school_name = school_doc.get("university_name") or school_doc.get("name", school_id)
+    school_division = school_doc.get("division", "")
 
     # Gather recommendations for this school
     school_recs = [r for r in RECOMMENDATIONS if r["school_id"] == school_id]
 
-    # Gather event notes for this school across all events
+    # Gather event notes for this school from db.events
     event_notes = []
-    for event in UPCOMING_EVENTS:
+    events = await db.events.find({}, {"_id": 0}).to_list(200)
+    for event in events:
         for note in event.get("capturedNotes", []):
             if note.get("school_id") == school_id:
                 event_notes.append({**note, "_event_name": event["name"]})
@@ -479,7 +491,7 @@ def get_school_relationship(school_id):
             })
 
     return {
-        "school": {"id": school["id"], "name": school["name"], "division": school["division"]},
+        "school": {"id": school_id, "name": school_name, "division": school_division},
         "summary": {
             "totalInteractions": total_interactions,
             "athletesIntroduced": athletes_introduced,
@@ -492,11 +504,13 @@ def get_school_relationship(school_id):
     }
 
 
-def get_all_relationships():
+async def get_all_relationships():
     """Return summary of all school relationships"""
+    schools = await db.university_knowledge_base.find({}, {"_id": 0, "id": 1, "university_name": 1}).to_list(200)
     relationships = []
-    for school in SCHOOLS:
-        rel = get_school_relationship(school["id"])
+    for school_doc in schools:
+        sid = school_doc.get("id") or school_doc.get("university_name", "")
+        rel = await get_school_relationship(sid)
         if rel and rel["summary"]["totalInteractions"] > 0:
             relationships.append({
                 "school": rel["school"],
@@ -514,8 +528,9 @@ def get_all_relationships():
 async def get_event_context(athlete_id, school_id=None):
     """Get event notes relevant to an athlete-school pair for recommendation builder"""
     context_notes = []
+    events = await db.events.find({}, {"_id": 0}).to_list(200)
 
-    for event in UPCOMING_EVENTS:
+    for event in events:
         for note in event.get("capturedNotes", []):
             if note.get("athlete_id") != athlete_id:
                 continue

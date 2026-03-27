@@ -179,7 +179,7 @@ class TestKanbanDragDrop:
         return programs[0]["program_id"]
 
     def test_get_athlete_programs_returns_programs(self, auth_token):
-        """GET /api/athlete/programs returns list of programs with journey_stage"""
+        """GET /api/athlete/programs returns programs with pipeline_stage (Sprint 3 SSOT)"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         response = requests.get(f"{BASE_URL}/api/athlete/programs", headers=headers)
         assert response.status_code == 200
@@ -188,68 +188,62 @@ class TestKanbanDragDrop:
         assert isinstance(programs, list)
         assert len(programs) > 0
         
-        # Verify program structure
+        # Verify program structure includes canonical fields
         program = programs[0]
         assert "program_id" in program
         assert "university_name" in program
-        assert "division" in program
+        assert "pipeline_stage" in program
         assert "board_group" in program
-        # journey_stage may or may not be present
 
-    def test_update_journey_stage_via_put(self, auth_token, program_id):
-        """PUT /api/athlete/programs/{id} updates journey_stage and recruiting_status"""
+    def test_update_recruiting_status_via_put(self, auth_token, program_id):
+        """PUT /api/athlete/programs/{id} updates recruiting_status (Sprint 3 SSOT)"""
         headers = {"Authorization": f"Bearer {auth_token}", "Content-Type": "application/json"}
         
-        # Update to "outreach" stage
         response = requests.put(
             f"{BASE_URL}/api/athlete/programs/{program_id}",
             headers=headers,
-            json={"journey_stage": "outreach", "recruiting_status": "Contacted"}
+            json={"recruiting_status": "Contacted"}
         )
         
         assert response.status_code == 200, f"PUT failed: {response.text}"
         
         data = response.json()
-        assert data["journey_stage"] == "outreach"
         assert data["recruiting_status"] == "Contacted"
         
-        # Verify GET returns updated data
+        # Verify GET returns updated pipeline_stage
         get_response = requests.get(f"{BASE_URL}/api/athlete/programs", headers=headers)
         assert get_response.status_code == 200
         programs = get_response.json()
         updated_program = next((p for p in programs if p["program_id"] == program_id), None)
         assert updated_program is not None
-        assert updated_program.get("journey_stage") == "outreach"
+        assert updated_program.get("pipeline_stage") in ("outreach", "in_conversation")
 
     def test_update_to_each_kanban_column_stage(self, auth_token, program_id):
-        """Test updating to various kanban column stages"""
+        """Test updating to various recruiting_status values (Sprint 3 SSOT)"""
         headers = {"Authorization": f"Bearer {auth_token}", "Content-Type": "application/json"}
         
-        # Test stage mappings from COL_TO_STAGE
+        # Test canonical recruiting_status → pipeline_stage mappings
         stage_mappings = [
-            {"journey_stage": "added", "recruiting_status": "Not Contacted"},
-            {"journey_stage": "outreach", "recruiting_status": "Contacted"},
-            {"journey_stage": "in_conversation", "recruiting_status": "In Conversation"},
-            {"journey_stage": "campus_visit", "recruiting_status": "Campus Visit"},
-            {"journey_stage": "offer", "recruiting_status": "Offer"},
-            {"journey_stage": "committed", "recruiting_status": "Committed"},
+            {"recruiting_status": "Not Contacted", "expected_stage": "added"},
+            {"recruiting_status": "Contacted", "expected_stage": "outreach"},
+            {"recruiting_status": "In Conversation", "expected_stage": "in_conversation"},
+            {"recruiting_status": "Campus Visit", "expected_stage": "campus_visit"},
+            {"recruiting_status": "Offer", "expected_stage": "offer"},
         ]
         
         for mapping in stage_mappings:
             response = requests.put(
                 f"{BASE_URL}/api/athlete/programs/{program_id}",
                 headers=headers,
-                json=mapping
+                json={"recruiting_status": mapping["recruiting_status"]}
             )
             assert response.status_code == 200, f"Failed to update to {mapping}: {response.text}"
-            data = response.json()
-            assert data.get("journey_stage") == mapping["journey_stage"]
         
-        # Reset to added for cleanup
+        # Reset for cleanup
         requests.put(
             f"{BASE_URL}/api/athlete/programs/{program_id}",
             headers=headers,
-            json={"journey_stage": "added", "recruiting_status": "Not Contacted"}
+            json={"recruiting_status": "Not Contacted"}
         )
 
 

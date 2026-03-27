@@ -4,7 +4,6 @@ from fastapi import APIRouter, HTTPException
 from db_client import db
 from auth_middleware import get_current_user_dep
 from services.athlete_store import get_interventions
-from mock_data import SCHOOLS
 
 router = APIRouter()
 
@@ -26,6 +25,8 @@ async def admin_status(current_user: dict = get_current_user_dep()):
     pod_action_events_count = await db.pod_action_events.count_documents({})
     program_snapshots_count = await db.program_snapshots.count_documents({})
 
+    schools_count = await db.university_knowledge_base.count_documents({})
+
     return {
         "persistence_phase": "Phase 2",
         "collections": {
@@ -41,9 +42,9 @@ async def admin_status(current_user: dict = get_current_user_dep()):
                 {"name": "messages", "count": messages_count, "source": "MongoDB", "phase": 0, "description": "Quick messages from peek panel"},
                 {"name": "pod_resolutions", "count": pod_resolutions_count, "source": "MongoDB", "phase": 0, "description": "Issue resolution records"},
                 {"name": "pod_action_events", "count": pod_action_events_count, "source": "MongoDB", "phase": 0, "description": "Action create/update audit log"},
+                {"name": "university_knowledge_base", "count": schools_count, "source": "MongoDB", "description": "School/university data — fully persisted"},
             ],
             "in_memory_only": [
-                {"name": "schools", "count": len(SCHOOLS), "source": "mock_data.py", "description": "10 static school entries — low priority for persistence"},
                 {"name": "interventions", "count": len(await get_interventions()), "source": "decision_engine.py", "description": "Recomputed on startup from persisted data — stateless, no persistence needed"},
             ],
         },

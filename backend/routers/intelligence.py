@@ -453,7 +453,7 @@ async def pod_actions_ai(athlete_id: str, current_user: dict = get_current_user_
     saved_actions = await db.pod_actions.find({"athlete_id": athlete_id}, {"_id": 0}).to_list(100)
     timeline_count = await db.athlete_notes.count_documents({"athlete_id": athlete_id})
     timeline_count += await db.assignments.count_documents({"athlete_id": athlete_id})
-    events = get_relevant_events(athlete_id)
+    events = await get_relevant_events(athlete_id)
 
     try:
         raw = await generate_pod_actions(athlete, interventions, saved_actions, timeline_count, events)

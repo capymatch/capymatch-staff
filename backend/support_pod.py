@@ -7,7 +7,7 @@ calculates pod health, and provides helpers for the support pod endpoints.
 
 from datetime import datetime, timezone, timedelta
 from services.athlete_store import get_all as get_athletes, get_interventions
-from mock_data import UPCOMING_EVENTS
+from db_client import db
 
 
 async def get_athlete(athlete_id):
@@ -430,8 +430,13 @@ def explain_pod_health(athlete, interventions):
     return {"status": "green", "label": "Healthy", "reason": "On track"}
 
 
-def get_relevant_events(athlete):
-    return [e for e in UPCOMING_EVENTS if e["daysAway"] <= 14][:3]
+async def get_relevant_events(athlete):
+    """Get real events happening within 14 days from db.events."""
+    events = await db.events.find(
+        {"daysAway": {"$lte": 14}},
+        {"_id": 0},
+    ).sort("daysAway", 1).to_list(3)
+    return events
 
 
 def generate_recruiting_timeline(athlete):
@@ -713,9 +718,9 @@ def _playbook_momentum_recovery(ctx):
     if interest == 0 and targets > 0:
         steps.append({"step": 3, "action": f"Send personalized follow-up emails to all {targets} target schools — no responses yet", "owner": "Athlete", "days": "Day 2-3"})
     elif targets > 0:
-        steps.append({"step": 3, "action": f"Send follow-up emails to top 3 target schools with updated content", "owner": "Athlete", "days": "Day 2-3"})
+        steps.append({"step": 3, "action": "Send follow-up emails to top 3 target schools with updated content", "owner": "Athlete", "days": "Day 2-3"})
     else:
-        steps.append({"step": 3, "action": f"Build an initial target school list and send first outreach", "owner": "Coach + Athlete", "days": "Day 2-3"})
+        steps.append({"step": 3, "action": "Build an initial target school list and send first outreach", "owner": "Coach + Athlete", "days": "Day 2-3"})
 
     # Conditional: video refresh if old or missing
     if not has_video:
@@ -815,7 +820,7 @@ def _playbook_reengagement(ctx):
 
     steps = [
         {"step": 1, "action": f"Identify which {silent_count} of {targets} target schools have gone silent and when contact was last made", "owner": "Coach", "days": "Day 1"},
-        {"step": 2, "action": f"Draft personalized follow-up messages for each silent school — include new content or a specific reason to re-engage", "owner": "Coach + Athlete", "days": "Day 2"},
+        {"step": 2, "action": "Draft personalized follow-up messages for each silent school — include new content or a specific reason to re-engage", "owner": "Coach + Athlete", "days": "Day 2"},
     ]
 
     # Conditional: what to send depends on available assets
@@ -887,11 +892,11 @@ def _playbook_readiness(ctx):
 
     # Conditional steps based on what's missing
     if not has_video:
-        steps.append({"step": len(steps) + 1, "action": f"Record and upload a highlight video — this is the most impactful missing asset", "owner": "Athlete", "days": "Day 3-5"})
+        steps.append({"step": len(steps) + 1, "action": "Record and upload a highlight video — this is the most impactful missing asset", "owner": "Athlete", "days": "Day 3-5"})
     if ctx["video_age_days"] > 90 and has_video:
         steps.append({"step": len(steps) + 1, "action": f"Re-record highlight video — current one is {ctx['video_age_days']} days old and may not reflect current ability", "owner": "Athlete", "days": "Day 3-5"})
 
-    steps.append({"step": len(steps) + 1, "action": f"Check in on progress — have the highest-priority gaps been addressed?", "owner": "Coach", "days": "Day 5"})
+    steps.append({"step": len(steps) + 1, "action": "Check in on progress — have the highest-priority gaps been addressed?", "owner": "Coach", "days": "Day 5"})
     steps.append({"step": len(steps) + 1, "action": f"Update {name}'s profile and notify target schools of improvements", "owner": "Athlete", "days": "Day 7-10"})
 
     return {

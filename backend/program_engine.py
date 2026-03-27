@@ -15,7 +15,7 @@ Supports two modes:
 
 from datetime import datetime, timezone
 from services.athlete_store import get_all as get_athletes, get_interventions
-from mock_data import UPCOMING_EVENTS
+from db_client import db as app_db
 from support_pod import (
     generate_pod_members,
     generate_suggested_actions,
@@ -197,7 +197,8 @@ async def compute_event_effectiveness(athlete_ids=None):
     past_events = []
     upcoming_events = []
 
-    for event in UPCOMING_EVENTS:
+    all_events = await app_db.events.find({}, {"_id": 0}).to_list(200)
+    for event in all_events:
         if event.get("daysAway", 0) < 0 or event.get("status") == "past":
             notes = event.get("capturedNotes", [])
             if athlete_ids is not None:
@@ -284,7 +285,7 @@ async def compute_advocacy_outcomes(athlete_ids=None):
     school_activity = []
     if athlete_ids is None:
         # Director view: full school activity
-        relationships = get_all_relationships()
+        relationships = await get_all_relationships()
         for rel in relationships[:6]:
             school_recs = [r for r in RECOMMENDATIONS if r["school_id"] == rel["school"]["id"] and r["status"] != "draft"]
             warm_resp = sum(1 for r in school_recs if r.get("response_status") == "warm" or r.get("closed_reason") == "positive_outcome")
@@ -401,7 +402,7 @@ async def compute_all(coach_id=None):
         "support_load": await compute_support_load(coach_id=coach_id, athlete_ids=athlete_ids),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "athlete_count": len(athletes),
-        "event_count": len(UPCOMING_EVENTS),
+        "event_count": len(await app_db.events.find({}, {"_id": 0, "name": 1}).to_list(200)),
         "recommendation_count": len(_filter_recommendations(athlete_ids)),
         "view_mode": view_mode,
         "coach_id": coach_id,

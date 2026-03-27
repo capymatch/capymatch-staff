@@ -380,16 +380,16 @@ class TestUpdateProgramStage:
         
         print("PASS: Program status updated successfully")
 
-    def test_update_program_journey_stage(self):
-        """Test updating program journey_stage advances rail"""
+    def test_update_program_recruiting_status(self):
+        """Test updating program recruiting_status (Sprint 3 SSOT: canonical field)"""
         response = requests.put(
             f"{BASE_URL}/api/athlete/programs/{KNOWN_PROGRAM_ID}",
             headers=self.headers,
-            json={"journey_stage": "outreach"}
+            json={"recruiting_status": "Contacted"}
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         
-        print("PASS: Program journey_stage updated")
+        print("PASS: Program recruiting_status updated")
 
     def test_update_followup_schedule(self):
         """Test scheduling follow-up via program update"""

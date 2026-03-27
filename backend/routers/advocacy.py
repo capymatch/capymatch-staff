@@ -160,7 +160,7 @@ async def get_advocacy_context_athlete(athlete_id: str, current_user: dict = get
 
 @router.get("/advocacy/relationships")
 async def list_all_relationships_endpoint(current_user: dict = get_current_user_dep()):
-    all_rels = get_all_relationships()
+    all_rels = await get_all_relationships()
     if current_user["role"] == "director":
         return all_rels
     # Filter relationships to those involving coach's athletes
@@ -175,7 +175,7 @@ async def list_all_relationships_endpoint(current_user: dict = get_current_user_
 
 @router.get("/advocacy/relationships/{school_id}")
 async def get_relationship(school_id: str, current_user: dict = get_current_user_dep()):
-    result = get_school_relationship(school_id)
+    result = await get_school_relationship(school_id)
     if not result:
         return {"error": "School not found"}
     return result
@@ -197,7 +197,7 @@ async def get_rec_detail(rec_id: str, current_user: dict = get_current_user_dep(
     if not rec:
         return {"error": "Recommendation not found"}
     if rec.get("school_id"):
-        rel = get_school_relationship(rec["school_id"])
+        rel = await get_school_relationship(rec["school_id"])
         rec["relationship_summary"] = rel["summary"] if rel else None
     return rec
 

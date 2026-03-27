@@ -1087,14 +1087,8 @@ async def seed():
 
     # Map recruiting_status to the interaction trail that PRODUCES that state
     # Journey rail auto-detects: added (always), outreach (outreach_count>0), in_conversation (has_coach_reply)
-    # campus_visit, offer, committed require journey_stage manual override
-    JOURNEY_STAGE_MAP = {
-        "Campus Visit": "campus_visit",
-        "Visit Scheduled": "campus_visit",
-        "Visit": "campus_visit",
-        "Offer": "offer",
-        "Committed": "committed",
-    }
+    # Sprint 3 SSOT: pipeline_stage is derived by stage_engine from recruiting_status + signals
+    # No journey_stage field is written.
 
     interaction_count = 0
     for p in PROGRAMS:
@@ -1104,14 +1098,6 @@ async def seed():
         status = p["status"]
         reply = p["reply"]
         contact_days = p["initial_contact_days"]
-
-        # Set journey_stage on the program for advanced stages
-        journey_stage = JOURNEY_STAGE_MAP.get(status)
-        if journey_stage:
-            await db.programs.update_one(
-                {"program_id": pid},
-                {"$set": {"journey_stage": journey_stage}}
-            )
 
         if status == "Not Contacted":
             continue  # No interactions for uncontacted schools
