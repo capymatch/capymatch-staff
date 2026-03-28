@@ -118,7 +118,15 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
               paddingTop: 6,
               borderTop: "1px solid rgba(255,255,255,0.06)",
             }} data-testid="hero-action-title">
-              {current.primaryAction || `Review ${p?.university_name || "School"} now`}
+              {(() => {
+                const name = p?.university_name || "School";
+                const action = current.primaryAction || "";
+                if (!action) return `Follow up with ${name} now`;
+                if (/^review this school$/i.test(action)) return `Follow up with ${name} now`;
+                const personalized = action.replace(/this school/gi, name);
+                if (personalized !== action) return personalized;
+                return action;
+              })()}
             </h3>
 
             {/* REASON — clean, deduplicated signal bullets */}
