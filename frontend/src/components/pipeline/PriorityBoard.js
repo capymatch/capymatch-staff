@@ -15,11 +15,12 @@ const P = {
   ochreSoft:  "rgba(199,80,0,0.035)",
   lemon:      "#b08800",
   lemonSoft:  "rgba(176,136,0,0.03)",
-  thistle:    "#5e9470",
-  thistleSoft:"rgba(94,148,112,0.02)",
+  thistle:    "#408a5c",
+  thistleSoft:"rgba(64,138,92,0.03)",
   borderWarm: "#e7dfd4",
   shadowRest: "0 2px 8px rgba(80,60,30,0.03), 0 0.5px 2px rgba(80,60,30,0.02)",
   shadowLift: "0 8px 24px rgba(80,60,30,0.06), 0 1px 4px rgba(80,60,30,0.03)",
+  shadowHover: "0 10px 30px rgba(80,60,30,0.08), 0 2px 6px rgba(80,60,30,0.04)",
 };
 
 /* ── Tier config ── */
@@ -46,13 +47,13 @@ const TIER_CONFIG = {
   },
   watch: {
     badge: "On track",
-    badgeColor: "#3d7a55",
-    borderColor: "rgba(120,190,150,0.60)",
+    badgeColor: "#357a4d",
+    borderColor: "rgba(100,180,140,0.65)",
     Icon: Eye,
-    iconBg: "rgba(94,148,112,0.04)",
-    iconColor: "#5a9a72",
-    cardBg: "rgba(94,148,112,0.018)",
-    cardBorder: "1px solid rgba(94,148,112,0.10)",
+    iconBg: "rgba(64,138,92,0.05)",
+    iconColor: "#4a9468",
+    cardBg: "rgba(64,138,92,0.025)",
+    cardBorder: "1px solid rgba(64,138,92,0.12)",
   },
 };
 
@@ -100,26 +101,27 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
       onClick={() => navigate && navigate(`/pipeline/${priority.program_id}`)}
       style={{
         background: config.cardBg,
-        borderLeft: `3px solid ${config.borderColor}`,
         border: config.cardBorder,
         borderLeft: `3px solid ${config.borderColor}`,
         borderRadius: 16,
         padding: "20px 22px",
         cursor: "pointer",
-        transition: "transform 120ms ease, box-shadow 120ms ease",
+        transition: "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
         boxShadow: firstOnTrackLift
           ? "0 3px 12px rgba(80,60,30,0.04), 0 0.5px 2px rgba(80,60,30,0.02)"
           : P.shadowRest,
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = P.shadowLift;
+        e.currentTarget.style.boxShadow = P.shadowHover;
+        e.currentTarget.style.borderColor = config.borderColor;
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = "";
         e.currentTarget.style.boxShadow = firstOnTrackLift
           ? "0 3px 12px rgba(80,60,30,0.04), 0 0.5px 2px rgba(80,60,30,0.02)"
           : P.shadowRest;
+        e.currentTarget.style.borderColor = "";
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
@@ -233,7 +235,7 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
   if (allCards.length === 0) return null;
 
   return (
-    <div data-testid="priority-board" style={{ marginTop: 10, fontFamily: FONT }}>
+    <div data-testid="priority-board" style={{ marginTop: 18, fontFamily: FONT }}>
       {/* ── All-on-track banner (only when no urgent items) ── */}
       {allOnTrack && (
         <div style={{
@@ -248,18 +250,18 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
       )}
 
       {/* ── Sections ── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-        {sectionData.map(section => {
+      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+        {sectionData.map((section, sIdx) => {
           const HeaderIcon = section.headerIcon;
 
           return (
-            <div key={section.key} data-testid={`urgency-group-${section.key}`}>
+            <div key={section.key} data-testid={`urgency-group-${section.key}`} style={{ paddingTop: sIdx > 0 ? 4 : 0 }}>
               {/* Section header */}
               <div style={{
                 display: "flex", alignItems: "center", gap: 7,
                 marginBottom: 14,
               }}>
-                <HeaderIcon style={{ width: 14, height: 14, color: section.headerColor, opacity: 0.85 }} />
+                <HeaderIcon style={{ width: 14, height: 14, color: section.headerColor, opacity: 0.9 }} />
                 <span style={{
                   fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em",
                   color: section.headerColor,
@@ -267,10 +269,13 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
                   {section.label}
                 </span>
                 <span style={{
-                  fontSize: 13, fontWeight: 600,
-                  color: section.headerColor, opacity: 0.6,
+                  fontSize: 12, fontWeight: 700,
+                  color: section.headerColor, opacity: 0.55,
+                  background: `${section.headerColor}10`,
+                  padding: "1px 6px",
+                  borderRadius: 5,
                 }}>
-                  ({section.items.length})
+                  {section.items.length}
                 </span>
               </div>
 

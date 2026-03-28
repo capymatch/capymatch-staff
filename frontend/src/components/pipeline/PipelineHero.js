@@ -97,13 +97,13 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                   name={p.university_name}
                   logoUrl={ms?.logo_url || p.logo_url}
                   domain={ms?.domain || p.domain}
-                  size={32}
+                  size={34}
                   className="rounded-lg flex-shrink-0"
                 />
               )}
               <span style={{
-                fontSize: 16, fontWeight: 700,
-                color: "#fff", letterSpacing: "-0.01em",
+                fontSize: 18, fontWeight: 700,
+                color: "#fff", letterSpacing: "-0.015em",
                 lineHeight: 1.2,
               }} data-testid="hero-school-name">
                 {p?.university_name || "School"}
@@ -112,9 +112,9 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
 
             {/* ACTION TITLE */}
             <h3 style={{
-              fontSize: 18, fontWeight: 600,
-              color: "rgba(255,255,255,0.92)", letterSpacing: "-0.025em",
-              margin: "0 0 6px", lineHeight: 1.25,
+              fontSize: 16, fontWeight: 500,
+              color: "rgba(255,255,255,0.72)", letterSpacing: "-0.015em",
+              margin: "0 0 8px", lineHeight: 1.3,
               paddingTop: 6,
               borderTop: "1px solid rgba(255,255,255,0.06)",
             }} data-testid="hero-action-title">
@@ -146,7 +146,7 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                       {signals.map((s, i) => (
                         <li key={i} style={{
                           display: "flex", gap: 8, alignItems: "center",
-                          marginBottom: i < signals.length - 1 ? 4 : 0,
+                          marginBottom: i < signals.length - 1 ? 6 : 0,
                           color: "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: 450, lineHeight: 1.4,
                         }}>
                           <span style={{
@@ -209,11 +209,22 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
             </div>
           </div>
 
-          {/* RIGHT: Vertical stage rail — subdued, integrated */}
+          {/* RIGHT: Vertical stage rail — balanced, integrated */}
           {rail && (
-            <div className="hidden sm:flex flex-col items-start pt-1 pl-4 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.04)", minWidth: 110 }} data-testid="hero-progress-rail">
-              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.14)", marginBottom: 10 }}>
-                Stage
+            <div className="hidden sm:flex flex-col items-start pt-1 pl-5 flex-shrink-0" style={{
+              borderLeft: "1px solid rgba(255,255,255,0.06)",
+              minWidth: 120,
+              background: "rgba(255,255,255,0.02)",
+              borderRadius: "0 16px 16px 0",
+              marginRight: -20,
+              marginTop: -20,
+              marginBottom: -20,
+              paddingTop: 22,
+              paddingRight: 20,
+              paddingBottom: 20,
+            }} data-testid="hero-progress-rail">
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.22)", marginBottom: 12 }}>
+                Pipeline stage
               </div>
               <div className="flex flex-col gap-0">
                 {RAIL_STAGES.map((s, stIdx) => {
@@ -221,28 +232,28 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                   const isPast = stIdx < activeStageIdx;
                   const isLast = stIdx === RAIL_STAGES.length - 1;
                   return (
-                    <div key={s.key} className="flex items-start gap-2" data-testid={`rail-stage-${s.key}`}>
+                    <div key={s.key} className="flex items-start gap-2.5" data-testid={`rail-stage-${s.key}`}>
                       <div className="flex flex-col items-center" style={{ width: 10 }}>
                         <div style={{
-                          width: isActive ? 8 : 5,
-                          height: isActive ? 8 : 5,
+                          width: isActive ? 9 : 5,
+                          height: isActive ? 9 : 5,
                           borderRadius: "50%",
-                          background: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)",
-                          boxShadow: isActive ? "0 0 8px rgba(72,201,168,0.35)" : "none",
+                          background: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.07)",
+                          boxShadow: isActive ? "0 0 10px rgba(72,201,168,0.4)" : "none",
                           flexShrink: 0,
-                          marginTop: isActive ? 4 : 5,
+                          marginTop: isActive ? 3 : 5,
                         }} />
                         {!isLast && (
                           <div style={{
-                            width: 1, height: 12,
-                            background: isPast ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
+                            width: 1.5, height: 13,
+                            background: isPast ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
                           }} />
                         )}
                       </div>
                       <span style={{
-                        fontSize: 11,
-                        fontWeight: isActive ? 600 : 400,
-                        color: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.12)",
+                        fontSize: 11.5,
+                        fontWeight: isActive ? 650 : 400,
+                        color: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.14)",
                         lineHeight: isActive ? "16px" : "20px",
                       }}>
                         {s.label}
