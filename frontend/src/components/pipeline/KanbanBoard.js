@@ -21,13 +21,17 @@ function getShortAction(attn) {
   if (!attn) return "On track";
   const rs = (attn.reasonShort || "").toLowerCase();
   if (rs.includes("coach assigned")) return "Take action";
-  if (rs.includes("flagged by coach")) return "Review flag";
+  if (rs.includes("flagged by coach")) return "Reassess approach";
   if (rs.includes("overdue")) return "Follow up";
   if (rs.includes("due today") || rs.includes("due tomorrow") || rs.includes("due in")) return "Follow up";
   if (rs.includes("no response") || rs.includes("no recent")) return "Re-engage";
   if (rs.includes("ready for first contact")) return "Start outreach";
   if (rs === "on track") return "On track";
-  return attn.ctaLabel || "View details";
+  // Transform passive labels to action-oriented ones
+  const cta = attn.ctaLabel || "";
+  if (/review flag/i.test(cta)) return "Reassess approach";
+  if (/review action/i.test(cta) || /review/i.test(cta) || /check/i.test(cta) || /look/i.test(cta)) return "Follow up now";
+  return cta || "View details";
 }
 
 /* ── Time line from attention data ── */

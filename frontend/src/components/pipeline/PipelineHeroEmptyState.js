@@ -61,7 +61,7 @@ export default function PipelineHeroEmptyState({ onTrackCount, navigate }) {
             className="ds-btn-primary"
             style={{ borderRadius: 999, padding: "12px 24px", background: "linear-gradient(135deg, #16b57f, #19c3b2)" }}
           >
-            Review your schools <ArrowRight className="w-4 h-4" />
+            Explore your schools <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => navigate("/schools")}

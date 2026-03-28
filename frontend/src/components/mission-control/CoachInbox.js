@@ -43,6 +43,9 @@ const COACH_CTA_CONFIG = {
   "Open Pod":       { icon: ExternalLink, color: "#3b82f6", bg: "#3b82f6" },
   "Request director help": { icon: AlertTriangle, color: "#dc2626", bg: "#dc2626" },
   "Review blocker": { icon: FileText, color: "#b45309", bg: "#b45309" },
+  "Resolve blocker": { icon: FileText, color: "#b45309", bg: "#b45309" },
+  "Follow up now":   { icon: Send, color: "#0d9488", bg: "#0d9488" },
+  "Reassess approach": { icon: FileText, color: "#3b82f6", bg: "#3b82f6" },
 };
 
 /* ═══════════════════════════════════════════════ */
@@ -228,18 +231,18 @@ const GENERIC_LABELS = new Set(["Needs attention", "Needs follow-up"]);
 
 /* Signal-aware CTA: intervention + primary signal → specific label */
 const SIGNAL_CTA = {
-  "No activity":         { label: "Check in",       color: "#0d9488" },
-  "Awaiting reply":      { label: "Send follow-up", color: "#0d9488" },
-  "Missing requirement": { label: "Review blocker", color: "#b45309" },
-  "No coach assigned":   { label: "Assign coach",   color: "#b45309" },
-  "Stalled stage":       { label: "Review status",  color: "#3b82f6" },
+  "No activity":         { label: "Follow up now",     color: "#0d9488" },
+  "Awaiting reply":      { label: "Send follow-up",    color: "#0d9488" },
+  "Missing requirement": { label: "Resolve blocker",   color: "#b45309" },
+  "No coach assigned":   { label: "Assign coach",      color: "#b45309" },
+  "Stalled stage":       { label: "Reassess approach", color: "#3b82f6" },
 };
 
 const INTERVENTION_CTA = {
-  nudge:    { label: "Check in",       color: "#0d9488" },
-  review:   { label: "Open Pod",       color: "#3b82f6" },
-  escalate: { label: "Request help",   color: "#dc2626" },
-  blocker:  { label: "Review blocker", color: "#b45309" },
+  nudge:    { label: "Follow up now",     color: "#0d9488" },
+  review:   { label: "Open Pod",          color: "#3b82f6" },
+  escalate: { label: "Request help",      color: "#dc2626" },
+  blocker:  { label: "Resolve blocker",   color: "#b45309" },
 };
 
 function getRowCta(item) {

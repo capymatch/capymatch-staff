@@ -149,7 +149,16 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
             lineHeight: 1.35, marginBottom: 5,
             letterSpacing: "-0.02em",
           }}>
-            {priority.action}
+            {(() => {
+              const a = priority.action || "";
+              if (/^re-?engage\b/i.test(a)) return "Re-engage now";
+              if (/^monitor\b/i.test(a)) return "Maintain momentum";
+              if (/^maintain contact/i.test(a)) return "Maintain momentum";
+              if (/^follow up\b/i.test(a)) return "Follow up now";
+              if (/^review\b/i.test(a)) return "Follow up now";
+              if (/^check\b/i.test(a)) return "Follow up now";
+              return a;
+            })()}
           </div>
 
           <div data-testid={`move-reason-${priority.program_id}`} style={{

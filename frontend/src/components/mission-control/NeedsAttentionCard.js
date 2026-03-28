@@ -9,7 +9,7 @@ import {
 const CATEGORY_CONFIG = {
   event_follow_up: { icon: Mail, label: "Follow-Up Overdue" },
   ownership_gap: { icon: Users, label: "Ownership Gap" },
-  momentum_drop: { icon: Zap, label: "Needs Review" },
+  momentum_drop: { icon: Zap, label: "Reassess Approach" },
   blocker: { icon: ShieldAlert, label: "Blocker" },
   engagement_drop: { icon: AlertTriangle, label: "At Risk" },
   deadline_proximity: { icon: AlertTriangle, label: "Event Prep Risk" },
@@ -36,7 +36,7 @@ const ACTIONS_BY_CATEGORY = {
   momentum_drop: [
     { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
-    { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
+    { key: "checkin", icon: ClipboardCheck, label: "Follow Up Now" },
   ],
   blocker: [
     { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
@@ -46,12 +46,12 @@ const ACTIONS_BY_CATEGORY = {
   engagement_drop: [
     { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
-    { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
+    { key: "checkin", icon: ClipboardCheck, label: "Follow Up Now" },
   ],
   deadline_proximity: [
     { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },
     { key: "open", icon: ExternalLink, label: "Open Athlete" },
-    { key: "checkin", icon: ClipboardCheck, label: "Log Check-In" },
+    { key: "checkin", icon: ClipboardCheck, label: "Follow Up Now" },
   ],
   readiness_issue: [
     { key: "pipeline", icon: ArrowUpRight, label: "Pipeline" },

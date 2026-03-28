@@ -119,13 +119,11 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
               borderTop: "1px solid rgba(255,255,255,0.06)",
             }} data-testid="hero-action-title">
               {(() => {
-                const name = p?.university_name || "School";
-                const action = current.primaryAction || "";
-                if (!action) return `Follow up with ${name} now`;
-                if (/^review this school$/i.test(action)) return `Follow up with ${name} now`;
-                const personalized = action.replace(/this school/gi, name);
-                if (personalized !== action) return personalized;
-                return action;
+                const tier = current.tier || current.attentionLevel;
+                if (tier === "high") return "Follow up now";
+                if (tier === "medium") return "Follow up soon";
+                if (tier === "low") return "Maintain momentum";
+                return "Follow up now";
               })()}
             </h3>
 
@@ -212,7 +210,12 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = ""; }}
               >
-                {current.coachWaiting ? "Reply to coach" : (current.ctaLabel || "Review now")} <ArrowRight style={{ width: 15, height: 15 }} />
+                {(() => {
+                  if (current.coachWaiting) return "Reply now";
+                  const cta = current.ctaLabel || "";
+                  if (/review|check|look/i.test(cta) || !cta) return "Follow up now";
+                  return cta;
+                })()} <ArrowRight style={{ width: 15, height: 15 }} />
               </button>
             </div>
           </div>

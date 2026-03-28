@@ -138,7 +138,7 @@ export default function HeroCard({ action, variant = "urgent", onClick }) {
         data-testid={`hero-card-explanation-${action.id}`}
       >
         {(() => {
-          const raw = action.context || "Review this program";
+          const raw = action.context || "Follow up now";
           const signals = parseSignals(raw);
           if (signals.length === 0) {
             return <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{raw}</span>;
