@@ -1,0 +1,106 @@
+{
+  "summary": "Pipeline Hero Card UI Clarity Improvements - Iteration 275. All features verified: max 3 bullets, deduplication, colored status dots (red/green/amber), en-dash preservation in number ranges. Both desktop and mobile viewports tested.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/frontend/src/components/pipeline/signal-format.js",
+    "/app/frontend/src/components/pipeline/PipelineHero.js",
+    "/app/frontend/src/components/pipeline/PriorityBoard.js"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "signal-format.js: parseSignals() correctly splits on em-dash (—) and semicolon (;) only, NOT en-dash (–) - VERIFIED",
+    "signal-format.js: dedupKey() and isSimilar() functions properly deduplicate similar phrases - VERIFIED",
+    "signal-format.js: dotColor() correctly assigns RED (#ff6b7f) for negative keywords, GREEN (#5ce0b8) for positive, AMBER (#ffb347) for neutral - VERIFIED",
+    "signal-format.js: Max 3 bullets enforced via unique.slice(0, 3) - VERIFIED",
+    "PipelineHero.js: Uses parseSignals() for reason text, renders colored dot bullets (lines 140-160) - VERIFIED",
+    "PriorityBoard.js: RecapMoveCard uses parseSignals() for reason text (lines 152-175) - VERIFIED"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100% - All 9 features verified"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123"
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pipeline Hero Card UI clarity improvements complete. signal-format.js utility handles: (1) splitting on em-dash/semicolon only, (2) deduplication via keyword overlap detection, (3) max 3 bullets, (4) colored dots based on sentiment keywords. En-dash ranges like '24–48 hours' are preserved. All navigation and toggle functionality working.",
+  "features_tested": {
+    "pipeline_page_loads": {
+      "status": "PASS",
+      "details": "Pipeline page loads successfully after login, Priority view is default"
+    },
+    "hero_max_3_bullets": {
+      "status": "PASS",
+      "details": "Exactly 3 bullets displayed: 'Overdue follow-up needs action', 'Coach responded', 'Momentum is building'"
+    },
+    "hero_deduplication": {
+      "status": "PASS",
+      "details": "Deduplication working - similar phrases filtered out, only unique signals shown"
+    },
+    "hero_colored_dots": {
+      "status": "PASS",
+      "details": "RED dot for 'Overdue follow-up needs action' (negative), GREEN dot for 'Coach responded' (positive), AMBER dot for 'Momentum is building' (neutral)"
+    },
+    "priority_board_bullets_with_dots": {
+      "status": "PASS",
+      "details": "All attention cards show bullet format with colored dots. Example: Emory card shows RED dot for 'No activity for 14 days', AMBER for 'Re-engage within 24–48 hours'"
+    },
+    "en_dash_preservation": {
+      "status": "PASS",
+      "details": "'24–48 hours' preserved as single bullet, en-dash (–) not split"
+    },
+    "hero_cta_navigation": {
+      "status": "PASS",
+      "details": "'Review Action' button navigates to /pipeline/{program_id}"
+    },
+    "attention_card_navigation": {
+      "status": "PASS",
+      "details": "Clicking attention cards navigates to school detail page"
+    },
+    "mobile_viewport": {
+      "status": "PASS",
+      "details": "Hero card renders properly at 390x844, all 3 bullets visible with colored dots, progress rail hidden (sm:flex)"
+    }
+  },
+  "playwright_test_results": {
+    "desktop_1920x1080": {
+      "hero_visible": true,
+      "bullet_count": 3,
+      "bullet_1": {
+        "text": "Overdue follow-up needs action",
+        "dot_color": "RED (#ff6b7f)"
+      },
+      "bullet_2": {
+        "text": "Coach responded",
+        "dot_color": "GREEN (#5ce0b8)"
+      },
+      "bullet_3": {
+        "text": "Momentum is building",
+        "dot_color": "AMBER (#ffb347)"
+      },
+      "cta_text": "Review Action",
+      "cta_navigation": "PASS",
+      "attention_cards_count": 7,
+      "en_dash_preserved": true
+    },
+    "mobile_390x844": {
+      "hero_visible": true,
+      "bullet_count": 3,
+      "colored_dots_visible": true,
+      "progress_rail_hidden": true,
+      "cta_navigation": "PASS",
+      "attention_card_navigation": "PASS"
+    }
+  }
+}

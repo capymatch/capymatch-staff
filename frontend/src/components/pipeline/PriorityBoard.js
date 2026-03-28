@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertCircle, ChevronRight, Eye } from "lucide-react";
+import { parseSignals } from "./signal-format";
 
 const FONT = 'Inter, -apple-system, "SF Pro Text", ui-sans-serif, system-ui, sans-serif';
 
@@ -151,16 +152,22 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
             {(() => {
               const raw = priority.reason || "Keep your pipeline moving";
               const clean = raw.startsWith("\u2192") ? raw.slice(1).trim() : raw;
-              const parts = clean.split(/\s*[—]\s*/).map(s => s.trim()).filter(Boolean);
-              if (parts.length <= 1) {
+              const signals = parseSignals(clean);
+              if (signals.length === 0) {
                 return <span>{"\u2192"} {clean}</span>;
               }
               return (
                 <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                  {parts.map((pt, i) => (
-                    <li key={i} style={{ display: "flex", gap: 6, alignItems: "baseline", marginBottom: i < parts.length - 1 ? 2 : 0 }}>
-                      <span style={{ color: P.textSub, opacity: 0.5, flexShrink: 0, fontSize: 11 }}>{"\u2022"}</span>
-                      <span>{pt}</span>
+                  {signals.map((s, i) => (
+                    <li key={i} style={{
+                      display: "flex", gap: 6, alignItems: "center",
+                      marginBottom: i < signals.length - 1 ? 3 : 0,
+                    }}>
+                      <span style={{
+                        width: 5, height: 5, borderRadius: "50%",
+                        background: s.color, flexShrink: 0, opacity: 0.75,
+                      }} />
+                      <span>{s.text}</span>
                     </li>
                   ))}
                 </ul>

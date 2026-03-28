@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { trackEvent } from "../../lib/analytics";
 import UniversityLogo from "../UniversityLogo";
 import { RAIL_STAGES } from "../journey/constants";
+import { parseSignals } from "./signal-format";
 import PipelineHeroEmptyState from "./PipelineHeroEmptyState";
 import "./pipeline-motion.css";
 import "./pipeline-premium.css";
@@ -120,7 +121,7 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
               {current.primaryAction || `Follow up with ${p?.university_name || "School"}`}
             </h3>
 
-            {/* REASON — bullet points instead of em-dashes */}
+            {/* REASON — clean, deduplicated signal bullets */}
             <div data-testid="hero-advice-box" style={{ marginBottom: 4 }}>
               <div data-testid="hero-descriptive-reason">
                 {(() => {
@@ -132,24 +133,27 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                   else if (risk) raw = risk;
                   else if (current.tier === "high") {
                     const days = p?.signals?.days_since_activity || p?.signals?.days_since_last_activity;
-                    raw = days ? `No response in ${days} day${days !== 1 ? 's' : ''} — coach is expecting a reply` : "Needs your attention now";
+                    raw = days ? `No response in ${days} days — coach is expecting a reply` : "Needs your attention now";
                   } else {
-                    raw = "On track \u2014 keep momentum";
+                    raw = "On track";
                   }
-                  const parts = raw.split(/\s*[—]\s*/).map(s => s.trim()).filter(Boolean);
-                  if (parts.length <= 1) {
+                  const signals = parseSignals(raw);
+                  if (signals.length === 0) {
                     return <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 450, lineHeight: 1.5 }}>{raw}</span>;
                   }
                   return (
                     <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                      {parts.map((pt, i) => (
+                      {signals.map((s, i) => (
                         <li key={i} style={{
-                          display: "flex", gap: 8, alignItems: "baseline",
-                          marginBottom: i < parts.length - 1 ? 3 : 0,
-                          color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 450, lineHeight: 1.5,
+                          display: "flex", gap: 8, alignItems: "center",
+                          marginBottom: i < signals.length - 1 ? 5 : 0,
+                          color: "rgba(255,255,255,0.65)", fontSize: 14, fontWeight: 450, lineHeight: 1.4,
                         }}>
-                          <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0, fontSize: 11 }}>{"\u2022"}</span>
-                          <span>{pt}</span>
+                          <span style={{
+                            width: 6, height: 6, borderRadius: "50%",
+                            background: s.color, flexShrink: 0, opacity: 0.85,
+                          }} />
+                          <span>{s.text}</span>
                         </li>
                       ))}
                     </ul>

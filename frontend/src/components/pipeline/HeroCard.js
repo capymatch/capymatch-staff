@@ -8,6 +8,7 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
 import UniversityLogo from "../UniversityLogo";
+import { parseSignals } from "./signal-format";
 
 const ACCENT = {
   coach_flag:      "#ef4444",
@@ -125,7 +126,7 @@ export default function HeroCard({ action, variant = "urgent", onClick }) {
         )}
       </div>
 
-      {/* Explanation — split em-dashes into bullet points */}
+      {/* Explanation — clean, deduplicated signal bullets */}
       <div
         style={{
           fontSize: isUrgent ? 13 : 12,
@@ -138,25 +139,24 @@ export default function HeroCard({ action, variant = "urgent", onClick }) {
       >
         {(() => {
           const raw = action.context || "Review this program";
-          const parts = raw.split(/\s*[—]\s*/).map(s => s.trim()).filter(Boolean);
-          if (parts.length <= 1) {
+          const signals = parseSignals(raw);
+          if (signals.length === 0) {
             return <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{raw}</span>;
           }
           return (
-            <ul style={{ margin: 0, padding: "0 0 0 6px", listStyle: "none" }}>
-              {parts.slice(0, 3).map((pt, i) => (
+            <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+              {signals.map((s, i) => (
                 <li key={i} style={{
-                  display: "flex",
-                  gap: 6,
-                  alignItems: "baseline",
-                  marginBottom: i < parts.length - 1 ? 2 : 0,
+                  display: "flex", gap: 6, alignItems: "center",
+                  marginBottom: i < signals.length - 1 ? 3 : 0,
                 }}>
-                  <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0, fontSize: 10 }}>•</span>
                   <span style={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}>{pt}</span>
+                    width: 5, height: 5, borderRadius: "50%",
+                    background: s.color, flexShrink: 0, opacity: 0.8,
+                  }} />
+                  <span style={{
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>{s.text}</span>
                 </li>
               ))}
             </ul>
