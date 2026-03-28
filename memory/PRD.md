@@ -69,9 +69,9 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **HeroCard.js**: Updated with same formatting (not currently imported/used by any page).
 - All navigation, toggles, and CTAs remain fully functional. 100% test pass.
 
-## Pipeline Signal Clarity Enhancement (Mar 2026)
-- **signal-format.js**: New shared utility — `parseSignals()` splits on em-dash/semicolon, deduplicates by keyword overlap, caps at 3 bullets, assigns colored status dots (red=negative, amber=neutral, green=positive).
-- Applied to PipelineHero, PriorityBoard, and HeroCard. En-dash ranges (e.g., 24–48) preserved. 100% test pass (iteration 275).
+## Pipeline Visual Refinement Polish (Mar 2026)
+- **PipelineHero.js**: Reduced gap (gap-3) between content and stage tracker for cohesive feel. Stage tracker subdued (minWidth 110, softer colors/dots, "Stage" label). Tighter signals-to-CTA spacing (mt-3.5). Slightly smaller signal font (13px) for clean hierarchy.
+- **PriorityBoard.js**: Section headers stronger (14px, weight 700, visible counts). Card borders added (tier-colored). Badge weight increased (600). On Track green enhanced (#3d7a55). All purely visual — no logic changes. 100% test pass (iteration 276).
 
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
