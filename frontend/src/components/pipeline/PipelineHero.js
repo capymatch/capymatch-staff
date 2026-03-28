@@ -119,11 +119,13 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
               borderTop: "1px solid rgba(255,255,255,0.06)",
             }} data-testid="hero-action-title">
               {(() => {
+                const name = p?.university_name || "School";
+                const short = name.replace(/^University of /i, "").replace(/\bUniversity\b/gi, "").replace(/\bCollege\b/gi, "").replace(/\bInstitute\b/gi, "").replace(/\bof\s*$/i, "").trim() || name;
                 const tier = current.tier || current.attentionLevel;
-                if (tier === "high") return "Follow up now";
-                if (tier === "medium") return "Follow up soon";
-                if (tier === "low") return "Maintain momentum";
-                return "Follow up now";
+                if (tier === "high") return `Follow up with ${short} now`;
+                if (tier === "medium") return `Follow up with ${short}`;
+                if (tier === "low") return `Maintain momentum with ${short}`;
+                return `Follow up with ${short} now`;
               })()}
             </h3>
 
