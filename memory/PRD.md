@@ -79,6 +79,17 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **PipelineHero.js**: School name enlarged (18px/700) for prominence, action title reduced (16px/500) for hierarchy. Stage tracker given visual weight — "Pipeline stage" label, tinted background, larger dots. Signal bullet spacing increased (6px). CTA spacing tightened (mt-3.5).
 - **PriorityBoard.js**: Section headers strengthened (14px/700), count shown in pill badges. Card hover states added (stronger shadow + border-color). On Track green boosted (#357a4d). Section gap increased (32px). All purely visual — no logic changes. 100% test pass (iteration 277).
 
+## Performance Optimization (Mar 2026)
+### Backend
+- **Journey endpoint**: Parallelized 4 sequential DB queries with `asyncio.gather()` → **498ms → 115ms (77% faster)**
+- **Profile endpoint**: Added `?lite=true` param excluding base64 photo_url → **1.3MB → 689B (99.9% reduction)**
+- **Top-actions**: Replaced N+1 per-program queries with batch fetch → 4 bulk queries instead of 4×N
+- **MongoDB indexes**: Added 10 compound indexes for Pipeline/Journey query patterns
+### Frontend
+- **Pipeline**: useMemo for derived data, skeleton loading state (hero + cards skeleton)
+- **Journey**: 3-phase progressive loading (critical → secondary → background), skeleton loading state
+- No logic, visual, or data changes. 100% test pass (iteration 279).
+
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
 
