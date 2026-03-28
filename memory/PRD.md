@@ -70,8 +70,8 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - All navigation, toggles, and CTAs remain fully functional. 100% test pass.
 
 ## Pipeline Visual Refinement Polish (Mar 2026)
-- **PipelineHero.js**: Reduced gap (gap-3) between content and stage tracker for cohesive feel. Stage tracker subdued (minWidth 110, softer colors/dots, "Stage" label). Tighter signals-to-CTA spacing (mt-3.5). Slightly smaller signal font (13px) for clean hierarchy.
-- **PriorityBoard.js**: Section headers stronger (14px, weight 700, visible counts). Card borders added (tier-colored). Badge weight increased (600). On Track green enhanced (#3d7a55). All purely visual — no logic changes. 100% test pass (iteration 276).
+- **PipelineHero.js**: School name enlarged (18px/700) for prominence, action title reduced (16px/500) for hierarchy. Stage tracker given visual weight — "Pipeline stage" label, tinted background, larger dots. Signal bullet spacing increased (6px). CTA spacing tightened (mt-3.5).
+- **PriorityBoard.js**: Section headers strengthened (14px/700), count shown in pill badges. Card hover states added (stronger shadow + border-color). On Track green boosted (#357a4d). Section gap increased (32px). All purely visual — no logic changes. 100% test pass (iteration 277).
 
 ## Pending Issues
 - P0: Update Vercel REACT_APP_BACKEND_URL to `https://capymatch-staff-production.up.railway.app`
