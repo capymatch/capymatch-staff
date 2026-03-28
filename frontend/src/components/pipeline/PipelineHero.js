@@ -73,11 +73,11 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
       }} />
 
       <div className="relative z-[1] px-5 sm:px-7 py-5 sm:py-6">
-        <div className="flex gap-5">
+        <div className="flex gap-3">
           <div className="flex-1 min-w-0">
 
             {/* SIGNAL ROW */}
-            <div className="flex items-center gap-2.5 flex-wrap mb-3" data-testid="hero-status-row">
+            <div className="flex items-center gap-2.5 flex-wrap mb-2.5" data-testid="hero-status-row">
               <span style={{
                 fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
                 textTransform: "uppercase",
@@ -91,7 +91,7 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
             </div>
 
             {/* SCHOOL IDENTITY */}
-            <div className="flex items-center gap-3 mb-2" data-testid="hero-school-row">
+            <div className="flex items-center gap-3 mb-1.5" data-testid="hero-school-row">
               {p && (
                 <UniversityLogo
                   name={p.university_name}
@@ -112,17 +112,17 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
 
             {/* ACTION TITLE */}
             <h3 style={{
-              fontSize: 19, fontWeight: 600,
+              fontSize: 18, fontWeight: 600,
               color: "rgba(255,255,255,0.92)", letterSpacing: "-0.025em",
-              margin: "0 0 6px", lineHeight: 1.2,
+              margin: "0 0 6px", lineHeight: 1.25,
               paddingTop: 6,
               borderTop: "1px solid rgba(255,255,255,0.06)",
             }} data-testid="hero-action-title">
-              {current.primaryAction || `Follow up with ${p?.university_name || "School"}`}
+              {current.primaryAction || `Review ${p?.university_name || "School"} now`}
             </h3>
 
             {/* REASON — clean, deduplicated signal bullets */}
-            <div data-testid="hero-advice-box" style={{ marginBottom: 4 }}>
+            <div data-testid="hero-advice-box" style={{ marginBottom: 0 }}>
               <div data-testid="hero-descriptive-reason">
                 {(() => {
                   const hr = (current.heroReason || "").trim();
@@ -139,15 +139,15 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                   }
                   const signals = parseSignals(raw);
                   if (signals.length === 0) {
-                    return <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 450, lineHeight: 1.5 }}>{raw}</span>;
+                    return <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, fontWeight: 450, lineHeight: 1.5 }}>{raw}</span>;
                   }
                   return (
                     <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
                       {signals.map((s, i) => (
                         <li key={i} style={{
                           display: "flex", gap: 8, alignItems: "center",
-                          marginBottom: i < signals.length - 1 ? 5 : 0,
-                          color: "rgba(255,255,255,0.65)", fontSize: 14, fontWeight: 450, lineHeight: 1.4,
+                          marginBottom: i < signals.length - 1 ? 4 : 0,
+                          color: "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: 450, lineHeight: 1.4,
                         }}>
                           <span style={{
                             width: 6, height: 6, borderRadius: "50%",
@@ -164,7 +164,7 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
 
             {/* META: Owner */}
             {ownerLabel !== 'You' && (
-              <div className="mt-2.5 flex items-center gap-2" data-testid="hero-meta-line">
+              <div className="mt-2 flex items-center gap-2" data-testid="hero-meta-line">
                 <span style={{
                   fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
                   background: "rgba(140,170,255,0.10)", color: "#a0b8e8",
@@ -176,7 +176,7 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
             )}
 
             {/* CTA ROW */}
-            <div className="flex items-center gap-4 mt-5">
+            <div className="flex items-center gap-4 mt-3.5">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -193,7 +193,7 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                 data-testid="hero-cta-btn"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
-                  padding: "12px 24px",
+                  padding: "11px 22px",
                   background: "#ff5a1f",
                   color: "#fff", fontSize: 14, fontWeight: 700,
                   border: "none", borderRadius: 12, cursor: "pointer",
@@ -204,16 +204,16 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                 onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = ""; }}
               >
-                {current.coachWaiting ? "Reply to coach" : (current.ctaLabel || "Open school")} <ArrowRight style={{ width: 15, height: 15 }} />
+                {current.coachWaiting ? "Reply to coach" : (current.ctaLabel || "Review now")} <ArrowRight style={{ width: 15, height: 15 }} />
               </button>
             </div>
           </div>
 
-          {/* RIGHT: Vertical stage rail */}
+          {/* RIGHT: Vertical stage rail — subdued, integrated */}
           {rail && (
-            <div className="hidden sm:flex flex-col items-start pt-1 pl-5 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.05)", minWidth: 130 }} data-testid="hero-progress-rail">
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.18)", marginBottom: 12 }}>
-                Where you are
+            <div className="hidden sm:flex flex-col items-start pt-1 pl-4 flex-shrink-0" style={{ borderLeft: "1px solid rgba(255,255,255,0.04)", minWidth: 110 }} data-testid="hero-progress-rail">
+              <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.14)", marginBottom: 10 }}>
+                Stage
               </div>
               <div className="flex flex-col gap-0">
                 {RAIL_STAGES.map((s, stIdx) => {
@@ -221,29 +221,29 @@ export default function PipelineHero({ heroItem, matchScores, navigate }) {
                   const isPast = stIdx < activeStageIdx;
                   const isLast = stIdx === RAIL_STAGES.length - 1;
                   return (
-                    <div key={s.key} className="flex items-start gap-2.5" data-testid={`rail-stage-${s.key}`}>
-                      <div className="flex flex-col items-center" style={{ width: 12 }}>
+                    <div key={s.key} className="flex items-start gap-2" data-testid={`rail-stage-${s.key}`}>
+                      <div className="flex flex-col items-center" style={{ width: 10 }}>
                         <div style={{
-                          width: isActive ? 10 : 6,
-                          height: isActive ? 10 : 6,
+                          width: isActive ? 8 : 5,
+                          height: isActive ? 8 : 5,
                           borderRadius: "50%",
-                          background: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.08)",
-                          boxShadow: isActive ? "0 0 10px rgba(72,201,168,0.45)" : "none",
+                          background: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)",
+                          boxShadow: isActive ? "0 0 8px rgba(72,201,168,0.35)" : "none",
                           flexShrink: 0,
-                          marginTop: isActive ? 3 : 5,
+                          marginTop: isActive ? 4 : 5,
                         }} />
                         {!isLast && (
                           <div style={{
-                            width: 1.5, height: 14,
-                            background: isPast ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)",
+                            width: 1, height: 12,
+                            background: isPast ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)",
                           }} />
                         )}
                       </div>
                       <span style={{
-                        fontSize: 12,
-                        fontWeight: isActive ? 700 : 400,
-                        color: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.40)" : "rgba(255,255,255,0.16)",
-                        lineHeight: isActive ? "16px" : "22px",
+                        fontSize: 11,
+                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? "#48c9a8" : isPast ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.12)",
+                        lineHeight: isActive ? "16px" : "20px",
                       }}>
                         {s.label}
                       </span>

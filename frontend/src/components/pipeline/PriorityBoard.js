@@ -27,29 +27,32 @@ const TIER_CONFIG = {
   top: {
     badge: "Attention needed",
     badgeColor: "#b84a00",
-    borderColor: "rgba(212,120,58,0.50)",
+    borderColor: "rgba(212,120,58,0.55)",
     Icon: AlertCircle,
-    iconBg: "rgba(199,80,0,0.04)",
+    iconBg: "rgba(199,80,0,0.05)",
     iconColor: "#c06830",
     cardBg: P.boneCard,
+    cardBorder: "1px solid rgba(212,120,58,0.12)",
   },
   secondary: {
     badge: "Follow up",
     badgeColor: "#957200",
-    borderColor: "rgba(201,168,69,0.45)",
+    borderColor: "rgba(201,168,69,0.50)",
     Icon: ChevronRight,
-    iconBg: "rgba(176,136,0,0.03)",
+    iconBg: "rgba(176,136,0,0.04)",
     iconColor: "#a08520",
     cardBg: P.boneCard,
+    cardBorder: "1px solid rgba(201,168,69,0.10)",
   },
   watch: {
     badge: "On track",
-    badgeColor: "#4d8360",
-    borderColor: "rgba(176,212,187,0.55)",
+    badgeColor: "#3d7a55",
+    borderColor: "rgba(120,190,150,0.60)",
     Icon: Eye,
-    iconBg: "rgba(94,148,112,0.025)",
-    iconColor: "#7aaa8c",
-    cardBg: "rgba(94,148,112,0.012)",
+    iconBg: "rgba(94,148,112,0.04)",
+    iconColor: "#5a9a72",
+    cardBg: "rgba(94,148,112,0.018)",
+    cardBorder: "1px solid rgba(94,148,112,0.10)",
   },
 };
 
@@ -97,9 +100,11 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
       onClick={() => navigate && navigate(`/pipeline/${priority.program_id}`)}
       style={{
         background: config.cardBg,
-        borderLeft: `2px solid ${config.borderColor}`,
-        borderRadius: 18,
-        padding: "24px 24px",
+        borderLeft: `3px solid ${config.borderColor}`,
+        border: config.cardBorder,
+        borderLeft: `3px solid ${config.borderColor}`,
+        borderRadius: 16,
+        padding: "20px 22px",
         cursor: "pointer",
         transition: "transform 120ms ease, box-shadow 120ms ease",
         boxShadow: firstOnTrackLift
@@ -129,18 +134,18 @@ function RecapMoveCard({ priority, navigate, isFirst }) {
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <span data-testid={`move-badge-${priority.rank}`} style={{
-            fontSize: 10, fontWeight: 500, letterSpacing: "0.04em",
+            fontSize: 10, fontWeight: 600, letterSpacing: "0.04em",
             textTransform: "uppercase",
             color: config.badgeColor,
-            display: "inline-block", marginBottom: 5,
+            display: "inline-block", marginBottom: 4,
           }}>
             {config.badge}
           </span>
 
           <div data-testid={`move-action-${priority.program_id}`} style={{
-            fontSize: 16, fontWeight: 600, color: P.textDark,
+            fontSize: 16, fontWeight: 650, color: P.textDark,
             lineHeight: 1.35, marginBottom: 5,
-            letterSpacing: "-0.015em",
+            letterSpacing: "-0.02em",
           }}>
             {priority.action}
           </div>
@@ -254,16 +259,16 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
                 display: "flex", alignItems: "center", gap: 7,
                 marginBottom: 14,
               }}>
-                <HeaderIcon style={{ width: 13, height: 13, color: section.headerColor, opacity: 0.7 }} />
+                <HeaderIcon style={{ width: 14, height: 14, color: section.headerColor, opacity: 0.85 }} />
                 <span style={{
-                  fontSize: 13, fontWeight: 600, letterSpacing: "-0.01em",
+                  fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em",
                   color: section.headerColor,
                 }}>
                   {section.label}
                 </span>
                 <span style={{
-                  fontSize: 13, fontWeight: 450,
-                  color: section.headerColor, opacity: 0.5,
+                  fontSize: 13, fontWeight: 600,
+                  color: section.headerColor, opacity: 0.6,
                 }}>
                   ({section.items.length})
                 </span>
