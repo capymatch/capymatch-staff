@@ -727,7 +727,7 @@ export default function JourneyPage() {
       </header>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-1 sm:px-6 mt-2">
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-0 sm:px-6 mt-2">
 
         {/* ═══ ORCHESTRATED HERO SECTION ═══ */}
         <PrimaryHeroCard hero={featuredHero} program={program} />

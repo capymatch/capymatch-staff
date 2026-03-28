@@ -109,7 +109,7 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 2. URGENCY LINE */}
         {hero.isCommunication && urgencyLine && (
-          <div className="flex items-center gap-1.5 ml-[58px] mt-1 mb-2" data-testid="hero-urgency-line">
+          <div className="flex items-center gap-1.5 sm:ml-[58px] mt-1 mb-2" data-testid="hero-urgency-line">
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "#ef4444" }} />
             <p className="text-[13px] font-bold" style={{ color: "rgba(248,113,113,0.9)", lineHeight: 1.4 }}>
               {urgencyLine}
@@ -119,7 +119,7 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 3. MESSAGE TO COACH — read-only preview */}
         {hero.isCommunication && messageParagraphs && (
-          <div className="mb-3 ml-[58px] rounded-2xl px-6 py-5"
+          <div className="mb-3 sm:ml-[58px] rounded-2xl px-4 sm:px-6 py-4 sm:py-5"
             style={{ background: "rgba(255,255,255,0.018)" }}
             data-testid="hero-suggested-message">
             <p className="text-[9px] font-bold uppercase tracking-[0.15em] mb-2.5"
@@ -146,7 +146,7 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 4. HELPER TEXT — above CTA */}
         {hero.isCommunication && messageParagraphs && (
-          <p className="ml-[58px] mt-1 mb-2 text-[10px]"
+          <p className="sm:ml-[58px] mt-1 mb-2 text-[10px]"
             style={{ color: "rgba(255,255,255,0.28)" }}
             data-testid="hero-edit-hint">
             You can edit before sending
@@ -154,7 +154,7 @@ export function PrimaryHeroCard({ hero, program }) {
         )}
 
         {/* 5. PRIMARY CTA */}
-        <div className="ml-[58px] mt-4">
+        <div className="sm:ml-[58px] mt-4">
           {hero.primaryCta && (
             <>
               {hero.isCommunication && (
@@ -199,7 +199,7 @@ export function PrimaryHeroCard({ hero, program }) {
 
         {/* 7. WHY THIS — intentional, readable */}
         {hero.whyThis?.length > 0 && (
-          <div className="ml-[58px] mt-4 mb-1 transition-all duration-300"
+          <div className="sm:ml-[58px] mt-4 mb-1 transition-all duration-300"
             style={{
               opacity: whyVisible ? 1 : 0,
               transform: whyVisible ? "translateY(0)" : "translateY(4px)",
@@ -219,7 +219,7 @@ export function PrimaryHeroCard({ hero, program }) {
         )}
 
         {/* 8. METADATA */}
-        <p className="text-[10px] ml-[58px] mt-2"
+        <p className="text-[10px] sm:ml-[58px] mt-2"
           style={{ color: "rgba(255,255,255,0.22)", lineHeight: 1.5 }}
           data-testid="hero-subtitle">
           {hero.subtitle}
