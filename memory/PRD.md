@@ -69,7 +69,13 @@ The Google button is always visible. The OAuth flow is backend-driven:
 - **HeroCard.js**: Updated with same formatting (not currently imported/used by any page).
 - All navigation, toggles, and CTAs remain fully functional. 100% test pass.
 
-## Pipeline Visual Refinement Polish (Mar 2026)
+## Action Language Standardization (Mar 2026)
+- Replaced all passive labels (Review, Check, Look at) with action-oriented phrases across 7 files.
+- **Hero**: Tier-based action title ("Follow up now" / "Follow up soon" / "Maintain momentum"). CTA button matches action.
+- **Cards**: "Re-engage now", "Follow up now", "Maintain momentum" — school names removed from action titles (school shown separately).
+- **KanbanBoard**: "Review flag" → "Reassess approach". **CoachInbox**: "Check in" → "Follow up now", "Review blocker" → "Resolve blocker".
+- **NeedsAttentionCard**: "Needs Review" → "Reassess Approach", "Log Check-In" → "Follow Up Now".
+- 100% test pass (iteration 278).
 - **PipelineHero.js**: School name enlarged (18px/700) for prominence, action title reduced (16px/500) for hierarchy. Stage tracker given visual weight — "Pipeline stage" label, tinted background, larger dots. Signal bullet spacing increased (6px). CTA spacing tightened (mt-3.5).
 - **PriorityBoard.js**: Section headers strengthened (14px/700), count shown in pill badges. Card hover states added (stronger shadow + border-color). On Track green boosted (#357a4d). Section gap increased (32px). All purely visual — no logic changes. 100% test pass (iteration 277).
 
