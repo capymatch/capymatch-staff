@@ -622,6 +622,7 @@ async def get_program(program_id: str, current_user: dict = get_current_user_dep
 @router.get("/athlete/programs/{program_id}/journey")
 async def get_program_journey(program_id: str, current_user: dict = get_current_user_dep()):
     """Get timeline of all interactions with a program, formatted for conversation view."""
+    import asyncio
     tenant_id = await get_athlete_tenant(current_user)
     program = await db.programs.find_one(
         {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
@@ -629,9 +630,20 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
     if not program:
         raise HTTPException(404, "Program not found")
 
-    interactions = await db.interactions.find(
+    # Parallel fetch: interactions, events, athlete doc (for notes lookup)
+    interactions_fut = db.interactions.find(
         {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
     ).sort("date_time", -1).to_list(200)
+
+    events_fut = db.athlete_events.find(
+        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
+    ).to_list(100)
+
+    athlete_fut = db.athletes.find_one({"tenant_id": tenant_id}, {"_id": 0, "id": 1})
+
+    interactions, events, athlete_doc = await asyncio.gather(
+        interactions_fut, events_fut, athlete_fut
+    )
 
     timeline = []
     for ix in interactions:
@@ -680,10 +692,6 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
             "created_by_name": ix.get("created_by_name") if is_coach_flag else "",
         })
 
-    # Also include linked events
-    events = await db.athlete_events.find(
-        {"tenant_id": tenant_id, "program_id": program_id}, {"_id": 0}
-    ).to_list(100)
     for e in events:
         etype = e.get("event_type", "").lower()
         event_type = "camp"
@@ -704,8 +712,7 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
             "coach_name": "",
         })
 
-    # Include event signals (coach notes from live events)
-    athlete_doc = await db.athletes.find_one({"tenant_id": tenant_id}, {"_id": 0, "id": 1})
+    # Fetch event signal notes in parallel with timeline construction (already have athlete_doc)
     athlete_id_for_notes = (athlete_doc or {}).get("id", "")
     if athlete_id_for_notes:
         signal_notes = await db.athlete_notes.find(
@@ -728,9 +735,6 @@ async def get_program_journey(program_id: str, current_user: dict = get_current_
             })
 
     # Sort by date descending
-    timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
-
-    # Re-sort after adding events
     timeline.sort(key=lambda x: x.get("date") or "", reverse=True)
 
     # Enrich timeline with per-message engagement tracking

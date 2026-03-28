@@ -191,6 +191,20 @@ async def run_startup(db):
 
     log.info("MongoDB indexes ensured on all core collections")
 
+    # Performance indexes for Pipeline & Journey page queries
+    await db.interactions.create_index([("tenant_id", 1), ("program_id", 1), ("date_time", -1)])
+    await db.programs.create_index([("tenant_id", 1), ("is_active", 1)])
+    await db.program_metrics.create_index([("tenant_id", 1), ("program_id", 1)])
+    await db.coach_flags.create_index([("tenant_id", 1), ("program_id", 1), ("status", 1)])
+    await db.pod_actions.create_index([("program_id", 1), ("athlete_id", 1), ("status", 1)])
+    await db.director_actions.create_index([("athlete_id", 1), ("status", 1)])
+    await db.engagement_events.create_index([("tenant_id", 1), ("program_id", 1)])
+    await db.athlete_events.create_index([("tenant_id", 1), ("program_id", 1)])
+    await db.athlete_notes.create_index([("athlete_id", 1), ("program_id", 1), ("tag", 1)])
+    await db.email_tracking.create_index("message_id")
+
+    log.info("Performance indexes ensured for Pipeline & Journey")
+
     # Knowledge Base indexes
     kb_count = await db.university_knowledge_base.count_documents({})
     if kb_count > 0:

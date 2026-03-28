@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Loader2, AlertTriangle, Archive, ChevronRight, RotateCcw, ArrowLeft } from "lucide-react";
@@ -167,33 +167,70 @@ export default function PipelinePage() {
     }, 140);
   }, [viewMode, viewPhase]);
 
-  /* ── Loading state ── */
+  /* ── Derived data (memoized — must be before any early returns for hook order) ── */
+  const { archivedPrograms, activePrograms, committedPrograms, allAttention, attentionMap, heroItem } = useMemo(() => {
+    const archived = allPrograms.filter(p => p.board_group === "archived");
+    const active = allPrograms.filter(p => p.board_group !== "archived");
+    const committed = allPrograms.filter(p => p.recruiting_status === "Committed" || p.pipeline_stage === "committed");
+    const attention = allPrograms
+      .filter(p => p.attention && p.is_active !== false)
+      .map(p => ({ ...p.attention, programId: p.program_id, universityName: p.university_name, program: p }))
+      .sort((a, b) => (b.attentionScore || 0) - (a.attentionScore || 0));
+    const aMap = {};
+    attention.forEach(a => { aMap[a.programId] = a; });
+    return { archivedPrograms: archived, activePrograms: active, committedPrograms: committed, allAttention: attention, attentionMap: aMap, heroItem: attention[0] || null };
+  }, [allPrograms]);
+
+  /* ── Loading state — skeleton instead of spinner ── */
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24" data-testid="board-loading">
-        <div className="flex flex-col items-center gap-3"><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#999" }} /><span className="text-sm" style={{ color: "#999" }}>Loading your board...</span></div>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-0 sm:px-1" data-testid="board-loading">
+        <PipelineStyles />
+        {/* Header skeleton */}
+        <div className="-mx-[200px] -mt-4 sm:-mt-6 mb-5 sm:mb-8 bg-white" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", paddingLeft: 200, paddingRight: 200 }}>
+          <div className="py-3 sm:py-4 flex items-center gap-3">
+            <div className="h-8 w-48 rounded-lg" style={{ background: "rgba(0,0,0,0.04)" }} />
+            <div className="ml-auto flex gap-2">
+              <div className="h-8 w-20 rounded-lg" style={{ background: "rgba(0,0,0,0.04)" }} />
+              <div className="h-8 w-20 rounded-lg" style={{ background: "rgba(0,0,0,0.04)" }} />
+            </div>
+          </div>
+        </div>
+        {/* Hero skeleton */}
+        <div className="rounded-2xl mb-6" style={{ background: "#1a1a1e", padding: "28px 28px", animation: "pulse 1.5s ease-in-out infinite" }}>
+          <div className="h-3 w-20 rounded mb-4" style={{ background: "rgba(255,255,255,0.06)" }} />
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div className="h-5 w-40 rounded" style={{ background: "rgba(255,255,255,0.06)" }} />
+          </div>
+          <div className="h-4 w-52 rounded mb-2" style={{ background: "rgba(255,255,255,0.04)" }} />
+          <div className="h-3 w-72 rounded mb-1" style={{ background: "rgba(255,255,255,0.03)" }} />
+          <div className="h-3 w-56 rounded mb-6" style={{ background: "rgba(255,255,255,0.03)" }} />
+          <div className="h-10 w-36 rounded-xl" style={{ background: "rgba(255,90,31,0.15)" }} />
+        </div>
+        {/* Cards skeleton */}
+        <div className="h-4 w-40 rounded mb-3" style={{ background: "rgba(0,0,0,0.05)" }} />
+        <div className="flex flex-col gap-3">
+          {[1,2,3].map(i => (
+            <div key={i} className="rounded-2xl" style={{ background: "#faf8f4", padding: "20px 22px", border: "1px solid rgba(0,0,0,0.04)", animation: `pulse 1.5s ease-in-out ${i * 0.15}s infinite` }}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-lg" style={{ background: "rgba(0,0,0,0.04)" }} />
+                <div>
+                  <div className="h-4 w-40 rounded mb-1" style={{ background: "rgba(0,0,0,0.05)" }} />
+                  <div className="h-3 w-56 rounded" style={{ background: "rgba(0,0,0,0.03)" }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <style>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }`}</style>
       </div>
     );
   }
 
-  /* ── Derived data ── */
-  const archivedPrograms = allPrograms.filter(p => p.board_group === "archived");
-  const activePrograms = allPrograms.filter(p => p.board_group !== "archived");
-  const committedPrograms = allPrograms.filter(p => p.recruiting_status === "Committed" || p.pipeline_stage === "committed");
-
   if (activePrograms.length === 0 && archivedPrograms.length === 0) {
     return <div style={{ maxWidth: 1120, margin: "0 auto" }}><PipelineStyles /><OnboardingEmptyBoard onSchoolAdded={fetchAll} /></div>;
   }
-
-  // ── Attention data comes from backend (SSOT) — no client-side recomputation ──
-  const allAttention = allPrograms
-    .filter(p => p.attention && p.is_active !== false)
-    .map(p => ({ ...p.attention, programId: p.program_id, universityName: p.university_name, program: p }))
-    .sort((a, b) => (b.attentionScore || 0) - (a.attentionScore || 0));
-  const attentionMap = {};
-  allAttention.forEach(a => { attentionMap[a.programId] = a; });
-  // Single hero = highest priority item (first in sorted attention list)
-  const heroItem = allAttention.length > 0 ? allAttention[0] : null;
 
   const usage = getUsage(subscription, "schools");
   const schoolPct = usage.limit > 0 && !usage.unlimited ? usage.used / usage.limit : 0;

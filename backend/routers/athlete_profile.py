@@ -188,9 +188,12 @@ async def _get_athlete(current_user: dict) -> dict:
 # ── Profile CRUD ───────────────────────────────────────────────────────
 
 @router.get("/athlete/profile")
-async def get_profile(current_user: dict = get_current_user_dep()):
+async def get_profile(current_user: dict = get_current_user_dep(), lite: bool = False):
     athlete = await _get_athlete(current_user)
-    return _athlete_to_profile(athlete)
+    profile = _athlete_to_profile(athlete)
+    if lite:
+        profile.pop("photo_url", None)
+    return profile
 
 
 @router.put("/athlete/profile")

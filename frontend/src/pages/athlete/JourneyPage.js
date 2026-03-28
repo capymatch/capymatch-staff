@@ -239,18 +239,15 @@ export default function JourneyPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [pRes, jRes, msRes, engRes, gmailRes, profRes] = await Promise.allSettled([
+      // Phase 1: Critical data (hero + timeline) — renders first paint
+      const [pRes, jRes, msRes] = await Promise.allSettled([
         axios.get(`${API}/athlete/programs/${programId}`),
         axios.get(`${API}/athlete/programs/${programId}/journey`),
         axios.get(`${API}/match-scores`),
-        axios.get(`${API}/athlete/engagement/${programId}`),
-        axios.get(`${API}/athlete/gmail/status`),
-        axios.get(`${API}/athlete/profile`),
       ]);
       if (pRes.status !== "fulfilled") throw new Error("Failed to load program");
       setProgram(pRes.value.data);
       if (jRes.status === "fulfilled") setTimeline(jRes.value.data.timeline || []);
-      if (profRes.status === "fulfilled") setProfileData(profRes.value.data);
 
       // Match score lookup
       if (msRes.status === "fulfilled") {
@@ -261,38 +258,40 @@ export default function JourneyPage() {
           setRiskBadges(found.risk_badges || []);
         }
       }
-
-      // Engagement data
-      if (engRes.status === "fulfilled") setEngagement(engRes.value.data);
-
-      // Gmail connection status
-      setGmailConnected(gmailRes.status === "fulfilled" && gmailRes.value.data?.connected === true);
-
-      // Coach Watch — new relationship state engine
-      axios.get(`${API}/coach-watch/${programId}`)
-        .then(r => setCoachWatch(r.data))
-        .catch(() => {});
-
-      // Coaching Stability — head coach job stability
-      axios.get(`${API}/coaching-stability/${programId}`)
-        .then(r => setCoachingStability(r.data?.stability || null))
-        .catch(() => {});
-
-      // Fetch coach flags for this program
-      axios.get(`${API}/athlete/flags`)
-        .then(r => {
-          const flags = (r.data?.flags || []).filter(f => f.program_id === programId);
-          setCoachFlags(flags);
-        })
-        .catch(() => {});
-
-      // Fetch coach-assigned actions for this school
-      axios.get(`${API}/athletes/me/school/${programId}/assigned-actions`)
-        .then(r => setAssignedActions(r.data?.actions || []))
-        .catch(() => {});
     } catch (e) {
       toast.error("Failed to load program");
     } finally { setLoading(false); }
+
+    // Phase 2: Secondary data (non-blocking, after first paint)
+    Promise.allSettled([
+      axios.get(`${API}/athlete/engagement/${programId}`),
+      axios.get(`${API}/athlete/gmail/status`),
+      axios.get(`${API}/athlete/profile?lite=true`),
+    ]).then(([engRes, gmailRes, profRes]) => {
+      if (engRes.status === "fulfilled") setEngagement(engRes.value.data);
+      setGmailConnected(gmailRes.status === "fulfilled" && gmailRes.value.data?.connected === true);
+      if (profRes.status === "fulfilled") setProfileData(profRes.value.data);
+    });
+
+    // Phase 3: Background data (deferred)
+    axios.get(`${API}/coach-watch/${programId}`)
+      .then(r => setCoachWatch(r.data))
+      .catch(() => {});
+
+    axios.get(`${API}/coaching-stability/${programId}`)
+      .then(r => setCoachingStability(r.data?.stability || null))
+      .catch(() => {});
+
+    axios.get(`${API}/athlete/flags`)
+      .then(r => {
+        const flags = (r.data?.flags || []).filter(f => f.program_id === programId);
+        setCoachFlags(flags);
+      })
+      .catch(() => {});
+
+    axios.get(`${API}/athletes/me/school/${programId}/assigned-actions`)
+      .then(r => setAssignedActions(r.data?.actions || []))
+      .catch(() => {});
   }, [programId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -448,8 +447,43 @@ export default function JourneyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
-        <div className="w-8 h-8 border-2 border-teal-700 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen" style={{ backgroundColor: "var(--cm-bg)" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "24px 20px" }}>
+          {/* Back button skeleton */}
+          <div className="mb-4">
+            <div className="h-5 w-20 rounded" style={{ background: "rgba(0,0,0,0.05)" }} />
+          </div>
+          {/* Hero skeleton */}
+          <div className="rounded-2xl mb-5" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.06)", padding: "28px 28px", animation: "j-pulse 1.5s ease-in-out infinite" }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg" style={{ background: "rgba(0,0,0,0.05)" }} />
+              <div>
+                <div className="h-5 w-48 rounded mb-1" style={{ background: "rgba(0,0,0,0.06)" }} />
+                <div className="h-3 w-32 rounded" style={{ background: "rgba(0,0,0,0.03)" }} />
+              </div>
+            </div>
+            <div className="h-4 w-56 rounded mb-2" style={{ background: "rgba(0,0,0,0.04)" }} />
+            <div className="h-3 w-72 rounded mb-1" style={{ background: "rgba(0,0,0,0.03)" }} />
+            <div className="h-3 w-44 rounded" style={{ background: "rgba(0,0,0,0.03)" }} />
+          </div>
+          {/* Stage rail skeleton */}
+          <div className="flex gap-3 mb-5">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="h-7 w-20 rounded-full" style={{ background: "rgba(0,0,0,0.03)" }} />
+            ))}
+          </div>
+          {/* Timeline skeleton */}
+          <div className="flex flex-col gap-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="rounded-xl" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.04)", padding: "16px 18px", animation: `j-pulse 1.5s ease-in-out ${i * 0.2}s infinite` }}>
+                <div className="h-3 w-20 rounded mb-2" style={{ background: "rgba(0,0,0,0.04)" }} />
+                <div className="h-4 w-64 rounded mb-1" style={{ background: "rgba(0,0,0,0.05)" }} />
+                <div className="h-3 w-44 rounded" style={{ background: "rgba(0,0,0,0.03)" }} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <style>{`@keyframes j-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }`}</style>
       </div>
     );
   }
