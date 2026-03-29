@@ -270,7 +270,7 @@ export default function CoachView({ data, userName }) {
                   style={{ color: "#ef4444", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}
                   data-testid="hero-top-priority-cta"
                 >
-                  Review blocker <ChevronRight className="w-3 h-3" />
+                  Fix overdue <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
             );

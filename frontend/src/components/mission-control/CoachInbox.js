@@ -162,20 +162,23 @@ function CoachTopPriority({ item }) {
             {compressed}
           </p>
 
-          {/* School bullets — neutral gray, never red */}
+          {/* School bullets — neutral gray, max 3 + overflow */}
           {schoolNames.length > 0 && (
             <div className="mt-2 flex flex-col gap-0.5" data-testid="coach-school-list">
-              {schoolNames.slice(0, 5).map((name, i) => (
+              {schoolNames.slice(0, 3).map((name, i) => (
                 <p key={i} className="text-[11px] flex items-center gap-1.5" style={{ color: "#64748b" }}>
                   <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#cbd5e1" }} />
                   {name}
                 </p>
               ))}
+              {schoolNames.length > 3 && (
+                <p className="text-[10px] pl-2.5" style={{ color: "#94a3b8" }}>+{schoolNames.length - 3} more</p>
+              )}
             </div>
           )}
 
-          {/* CTA — full-width solid button for critical card */}
-          <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${isCritical ? "rgba(254,202,202,0.4)" : "rgba(254,240,138,0.4)"}` }}>
+          {/* CTA — full-width solid button, tighter spacing */}
+          <div className="mt-2.5 pt-2" style={{ borderTop: `1px solid ${isCritical ? "rgba(254,202,202,0.4)" : "rgba(254,240,138,0.4)"}` }}>
             <button onClick={handleCta}
               className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-[12px] font-bold cursor-pointer text-white transition-opacity hover:opacity-90"
               style={{ background: ctaColor, border: "none", fontFamily: "inherit" }}
@@ -236,14 +239,19 @@ function UpNextRow({ item, onDismiss }) {
               {context && <span style={{ color: "#78716c" }}>{context} · </span>}
               {compressed}
             </p>
-            {/* School names inline — neutral gray, no red */}
+            {/* School bullets — consistent with top card */}
             {schoolNames.length > 1 && (
-              <p className="text-[10px] mt-0.5" style={{ color: "#94a3b8" }}>
-                {schoolNames.slice(0, 3).map((n, i) => (
-                  <span key={i}>{i > 0 ? " · " : ""}{n}</span>
+              <div className="mt-1 flex flex-col gap-0" data-testid={`school-list-${item.id}`}>
+                {schoolNames.slice(0, 3).map((name, i) => (
+                  <p key={i} className="text-[10px] flex items-center gap-1.5" style={{ color: "#94a3b8" }}>
+                    <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#cbd5e1" }} />
+                    {name}
+                  </p>
                 ))}
-                {schoolNames.length > 3 && <span> +{schoolNames.length - 3}</span>}
-              </p>
+                {schoolNames.length > 3 && (
+                  <p className="text-[10px] pl-2.5" style={{ color: "#b0b4bc" }}>+{schoolNames.length - 3} more</p>
+                )}
+              </div>
             )}
           </div>
 

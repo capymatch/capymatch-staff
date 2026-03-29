@@ -104,21 +104,24 @@ export function TopPriorityCard({ item, onActionComplete }) {
           {compressed}
         </p>
 
-        {/* School list — neutral gray bullets, never red */}
+        {/* School list — neutral gray bullets, max 3 + overflow */}
         {schoolNames.length > 0 && (
-          <div className="mt-2.5 flex flex-col gap-0.5" data-testid="school-breakdown">
-            {schoolNames.slice(0, 5).map((name, i) => (
+          <div className="mt-2 flex flex-col gap-0.5" data-testid="school-breakdown">
+            {schoolNames.slice(0, 3).map((name, i) => (
               <p key={i} className="text-[11px] flex items-center gap-1.5" style={{ color: textSecondary }}>
                 <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#64748b" }} />
                 {name}
               </p>
             ))}
+            {schoolNames.length > 3 && (
+              <p className="text-[10px] pl-2.5" style={{ color: textMuted }}>+{schoolNames.length - 3} more</p>
+            )}
           </div>
         )}
 
-        {/* Action buttons — full-width solid button */}
+        {/* Action buttons — tighter spacing */}
         {nudge && (
-          <div className="mt-4 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="mt-2.5 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <div className="flex items-center gap-2.5">
               {canAutoExecute && (
                 <button onClick={handleApprove}

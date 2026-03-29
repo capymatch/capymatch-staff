@@ -89,7 +89,7 @@ function OutboxStrip({ summary }) {
           {parts.join(" · ")}
         </p>
         <span className="text-[11px] font-semibold flex items-center gap-0.5" style={{ color: "#64748b" }}>
-          {expanded ? "Hide" : "View details"}
+          {expanded ? "Hide" : "Show details"}
           <ChevronRight className="w-3 h-3 transition-transform duration-150" style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)" }} />
         </span>
       </div>

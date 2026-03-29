@@ -31,7 +31,7 @@ function getShortAction(attn) {
   const cta = attn.ctaLabel || "";
   if (/review flag/i.test(cta)) return "Reassess approach";
   if (/review action/i.test(cta) || /review/i.test(cta) || /check/i.test(cta) || /look/i.test(cta)) return "Follow up now";
-  return cta || "View details";
+  return cta || "Take action";
 }
 
 /* ── Time line from attention data ── */

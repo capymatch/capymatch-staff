@@ -62,12 +62,19 @@ export function InboxRow({ item }) {
             {context && <span style={{ color: "#78716c" }}>{context} · </span>}
             {compressed}
           </p>
-          {/* School names (neutral gray) */}
+          {/* School bullets — consistent with top card */}
           {schoolNames.length > 1 && (
-            <p className="text-[10px]" style={{ color: "#94a3b8", margin: "2px 0 0" }}>
-              {schoolNames.slice(0, 3).join(" · ")}
-              {schoolNames.length > 3 && ` +${schoolNames.length - 3}`}
-            </p>
+            <div className="flex flex-col gap-0" style={{ marginTop: 2 }}>
+              {schoolNames.slice(0, 3).map((name, i) => (
+                <p key={i} className="text-[10px] flex items-center gap-1.5" style={{ color: "#94a3b8" }}>
+                  <span className="w-1 h-1 rounded-full shrink-0" style={{ background: "#cbd5e1" }} />
+                  {name}
+                </p>
+              ))}
+              {schoolNames.length > 3 && (
+                <p className="text-[10px] pl-2.5" style={{ color: "#b0b4bc" }}>+{schoolNames.length - 3} more</p>
+              )}
+            </div>
           )}
           {/* Suggested action — subtle text link */}
           {showSuggestedAction && nudge && (

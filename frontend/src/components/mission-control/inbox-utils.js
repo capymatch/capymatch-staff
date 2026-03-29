@@ -186,18 +186,31 @@ export function getPrimaryHeadline(item) {
 }
 
 /**
- * Secondary context: "Across {Y} schools" — only shown when Y > 1 and differs from headline count.
+ * Secondary context — contextual, meaningful label (max 5 words).
+ * Uses issue/risk data to describe WHY these schools matter.
  */
 export function getSecondaryContext(item) {
   const deduped = _getDeduped(item);
-  if (deduped.length > 1) return `Across ${deduped.length} schools`;
-  if (deduped.length === 1) return deduped[0].school;
-  if (item.schoolName) return item.schoolName;
-  return "";
+  const issues = item.issues || [];
+  const count = deduped.length;
+
+  if (count <= 1) {
+    return deduped[0]?.school || item.schoolName || "";
+  }
+
+  // Pick contextual descriptor based on dominant signal
+  if (issues.includes("Overdue follow-up"))   return `Across ${count} at-risk schools`;
+  if (issues.includes("No activity"))         return `Across ${count} stalled schools`;
+  if (issues.includes("Awaiting reply"))      return `Across ${count} pending conversations`;
+  if (issues.includes("Missing requirement")) return `Across ${count} blocked schools`;
+  if (issues.includes("Escalated issue"))     return `Across ${count} flagged schools`;
+  return `Across ${count} active schools`;
 }
 
 /**
- * Compressed single-line: "↘ Worsening · Momentum dropping"
+ * Compressed single-line with signal-specific language.
+ * Format: "↘ Worsening · [specific reason]"
+ * Falls back to generic only when no better signal exists.
  */
 export function getCompressedLine(item) {
   const issues = item.issues || [];
@@ -205,25 +218,27 @@ export function getCompressedLine(item) {
   const traj = TRAJECTORY[item.trajectory];
   const showTraj = item.trajectory && item.trajectory !== "stable" && traj;
 
+  // Pick the most specific reason available
   let reason = "";
-  if (has("Overdue follow-up") && has("No activity")) reason = "Momentum dropping";
-  else if (has("Overdue follow-up")) reason = "Relationships cooling";
-  else if (has("No activity") && has("No coach assigned")) reason = "No coach, drifting";
-  else if (has("Escalated issue") && has("No activity")) reason = "Flagged, needs re-engagement";
-  else if (has("Missing requirement")) reason = "Blocking progress";
-  else if (has("Awaiting reply")) reason = "Waiting for response";
-  else if (has("No coach assigned")) reason = "Unmanaged";
-  else if (has("No activity")) reason = "Check in needed";
-  else if (has("Escalated issue")) reason = "Flagged for review";
-  else reason = "Review recommended";
+  if (has("Overdue follow-up") && has("No activity"))            reason = "Follow-ups missed";
+  else if (has("Overdue follow-up") && has("Awaiting reply"))    reason = "No recent replies";
+  else if (has("Overdue follow-up"))                             reason = "Follow-ups past due";
+  else if (has("Awaiting reply") && has("No activity"))          reason = "No recent replies";
+  else if (has("No activity") && has("No coach assigned"))       reason = "No coach, no activity";
+  else if (has("Escalated issue") && has("No activity"))         reason = "Flagged, still inactive";
+  else if (has("Missing requirement"))                           reason = "Requirement blocking progress";
+  else if (has("Awaiting reply"))                                reason = "Waiting on reply";
+  else if (has("No coach assigned"))                             reason = "Needs coach assignment";
+  else if (has("No activity"))                                   reason = "No recent activity";
+  else if (has("Escalated issue"))                               reason = "Escalation pending";
+  else                                                           reason = "Needs review";
 
   if (showTraj) return `${traj.symbol} ${traj.label} · ${reason}`;
   return reason;
 }
 
 /**
- * Contextual CTA label — count always matches headline.
- * "Send follow-ups ({N})" where N = overdue actions count.
+ * Contextual CTA — action-first, decisive, max 3 words + count.
  */
 export function getContextualCta(item) {
   const issues = item.issues || [];
@@ -231,14 +246,14 @@ export function getContextualCta(item) {
   const overdueCount = deduped.filter(s => s.hasOverdue).length;
 
   if (issues.includes("Overdue follow-up") && overdueCount > 0) {
-    return `Send follow-ups (${overdueCount})`;
+    return `Fix overdue (${overdueCount})`;
   }
   if (issues.includes("No coach assigned")) return "Assign coach";
-  if (issues.includes("Missing requirement")) return "Complete requirement";
+  if (issues.includes("Missing requirement")) return "Fix requirement";
   if (issues.includes("Awaiting reply")) return "Send follow-up";
-  if (issues.includes("No activity")) return "Check in";
-  if (issues.includes("Escalated issue")) return "Review escalation";
-  if (deduped.length > 1) return "Review schools";
+  if (issues.includes("Escalated issue")) return "Resolve escalation";
+  if (issues.includes("No activity")) return "Re-engage now";
+  if (deduped.length > 1) return "Check schools";
   return "Open pod";
 }
 
