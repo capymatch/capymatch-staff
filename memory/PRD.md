@@ -39,6 +39,16 @@ CapyMatch is a production full-stack athlete management platform connecting athl
 - Mobile layout fix for Journey page
 - Canonical urgency SSOT: `compute_urgency_class` in `stage_engine.py`
 
+### UI/UX Refinement v2: Count Consistency, Dedup, CTA, Hierarchy (March 29, 2026)
+- **Count Mismatch (CRITICAL)**: Fixed using Option A — "{X} overdue actions" headline with "Send follow-ups ({X})" CTA using identical deduped count. No mismatches anywhere.
+- **School Dedup**: Added `dedupeSchools()` normalizer that merges "Clemson"/"Clemson University" into one entry (keeps longer official name)
+- **CTA Consistency**: Critical card = full-width solid red button; Secondary cards = right-aligned subtle text+arrow. Removed "Resolve blocker" and "View details"
+- **Color Reduction**: Red reserved for overdue counts, CRITICAL/BLOCKER labels, CTA buttons only. Bullet dots and school names use neutral gray
+- **Text Compression**: Merged trend+explanation into single line: "↘ Worsening · Momentum dropping"
+- **Target School Hierarchy**: Name → "1 overdue" (PRIMARY, bold red) → "At Risk · In Conversation · 9d ago" (SECONDARY, muted)
+- **Attention CTA**: "Review overdue actions" replaces passive "View Details"
+- **Status**: VERIFIED — 100% frontend test pass (14/14 features, iteration_283)
+
 ### UI/UX Refinement: Mission Control, Target Schools, Attention Section (March 29, 2026)
 - **Mission Control Cards**: New strict hierarchy — Name > "{N} schools overdue" headline > Trend > Short explanation (max 8 words, no dashes) > School bullet list > Contextual CTA ("Send follow-ups (3)"). Removed "Across X schools", verbose paragraphs, "Resolve blocker"
 - **Target School Cards**: School Name — Status inline, Stage · activity below, overdue badge dominant on right. Removed duplicate "need attention" badge from header
