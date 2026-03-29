@@ -46,6 +46,7 @@ const COACH_CTA_CONFIG = {
   "Resolve blocker": { icon: FileText, color: "#b45309", bg: "#b45309" },
   "Follow up now":   { icon: Send, color: "#0d9488", bg: "#0d9488" },
   "Reassess approach": { icon: FileText, color: "#3b82f6", bg: "#3b82f6" },
+  "Act now":         { icon: AlertTriangle, color: "#dc2626", bg: "#dc2626" },
 };
 
 /* ═══════════════════════════════════════════════ */
@@ -236,6 +237,7 @@ const SIGNAL_CTA = {
   "Missing requirement": { label: "Resolve blocker",   color: "#b45309" },
   "No coach assigned":   { label: "Assign coach",      color: "#b45309" },
   "Stalled stage":       { label: "Reassess approach", color: "#3b82f6" },
+  "Overdue follow-up":   { label: "Act now",           color: "#dc2626" },
 };
 
 const INTERVENTION_CTA = {
@@ -338,6 +340,17 @@ function UpNextRow({ item, onDismiss }) {
             {/* WHY: whyNow explanation */}
             {whyNow && (
               <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8", lineHeight: 1.4 }} data-testid={`why-now-${item.id}`}>{whyNow}</p>
+            )}
+            {/* School-level issues */}
+            {(item.schoolIssues || []).length > 1 && (
+              <p className="text-[10px] mt-1 flex flex-wrap gap-x-1.5 gap-y-0.5" data-testid={`school-issues-${item.id}`}>
+                {item.schoolIssues.map((si, i) => (
+                  <span key={i} className="inline-flex items-center gap-0.5" style={{ color: "#ef4444" }}>
+                    <span className="w-1 h-1 rounded-full inline-block" style={{ background: "#ef4444" }} />
+                    {si.school}
+                  </span>
+                ))}
+              </p>
             )}
             {/* Hover: secondary risks */}
             {hovered && secondary.length > 0 && (

@@ -29,10 +29,11 @@ ISSUE_LABELS = {
     "no_coach_assigned": "No coach assigned",
     "stalled_stage":     "Stalled stage",
     "event_blocker":     "Event/timeline blocker",
+    "overdue_followup":  "Overdue follow-up",
 }
 
 # Priority classification
-HIGH_ISSUES = {"escalation", "missing_documents", "no_coach_assigned"}
+HIGH_ISSUES = {"escalation", "missing_documents", "no_coach_assigned", "overdue_followup"}
 MEDIUM_ISSUES = {"awaiting_reply", "follow_up", "no_activity"}
 
 # CTA priority: primary CTAs get stronger visual treatment
@@ -198,6 +199,32 @@ async def get_director_inbox(
                 "ctaUrl": f"/support-pods/{ath['id']}",
             })
 
+    # ── 5. SCHOOL-LEVEL OVERDUE FOLLOW-UPS ──
+    overdue_programs = await db.programs.find(
+        {
+            "next_action_due": {"$lt": now.isoformat(), "$ne": "", "$exists": True},
+        },
+        {"_id": 0, "athlete_id": 1, "university_name": 1, "next_action_due": 1, "program_id": 1},
+    ).to_list(500)
+
+    athlete_name_map = {a["id"]: a.get("full_name", a.get("name", "Unknown")) for a in athletes}
+    for prog in overdue_programs:
+        aid = prog.get("athlete_id", "")
+        if not aid:
+            continue
+        school = prog.get("university_name", "")
+        due_ts = _iso_or_none(prog.get("next_action_due"))
+        raw_items.append({
+            "athleteId": aid,
+            "athleteName": athlete_name_map.get(aid, "Unknown"),
+            "schoolName": school,
+            "issueKey": "overdue_followup",
+            "timestamp": due_ts or now,
+            "source": "programs",
+            "ctaLabel": "Open Pod",
+            "ctaUrl": f"/support-pods/{aid}",
+        })
+
     # ── Fetch recent autopilot actions (for trajectory inference) ──
     seven_days_ago = (now - __import__("datetime").timedelta(days=7)).isoformat()
     recent_autopilot = await db.autopilot_log.find(
@@ -244,7 +271,7 @@ async def get_director_inbox(
 
     # ── AGGREGATE by athlete (one row per athlete) ──
     ISSUE_SEVERITY = {"escalation": 6, "missing_documents": 5, "no_coach_assigned": 5,
-                      "awaiting_reply": 3, "no_activity": 3, "follow_up": 2}
+                      "overdue_followup": 4, "awaiting_reply": 3, "no_activity": 3, "follow_up": 2}
 
     athlete_groups = {}
     for item in raw_items:

@@ -1,0 +1,117 @@
+{
+  "summary": "Overdue Follow-up Inbox Fix Testing - All features verified. The fix adds school-level overdue follow-up detection (Section 5) to both coach and director inbox endpoints. Sophia Garcia (athlete_10) now correctly shows: (1) 'Overdue follow-up' signal in riskSignals, (2) severity=critical with riskScore=100, (3) schoolCount=3 with all 3 schools (Arizona State, U of Arizona, San Diego State) in schoolIssues/schoolBreakdown, (4) whyNow mentions 'Overdue school follow-ups compounded by overall inactivity'. Both Coach and Director UI correctly display the overdue follow-up signals with school names.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_overdue_followup_inbox.py",
+    "/app/test_reports/pytest/pytest_overdue_followup_inbox.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "coach_inbox.py: Section 5 (lines 167-191) - correctly queries programs with overdue next_action_due dates and creates 'overdue_followup' issue entries with school names - VERIFIED",
+    "director_inbox.py: Section 5 (lines 202-226) - correctly queries programs with overdue next_action_due dates and creates 'overdue_followup' issue entries with school names - VERIFIED",
+    "risk_engine.py: SIGNAL_BASE_SCORE includes overdue_followup=55, COMPOUND_RULES includes overdue_followup+no_activity=1.45 multiplier - VERIFIED",
+    "risk_engine.py: SIGNAL_LABELS, CONFIDENCE_MAP, ROLE_ACTIONS all include overdue_followup entries - VERIFIED",
+    "CoachInbox.js: SIGNAL_CTA includes 'Overdue follow-up' with 'Act now' label and red color - VERIFIED",
+    "TopPriorityCard.js: schoolBreakdown display shows 'Also affected' section with school-issue pairs - VERIFIED"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_overdue_followup_inbox.py"
+  ],
+  "success_rate": {
+    "backend": "100% - 19/19 tests passed",
+    "frontend": "100% - All UI features verified via Playwright"
+  },
+  "test_credentials": {
+    "coach": "coach.williams@capymatch.com / coach123",
+    "director": "director@capymatch.com / director123"
+  },
+  "seed_data_creation": "None - used existing seed data (Sophia Garcia athlete_10 has 3 programs with overdue next_action_due dates)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Overdue follow-up inbox fix verified. Key changes: (1) Both coach_inbox.py and director_inbox.py now have Section 5 that queries programs collection for overdue next_action_due dates, (2) Creates 'overdue_followup' issue entries with school names, (3) Risk engine scores overdue_followup+no_activity compound at 1.45x multiplier, (4) Sophia Garcia (athlete_10) correctly shows critical severity with 3 schools. Coach view shows school issues in 'Up Next' rows, Director view shows schoolBreakdown in TopPriorityCard 'Also affected' section.",
+  "features_tested": {
+    "coach_inbox_overdue_followup": {
+      "status": "PASS",
+      "details": "Coach inbox returns overdue_followup signals with school names for Sophia Garcia"
+    },
+    "director_inbox_overdue_followup": {
+      "status": "PASS",
+      "details": "Director inbox returns overdue_followup signals with school names for Sophia Garcia"
+    },
+    "sophia_severity_critical": {
+      "status": "PASS",
+      "details": "Sophia Garcia shows severity=critical (riskScore=100) in both coach and director inboxes"
+    },
+    "sophia_school_issues_3_schools": {
+      "status": "PASS",
+      "details": "Sophia Garcia shows schoolIssues with 3 schools (Arizona State, U of Arizona, San Diego State) in coach inbox"
+    },
+    "sophia_school_breakdown_3_schools": {
+      "status": "PASS",
+      "details": "Sophia Garcia shows schoolBreakdown with 3 schools in director inbox"
+    },
+    "coach_ui_overdue_signal": {
+      "status": "PASS",
+      "details": "Coach view UI shows Sophia's card with 'Overdue follow-up' signal, 'Across 3 schools', and all school names listed"
+    },
+    "director_ui_school_breakdown": {
+      "status": "PASS",
+      "details": "Director view TopPriorityCard shows 'Also affected' section with school breakdown and overdue follow-up signals"
+    },
+    "risk_engine_compound_scoring": {
+      "status": "PASS",
+      "details": "Risk engine properly scores overdue_followup + no_activity compound as elevated severity (riskScore=100, severity=critical)"
+    },
+    "no_regressions": {
+      "status": "PASS",
+      "details": "All existing inbox items still render correctly with required fields"
+    }
+  },
+  "api_verification": {
+    "coach_inbox": {
+      "url": "/api/coach-inbox",
+      "status": 200,
+      "sophia_data": {
+        "athleteId": "athlete_10",
+        "athleteName": "Sophia Garcia",
+        "severity": "critical",
+        "priority": "high",
+        "riskScore": 100,
+        "schoolCount": 3,
+        "issues": ["Overdue follow-up", "No activity"],
+        "riskSignals": ["Overdue follow-up", "No activity"],
+        "whyNow": "Overdue school follow-ups compounded by overall inactivity — relationships at risk",
+        "schoolIssues": [
+          {"school": "Arizona State University", "issue": "Overdue follow-up"},
+          {"school": "University of Arizona", "issue": "Overdue follow-up"},
+          {"school": "San Diego State University", "issue": "Overdue follow-up"}
+        ]
+      }
+    },
+    "director_inbox": {
+      "url": "/api/director-inbox",
+      "status": 200,
+      "sophia_data": {
+        "athleteId": "athlete_10",
+        "athleteName": "Sophia Garcia",
+        "severity": "critical",
+        "priority": "high",
+        "riskScore": 100,
+        "schoolCount": 3,
+        "schoolBreakdown": [
+          {"school": "Arizona State University", "issue": "Overdue follow-up"},
+          {"school": "University of Arizona", "issue": "Overdue follow-up"},
+          {"school": "San Diego State University", "issue": "Overdue follow-up"}
+        ]
+      }
+    }
+  }
+}

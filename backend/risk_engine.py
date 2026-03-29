@@ -24,6 +24,7 @@ SIGNAL_BASE_SCORE = {
     "escalation":        70,
     "missing_documents": 60,
     "no_coach_assigned": 55,
+    "overdue_followup":  55,
     "stalled_stage":     50,
     "event_blocker":     50,
     "awaiting_reply":    40,
@@ -58,6 +59,8 @@ COMPOUND_RULES = [
     ({"no_activity", "follow_up"},            1.20, "Overdue follow-up with no recent activity"),
     ({"missing_documents", "no_activity"},    1.25, "Missing docs and no momentum — progress likely blocked"),
     ({"stalled_stage", "no_activity"},        1.30, "Pipeline stalled with no engagement — relationship cooling"),
+    ({"overdue_followup", "no_activity"},     1.45, "Overdue school follow-ups compounded by overall inactivity — relationships at risk"),
+    ({"overdue_followup", "awaiting_reply"},  1.30, "Overdue follow-ups with pending replies — schools may lose interest"),
 ]
 
 # Severity bands
@@ -75,6 +78,7 @@ CONFIDENCE_MAP = {
     "escalation":        "high",
     "missing_documents": "high",
     "no_coach_assigned": "high",
+    "overdue_followup":  "high",
     "event_blocker":     "high",
     "stalled_stage":     "medium",
     "awaiting_reply":    "medium",
@@ -92,6 +96,7 @@ SIGNAL_LABELS = {
     "no_coach_assigned": "No coach assigned",
     "stalled_stage":     "Stalled stage",
     "event_blocker":     "Event/timeline blocker",
+    "overdue_followup":  "Overdue follow-up",
 }
 
 # Intervention mapping: (severity, trajectory) -> intervention type
@@ -132,11 +137,13 @@ def _role_actions(intervention_type, primary_signal, school_name=None):
             "no_coach_assigned": {"director": "Assign coach and review outreach plan", "coach": None, "family": "Reach out to program director"},
             "no_activity":       {"director": f"Escalate re-engagement{school_ctx}", "coach": f"Re-engage school{school_ctx}", "family": "Respond to coach request"},
             "awaiting_reply":    {"director": "Review stalled conversation", "coach": f"Re-engage{school_ctx}", "family": "Respond to pending message"},
+            "overdue_followup":  {"director": f"Review overdue school follow-ups{school_ctx}", "coach": f"Send overdue follow-ups{school_ctx}", "family": "Check in with coach about school outreach"},
             "_default":          {"director": "Review and escalate", "coach": "Take immediate action", "family": "Check in with your team"},
         },
         "review": {
             "missing_documents": {"director": f"Review requirement status{school_ctx}", "coach": f"Follow up on documents{school_ctx}", "family": "Check document status"},
             "stalled_stage":     {"director": f"Review stalled pipeline{school_ctx}", "coach": f"Assess next move{school_ctx}", "family": "Ask about recruiting status"},
+            "overdue_followup":  {"director": f"Review overdue follow-ups{school_ctx}", "coach": f"Prioritize overdue school contacts{school_ctx}", "family": "Ask about school communication status"},
             "_default":          {"director": "Review current status", "coach": "Provide status update", "family": "Check in with your coordinator"},
         },
         "nudge": {
@@ -221,6 +228,13 @@ def _why_now(primary_signal, secondary_signals, severity, trajectory, best_stage
 
     if primary_signal == "event_blocker":
         return f"Upcoming event requires prep to avoid a missed opportunity."
+
+    if primary_signal == "overdue_followup":
+        if "no_activity" in secondary_signals:
+            return f"Overdue school follow-ups compounded by inactivity — schools may lose interest."
+        if trajectory == "worsening":
+            return f"Overdue follow-ups and situation getting worse — act before schools disengage."
+        return f"School follow-ups are past due — delays risk cooling relationships."
 
     # Fallback
     if severity == "critical":
