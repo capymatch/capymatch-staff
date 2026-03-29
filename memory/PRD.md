@@ -39,7 +39,11 @@ CapyMatch is a production full-stack athlete management platform connecting athl
 - Mobile layout fix for Journey page
 - Canonical urgency SSOT: `compute_urgency_class` in `stage_engine.py`
 
-### Bug Fix: Coach/Director Inbox Overdue Mismatch (March 29, 2026)
+### Bug Fix: Support Pod "Overdue Actions" Count Mismatch (March 29, 2026)
+- **Problem**: Support Pod ATTENTION section showed "2 Overdue Actions" but TARGET SCHOOLS listed 3 schools each with "1 overdue" (Arizona State, U of Arizona, San Diego State)
+- **Root Cause**: `evaluate_issues()` in `pod_issues.py` only counted overdue **pod actions** (task items) but missed programs with overdue `next_action_due` dates that had no corresponding pod action (San Diego State had an overdue program follow-up but no pod action task)
+- **Fix**: Updated `evaluate_issues()` to also query programs with overdue `next_action_due` dates and merge them into the overdue count, deduplicating by `program_id` so pod actions aren't double-counted
+- **Status**: VERIFIED — ATTENTION now correctly shows "3 Overdue Actions" matching the 3 at-risk schools
 - **Problem**: Coach dashboard showed mild "Follow up now" for Sophia Garcia while Support Pod showed "BLOCKER - 2 Overdue Actions" with 3 at-risk schools
 - **Root Cause**: Coach Inbox and Director Inbox endpoints only checked 4 signal sources (escalations, advocacy, missing docs, inactivity) but missed school-level overdue follow-ups from programs collection
 - **Fix**: Added Section 5 to both `/api/coach-inbox` and `/api/director-inbox` — queries programs with overdue `next_action_due` dates and surfaces them as `overdue_followup` issue entries with school names

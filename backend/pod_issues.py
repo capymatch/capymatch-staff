@@ -212,14 +212,30 @@ async def evaluate_issues(athlete_id: str, athlete: dict, interventions: list, a
     # Active (non-completed) actions
     active_actions = [a for a in actions if a.get("status") not in ("completed", "cancelled", "escalated")]
     overdue = []
+    overdue_program_ids = set()
     for a in active_actions:
         if a.get("due_date"):
             try:
                 due = datetime.fromisoformat(a["due_date"].replace("Z", "+00:00"))
                 if due < now:
                     overdue.append(a)
+                    if a.get("program_id"):
+                        overdue_program_ids.add(a["program_id"])
             except (ValueError, TypeError):
                 pass
+
+    # Also count programs with overdue next_action_due that lack a pod action
+    overdue_programs = await db.programs.find(
+        {
+            "athlete_id": athlete_id,
+            "next_action_due": {"$lt": now.isoformat(), "$ne": "", "$exists": True},
+        },
+        {"_id": 0, "program_id": 1, "next_action_due": 1},
+    ).to_list(50)
+    for prog in overdue_programs:
+        if prog["program_id"] not in overdue_program_ids:
+            overdue.append({"due_date": prog["next_action_due"], "_from_program": True})
+
     unassigned = [a for a in active_actions if a.get("owner") in ("Unassigned", None, "")]
 
     # ── Check each condition ──
