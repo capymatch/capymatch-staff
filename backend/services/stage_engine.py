@@ -221,6 +221,42 @@ def compute_board_group(program: dict, pipeline_stage: str) -> str:
     return "needs_outreach"
 
 
+def compute_urgency_class(program: dict, pipeline_stage: str, signals: dict | None = None) -> str:
+    """Canonical urgency classification — single source of truth.
+
+    Used by both summary badges AND attention lists so counts always match.
+
+    Returns one of:
+        "overdue"   — next_action_due is strictly before today
+        "due_today" — next_action_due is today
+        "stalled"   — no meaningful activity for 10+ days, no due date
+        "on_track"  — everything else
+        "none"      — archived or committed (not actionable)
+    """
+    if pipeline_stage in ("archived", "committed"):
+        return "none"
+
+    next_due = program.get("next_action_due", "")
+    today = datetime.now(timezone.utc).date()
+
+    if next_due:
+        try:
+            due_date = datetime.strptime(str(next_due)[:10], "%Y-%m-%d").date()
+            if due_date < today:
+                return "overdue"
+            if due_date == today:
+                return "due_today"
+        except (ValueError, TypeError):
+            pass
+
+    # Stalled = no meaningful activity for 10+ days
+    days = (signals or {}).get("days_since_activity") or (signals or {}).get("days_since_last_activity") or 0
+    if days >= 10:
+        return "stalled"
+
+    return "on_track"
+
+
 def compute_journey_rail(program: dict, pipeline_stage: str, signals: dict | None = None) -> dict:
     """Compute the 6-stage journey rail visualization from pipeline_stage.
 

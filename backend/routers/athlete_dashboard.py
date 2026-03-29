@@ -452,6 +452,7 @@ from services.stage_engine import (
     compute_journey_rail,
     compute_auto_corrections,
     normalize_recruiting_status,
+    compute_urgency_class,
 )
 
 
@@ -521,6 +522,7 @@ async def list_programs(
         # Canonical stage computation (Sprint 3 SSOT)
         p["pipeline_stage"] = compute_pipeline_stage(p, sigs)
         p["board_group"] = compute_board_group(p, p["pipeline_stage"])
+        p["urgency_class"] = compute_urgency_class(p, p["pipeline_stage"], sigs)
         p["journey_rail"] = compute_journey_rail(p, p["pipeline_stage"], sigs)
         # Enrich with KB logo and domain
         kb = kb_by_name.get(p.get("university_name"), {})

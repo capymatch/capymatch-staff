@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException
 from db_client import db
 from auth_middleware import get_current_user_dep
 from services.athlete_store import get_by_id as get_athlete_by_id
-from services.stage_engine import compute_pipeline_stage, compute_board_group, compute_journey_rail
+from services.stage_engine import compute_pipeline_stage, compute_board_group, compute_journey_rail, compute_urgency_class
 from models import PipelineResponse
 
 router = APIRouter()
@@ -116,15 +116,18 @@ async def get_athlete_pipeline_summary(
         pipeline_stage = compute_pipeline_stage(p)
         p["pipeline_stage"] = pipeline_stage
         p["board_group"] = compute_board_group(p, pipeline_stage)
+        p["urgency_class"] = compute_urgency_class(p, pipeline_stage, p.get("signals"))
         p["journey_rail"] = compute_journey_rail(p, pipeline_stage)
         kb = kb_map.get(p.get("university_name"), {})
         if not p.get("logo_url"):
             p["logo_url"] = kb.get("logo_url", "")
 
-    # ── Top summary ──
+    # ── Top summary (uses canonical urgency_class) ──
     total = len(programs)
     replied = sum(1 for p in programs if p.get("reply_status") in ("Reply Received", "Positive"))
-    overdue = sum(1 for p in programs if p.get("board_group") == "overdue")
+    overdue = sum(1 for p in programs if p.get("urgency_class") == "overdue")
+    due_today = sum(1 for p in programs if p.get("urgency_class") == "due_today")
+    stalled = sum(1 for p in programs if p.get("urgency_class") == "stalled")
     waiting = sum(1 for p in programs if p.get("board_group") == "waiting_on_reply")
     in_convo = sum(1 for p in programs if p.get("board_group") == "in_conversation")
     response_rate = round((replied / total * 100) if total > 0 else 0)
@@ -134,6 +137,9 @@ async def get_athlete_pipeline_summary(
         "response_rate": response_rate,
         "active_conversations": in_convo,
         "overdue_followups": overdue,
+        "due_today": due_today,
+        "stalled": stalled,
+        "needs_attention": overdue + due_today + stalled,
         "waiting_on_reply": waiting,
     }
 

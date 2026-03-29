@@ -135,13 +135,19 @@ function RecapMoveCard({ priority, navigate, isFirst, cardIndex = 0 }) {
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <span data-testid={`move-badge-${priority.rank}`} style={{
+          <span data-testid={`move-badge-${priority.program_id}`} style={{
             fontSize: 10, fontWeight: 600, letterSpacing: "0.04em",
             textTransform: "uppercase",
-            color: config.badgeColor,
+            color: priority.urgency_class === "overdue" ? "#c53030"
+              : priority.urgency_class === "due_today" ? "#b45309"
+              : priority.urgency_class === "stalled" ? "#6b7280"
+              : config.badgeColor,
             display: "inline-block", marginBottom: 4,
           }}>
-            {config.badge}
+            {priority.urgency_class === "overdue" ? "Overdue"
+              : priority.urgency_class === "due_today" ? "Due today"
+              : priority.urgency_class === "stalled" ? "Stalled"
+              : config.badge}
           </span>
 
           <div data-testid={`move-action-${priority.program_id}`} style={{
@@ -211,7 +217,7 @@ function RecapMoveCard({ priority, navigate, isFirst, cardIndex = 0 }) {
 }
 
 /* ── Main PriorityBoard ── */
-export default function PriorityBoard({ items, navigate, heroItemId, recapData }) {
+export default function PriorityBoard({ items, navigate, heroItemId, recapData, programs }) {
   const RANK_ORDER = { top: 0, secondary: 1, watch: 2 };
   const priorities = (recapData?.priorities || [])
     .filter(p => p.program_id !== heroItemId)
@@ -228,7 +234,14 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
       urgency_note: i.riskContext || null,
     }));
 
+  // Build urgency lookup from programs
+  const urgencyMap = {};
+  (programs || []).forEach(p => {
+    if (p.urgency_class) urgencyMap[p.program_id] = p.urgency_class;
+  });
+
   const allCards = [...priorities, ...extraItems]
+    .map(c => ({ ...c, urgency_class: urgencyMap[c.program_id] || "on_track" }))
     .sort((a, b) => (RANK_ORDER[a.rank] ?? 9) - (RANK_ORDER[b.rank] ?? 9));
 
   const IMMEDIATE_COUNT = Math.min(3, Math.max(1, allCards.filter(c => c.rank !== "watch").length));
@@ -270,10 +283,10 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
 
           return (
             <div key={section.key} data-testid={`urgency-group-${section.key}`} style={{ paddingTop: sIdx > 0 ? 4 : 0 }}>
-              {/* Section header */}
+              {/* Section header with urgency breakdown */}
               <div style={{
                 display: "flex", alignItems: "center", gap: 7,
-                marginBottom: 14,
+                marginBottom: 14, flexWrap: "wrap",
               }}>
                 <HeaderIcon style={{ width: 14, height: 14, color: section.headerColor, opacity: 0.9 }} />
                 <span style={{
@@ -291,6 +304,25 @@ export default function PriorityBoard({ items, navigate, heroItemId, recapData }
                 }}>
                   {section.items.length}
                 </span>
+                {section.key === "top" && (() => {
+                  const ov = section.items.filter(i => i.urgency_class === "overdue").length;
+                  const dt = section.items.filter(i => i.urgency_class === "due_today").length;
+                  const st = section.items.filter(i => i.urgency_class === "stalled").length;
+                  const tags = [];
+                  if (ov) tags.push({ label: `${ov} Overdue`, color: "#c53030" });
+                  if (dt) tags.push({ label: `${dt} Due today`, color: "#b45309" });
+                  if (st) tags.push({ label: `${st} Stalled`, color: "#6b7280" });
+                  return tags.map((t, i) => (
+                    <span key={i} data-testid={`urgency-tag-${t.label.toLowerCase().replace(/\s/g,"-")}`} style={{
+                      fontSize: 11, fontWeight: 600, color: t.color,
+                      padding: "1px 7px", borderRadius: 5,
+                      background: `${t.color}0d`,
+                      letterSpacing: "0.01em",
+                    }}>
+                      {t.label}
+                    </span>
+                  ));
+                })()}
               </div>
 
               {/* Cards */}

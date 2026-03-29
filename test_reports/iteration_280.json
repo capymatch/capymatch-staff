@@ -1,0 +1,93 @@
+{
+  "summary": "Urgency Classification Feature Testing - Iteration 280. All features verified: (1) Pipeline page loads after login, (2) Hero card renders with school name, signals, CTA, (3) Section header 'Needs attention now' shows total count + urgency breakdown tags (2 Overdue), (4) Card badges show canonical urgency class: OVERDUE (red) for overdue programs, ATTENTION NEEDED for non-overdue attention items, ON TRACK for watch items, (5) API /api/athlete/programs returns urgency_class field for each program, (6) urgency_class values are correct (overdue for past-due, on_track for active), (7) Cards clickable and navigate to school detail, (8) Priority/Pipeline toggle works, (9) On track section renders correctly with ON TRACK badges, (10) Mobile viewport: section headers with urgency tags render properly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_urgency_classification.py",
+    "/app/test_reports/pytest/pytest_urgency_classification.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "stage_engine.py: compute_urgency_class() (lines 224-257) - canonical function returns overdue|due_today|stalled|on_track|none based on next_action_due and days_since_activity - VERIFIED",
+    "athlete_dashboard.py: list_programs() (line 525) - adds urgency_class to each program using compute_urgency_class() - VERIFIED",
+    "connected.py: summary (lines 128-143) - includes overdue, due_today, stalled, needs_attention counts using urgency_class - VERIFIED",
+    "PriorityBoard.js: urgencyMap lookup (lines 239-244) - builds map from programs prop, applies to cards - VERIFIED",
+    "PriorityBoard.js: section header urgency tags (lines 307-325) - shows '2 Overdue', '1 Due today' etc in red/amber - VERIFIED",
+    "PriorityBoard.js: card badges (lines 138-151) - reads urgency_class to show OVERDUE/DUE TODAY/STALLED/ATTENTION NEEDED/ON TRACK - VERIFIED"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_urgency_classification.py"
+  ],
+  "success_rate": {
+    "backend": "100% - 7/7 tests passed (1 skipped - requires director token)",
+    "frontend": "100% - All 10 features verified via Playwright"
+  },
+  "test_credentials": {
+    "athlete": "emma.chen@athlete.capymatch.com / athlete123"
+  },
+  "seed_data_creation": "None - used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Urgency classification feature complete. Key changes: (1) stage_engine.py has compute_urgency_class() that returns overdue|due_today|stalled|on_track|none, (2) Both list_programs() and connected.py summary use this canonical function, (3) PriorityBoard.js shows urgency breakdown tags in section headers (e.g., '2 Overdue' in red), (4) Card badges show urgency_class values (OVERDUE in red, ATTENTION NEEDED, ON TRACK). API returns urgency_class for each program. Mobile viewport works correctly.",
+  "features_tested": {
+    "pipeline_page_loads": {
+      "status": "PASS",
+      "details": "Pipeline page loads after login, shows recruiting-board"
+    },
+    "hero_card_renders": {
+      "status": "PASS",
+      "details": "Hero card shows UCLA with TOP PRIORITY badge, school name, 3 signals (Overdue follow-up needs action, Coach responded, Momentum is building), CTA 'Follow up now'"
+    },
+    "section_header_urgency_breakdown": {
+      "status": "PASS",
+      "details": "Section header 'Needs attention now' shows count '3' and urgency tag '2 Overdue' in red"
+    },
+    "card_badges_urgency_class": {
+      "status": "PASS",
+      "details": "Card badges show OVERDUE (red) for Emory/Florida, ATTENTION NEEDED for Stanford, ON TRACK for Creighton"
+    },
+    "api_urgency_class_field": {
+      "status": "PASS",
+      "details": "GET /api/athlete/programs returns urgency_class for each program (overdue, on_track, etc.)"
+    },
+    "urgency_class_values_correct": {
+      "status": "PASS",
+      "details": "overdue programs have past due dates, on_track programs have future/no due dates"
+    },
+    "cards_clickable_navigate": {
+      "status": "PASS",
+      "details": "Clicking card navigates to /pipeline/{program_id} school detail page"
+    },
+    "priority_pipeline_toggle": {
+      "status": "PASS",
+      "details": "Priority/Pipeline toggle switches between views correctly"
+    },
+    "on_track_section": {
+      "status": "PASS",
+      "details": "On track section renders with ON TRACK badges for watch items"
+    },
+    "mobile_viewport": {
+      "status": "PASS",
+      "details": "Mobile viewport (390x844) renders section headers with urgency tags correctly"
+    }
+  },
+  "api_verification": {
+    "programs_endpoint": {
+      "url": "/api/athlete/programs",
+      "status": 200,
+      "urgency_class_values_found": ["overdue", "on_track"],
+      "sample_data": [
+        {"university_name": "Stanford University", "urgency_class": "on_track", "pipeline_stage": "campus_visit"},
+        {"university_name": "University of Florida", "urgency_class": "overdue", "pipeline_stage": "in_conversation"},
+        {"university_name": "Emory University", "urgency_class": "overdue", "pipeline_stage": "outreach"}
+      ]
+    }
+  }
+}

@@ -306,7 +306,7 @@ export default function PipelinePage() {
         {viewMode === 'pipeline' ? (
           <KanbanBoard programs={allPrograms} navigate={navigate} onDragEnd={handleDragEnd} onDragUpdate={handleDragUpdate} onDragStart={handleDragStart} attentionMap={attentionMap} justDroppedId={justDroppedId} dragDest={dragDest} pulsingColumnId={pulsingColumnId} activeDragId={activeDragId} />
         ) : (
-          <PriorityBoard items={allAttention} navigate={navigate} heroItemId={heroItem?.programId} recapData={recapData} />
+          <PriorityBoard items={allAttention} navigate={navigate} heroItemId={heroItem?.programId} recapData={recapData} programs={allPrograms} />
         )}
       </div>
 
