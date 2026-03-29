@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check, AlertTriangle } from "lucide-react";
-import { getNudge, generateWhy, buildTitle } from "./inbox-utils";
+import { getNudge, getPrimaryHeadline, getShortExplanation, getSchoolNames, getContextualCta } from "./inbox-utils";
 import { TrajectoryHint } from "./TrajectoryHint";
 import { ComposeModal } from "./ComposeModal";
 
@@ -12,15 +12,12 @@ export function TopPriorityCard({ item, onActionComplete }) {
 
   if (!item || completed) return null;
 
-  const title = buildTitle(item);
-  const parts = [...(item.issues || [])];
-  if (item.timeAgo) parts.push(item.timeAgo);
-  const issueLine = parts.join(" · ");
+  const headline = getPrimaryHeadline(item);
+  const explanation = getShortExplanation(item);
+  const schoolNames = getSchoolNames(item);
+  const ctaLabel = getContextualCta(item);
 
-  const why = item.whyNow || generateWhy(item);
   const nudge = getNudge(item);
-  const breakdown = item.schoolBreakdown || [];
-
   const intervention = item.interventionType || "nudge";
   const isCritical = item.severity === "critical";
   const isBlocker = intervention === "blocker";
@@ -36,7 +33,7 @@ export function TopPriorityCard({ item, onActionComplete }) {
   const badgeBg    = isCritical ? "rgba(220,38,38,0.10)" : "rgba(245,158,11,0.10)";
   const badgeBorder= isCritical ? "rgba(220,38,38,0.20)" : "rgba(245,158,11,0.20)";
   const labelColor = isCritical ? "#dc2626" : "#f59e0b";
-  const issueColor = isCritical ? "#f87171" : "#fbbf24";
+  const headlineColor = isCritical ? "#f87171" : "#fbbf24";
   const textPrimary   = "#f0f0f2";
   const textSecondary = "#8b8d98";
   const textMuted     = "#5c5e6a";
@@ -63,7 +60,6 @@ export function TopPriorityCard({ item, onActionComplete }) {
     if (onActionComplete) onActionComplete(item.id);
   }
 
-  /* button accent: red = problem, orange = action */
   const btnAccent = isBlocker ? "#dc2626" : isEscalate ? "#dc2626" : "#ff6a3d";
   const btnGlow   = isBlocker ? "rgba(220,38,38,0.20)" : isEscalate ? "rgba(220,38,38,0.20)" : "rgba(255,106,61,0.20)";
 
@@ -88,8 +84,8 @@ export function TopPriorityCard({ item, onActionComplete }) {
           )}
         </div>
 
-        {/* Athlete identity row */}
-        <div className="flex items-center gap-3 mb-2.5">
+        {/* Athlete identity */}
+        <div className="flex items-center gap-3 mb-3">
           {item.photoUrl ? (
             <img
               src={item.photoUrl}
@@ -107,41 +103,28 @@ export function TopPriorityCard({ item, onActionComplete }) {
               {(item.athleteName || "?").charAt(0)}
             </div>
           )}
-          <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: textMuted, margin: 0 }}>
-              Athlete
-            </p>
-            <p className="text-[13px] font-semibold truncate" style={{ color: textPrimary, margin: 0, lineHeight: 1.2 }}>
-              {item.athleteName}
-            </p>
-          </div>
+          <p className="text-[14px] font-semibold" style={{ color: textPrimary, lineHeight: 1.2 }}>
+            {item.athleteName}
+          </p>
         </div>
 
-        {/* Title */}
-        <p className="text-[16px] font-bold" style={{ color: textPrimary, margin: 0, lineHeight: 1.3, letterSpacing: "-0.01em" }}>
-          {title}
+        {/* Primary headline (dominant) */}
+        <p className="text-[17px] font-bold" style={{ color: headlineColor, lineHeight: 1.3, letterSpacing: "-0.01em" }} data-testid="headline-text">
+          {headline}
         </p>
 
-        {/* Issue line */}
-        <p className="text-[12px] font-medium mt-1.5" style={{ color: issueColor, margin: 0 }}>
-          {issueLine}
+        {/* Short explanation (1 line) */}
+        <p className="text-[12px] mt-1.5" style={{ color: textSecondary, lineHeight: 1.4 }} data-testid="why-now-text">
+          {explanation}
         </p>
 
-        {/* Why now */}
-        <p className="text-[12px] mt-2" style={{ color: textSecondary, margin: 0, lineHeight: 1.5 }} data-testid="why-now-text">
-          {why}
-        </p>
-
-        {/* School breakdown */}
-        {breakdown.length > 1 && (
-          <div className="mt-3">
-            <p className="text-[9px] font-bold uppercase tracking-[0.08em]" style={{ color: textMuted, margin: "0 0 5px" }}>
-              Also affected
-            </p>
-            {breakdown.slice(0, 3).map((b, i) => (
-              <p key={i} className="text-[11px] font-medium" style={{ color: textSecondary, margin: "2px 0", lineHeight: 1.4 }}>
-                <span style={{ color: issueColor }}>{b.issue}</span>
-                <span style={{ color: textMuted }}> — {b.school}</span>
+        {/* School list (compact bullets) */}
+        {schoolNames.length > 0 && (
+          <div className="mt-3 flex flex-col gap-1" data-testid="school-breakdown">
+            {schoolNames.slice(0, 5).map((name, i) => (
+              <p key={i} className="text-[11px] flex items-center gap-1.5" style={{ color: textSecondary }}>
+                <span className="w-1 h-1 rounded-full shrink-0" style={{ background: headlineColor }} />
+                {name}
               </p>
             ))}
           </div>
@@ -150,21 +133,6 @@ export function TopPriorityCard({ item, onActionComplete }) {
         {/* Suggested Action */}
         {nudge && (
           <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${borderSubtle}` }}>
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color: textMuted, margin: "0 0 8px" }}>
-              Suggested action
-            </p>
-            {(item.schoolName || item.titleSuffix) && (
-              <p className="text-[11px] font-medium mb-1.5" style={{ color: labelColor, opacity: 0.8, margin: 0 }}>
-                {item.schoolName ? `Regarding ${item.schoolName} outreach` : `${item.titleSuffix}`}
-              </p>
-            )}
-            <div className="flex items-center gap-2 mb-3">
-              {isBlocker && <AlertTriangle className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />}
-              {!isBlocker && <nudge.Icon className="w-3.5 h-3.5" style={{ color: "#ff6a3d" }} />}
-              <span className="text-[12.5px] font-semibold" style={{ color: textPrimary }}>
-                {nudge.label}
-              </span>
-            </div>
             <div className="flex items-center gap-2.5">
               {canAutoExecute && (
                 <button
@@ -180,7 +148,7 @@ export function TopPriorityCard({ item, onActionComplete }) {
                   data-testid="autopilot-approve-btn"
                 >
                   {isBlocker ? <AlertTriangle className="w-3 h-3" /> : <Check className="w-3 h-3" />}
-                  {isBlocker ? "Act Now" : isEscalate ? "Escalate & Send" : "Approve & Send"}
+                  {ctaLabel}
                 </button>
               )}
               {intervention === "review" && (
@@ -196,7 +164,7 @@ export function TopPriorityCard({ item, onActionComplete }) {
                   }}
                   data-testid="autopilot-review-btn"
                 >
-                  Open Pod <ArrowRight className="w-3 h-3" />
+                  {ctaLabel} <ArrowRight className="w-3 h-3" />
                 </button>
               )}
               <button
@@ -225,7 +193,7 @@ export function TopPriorityCard({ item, onActionComplete }) {
           onMouseLeave={(e) => e.currentTarget.style.color = textMuted}
           data-testid="top-priority-cta"
         >
-          {item.cta.label} <ArrowRight className="w-3 h-3" />
+          Open Pod <ArrowRight className="w-3 h-3" />
         </span>
       </div>
 

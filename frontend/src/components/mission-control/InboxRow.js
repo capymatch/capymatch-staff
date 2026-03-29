@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, AlertTriangle } from "lucide-react";
-import { DOT_COLOR, getNudge, ctaWithContext } from "./inbox-utils";
+import { DOT_COLOR, getNudge, getPrimaryHeadline, getShortExplanation, getSchoolNames, getContextualCta } from "./inbox-utils";
 import { TrajectoryHint } from "./TrajectoryHint";
 import { ComposeModal } from "./ComposeModal";
 
@@ -13,23 +13,13 @@ export function InboxRow({ item }) {
   const canCompose = nudge && nudge.actionType !== "assign_coach" && nudge.template;
   const intervention = item.interventionType || "nudge";
 
-  const title = item.titleSuffix
-    ? `${item.athleteName} — ${item.titleSuffix}`
-    : item.schoolName
-      ? `${item.athleteName} — ${item.schoolName}`
-      : item.athleteName;
-
-  const issues = (item.issues || []).filter(i => i !== "Escalated issue");
-  const primary = issues[0] || item.primaryRisk || "";
-  const context = item.schoolName || (item.schoolCount > 1 ? `across ${item.schoolCount} schools` : "");
-  let subtitle = primary;
-  if (context) subtitle += ` — ${context}`;
-  if (item.timeAgo) subtitle += ` · ${item.timeAgo}`;
-
-  const suggestedLabel = ctaWithContext(item);
-  const showSuggestedAction = intervention !== "monitor";
+  const headline = getPrimaryHeadline(item);
+  const explanation = getShortExplanation(item);
+  const schoolNames = getSchoolNames(item);
+  const ctaLabel = getContextualCta(item);
   const isBlocker = intervention === "blocker";
   const isEscalate = intervention === "escalate";
+  const showSuggestedAction = intervention !== "monitor";
 
   function handleSuggestedClick(e) {
     e.stopPropagation();
@@ -70,13 +60,25 @@ export function InboxRow({ item }) {
           />
         </div>
         <div className="inbox-text">
-          <p className="inbox-title">{title}</p>
+          {/* Name */}
+          <p className="inbox-title">{item.athleteName}</p>
+          {/* Headline + trend */}
           <div className="flex items-center gap-2" style={{ marginTop: 2 }}>
-            <p className="inbox-subtitle" style={{ margin: 0 }}>{subtitle}</p>
+            <p className="inbox-subtitle" style={{ margin: 0, fontWeight: 600 }}>{headline}</p>
             {item.trajectory && item.trajectory !== "stable" && (
               <TrajectoryHint trajectory={item.trajectory} />
             )}
           </div>
+          {/* Short explanation */}
+          <p className="text-[10px]" style={{ color: "#8b8d98", margin: "2px 0 0", lineHeight: 1.3 }}>
+            {explanation}
+          </p>
+          {/* School names inline */}
+          {schoolNames.length > 1 && (
+            <p className="text-[10px]" style={{ color: "#6b7280", margin: "3px 0 0" }}>
+              {schoolNames.slice(0, 3).join(" · ")}
+            </p>
+          )}
           {showSuggestedAction && nudge && (
             <span
               className={`inbox-action-link${isBlocker ? " inbox-action-blocker" : ""}${isEscalate ? " inbox-action-escalate" : ""}`}
@@ -84,7 +86,7 @@ export function InboxRow({ item }) {
               data-testid={`suggested-action-${item.id}`}
             >
               {isBlocker && <AlertTriangle className="w-3 h-3" />}
-              {suggestedLabel} <ArrowRight className="w-3 h-3" />
+              {ctaLabel} <ArrowRight className="w-3 h-3" />
             </span>
           )}
         </div>

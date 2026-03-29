@@ -11,18 +11,15 @@ export const TRAJECTORY = {
   improving: { symbol: "\u2197", label: "Improving", color: "rgba(74,222,128,0.6)" },
 };
 
-/* ── Short explanation for high priority rows ── */
-export const WHY_SHORT = {
-  "Escalated issue": "Momentum may be dropping",
-  "No activity": "Momentum may be dropping",
-  "Awaiting reply": "Waiting for response",
-  "Missing requirement": "Blocking progress",
-  "No coach assigned": "Not being actively managed",
-  "Needs follow-up": "Conversation may stall",
-};
-
 /* ── Nudge mapping: issue → suggestion + icon + route + autopilot action ── */
 const NUDGE_MAP = {
+  "Overdue follow-up": {
+    label: "Send follow-ups",
+    icon: Send,
+    actionType: "follow_up",
+    getUrl: (item) => `/support-pods/${extractAthleteId(item)}`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up on some overdue school outreach${item.schoolName ? ` regarding ${item.schoolName}` : ""}. Let's make sure we don't lose momentum.`,
+  },
   "Awaiting reply": {
     label: "Send follow-up message",
     icon: Send,
@@ -73,7 +70,7 @@ export function extractAthleteId(item) {
 
 export function getNudge(item) {
   const issues = item.issues || [];
-  const order = ["No coach assigned", "Missing requirement", "Awaiting reply", "No activity", "Needs follow-up", "Escalated issue"];
+  const order = ["No coach assigned", "Missing requirement", "Overdue follow-up", "Awaiting reply", "No activity", "Needs follow-up", "Escalated issue"];
   for (const key of order) {
     if (issues.includes(key) && NUDGE_MAP[key]) {
       const n = NUDGE_MAP[key];
@@ -90,7 +87,7 @@ export function getNudge(item) {
 }
 
 /* ── Scoring logic for Top Priority ── */
-const HIGH_ISSUES = new Set(["Escalated issue", "Missing requirement", "No coach assigned"]);
+const HIGH_ISSUES = new Set(["Escalated issue", "Missing requirement", "No coach assigned", "Overdue follow-up"]);
 const MED_ISSUES = new Set(["Awaiting reply", "No activity"]);
 const LOW_ISSUES = new Set(["Needs follow-up"]);
 
@@ -110,30 +107,70 @@ export function scoreItem(item) {
   return score;
 }
 
-export function generateWhy(item) {
+/* ── Primary headline: "{N} schools overdue" or "{N} schools at risk" ── */
+export function getPrimaryHeadline(item) {
+  const schools = item.schoolIssues || item.schoolBreakdown || [];
+  const issues = item.issues || [];
+
+  if (issues.includes("Overdue follow-up") && schools.length > 0) {
+    const overdueSchools = schools.filter(s =>
+      (s.issue || "").toLowerCase().includes("overdue")
+    );
+    const uniqueNames = new Set((overdueSchools.length > 0 ? overdueSchools : schools).map(s => s.school).filter(Boolean));
+    const count = uniqueNames.size || 1;
+    return `${count} school${count !== 1 ? "s" : ""} overdue`;
+  }
+  if (item.schoolCount > 1 && issues.some(i => i === "No activity" || i === "Needs follow-up")) {
+    return `${item.schoolCount} schools at risk`;
+  }
+  if (issues.includes("No coach assigned")) return "No coach assigned";
+  if (issues.includes("Missing requirement")) return "Missing requirement";
+  if (issues.includes("Escalated issue")) return "Escalated to director";
+  if (issues.includes("Awaiting reply")) return "Awaiting reply";
+  if (issues.includes("No activity")) return "Inactive, losing momentum";
+  return item.primaryRisk || "Needs attention";
+}
+
+/* ── Short 1-line explanation (max ~8 words, no dashes) ── */
+export function getShortExplanation(item) {
   const issues = item.issues || [];
   const has = (s) => issues.includes(s);
-  const daysStr = item.timeAgo || "";
 
-  if (has("No activity") && has("No coach assigned"))
-    return "No activity and no coach assigned — athlete is at risk of falling behind.";
-  if (has("Escalated issue") && has("No activity"))
-    return `Flagged and inactive ${daysStr ? "for " + daysStr.replace(" ago", "") : ""} — momentum may be dropping.`.replace("for now", "");
-  if (has("Escalated issue") && has("Missing requirement"))
-    return "Flagged with missing requirements — may block applications.";
-  if (has("No coach assigned"))
-    return "No coach assigned — athlete is not being actively managed.";
-  if (has("Missing requirement"))
-    return "Missing requirement — may block applications.";
-  if (has("Awaiting reply"))
-    return "Waiting for response — opportunity may go cold.";
-  if (has("No activity"))
-    return `No activity ${daysStr ? "in " + daysStr.replace(" ago", "") : ""} — recruiting momentum may be dropping.`.replace("in now", "recently");
-  if (has("Needs follow-up"))
-    return "Follow-up needed — don't let this conversation stall.";
-  if (has("Escalated issue"))
-    return "Flagged for attention — review and take action.";
-  return "This item needs your attention.";
+  if (has("Overdue follow-up") && has("No activity")) return "Follow-ups missed, momentum dropping";
+  if (has("Overdue follow-up")) return "Follow-ups past due, relationships cooling";
+  if (has("No activity") && has("No coach assigned")) return "No coach, no recent activity";
+  if (has("Escalated issue") && has("No activity")) return "Flagged, needs re-engagement";
+  if (has("Missing requirement")) return "Requirement missing, blocking progress";
+  if (has("Awaiting reply")) return "Waiting for response";
+  if (has("No coach assigned")) return "Unmanaged, needs assignment";
+  if (has("No activity")) return "Momentum dropping, check in needed";
+  if (has("Needs follow-up")) return "Conversation may stall";
+  if (has("Escalated issue")) return "Flagged for review";
+  return "Review recommended";
+}
+
+/* ── Contextual CTA label (specific action + count) ── */
+export function getContextualCta(item) {
+  const issues = item.issues || [];
+  const schools = item.schoolIssues || item.schoolBreakdown || [];
+  const primary = issues[0] || item.primaryRisk || "";
+
+  if (issues.includes("Overdue follow-up") && schools.length > 0) {
+    const uniqueSchools = new Set(schools.map(s => s.school).filter(Boolean));
+    return `Send follow-ups (${uniqueSchools.size})`;
+  }
+  if (primary === "No coach assigned") return "Assign coach";
+  if (primary === "Missing requirement") return "Complete requirement";
+  if (primary === "Awaiting reply") return "Send follow-up";
+  if (primary === "Needs follow-up") return "Send follow-up";
+  if (primary === "No activity") return "Check in";
+  if (primary === "Escalated issue") return "Review escalation";
+  if (item.schoolCount > 1) return "Review schools";
+  return "Open pod";
+}
+
+export function generateWhy(item) {
+  return getShortExplanation(item);
 }
 
 export function getTopPriority(items) {
@@ -141,22 +178,23 @@ export function getTopPriority(items) {
   return items[0];
 }
 
-/* ── Context-aware CTA label ── */
+/* ── Context-aware CTA label (legacy compat) ── */
 export function ctaWithContext(item) {
-  const school = item.schoolName;
-  const multi = item.schoolCount > 1;
-  const primary = item.primaryRisk || (item.issues || [])[0] || "";
-
-  if (primary === "No coach assigned") return "Assign coach";
-  if (primary === "Awaiting reply") return school ? `Follow up with ${school}` : multi ? "Follow up across schools" : "Follow up";
-  if (primary === "Missing requirement") return school ? `Review ${school}` : "Review";
-  if (primary === "Needs follow-up") return school ? `Follow up with ${school}` : "Follow up";
-  return school ? `Check in about ${school}` : multi ? "Check in across schools" : "Check in";
+  return getContextualCta(item);
 }
 
-/* ── Build title from item ── */
+/* ── Build title: just athlete name, no suffix ── */
 export function buildTitle(item) {
-  if (item.titleSuffix) return `${item.athleteName} — ${item.titleSuffix}`;
-  if (item.schoolName) return `${item.athleteName} — ${item.schoolName}`;
-  return item.athleteName;
+  return item.athleteName || "Unknown";
+}
+
+/* ── Extract unique school names from schoolIssues or schoolBreakdown ── */
+export function getSchoolNames(item) {
+  const schools = item.schoolIssues || item.schoolBreakdown || [];
+  const seen = new Set();
+  return schools.map(s => s.school).filter(name => {
+    if (!name || seen.has(name)) return false;
+    seen.add(name);
+    return true;
+  });
 }

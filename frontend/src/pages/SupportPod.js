@@ -101,50 +101,53 @@ function ProfileAlert({ completeness, athleteId, athleteName }) {
 // ─── School Row ─────────────────────────────────────
 function SchoolRow({ school, athleteId }) {
   const navigate = useNavigate();
-  const healthColors = {
-    at_risk: { bg: "rgba(239,68,68,0.08)", text: "#ef4444" },
-    cooling_off: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b" },
-    needs_attention: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b" },
-    needs_follow_up: { bg: "rgba(245,158,11,0.08)", text: "#f59e0b" },
-    awaiting_reply: { bg: "rgba(59,130,246,0.08)", text: "#3b82f6" },
-    active: { bg: "rgba(13,148,136,0.08)", text: "#0d9488" },
-    strong_momentum: { bg: "rgba(16,185,129,0.08)", text: "#10b981" },
-    still_early: { bg: "rgba(100,116,139,0.08)", text: "#64748b" },
+  const healthLabels = {
+    at_risk: { color: "#ef4444", label: "At Risk" },
+    cooling_off: { color: "#f59e0b", label: "Cooling Off" },
+    needs_attention: { color: "#f59e0b", label: "Needs Attention" },
+    needs_follow_up: { color: "#f59e0b", label: "Follow Up" },
+    awaiting_reply: { color: "#3b82f6", label: "Awaiting Reply" },
+    active: { color: "#0d9488", label: "Active" },
+    strong_momentum: { color: "#10b981", label: "Strong" },
+    still_early: { color: "#94a3b8", label: "Early" },
   };
-  const c = healthColors[school.health] || healthColors.still_early;
+  const h = healthLabels[school.health] || healthLabels.still_early;
+  const hasOverdue = school.overdue_followups > 0;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 group hover:bg-slate-50/80 transition-colors" data-testid={`school-row-${school.program_id}`}>
-      <button
-        onClick={() => navigate(`/support-pods/${athleteId}/school/${school.program_id}`)}
-        className="flex-1 flex items-center gap-3 text-left min-w-0"
-      >
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: c.bg }}>
-          <UniversityLogo domain={school.domain} name={school.university_name} logoUrl={school.logo_url} size={32} />
+    <div
+      className="flex items-center gap-3 px-4 py-3 group hover:bg-slate-50/80 transition-colors cursor-pointer"
+      onClick={() => navigate(`/support-pods/${athleteId}/school/${school.program_id}`)}
+      data-testid={`school-row-${school.program_id}`}
+    >
+      {/* Logo */}
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: `${h.color}08` }}>
+        <UniversityLogo domain={school.domain} name={school.university_name} logoUrl={school.logo_url} size={32} />
+      </div>
+
+      {/* Center content */}
+      <div className="flex-1 min-w-0">
+        {/* Line 1: School Name — Status (inline) */}
+        <div className="flex items-center gap-2">
+          <p className="text-[13px] font-semibold truncate" style={{ color: "#1e293b" }}>
+            {school.university_name}
+          </p>
+          <span className="text-[10px] font-semibold shrink-0" style={{ color: h.color }}>
+            {h.label}
+          </span>
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-xs sm:text-sm font-semibold truncate" style={{ color: "var(--cm-text, #1e293b)" }}>
-              {school.university_name}
-            </p>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: c.bg, color: c.text }}>
-              {school.health_label}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 mt-0.5 text-[11px]" style={{ color: "var(--cm-text-3, #94a3b8)" }}>
-            <span>{school.recruiting_status}</span>
-            <span>·</span>
-            <span>{school.reply_status}</span>
-            {school.days_since_last_engagement != null && school.days_since_last_engagement < 999 && school.days_since_last_engagement > 0 && (
-              <>
-                <span>·</span>
-                <span>{school.days_since_last_engagement}d ago</span>
-              </>
-            )}
-          </div>
-        </div>
-      </button>
-      <div className="flex items-center gap-1.5 shrink-0">
+        {/* Line 2: Stage · last activity */}
+        <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8" }}>
+          {school.recruiting_status}
+          {school.reply_status && <span> · {school.reply_status}</span>}
+          {school.days_since_last_engagement != null && school.days_since_last_engagement > 0 && school.days_since_last_engagement < 999 && (
+            <span> · {school.days_since_last_engagement}d ago</span>
+          )}
+        </p>
+      </div>
+
+      {/* Right: Overdue badge (dominant when present) + advocate */}
+      <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={(e) => { e.stopPropagation(); navigate(`/advocacy/new?athlete=${athleteId}&schoolName=${encodeURIComponent(school.university_name)}`); }}
           className="flex items-center gap-1 px-2 py-1.5 text-[10px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md transition-colors border border-amber-100 opacity-0 group-hover:opacity-100"
@@ -154,13 +157,12 @@ function SchoolRow({ school, athleteId }) {
           <Megaphone className="w-3 h-3" />
           <span className="hidden sm:inline">Advocate</span>
         </button>
-        {school.next_action && (
-          <span className="hidden sm:block text-[10px] max-w-[160px] truncate px-2 py-1 rounded-lg border" style={{ color: "var(--cm-text-2, #64748b)", borderColor: "var(--cm-border, #e2e8f0)" }}>
-            {school.next_action}
-          </span>
-        )}
-        {school.overdue_followups > 0 && (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-600 shrink-0">
+        {hasOverdue && (
+          <span
+            className="text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0"
+            style={{ background: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.15)" }}
+            data-testid={`overdue-badge-${school.program_id}`}
+          >
             {school.overdue_followups} overdue
           </span>
         )}
@@ -359,11 +361,6 @@ function SupportPod() {
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-3, #94a3b8)" }}>Target Schools</h3>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ backgroundColor: "var(--cm-surface-2, #f1f5f9)", color: "var(--cm-text-3)" }}>{schools.length}</span>
-              {needsAttention.length > 0 && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-red-50 text-red-600">
-                  {needsAttention.length} need attention
-                </span>
-              )}
             </div>
           </div>
 
