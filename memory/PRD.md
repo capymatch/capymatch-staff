@@ -39,6 +39,13 @@ CapyMatch is a production full-stack athlete management platform connecting athl
 - Mobile layout fix for Journey page
 - Canonical urgency SSOT: `compute_urgency_class` in `stage_engine.py`
 
+### UI/UX Refinement: Mission Control, Target Schools, Attention Section (March 29, 2026)
+- **Mission Control Cards**: New strict hierarchy — Name > "{N} schools overdue" headline > Trend > Short explanation (max 8 words, no dashes) > School bullet list > Contextual CTA ("Send follow-ups (3)"). Removed "Across X schools", verbose paragraphs, "Resolve blocker"
+- **Target School Cards**: School Name — Status inline, Stage · activity below, overdue badge dominant on right. Removed duplicate "need attention" badge from header
+- **Attention/Blocker Section**: BLOCKER badge + bold headline + actionable 1-line subtext ("Follow-ups required to maintain momentum"). Secondary signals collapsed into expandable "N more signals"
+- **Applied to**: CoachInbox.js, TopPriorityCard.js, InboxRow.js, inbox-utils.js, StatusIntelligence.js, SupportPod.js
+- **Status**: VERIFIED — 100% frontend test pass (12/12 features)
+
 ### Bug Fix: Support Pod "Overdue Actions" Count Mismatch (March 29, 2026)
 - **Problem**: Support Pod ATTENTION section showed "2 Overdue Actions" but TARGET SCHOOLS listed 3 schools each with "1 overdue" (Arizona State, U of Arizona, San Diego State)
 - **Root Cause**: `evaluate_issues()` in `pod_issues.py` only counted overdue **pod actions** (task items) but missed programs with overdue `next_action_due` dates that had no corresponding pod action (San Diego State had an overdue program follow-up but no pod action task)
