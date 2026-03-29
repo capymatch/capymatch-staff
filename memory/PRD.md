@@ -39,6 +39,14 @@ CapyMatch is a production full-stack athlete management platform connecting athl
 - Mobile layout fix for Journey page
 - Canonical urgency SSOT: `compute_urgency_class` in `stage_engine.py`
 
+### UI Final Polish Pass: Contextual Labels, Signal Language, CTA Strength (March 29, 2026)
+- **Contextual labels**: "Across 3 schools" → "Across 3 at-risk schools" / "Across 3 stalled schools" / "Across 3 pending conversations" based on dominant signal
+- **Signal-specific language**: "Momentum dropping" → "Follow-ups missed" / "No recent replies" / "No coach, no activity" based on actual signals
+- **Bullet lists standardized**: All cards (top, up-next, director) use bullet format with max 3 + "+N more" overflow
+- **CTAs strengthened**: "Fix overdue (3)" / "Fix requirement" / "Re-engage now" / "Resolve escalation". Eliminated all "Resolve blocker", "Review blocker", "View details"
+- **Tighter spacing**: School list → divider → CTA now feels like one cohesive action unit
+- **Status**: VERIFIED — 100% frontend test pass (14/14 features, iteration_284)
+
 ### UI/UX Refinement v2: Count Consistency, Dedup, CTA, Hierarchy (March 29, 2026)
 - **Count Mismatch (CRITICAL)**: Fixed using Option A — "{X} overdue actions" headline with "Send follow-ups ({X})" CTA using identical deduped count. No mismatches anywhere.
 - **School Dedup**: Added `dedupeSchools()` normalizer that merges "Clemson"/"Clemson University" into one entry (keeps longer official name)
