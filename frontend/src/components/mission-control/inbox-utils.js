@@ -11,7 +11,53 @@ export const TRAJECTORY = {
   improving: { symbol: "\u2197", label: "Improving", color: "rgba(74,222,128,0.6)" },
 };
 
-/* ── Nudge mapping: issue → suggestion + icon + route + autopilot action ── */
+/* ═══════════════════════════════════════════════════ */
+/* School name normalization + deduplication           */
+/* ═══════════════════════════════════════════════════ */
+
+function normalizeKey(name) {
+  return (name || "")
+    .toLowerCase()
+    .replace(/\buniversity\b/g, "")
+    .replace(/\buniv\.?\b/g, "")
+    .replace(/\bthe\b/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
+/**
+ * Deduplicates school entries by normalized name.
+ * Keeps the longest (most official) variant of each name.
+ * Merges issues into a Set per school.
+ */
+export function dedupeSchools(schools) {
+  if (!schools || schools.length === 0) return [];
+  const map = new Map();
+  for (const s of schools) {
+    const key = normalizeKey(s.school);
+    if (!key) continue;
+    const existing = map.get(key);
+    if (!existing) {
+      map.set(key, { school: s.school, issues: new Set([s.issue || s.label || ""]) });
+    } else {
+      // Keep longer (more official) name
+      if ((s.school || "").length > existing.school.length) {
+        existing.school = s.school;
+      }
+      existing.issues.add(s.issue || s.label || "");
+    }
+  }
+  return Array.from(map.values()).map(e => ({
+    school: e.school,
+    issues: Array.from(e.issues).filter(Boolean),
+    hasOverdue: Array.from(e.issues).some(i => i.toLowerCase().includes("overdue")),
+  }));
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* Nudge mapping                                       */
+/* ═══════════════════════════════════════════════════ */
+
 const NUDGE_MAP = {
   "Overdue follow-up": {
     label: "Send follow-ups",
@@ -24,22 +70,22 @@ const NUDGE_MAP = {
     label: "Send follow-up message",
     icon: Send,
     actionType: "follow_up",
-    getUrl: (item) => `/messages?to=${encodeURIComponent(item.athleteName)}&draft=${encodeURIComponent(`Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""} — would love to hear your thoughts. Let us know if you had a chance to review.`)}`,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""} — would love to hear your thoughts. Let us know if you had a chance to review.`,
+    getUrl: (item) => `/messages?to=${encodeURIComponent(item.athleteName)}&draft=${encodeURIComponent(`Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""}.`)}`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""}.`,
   },
   "No activity": {
     label: "Check in with athlete",
     icon: MessageCircle,
     actionType: "check_in",
     getUrl: (item) => `/support-pods/${extractAthleteId(item)}`,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in${item.schoolName ? ` regarding ${item.schoolName}` : ""} — wanted to see how things are going on your end. Let us know if there's anything you need.`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, checking in${item.schoolName ? ` regarding ${item.schoolName}` : ""}.`,
   },
   "Missing requirement": {
     label: "Request missing document",
     icon: FileText,
     actionType: "request_doc",
     getUrl: (item) => `/support-pods/${extractAthleteId(item)}`,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, we noticed a required document is still missing${item.schoolName ? ` for ${item.schoolName}` : ""} from your profile. Please upload it at your earliest convenience so we can keep things moving.`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, a required document is still missing${item.schoolName ? ` for ${item.schoolName}` : ""}.`,
   },
   "No coach assigned": {
     label: "Assign coach",
@@ -53,19 +99,19 @@ const NUDGE_MAP = {
     icon: RefreshCw,
     actionType: "follow_up",
     getUrl: () => "/advocacy",
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just following up${item.schoolName ? ` regarding ${item.schoolName}` : ""} on our last conversation. Let us know how things are progressing.`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, following up${item.schoolName ? ` regarding ${item.schoolName}` : ""}.`,
   },
   "Escalated issue": {
     label: "Review and take action",
     icon: RefreshCw,
     actionType: "check_in",
-    getUrl: (item) => item.cta.url,
-    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, just checking in${item.schoolName ? ` regarding ${item.schoolName}` : ""} — wanted to see how things are going. Let us know if there's anything you need.`,
+    getUrl: (item) => item.cta?.url || `/support-pods/${extractAthleteId(item)}`,
+    getTemplate: (item) => `Hi ${item.athleteName.split(" ")[0]}, checking in${item.schoolName ? ` regarding ${item.schoolName}` : ""}.`,
   },
 };
 
 export function extractAthleteId(item) {
-  return (item.id || "").replace(/^inbox_/, "").split("_")[0];
+  return (item.athleteId || item.id || "").replace(/^inbox_/, "");
 }
 
 export function getNudge(item) {
@@ -107,21 +153,29 @@ export function scoreItem(item) {
   return score;
 }
 
-/* ── Primary headline: "{N} schools overdue" or "{N} schools at risk" ── */
-export function getPrimaryHeadline(item) {
-  const schools = item.schoolIssues || item.schoolBreakdown || [];
-  const issues = item.issues || [];
+/* ═══════════════════════════════════════════════════ */
+/* Display helpers — OPTION A: count = overdue actions */
+/* ═══════════════════════════════════════════════════ */
 
-  if (issues.includes("Overdue follow-up") && schools.length > 0) {
-    const overdueSchools = schools.filter(s =>
-      (s.issue || "").toLowerCase().includes("overdue")
-    );
-    const uniqueNames = new Set((overdueSchools.length > 0 ? overdueSchools : schools).map(s => s.school).filter(Boolean));
-    const count = uniqueNames.size || 1;
-    return `${count} school${count !== 1 ? "s" : ""} overdue`;
-  }
-  if (item.schoolCount > 1 && issues.some(i => i === "No activity" || i === "Needs follow-up")) {
-    return `${item.schoolCount} schools at risk`;
+/**
+ * Returns deduped schools from item data.
+ */
+function _getDeduped(item) {
+  const raw = item.schoolIssues || item.schoolBreakdown || [];
+  return dedupeSchools(raw);
+}
+
+/**
+ * Primary headline.
+ * For overdue: "{N} overdue actions" where N = deduped overdue school count.
+ */
+export function getPrimaryHeadline(item) {
+  const issues = item.issues || [];
+  const deduped = _getDeduped(item);
+  const overdueCount = deduped.filter(s => s.hasOverdue).length;
+
+  if (issues.includes("Overdue follow-up") && overdueCount > 0) {
+    return `${overdueCount} overdue action${overdueCount !== 1 ? "s" : ""}`;
   }
   if (issues.includes("No coach assigned")) return "No coach assigned";
   if (issues.includes("Missing requirement")) return "Missing requirement";
@@ -131,70 +185,72 @@ export function getPrimaryHeadline(item) {
   return item.primaryRisk || "Needs attention";
 }
 
-/* ── Short 1-line explanation (max ~8 words, no dashes) ── */
-export function getShortExplanation(item) {
-  const issues = item.issues || [];
-  const has = (s) => issues.includes(s);
-
-  if (has("Overdue follow-up") && has("No activity")) return "Follow-ups missed, momentum dropping";
-  if (has("Overdue follow-up")) return "Follow-ups past due, relationships cooling";
-  if (has("No activity") && has("No coach assigned")) return "No coach, no recent activity";
-  if (has("Escalated issue") && has("No activity")) return "Flagged, needs re-engagement";
-  if (has("Missing requirement")) return "Requirement missing, blocking progress";
-  if (has("Awaiting reply")) return "Waiting for response";
-  if (has("No coach assigned")) return "Unmanaged, needs assignment";
-  if (has("No activity")) return "Momentum dropping, check in needed";
-  if (has("Needs follow-up")) return "Conversation may stall";
-  if (has("Escalated issue")) return "Flagged for review";
-  return "Review recommended";
+/**
+ * Secondary context: "Across {Y} schools" — only shown when Y > 1 and differs from headline count.
+ */
+export function getSecondaryContext(item) {
+  const deduped = _getDeduped(item);
+  if (deduped.length > 1) return `Across ${deduped.length} schools`;
+  if (deduped.length === 1) return deduped[0].school;
+  if (item.schoolName) return item.schoolName;
+  return "";
 }
 
-/* ── Contextual CTA label (specific action + count) ── */
+/**
+ * Compressed single-line: "↘ Worsening · Momentum dropping"
+ */
+export function getCompressedLine(item) {
+  const issues = item.issues || [];
+  const has = (s) => issues.includes(s);
+  const traj = TRAJECTORY[item.trajectory];
+  const showTraj = item.trajectory && item.trajectory !== "stable" && traj;
+
+  let reason = "";
+  if (has("Overdue follow-up") && has("No activity")) reason = "Momentum dropping";
+  else if (has("Overdue follow-up")) reason = "Relationships cooling";
+  else if (has("No activity") && has("No coach assigned")) reason = "No coach, drifting";
+  else if (has("Escalated issue") && has("No activity")) reason = "Flagged, needs re-engagement";
+  else if (has("Missing requirement")) reason = "Blocking progress";
+  else if (has("Awaiting reply")) reason = "Waiting for response";
+  else if (has("No coach assigned")) reason = "Unmanaged";
+  else if (has("No activity")) reason = "Check in needed";
+  else if (has("Escalated issue")) reason = "Flagged for review";
+  else reason = "Review recommended";
+
+  if (showTraj) return `${traj.symbol} ${traj.label} · ${reason}`;
+  return reason;
+}
+
+/**
+ * Contextual CTA label — count always matches headline.
+ * "Send follow-ups ({N})" where N = overdue actions count.
+ */
 export function getContextualCta(item) {
   const issues = item.issues || [];
-  const schools = item.schoolIssues || item.schoolBreakdown || [];
-  const primary = issues[0] || item.primaryRisk || "";
+  const deduped = _getDeduped(item);
+  const overdueCount = deduped.filter(s => s.hasOverdue).length;
 
-  if (issues.includes("Overdue follow-up") && schools.length > 0) {
-    const uniqueSchools = new Set(schools.map(s => s.school).filter(Boolean));
-    return `Send follow-ups (${uniqueSchools.size})`;
+  if (issues.includes("Overdue follow-up") && overdueCount > 0) {
+    return `Send follow-ups (${overdueCount})`;
   }
-  if (primary === "No coach assigned") return "Assign coach";
-  if (primary === "Missing requirement") return "Complete requirement";
-  if (primary === "Awaiting reply") return "Send follow-up";
-  if (primary === "Needs follow-up") return "Send follow-up";
-  if (primary === "No activity") return "Check in";
-  if (primary === "Escalated issue") return "Review escalation";
-  if (item.schoolCount > 1) return "Review schools";
+  if (issues.includes("No coach assigned")) return "Assign coach";
+  if (issues.includes("Missing requirement")) return "Complete requirement";
+  if (issues.includes("Awaiting reply")) return "Send follow-up";
+  if (issues.includes("No activity")) return "Check in";
+  if (issues.includes("Escalated issue")) return "Review escalation";
+  if (deduped.length > 1) return "Review schools";
   return "Open pod";
 }
 
-export function generateWhy(item) {
-  return getShortExplanation(item);
-}
-
-export function getTopPriority(items) {
-  if (!items || items.length === 0) return null;
-  return items[0];
-}
-
-/* ── Context-aware CTA label (legacy compat) ── */
-export function ctaWithContext(item) {
-  return getContextualCta(item);
-}
-
-/* ── Build title: just athlete name, no suffix ── */
-export function buildTitle(item) {
-  return item.athleteName || "Unknown";
-}
-
-/* ── Extract unique school names from schoolIssues or schoolBreakdown ── */
+/**
+ * Extract unique deduped school names (display-ready).
+ */
 export function getSchoolNames(item) {
-  const schools = item.schoolIssues || item.schoolBreakdown || [];
-  const seen = new Set();
-  return schools.map(s => s.school).filter(name => {
-    if (!name || seen.has(name)) return false;
-    seen.add(name);
-    return true;
-  });
+  return _getDeduped(item).map(s => s.school);
 }
+
+/* ── Legacy compat ── */
+export function generateWhy(item) { return getCompressedLine(item); }
+export function getTopPriority(items) { return items?.[0] || null; }
+export function ctaWithContext(item) { return getContextualCta(item); }
+export function buildTitle(item) { return item.athleteName || "Unknown"; }

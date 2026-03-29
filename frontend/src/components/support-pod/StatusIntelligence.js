@@ -154,7 +154,7 @@ export default function StatusIntelligence({ data, escalations, athleteId, onAct
                   style={{ background: "rgba(100,116,139,0.06)", color: "#64748b", border: "1px solid rgba(100,116,139,0.12)" }}
                   data-testid="si-action-view"
                 >
-                  <Eye className="w-3 h-3" /> View Details
+                  <Eye className="w-3 h-3" /> {primaryReason.toLowerCase().includes("overdue") ? "Review overdue actions" : "Open tasks"}
                 </button>
               </div>
             </>

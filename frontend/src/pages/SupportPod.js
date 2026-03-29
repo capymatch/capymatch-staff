@@ -127,18 +127,20 @@ function SchoolRow({ school, athleteId }) {
 
       {/* Center content */}
       <div className="flex-1 min-w-0">
-        {/* Line 1: School Name — Status (inline) */}
-        <div className="flex items-center gap-2">
-          <p className="text-[13px] font-semibold truncate" style={{ color: "#1e293b" }}>
-            {school.university_name}
+        {/* Line 1: School Name */}
+        <p className="text-[13px] font-semibold truncate" style={{ color: "#1e293b" }}>
+          {school.university_name}
+        </p>
+        {/* Line 2 (PRIMARY): Overdue — most visually prominent when present */}
+        {hasOverdue && (
+          <p className="text-[12px] font-bold mt-0.5" style={{ color: "#dc2626" }} data-testid={`overdue-label-${school.program_id}`}>
+            {school.overdue_followups} overdue
           </p>
-          <span className="text-[10px] font-semibold shrink-0" style={{ color: h.color }}>
-            {h.label}
-          </span>
-        </div>
-        {/* Line 2: Stage · last activity */}
+        )}
+        {/* Line 3 (SECONDARY): Risk · Stage · Activity */}
         <p className="text-[11px] mt-0.5" style={{ color: "#94a3b8" }}>
-          {school.recruiting_status}
+          {h.label}
+          {school.recruiting_status && <span> · {school.recruiting_status}</span>}
           {school.reply_status && <span> · {school.reply_status}</span>}
           {school.days_since_last_engagement != null && school.days_since_last_engagement > 0 && school.days_since_last_engagement < 999 && (
             <span> · {school.days_since_last_engagement}d ago</span>
@@ -146,7 +148,7 @@ function SchoolRow({ school, athleteId }) {
         </p>
       </div>
 
-      {/* Right: Overdue badge (dominant when present) + advocate */}
+      {/* Right: Advocate only (overdue is now inline with content) */}
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={(e) => { e.stopPropagation(); navigate(`/advocacy/new?athlete=${athleteId}&schoolName=${encodeURIComponent(school.university_name)}`); }}
@@ -157,15 +159,6 @@ function SchoolRow({ school, athleteId }) {
           <Megaphone className="w-3 h-3" />
           <span className="hidden sm:inline">Advocate</span>
         </button>
-        {hasOverdue && (
-          <span
-            className="text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0"
-            style={{ background: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.15)" }}
-            data-testid={`overdue-badge-${school.program_id}`}
-          >
-            {school.overdue_followups} overdue
-          </span>
-        )}
         <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
       </div>
     </div>
