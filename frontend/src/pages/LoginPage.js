@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { Eye, EyeOff } from "lucide-react";
 import axios from "axios";
@@ -18,7 +18,8 @@ const pageStyle = {
 
 export default function LoginPage() {
   const { login, register, loginWithTokens } = useAuth();
-  const [mode, setMode] = useState("login");
+  const location = useLocation();
+  const [mode, setMode] = useState(location.pathname === "/signup" ? "register" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");

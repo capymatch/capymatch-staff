@@ -118,6 +118,7 @@ function AppRoutes() {
     <Suspense fallback={<LazyFallback />}>
       <Routes>
       <Route path="/login" element={user ? <Navigate to={home} replace /> : <LoginPage />} />
+      <Route path="/signup" element={user ? <Navigate to={home} replace /> : <LoginPage />} />
       <Route path="/forgot-password" element={user ? <Navigate to={home} replace /> : <ForgotPasswordPage />} />
       <Route path="/reset-password" element={user ? <Navigate to={home} replace /> : <ResetPasswordPage />} />
       <Route path="/invite/:token" element={user ? <Navigate to={home} replace /> : <AcceptInvitePage />} />
