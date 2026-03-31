@@ -7,6 +7,8 @@ Uses the unified JWT auth middleware throughout.
 
 log = logging.getLogger(__name__)
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
+from starlette.responses import Response
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import asyncio
@@ -463,6 +465,7 @@ from services.stage_engine import (
 @router.get("/athlete/programs")
 async def list_programs(
     current_user: dict = get_current_user_dep(),
+    response: Response = None,
     grouped: Optional[bool] = Query(False),
     recruiting_status: Optional[str] = None,
     division: Optional[str] = None,
@@ -534,15 +537,10 @@ async def list_programs(
             p["social_links"] = kb["social_links"]
 
     # ── Compute canonical priority per program (Priority Engine v2 SSOT) ──
-    # mx_map already fetched above via batch_get_metrics
-    ta_map = {}
-    for pid in program_ids:
-        try:
-            ta = await compute_top_action(pid, tenant_id)
-            if ta:
-                ta_map[pid] = ta
-        except Exception:
-            pass
+    # Use batch top-action computation: 4 queries total instead of 5 * N
+    from services.top_action_engine import compute_all_top_actions
+    all_top_actions = await compute_all_top_actions(tenant_id)
+    ta_map = {a["program_id"]: a for a in all_top_actions if a.get("program_id")}
 
     for p in programs:
         pid = p["program_id"]
@@ -564,13 +562,14 @@ async def list_programs(
             g = p.get("board_group", "needs_outreach")
             if g in groups:
                 groups[g].append(p)
-        return {
+        result = {
             "groups": groups,
             "counts": {k: len(v) for k, v in groups.items()},
             "total": len(programs),
         }
+        return JSONResponse(content=result, headers={"Cache-Control": "private, max-age=15, stale-while-revalidate=30"})
 
-    return programs
+    return JSONResponse(content=programs, headers={"Cache-Control": "private, max-age=15, stale-while-revalidate=30"})
 
 
 @router.get("/athlete/programs/{program_id}")

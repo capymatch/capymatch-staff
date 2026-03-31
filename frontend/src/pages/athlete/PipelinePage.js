@@ -52,8 +52,21 @@ export default function PipelinePage() {
   const togglePriorityRef = useRef(null);
   const togglePipelineRef = useRef(null);
 
-  /* ── Data fetching ── */
+  /* ── Data fetching with SWR-style instant stale data ── */
   const fetchAll = useCallback(async () => {
+    // Show cached data instantly while revalidating
+    try {
+      const cached = sessionStorage.getItem("pipeline_cache");
+      if (cached) {
+        const { programs, matchScores, tasks, topActions } = JSON.parse(cached);
+        if (programs) setAllPrograms(programs);
+        if (matchScores) setMatchScores(matchScores);
+        if (tasks) setTasks(tasks);
+        if (topActions) setTopActionsMap(topActions);
+        setLoading(false);
+      }
+    } catch { /* ignore parse errors */ }
+
     try {
       const [programsRes, matchRes, tasksRes, topActionsRes] = await Promise.all([
         axios.get(`${API}/athlete/programs`),
@@ -74,6 +87,13 @@ export default function PipelinePage() {
       const actionsMap = {};
       (topActionsRes.data?.actions || []).forEach(a => { actionsMap[a.program_id] = a; });
       setTopActionsMap(actionsMap);
+
+      // Cache for next visit
+      try {
+        sessionStorage.setItem("pipeline_cache", JSON.stringify({
+          programs, matchScores: byId, tasks: tasksRes.data?.tasks || [], topActions: actionsMap,
+        }));
+      } catch { /* quota exceeded — ignore */ }
     } catch { toast.error("Failed to load programs"); }
     finally { setLoading(false); }
   }, []);

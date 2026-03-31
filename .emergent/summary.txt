@@ -1,24 +1,31 @@
 <analysis>**original_problem_statement**: 
-CapyMatch is a production full-stack athlete management platform. The user requested a series of highly specific UI/UX refinements on the Pipeline and Journey pages (improving mobile readability, copy actionability, and layout balance). Following that, the user requested a massive performance optimization pass for the Pipeline and Journey pages without altering underlying logic. Finally, the user requested an architectural fix to synchronize the overdue count in the summary badge with the items displayed in the priority list by establishing a canonical urgency classification.
+The user requested a series of fixes and UI/UX refinements across the platform. First, resolving data mismatches where Coach/Director dashboards and Support Pods showed different counts for overdue actions compared to the actual data. Second, a strict, premium UI/UX polish pass on Mission Control and Target School cards (standardizing language, CTAs, counts, and bulleted lists). Third, adding a dedicated  route for landing page integration. Finally, fixing a critical 15-second production load time on the My Schools (Pipeline) page without changing underlying logic or displayed data.
 
 **User's preferred language**: English
 *(INSTRUCT: Next agent must respond in English only)*
 
 **what currently exists?** 
-A highly optimized React + FastAPI + MongoDB application with a strict Single Source of Truth (SSOT) backend architecture. The Pipeline and Journey pages have been heavily optimized with skeleton loaders, parallelized backend queries, batched DB lookups, and lean payloads. All UI action buttons and cards now use standardized, actionable copy that includes the specific school name (e.g., Follow up with UCLA now). A canonical  has been implemented in the backend to ensure UI badges and summary counts perfectly align.
+A heavily optimized React + FastAPI + MongoDB athlete management platform utilizing a strict Single Source of Truth (SSOT) architecture. The backend employs a Risk Engine to compute signal severities (at_risk, cooling_off, overdue). The Mission Control and Support Pod UI components have just received a massive Apple-level UI/UX polish. The Pipeline page recently received backend GZip compression, cache-control headers, and batched N+1 DB queries to drastically reduce load times, along with frontend SWR (stale-while-revalidate) sessionStorage caching.
 
 **Last working item**: 
-    - Last item agent was working: Unifying the overdue counting logic. The agent created  in  as the canonical SSOT for urgency (Overdue, Due Today, Attention Needed, On Track) so that the Pipeline summary badge count perfectly matches the Priority Board list.
-    - Status: COMPLETED
-    - Agent Testing Done: Y
-    - Which testing method agent to use? testing_agent_v3_fork
+    - Last item agent was working: Debugging a stuck loading screen on the Pipeline () page. The agent successfully optimized the endpoints (cutting payload by 85% via GZip and dropping backend time to <200ms via batching), but after implementing an SWR-style  cache in , the UI failed to render (stuck on the loading state). The user forced a finish before the agent could debug it.
+    - Status: IN PROGRESS
+    - Agent Testing Done: N (Screenshot taken, but issue was not fixed)
+    - Which testing method agent to use? Frontend testing agent / manual screenshot tool to verify Pipeline page render.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**: 
-None from this session.
+  Issue 1: Pipeline Page (My Schools) is stuck in a loading state (P0)
+     - Attempted fixes: Agent implemented  caching,  headers, GZip middleware, and replaced a sequential N+1 query in  with . 
+     - Next debug checklist: Check  for infinite loops, missing dependency arrays in , or malformed data expectations from the newly optimized SWR caching logic. Verify  payload structure wasn't accidentally altered during the batch optimization in .
+     - Why fix this issue and what will be achieved with the fix? This is the core view for athletes. The optimizations successfully dropped the backend time from 15s to ~100ms, but the frontend needs to actually render the data.
+     - Status: IN PROGRESS
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**: 
-None.
+None currently (Only the P0 bug above).
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
@@ -31,14 +38,11 @@ None.
     - (P2) Multi-Agent Intelligence Pipeline.
 
 **Completed work in this session**
-- Pipeline Hero Card Mobile Readability: Grouped school name/logo, replaced em-dashes with bullets in  and  (DONE)
-- Hero Card Signals Clarity: Created  to limit bullets to 3, deduplicate, and add colored status dots (DONE)
-- Pipeline Visual Balance: Adjusted gaps, stage tracker styling, and hover states across Pipeline components (DONE)
-- Sitewide Action Language Standardization: Replaced all passive labels (Review, Check) with active, school-specific labels (Follow up with UCLA now) across 7+ files (DONE)
-- Bug Fix: Suppressed benign  error overlay via  (DONE)
-- P0 Performance Optimization: Reduced  payload by stripping 1.3MB base64 , parallelized Journey DB queries, batched Top-Actions (fixing N+1), added MongoDB indexes, and added progressive skeleton loaders to Frontend (DONE)
-- Mobile Layout Fix: Removed excessive left margin () from the Journey page  on mobile views (DONE)
-- Canonical Urgency SSOT: Built  in  to sync overdue counts between the header badge and the actual priority cards rendered in  (DONE)
+- Overdue Metric Sync: Fixed Coach/Director Inboxes to accurately assess and display school-level  rather than just generic inactivity (DONE).
+- Support Pod Overdue Sync: Modified  to correctly merge program-level overdue actions into the total pod issues count (DONE).
+- Mission Control UI Refinement: Standardized card hierarchy, unified phrasing to {X} overdue actions, deduplicated school names, converted inline lists to gray bullet lists, and updated CTAs to be active/contextual (DONE).
+- Signup Route: Added a  route in  that navigates to the existing  but automatically mounts the Create Account tab (DONE).
+- Pipeline Performance Overhaul: Replaced sequential  calls with batched  in , added GZip middleware in , and added cache-control headers (DONE, but caused frontend regression).
 
 **Earlier issues found/mentioned but not fixed**
    - None
@@ -52,73 +56,72 @@ None.
 
 
 **Key Technical Concepts**
-- **Strict SSOT Architecture**: Backend services are the sole arbiters of application state. Display layers must strictly inherit from  (stages/urgency) and  (priority).
-- **Performance/Progressive Loading**: The frontend uses skeleton loaders instead of full-page spinners to display critical above-the-fold content instantly while secondary data loads.
-- **Lean API Payloads**: Heavy fields (like base64 images) are stripped from default backend responses unless explicitly requested.
+- **Strict SSOT Architecture**: Backend services dictate logic. The UI only formats the response.
+- **Risk Engine**: Determines the severity of inactivity, missing documents, or overdue tasks.
+- **SWR Frontend Caching**: Implemented in PipelinePage to serve stale  data instantly while fetching fresh data in the background.
 
 **key DB schema**
-  - : Core user profiles. (Note:  can contain large base64 strings).
-  - : Contains relations. Frontend dynamically receives , , and  derived on-the-fly by the backend.
+  - 
+  - : Represents an athlete's target school. Contains , , .
+  - : Holds .
+  - : Holds specific actionable task states.
 
 **changes in tech stack**
-  - MongoDB performance was significantly upgraded by adding critical collection indexes during the application startup script ().
+  - Added  to FastAPI backend to reduce payload sizes.
 
 **All files of reference**
--  (Canonical SSOT logic)
--  (Core endpoints for Pipeline/Journey)
--  (Skeleton loading implementation)
--  (Skeleton loading implementation)
--  (Consumes urgency_class)
+-  (Must be investigated for the stuck loading state)
+-  (Specifically )
+-  (Formatting helpers)
+- 
 
 **Areas that need refactoring**:
-- None. A massive performance and code-cleanup pass was just completed.
+- The custom caching logic injected into  needs immediate review, as it broke the render lifecycle.
 
 **key api endpoints**
--  (Now returns canonical )
--  (Now excludes base64  by default to save 1.3MB)
--  (Queries parallelized)
+-  (Heaviest endpoint on Pipeline page; recently batched)
+- 
+- 
 
 **Critical Info for New Agent**
-- **DO NOT alter business logic when making UI changes**. The user is very strict that visual refinements must not break the underlying data truth.
-- **Respect the SSOT**: Never duplicate backend logic (like determining if a program is overdue) in the React frontend. Always read the classification generated by the backend API.
-- **Performance First**: Do not introduce N+1 queries, do not request heavy payloads unneccessarily, and do not remove the React skeleton loaders.
+- **Fix the Pipeline Page FIRST**: The user was highly concerned about a 15-second load time on My Schools (). The previous agent made the backend blazing fast (~100ms) but broke the frontend rendering logic in  while attempting to add an SWR cache. Fix this regression immediately.
+- **Do not alter business logic**: The user is strict about not changing underlying logic or data parameters when doing UI/UX refinements.
 
 **documents and test reports created in this job**
-  -  through 
+  - 
+  - 
+  - 
+  - 
   - 
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. (User) **PENDING (Resolved by Agent, but no subsequent human message)**: Asked why a specific user (Sophia) showed 2 overdue in the summary badge but 3 items in the overdue list. Allowed the agent to unify the overdue classification logic so the UI badge count matches the Priority Board list.
-2. (User) Provided an image and asked to fix a mobile layout issue where there was too much blank space on the left side of the Journey page.
-3. (User) Requested a massive performance optimization pass across Pipeline and Journey pages, specifying that backend API speed and frontend rendering must be improved without altering any business logic.
-4. (User) Requested that every action button/label across the app include BOTH the action and the school name (e.g., Follow up with UCLA now instead of Follow up now).
-5. (User) Provided an image of a  React error overlay preventing login visibility.
-6. (User) Requested standardizing all action language sitewide to replace passive labels (Review, Check) with active ones (Reply now, Maintain momentum).
-7. (User) Asked to replace the hero title Review this school with a more actionable Follow up with UCLA now without changing logic.
-8. (User) Requested further visual refinement: increasing school name prominence, reducing weight of action title, and adding hover states to cards.
-9. (User) Requested visual balance tweaks to the Hero layout, including reducing gaps and softening the stage tracker contrast.
-10. (User) Requested reducing redundancy in the Hero card signals, limiting to 3 bullet points, and ensuring short scannable phrases. 
+1. (User) Requested adding a dedicated link/route directly to the signup view.
+2. (User) Clarified they need it for a public landing page (buttons for Sign In vs Sign Up).
+3. (User) Stated that My Schools (Pipeline page) takes more than 15 seconds to load in prod. Instructed strictly: DO NOT CHANGE ANY LOGIC. DO NOT CHANGE ANY DATA DISPLAYED.
+4. (Agent) Implemented backend optimizations (batching, GZip) and frontend SWR caching. Took a screenshot.
+5. (User) **PENDING (Interruption)**: Finish this task - The user forced the agent to stop before the agent could fix the fact that the Pipeline page screenshot showed an infinite loading state.
 
 **Project Health Check:**
-- Broken: None
+- Broken:  (Stuck in loading state)
 - Mocked: None
 
 **3rd Party Integrations** 
-  - OpenAI GPT-4o / Claude — uses Emergent LLM Key
+  - OpenAI GPT / Claude — uses Emergent LLM Key
   - Stripe (Payments) — requires User API Key
   - Resend (Email) — requires User API Key
   - Google OAuth — requires User Client ID/Secret
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Iterations 274 - 280)
+  - Testing agent used after significant changes: YES (For UI/UX refinements). NO (for the final Pipeline optimization task).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
-  - Known regressions: None
+  - Known regressions: [1]  is stuck loading and fails to render.
 
 **Credentials to test flow:**
-*(Refer to  for full list)*
+*(Refer to )*
 - Athlete:  / 
+- Coach:  / 
 - Director:  / 
 
 **What agent forgot to execute**
-- The agent perfectly completed the user's final architectural request regarding the overdue discrepancy. No tasks were missed.</analysis>
+- The agent failed to debug and fix the Pipeline page loading state regression because the user prematurely told the agent to Finish this task.</analysis>

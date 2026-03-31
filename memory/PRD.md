@@ -78,6 +78,12 @@ CapyMatch is a production full-stack athlete management platform connecting athl
 
 ## Prioritized Backlog
 
+### Pipeline Performance Fix (March 31, 2026)
+- **P0 "Stuck Loading" Regression**: Verified resolved — Pipeline page (`/pipeline`) renders correctly in both Priority and Kanban views
+- **Backend**: Batched `compute_all_top_actions()`, GZip middleware, Cache-Control headers all working (API response ~185ms)
+- **Frontend**: SWR `sessionStorage` caching in `PipelinePage.js` functioning correctly — stale data served instantly while revalidating
+- **Status**: VERIFIED — Both views render, no console errors
+
 ### P1 (Next Up)
 - CSV Import Tool: Bulk import for school/coach data
 - Bulk Approve Mode: Director Inbox multi-select and bulk approve

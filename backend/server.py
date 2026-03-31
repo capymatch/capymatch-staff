@@ -6,6 +6,7 @@ runs the startup pipeline, and manages background tasks.
 
 from fastapi import FastAPI, APIRouter, HTTPException
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 import os
 import asyncio
 import logging
@@ -78,6 +79,9 @@ logger = logging.getLogger(__name__)
 
 # Create the main app
 app = FastAPI()
+
+# ── GZip compression — reduces payload size 70-80% ──
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Parent router with /api prefix — all sub-routers inherit this
 api_router = APIRouter(prefix="/api")

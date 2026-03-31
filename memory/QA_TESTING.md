@@ -2,7 +2,7 @@
 
 **Version**: 1.0
 **Date**: March 23, 2026
-**App URL**: https://capymatch-perf-pass.preview.emergentagent.com
+**App URL**: https://frontend-stuck.preview.emergentagent.com
 
 ---
 
