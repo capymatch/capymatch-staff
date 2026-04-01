@@ -4,7 +4,7 @@ import os
 import jwt
 import uuid
 from datetime import datetime, timezone, timedelta
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from pathlib import Path
@@ -70,6 +70,7 @@ def decode_refresh_token(token: str) -> dict:
 
 
 async def _get_current_user(
+    request: Request,
     creds: HTTPAuthorizationCredentials = Depends(_bearer),
 ):
     if not creds:
@@ -77,14 +78,24 @@ async def _get_current_user(
     payload = decode_token(creds.credentials)
     if payload.get("type") == "refresh":
         raise HTTPException(status_code=401, detail="Cannot use refresh token for API access")
+    
+    role = payload["role"]
+    roles = payload.get("roles") or []
+    
+    # Allow role switching: if user has multiple roles and sends X-Effective-Role header,
+    # use that role (only if it's in their allowed roles list)
+    effective = request.headers.get("x-effective-role")
+    if effective and roles and effective in roles:
+        role = effective
+    
     return {
         "id": payload["sub"],
         "email": payload["email"],
         "name": payload["name"],
-        "role": payload["role"],
+        "role": role,
         "org_id": payload.get("org_id"),
         "athlete_id": payload.get("athlete_id"),
-        "roles": payload.get("roles"),
+        "roles": roles,
     }
 
 

@@ -24,6 +24,16 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
+  // Send effective role header with every request
+  useEffect(() => {
+    const id = axios.interceptors.request.use((config) => {
+      const role = localStorage.getItem("capymatch_active_role");
+      if (role) config.headers["X-Effective-Role"] = role;
+      return config;
+    });
+    return () => axios.interceptors.request.eject(id);
+  }, []);
+
   // Refresh token helper
   const refreshAccessToken = useCallback(async () => {
     const refreshToken = localStorage.getItem("capymatch_refresh_token");
