@@ -43,6 +43,8 @@ def _safe_user(doc):
     }
     if doc.get("athlete_id"):
         safe["athlete_id"] = doc["athlete_id"]
+    if doc.get("roles"):
+        safe["roles"] = doc["roles"]
     return safe
 
 
