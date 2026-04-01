@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import "../../components/pipeline/pipeline-premium.css";
 import {
-  ArrowLeft, Archive, RotateCcw, User, Mail, Phone,
+  ArrowLeft, Archive, RotateCcw, User, Users, Mail, Phone,
   Edit2, Trash2, Plus, AlertCircle, Clock, ExternalLink,
   Sparkles, Loader2, X, CheckCircle2, ClipboardCheck,
   Eye, Send, Share2,
@@ -557,64 +557,47 @@ export default function JourneyPage() {
       backgroundColor: 'var(--cm-bg)',
     }} data-testid="journey-page">
       {/* ─── HEADER BAR ─── */}
-      <header className="bg-white/95 border-b border-gray-100/80 -mx-2 -mt-4 sm:-mx-6 sm:-mt-6 mb-4" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.03), 0 0.5px 1px rgba(0,0,0,0.02)" }} data-testid="journey-header-bar">
-        <div className="px-2 sm:px-4 py-2.5 sm:py-3" style={{ maxWidth: 1120, margin: "0 auto" }}>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <header className="-mx-2 -mt-4 sm:-mx-6 sm:-mt-6 mb-4" style={{ background: "#1a1e2e", borderBottom: "3px solid #0d9488" }} data-testid="journey-header-bar">
+        <div className="px-4 sm:px-6 pt-6 pb-5" style={{ maxWidth: 1120, margin: "0 auto" }}>
+          {/* Row 1: Back + Logo + Name + Actions */}
+          <div className="flex items-center gap-x-4">
             <button
               onClick={() => navigate("/pipeline")}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors shrink-0"
+              className="flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-colors"
+              style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
               data-testid="back-to-pipeline"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Pipeline</span>
+              <ArrowLeft className="w-4 h-4 text-white/70" />
             </button>
-            <div className="h-5 w-px bg-gray-200 hidden sm:block" />
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={36} className="rounded-full shrink-0" style={{ border: "1px solid #e5e7eb" }} />
-              <div className="min-w-0">
-                <h1 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate" data-testid="journey-school-name">
-                  {program.university_name}
-                </h1>
-                <p className="text-[11px] sm:text-xs text-gray-500 truncate">
-                  {[program.division, program.conference, `${timeline.length} interactions`].filter(Boolean).join(" · ")}
-                </p>
-              </div>
+            <UniversityLogo name={program.university_name} logoUrl={logoUrl} domain={domain} size={44} className="rounded-xl shrink-0" style={{ border: "2px solid rgba(255,255,255,0.15)" }} />
+            <div className="min-w-0 flex-1">
+              <h1 className="font-bold text-white text-lg sm:text-xl leading-tight truncate" data-testid="journey-school-name">
+                {program.university_name}
+              </h1>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
-              {matchScore && (
-                <span className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-teal-600 bg-teal-50 rounded-full shrink-0"
-                  data-testid="journey-match-score">
-                  {matchScore.match_score}%
-                </span>
-              )}
+            <div className="flex items-center gap-2 ml-auto shrink-0">
               <button onClick={() => navigate(`/compare?selected=${programId}`)}
-                className="hidden sm:flex p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ backgroundColor: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.75)" }}
                 data-testid="compare-btn"
                 title="Compare">
-                <GitCompare className="w-3.5 h-3.5 text-gray-400" />
+                <GitCompare className="w-3.5 h-3.5" /> Compare
               </button>
-              {program.questionnaire_url && (
-                <a href={program.questionnaire_url} target="_blank" rel="noopener noreferrer"
-                  className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-                  data-testid="questionnaire-link"
-                  title="Questionnaire">
-                  <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-                </a>
-              )}
               {isArchived ? (
                 <button onClick={handleArchiveToggle}
-                  className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 rounded-full transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  style={{ backgroundColor: "rgba(13,148,136,0.15)", border: "1px solid rgba(13,148,136,0.25)", color: "#5eead4" }}
                   data-testid="reactivate-btn">
-                  <RotateCcw className="w-3 h-3" />
-                  <span className="hidden sm:inline">Reactivate</span>
+                  <RotateCcw className="w-3 h-3" /> Reactivate
                 </button>
               ) : (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                    <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                      style={{ backgroundColor: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.75)" }}
                       data-testid="archive-btn"
                       title="Archive">
-                      <Archive className="w-3.5 h-3.5 text-gray-400" />
+                      <Archive className="w-3.5 h-3.5" /> Archive
                     </button>
                   </AlertDialogTrigger>
                   <AlertDialogContent style={{ background: "var(--cm-surface)", borderColor: "var(--cm-border)" }}>
@@ -641,46 +624,93 @@ export default function JourneyPage() {
                   </AlertDialogContent>
                 </AlertDialog>
               )}
-              {coachWatch?.state && (
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full"
-                  style={{
-                    backgroundColor: coachWatch.state === "hot" ? "rgba(239,68,68,0.08)"
-                      : coachWatch.state === "warm" ? "rgba(245,158,11,0.08)"
-                      : coachWatch.state === "active" ? "rgba(13,148,136,0.08)"
-                      : "rgba(100,116,139,0.08)"
-                  }}
-                  data-testid="journey-health-badge">
-                  <div className="w-2 h-2 rounded-full"
-                    style={{
-                      backgroundColor: coachWatch.state === "hot" ? "#ef4444"
-                        : coachWatch.state === "warm" ? "#f59e0b"
-                        : coachWatch.state === "active" ? "#0d9488"
-                        : "#64748b"
-                    }} />
-                  <Activity className="w-3.5 h-3.5"
-                    style={{
-                      color: coachWatch.state === "hot" ? "#ef4444"
-                        : coachWatch.state === "warm" ? "#f59e0b"
-                        : coachWatch.state === "active" ? "#0d9488"
-                        : "#64748b"
-                    }} />
-                </div>
-              )}
             </div>
           </div>
 
-          {/* ── Compact Progress Rail (light-mode) ── */}
+          {/* Row 2: Tags/badges */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {coachWatch?.state && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold"
+                style={{
+                  backgroundColor: coachWatch.state === "hot" ? "rgba(239,68,68,0.15)"
+                    : coachWatch.state === "warm" ? "rgba(245,158,11,0.15)"
+                    : coachWatch.state === "active" ? "rgba(13,148,136,0.15)"
+                    : "rgba(148,163,184,0.15)",
+                  color: coachWatch.state === "hot" ? "#fca5a5"
+                    : coachWatch.state === "warm" ? "#fcd34d"
+                    : coachWatch.state === "active" ? "#5eead4"
+                    : "#94a3b8",
+                }}
+                data-testid="journey-health-badge">
+                <div className="w-1.5 h-1.5 rounded-full" style={{
+                  backgroundColor: coachWatch.state === "hot" ? "#ef4444"
+                    : coachWatch.state === "warm" ? "#f59e0b"
+                    : coachWatch.state === "active" ? "#0d9488"
+                    : "#64748b"
+                }} />
+                {coachWatch.state.charAt(0).toUpperCase() + coachWatch.state.slice(1)}
+              </span>
+            )}
+            {program.division && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold"
+                style={{ backgroundColor: "rgba(16,185,129,0.12)", color: "#6ee7b7" }}>
+                {program.division}
+              </span>
+            )}
+            {matchScore?.match_score != null && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold"
+                style={{ backgroundColor: "rgba(234,179,8,0.12)", color: "#fde047" }}
+                data-testid="journey-match-score">
+                {matchScore.match_score}% Match
+              </span>
+            )}
+            {program.conference && (
+              <span className="text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {program.conference}
+              </span>
+            )}
+            <span className="text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>
+              {timeline.length} {timeline.length === 1 ? "event" : "events"}
+            </span>
+            {program.social_links && Object.keys(program.social_links).length > 0 && (
+              <div className="flex items-center gap-1.5 ml-1">
+                {program.social_links.twitter && <a href={program.social_links.twitter} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="rgba(255,255,255,0.4)"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>}
+                {program.social_links.instagram && <a href={program.social_links.instagram} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="rgba(255,255,255,0.4)"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>}
+                {program.social_links.facebook && <a href={program.social_links.facebook} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="rgba(255,255,255,0.4)"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>}
+              </div>
+            )}
+          </div>
+
+          {/* Row 3: Signal badges */}
+          {(program.roster_status || program.timeline_awareness) && (
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              {program.roster_status && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <Users className="w-3 h-3" /> {program.roster_status}
+                </span>
+              )}
+              {program.timeline_awareness && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                  style={{ backgroundColor: "rgba(139,92,246,0.12)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.15)" }}>
+                  <Clock className="w-3 h-3" /> {program.timeline_awareness}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Row 4: Progress Rail */}
           {rail?.active && (
-            <div className="mt-2.5 pt-2 hidden sm:block" style={{ borderTop: "1px solid rgba(0,0,0,0.04)" }} data-testid="header-progress-rail">
-              <div style={{ position: "relative", height: 18, display: "flex", alignItems: "center" }}>
-                {/* Track line */}
-                <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: "translateY(-50%)", height: 4, background: "#dce0e6", borderRadius: 2 }} />
-                {/* Filled line */}
+            <div className="mt-5 hidden sm:block" data-testid="header-progress-rail">
+              <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center" }}>
+                {/* Track line (background) */}
+                <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: "translateY(-50%)", height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 3 }} />
+                {/* Filled line (progress) */}
                 {(() => {
                   const aidx = RAIL_STAGES.findIndex(s => s.key === rail.active);
                   const fill = aidx > 0 ? aidx / (RAIL_STAGES.length - 1) : 0;
                   return fill > 0 ? (
-                    <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: `translateY(-50%) scaleX(${fill})`, transformOrigin: "left", height: 4, background: RAIL_STAGES[aidx]?.color || "#0d9488", borderRadius: 2, transition: "transform 0.5s ease" }} />
+                    <div style={{ position: "absolute", left: `${100 / (RAIL_STAGES.length * 2)}%`, right: `${100 / (RAIL_STAGES.length * 2)}%`, top: "50%", transform: `translateY(-50%) scaleX(${fill})`, transformOrigin: "left", height: 4, background: `linear-gradient(90deg, #94a3b8, ${RAIL_STAGES[Math.min(1, aidx)]?.color || "#0d9488"}, ${RAIL_STAGES[aidx]?.color || "#0d9488"})`, borderRadius: 3, transition: "transform 0.5s ease" }} />
                   ) : null;
                 })()}
                 {/* Stage dots */}
@@ -688,16 +718,16 @@ export default function JourneyPage() {
                   const aidx = RAIL_STAGES.findIndex(st => st.key === rail.active);
                   const isActive = s.key === rail.active;
                   const isPast = aidx >= 0 && idx < aidx;
-                  const dotSize = isActive ? 16 : 8;
+                  const dotSize = isActive ? 20 : isPast ? 12 : 10;
                   return (
                     <button key={s.key} onClick={() => handleStageClick(s.key)}
                       data-testid={`header-rail-${s.key}`}
                       style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", zIndex: 1 }}>
                       <div style={{
                         width: dotSize, height: dotSize, borderRadius: "50%",
-                        background: isActive || isPast ? s.color : "#fff",
-                        border: `2px solid ${isActive || isPast ? s.color : "#cbd5e1"}`,
-                        boxShadow: isActive ? `0 0 12px ${s.color}70, 0 0 5px ${s.color}50` : "none",
+                        background: isActive ? s.color : isPast ? s.color : "transparent",
+                        border: isActive || isPast ? `2px solid ${s.color}` : `2px solid rgba(255,255,255,0.2)`,
+                        boxShadow: isActive ? `0 0 16px ${s.color}90, 0 0 6px ${s.color}60` : "none",
                         transition: "all 0.3s",
                       }} />
                     </button>
@@ -705,7 +735,7 @@ export default function JourneyPage() {
                 })}
               </div>
               {/* Labels */}
-              <div style={{ display: "flex", marginTop: 4, marginBottom: 2 }}>
+              <div style={{ display: "flex", marginTop: 6 }}>
                 {RAIL_STAGES.map((s) => {
                   const aidx = RAIL_STAGES.findIndex(st => st.key === rail.active);
                   const sidx = RAIL_STAGES.findIndex(st => st.key === s.key);
@@ -714,8 +744,8 @@ export default function JourneyPage() {
                   return (
                     <div key={s.key} style={{ flex: 1, textAlign: "center" }}>
                       <span style={{
-                        fontSize: isActive ? 10 : 9, fontWeight: isActive ? 800 : 500, letterSpacing: "0.02em",
-                        color: isActive ? s.color : isPast ? "#64748b" : "#b8bdc5",
+                        fontSize: isActive ? 11 : 10, fontWeight: isActive ? 700 : 500,
+                        color: isActive ? s.color : isPast ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.25)",
                       }}>{s.label}</span>
                     </div>
                   );
