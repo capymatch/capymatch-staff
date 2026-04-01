@@ -845,7 +845,7 @@ export default function JourneyPage() {
         {/* ─── GRID: Timeline + Sidebar ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* LEFT: Timeline */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 rounded-2xl p-5 sm:p-6" style={{ backgroundColor: "#ffffff", border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 1px 4px rgba(0,0,0,0.03)" }}>
             <div className="mb-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold" style={{ color: "#1a1a1a" }}>Timeline</h2>
