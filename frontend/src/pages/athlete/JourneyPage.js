@@ -557,8 +557,9 @@ export default function JourneyPage() {
       backgroundColor: 'var(--cm-bg)',
     }} data-testid="journey-page">
       {/* ─── HEADER BAR ─── */}
-      <header className="-mx-2 -mt-4 sm:-mx-6 sm:-mt-6 mb-4" style={{ background: "#1a1e2e", borderBottom: "3px solid #0d9488" }} data-testid="journey-header-bar">
-        <div className="px-4 sm:px-6 pt-6 pb-5" style={{ maxWidth: 1120, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-0 sm:px-6 mt-0 sm:-mt-2">
+      <header className="mb-4 rounded-2xl overflow-hidden" style={{ background: "#1a1e2e" }} data-testid="journey-header-bar">
+        <div className="px-4 sm:px-6 pt-6 pb-5">
           {/* Row 1: Back + Logo + Name + Actions */}
           <div className="flex items-center gap-x-4">
             <button
@@ -755,6 +756,7 @@ export default function JourneyPage() {
           )}
         </div>
       </header>
+      </div>
 
       {/* ─── MAIN CONTENT ─── */}
       <div style={{ maxWidth: 1120, margin: "0 auto" }} className="px-0 sm:px-6 mt-2">
