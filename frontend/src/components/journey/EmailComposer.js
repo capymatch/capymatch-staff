@@ -151,7 +151,7 @@ export function EmailComposer({ coaches, programId, universityName, onSent, onCa
             className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition-all hover:shadow-[0_0_20px_rgba(26,138,128,0.4)]"
             style={{ background: "linear-gradient(135deg, #1a8a80, #25a99e)" }}
             data-testid="send-email-btn">
-            <Send className="w-4 h-4" />{sending ? "Sending..." : "Log Email"}
+            <Send className="w-4 h-4" />{sending ? "Sending..." : "Send Email"}
           </Button>
         </div>
       </div>
