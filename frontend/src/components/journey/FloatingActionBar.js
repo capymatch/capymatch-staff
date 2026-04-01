@@ -1,38 +1,39 @@
-import { Mail, Phone, ClipboardList, MessageSquare, ChevronRight } from "lucide-react";
+import { Mail, ClipboardList, CheckCircle2, Clock } from "lucide-react";
 
-export function FloatingActionBar({ onEmail, onCall, onLog, onFollowUp }) {
+export function FloatingActionBar({ onEmail, onLog, onReplied, onFollowup, activeAction }) {
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full border shadow-lg"
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center rounded-2xl"
       style={{
-        backgroundColor: "rgba(255,255,255,0.95)",
-        borderColor: "rgba(20,37,68,0.08)",
-        boxShadow: "0 -2px 0 rgba(0,0,0,0.02), 0 6px 28px rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.08)",
-        backdropFilter: "blur(16px)",
+        backgroundColor: "#1a1a1e",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.28), 0 2px 8px rgba(0,0,0,0.12)",
       }}
       data-testid="floating-action-bar">
       <button onClick={onEmail}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-        style={{ color: "#fff", backgroundColor: "#0d9488" }}
+        className="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors hover:bg-white/10 rounded-l-2xl"
+        style={{ color: "#ffffff" }}
         data-testid="fab-email">
-        <Mail className="w-3.5 h-3.5" />Email
+        <Mail className="w-4 h-4" />Email
       </button>
-      <button onClick={onCall}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border hover:bg-slate-50"
-        style={{ color: "#475569", borderColor: "#e2e8f0" }}
-        data-testid="fab-call">
-        <Phone className="w-3.5 h-3.5" />Call
-      </button>
+      <div className="w-px h-5" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
       <button onClick={onLog}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border hover:bg-slate-50"
-        style={{ color: "#475569", borderColor: "#e2e8f0" }}
+        className="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors hover:bg-white/10"
+        style={{ color: "#ffffff" }}
         data-testid="fab-log">
-        <ClipboardList className="w-3.5 h-3.5" />Log
+        <ClipboardList className="w-4 h-4" />Log
       </button>
-      <button onClick={onFollowUp}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border hover:bg-slate-50"
-        style={{ color: "#475569", borderColor: "#e2e8f0" }}
+      <div className="w-px h-5" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+      <button onClick={onReplied}
+        className="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors hover:bg-white/10"
+        style={{ color: "#ffffff" }}
+        data-testid="fab-replied">
+        <CheckCircle2 className="w-4 h-4" />Mark as Replied
+      </button>
+      <div className="w-px h-5" style={{ backgroundColor: "rgba(255,255,255,0.15)" }} />
+      <button onClick={onFollowup}
+        className="flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors hover:bg-white/10 rounded-r-2xl"
+        style={{ color: "#ffffff" }}
         data-testid="fab-followup">
-        <MessageSquare className="w-3.5 h-3.5" />Follow-up
+        <Clock className="w-4 h-4" />Follow-up
       </button>
     </div>
   );

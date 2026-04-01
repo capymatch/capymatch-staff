@@ -846,9 +846,12 @@ export default function JourneyPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* LEFT: Timeline */}
           <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[11px] font-extrabold uppercase tracking-[1.5px]" style={{ color: "#6b6358" }}>Timeline</h2>
-              <span className="text-[10px] font-medium" style={{ color: "#6b6358" }} data-testid="timeline-count">{timeline.length} interactions</span>
+            <div className="mb-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold" style={{ color: "#1a1a1a" }}>Timeline</h2>
+                <span className="text-[11px] font-medium" style={{ color: "#9ca3af" }} data-testid="timeline-count">{timeline.length} interactions</span>
+              </div>
+              <p className="text-sm mt-0.5" style={{ color: "#9ca3af" }}>Every email, reply, and interaction — all in one place</p>
             </div>
 
             {/* J3: Gmail Connect Nudge */}
