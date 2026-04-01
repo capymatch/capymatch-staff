@@ -28,6 +28,7 @@ def create_token(user: dict) -> str:
         "role": user["role"],
         "org_id": user.get("org_id"),
         "athlete_id": user.get("athlete_id"),
+        "roles": user.get("roles"),
         "type": "access",
         "exp": datetime.now(timezone.utc) + timedelta(hours=ACCESS_EXPIRY_HOURS),
     }
@@ -83,6 +84,7 @@ async def _get_current_user(
         "role": payload["role"],
         "org_id": payload.get("org_id"),
         "athlete_id": payload.get("athlete_id"),
+        "roles": payload.get("roles"),
     }
 
 

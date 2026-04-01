@@ -147,6 +147,7 @@ class UserOut(BaseModel):
     email: str
     name: str
     role: str
+    roles: Optional[list] = None
     org_id: Optional[str] = None
     created_at: str = ""
     athlete_id: Optional[str] = None
@@ -163,6 +164,7 @@ class MeResponse(BaseModel):
     email: str
     name: str
     role: str
+    roles: Optional[list] = None
     org_id: Optional[str] = None
     athlete_id: Optional[str] = None
     photo_url: Optional[str] = ""
