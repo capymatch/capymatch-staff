@@ -69,7 +69,7 @@ function getHomeRoute(role, onboardingDone) {
 }
 
 function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
-  const { user, loading, onboardingDone } = useAuth();
+  const { user, loading, onboardingDone, effectiveRole } = useAuth();
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
@@ -78,11 +78,11 @@ function ProtectedRoute({ children, useLayout = true, allowedRoles }) {
     );
   }
   if (!user) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user.role) && user.role !== "platform_admin") {
-    return <Navigate to={getHomeRoute(user.role, onboardingDone)} replace />;
+  const role = effectiveRole || user.role;
+  if (allowedRoles && !allowedRoles.includes(role) && role !== "platform_admin") {
+    return <Navigate to={getHomeRoute(role, onboardingDone)} replace />;
   }
-  // For athletes: wait for onboarding check, then redirect if needed
-  const isAthlete = user.role === "athlete" || user.role === "parent";
+  const isAthlete = role === "athlete" || role === "parent";
   if (isAthlete && onboardingDone === null) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--cm-bg)" }}>
@@ -106,13 +106,14 @@ function LazyFallback() {
 }
 
 function AppRoutes() {
-  const { user, loading, onboardingDone } = useAuth();
+  const { user, loading, onboardingDone, effectiveRole } = useAuth();
 
   if (loading) {
     return <LazyFallback />;
   }
 
-  const home = user ? getHomeRoute(user.role, onboardingDone) : "/login";
+  const role = effectiveRole || user?.role;
+  const home = user ? getHomeRoute(role, onboardingDone) : "/login";
 
   return (
     <Suspense fallback={<LazyFallback />}>

@@ -1,22 +1,38 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Moon, Sun, LogOut, User, Menu, Settings, CreditCard, ChevronDown, Receipt } from "lucide-react";
+import { Moon, Sun, LogOut, User, Menu, Settings, CreditCard, ChevronDown, Receipt, Shield, Users, GraduationCap, Megaphone } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 import { useTheme } from "@/ThemeContext";
 import NotificationBell from "../NotificationBell";
 
+const ROLE_CONFIG = {
+  platform_admin: { label: "Admin", icon: Shield, color: "#8b5cf6", home: "/admin/dashboard" },
+  director: { label: "Director", icon: Megaphone, color: "#f59e0b", home: "/mission-control" },
+  coach: { label: "Coach", icon: Users, color: "#0d9488", home: "/mission-control" },
+  club_coach: { label: "Coach", icon: Users, color: "#0d9488", home: "/mission-control" },
+  athlete: { label: "Athlete", icon: GraduationCap, color: "#3b82f6", home: "/board" },
+  parent: { label: "Parent", icon: User, color: "#6366f1", home: "/board" },
+};
+
 export default function TopBar({ title, icon: Icon, onMenuToggle }) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, effectiveRole, switchRole } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const roleRef = useRef(null);
 
   const handleLogout = () => { logout(); navigate("/login"); };
-  const isAthlete = user?.role === "athlete" || user?.role === "parent";
+  const currentRole = effectiveRole || user?.role;
+  const isAthlete = currentRole === "athlete" || currentRole === "parent";
+  const hasMultipleRoles = user?.roles && user.roles.length > 1;
 
   useEffect(() => {
-    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (roleRef.current && !roleRef.current.contains(e.target)) setRoleMenuOpen(false);
+    };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -39,6 +55,51 @@ export default function TopBar({ title, icon: Icon, onMenuToggle }) {
       </div>
 
       <div className="flex items-center gap-1">
+        {/* Role Switcher */}
+        {hasMultipleRoles && (
+          <div className="relative" ref={roleRef}>
+            <button onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:opacity-90"
+              style={{
+                backgroundColor: `${ROLE_CONFIG[currentRole]?.color || "#6b7280"}15`,
+                color: ROLE_CONFIG[currentRole]?.color || "#6b7280",
+                border: `1px solid ${ROLE_CONFIG[currentRole]?.color || "#6b7280"}25`,
+              }}
+              data-testid="role-switcher-trigger">
+              {(() => { const RIcon = ROLE_CONFIG[currentRole]?.icon || User; return <RIcon className="w-3.5 h-3.5" />; })()}
+              {ROLE_CONFIG[currentRole]?.label || currentRole}
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {roleMenuOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-48 rounded-xl py-1.5 z-50 border overflow-hidden"
+                style={{ backgroundColor: "var(--cm-surface)", borderColor: "var(--cm-border)", boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
+                data-testid="role-switcher-dropdown">
+                <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--cm-text-4)" }}>Switch View</p>
+                {user.roles.map((r) => {
+                  const cfg = ROLE_CONFIG[r] || { label: r, icon: User, color: "#6b7280", home: "/board" };
+                  const RoleIcon = cfg.icon;
+                  const isActive = r === currentRole;
+                  return (
+                    <button key={r}
+                      onClick={() => {
+                        switchRole(r);
+                        setRoleMenuOpen(false);
+                        navigate(cfg.home);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-white/5"
+                      style={{ color: isActive ? cfg.color : "var(--cm-text-2)", fontWeight: isActive ? 600 : 400 }}
+                      data-testid={`role-switch-${r}`}>
+                      <RoleIcon className="w-4 h-4" style={{ color: cfg.color }} />
+                      {cfg.label}
+                      {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.color }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Notifications */}
         <NotificationBell />
 

@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("capymatch_token"));
   const [loading, setLoading] = useState(true);
   const [onboardingDone, setOnboardingDone] = useState(null);
+  const [activeRole, setActiveRole] = useState(localStorage.getItem("capymatch_active_role") || null);
   const refreshingRef = useRef(null);
 
   // Persist tokens
@@ -199,6 +200,30 @@ export function AuthProvider({ children }) {
 
   const completeOnboarding = () => setOnboardingDone(true);
 
+  const switchRole = (role) => {
+    setActiveRole(role);
+    localStorage.setItem("capymatch_active_role", role);
+  };
+
+  // Derive the effective role: activeRole override if user has multiple roles
+  const effectiveRole = (user?.roles && user.roles.length > 1 && activeRole && user.roles.includes(activeRole))
+    ? activeRole
+    : (user?.role || null);
+
+  // When user changes, initialize activeRole if not set or invalid
+  useEffect(() => {
+    if (user?.roles && user.roles.length > 1) {
+      if (!activeRole || !user.roles.includes(activeRole)) {
+        const defaultRole = user.roles[0];
+        setActiveRole(defaultRole);
+        localStorage.setItem("capymatch_active_role", defaultRole);
+      }
+    } else if (user?.role) {
+      setActiveRole(user.role);
+      localStorage.setItem("capymatch_active_role", user.role);
+    }
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const logout = async () => {
     try {
       await axios.post(`${API}/auth/logout`);
@@ -209,7 +234,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token, loading, login, register, googleLogin, loginWithTokens, logout, onboardingDone, completeOnboarding }}>
+    <AuthContext.Provider value={{ user, setUser, token, loading, login, register, googleLogin, loginWithTokens, logout, onboardingDone, completeOnboarding, activeRole, effectiveRole, switchRole }}>
       {children}
     </AuthContext.Provider>
   );

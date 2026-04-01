@@ -46,8 +46,9 @@ export default function AppLayout({ children, title, icon }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("cm-sidebar-collapsed") === "true");
   const [aiOpen, setAiOpen] = useState(false);
-  const { user } = useAuth();
-  const isAthlete = user?.role === "athlete" || user?.role === "parent";
+  const { user, effectiveRole } = useAuth();
+  const role = effectiveRole || user?.role;
+  const isAthlete = role === "athlete" || role === "parent";
 
   const toggleCollapsed = () => {
     setCollapsed(prev => {

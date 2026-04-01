@@ -46,11 +46,12 @@ const ATHLETE_NAV = [
 export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isAthlete = user?.role === "athlete" || user?.role === "parent";
-  const isDirector = user?.role === "director";
-  const isAdmin = user?.role === "platform_admin";
-  const isStaff = isDirector || user?.role === "club_coach" || isAdmin;
+  const { user, effectiveRole } = useAuth();
+  const role = effectiveRole || user?.role;
+  const isAthlete = role === "athlete" || role === "parent";
+  const isDirector = role === "director";
+  const isAdmin = role === "platform_admin";
+  const isStaff = isDirector || role === "club_coach" || isAdmin;
 
   const [unreadMessages, setUnreadMessages] = useState(0);
 
