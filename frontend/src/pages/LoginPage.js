@@ -451,46 +451,6 @@ export default function LoginPage() {
                 </div>
 
                 {/* Demo box */}
-                <div
-                  style={{
-                    border: "1px solid #e7dfd4",
-                    background: "#fcfbf9",
-                    borderRadius: 20,
-                    padding: 18,
-                  }}
-                >
-                  <h3 className="text-sm font-extrabold uppercase tracking-[0.08em] text-[#667085] mb-2.5 mt-0">
-                    Quick access
-                  </h3>
-                  <div className="grid gap-2.5">
-                    {demoAccounts.map((d) => (
-                      <div
-                        key={d.email}
-                        className="flex items-center justify-between gap-3"
-                        style={{
-                          background: "white",
-                          border: "1px solid #e7dfd4",
-                          borderRadius: 16,
-                          padding: 14,
-                        }}
-                      >
-                        <div>
-                          <strong className="block text-[15px] text-[#101828] mb-0.5">{d.label}</strong>
-                          <span className="text-[13px] text-[#667085]">{d.desc}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => { setEmail(d.email); setPassword(d.pw); }}
-                          className="border border-[#e7dfd4] bg-white text-[#101828] font-bold cursor-pointer hover:bg-gray-50 transition-colors text-sm"
-                          style={{ borderRadius: 12, padding: "10px 12px" }}
-                          data-testid={`demo-${d.label.toLowerCase().replace(/\s+/g, "-")}`}
-                        >
-                          Use
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </>
             )}
           </div>
