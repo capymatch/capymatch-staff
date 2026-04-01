@@ -82,7 +82,8 @@ CapyMatch is a production full-stack athlete management platform connecting athl
 - **P0 "Stuck Loading" Regression**: Verified resolved — Pipeline page (`/pipeline`) renders correctly in both Priority and Kanban views
 - **Backend**: Batched `compute_all_top_actions()`, GZip middleware, Cache-Control headers all working (API response ~185ms)
 - **Frontend**: SWR `sessionStorage` caching in `PipelinePage.js` functioning correctly — stale data served instantly while revalidating
-- **Status**: VERIFIED — Both views render, no console errors
+- **Removed redundant `/api/internal/programs/top-actions` call** — data already embedded in programs response via `attention` field. Eliminated dead `topActionsMap` state. Reduced API calls from 10 to 9 unique per page load.
+- **Status**: VERIFIED — Both views render, no console errors, 0 redundant calls
 
 ### P1 (Next Up)
 - CSV Import Tool: Bulk import for school/coach data

@@ -32,7 +32,7 @@ export default function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [matchScores, setMatchScores] = useState({});
   const [tasks, setTasks] = useState([]);
-  const [topActionsMap, setTopActionsMap] = useState({});
+  // topActionsMap removed — attention data is already embedded in each program from /api/athlete/programs
   const [collapsedArchived, setCollapsedArchived] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [justDroppedId, setJustDroppedId] = useState(null);
@@ -58,21 +58,19 @@ export default function PipelinePage() {
     try {
       const cached = sessionStorage.getItem("pipeline_cache");
       if (cached) {
-        const { programs, matchScores, tasks, topActions } = JSON.parse(cached);
+        const { programs, matchScores, tasks } = JSON.parse(cached);
         if (programs) setAllPrograms(programs);
         if (matchScores) setMatchScores(matchScores);
         if (tasks) setTasks(tasks);
-        if (topActions) setTopActionsMap(topActions);
         setLoading(false);
       }
     } catch { /* ignore parse errors */ }
 
     try {
-      const [programsRes, matchRes, tasksRes, topActionsRes] = await Promise.all([
+      const [programsRes, matchRes, tasksRes] = await Promise.all([
         axios.get(`${API}/athlete/programs`),
         axios.get(`${API}/match-scores`).catch(() => ({ data: { scores: [] } })),
         axios.get(`${API}/athlete/tasks`).catch(() => ({ data: { tasks: [] } })),
-        axios.get(`${API}/internal/programs/top-actions`).catch(() => ({ data: { actions: [] } })),
       ]);
 
       const programs = Array.isArray(programsRes.data) ? programsRes.data : [];
@@ -84,14 +82,10 @@ export default function PipelinePage() {
 
       setTasks(tasksRes.data?.tasks || []);
 
-      const actionsMap = {};
-      (topActionsRes.data?.actions || []).forEach(a => { actionsMap[a.program_id] = a; });
-      setTopActionsMap(actionsMap);
-
       // Cache for next visit
       try {
         sessionStorage.setItem("pipeline_cache", JSON.stringify({
-          programs, matchScores: byId, tasks: tasksRes.data?.tasks || [], topActions: actionsMap,
+          programs, matchScores: byId, tasks: tasksRes.data?.tasks || [],
         }));
       } catch { /* quota exceeded — ignore */ }
     } catch { toast.error("Failed to load programs"); }
