@@ -142,6 +142,7 @@ const MOM_CFG = {
   strong: { text: "Strong", cls: "text-emerald-700", dotCls: "bg-emerald-500", icon: TrendingUp },
   stable: { text: "Stable", cls: "text-amber-600", dotCls: "bg-amber-400", icon: Minus },
   declining: { text: "Declining", cls: "text-red-600", dotCls: "bg-red-500", icon: TrendingDown },
+  getting_started: { text: "Getting Started", cls: "text-blue-600", dotCls: "bg-blue-400", icon: Minus },
 };
 
 function MomentumLabel({ label }) {
@@ -157,10 +158,10 @@ function MomentumLabel({ label }) {
 /* ── Athlete Row (new layout) ── */
 
 function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
-  const hasRisk = athlete.risk_alerts && athlete.risk_alerts.length > 0;
+  const hasRisk = !athlete.is_onboarding && athlete.risk_alerts && athlete.risk_alerts.length > 0;
   const rowBorder = hasRisk
     ? athlete.risk_level === "critical" ? "border-l-2 border-l-red-400" : "border-l-2 border-l-amber-400"
-    : "border-l-2 border-l-transparent";
+    : athlete.is_onboarding ? "border-l-2 border-l-blue-300" : "border-l-2 border-l-transparent";
 
   return (
     <div className={`group ${rowBorder} transition-colors hover:bg-slate-50/70`} data-testid={`roster-athlete-${athlete.id}`}>
@@ -201,8 +202,9 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
 
           {/* Line 4: Coach • Last Activity */}
           <p className="text-[11px] text-slate-400 mt-1">
-            {athlete.coach_name || "Unassigned"} <span className="mx-1">&middot;</span>{" "}
-            {athlete.days_since_activity == null ? "No activity" :
+            {athlete.coach_name ? athlete.coach_name : (athlete.is_onboarding ? "No coach assigned yet" : "Unassigned")} <span className="mx-1">&middot;</span>{" "}
+            {athlete.is_onboarding && athlete.days_since_activity == null ? "No recruiting activity yet" :
+              athlete.days_since_activity == null ? "No activity" :
               athlete.days_since_activity === 0 ? "Active today" : `${athlete.days_since_activity}d ago`}
           </p>
 
@@ -625,22 +627,43 @@ function RosterInsights({ athletes }) {
   const insights = useMemo(() => {
     if (!athletes || athletes.length === 0) return [];
     const items = [];
+
+    // Separate onboarding athletes from established ones
+    const onboarding = athletes.filter((a) => a.is_onboarding);
+    const established = athletes.filter((a) => !a.is_onboarding);
+
     const strongInterest = athletes.filter((a) => a.recruiting_stage === "offer" || a.recruiting_stage === "visit").length;
     if (strongInterest > 0) items.push({ text: `${strongInterest} athlete${strongInterest > 1 ? "s" : ""} have strong recruiting interest`, type: "positive" });
-    const declining = athletes.filter((a) => a.momentum_label === "declining").length;
+
+    // Only show declining warning for established athletes
+    const declining = established.filter((a) => a.momentum_label === "declining").length;
     if (declining > 0) items.push({ text: `${declining} athlete${declining > 1 ? "s" : ""} risk losing recruiting momentum`, type: "warning" });
-    const missingDocs = athletes.filter((a) => (a.risk_alerts || []).some((r) => /missing|transcript|document|blocks/i.test(r.why))).length;
+
+    const missingDocs = established.filter((a) => (a.risk_alerts || []).some((r) => /missing|transcript|document|blocks/i.test(r.why))).length;
     if (missingDocs > 0) items.push({ text: `${missingDocs} athlete${missingDocs > 1 ? "s" : ""} missing required documents`, type: "danger" });
-    const noOwner = athletes.filter((a) => a.unassigned || (a.risk_alerts || []).some((r) => /no one owns|ownership/i.test(r.why))).length;
-    if (noOwner > 0) items.push({ text: `${noOwner} athlete${noOwner > 1 ? "s" : ""} without coach ownership`, type: "warning" });
-    const inactive = athletes.filter((a) => (a.days_since_activity || 0) > 14).length;
+
+    // Only show "without coach" warning for established athletes
+    const noOwnerEstablished = established.filter((a) => a.unassigned || (a.risk_alerts || []).some((r) => /no one owns|ownership/i.test(r.why))).length;
+    if (noOwnerEstablished > 0) items.push({ text: `${noOwnerEstablished} athlete${noOwnerEstablished > 1 ? "s" : ""} without coach ownership`, type: "warning" });
+
+    const inactive = established.filter((a) => (a.days_since_activity || 0) > 14).length;
     if (inactive > 0) items.push({ text: `${inactive} athlete${inactive > 1 ? "s" : ""} inactive for 2+ weeks`, type: "danger" });
-    return items.slice(0, 4);
+
+    // Neutral onboarding messages for new athletes
+    if (onboarding.length > 0) {
+      items.push({ text: `${onboarding.length} new athlete${onboarding.length > 1 ? "s" : ""} getting started — needs setup to begin recruiting tracking`, type: "onboarding" });
+    }
+    const newUnassigned = onboarding.filter((a) => a.unassigned).length;
+    if (newUnassigned > 0) {
+      items.push({ text: `${newUnassigned} athlete${newUnassigned > 1 ? "s have" : " has"} not been assigned to a coach yet`, type: "onboarding" });
+    }
+
+    return items.slice(0, 5);
   }, [athletes]);
 
   if (insights.length === 0) return null;
-  const colorMap = { positive: "text-emerald-600", warning: "text-amber-600", danger: "text-red-500" };
-  const dotMap = { positive: "bg-emerald-500", warning: "bg-amber-400", danger: "bg-red-500" };
+  const colorMap = { positive: "text-emerald-600", warning: "text-amber-600", danger: "text-red-500", onboarding: "text-blue-600" };
+  const dotMap = { positive: "bg-emerald-500", warning: "bg-amber-400", danger: "bg-red-500", onboarding: "bg-blue-400" };
 
   return (
     <div className="bg-white border border-gray-100 rounded-xl shadow-sm p-5 mb-6" data-testid="roster-insights">

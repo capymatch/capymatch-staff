@@ -22,20 +22,18 @@ Athlete management platform (CapyMatch) with multi-role support (Admin, Director
 - Routing & Invites fixes (Coaches page, Roster page)
 - AcceptInvitePage redesign (matches Login page style)
 - [2026-04-02] Bug Fix: Director dashboard coach count + momentum
-- [2026-04-02] Coach Management CRUD: Backend `/api/coaches` endpoints
-- **[2026-04-02] Coach Management Page Redesign**: Complete overhaul of Director's Coaches page:
-  - Summary stat strip (Active Coaches, Pending Invites, Athletes Managed, Avg Response)
-  - Refined tabs with icons and dark count badges
-  - Rich coach cards with avatar health signals, stats row, edit/menu actions
-  - Contextual "Grow your coaching staff" prompt when < 3 coaches
-  - Improved invite flow with dashed CTA button
-  - Orange accent styling consistent with design system
-  - Coach health signals (Active/Needs attention/Inactive)
+- [2026-04-02] Coach Management CRUD + Page Redesign (summary strip, rich cards, health signals)
+- [2026-04-02] Team dropdown from rosters in invite/edit forms
+- **[2026-04-02] New Athlete Onboarding Logic**: 5-day grace period for new athletes. Suppresses declining/risk warnings. Shows "Getting Started" (blue, neutral) instead of "Declining" (red). Roster Insights shows onboarding guidance. "No coach assigned yet" instead of "without coach ownership."
+
+## Product Principle
+Treat missing setup and missing data as onboarding states, not failure states.
 
 ## Key Files
+- `/app/backend/routers/roster.py` — Roster view with onboarding detection (lines 90-145)
 - `/app/backend/routers/coaches.py` — Coach CRUD endpoints
-- `/app/backend/routers/invites.py` — Invite system
-- `/app/frontend/src/pages/InvitesPage.js` — Redesigned Coaches + Invites page
+- `/app/frontend/src/pages/RosterPage.js` — Roster page with neutral onboarding states
+- `/app/frontend/src/pages/InvitesPage.js` — Coach management page
 
 ## P1 Upcoming Tasks
 - CSV Import Tool: Bulk import for school/coach data

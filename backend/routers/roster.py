@@ -89,15 +89,44 @@ async def get_roster(current_user: dict = get_current_user_dep()):
 
     # Build enriched athlete list
     enriched_athletes = []
+    now_utc = datetime.now(timezone.utc)
+    ONBOARDING_GRACE_DAYS = 5
+
     for a in await get_athletes():
         cid = athlete_to_coach.get(a["id"])
         coach = coach_by_id.get(cid) if cid else None
 
-        # Momentum label: Strong / Stable / Declining
+        # ── Onboarding detection ──
+        created_at_str = a.get("created_at")
+        days_since_creation = 0
+        if created_at_str:
+            try:
+                created_dt = datetime.fromisoformat(created_at_str)
+                days_since_creation = (now_utc - created_dt).days
+            except (ValueError, TypeError):
+                days_since_creation = 999  # assume not new
+
+        has_school_targets = (a.get("school_targets", 0) or 0) > 0
+        has_active_interest = (a.get("active_interest", 0) or 0) > 0
+        has_gmail = bool(a.get("gmail_connected"))
+        has_interactions = (a.get("interaction_count", 0) or 0) > 0
         mscore = a.get("momentum_score", 0) or 0
         mtrend = a.get("momentum_trend", "stable")
         days_inactive = a.get("days_since_activity")
-        if mtrend == "rising" and mscore >= 5:
+
+        # Athlete is "onboarding" if created recently AND has no meaningful activity
+        is_onboarding = (
+            days_since_creation <= ONBOARDING_GRACE_DAYS
+            and not has_school_targets
+            and not has_active_interest
+            and not has_interactions
+            and not has_gmail
+        )
+
+        # Momentum label: Strong / Stable / Declining / Getting Started
+        if is_onboarding:
+            momentum_label = "getting_started"
+        elif mtrend == "rising" and mscore >= 5:
             momentum_label = "strong"
         elif mscore <= 0 or (mtrend == "declining" and (days_inactive or 0) > 10):
             momentum_label = "declining"
@@ -142,6 +171,8 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             "coach_name": coach["name"] if coach else None,
             "unassigned": a["id"] in unassigned_ids,
             "unassigned_reason": a.get("unassigned_reason") if a["id"] in unassigned_ids else None,
+            "is_onboarding": is_onboarding,
+            "days_since_creation": days_since_creation,
         })
 
     # Needs attention — build per-athlete risk alerts
@@ -159,14 +190,19 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         })
 
     # Attach risk alerts inline to each athlete
+    # Suppress negative alerts for onboarding athletes
     for ea in enriched_athletes:
-        alerts = attention_lookup.get(ea["id"])
-        if alerts:
-            ea["risk_alerts"] = alerts
-            ea["risk_level"] = "critical" if any(a["badge_color"] == "red" for a in alerts) else "warning"
-        else:
+        if ea["is_onboarding"]:
             ea["risk_alerts"] = []
             ea["risk_level"] = None
+        else:
+            alerts = attention_lookup.get(ea["id"])
+            if alerts:
+                ea["risk_alerts"] = alerts
+                ea["risk_level"] = "critical" if any(a["badge_color"] == "red" for a in alerts) else "warning"
+            else:
+                ea["risk_alerts"] = []
+                ea["risk_level"] = None
 
     # Coach groups (for Coach View)
     groups = []
