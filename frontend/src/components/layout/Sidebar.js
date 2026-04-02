@@ -106,7 +106,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
         <div className="px-5 mb-3">
           <span className="text-[10px] font-bold uppercase tracking-[0.12em] px-2 py-1 rounded-md"
             style={{ backgroundColor: "rgba(255,106,61,0.12)", color: "#ff6a3d" }}>
-            {user?.role === "director" ? "Director" : user?.role === "club_coach" ? "Coach" : "Athlete"}
+            {role === "director" ? "Director" : role === "club_coach" || role === "coach" ? "Coach" : role === "platform_admin" ? "Admin" : "Athlete"}
           </span>
         </div>
       )}
