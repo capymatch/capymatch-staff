@@ -16,7 +16,8 @@ from db_client import db
 # ============================================================================
 
 def _seed_recommendations():
-    """Seed realistic recommendations in various states"""
+    """Return empty list — no hardcoded seed data."""
+    return []
     now = datetime.now(timezone.utc)
     return [
         {
