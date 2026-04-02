@@ -6,55 +6,48 @@ import { toast } from "sonner";
 import {
   Mail, UserPlus, Clock, CheckCircle, XCircle, Trash2, Copy, Users,
   RefreshCw, AlertTriangle, Send, UserCheck, Pencil, X, Shield,
-  ChevronDown, MoreHorizontal,
+  MoreHorizontal, Activity, UserCog, Calendar, ChevronRight,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-/* ──────────────────────── Shared components ──────────────────────── */
+/* ═══════════════════════ Utility Helpers ═══════════════════════ */
 
-function StatusBadge({ status }) {
-  const styles = {
-    pending: "bg-amber-50 text-amber-700 border-amber-200",
-    accepted: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    expired: "bg-gray-100 text-gray-500 border-gray-200",
-    cancelled: "bg-red-50 text-red-600 border-red-200",
-    active: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    inactive: "bg-gray-100 text-gray-500 border-gray-200",
-  };
-  const icons = { pending: Clock, accepted: CheckCircle, expired: XCircle, cancelled: XCircle, active: CheckCircle, inactive: XCircle };
-  const Icon = icons[status] || Clock;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium border rounded-full uppercase tracking-wider ${styles[status] || styles.pending}`} data-testid={`status-badge-${status}`}>
-      <Icon className="w-3 h-3" /> {status}
-    </span>
-  );
+function coachHealthSignal(coach) {
+  if (coach.status === "inactive") return { dot: "bg-gray-400", label: "Inactive", color: "text-gray-500" };
+  if (coach.last_active) {
+    const days = Math.floor((Date.now() - new Date(coach.last_active).getTime()) / 86400000);
+    if (days <= 3) return { dot: "bg-emerald-500", label: "Active", color: "text-emerald-600" };
+    if (days <= 7) return { dot: "bg-amber-400", label: "Needs attention", color: "text-amber-600" };
+    return { dot: "bg-red-400", label: "Inactive", color: "text-red-500" };
+  }
+  if (coach.status === "active") return { dot: "bg-emerald-500", label: "Active", color: "text-emerald-600" };
+  return { dot: "bg-gray-400", label: "Unknown", color: "text-gray-500" };
 }
 
-function DeliveryBadge({ status, lastError }) {
-  const map = {
-    sent: { style: "text-emerald-600", icon: CheckCircle, label: "Email sent" },
-    failed: { style: "text-red-500", icon: AlertTriangle, label: "Send failed" },
-    pending: { style: "text-gray-400", icon: Clock, label: "Sending..." },
-  };
-  const cfg = map[status] || map.pending;
-  const Icon = cfg.icon;
-  return (
-    <span className={`inline-flex items-center gap-1 text-[10px] ${cfg.style}`} title={lastError || ""} data-testid={`delivery-status-${status}`}>
-      <Icon className="w-3 h-3" /> {cfg.label}
-    </span>
-  );
+function timeAgo(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const now = new Date();
+  const days = Math.floor((now - d) / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+
+/* ═══════════════════════ Confirm Dialog ═══════════════════════ */
 
 function ConfirmDialog({ title, message, onConfirm, onCancel, confirmLabel = "Confirm", destructive = false }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" data-testid="confirm-dialog">
-      <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">{title}</h3>
-        <p className="text-xs text-gray-500 mb-5">{message}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "var(--cm-overlay)" }} data-testid="confirm-dialog">
+      <div className="rounded-xl p-6 max-w-sm w-full mx-4" style={{ background: "var(--cm-surface)", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--cm-text)" }}>{title}</h3>
+        <p className="text-xs mb-5" style={{ color: "var(--cm-text-3)" }}>{message}</p>
         <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-50" data-testid="confirm-cancel-btn">Cancel</button>
-          <button onClick={onConfirm} className={`px-4 py-2 text-xs font-medium rounded-lg text-white ${destructive ? "bg-red-600 hover:bg-red-700" : "bg-slate-900 hover:bg-slate-800"}`} data-testid="confirm-action-btn">
+          <button onClick={onCancel} className="px-3 py-2 text-xs font-medium rounded-lg transition-colors hover:bg-gray-100" style={{ color: "var(--cm-text-2)" }} data-testid="confirm-cancel-btn">Cancel</button>
+          <button onClick={onConfirm} className={`px-4 py-2 text-xs font-medium rounded-lg text-white transition-colors ${destructive ? "bg-red-600 hover:bg-red-700" : ""}`} style={!destructive ? { background: "var(--cm-accent)" } : {}} data-testid="confirm-action-btn">
             {confirmLabel}
           </button>
         </div>
@@ -63,7 +56,7 @@ function ConfirmDialog({ title, message, onConfirm, onCancel, confirmLabel = "Co
   );
 }
 
-/* ──────────────────────── Edit Coach Modal ──────────────────────── */
+/* ═══════════════════════ Edit Coach Modal ═══════════════════════ */
 
 function EditCoachModal({ coach, onSave, onClose }) {
   const [name, setName] = useState(coach.name || "");
@@ -81,32 +74,31 @@ function EditCoachModal({ coach, onSave, onClose }) {
       await axios.put(`${API}/coaches/${coach.id}`, updates);
       toast.success("Coach updated");
       onSave();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to update");
-    } finally { setSaving(false); }
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed to update"); }
+    finally { setSaving(false); }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" data-testid="edit-coach-modal">
-      <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-900">Edit Coach</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md" data-testid="close-edit-modal">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "var(--cm-overlay)" }} data-testid="edit-coach-modal">
+      <div className="rounded-xl p-6 max-w-md w-full mx-4" style={{ background: "var(--cm-surface)", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>Edit Coach</h3>
+          <button onClick={onClose} className="p-1 rounded-md transition-colors hover:bg-gray-100" style={{ color: "var(--cm-text-3)" }} data-testid="close-edit-modal">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <form onSubmit={handleSave} className="space-y-3">
+        <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block mb-1">Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300" data-testid="edit-coach-name" />
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-3 py-2.5 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-orange-200" style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="edit-coach-name" />
           </div>
           <div>
-            <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block mb-1">Team</label>
-            <input type="text" value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Varsity, JV, 2027s..." className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300" data-testid="edit-coach-team" />
+            <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Team</label>
+            <input type="text" value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Varsity, JV, 2027s..." className="w-full px-3 py-2.5 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-orange-200" style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="edit-coach-team" />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-3 py-2 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50" data-testid="save-coach-btn">
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} className="px-3 py-2.5 text-xs font-medium rounded-lg transition-colors hover:bg-gray-100" style={{ color: "var(--cm-text-2)" }}>Cancel</button>
+            <button type="submit" disabled={saving} className="px-5 py-2.5 text-xs font-semibold rounded-lg text-white disabled:opacity-50 transition-colors" style={{ background: "var(--cm-accent)" }} data-testid="save-coach-btn">
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
@@ -116,7 +108,300 @@ function EditCoachModal({ coach, onSave, onClose }) {
   );
 }
 
-/* ──────────────────────── Pending Assignment Banner ──────────────────────── */
+/* ═══════════════════════ Summary Strip ═══════════════════════ */
+
+function SummaryStrip({ coaches, pendingInviteCount }) {
+  const totalAthletes = coaches.reduce((sum, c) => sum + (c.athlete_count || 0), 0);
+  const activeCount = coaches.filter(c => (c.status || "active") === "active").length;
+
+  const stats = [
+    { label: "Active Coaches", value: activeCount, icon: Users, accent: false },
+    { label: "Pending Invites", value: pendingInviteCount, icon: Clock, accent: pendingInviteCount > 0 },
+    { label: "Athletes Managed", value: totalAthletes, icon: Activity, accent: false },
+    { label: "Avg Response", value: "--", icon: RefreshCw, accent: false, muted: true },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" data-testid="summary-strip">
+      {stats.map((s) => (
+        <div
+          key={s.label}
+          className="rounded-xl px-4 py-3.5 transition-all"
+          style={{
+            background: "var(--cm-surface)",
+            border: `1px solid ${s.accent ? "var(--cm-accent)" : "var(--cm-border-subtle)"}`,
+            boxShadow: "var(--cm-shadow)",
+          }}
+          data-testid={`stat-${s.label.toLowerCase().replace(/\s/g, "-")}`}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <s.icon className="w-3.5 h-3.5" style={{ color: s.accent ? "var(--cm-accent)" : "var(--cm-text-3)" }} />
+            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--cm-text-3)" }}>{s.label}</span>
+          </div>
+          <span className={`text-xl font-bold tabular-nums ${s.muted ? "opacity-40" : ""}`} style={{ color: s.accent ? "var(--cm-accent-text)" : "var(--cm-text)" }}>
+            {s.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════ Coach Card ═══════════════════════ */
+
+function CoachCard({ coach, onEdit, onToggleStatus, onRemove }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const health = coachHealthSignal(coach);
+
+  return (
+    <div
+      className="rounded-xl p-5 transition-all hover:translate-y-[-1px]"
+      style={{
+        background: "var(--cm-surface)",
+        border: "1px solid var(--cm-border-subtle)",
+        boxShadow: "var(--cm-shadow)",
+      }}
+      data-testid={`coach-card-${coach.id}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        {/* Left: Avatar + Identity */}
+        <div className="flex items-start gap-3.5 flex-1 min-w-0">
+          <div className="relative shrink-0">
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white"
+              style={{ background: (coach.status || "active") === "active" ? "#1e293b" : "#94a3b8" }}
+            >
+              {(coach.name || "?").charAt(0).toUpperCase()}
+            </div>
+            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 ${health.dot}`} style={{ borderColor: "var(--cm-surface)" }} />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span className="text-sm font-semibold truncate" style={{ color: "var(--cm-text)" }}>{coach.name}</span>
+              {coach.team && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-md" style={{ background: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>
+                  {coach.team}
+                </span>
+              )}
+            </div>
+            <p className="text-xs truncate mb-2.5" style={{ color: "var(--cm-text-3)" }}>{coach.email}</p>
+
+            {/* Stats row */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <Users className="w-3 h-3" style={{ color: "var(--cm-text-4)" }} />
+                <span className="text-[11px] font-medium" style={{ color: "var(--cm-text-2)" }}>
+                  {coach.athlete_count} athlete{coach.athlete_count !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${health.dot}`} />
+                <span className={`text-[11px] font-medium ${health.color}`}>{health.label}</span>
+              </div>
+              {coach.created_at && (
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3" style={{ color: "var(--cm-text-4)" }} />
+                  <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>
+                    Joined {new Date(coach.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                </div>
+              )}
+              {coach.last_active && (
+                <span className="text-[11px]" style={{ color: "var(--cm-text-3)" }}>
+                  Last active {timeAgo(coach.last_active)}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="relative flex items-center gap-0.5 shrink-0">
+          <button
+            onClick={() => onEdit(coach)}
+            className="p-2 rounded-lg transition-colors hover:bg-gray-100"
+            style={{ color: "var(--cm-text-3)" }}
+            title="Edit"
+            data-testid={`edit-coach-${coach.id}`}
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-2 rounded-lg transition-colors hover:bg-gray-100"
+            style={{ color: "var(--cm-text-3)" }}
+            data-testid={`coach-menu-${coach.id}`}
+          >
+            <MoreHorizontal className="w-3.5 h-3.5" />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 rounded-xl py-1.5 z-20 min-w-[180px]" style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", boxShadow: "var(--cm-shadow-md)" }} data-testid={`coach-menu-dropdown-${coach.id}`}>
+                <button
+                  onClick={() => { onToggleStatus(coach); setMenuOpen(false); }}
+                  className="w-full text-left px-3.5 py-2 text-xs flex items-center gap-2.5 transition-colors hover:bg-gray-50"
+                  style={{ color: "var(--cm-text-2)" }}
+                  data-testid={`toggle-status-${coach.id}`}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  {(coach.status || "active") === "active" ? "Deactivate Coach" : "Activate Coach"}
+                </button>
+                <div className="my-1" style={{ borderTop: "1px solid var(--cm-border-subtle)" }} />
+                <button
+                  onClick={() => { onRemove(coach); setMenuOpen(false); }}
+                  className="w-full text-left px-3.5 py-2 text-xs text-red-600 flex items-center gap-2.5 transition-colors hover:bg-red-50"
+                  data-testid={`remove-coach-${coach.id}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Remove Coach
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════ Active Coaches Tab ═══════════════════════ */
+
+function ActiveCoachesTab({ coaches, loading, onRefresh, onOpenInvite }) {
+  const [editingCoach, setEditingCoach] = useState(null);
+  const [confirmRemove, setConfirmRemove] = useState(null);
+
+  const handleRemove = async (coach) => {
+    try {
+      const res = await axios.delete(`${API}/coaches/${coach.id}`);
+      toast.success(`${res.data.coach_name} removed${res.data.athletes_unassigned > 0 ? ` — ${res.data.athletes_unassigned} athletes unassigned` : ""}`);
+      onRefresh();
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed to remove"); }
+    finally { setConfirmRemove(null); }
+  };
+
+  const toggleStatus = async (coach) => {
+    const newStatus = (coach.status || "active") === "active" ? "inactive" : "active";
+    try {
+      await axios.put(`${API}/coaches/${coach.id}`, { status: newStatus });
+      toast.success(`${coach.name} ${newStatus === "active" ? "activated" : "deactivated"}`);
+      onRefresh();
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed to update"); }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: "var(--cm-accent)" }} />
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="active-coaches-list">
+      {coaches.length === 0 ? (
+        <div className="text-center py-16 rounded-xl" style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border-subtle)", boxShadow: "var(--cm-shadow)" }} data-testid="no-coaches-empty">
+          <div className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "var(--cm-accent-light)" }}>
+            <Users className="w-6 h-6" style={{ color: "var(--cm-accent)" }} />
+          </div>
+          <p className="text-sm font-semibold mb-1" style={{ color: "var(--cm-text)" }}>Your program is just getting started</p>
+          <p className="text-xs max-w-xs mx-auto mb-5" style={{ color: "var(--cm-text-3)" }}>
+            Invite coaches to manage athletes and recruiting workflows.
+          </p>
+          <button onClick={onOpenInvite} className="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-semibold rounded-lg text-white transition-colors" style={{ background: "var(--cm-accent)" }} data-testid="empty-invite-coach-btn">
+            <UserPlus className="w-3.5 h-3.5" /> Invite Coach
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-3">
+            {coaches.map((coach) => (
+              <CoachCard
+                key={coach.id}
+                coach={coach}
+                onEdit={setEditingCoach}
+                onToggleStatus={toggleStatus}
+                onRemove={setConfirmRemove}
+              />
+            ))}
+          </div>
+
+          {/* Contextual footer */}
+          {coaches.length < 3 && (
+            <div className="mt-6 rounded-xl px-5 py-4 flex items-center justify-between" style={{ background: "var(--cm-surface-2)", border: "1px solid var(--cm-border-subtle)" }} data-testid="grow-team-prompt">
+              <div>
+                <p className="text-xs font-medium" style={{ color: "var(--cm-text-2)" }}>Grow your coaching staff</p>
+                <p className="text-[11px] mt-0.5" style={{ color: "var(--cm-text-3)" }}>Invite more coaches to expand coverage and improve response times.</p>
+              </div>
+              <button onClick={onOpenInvite} className="shrink-0 flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold rounded-lg transition-colors hover:opacity-90 text-white ml-4" style={{ background: "var(--cm-accent)" }} data-testid="grow-invite-btn">
+                <UserPlus className="w-3 h-3" /> Invite Coach
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {editingCoach && (
+        <EditCoachModal
+          coach={editingCoach}
+          onSave={() => { setEditingCoach(null); onRefresh(); }}
+          onClose={() => setEditingCoach(null)}
+        />
+      )}
+      {confirmRemove && (
+        <ConfirmDialog
+          title={`Remove ${confirmRemove.name}?`}
+          message={`This will permanently remove the coach and unassign their ${confirmRemove.athlete_count} athlete${confirmRemove.athlete_count !== 1 ? "s" : ""}. This cannot be undone.`}
+          confirmLabel="Remove Coach"
+          destructive
+          onConfirm={() => handleRemove(confirmRemove)}
+          onCancel={() => setConfirmRemove(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════ Invite Status Badges ═══════════════════════ */
+
+function InviteStatusBadge({ status }) {
+  const cfg = {
+    pending: { bg: "rgba(245,158,11,0.08)", color: "#d97706", border: "rgba(245,158,11,0.2)" },
+    accepted: { bg: "rgba(16,185,129,0.08)", color: "#059669", border: "rgba(16,185,129,0.2)" },
+    expired: { bg: "rgba(148,163,184,0.08)", color: "#64748b", border: "rgba(148,163,184,0.2)" },
+    cancelled: { bg: "rgba(239,68,68,0.08)", color: "#dc2626", border: "rgba(239,68,68,0.2)" },
+  };
+  const icons = { pending: Clock, accepted: CheckCircle, expired: XCircle, cancelled: XCircle };
+  const Icon = icons[status] || Clock;
+  const c = cfg[status] || cfg.pending;
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md"
+      style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}` }}
+      data-testid={`status-badge-${status}`}
+    >
+      <Icon className="w-3 h-3" /> {status}
+    </span>
+  );
+}
+
+function DeliveryBadge({ status, lastError }) {
+  const map = {
+    sent: { color: "#059669", icon: CheckCircle, label: "Email sent" },
+    failed: { color: "#dc2626", icon: AlertTriangle, label: "Send failed" },
+    pending: { color: "#94a3b8", icon: Clock, label: "Sending..." },
+  };
+  const cfg = map[status] || map.pending;
+  const Icon = cfg.icon;
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: cfg.color }} title={lastError || ""} data-testid={`delivery-status-${status}`}>
+      <Icon className="w-3 h-3" /> {cfg.label}
+    </span>
+  );
+}
+
+/* ═══════════════════════ Pending Assignment Banner ═══════════════════════ */
 
 function PendingAssignmentBanner({ assignment, onComplete }) {
   const [selected, setSelected] = useState(new Set(assignment.suggested_athletes.map((a) => a.id)));
@@ -146,39 +431,31 @@ function PendingAssignmentBanner({ assignment, onComplete }) {
   };
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-4" data-testid="pending-assignment-banner">
+    <div className="rounded-xl p-5 mb-4" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }} data-testid="pending-assignment-banner">
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
-          <UserCheck className="w-4 h-4 text-amber-700" />
+        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(245,158,11,0.12)" }}>
+          <UserCheck className="w-4 h-4 text-amber-600" />
         </div>
         <div className="flex-1">
           <h3 className="text-sm font-semibold text-amber-900">{assignment.coach_name} joined — assign {assignment.team} athletes?</h3>
-          <p className="text-xs text-amber-700 mt-0.5">{assignment.suggested_count} unassigned athlete{assignment.suggested_count !== 1 ? "s" : ""} on {assignment.team}</p>
+          <p className="text-xs text-amber-700 mt-0.5">{assignment.suggested_count} unassigned</p>
         </div>
       </div>
       {assignment.suggested_athletes.length > 0 && (
-        <>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Select athletes</span>
-            <button onClick={() => setSelected(new Set(assignment.suggested_athletes.map((a) => a.id)))} className="text-[10px] text-amber-600 hover:text-amber-800 underline">All</button>
-            <button onClick={() => setSelected(new Set())} className="text-[10px] text-amber-600 hover:text-amber-800 underline">None</button>
-          </div>
-          <div className="space-y-1.5 mb-4">
-            {assignment.suggested_athletes.map((a) => (
-              <label key={a.id} className="flex items-center gap-3 px-3 py-2 bg-white/70 rounded-lg border border-amber-100 cursor-pointer hover:bg-white transition-colors">
-                <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggleAthlete(a.id)} className="w-3.5 h-3.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
-                <span className="text-sm text-gray-800 flex-1">{a.name}</span>
-                <span className="text-[10px] text-amber-500">{a.team}</span>
-              </label>
-            ))}
-          </div>
-        </>
+        <div className="space-y-1.5 mb-4">
+          {assignment.suggested_athletes.map((a) => (
+            <label key={a.id} className="flex items-center gap-3 px-3 py-2 bg-white/70 rounded-lg border border-amber-100 cursor-pointer hover:bg-white transition-colors">
+              <input type="checkbox" checked={selected.has(a.id)} onChange={() => toggleAthlete(a.id)} className="w-3.5 h-3.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+              <span className="text-sm text-gray-800 flex-1">{a.name}</span>
+            </label>
+          ))}
+        </div>
       )}
       <div className="flex items-center gap-2">
-        <button onClick={handleAssign} disabled={assigning || selected.size === 0} className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium bg-amber-700 text-white rounded-lg hover:bg-amber-800 disabled:opacity-50" data-testid="assign-selected-btn">
+        <button onClick={handleAssign} disabled={assigning || selected.size === 0} className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50" data-testid="assign-selected-btn">
           <UserCheck className="w-3 h-3" /> {assigning ? "Assigning..." : `Assign ${selected.size}`}
         </button>
-        <button onClick={handleDismiss} disabled={dismissing} className="px-3 py-2 text-xs text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded-lg">
+        <button onClick={handleDismiss} disabled={dismissing} className="px-3 py-2 text-xs text-amber-600 hover:text-amber-800 hover:bg-amber-100/50 rounded-lg">
           {dismissing ? "..." : "Skip for now"}
         </button>
       </div>
@@ -186,132 +463,7 @@ function PendingAssignmentBanner({ assignment, onComplete }) {
   );
 }
 
-/* ──────────────────────── Active Coaches Tab ──────────────────────── */
-
-function ActiveCoachesTab({ coaches, loading, onRefresh }) {
-  const [editingCoach, setEditingCoach] = useState(null);
-  const [confirmRemove, setConfirmRemove] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(null);
-
-  const handleRemove = async (coach) => {
-    try {
-      const res = await axios.delete(`${API}/coaches/${coach.id}`);
-      toast.success(`${res.data.coach_name} removed${res.data.athletes_unassigned > 0 ? ` · ${res.data.athletes_unassigned} athletes unassigned` : ""}`);
-      onRefresh();
-    } catch (err) { toast.error(err.response?.data?.detail || "Failed to remove"); }
-    finally { setConfirmRemove(null); }
-  };
-
-  const toggleStatus = async (coach) => {
-    const newStatus = coach.status === "active" ? "inactive" : "active";
-    try {
-      await axios.put(`${API}/coaches/${coach.id}`, { status: newStatus });
-      toast.success(`${coach.name} ${newStatus === "active" ? "activated" : "deactivated"}`);
-      onRefresh();
-    } catch (err) { toast.error(err.response?.data?.detail || "Failed to update"); }
-    setMenuOpen(null);
-  };
-
-  if (loading) {
-    return <div className="flex items-center justify-center py-16"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400" /></div>;
-  }
-
-  if (coaches.length === 0) {
-    return (
-      <div className="text-center py-16 bg-white border border-gray-100 rounded-xl" data-testid="no-coaches-empty">
-        <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p className="text-sm text-gray-500">No active coaches yet</p>
-        <p className="text-xs text-gray-400 mt-1">Invite coaches from the Invites tab</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2" data-testid="active-coaches-list">
-      {coaches.map((coach) => (
-        <div key={coach.id} className="bg-white border border-gray-100 rounded-lg p-4 flex items-center justify-between hover:border-gray-200 transition-colors" data-testid={`coach-card-${coach.id}`}>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: coach.status === "active" ? "#1e293b" : "#94a3b8" }}>
-              {(coach.name || "?").charAt(0).toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <span className="text-sm font-medium text-gray-900 truncate">{coach.name}</span>
-                <StatusBadge status={coach.status || "active"} />
-                {coach.team && <span className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{coach.team}</span>}
-              </div>
-              <p className="text-xs text-gray-500 truncate">{coach.email}</p>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-[10px] text-gray-400">
-                  {coach.athlete_count} athlete{coach.athlete_count !== 1 ? "s" : ""}
-                </span>
-                {coach.created_at && (
-                  <span className="text-[10px] text-gray-400">
-                    Joined {new Date(coach.created_at).toLocaleDateString()}
-                  </span>
-                )}
-                {coach.last_active && (
-                  <span className="text-[10px] text-gray-400">
-                    Last active {new Date(coach.last_active).toLocaleDateString()}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="relative flex items-center gap-1 shrink-0 ml-3">
-            <button onClick={() => setEditingCoach(coach)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-md hover:bg-blue-50" title="Edit coach" data-testid={`edit-coach-${coach.id}`}>
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => setMenuOpen(menuOpen === coach.id ? null : coach.id)} className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md hover:bg-gray-50" data-testid={`coach-menu-${coach.id}`}>
-              <MoreHorizontal className="w-3.5 h-3.5" />
-            </button>
-            {menuOpen === coach.id && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20 min-w-[160px]" data-testid={`coach-menu-dropdown-${coach.id}`}>
-                <button
-                  onClick={() => toggleStatus(coach)}
-                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  data-testid={`toggle-status-${coach.id}`}
-                >
-                  <Shield className="w-3 h-3" />
-                  {coach.status === "active" ? "Deactivate" : "Activate"}
-                </button>
-                <button
-                  onClick={() => { setConfirmRemove(coach); setMenuOpen(null); }}
-                  className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  data-testid={`remove-coach-${coach.id}`}
-                >
-                  <Trash2 className="w-3 h-3" />
-                  Remove Coach
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-
-      {editingCoach && (
-        <EditCoachModal
-          coach={editingCoach}
-          onSave={() => { setEditingCoach(null); onRefresh(); }}
-          onClose={() => setEditingCoach(null)}
-        />
-      )}
-
-      {confirmRemove && (
-        <ConfirmDialog
-          title={`Remove ${confirmRemove.name}?`}
-          message={`This will permanently remove the coach and unassign their ${confirmRemove.athlete_count} athlete${confirmRemove.athlete_count !== 1 ? "s" : ""}. This cannot be undone.`}
-          confirmLabel="Remove Coach"
-          destructive
-          onConfirm={() => handleRemove(confirmRemove)}
-          onCancel={() => setConfirmRemove(null)}
-        />
-      )}
-    </div>
-  );
-}
-
-/* ──────────────────────── Invites Tab ──────────────────────── */
+/* ═══════════════════════ Invites Tab ═══════════════════════ */
 
 function InvitesTab({ invites, pendingAssignments, loading, onRefresh }) {
   const [showForm, setShowForm] = useState(false);
@@ -359,42 +511,45 @@ function InvitesTab({ invites, pendingAssignments, loading, onRefresh }) {
   const others = invites.filter((i) => i.status !== "pending");
 
   if (loading) {
-    return <div className="flex items-center justify-center py-16"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400" /></div>;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: "var(--cm-accent)" }} />
+      </div>
+    );
   }
 
   return (
     <div data-testid="invites-tab-content">
-      {/* New Invite Button */}
-      <div className="flex justify-end mb-4">
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800 transition-colors" data-testid="new-invite-btn">
-          <UserPlus className="w-3.5 h-3.5" /> New Invite
+      {/* Inline invite form toggle */}
+      {!showForm && (
+        <button onClick={() => setShowForm(true)} className="w-full rounded-xl px-5 py-4 mb-4 flex items-center justify-center gap-2 text-xs font-semibold transition-all hover:border-orange-200" style={{ background: "var(--cm-accent-light)", border: "1px dashed var(--cm-accent)", color: "var(--cm-accent-text)" }} data-testid="new-invite-btn">
+          <UserPlus className="w-4 h-4" /> Send a New Invite
         </button>
-      </div>
+      )}
 
-      {/* Invite Form */}
       {showForm && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4" data-testid="invite-form">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Mail className="w-4 h-4 text-gray-400" /> Send Coach Invite
+        <div className="rounded-xl p-5 mb-4" style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border)", boxShadow: "var(--cm-shadow)" }} data-testid="invite-form">
+          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--cm-text)" }}>
+            <Mail className="w-4 h-4" style={{ color: "var(--cm-accent)" }} /> Send Coach Invite
           </h2>
           <form onSubmit={handleInvite} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block mb-1">Coach Name</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Coach Thompson" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300" data-testid="invite-name-input" />
+                <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Coach Name</label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Coach Thompson" className="w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-200" style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="invite-name-input" />
               </div>
               <div>
-                <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block mb-1">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="coach@example.com" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300" data-testid="invite-email-input" />
+                <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Email</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="coach@example.com" className="w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-200" style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="invite-email-input" />
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider block mb-1">Team (optional)</label>
-              <input type="text" value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Varsity, JV, 2027s..." className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300" data-testid="invite-team-input" />
+              <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Team (optional)</label>
+              <input type="text" value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Varsity, JV, 2027s..." className="w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-200" style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="invite-team-input" />
             </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setShowForm(false)} className="px-3 py-2 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
-              <button type="submit" disabled={sending} className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50" data-testid="send-invite-btn">
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setShowForm(false)} className="px-3 py-2.5 text-xs font-medium rounded-lg transition-colors hover:bg-gray-100" style={{ color: "var(--cm-text-2)" }}>Cancel</button>
+              <button type="submit" disabled={sending} className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-semibold rounded-lg text-white disabled:opacity-50 transition-colors" style={{ background: "var(--cm-accent)" }} data-testid="send-invite-btn">
                 {sending ? <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" /> : <Send className="w-3.5 h-3.5" />}
                 Send Invite
               </button>
@@ -409,41 +564,41 @@ function InvitesTab({ invites, pendingAssignments, loading, onRefresh }) {
       ))}
 
       {/* Invite Lists */}
-      {invites.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-gray-100 rounded-xl" data-testid="no-invites-empty">
-          <Mail className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">No invites yet</p>
-          <p className="text-xs text-gray-400 mt-1">Send an invite to add coaches to your program</p>
+      {invites.length === 0 && !showForm ? (
+        <div className="text-center py-16 rounded-xl" style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border-subtle)" }} data-testid="no-invites-empty">
+          <Mail className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--cm-text-4)" }} />
+          <p className="text-sm font-medium" style={{ color: "var(--cm-text-2)" }}>No invites sent yet</p>
+          <p className="text-xs mt-1" style={{ color: "var(--cm-text-3)" }}>Send an invite to add coaches to your program</p>
         </div>
       ) : (
         <div className="space-y-3">
           {pending.length > 0 && (
             <div>
-              <h3 className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-2">Pending Invites</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-wider mb-2.5" style={{ color: "var(--cm-accent-text)" }}>Pending Invites</h3>
               <div className="space-y-2">
                 {pending.map((inv) => (
-                  <div key={inv.id} className="bg-white border border-gray-100 rounded-lg p-4 flex items-center justify-between" data-testid={`invite-${inv.id}`}>
-                    <div>
+                  <div key={inv.id} className="rounded-xl p-4 flex items-center justify-between transition-colors" style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border-subtle)", boxShadow: "var(--cm-shadow)" }} data-testid={`invite-${inv.id}`}>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span className="text-sm font-medium text-gray-900">{inv.name}</span>
-                        <StatusBadge status={inv.status} />
+                        <span className="text-sm font-semibold" style={{ color: "var(--cm-text)" }}>{inv.name}</span>
+                        <InviteStatusBadge status={inv.status} />
                         <DeliveryBadge status={inv.delivery_status} lastError={inv.last_error} />
-                        {inv.team && <span className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{inv.team}</span>}
+                        {inv.team && <span className="text-[10px] font-medium px-2 py-0.5 rounded-md" style={{ background: "var(--cm-surface-2)", color: "var(--cm-text-2)" }}>{inv.team}</span>}
                       </div>
-                      <p className="text-xs text-gray-500">{inv.email}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
+                      <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>{inv.email}</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: "var(--cm-text-4)" }}>
                         Invited {new Date(inv.created_at).toLocaleDateString()} · Expires {new Date(inv.expires_at).toLocaleDateString()}
                         {inv.resend_count > 0 && <span className="ml-1">· Resent {inv.resend_count}x</span>}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => handleResend(inv.id)} disabled={resendingId === inv.id} className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-md hover:bg-blue-50 disabled:opacity-50" title="Resend" data-testid={`resend-invite-${inv.id}`}>
+                    <div className="flex items-center gap-0.5 shrink-0 ml-3">
+                      <button onClick={() => handleResend(inv.id)} disabled={resendingId === inv.id} className="p-2 rounded-lg transition-colors hover:bg-blue-50 disabled:opacity-50" style={{ color: "var(--cm-text-3)" }} title="Resend invite" data-testid={`resend-invite-${inv.id}`}>
                         {resendingId === inv.id ? <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-blue-500" /> : <RefreshCw className="w-3.5 h-3.5" />}
                       </button>
-                      <button onClick={() => copyInviteLink(inv)} className="p-2 text-gray-400 hover:text-slate-700 transition-colors rounded-md hover:bg-gray-50" title="Copy link" data-testid={`copy-invite-${inv.id}`}>
+                      <button onClick={() => copyInviteLink(inv)} className="p-2 rounded-lg transition-colors hover:bg-gray-100" style={{ color: "var(--cm-text-3)" }} title="Copy invite link" data-testid={`copy-invite-${inv.id}`}>
                         <Copy className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => handleCancel(inv.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-md hover:bg-red-50" title="Cancel" data-testid={`cancel-invite-${inv.id}`}>
+                      <button onClick={() => handleCancel(inv.id)} className="p-2 rounded-lg transition-colors hover:bg-red-50 hover:text-red-500" style={{ color: "var(--cm-text-3)" }} title="Cancel invite" data-testid={`cancel-invite-${inv.id}`}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -453,18 +608,18 @@ function InvitesTab({ invites, pendingAssignments, loading, onRefresh }) {
             </div>
           )}
           {others.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">History</h3>
+            <div className={pending.length > 0 ? "mt-5" : ""}>
+              <h3 className="text-[10px] font-bold uppercase tracking-wider mb-2.5" style={{ color: "var(--cm-text-4)" }}>History</h3>
               <div className="space-y-2">
                 {others.map((inv) => (
-                  <div key={inv.id} className="bg-white border border-gray-50 rounded-lg p-4 flex items-center justify-between opacity-75" data-testid={`invite-${inv.id}`}>
+                  <div key={inv.id} className="rounded-xl p-4 flex items-center justify-between" style={{ background: "var(--cm-surface)", border: "1px solid var(--cm-border-subtle)", opacity: 0.7 }} data-testid={`invite-${inv.id}`}>
                     <div>
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span className="text-sm font-medium text-gray-700">{inv.name}</span>
-                        <StatusBadge status={inv.status} />
-                        {inv.team && <span className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{inv.team}</span>}
+                        <span className="text-sm font-medium" style={{ color: "var(--cm-text-2)" }}>{inv.name}</span>
+                        <InviteStatusBadge status={inv.status} />
+                        {inv.team && <span className="text-[10px] font-medium px-2 py-0.5 rounded-md" style={{ background: "var(--cm-surface-2)", color: "var(--cm-text-3)" }}>{inv.team}</span>}
                       </div>
-                      <p className="text-xs text-gray-500">{inv.email}</p>
+                      <p className="text-xs" style={{ color: "var(--cm-text-3)" }}>{inv.email}</p>
                       {inv.accepted_at && <p className="text-[10px] text-emerald-600 mt-0.5">Accepted {new Date(inv.accepted_at).toLocaleDateString()}</p>}
                     </div>
                   </div>
@@ -478,7 +633,7 @@ function InvitesTab({ invites, pendingAssignments, loading, onRefresh }) {
   );
 }
 
-/* ──────────────────────── Main Page ──────────────────────── */
+/* ═══════════════════════ Main Page ═══════════════════════ */
 
 export default function InvitesPage() {
   const { user, effectiveRole } = useAuth();
@@ -522,57 +677,78 @@ export default function InvitesPage() {
     fetchCoaches();
     fetchInvites();
     fetchPendingAssignments();
-  }, [user, navigate, role, fetchCoaches, fetchInvites, fetchPendingAssignments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
 
   const pendingInviteCount = invites.filter((i) => i.status === "pending").length;
 
   const tabs = [
-    { id: "coaches", label: "Active Coaches", count: coaches.length },
-    { id: "invites", label: "Invites", count: pendingInviteCount, countColor: pendingInviteCount > 0 ? "bg-amber-100 text-amber-700" : "" },
+    { id: "coaches", label: "Active Coaches", count: coaches.length, icon: Users },
+    { id: "invites", label: "Invites", count: pendingInviteCount, icon: Mail },
   ];
+
+  const openInviteTab = () => setActiveTab("invites");
 
   return (
     <div data-testid="coaches-page">
-      <main className="max-w-[800px] mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-lg font-semibold text-gray-900" data-testid="coaches-page-title">Coaches</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {coaches.length} active coach{coaches.length !== 1 ? "es" : ""} · {pendingInviteCount} pending invite{pendingInviteCount !== 1 ? "s" : ""}
-          </p>
+      <main className="max-w-[880px] mx-auto">
+        {/* ═══ Header ═══ */}
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-lg font-bold" style={{ color: "var(--cm-text)" }} data-testid="coaches-page-title">Coaches</h1>
+            <p className="text-xs mt-0.5" style={{ color: "var(--cm-text-3)" }}>
+              Manage your coaching staff and track their activity across the program
+            </p>
+          </div>
+          <button
+            onClick={openInviteTab}
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-lg text-white transition-all hover:opacity-90"
+            style={{ background: "var(--cm-accent)" }}
+            data-testid="header-invite-coach-btn"
+          >
+            <UserPlus className="w-3.5 h-3.5" /> Invite Coach
+          </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1 mb-5 border-b border-gray-200" data-testid="coaches-tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative px-4 py-2.5 text-xs font-medium transition-colors ${
-                activeTab === tab.id
-                  ? "text-gray-900"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-              data-testid={`tab-${tab.id}`}
-            >
-              <span className="flex items-center gap-1.5">
+        {/* ═══ Summary Strip ═══ */}
+        <SummaryStrip coaches={coaches} pendingInviteCount={pendingInviteCount} />
+
+        {/* ═══ Tabs ═══ */}
+        <div className="flex items-center gap-0 mb-6" style={{ borderBottom: "1px solid var(--cm-border)" }} data-testid="coaches-tabs">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className="relative flex items-center gap-2 px-5 py-3 text-xs font-semibold transition-colors"
+                style={{ color: isActive ? "var(--cm-text)" : "var(--cm-text-3)" }}
+                data-testid={`tab-${tab.id}`}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${tab.countColor || "bg-gray-100 text-gray-600"}`}>
+                  <span
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-md tabular-nums"
+                    style={{
+                      background: isActive ? "var(--cm-text)" : "var(--cm-surface-2)",
+                      color: isActive ? "var(--cm-surface)" : "var(--cm-text-3)",
+                    }}
+                  >
                     {tab.count}
                   </span>
                 )}
-              </span>
-              {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-900 rounded-full" />
-              )}
-            </button>
-          ))}
+                {isActive && (
+                  <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full" style={{ background: "var(--cm-accent)" }} />
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Tab Content */}
+        {/* ═══ Tab Content ═══ */}
         {activeTab === "coaches" && (
-          <ActiveCoachesTab coaches={coaches} loading={loadingCoaches} onRefresh={refreshAll} />
+          <ActiveCoachesTab coaches={coaches} loading={loadingCoaches} onRefresh={refreshAll} onOpenInvite={openInviteTab} />
         )}
         {activeTab === "invites" && (
           <InvitesTab invites={invites} pendingAssignments={pendingAssignments} loading={loadingInvites} onRefresh={refreshAll} />
