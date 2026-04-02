@@ -72,7 +72,7 @@ export default function Sidebar({ open, onClose, collapsed, onToggleCollapse }) 
     return () => { clearInterval(interval); window.removeEventListener("messages-read", onRead); };
   }, [user]);
 
-  let navItems = isAthlete ? ATHLETE_NAV : [...STAFF_NAV, ...(isDirector ? DIRECTOR_EXTRA : [])];
+  let navItems = isAthlete ? ATHLETE_NAV : [...STAFF_NAV, ...(isDirector ? DIRECTOR_EXTRA : []), ...(!isDirector && !isAdmin && (role === "club_coach" || role === "coach") ? [{ id: "roster", label: "Roster", icon: Users, path: "/roster" }] : [])];
   if (isDirector) navItems = navItems.filter(n => n.id !== "spotlight");
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + "/");

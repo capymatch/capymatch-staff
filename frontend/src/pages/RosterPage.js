@@ -751,19 +751,22 @@ function RosterPage() {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
 
+  const role = effectiveRole || user?.role;
+  const isCoach = role === "club_coach" || role === "coach";
+
   useEffect(() => {
-    const role = effectiveRole || user?.role;
-    if (role !== "director" && role !== "coach" && role !== "platform_admin") navigate("/mission-control");
-  }, [user, navigate]);
+    if (role !== "director" && role !== "club_coach" && role !== "coach" && role !== "platform_admin") navigate("/mission-control");
+  }, [user, navigate, role]);
 
   const fetchRoster = useCallback(async () => {
     try {
-      const [rosterRes, coachesRes] = await Promise.all([
-        axios.get(`${API}/roster`),
-        axios.get(`${API}/roster/coaches`),
-      ]);
+      const rosterRes = await axios.get(`${API}/roster`);
       setData(rosterRes.data);
-      setCoaches(coachesRes.data);
+      // Coaches list (for reassignment) — only directors need this
+      try {
+        const coachesRes = await axios.get(`${API}/roster/coaches`);
+        setCoaches(coachesRes.data);
+      } catch { /* coaches may not have access to this endpoint */ }
     } catch {
       toast.error("Failed to load roster");
     } finally {
@@ -851,11 +854,13 @@ function RosterPage() {
               </p>
             )}
           </div>
-          <button onClick={() => setShowAddTeam(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
-            data-testid="add-team-btn">
-            <Plus className="w-3.5 h-3.5" />Add Team
-          </button>
+          {!isCoach && (
+            <button onClick={() => setShowAddTeam(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+              data-testid="add-team-btn">
+              <Plus className="w-3.5 h-3.5" />Add Team
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <SearchBar value={search} onChange={setSearch} />

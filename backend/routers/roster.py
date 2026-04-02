@@ -31,6 +31,11 @@ def _require_director(user: dict):
         raise HTTPException(status_code=403, detail="Only directors can manage roster assignments")
 
 
+def _require_staff(user: dict):
+    if user["role"] not in ("director", "club_coach", "coach"):
+        raise HTTPException(status_code=403, detail="Staff access required")
+
+
 async def _athlete_by_id(athlete_id: str) -> dict | None:
     return await get_athlete_by_id(athlete_id)
 
@@ -81,8 +86,9 @@ async def _auto_link_coach_from_team(athlete_id: str, team_name: str):
 
 @router.get("/roster")
 async def get_roster(current_user: dict = get_current_user_dep()):
-    """Director view: all athletes with recruiting insights, grouped data."""
-    _require_director(current_user)
+    """Director/Coach view: athletes with recruiting insights. Coaches see only their assigned athletes."""
+    _require_staff(current_user)
+    is_coach = current_user["role"] in ("club_coach", "coach")
 
     coaches = await db.users.find(
         {"role": "club_coach"}, {"_id": 0, "id": 1, "name": 1, "email": 1, "team": 1, "profile": 1}
@@ -254,6 +260,11 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         else:
             ea["display_status"] = "active"
 
+    # For coaches: filter to only their assigned athletes
+    if is_coach:
+        coach_id = current_user["id"]
+        enriched_athletes = [a for a in enriched_athletes if a["coach_id"] == coach_id]
+
     # Coach groups (for Coach View)
     groups = []
     if unassigned_ids:
@@ -299,7 +310,8 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         age_map[label].append(a)
     age_groups = [{"label": l, "athletes": ats, "count": len(ats)} for l, ats in sorted(age_map.items())]
 
-    total = len(await get_athletes())
+    total = len(enriched_athletes) if is_coach else len(await get_athletes())
+    coach_unassigned = len([a for a in enriched_athletes if a["unassigned"]]) if is_coach else len(unassigned_ids)
     return {
         "athletes": enriched_athletes,
         "groups": groups,
@@ -311,8 +323,8 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         ],
         "summary": {
             "total_athletes": total,
-            "assigned": total - len(unassigned_ids),
-            "unassigned": len(unassigned_ids),
+            "assigned": total - coach_unassigned,
+            "unassigned": coach_unassigned,
             "coach_count": len(coaches),
             "teams": len(team_map),
         },

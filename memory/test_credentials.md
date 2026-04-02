@@ -1,8 +1,11 @@
-# CapyMatch Test Credentials
+# Test Credentials
 
-## Admin Account (Multi-role)
+## Admin (all roles)
 - Email: douglas@capymatch.com
 - Password: abc123
 - Roles: platform_admin, director, coach, athlete
-- Has: 10 schools, 41 interactions, full demo data across all pipeline stages
-- Note: This is the ONLY account in the system. All other accounts have been deleted.
+
+## Coach
+- Email: douglas.gmns@gmail.com
+- Password: abc123
+- Role: club_coach
