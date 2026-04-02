@@ -19,10 +19,12 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 async def seed_athletes(db, athletes):
-    """Seed athletes collection from mock data if empty"""
-    count = await db.athletes.count_documents({})
-    if count > 0:
-        logger.info(f"athletes already has {count} docs — skipping seed")
+    """Seed athletes collection from mock data if empty.
+    Skip if any user already exists (prevents re-seeding after data wipe)."""
+    user_count = await db.users.count_documents({})
+    if user_count > 0:
+        count = await db.athletes.count_documents({})
+        logger.info(f"Users exist ({user_count}) — athletes has {count} docs, skipping seed")
         return False
 
     from services.org_foundation import DEFAULT_ORG_ID
@@ -56,11 +58,11 @@ async def load_athletes_to_memory(db):
 
 async def seed_events(db, events):
     """Seed events collection from mock data if empty.
-    Stores event metadata WITHOUT capturedNotes (those live in event_notes collection).
-    """
-    count = await db.events.count_documents({})
-    if count > 0:
-        logger.info(f"events already has {count} docs — skipping seed")
+    Skip if any user already exists (prevents re-seeding after data wipe)."""
+    user_count = await db.users.count_documents({})
+    if user_count > 0:
+        count = await db.events.count_documents({})
+        logger.info(f"Users exist ({user_count}) — events has {count} docs, skipping seed")
         return False
 
     docs = []
@@ -109,9 +111,9 @@ async def load_events_to_memory(db):
 
 async def seed_event_notes(db, events):
     """Seed event_notes collection from mock capturedNotes if empty"""
-    count = await db.event_notes.count_documents({})
-    if count > 0:
-        logger.info(f"event_notes already has {count} docs — skipping seed")
+    user_count = await db.users.count_documents({})
+    if user_count > 0:
+        logger.info(f"Users exist ({user_count}) — skipping event_notes seed")
         return False
 
     notes = []
