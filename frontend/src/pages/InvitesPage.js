@@ -497,7 +497,7 @@ export default function InvitesPage() {
     fetchCoaches();
     fetchInvites();
     fetchPendingAssignments();
-  }, [user, navigate]);
+  }, [user, navigate, role, fetchCoaches, fetchInvites, fetchPendingAssignments]);
 
   const fetchCoaches = useCallback(async () => {
     setLoadingCoaches(true);
