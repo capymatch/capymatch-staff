@@ -9,7 +9,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const POLL_INTERVAL = 45_000; // 45 seconds
 
 function MissionControl() {
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
@@ -39,7 +39,8 @@ function MissionControl() {
     return () => clearInterval(interval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isDirector = data?.role === "director" || user?.role === "director";
+  const role = effectiveRole || user?.role;
+  const isDirector = data?.role === "director" || role === "director";
 
   if (loading) {
     return (

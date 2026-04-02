@@ -162,8 +162,9 @@ function DeliveryBadge({ status, lastError }) {
 }
 
 export default function InvitesPage() {
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const navigate = useNavigate();
+  const role = effectiveRole || user?.role;
   const [invites, setInvites] = useState([]);
   const [pendingAssignments, setPendingAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,7 +176,7 @@ export default function InvitesPage() {
   const [resendingId, setResendingId] = useState(null);
 
   useEffect(() => {
-    if (user?.role !== "director") { navigate("/mission-control"); return; }
+    if (role !== "director" && role !== "coach" && role !== "platform_admin") { navigate("/mission-control"); return; }
     fetchInvites();
     fetchPendingAssignments();
   }, [user, navigate]);

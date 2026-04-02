@@ -135,7 +135,7 @@ function AppRoutes() {
       <Route path="/advocacy/:recommendationId" element={<ProtectedRoute allowedRoles={["director","club_coach","coach"]}><RecommendationDetail /></ProtectedRoute>} />
       <Route path="/advocacy/relationships/:schoolId" element={<ProtectedRoute allowedRoles={["director","club_coach","coach"]}><RelationshipDetail /></ProtectedRoute>} />
       <Route path="/program" element={<ProtectedRoute allowedRoles={["director","club_coach","coach"]}><ProgramIntelligence /></ProtectedRoute>} />
-      <Route path="/invites" element={<ProtectedRoute allowedRoles={["director"]}><InvitesPage /></ProtectedRoute>} />
+      <Route path="/invites" element={<ProtectedRoute allowedRoles={["director","coach"]}><InvitesPage /></ProtectedRoute>} />
       <Route path="/roster" element={<ProtectedRoute allowedRoles={["director"]}><RosterPage /></ProtectedRoute>} />
       <Route path="/club-billing" element={<ProtectedRoute allowedRoles={["director"]}><ClubBillingPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

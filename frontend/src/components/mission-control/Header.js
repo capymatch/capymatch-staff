@@ -14,7 +14,8 @@ import { useAuth } from "@/AuthContext";
 function Header({ selectedGradYear, setSelectedGradYear, stats }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, effectiveRole } = useAuth();
+  const role = effectiveRole || user?.role;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -31,14 +32,14 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
     { id: "events", label: "Events", icon: Calendar, path: "/events" },
     { id: "advocacy", label: "Advocacy", icon: Megaphone, path: "/advocacy" },
     { id: "program", label: "Program", icon: BarChart3, path: "/program" },
-    ...(user?.role === "director" ? [{ id: "roster", label: "Roster", icon: Users, path: "/roster" }] : []),
+    ...(role === "director" ? [{ id: "roster", label: "Roster", icon: Users, path: "/roster" }] : []),
   ];
 
   const initials = user?.name
     ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "CM";
 
-  const roleLabel = user?.role === "director" ? "Director" : "Coach";
+  const roleLabel = role === "director" ? "Director" : "Coach";
 
   const handleLogout = () => {
     logout();
@@ -130,7 +131,7 @@ function Header({ selectedGradYear, setSelectedGradYear, stats }) {
             </button>
 
             {/* Director-only: Invite coaches link */}
-            {user?.role === "director" && (
+            {role === "director" && (
               <button
                 onClick={() => navigate("/invites")}
                 className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-white/10 transition-colors text-white/50 hover:text-white/80"

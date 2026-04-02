@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Calendar, Megaphone, BarChart3, Users,
   ChevronRight, Kanban, GraduationCap, Mail, Video, Play,
   Shield, Plug, Database, CreditCard, MessageSquare, Building2,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, UserPlus,
 } from "lucide-react";
 import { useAuth } from "@/AuthContext";
 
@@ -18,6 +18,7 @@ const STAFF_NAV = [
 ];
 
 const DIRECTOR_EXTRA = [
+  { id: "invites", label: "Invite Coaches", icon: UserPlus, path: "/invites" },
   { id: "roster", label: "Roster", icon: Users, path: "/roster" },
   { id: "club-billing", label: "Club Billing", icon: CreditCard, path: "/club-billing" },
 ];
