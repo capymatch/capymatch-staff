@@ -6,10 +6,35 @@ import { toast } from "sonner";
 import {
   Mail, UserPlus, Clock, CheckCircle, XCircle, Trash2, Copy, Users,
   RefreshCw, AlertTriangle, Send, UserCheck, Pencil, X, Shield,
-  MoreHorizontal, Activity, UserCog, Calendar, ChevronRight,
+  MoreHorizontal, Activity, Calendar, ChevronDown,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+/* ═══════════════════════ Team Dropdown ═══════════════════════ */
+
+function TeamDropdown({ value, onChange, teams, loading }) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full appearance-none px-3 py-2.5 pr-8 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer"
+        style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: value ? "var(--cm-text)" : "var(--cm-text-3)" }}
+        data-testid="team-dropdown"
+      >
+        <option value="">Select a roster...</option>
+        {loading && <option disabled>Loading rosters...</option>}
+        {teams.map((t) => (
+          <option key={t.name} value={t.name}>
+            {t.name}{t.age_group ? ` (${t.age_group})` : ""}{t.athlete_count > 0 ? ` — ${t.athlete_count} athletes` : ""}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--cm-text-3)" }} />
+    </div>
+  );
+}
 
 /* ═══════════════════════ Utility Helpers ═══════════════════════ */
 
@@ -58,7 +83,7 @@ function ConfirmDialog({ title, message, onConfirm, onCancel, confirmLabel = "Co
 
 /* ═══════════════════════ Edit Coach Modal ═══════════════════════ */
 
-function EditCoachModal({ coach, onSave, onClose }) {
+function EditCoachModal({ coach, onSave, onClose, teams, teamsLoading }) {
   const [name, setName] = useState(coach.name || "");
   const [team, setTeam] = useState(coach.team || "");
   const [saving, setSaving] = useState(false);
@@ -94,7 +119,7 @@ function EditCoachModal({ coach, onSave, onClose }) {
           </div>
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Team</label>
-            <input type="text" value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Varsity, JV, 2027s..." className="w-full px-3 py-2.5 text-sm rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-orange-200" style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="edit-coach-team" />
+            <TeamDropdown value={team} onChange={setTeam} teams={teams} loading={teamsLoading} />
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="px-3 py-2.5 text-xs font-medium rounded-lg transition-colors hover:bg-gray-100" style={{ color: "var(--cm-text-2)" }}>Cancel</button>
@@ -268,7 +293,7 @@ function CoachCard({ coach, onEdit, onToggleStatus, onRemove }) {
 
 /* ═══════════════════════ Active Coaches Tab ═══════════════════════ */
 
-function ActiveCoachesTab({ coaches, loading, onRefresh, onOpenInvite }) {
+function ActiveCoachesTab({ coaches, loading, onRefresh, onOpenInvite, teams, teamsLoading }) {
   const [editingCoach, setEditingCoach] = useState(null);
   const [confirmRemove, setConfirmRemove] = useState(null);
 
@@ -347,6 +372,8 @@ function ActiveCoachesTab({ coaches, loading, onRefresh, onOpenInvite }) {
           coach={editingCoach}
           onSave={() => { setEditingCoach(null); onRefresh(); }}
           onClose={() => setEditingCoach(null)}
+          teams={teams}
+          teamsLoading={teamsLoading}
         />
       )}
       {confirmRemove && (
@@ -465,7 +492,7 @@ function PendingAssignmentBanner({ assignment, onComplete }) {
 
 /* ═══════════════════════ Invites Tab ═══════════════════════ */
 
-function InvitesTab({ invites, pendingAssignments, loading, onRefresh }) {
+function InvitesTab({ invites, pendingAssignments, loading, onRefresh, teams, teamsLoading }) {
   const [showForm, setShowForm] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -545,7 +572,7 @@ function InvitesTab({ invites, pendingAssignments, loading, onRefresh }) {
             </div>
             <div>
               <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: "var(--cm-text-3)" }}>Team (optional)</label>
-              <input type="text" value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Varsity, JV, 2027s..." className="w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-200" style={{ background: "var(--cm-input-bg)", borderColor: "var(--cm-border)", color: "var(--cm-text)" }} data-testid="invite-team-input" />
+              <TeamDropdown value={team} onChange={setTeam} teams={teams} loading={teamsLoading} />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setShowForm(false)} className="px-3 py-2.5 text-xs font-medium rounded-lg transition-colors hover:bg-gray-100" style={{ color: "var(--cm-text-2)" }}>Cancel</button>
@@ -646,6 +673,8 @@ export default function InvitesPage() {
   const [pendingAssignments, setPendingAssignments] = useState([]);
   const [loadingCoaches, setLoadingCoaches] = useState(true);
   const [loadingInvites, setLoadingInvites] = useState(true);
+  const [teams, setTeams] = useState([]);
+  const [teamsLoading, setTeamsLoading] = useState(true);
 
   const fetchCoaches = useCallback(async () => {
     setLoadingCoaches(true);
@@ -666,17 +695,26 @@ export default function InvitesPage() {
     catch { /* silent */ }
   }, []);
 
+  const fetchTeams = useCallback(async () => {
+    setTeamsLoading(true);
+    try { const res = await axios.get(`${API}/roster/teams`); setTeams(res.data); }
+    catch { /* silent */ }
+    finally { setTeamsLoading(false); }
+  }, []);
+
   const refreshAll = useCallback(() => {
     fetchCoaches();
     fetchInvites();
     fetchPendingAssignments();
-  }, [fetchCoaches, fetchInvites, fetchPendingAssignments]);
+    fetchTeams();
+  }, [fetchCoaches, fetchInvites, fetchPendingAssignments, fetchTeams]);
 
   useEffect(() => {
     if (role !== "director" && role !== "coach" && role !== "platform_admin") { navigate("/mission-control"); return; }
     fetchCoaches();
     fetchInvites();
     fetchPendingAssignments();
+    fetchTeams();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
@@ -748,10 +786,10 @@ export default function InvitesPage() {
 
         {/* ═══ Tab Content ═══ */}
         {activeTab === "coaches" && (
-          <ActiveCoachesTab coaches={coaches} loading={loadingCoaches} onRefresh={refreshAll} onOpenInvite={openInviteTab} />
+          <ActiveCoachesTab coaches={coaches} loading={loadingCoaches} onRefresh={refreshAll} onOpenInvite={openInviteTab} teams={teams} teamsLoading={teamsLoading} />
         )}
         {activeTab === "invites" && (
-          <InvitesTab invites={invites} pendingAssignments={pendingAssignments} loading={loadingInvites} onRefresh={refreshAll} />
+          <InvitesTab invites={invites} pendingAssignments={pendingAssignments} loading={loadingInvites} onRefresh={refreshAll} teams={teams} teamsLoading={teamsLoading} />
         )}
       </main>
     </div>
