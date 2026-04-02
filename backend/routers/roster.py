@@ -66,6 +66,19 @@ async def _get_open_actions_warning(athlete_id: str, from_coach_id: str) -> list
     return warnings
 
 
+async def _auto_link_coach_from_team(athlete_id: str, team_name: str):
+    """If the team has a coach assigned, set that coach as the athlete's primary_coach_id."""
+    if not team_name:
+        return
+    team_doc = await db.club_teams.find_one({"name": team_name}, {"_id": 0, "coach_id": 1})
+    if team_doc and team_doc.get("coach_id"):
+        await db.athletes.update_one(
+            {"id": athlete_id, "primary_coach_id": {"$in": [None, ""]}},
+            {"$set": {"primary_coach_id": team_doc["coach_id"]}}
+        )
+
+
+
 @router.get("/roster")
 async def get_roster(current_user: dict = get_current_user_dep()):
     """Director view: all athletes with recruiting insights, grouped data."""
@@ -934,6 +947,9 @@ async def add_athlete_to_team(team_name: str, request_body: dict, current_user: 
         {"$set": {"team": team_name, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
 
+    # Auto-link to team's coach if athlete has no coach
+    await _auto_link_coach_from_team(athlete_id, team_name)
+
     await recompute_derived_data()
 
     return {"ok": True, "athlete_id": athlete_id, "team": team_name, "name": athlete.get("full_name")}
@@ -964,6 +980,7 @@ async def invite_athlete_to_team(team_name: str, request_body: dict, current_use
                 {"id": existing_athlete["id"]},
                 {"$set": {"team": team_name, "updated_at": datetime.now(timezone.utc).isoformat()}}
             )
+            await _auto_link_coach_from_team(existing_athlete["id"], team_name)
             await recompute_derived_data()
             return {"ok": True, "action": "moved", "athlete_name": existing_athlete.get("full_name"), "team": team_name}
         raise HTTPException(400, f"A user with this email exists but has no athlete profile")
@@ -1016,6 +1033,9 @@ async def invite_athlete_to_team(team_name: str, request_body: dict, current_use
     }
     await db.athletes.insert_one(athlete_doc)
     athlete_doc.pop("_id", None)
+
+    # Auto-link to team's coach
+    await _auto_link_coach_from_team(athlete_doc["id"], team_name)
 
     # Create basic subscription
     await db.subscriptions.insert_one({"tenant_id": tenant_id, "tier": "basic"})
