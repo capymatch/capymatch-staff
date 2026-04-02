@@ -218,10 +218,13 @@ async def _build_director_response(alerts, attention, signals, events):
     unassigned_ids = get_unassigned_athlete_ids()
     coach_map = get_coach_athlete_map()
 
+    # Count actual registered coaches from DB
+    registered_coach_count = await db.users.count_documents({"role": "club_coach"})
+
     # Program status KPIs
     program_status = {
         "totalAthletes": len(await get_athletes()),
-        "activeCoaches": len(coach_map),
+        "activeCoaches": registered_coach_count,
         "unassignedCount": len(unassigned_ids),
         "upcomingEvents": len([e for e in events if 0 <= e.get("daysAway", 99) <= 14]),
         "needingAttention": len(attention),
@@ -310,6 +313,21 @@ async def _compute_trends(current_status):
         return persisted["result"]
 
     try:
+        # If there are no athletes, momentum is always stable — no activity to measure
+        if current_status.get("totalAthletes", 0) == 0:
+            result = {
+                "needAttentionDelta": 0,
+                "momentum": {"state": "stable", "engagementDelta": 0},
+            }
+            await db.computed_trends.update_one(
+                {"date": today_key},
+                {"$set": {"date": today_key, "result": result, "computed_at": datetime.now(timezone.utc).isoformat()}},
+                upsert=True,
+            )
+            _trend_cache["data"] = result
+            _trend_cache["ts"] = _time.monotonic()
+            return result
+
         today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         cursor = db.program_snapshots.find(
             {"captured_at": {"$lt": today_start.isoformat()}},

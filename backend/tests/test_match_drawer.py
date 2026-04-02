@@ -13,7 +13,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://frontend-stuck.preview.emergentagent.com")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://capymatch-admin.preview.emergentagent.com")
 
 # Test credentials
 ATHLETE_EMAIL = "emma.chen@athlete.capymatch.com"

@@ -155,7 +155,7 @@ class TestStripeCheckout:
             f"{BASE_URL}/api/checkout/create-session",
             json={
                 "tier": "pro",
-                "origin_url": "https://frontend-stuck.preview.emergentagent.com"
+                "origin_url": "https://capymatch-admin.preview.emergentagent.com"
             },
             headers=auth_headers
         )
@@ -177,7 +177,7 @@ class TestStripeCheckout:
             f"{BASE_URL}/api/checkout/create-session",
             json={
                 "tier": "premium",
-                "origin_url": "https://frontend-stuck.preview.emergentagent.com"
+                "origin_url": "https://capymatch-admin.preview.emergentagent.com"
             },
             headers=auth_headers
         )
@@ -197,7 +197,7 @@ class TestStripeCheckout:
             f"{BASE_URL}/api/checkout/create-session",
             json={
                 "tier": "invalid_tier",
-                "origin_url": "https://frontend-stuck.preview.emergentagent.com"
+                "origin_url": "https://capymatch-admin.preview.emergentagent.com"
             },
             headers=auth_headers
         )
