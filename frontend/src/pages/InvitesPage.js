@@ -492,13 +492,6 @@ export default function InvitesPage() {
   const [loadingCoaches, setLoadingCoaches] = useState(true);
   const [loadingInvites, setLoadingInvites] = useState(true);
 
-  useEffect(() => {
-    if (role !== "director" && role !== "coach" && role !== "platform_admin") { navigate("/mission-control"); return; }
-    fetchCoaches();
-    fetchInvites();
-    fetchPendingAssignments();
-  }, [user, navigate, role, fetchCoaches, fetchInvites, fetchPendingAssignments]);
-
   const fetchCoaches = useCallback(async () => {
     setLoadingCoaches(true);
     try { const res = await axios.get(`${API}/coaches`); setCoaches(res.data); }
@@ -523,6 +516,13 @@ export default function InvitesPage() {
     fetchInvites();
     fetchPendingAssignments();
   }, [fetchCoaches, fetchInvites, fetchPendingAssignments]);
+
+  useEffect(() => {
+    if (role !== "director" && role !== "coach" && role !== "platform_admin") { navigate("/mission-control"); return; }
+    fetchCoaches();
+    fetchInvites();
+    fetchPendingAssignments();
+  }, [user, navigate, role, fetchCoaches, fetchInvites, fetchPendingAssignments]);
 
   const pendingInviteCount = invites.filter((i) => i.status === "pending").length;
 
