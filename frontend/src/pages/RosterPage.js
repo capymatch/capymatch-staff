@@ -699,7 +699,7 @@ function SearchBar({ value, onChange }) {
 /* ── Main Page ── */
 
 function RosterPage() {
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -709,7 +709,8 @@ function RosterPage() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => {
-    if (user?.role !== "director") navigate("/mission-control");
+    const role = effectiveRole || user?.role;
+    if (role !== "director" && role !== "coach" && role !== "platform_admin") navigate("/mission-control");
   }, [user, navigate]);
 
   const fetchRoster = useCallback(async () => {
