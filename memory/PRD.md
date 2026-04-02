@@ -21,19 +21,21 @@ Athlete management platform (CapyMatch) with multi-role support (Admin, Director
 - Database purge of all mock data
 - Routing & Invites fixes (Coaches page, Roster page)
 - AcceptInvitePage redesign (matches Login page style)
-- **[2026-04-02] Bug Fix**: Director dashboard coach count now queries actual registered users. Momentum defaults to "Stable" when no athletes exist.
-- **[2026-04-02] Coach Management Page**: Redesigned InvitesPage with tabs (Active Coaches / Invites). Full CRUD for coaches: view, edit name/team, deactivate/activate, remove. Backend: new `/api/coaches` endpoints. Frontend: tabbed UI with edit modal, action menus, confirm dialogs.
-
-## Current State
-- DB has 2 users (Douglas admin + Douglas Coach) and 1,057 university KB entries
-- Auto-seeding is disabled
-- All dashboard KPIs reflect real data
-- Coach management fully operational
+- [2026-04-02] Bug Fix: Director dashboard coach count + momentum
+- [2026-04-02] Coach Management CRUD: Backend `/api/coaches` endpoints
+- **[2026-04-02] Coach Management Page Redesign**: Complete overhaul of Director's Coaches page:
+  - Summary stat strip (Active Coaches, Pending Invites, Athletes Managed, Avg Response)
+  - Refined tabs with icons and dark count badges
+  - Rich coach cards with avatar health signals, stats row, edit/menu actions
+  - Contextual "Grow your coaching staff" prompt when < 3 coaches
+  - Improved invite flow with dashed CTA button
+  - Orange accent styling consistent with design system
+  - Coach health signals (Active/Needs attention/Inactive)
 
 ## Key Files
 - `/app/backend/routers/coaches.py` — Coach CRUD endpoints
 - `/app/backend/routers/invites.py` — Invite system
-- `/app/frontend/src/pages/InvitesPage.js` — Tabbed Coaches + Invites page
+- `/app/frontend/src/pages/InvitesPage.js` — Redesigned Coaches + Invites page
 
 ## P1 Upcoming Tasks
 - CSV Import Tool: Bulk import for school/coach data
