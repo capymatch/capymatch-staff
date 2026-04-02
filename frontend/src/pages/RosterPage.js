@@ -19,7 +19,7 @@ const WARNING_MAP = [
   { match: /missing|transcript|document|blocks/i, tag: "Missing Docs" },
   { match: /no one owns|unassigned|ownership/i, tag: "No Owner" },
   { match: /follow.?up overdue/i, tag: "Follow-Up" },
-  { match: /momentum|declining/i, tag: "Needs Review" },
+  { match: /momentum|declining/i, tag: "Needs Attention" },
   { match: /early warning/i, tag: "At Risk" },
   { match: /no prep|readiness/i, tag: "Unprepped" },
   { match: /engagement/i, tag: "Disengaged" },
@@ -139,14 +139,16 @@ function MiniPipeline({ stage }) {
 /* ── Momentum label ── */
 
 const MOM_CFG = {
-  strong: { text: "Strong", cls: "text-emerald-700", dotCls: "bg-emerald-500", icon: TrendingUp },
-  stable: { text: "Stable", cls: "text-amber-600", dotCls: "bg-amber-400", icon: Minus },
-  declining: { text: "Declining", cls: "text-red-600", dotCls: "bg-red-500", icon: TrendingDown },
+  building_momentum: { text: "Building Momentum", cls: "text-emerald-700", dotCls: "bg-emerald-500", icon: TrendingUp },
+  active: { text: "Active", cls: "text-sky-600", dotCls: "bg-sky-500", icon: Minus },
+  declining: { text: "Needs Attention", cls: "text-red-600", dotCls: "bg-red-500", icon: TrendingDown },
   getting_started: { text: "Getting Started", cls: "text-blue-600", dotCls: "bg-blue-400", icon: Minus },
+  setup_needed: { text: "Setup Needed", cls: "text-violet-600", dotCls: "bg-violet-400", icon: Minus },
+  inactive: { text: "Inactive", cls: "text-gray-500", dotCls: "bg-gray-400", icon: Minus },
 };
 
 function MomentumLabel({ label }) {
-  const c = MOM_CFG[label] || MOM_CFG.stable;
+  const c = MOM_CFG[label] || MOM_CFG.active;
   const Icon = c.icon;
   return (
     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${c.cls}`} data-testid="momentum-label">
@@ -159,9 +161,19 @@ function MomentumLabel({ label }) {
 
 function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
   const hasRisk = !athlete.is_onboarding && athlete.risk_alerts && athlete.risk_alerts.length > 0;
+  const borderMap = {
+    critical: "border-l-2 border-l-red-400",
+    at_risk: "border-l-2 border-l-red-300",
+    needs_attention: "border-l-2 border-l-amber-400",
+    building_momentum: "border-l-2 border-l-emerald-300",
+    active: "border-l-2 border-l-transparent",
+    setup_needed: "border-l-2 border-l-violet-300",
+    getting_started: "border-l-2 border-l-blue-300",
+    inactive: "border-l-2 border-l-gray-300",
+  };
   const rowBorder = hasRisk
-    ? athlete.risk_level === "critical" ? "border-l-2 border-l-red-400" : "border-l-2 border-l-amber-400"
-    : athlete.is_onboarding ? "border-l-2 border-l-blue-300" : "border-l-2 border-l-transparent";
+    ? (athlete.risk_level === "critical" ? "border-l-2 border-l-red-400" : "border-l-2 border-l-amber-400")
+    : (borderMap[athlete.display_status] || "border-l-2 border-l-transparent");
 
   return (
     <div className={`group ${rowBorder} transition-colors hover:bg-slate-50/70`} data-testid={`roster-athlete-${athlete.id}`}>
@@ -632,12 +644,15 @@ function RosterInsights({ athletes }) {
     const onboarding = athletes.filter((a) => a.is_onboarding);
     const established = athletes.filter((a) => !a.is_onboarding);
 
+    const buildingMomentum = athletes.filter((a) => a.momentum_label === "building_momentum").length;
+    if (buildingMomentum > 0) items.push({ text: `${buildingMomentum} athlete${buildingMomentum > 1 ? "s" : ""} building recruiting momentum`, type: "positive" });
+
     const strongInterest = athletes.filter((a) => a.recruiting_stage === "offer" || a.recruiting_stage === "visit").length;
     if (strongInterest > 0) items.push({ text: `${strongInterest} athlete${strongInterest > 1 ? "s" : ""} have strong recruiting interest`, type: "positive" });
 
     // Only show declining warning for established athletes
     const declining = established.filter((a) => a.momentum_label === "declining").length;
-    if (declining > 0) items.push({ text: `${declining} athlete${declining > 1 ? "s" : ""} risk losing recruiting momentum`, type: "warning" });
+    if (declining > 0) items.push({ text: `${declining} athlete${declining > 1 ? "s" : ""} need attention — recruiting momentum at risk`, type: "warning" });
 
     const missingDocs = established.filter((a) => (a.risk_alerts || []).some((r) => /missing|transcript|document|blocks/i.test(r.why))).length;
     if (missingDocs > 0) items.push({ text: `${missingDocs} athlete${missingDocs > 1 ? "s" : ""} missing required documents`, type: "danger" });
@@ -649,9 +664,14 @@ function RosterInsights({ athletes }) {
     const inactive = established.filter((a) => (a.days_since_activity || 0) > 14).length;
     if (inactive > 0) items.push({ text: `${inactive} athlete${inactive > 1 ? "s" : ""} inactive for 2+ weeks`, type: "danger" });
 
-    // Neutral onboarding messages for new athletes
-    if (onboarding.length > 0) {
-      items.push({ text: `${onboarding.length} new athlete${onboarding.length > 1 ? "s" : ""} getting started — needs setup to begin recruiting tracking`, type: "onboarding" });
+    // Neutral onboarding messages
+    const setupNeeded = onboarding.filter((a) => a.momentum_label === "setup_needed").length;
+    const gettingStarted = onboarding.filter((a) => a.momentum_label === "getting_started").length;
+    if (gettingStarted > 0) {
+      items.push({ text: `${gettingStarted} new athlete${gettingStarted > 1 ? "s" : ""} getting started — needs setup to begin recruiting tracking`, type: "onboarding" });
+    }
+    if (setupNeeded > 0) {
+      items.push({ text: `${setupNeeded} athlete${setupNeeded > 1 ? "s" : ""} need${setupNeeded === 1 ? "s" : ""} setup — connect email or add schools to begin tracking`, type: "onboarding" });
     }
     const newUnassigned = onboarding.filter((a) => a.unassigned).length;
     if (newUnassigned > 0) {

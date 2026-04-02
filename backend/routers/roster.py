@@ -136,15 +136,30 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             and not has_gmail
         )
 
-        # Momentum label: Strong / Stable / Declining / Getting Started
+        # "setup_needed" — past grace period but still missing key setup
+        is_setup_needed = (
+            not is_onboarding
+            and days_since_creation <= 14
+            and not has_gmail
+            and not has_school_targets
+            and not has_interactions
+        )
+
+        # Momentum label: building_momentum / active / declining / inactive / setup_needed / getting_started
         if is_onboarding:
             momentum_label = "getting_started"
+        elif is_setup_needed:
+            momentum_label = "setup_needed"
         elif mtrend == "rising" and mscore >= 5:
-            momentum_label = "strong"
+            momentum_label = "building_momentum"
         elif mscore <= 0 or (mtrend == "declining" and (days_inactive or 0) > 10):
-            momentum_label = "declining"
+            # Distinguish intentional inactivity from actual decline
+            if (days_inactive or 0) > 21 and mscore == 0 and mtrend != "declining":
+                momentum_label = "inactive"
+            else:
+                momentum_label = "declining"
         else:
-            momentum_label = "stable"
+            momentum_label = "active"
 
         # Detailed recruiting stage pipeline (7-stage)
         raw_stage = a.get("recruiting_stage", "exploring")
@@ -184,8 +199,9 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             "coach_name": coach["name"] if coach else None,
             "unassigned": a["id"] in unassigned_ids,
             "unassigned_reason": a.get("unassigned_reason") if a["id"] in unassigned_ids else None,
-            "is_onboarding": is_onboarding,
+            "is_onboarding": is_onboarding or is_setup_needed,
             "days_since_creation": days_since_creation,
+            "display_status": None,  # computed after risk alerts attached
         })
 
     # Needs attention — build per-athlete risk alerts
@@ -216,6 +232,27 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             else:
                 ea["risk_alerts"] = []
                 ea["risk_level"] = None
+
+        # Step 4: Compute display_status — derived read-only label for UI
+        # Priority: blocker > at_risk > declining > building_momentum > active > setup_needed > getting_started > inactive
+        if ea["risk_level"] == "critical":
+            ea["display_status"] = "critical"
+        elif ea["risk_level"] == "warning" and any(a.get("category") in ("engagement_drop",) for a in ea["risk_alerts"]):
+            ea["display_status"] = "at_risk"
+        elif ea["momentum_label"] == "declining":
+            ea["display_status"] = "needs_attention"
+        elif ea["momentum_label"] == "building_momentum":
+            ea["display_status"] = "building_momentum"
+        elif ea["momentum_label"] == "active":
+            ea["display_status"] = "active"
+        elif ea["momentum_label"] == "setup_needed":
+            ea["display_status"] = "setup_needed"
+        elif ea["momentum_label"] == "getting_started":
+            ea["display_status"] = "getting_started"
+        elif ea["momentum_label"] == "inactive":
+            ea["display_status"] = "inactive"
+        else:
+            ea["display_status"] = "active"
 
     # Coach groups (for Coach View)
     groups = []
