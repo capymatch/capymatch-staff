@@ -282,7 +282,7 @@ function AthleteRow({ athlete, onReassign, navigate, selected, onToggle }) {
 
 /* ── Group Card ── */
 
-function GroupCard({ title, subtitle, count, athletes, coaches, onReload, navigate, icon: Icon, accentClass, selectedIds, onToggle, defaultExpanded = true, showAddAthlete = false }) {
+function GroupCard({ title, subtitle, count, athletes, coaches, onReload, navigate, icon: Icon, accentClass, selectedIds, onToggle, defaultExpanded = true, showAddAthlete = false, photoUrl }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [reassignTarget, setReassignTarget] = useState(null);
   const [showAddAthleteModal, setShowAddAthleteModal] = useState(false);
@@ -292,11 +292,13 @@ function GroupCard({ title, subtitle, count, athletes, coaches, onReload, naviga
       <button onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50/50 transition-colors">
         <div className="flex items-center gap-2.5">
-          {Icon && (
+          {photoUrl ? (
+            <img src={photoUrl} alt={title} className="w-7 h-7 rounded-lg object-cover" />
+          ) : Icon ? (
             <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${accentClass || "bg-slate-100"}`}>
               <Icon className="w-3.5 h-3.5 text-slate-600" />
             </div>
-          )}
+          ) : null}
           <div className="text-left">
             <span className="text-sm font-semibold text-gray-900">{title}</span>
             {subtitle && <span className="text-xs text-slate-400 ml-2">{subtitle}</span>}
@@ -803,7 +805,7 @@ function RosterPage() {
             onReload={fetchRoster} navigate={navigate}
             icon={iconKey} accentClass={accentClass}
             selectedIds={selectedIds} onToggle={toggleSelect}
-            showAddAthlete={showAddAthlete} />
+            showAddAthlete={showAddAthlete} photoUrl={g.photo_url} />
         );
       })}
     </div>
@@ -813,14 +815,16 @@ function RosterPage() {
     if (!data) return [];
     return (data.teamGroups || []).map((tg) => {
       const coachNames = [...new Set(tg.athletes.map((a) => a.coach_name).filter(Boolean))];
-      return { key: tg.team, title: tg.team, subtitle: coachNames.join(", "), athletes: tg.athletes };
+      const coachPhoto = tg.athletes.find((a) => a.coach_photo_url)?.coach_photo_url;
+      return { key: tg.team, title: tg.team, subtitle: coachNames.join(", "), photo_url: coachPhoto, athletes: tg.athletes };
     });
   }, [data]);
 
   const coachGroups = useMemo(() => {
     if (!data) return [];
     return (data.groups || []).map((g) => ({
-      key: g.coach_id || "unassigned", title: g.coach_name, subtitle: g.coach_email, athletes: g.athletes,
+      key: g.coach_id || "unassigned", title: g.coach_name, subtitle: g.coach_email,
+      photo_url: g.coach_photo_url, athletes: g.athletes,
     }));
   }, [data]);
 

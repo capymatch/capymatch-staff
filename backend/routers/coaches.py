@@ -26,6 +26,7 @@ def _safe_coach(doc: dict, athlete_count: int = 0) -> dict:
         "role": doc.get("role", "club_coach"),
         "team": doc.get("team"),
         "status": doc.get("status", "active"),
+        "photo_url": doc.get("photo_url"),
         "invited_by": doc.get("invited_by"),
         "created_at": doc.get("created_at"),
         "last_active": doc.get("last_active"),

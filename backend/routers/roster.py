@@ -203,6 +203,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
             "days_since_activity": days_inactive,
             "coach_id": cid,
             "coach_name": coach["name"] if coach else None,
+            "coach_photo_url": coach.get("photo_url") if coach else None,
             "unassigned": a["id"] in unassigned_ids,
             "unassigned_reason": a.get("unassigned_reason") if a["id"] in unassigned_ids else None,
             "is_onboarding": is_onboarding or is_setup_needed,
@@ -278,6 +279,7 @@ async def get_roster(current_user: dict = get_current_user_dep()):
         coach_athletes = [a for a in enriched_athletes if a["coach_id"] == cid]
         groups.append({
             "coach_id": cid, "coach_name": coach["name"], "coach_email": coach["email"],
+            "coach_photo_url": coach.get("photo_url"),
             "coach_team": coach.get("team"),
             "coach_contact_method": (coach.get("profile") or {}).get("contact_method"),
             "coach_availability": (coach.get("profile") or {}).get("availability"),

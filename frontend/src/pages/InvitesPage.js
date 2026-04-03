@@ -192,12 +192,20 @@ function CoachCard({ coach, onEdit, onToggleStatus, onRemove }) {
         {/* Left: Avatar + Identity */}
         <div className="flex items-start gap-3.5 flex-1 min-w-0">
           <div className="relative shrink-0">
-            <div
-              className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white"
-              style={{ background: (coach.status || "active") === "active" ? "#1e293b" : "#94a3b8" }}
-            >
-              {(coach.name || "?").charAt(0).toUpperCase()}
-            </div>
+            {coach.photo_url ? (
+              <img
+                src={coach.photo_url}
+                alt={coach.name}
+                className="w-11 h-11 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                style={{ background: (coach.status || "active") === "active" ? "#1e293b" : "#94a3b8" }}
+              >
+                {(coach.name || "?").charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 ${health.dot}`} style={{ borderColor: "var(--cm-surface)" }} />
           </div>
 
